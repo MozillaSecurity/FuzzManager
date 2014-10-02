@@ -20,7 +20,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import sys
 import os
 
-from optparse import OptionParser
+from argparse import ArgumentParser
 from FTB.Signatures import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 
@@ -83,8 +83,9 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     try:
-        # setup option parser
-        parser = OptionParser(version=program_version_string)
+        # setup argparser
+        parser = ArgumentParser()
+        parser.add_argument('--version', action='version', version=program_version_string)
         
         #parser.add_option("-i", "--in", dest="infile", help="set input path [default: %default]", metavar="FILE")
         #parser.add_option("-o", "--out", dest="outfile", help="set output path [default: %default]", metavar="FILE")
