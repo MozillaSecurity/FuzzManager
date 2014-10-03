@@ -19,11 +19,11 @@ class CrashSignature():
     classdocs
     '''
 
-    def __init__(self, sourceFile):
+    def __init__(self, rawSignature):
         '''
         Constructor
         
-        :param sourceFile:
+        :param rawSignature:
         '''
         
     def matches(self, crashInfo):
