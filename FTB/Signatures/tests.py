@@ -4,7 +4,8 @@ Created on Oct 1, 2014
 @author: decoder
 '''
 import unittest
-from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo
+from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo
+from FTB.Signatures import CrashSignature
 
 asanTraceCrash = """
 ASAN:SIGSEGV
@@ -238,7 +239,137 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
         assert GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64) == 0x7ffff66ffffeL
-    
+
+class CrashSignatureOutputTest(unittest.TestCase):
+    def runTest(self):
+        crashSignature1 = '{ "symptoms" : [ { "type" : "output", "value" : "test" } ] }'
+        crashSignature1Neg = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : "test" } ] }'
+        crashSignature2 = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : { "value" : "^fest$", "matchType" : "pcre" } } ] }'
+        
+        outputSignature1 = CrashSignature(crashSignature1)
+        outputSignature1Neg = CrashSignature(crashSignature1Neg)
+        outputSignature2 = CrashSignature(crashSignature2)
+        
+        gdbOutput = []
+        stdout = []
+        stderr = []
+        
+        stdout.append("Foo")
+        stdout.append("Bartester")
+        stdout.append("Baz")
+        stderr.append("hackfest")
+        
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, gdbOutput)
+        
+        # Ensure we match on stdout/err if nothing is specified
+        assert outputSignature1.matches(crashInfo)
+        
+        # Don't match stdout if stderr is specified 
+        assert not outputSignature1Neg.matches(crashInfo)
+        
+        # Check that we're really using PCRE
+        assert outputSignature2.matches(crashInfo)
+        
+        # Add something the PCRE should match, then retry
+        stderr.append("fest");
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, gdbOutput)
+        assert outputSignature2.matches(crashInfo)
+        
+class CrashSignatureAddressTest(unittest.TestCase):
+    def runTest(self):
+        crashSignature1 = '{ "symptoms" : [ { "type" : "crashAddress", "address" : "< 0x1000" } ] }'
+        crashSignature1Neg = '{ "symptoms" : [ { "type" : "crashAddress", "address" : "0x1000" } ] }'
+        addressSig1 = CrashSignature(crashSignature1);
+        addressSig1Neg = CrashSignature(crashSignature1Neg);
+        
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
+        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2)
+        
+        assert addressSig1.matches(crashInfo1)
+        assert not addressSig1Neg.matches(crashInfo1)
+        
+        # For crashInfo2, we don't have a crash address. Ensure we don't match
+        assert not addressSig1.matches(crashInfo2)
+        assert not addressSig1Neg.matches(crashInfo2)
+        
+class CrashSignatureRegisterTest(unittest.TestCase):
+    def runTest(self):
+        crashSignature1 = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14"] } ] }'
+        crashSignature1Neg = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14", "rax"] } ] }'
+        crashSignature2 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov" } ] }'
+        crashSignature2Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "cmp" } ] }'
+        crashSignature3 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rbx"] } ] }'
+        crashSignature3Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rax"] } ] }'
+        
+        instructionSig1 = CrashSignature(crashSignature1);
+        instructionSig1Neg = CrashSignature(crashSignature1Neg);
+        
+        instructionSig2 = CrashSignature(crashSignature2);
+        instructionSig2Neg = CrashSignature(crashSignature2Neg);
+        
+        instructionSig3 = CrashSignature(crashSignature3);
+        instructionSig3Neg = CrashSignature(crashSignature3Neg);
+        
+        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2)
+        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3)
+        
+        assert instructionSig1.matches(crashInfo2)
+        assert not instructionSig1Neg.matches(crashInfo2)
+        
+        assert instructionSig2.matches(crashInfo2)
+        assert not instructionSig2Neg.matches(crashInfo2)
+        
+        assert instructionSig3.matches(crashInfo2)
+        assert not instructionSig3Neg.matches(crashInfo2)
+        
+        # Crash info3 doesn't have register information, ensure we don't match any
+        assert not instructionSig1.matches(crashInfo3)
+        assert not instructionSig2.matches(crashInfo3)
+        assert not instructionSig3.matches(crashInfo3)
+
+class CrashSignatureStackFrameTest(unittest.TestCase):
+    def runTest(self):
+        crashSignature1 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "internalAppend" } ] }'
+        crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "foobar" } ] }'
+        
+        crashSignature2 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "<= 4" } ] }'
+        crashSignature2Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "> 4" } ] }'
+        
+        stackFrameSig1 = CrashSignature(crashSignature1);
+        stackFrameSig1Neg = CrashSignature(crashSignature1Neg);
+        
+        stackFrameSig2 = CrashSignature(crashSignature2);
+        stackFrameSig2Neg = CrashSignature(crashSignature2Neg);
+        
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
+        
+        assert stackFrameSig1.matches(crashInfo1)
+        assert not stackFrameSig1Neg.matches(crashInfo1)
+        
+        assert stackFrameSig2.matches(crashInfo1)
+        assert not stackFrameSig2Neg.matches(crashInfo1)
+        
+class CrashSignatureStackSizeTest(unittest.TestCase):
+    def runTest(self):
+        crashSignature1 = '{ "symptoms" : [ { "type" : "stackSize", "size" : 8 } ] }'
+        crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackSize", "size" : 9 } ] }'
+        
+        crashSignature2 = '{ "symptoms" : [ { "type" : "stackSize", "size" : "< 10" } ] }'
+        crashSignature2Neg = '{ "symptoms" : [ { "type" : "stackSize", "size" : "> 10" } ] }'
+        
+        stackSizeSig1 = CrashSignature(crashSignature1);
+        stackSizeSig1Neg = CrashSignature(crashSignature1Neg);
+        
+        stackSizeSig2 = CrashSignature(crashSignature2);
+        stackSizeSig2Neg = CrashSignature(crashSignature2Neg);
+        
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
+        
+        assert stackSizeSig1.matches(crashInfo1)
+        assert not stackSizeSig1Neg.matches(crashInfo1)
+        
+        assert stackSizeSig2.matches(crashInfo1)
+        assert not stackSizeSig2Neg.matches(crashInfo1)
         
 if __name__ == "__main__":
     unittest.main()
