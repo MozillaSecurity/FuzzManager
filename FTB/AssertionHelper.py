@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
+import re
+
 def getAssertion(output, onlyProgramAssertions=False):
     '''
     This helper class provides a way to extract and process the 
@@ -27,11 +29,48 @@ def getAssertion(output, onlyProgramAssertions=False):
     cases, like signature generation and lead to incompatible
     signatures.
      
-    :param output: List of strings to be searched
-    :param onlyProgramAssertions: Boolean, see above
+    @type output: list
+    @param output: List of strings to be searched
+    
+    @type onlyProgramAssertions: bool
+    @param onlyProgramAssertions: Boolean, see above
     '''
-    #TODO: Implement/Port assertion extraction code
-    pass
+    lastLine = None
+    addNext = False
+        
+    # Use this to ignore the ASan head line in case of an assertion
+    haveTrueAssertion = False
+    
+    for line in output:
+        # Remove any PID output at the beginning of the line
+        line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
+        
+        if addNext:
+            lastLine += " "
+            lastLine += line
+        elif line.startswith("Assertion failure"):
+            # Firefox JS assertion
+            lastLine = line
+            haveTrueAssertion = True
+        elif line.startswith("###!!! ASSERTION:"):
+            # Firefox assertion
+            lastLine = line
+            haveTrueAssertion = True
+        elif line.startswith("# Fatal error in"):
+            # Support v8 non-standard multi-line assertion output
+            lastLine = line
+            haveTrueAssertion = True
+            addNext = True
+        elif not onlyProgramAssertions and not haveTrueAssertion and "ERROR: AddressSanitizer" in line:
+            lastLine = line
+        elif "Assertion" in line and "failed" in line:
+            # Firefox ANGLE assertion
+            lastLine = line
+        elif not onlyProgramAssertions and "glibc detected" in line:
+            # Aborts caused by glibc runtime error detection
+            lastLine = line
+        
+    return lastLine
 
 def getSanitizedAssertionPattern(msg):
     '''
@@ -39,18 +78,50 @@ def getSanitizedAssertionPattern(msg):
     from assertions and replace it with pattern matching elements, e.g. 
     for use in signature matching.
     
-    :param msg: Assertion message to be sanitized
+    @type msg: string
+    @param msg: Assertion message to be sanitized
+        
+    @rtype: string
+    @return: Sanitized assertion message (regular expression)
     '''
-    #TODO: Implement/Port assertion sanitizing code
-    pass
+    assert msg != None
+    
+    sanitizedMsg = escapePattern(msg)
+    
+    replacementPatterns = []
+        
+    # Replace everything that looks like a memory address
+    replacementPatterns.append("0x[0-9a-fA-F]+")
+    
+    # Strip line numbers as they can easily change across versions
+    replacementPatterns.append(":[0-9]+")
+    replacementPatterns.append(", line [0-9]+")
+    
+    # Strip full path
+    replacementPatterns.append(" /.+/")
+    
+    for replacementPattern in replacementPatterns:
+        sanitizedMsg = re.sub(replacementPattern, replacementPattern, sanitizedMsg)
+    
+    return sanitizedMsg
     
 def escapePattern(msg):
     '''
     This method escapes regular expression characters in the string.
-    And no, this is not Pattern.quote, which wouldn't work in this
-    case.
+    And no, this is not re.escape, which would escape many more characters.
     
-    :param msg: String that needs to be quoted
+    @type msg: string
+    @param msg: String that needs to be quoted
+    
+    @rtype: string
+    @return: Escaped string for use in regular expressions
     '''
-    #TODO: Implement/Port escapePattern code
-    pass
+
+    escapedStr = msg
+        
+    activeChars = [ "\\", "[", "]", "{", "}", "(", ")", "*", "+", "-", "?", "^", "$", ".", "|" ]
+    
+    for activeChar in activeChars:
+        escapedStr = escapedStr.replace(activeChar, "\\" + activeChar)
+        
+    return escapedStr
