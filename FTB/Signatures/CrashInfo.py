@@ -59,7 +59,7 @@ class CrashInfo():
             pass
     
     def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, numFrames=8):
-        pass # TODO: Implement
+        pass # TODO: Implement crash signature creation
     
     
 class ASanCrashInfo(CrashInfo):
@@ -72,7 +72,7 @@ class ASanCrashInfo(CrashInfo):
         self.platform = platform
         self.product = product
         self.os = os
-        #TODO: Implement ASan parsing here
+        #TODO: Implement ASan parsing
         # backtrace
         # crashAddress =
         
@@ -86,7 +86,7 @@ class GDBCrashInfo(CrashInfo):
         self.platform = platform
         self.product = product
         self.os = os
-        #TODO: Implement GDB parsing here
+        #TODO: Implement GDB parsing
         # backtrace
         # crashAddress =
         # crashInstruction =
@@ -104,6 +104,6 @@ class GDBCrashInfo(CrashInfo):
         @rtype: long
         @return The calculated crash address
         '''
-        #TODO: Port this code from Java. It's complicated ^.^
+        #TODO: Port code to calculate crash address from Java.
         pass
         
