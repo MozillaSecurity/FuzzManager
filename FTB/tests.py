@@ -14,8 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import unittest
 from FTB import AssertionHelper
 
-asanFFAbort = """
-[26289] ###!!! ASSERTION: Unexpected non-ASCII character: '!(*s2 & ~0x7F)', file ../../../dist/include/nsCharTraits.h, line 168
+asanFFAbort = """[26289] ###!!! ASSERTION: Unexpected non-ASCII character: '!(*s2 & ~0x7F)', file ../../../dist/include/nsCharTraits.h, line 168
 Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozalloc/mozalloc_abort.cpp:30
 ASAN:SIGSEGV
 =================================================================
@@ -32,10 +31,19 @@ class AssertionHelperTestASanFFAbort(unittest.TestCase):
         
         # Now check that the ASan crash message is used if no assertion is present
         err.pop(0)
-        assert AssertionHelper.getAssertion(err, False).find("AddressSanitizer") != -1
+        self.assertIn("AddressSanitizer", AssertionHelper.getAssertion(err, False))
         
         # Now check that ASan crash message is not used if only programmatic assertions are requested
-        assert AssertionHelper.getAssertion(err, True) == None
+        self.assertEqual(AssertionHelper.getAssertion(err, True), None)
+
+class AssertionHelperTestSanitizing(unittest.TestCase):
+    def runTest(self):
+        err = asanFFAbort.splitlines()
+        
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
+        expectedMsg = "###!!! ASSERTION: Unexpected non\-ASCII character: '!\(\*s2 & ~0x[0-9a-fA-F]+\)', file \.\./\.\./\.\./dist/include/nsCharTraits\.h, line [0-9]+"
+        
+        self.assertEqual(sanitizedMsg, expectedMsg)
         
 if __name__ == "__main__":
     unittest.main()
