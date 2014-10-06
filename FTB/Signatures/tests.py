@@ -13,7 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import unittest
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo
-from FTB.Signatures import CrashSignature
+from FTB.Signatures.CrashSignature import CrashSignature
 
 asanTraceCrash = """
 ASAN:SIGSEGV
