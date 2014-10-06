@@ -80,9 +80,11 @@ class Collector():
         cachedSigFiles = os.listdir(self.sigCacheDir)
         
         for sigFile in cachedSigFiles:
-            crashSig = CrashSignature(sigFile)
-            if crashSig.matches(crashInfo):
-                return sigFile
+            with open(sigFile) as f:
+                sigData = f.read()
+                crashSig = CrashSignature(sigData)
+                if crashSig.matches(crashInfo):
+                    return sigFile
         
         return None
     
@@ -168,17 +170,33 @@ def main(argv=None):
     if opts.search and opts.create:
         print("Error: Can't --search and --generate at the same time", file=sys.stderr)
 
+    stdout = None
+    stderr = None
+    crashdata = None
+
     if opts.search or opts.create:
         if opts.stderr == None and opts.crashdata == None:
             print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
-
+        
+        if stdout:
+            with open(stdout) as f:
+                stdout = f.readLines()
+        
+        if stderr:
+            with open(stderr) as f:
+                stderr = f.readLines()
+            
+        if crashdata:
+            with open(crashdata) as f:
+                crashdata = f.readLines()
+            
     collector = Collector(opts.sigdir, opts.serverhost, opts.serverport)
     
     if opts.refresh:
         collector.refresh()
     
     if opts.search:
-        sig = collector.search(opts.stdout, opts.stderr, opts.crashdata, opts.platform, opts.product, opts.os)
+        sig = collector.search(stdout, stderr, crashdata, opts.platform, opts.product, opts.os)
         if sig == None:
             print("No match found")
             return 1
@@ -186,8 +204,11 @@ def main(argv=None):
         return 0
     
     if opts.generate:
-        sig = collector.generate(opts.stdout, opts.stderr, opts.crashdata, opts.platform, opts.product, opts.os, 
+        sig = collector.generate(stdout, stderr, crashdata, opts.platform, opts.product, opts.os, 
                                  opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
+        with open(opts.generate, 'w') as f:
+            f.write(sig)
+
 
 
 if __name__ == "__main__":
