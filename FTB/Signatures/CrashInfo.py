@@ -23,6 +23,8 @@ import re
 import sys
 from FTB.Signatures import RegisterHelper
 
+from numpy import int32, int64
+
 class CrashInfo():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
@@ -290,6 +292,159 @@ class GDBCrashInfo(CrashInfo):
         @rtype: long
         @return The calculated crash address
         '''
-        #TODO: Port code to calculate crash address from Java.
-        pass
+        parts = crashInstruction.split(None, 1)
         
+        if len(parts) != 2:
+            raise RuntimeError("Failed to split instruction and operands apart: %s" % crashInstruction)
+        
+        instruction = parts[0]
+        operands = parts[1]
+        
+        if not re.match("[a-z\\.]+", instruction):
+            raise RuntimeError("Invalid instruction: %s" % instruction)
+
+        parts = operands.split(",")
+         
+        # We now have four possibilities:
+        # 1. Length of parts is 1, that means we have one operand
+        # 2. Length of parts is 2, that means we have two simple operands
+        # 3. Length of parts is 4 and
+        #  a) First part contains '(' but not ')', meaning the first operand is complex
+        #  b) First part contains no '(' or ')', meaning the last operand is complex
+        #    e.g. mov    %ecx,0x500094(%r15,%rdx,4)
+        #    
+        #  4. Length of parts is 3, just one complex operand.
+        #   e.g. shrb   -0x69(%rdx,%rbx,8)
+        
+        # When we fail, try storing a reason here
+        failureReason = "Unknown failure."
+        
+        if RegisterHelper.isX86Compatible(registerMap):
+            if len(parts) == 1:
+                if instruction == "callq" or instruction == "push":
+                    return RegisterHelper.getStackPointer(registerMap)
+            elif len(parts) == 2:
+                derefOp = None
+                if "(" in parts[0] and ")" in parts[0]:
+                    derefOp = parts[0]
+                
+                if "(" in parts[1] and ")" in parts[1]:
+                    if derefOp != None:
+                        if ":(" in parts[1]:
+                            # This can be an instruction using multiple segments, like:
+                            #     
+                            #   movsq  %ds:(%rsi),%es:(%rdi)
+                            #   
+                            #  (gdb) p $_siginfo._sifields._sigfault.si_addr
+                            #    $1 = (void *) 0x7ff846e64d28
+                            #    (gdb) x /i $pc
+                            #    => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)
+                            #    (gdb) info reg $ds
+                            #    ds             0x0      0
+                            #    (gdb) info reg $es
+                            #    es             0x0      0
+                            #    (gdb) info reg $rsi
+                            #    rsi            0x7ff846e64d28   140704318115112
+                            #    (gdb) info reg $rdi
+                            #    rdi            0x7fff27fac030   140733864132656
+                            #
+                            # 
+                            # We don't support this right now, so return None.
+                            #
+                            return None
+
+                        raise RuntimeError("Instruction operands have multiple loads? %s" % crashInstruction)
+
+                    derefOp = parts[1]
+
+                if derefOp != None:
+                    match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
+                    if match != None:
+                        offset = 0L
+                        if len(match.group(1)):
+                            offset = long(match.group(1), 16)
+
+                        val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
+                        
+                        # If we don't have the value, return None
+                        if val == None:
+                            failureReason = "Missing value for register %s " % match.group(2)
+                        else:
+                            if RegisterHelper.getBitWidth(registerMap) == 32:
+                                return long(int32(offset) + int32(val))
+                            else:
+                                # Assume 64 bit width
+                                return long(int64(offset) + int64(val))
+                else:
+                    # We might still be reading from/writing to a hardcoded address.
+                    # Note that it's not possible to have two hardcoded addresses
+                    # in one instruction, one operand must be a register or immediate
+                    # constant (denoted by leading $).
+
+                    if re.match("\\-?0x[0-9a-f]+", parts[0]) != None:
+                        return long(parts[0], 16)
+                    elif re.match("\\-?0x[0-9a-f]+", parts[1]) != None:
+                        return long(parts[1], 16)
+            elif len(parts) == 3:
+                # Example instruction: shrb   -0x69(%rdx,%rbx,8)
+                if "(" in parts[0] and ")" in parts[2]:
+                    complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
+                    
+                    (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                    
+                    if result == None:
+                        failureReason = reason
+                    else:
+                        return result
+                else:
+                    raise RuntimeError("Unexpected instruction pattern: %s" % crashInstruction)
+            elif len(parts) == 4:
+                if "(" in parts[0] and not ")" in parts[0]:
+                    complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
+                elif not "(" in parts[0] and not ")" in parts[0]:
+                    complexDerefOp = parts[1] + "," + parts[2] + "," + parts[3]
+                
+                (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                    
+                if result == None:
+                    failureReason = reason
+                else:
+                    return result
+            else:
+                raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" % crashInstruction)
+        else:
+            failureReason = "Architecture is not supported."
+        
+        print("Unable to calculate crash address from instruction: %s " % crashInstruction, file=sys.stderr)
+        print("Reason: %s" % failureReason, file=sys.stderr)
+        return None
+    
+    @staticmethod
+    def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
+        
+        match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
+        if match != None:
+            offset = 0L
+            if len(match.group(1)) > 0:
+                offset = long(match.group(1), 16)
+                
+            regA = RegisterHelper.getRegisterValue(match.group(2), registerMap)
+            regB = RegisterHelper.getRegisterValue(match.group(3), registerMap)
+            
+            mult = long(match.group(4), 16)
+            
+            # If we're missing any of the two register values, return None
+            if regA == None or regB == None:
+                if (regA == None):
+                    return (None, "Missing value for register %s" % match.group(2))
+                else:
+                    return (None, "Missing value for register %s" % match.group(3))
+            
+            if RegisterHelper.getBitWidth(registerMap) == 32:
+                val = int32(regA) + int32(offset) + (int32(regB) * int32(mult))
+            else:
+                # Assume 64 bit width
+                val = int64(regA) + int64(offset) + (int64(regB) * int64(mult))
+            return (long(val), None)
+                
+        return (None, "Unknown failure.")
