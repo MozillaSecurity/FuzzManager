@@ -16,6 +16,8 @@ from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
+from numpy import int64, uint64, int32, uint32
+
 asanTraceCrash = """
 ASAN:SIGSEGV
 =================================================================
@@ -254,8 +256,8 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xFL)
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32), 0xFL)
         
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), 0xfffffffffffffff0L)
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), 0xfffffff0L)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), int64(uint64(0xfffffffffffffff0L)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), int32(uint32(0xfffffff0L)))
         
         # Scalar test
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32), 0x0L)
@@ -263,10 +265,10 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         # Real world examples
         # Note: The crash address here can also be 0xf7600000 because the double quadword 
         # move can fail on the second 8 bytes if the source address is not 16-byte aligned
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), 0xf75ffff8L)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), int32(uint32(0xf75ffff8L)))
         
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), 0x7ffff66ffffeL)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffeL)))
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
@@ -310,8 +312,8 @@ class CrashSignatureAddressTest(unittest.TestCase):
         addressSig1 = CrashSignature(crashSignature1)
         addressSig1Neg = CrashSignature(crashSignature1Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
-        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2)
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
+        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
         
         self.assert_(addressSig1.matches(crashInfo1))
         self.assertFalse(addressSig1Neg.matches(crashInfo1))
@@ -338,8 +340,8 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         instructionSig3 = CrashSignature(crashSignature3)
         instructionSig3Neg = CrashSignature(crashSignature3Neg)
         
-        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2)
-        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3)
+        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
+        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3.splitlines())
         
         self.assert_(instructionSig1.matches(crashInfo2))
         self.assertFalse(instructionSig1Neg.matches(crashInfo2))
@@ -369,7 +371,7 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
         stackFrameSig2 = CrashSignature(crashSignature2)
         stackFrameSig2Neg = CrashSignature(crashSignature2Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
         
         self.assert_(stackFrameSig1.matches(crashInfo1))
         self.assertFalse(stackFrameSig1Neg.matches(crashInfo1))
@@ -391,7 +393,7 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
         stackSizeSig2 = CrashSignature(crashSignature2)
         stackSizeSig2Neg = CrashSignature(crashSignature2Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1)
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
         
         self.assert_(stackSizeSig1.matches(crashInfo1))
         self.assertFalse(stackSizeSig1Neg.matches(crashInfo1))

@@ -27,4 +27,5 @@ class CrashSignature():
         '''
         
     def matches(self, crashInfo):
+        # TODO: Implement crash signature matching
         pass
