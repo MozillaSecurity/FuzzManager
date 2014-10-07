@@ -29,7 +29,9 @@ validRegisters = {
                   }
 
 def getRegisterPattern():
-    # Return a pattern including all register names that are considered valid
+    '''
+        Return a pattern including all register names that are considered valid
+    '''
     return "(" + '|'.join(["%s"] * len(validRegisters.values())) % tuple(['|'.join(i) for i in validRegisters.values()]) + ")"
 
 def getStackPointer(registerMap):
@@ -39,8 +41,8 @@ def getStackPointer(registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to value
         
-        @rtype long
-        @return The value of the stack pointer
+        @rtype: long
+        @return: The value of the stack pointer
     '''
     
     for reg in ["rsp", "esp", "sp"]:
@@ -59,6 +61,9 @@ def getRegisterValue(register, registerMap):
         
         @type registerMap: map
         @param registerMap: Map of register names to values
+        
+        @rtype: long
+        @return: The register value
     '''
         
     # If the register is requested as in the map, return it immediately
@@ -116,8 +121,8 @@ def getBitWidth(registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to value
         
-        @rtype int
-        @return The bit width
+        @rtype: int
+        @return: The bit width
     '''
     if "rax" in registerMap:
         return 64
@@ -132,7 +137,7 @@ def isX86Compatible(registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to value
         
-        @rtype bool
-        @return True if the architecture is X86 compatible, False otherwise
+        @rtype: bool
+        @return: True if the architecture is X86 compatible, False otherwise
     '''
     return "rax" in registerMap or "eax" in registerMap
