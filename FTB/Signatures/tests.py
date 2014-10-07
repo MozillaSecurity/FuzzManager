@@ -189,24 +189,33 @@ Program terminated with signal 11, Segmentation fault.
 
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
-        crashInfo = ASanCrashInfo([], asanTraceCrash)
+        crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines())
         self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "js::AbstractFramePtr::asRematerializedFrame() const")
         self.assertEqual(crashInfo.backtrace[2], "EvalInFrame(JSContext*, unsigned int, JS::Value*)")
         self.assertEqual(crashInfo.backtrace[6], "js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>)")
         
+        self.assertEqual(crashInfo.crashAddress, 0x00000014L)
+        self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
+        self.assertEqual(crashInfo.registers["sp"], 0xffc57860L)
+        self.assertEqual(crashInfo.registers["bp"], 0xffc57f18L)
+        
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
-        crashInfo = ASanCrashInfo([], asanTraceUAF)
-        self.assertEqual(len(crashInfo.backtrace), 8)
+        crashInfo = ASanCrashInfo([], asanTraceUAF.splitlines())
+        #print crashInfo.backtrace
+        self.assertEqual(len(crashInfo.backtrace), 23)
         self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long)")
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native() const")
+        
+        self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
+
 
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
-        crashInfo1 = GDBCrashInfo([], gdbCrashAddress1)
-        crashInfo2 = GDBCrashInfo([], gdbCrashAddress2)
-        crashInfo3 = GDBCrashInfo([], gdbCrashAddress3)
+        crashInfo1 = GDBCrashInfo([], gdbCrashAddress1.splitlines())
+        crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines())
+        crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines())
 
         self.assertEqual(crashInfo1.crashAddress, 0x1L)
         self.assertEqual(crashInfo2.crashAddress, None)
