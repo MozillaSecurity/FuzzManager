@@ -14,6 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import unittest
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures import RegisterHelper
 
 asanTraceCrash = """
 ASAN:SIGSEGV
@@ -387,6 +388,23 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
         
         self.assert_(stackSizeSig2.matches(crashInfo1))
         self.assertFalse(stackSizeSig2Neg.matches(crashInfo1))
+
+class RegisterHelperValueTest(unittest.TestCase):
+    def runTest(self):
+        registerMap = { "rax" : 0xfffffffffffffe00L, "rbx" : 0x7ffff79a7640L }
         
+        self.assertEqual(RegisterHelper.getRegisterValue("rax", registerMap), 0xfffffffffffffe00L)
+        self.assertEqual(RegisterHelper.getRegisterValue("eax", registerMap), 0xfffffe00L)
+        self.assertEqual(RegisterHelper.getRegisterValue("ax", registerMap), 0xfe00L)
+        self.assertEqual(RegisterHelper.getRegisterValue("ah", registerMap), 0xfeL)
+        self.assertEqual(RegisterHelper.getRegisterValue("al", registerMap), 0x0L)
+        
+        self.assertEqual(RegisterHelper.getRegisterValue("rbx", registerMap), 0x7ffff79a7640L)
+        self.assertEqual(RegisterHelper.getRegisterValue("ebx", registerMap), 0xf79a7640L)
+        self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640L)
+        self.assertEqual(RegisterHelper.getRegisterValue("bh", registerMap), 0x76L)
+        self.assertEqual(RegisterHelper.getRegisterValue("bl", registerMap), 0x40L)
+
+
 if __name__ == "__main__":
     unittest.main()
