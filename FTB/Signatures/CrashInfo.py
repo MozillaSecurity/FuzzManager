@@ -21,6 +21,7 @@ from __future__ import print_function
 from abc import ABCMeta, abstractmethod
 import re
 import sys
+from FTB.Signatures import RegisterHelper
 
 class CrashInfo():
     '''
@@ -185,11 +186,96 @@ class GDBCrashInfo(CrashInfo):
         self.platform = platform
         self.product = product
         self.os = os
-        #TODO: Implement GDB parsing
-        # backtrace
-        # crashAddress =
-        # crashInstruction =
-        # registers
+        
+        # If crashData is given, use that to find the GDB trace, otherwise use stderr
+        if crashData == None:
+            gdbOutput = stderr
+        else:
+            gdbOutput = crashData
+        
+        gdbFramePatterns = [
+                            "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+) \\(.*?\\)( at .+)?",
+                            "\\s*#(\\d+)\\s+()(.+) \\(.*?\\)( at .+)?"
+                            ]
+        
+        gdbRegisterPattern = RegisterHelper.getRegisterPattern() + "\\s+0x([0-9a-f]+)"
+        gdbCrashAddressPattern = "Crash Address:\\s+0x([0-9a-f]+)"
+        gdbCrashInstructionPattern = "=> 0x[0-9a-f]+(?: <.+>)?:\\s+(.+)"
+        
+        lastLineBuf = ""
+        
+        pastFrames = False
+        
+        for traceLine in gdbOutput:
+            # Do a very simple check for a frame number in combination with pending
+            # buffer content. If we detect this constellation, then it's highly likely
+            # that we have a valid trace line but no pattern that fits it. We need
+            # to make sure that we report this.
+            if not pastFrames and re.match("\\s*#\\d+.+", lastLineBuf) != None and re.match("\\s*#\\d+.+", traceLine) != None:
+                print("Fatal error parsing this GDB trace line:", file=sys.stderr)
+                print(lastLineBuf, file=sys.stderr)
+                raise RuntimeError("Fatal error parsing GDB trace")
+            
+            if not len(lastLineBuf):
+                match = re.search(gdbRegisterPattern, traceLine)
+                if match != None:
+                    pastFrames = True;
+                    register = match.group(1)
+                    value = long(match.group(2), 16)
+                    self.registers[register] = value
+                else:
+                    match = re.search(gdbCrashAddressPattern, traceLine)
+                    if match != None:
+                        self.crashAddress = long(match.group(1), 16)
+                    else:
+                        match = re.search(gdbCrashInstructionPattern, traceLine)
+                        if match != None:
+                            self.crashInstruction = match.group(1)
+            
+            if not pastFrames:
+                if not len(lastLineBuf) and re.match("\\s*#\\d+.+", traceLine) == None:
+                    # Skip additional lines
+                    continue
+                
+                lastLineBuf += traceLine
+                
+                functionName = None
+                frameIndex = None
+                
+                for gdbPattern in gdbFramePatterns:
+                    match = re.search(gdbPattern, lastLineBuf)
+                    if match != None:
+                        frameIndex = int(match.group(1))
+                        functionName = match.group(3)
+                        break
+                
+                if frameIndex == None:
+                    # Line might not be complete yet, try adding the next
+                    continue
+                else:
+                    # Successfully parsed line, reset last line buffer
+                    lastLineBuf = ""
+                
+                # Allow #0 to appear twice in the beginning, GDB does this for core dumps ... 
+                if len(self.backtrace) != frameIndex and frameIndex == 0:
+                    self.backtrace.pop(0)
+                elif len(self.backtrace) != frameIndex:
+                    print("Fatal error parsing this GDB trace (Index mismatch, wanted %s got %s ): " % (len(self.backtrace), frameIndex), file=sys.stderr)
+                    print(os.linesep.join(gdbOutput) , file=sys.stderr)
+                    raise RuntimeError("Fatal error parsing GDB trace")
+
+                # This is a workaround for GDB throwing an error while resolving function arguments
+                # in the trace and aborting. We try to remove the error message to at least recover
+                # the function name properly.
+                gdbErrorIdx = functionName.find(" (/build/buildd/gdb")
+                if gdbErrorIdx > 0:
+                    functionName = functionName[:gdbErrorIdx]
+                
+                self.backtrace.append(functionName)
+        
+        # If we have no crash address but the instruction, try to calculate the crash address
+        if self.crashAddress == None and self.crashInstruction != None:
+            self.crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
         
     @staticmethod
     def calculateCrashAddress(crashInstruction, registerMap):

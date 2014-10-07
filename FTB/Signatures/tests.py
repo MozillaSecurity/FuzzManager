@@ -204,13 +204,23 @@ class ASanParserTestCrash(unittest.TestCase):
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
         crashInfo = ASanCrashInfo([], asanTraceUAF.splitlines())
-        #print crashInfo.backtrace
         self.assertEqual(len(crashInfo.backtrace), 23)
         self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long)")
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native() const")
         
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
 
+class GDBParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        crashInfo = GDBCrashInfo([], gdbSampleTrace1.splitlines())
+        self.assertEqual(len(crashInfo.backtrace), 8)
+        self.assertEqual(crashInfo.backtrace[0], "internalAppend<js::ion::MDefinition*>")
+        self.assertEqual(crashInfo.backtrace[2], "js::ion::MPhi::addInput")
+        self.assertEqual(crashInfo.backtrace[6], "processCfgStack")
+
+        self.assertEqual(crashInfo.registers["eax"], 0x0L)
+        self.assertEqual(crashInfo.registers["ebx"], 0x8962ff4L)
+        self.assertEqual(crashInfo.registers["eip"], 0x818bc33L)
 
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
