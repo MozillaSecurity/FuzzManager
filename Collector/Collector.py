@@ -25,6 +25,7 @@ import os
 
 from argparse import ArgumentParser
 from FTB.Signatures.CrashSignature import CrashSignature
+import hashlib
 from FTB.Signatures.CrashInfo import CrashInfo
 
 __all__ = []
@@ -43,6 +44,8 @@ class Collector():
         @param serverPort: Server port to use when contacting server
         '''
         self.sigCacheDir = sigCacheDir
+        self.serverHost = serverHost
+        self.serverPort = serverPort
     
     
     def refresh(self):
@@ -52,31 +55,36 @@ class Collector():
         '''
         pass #TODO: Define JSON interface on server and call it here
     
+    def submit(self, crashInfo, testCase=None, metaData=None):
+        '''
+        Refresh signatures by contacting the server, downloading new signatures
+        and invalidating old ones.
+        
+        @type crashInfo: CrashInfo
+        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
+        
+        @type testCase: string
+        @param testCase: A file containing a testcase for reproduction
+        
+        @type metaData: map
+        @param metaData: A map containing arbitrary (application-specific) data which
+                         will be stored on the server in JSON format.
+        '''
+        pass #TODO: Define JSON interface on server and call it here
     
-    def search(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
+    
+    def search(self, crashInfo):
         '''
         Searches within the local signature cache directory for a signature matching the
         given crash. 
         
-        @type stdout: List of strings
-        @param stdout: List of lines as they appeared on stdout
-        @type stderr: List of strings
-        @param stderr: List of lines as they appeared on stderr
-        @type crashData: List of strings
-        @param crashData: Optional crash output (e.g. GDB). If not specified, assumed to be on stderr.
-        @type platform: string
-        @param platform: Optional platform to match the signature platform attribute
-        @type product: string
-        @param product: Optional product to match the signature product attribute
-        @type os: string
-        @param os: Optional OS to match the signature OS attribute
+        @type crashInfo: CrashInfo
+        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
         
         @rtype: string
         @return: Filename of the signature file matching, or None if no match.
         '''
-        
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, crashData, platform, product, os)
-        
+                
         cachedSigFiles = os.listdir(self.sigCacheDir)
         
         for sigFile in cachedSigFiles:
@@ -88,24 +96,13 @@ class Collector():
         
         return None
     
-    def generate(self, stdout, stderr, crashData=None, platform=None, product=None, os=None, 
-                 forceCrashAddress=None, forceCrashInstruction=None, numFrames=None):
+    def generate(self, crashInfo, forceCrashAddress=None, forceCrashInstruction=None, numFrames=None):
         '''
-        Searches within the local signature cache directory for a signature matching the
-        given crash. 
+        Generates a signature in the local cache directory. It will be deleted when L{refresh} is called
+        on the same local cache directory.
         
-        @type stdout: List of strings
-        @param stdout: List of lines as they appeared on stdout
-        @type stderr: List of strings
-        @param stderr: List of lines as they appeared on stderr
-        @type crashData: List of strings
-        @param crashData: Optional crash output (e.g. GDB). If not specified, assumed to be on stderr.
-        @type platform: string
-        @param platform: Optional platform to match the signature platform attribute
-        @type product: string
-        @param product: Optional product to match the signature product attribute
-        @type os: string
-        @param os: Optional OS to match the signature OS attribute
+        @type crashInfo: CrashInfo
+        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
         
         @type forceCrashAddress: bool
         @param forceCrashAddress: Force including the crash address into the signature
@@ -115,11 +112,16 @@ class Collector():
         @param numFrames: How many frames to include in the signature
         
         @rtype: string
-        @return: Crash signature in JSON format
+        @return: File containing crash signature in JSON format
         '''
         
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, crashData, platform, product, os)
-        return crashInfo.createCrashSignature(forceCrashAddress, forceCrashInstruction, numFrames) 
+        sig = crashInfo.createCrashSignature(forceCrashAddress, forceCrashInstruction, numFrames)
+        
+        # Write the file to a unique file name
+        h = hashlib.new('sha1')
+        h.update(sig)
+        with open(os.path.join(self.sigCacheDir, h.hexdigest() + ".signature"), 'w') as f:
+            f.write(sig) 
         
 
 def main(argv=None):
@@ -146,7 +148,7 @@ def main(argv=None):
     # Actions
     parser.add_argument("--refresh", dest="refresh", action='store_true', help="Perform a signature refresh")
     parser.add_argument("--search", dest="search", action='store_true', help="Search cached signatures for the given crash")
-    parser.add_argument("--generate", dest="generate", help="Create a local signature and store it to the specified file", metavar="FILE")
+    parser.add_argument("--generate", dest="generate", help="Create a (temporary) local signature in the cache directory")
 
     # Settings
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
@@ -173,6 +175,7 @@ def main(argv=None):
     stdout = None
     stderr = None
     crashdata = None
+    crashInfo = None
 
     if opts.search or opts.create:
         if opts.stderr == None and opts.crashdata == None:
@@ -189,6 +192,9 @@ def main(argv=None):
         if crashdata:
             with open(crashdata) as f:
                 crashdata = f.readLines()
+                
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, crashdata, opts.platform, opts.product, opts.os)
+
             
     collector = Collector(opts.sigdir, opts.serverhost, opts.serverport)
     
@@ -196,7 +202,7 @@ def main(argv=None):
         collector.refresh()
     
     if opts.search:
-        sig = collector.search(stdout, stderr, crashdata, opts.platform, opts.product, opts.os)
+        sig = collector.search(crashInfo)
         if sig == None:
             print("No match found")
             return 1
@@ -204,10 +210,8 @@ def main(argv=None):
         return 0
     
     if opts.generate:
-        sig = collector.generate(stdout, stderr, crashdata, opts.platform, opts.product, opts.os, 
-                                 opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
-        with open(opts.generate, 'w') as f:
-            f.write(sig)
+        sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
+        print(sigFile)
 
 
 
