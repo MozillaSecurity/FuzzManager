@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 from FTB.Signatures import JSONHelper
-from FTB.Signatures.Matchers import StringMatch
+from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
 class Symptom():
     '''
@@ -127,7 +127,25 @@ class StackFrameSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        pass
+        if "functionName" in obj:
+            functionName = obj["functionName"]
+            if isinstance(functionName, str) or isinstance(functionName, unicode):
+                self.functionName = StringMatch(functionName)
+            elif isinstance(functionName, dict):
+                self.functionName = StringMatch(functionName)
+            else:
+                raise RuntimeError("Malformed functionName specifier %s, type %s" % (functionName, type(functionName)))
+        else:
+            raise RuntimeError("Missing functionName specifier.")
+        
+        
+        self.frameNumber = JSONHelper.getStringChecked(obj, "frameNumber")
+
+        if self.frameNumber != None:
+            self.frameNumber = NumberMatch(self.frameNumber)
+        else:
+            # Default to 0
+            self.frameNumber = NumberMatch(0)
     
     def matches(self, crashInfo):
         '''
@@ -139,6 +157,13 @@ class StackFrameSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
+        
+        for idx in range(len(crashInfo.backtrace)):
+            # Not the most efficient way for very long stacks with a small match area
+            if self.frameNumber.matches(idx):
+                if self.functionName.matches(crashInfo.backtrace[idx]):
+                    return True
+        
         return False
 
 class StackSizeSymptom(Symptom):

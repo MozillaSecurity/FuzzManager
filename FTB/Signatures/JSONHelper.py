@@ -50,6 +50,24 @@ def getStringChecked(obj, key, mandatory=False):
     '''
     return __getTypeChecked(obj, key, str, mandatory)
 
+def getIntChecked(obj, key, mandatory=False):
+    '''
+        Retrieve an integer from the given object using the given key
+        
+        @type obj: map
+        @param obj: Source object
+        
+        @type key: string
+        @param key: Key to retrieve from obj
+        
+        @type mandatory: bool
+        @param mandatory: If True, throws an exception if the key is not found
+        
+        @rtype: int
+        @return: Integer retrieved from object
+    '''
+    return __getTypeChecked(obj, key, int, mandatory)
+
 
 def __getTypeChecked(obj, key, valType, mandatory=False):
     if not key in obj:

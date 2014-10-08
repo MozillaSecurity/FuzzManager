@@ -44,3 +44,55 @@ class StringMatch():
             return self.value.search(val) != None
         else:
             return self.value in val
+
+class NumberMatchType:
+    GE, GT, LE, LT = range(4)
+
+class NumberMatch():
+    def __init__(self, obj):
+        self.matchType = None
+        
+        if isinstance(obj, str) or isinstance(obj, unicode):
+            numberMatchComponents = obj.split(None, 1)
+            numIdx = 0
+            
+            if len(numberMatchComponents) > 1:
+                numIdx = 1
+                matchType = numberMatchComponents[0]
+                
+                if matchType == "==":
+                    pass
+                elif matchType == "<":
+                    self.matchType = NumberMatchType.LT
+                elif matchType == "<=":
+                    self.matchType = NumberMatchType.LE
+                elif matchType == ">":
+                    self.matchType = NumberMatchType.GT
+                elif matchType == ">=":
+                    self.matchType = NumberMatchType.GE
+                else:
+                    raise RuntimeError("Unknown match operator specified: %s" % matchType)
+            
+            try:
+                self.value = long(numberMatchComponents[numIdx], 16)
+            except ValueError:
+                raise RuntimeError("Invalid number specified: %s" % numberMatchComponents[numIdx])
+        elif isinstance(obj, int):
+            self.value = obj
+        else:
+            raise RuntimeError("Invalid type %s in NumberMatch." % type(obj))
+    
+    def matches(self, value):
+        if value == None:
+            return False
+        
+        if self.matchType == NumberMatchType.GE:
+            return value >= self.value
+        elif self.matchType == NumberMatchType.GT:
+            return value > self.value
+        elif self.matchType == NumberMatchType.LE:
+            return value <= self.value
+        elif self.matchType == NumberMatchType.LT:
+            return value < self.value
+        else:
+            return value == self.value
