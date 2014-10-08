@@ -12,7 +12,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 import unittest
-from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo
+from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo,\
+    NoCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
@@ -211,6 +212,14 @@ class ASanParserTestUAF(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native() const")
         
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
+        
+class ASanDetectionTest(unittest.TestCase):
+    def runTest(self):
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], asanTraceCrash.splitlines())
+        crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines())
+        
+        self.assertIsInstance(crashInfo1, ASanCrashInfo)
+        self.assertIsInstance(crashInfo2, ASanCrashInfo)
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -291,6 +300,8 @@ class CrashSignatureOutputTest(unittest.TestCase):
         
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, gdbOutput)
         
+        self.assertIsInstance(crashInfo, NoCrashInfo)
+        
         # Ensure we match on stdout/err if nothing is specified
         self.assert_(outputSignature1.matches(crashInfo))
         
@@ -298,7 +309,7 @@ class CrashSignatureOutputTest(unittest.TestCase):
         self.assertFalse(outputSignature1Neg.matches(crashInfo))
         
         # Check that we're really using PCRE
-        self.assert_(outputSignature2.matches(crashInfo))
+        self.assertFalse(outputSignature2.matches(crashInfo))
         
         # Add something the PCRE should match, then retry
         stderr.append("fest")
@@ -314,6 +325,9 @@ class CrashSignatureAddressTest(unittest.TestCase):
         
         crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
         crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
+        
+        self.assertIsInstance(crashInfo1, GDBCrashInfo)
+        self.assertIsInstance(crashInfo2, GDBCrashInfo)
         
         self.assert_(addressSig1.matches(crashInfo1))
         self.assertFalse(addressSig1Neg.matches(crashInfo1))
@@ -342,6 +356,9 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         
         crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
         crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3.splitlines())
+        
+        self.assertIsInstance(crashInfo2, GDBCrashInfo)
+        self.assertIsInstance(crashInfo3, GDBCrashInfo)
         
         self.assert_(instructionSig1.matches(crashInfo2))
         self.assertFalse(instructionSig1Neg.matches(crashInfo2))
@@ -373,6 +390,8 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
         
         crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
         
+        self.assertIsInstance(crashInfo1, GDBCrashInfo)
+        
         self.assert_(stackFrameSig1.matches(crashInfo1))
         self.assertFalse(stackFrameSig1Neg.matches(crashInfo1))
         
@@ -394,6 +413,8 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
         stackSizeSig2Neg = CrashSignature(crashSignature2Neg)
         
         crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
+        
+        self.assertIsInstance(crashInfo1, GDBCrashInfo)
         
         self.assert_(stackSizeSig1.matches(crashInfo1))
         self.assertFalse(stackSizeSig1Neg.matches(crashInfo1))
