@@ -16,16 +16,52 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 def getArrayChecked(obj, key, mandatory=False):
     '''
-        Return a pattern including all register names that are considered valid
+        Retrieve a list from the given object using the given key
+        
+        @type obj: map
+        @param obj: Source object
+        
+        @type key: string
+        @param key: Key to retrieve from obj
+        
+        @type mandatory: bool
+        @param mandatory: If True, throws an exception if the key is not found
+        
+        @rtype: list
+        @return: List retrieved from object
     '''
+    return __getTypeChecked(obj, key, list, mandatory)
+
+def getStringChecked(obj, key, mandatory=False):
+    '''
+        Retrieve a string from the given object using the given key
+        
+        @type obj: map
+        @param obj: Source object
+        
+        @type key: string
+        @param key: Key to retrieve from obj
+        
+        @type mandatory: bool
+        @param mandatory: If True, throws an exception if the key is not found
+        
+        @rtype: string
+        @return: String retrieved from object
+    '''
+    return __getTypeChecked(obj, key, str, mandatory)
+
+
+def __getTypeChecked(obj, key, valType, mandatory=False):
     if not key in obj:
         if mandatory:
             raise RuntimeError('Expected key "%s" in object' % key)
         return None
     
-    arr = obj[key]
+    val = obj[key]
     
-    if not isinstance(arr, list):
-        raise RuntimeError('Expected type "list" for key "%s" but got type %s' % (key, type(arr)))
+    if not isinstance(val, valType):
+        # Hack for str type vs. unicode type
+        if valType != str or not isinstance(val, unicode):
+            raise RuntimeError('Expected type "%s" for key "%s" but got type %s' % (valType, key, type(val)))
                            
-    return arr
+    return val
