@@ -75,6 +75,7 @@ class CrashInfo():
         assert stderr == None or isinstance(stderr, list)
         assert crashData ==None or isinstance(crashData, list)
         
+        # TODO: Implement auto detection of crash info type and instantiate appropriately
         if (crashData == None):
             pass
     
