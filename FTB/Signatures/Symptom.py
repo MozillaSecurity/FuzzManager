@@ -18,6 +18,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
+from FTB.Signatures import JSONHelper
+from FTB.Signatures.Matchers import StringMatch
 
 class Symptom():
     '''
@@ -74,7 +76,25 @@ class OutputSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        pass
+
+        if "value" in obj:
+            value = obj["value"]
+            if isinstance(value, str) or isinstance(value, unicode):
+                self.output = StringMatch(value)
+            elif isinstance(value, dict):
+                self.output = StringMatch(value)
+            else:
+                raise RuntimeError("Malformed value specifier %s, type %s" % (value, type(value)))
+        else:
+            raise RuntimeError("Missing value specifier.")
+        
+        
+        self.src = JSONHelper.getStringChecked(obj, "src")
+        
+        if self.src != None:
+            self.src = self.src.lower()
+            if self.src != "stderr" and self.src != "stdout":
+                raise RuntimeError("Invalid source specified: %s" % self.src)
     
     def matches(self, crashInfo):
         '''
@@ -86,6 +106,20 @@ class OutputSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
+        checkedOutput = []
+        
+        if self.src == None:
+            checkedOutput.extend(crashInfo.rawStdout)
+            checkedOutput.extend(crashInfo.rawStderr)
+        elif (self.src == "stdout"):
+            checkedOutput = crashInfo.rawStdout
+        else:
+            checkedOutput = crashInfo.rawStderr
+            
+        for line in checkedOutput:
+            if self.output.matches(line):
+                return True
+            
         return False
     
 class StackFrameSymptom(Symptom):
