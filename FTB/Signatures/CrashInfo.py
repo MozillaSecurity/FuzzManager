@@ -75,13 +75,49 @@ class CrashInfo():
         assert stderr == None or isinstance(stderr, list)
         assert crashData ==None or isinstance(crashData, list)
         
-        # TODO: Implement auto detection of crash info type and instantiate appropriately
-        if (crashData == None):
-            pass
+        asanString = "ERROR: AddressSanitizer:"
+        gdbString = "Program received signal "
+        gdbCoreString = "Program terminated with signal "
+        
+        # Search both crashData and stderr, but prefer crashData
+        lines = []
+        if (crashData != None):
+            lines = crashData
+        lines.extend(stderr)
+        
+        for line in lines:
+            if asanString in line:
+                return ASanCrashInfo(stdout, stderr, crashData, platform, product, os)
+            elif gdbString in line or gdbCoreString in line:
+                return GDBCrashInfo(stdout, stderr, crashData, platform, product, os)
+        
+        # Default fallback to be used if there is neither ASan nor GDB output.
+        # This is still useful in case there is no crash but we want to match
+        # e.g. stdout/stderr output with signatures.
+        return NoCrashInfo(stdout, stderr, crashData, platform, product, os)
     
     def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, numFrames=8):
         pass # TODO: Implement crash signature creation
-    
+
+class NoCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+        
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+            
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+        
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+        
+        self.platform = platform
+        self.product = product
+        self.os = os
     
 class ASanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
