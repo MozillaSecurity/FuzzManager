@@ -59,7 +59,10 @@ class CrashSignature():
         self.platforms = JSONHelper.getArrayChecked(obj, "platforms")
         self.operatingSystems = JSONHelper.getArrayChecked(obj, "operatingSystems")
         self.products = JSONHelper.getArrayChecked(obj, "products")
-        
+    
+    def __str__(self):
+        return self.rawSignature
+    
     def matches(self, crashInfo):
         '''
         Match this signature against the given crash information

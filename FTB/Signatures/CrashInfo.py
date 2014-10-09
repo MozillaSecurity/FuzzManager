@@ -97,6 +97,10 @@ class CrashInfo():
         return NoCrashInfo(stdout, stderr, crashData, platform, product, os)
     
     def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, numFrames=8):
+        '''
+        @rtype: CrashSignature
+        @return: A crash signature object
+        '''
         pass # TODO: Implement crash signature creation
 
 class NoCrashInfo(CrashInfo):
