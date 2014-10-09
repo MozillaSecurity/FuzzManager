@@ -173,6 +173,8 @@ Program terminated with signal 11, Segmentation fault.
 #5  NonGenericMethod<js::ParallelArrayObject::toString> (cx=0xa3024b8, argc=0, vp=0xf6ee2150) at /srv/repos/mozilla-central/js/src/builtin/ParallelArray.cpp:163
 #6  0x080d8dd8 in CallJSNative (cx=0xa3024b8, args=..., construct=js::NO_CONSTRUCT) at ../jscntxtinlines.h:389
 #7  PropertyAccess<(PropertyAccessKind)1> (cx=0xa3024b8, args=..., construct=js::NO_CONSTRUCT) at /srv/repos/mozilla-central/js/src/jsinterp.cpp:351
+rbx            0x1      1
+r14            0x1      1
 => 0x7f01fffecf41:    mov    0x8(%r14),%rbx
    0x7f01fffecf45:    cmp    %rbx,0x18(%rdi)
 """
@@ -324,17 +326,16 @@ class CrashSignatureAddressTest(unittest.TestCase):
         addressSig1Neg = CrashSignature(crashSignature1Neg)
         
         crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
-        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
-        
+        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3.splitlines())
+
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
-        self.assertIsInstance(crashInfo2, GDBCrashInfo)
         
         self.assert_(addressSig1.matches(crashInfo1))
         self.assertFalse(addressSig1Neg.matches(crashInfo1))
         
-        # For crashInfo2, we don't have a crash address. Ensure we don't match
-        self.assertFalse(addressSig1.matches(crashInfo2))
-        self.assertFalse(addressSig1Neg.matches(crashInfo2))
+        # For crashInfo3, we don't have a crash address. Ensure we don't match
+        self.assertFalse(addressSig1.matches(crashInfo3))
+        self.assertFalse(addressSig1Neg.matches(crashInfo3))
         
 class CrashSignatureRegisterTest(unittest.TestCase):
     def runTest(self):
