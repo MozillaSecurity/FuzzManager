@@ -30,7 +30,7 @@ def getArrayChecked(obj, key, mandatory=False):
         @rtype: list
         @return: List retrieved from object
     '''
-    return __getTypeChecked(obj, key, list, mandatory)
+    return __getTypeChecked(obj, key, [ list ], mandatory)
 
 def getStringChecked(obj, key, mandatory=False):
     '''
@@ -48,9 +48,9 @@ def getStringChecked(obj, key, mandatory=False):
         @rtype: string
         @return: String retrieved from object
     '''
-    return __getTypeChecked(obj, key, str, mandatory)
+    return __getTypeChecked(obj, key, [ basestring ], mandatory)
 
-def getIntChecked(obj, key, mandatory=False):
+def getNumberChecked(obj, key, mandatory=False):
     '''
         Retrieve an integer from the given object using the given key
         
@@ -63,13 +63,30 @@ def getIntChecked(obj, key, mandatory=False):
         @type mandatory: bool
         @param mandatory: If True, throws an exception if the key is not found
         
-        @rtype: int
-        @return: Integer retrieved from object
+        @rtype: long
+        @return: Number retrieved from object
     '''
-    return __getTypeChecked(obj, key, int, mandatory)
+    return __getTypeChecked(obj, key, [ int, long ], mandatory)
 
+def getNumberOrStringChecked(obj, key, mandatory=False):
+    '''
+        Retrieve an integer from the given object using the given key
+        
+        @type obj: map
+        @param obj: Source object
+        
+        @type key: string
+        @param key: Key to retrieve from obj
+        
+        @type mandatory: bool
+        @param mandatory: If True, throws an exception if the key is not found
+        
+        @rtype: string or number
+        @return: String/Number object retrieved from object
+    '''
+    return __getTypeChecked(obj, key, [ basestring, long, int ], mandatory)
 
-def __getTypeChecked(obj, key, valType, mandatory=False):
+def __getTypeChecked(obj, key, valTypes, mandatory=False):
     if not key in obj:
         if mandatory:
             raise RuntimeError('Expected key "%s" in object' % key)
@@ -77,9 +94,8 @@ def __getTypeChecked(obj, key, valType, mandatory=False):
     
     val = obj[key]
     
-    if not isinstance(val, valType):
-        # Hack for str type vs. unicode type
-        if valType != str or not isinstance(val, unicode):
-            raise RuntimeError('Expected type "%s" for key "%s" but got type %s' % (valType, key, type(val)))
-                           
-    return val
+    for valType in valTypes:
+        if isinstance(val, valType):
+            return val
+    
+    raise RuntimeError('Expected any of types "%s" for key "%s" but got type %s' % (", ".join([str(i) for i in valTypes]), key, type(val)))

@@ -127,19 +127,8 @@ class StackFrameSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        if "functionName" in obj:
-            functionName = obj["functionName"]
-            if isinstance(functionName, str) or isinstance(functionName, unicode):
-                self.functionName = StringMatch(functionName)
-            elif isinstance(functionName, dict):
-                self.functionName = StringMatch(functionName)
-            else:
-                raise RuntimeError("Malformed functionName specifier %s, type %s" % (functionName, type(functionName)))
-        else:
-            raise RuntimeError("Missing functionName specifier.")
-        
-        
-        self.frameNumber = JSONHelper.getStringChecked(obj, "frameNumber")
+        self.functionName = StringMatch(JSONHelper.getNumberOrStringChecked(obj, "functionName", True))        
+        self.frameNumber = JSONHelper.getNumberOrStringChecked(obj, "frameNumber")
 
         if self.frameNumber != None:
             self.frameNumber = NumberMatch(self.frameNumber)
@@ -168,10 +157,7 @@ class StackFrameSymptom(Symptom):
 
 class StackSizeSymptom(Symptom):
     def __init__(self, obj):
-        '''
-        Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
-        pass
+        self.stackSize = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "size", True))
     
     def matches(self, crashInfo):
         '''
@@ -183,7 +169,7 @@ class StackSizeSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
-        return False
+        return self.stackSize.matches(len(crashInfo.backtrace))
     
 class CrashAddressSymptom(Symptom):
     def __init__(self, obj):
