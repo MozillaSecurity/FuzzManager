@@ -76,19 +76,7 @@ class OutputSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-
-        if "value" in obj:
-            value = obj["value"]
-            if isinstance(value, str) or isinstance(value, unicode):
-                self.output = StringMatch(value)
-            elif isinstance(value, dict):
-                self.output = StringMatch(value)
-            else:
-                raise RuntimeError("Malformed value specifier %s, type %s" % (value, type(value)))
-        else:
-            raise RuntimeError("Missing value specifier.")
-        
-        
+        self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
         self.src = JSONHelper.getStringChecked(obj, "src")
         
         if self.src != None:
@@ -157,6 +145,9 @@ class StackFrameSymptom(Symptom):
 
 class StackSizeSymptom(Symptom):
     def __init__(self, obj):
+        '''
+        Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
+        '''
         self.stackSize = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "size", True))
     
     def matches(self, crashInfo):
@@ -176,7 +167,7 @@ class CrashAddressSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        pass
+        self.address = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "address", True))
     
     def matches(self, crashInfo):
         '''
@@ -188,14 +179,23 @@ class CrashAddressSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
-        return False
+        # In case the crash address is not available,
+        # the NumberMatch class will return false to not match.
+        return self.address.matches(crashInfo.crashAddress)
     
 class InstructionSymptom(Symptom):
     def __init__(self, obj):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        pass
+        
+        self.registerNames = JSONHelper.getArrayChecked(obj, "registerNames")
+        self.instructionName = JSONHelper.getObjectOrStringChecked(obj, "instructionName")
+        
+        if self.instructionName != None:
+            self.instructionName = StringMatch(self.instructionName)
+        elif self.registerNames == None or len(self.registerNames) == 0:
+            raise RuntimeError("Must provide at least instruction name or register names")
     
     def matches(self, crashInfo):
         '''
@@ -207,4 +207,17 @@ class InstructionSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
-        return False
+        if crashInfo.crashInstruction == None:
+            # No crash instruction available, do not match
+            return False
+        
+        if self.registerNames != None:
+            for register in self.registerNames:
+                if not register in crashInfo.crashInstruction:
+                    return False
+        
+        if self.instructionName != None:
+            if not self.instructionName.matches(crashInfo.crashInstruction):
+                return False
+        
+        return True

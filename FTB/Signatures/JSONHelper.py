@@ -68,9 +68,27 @@ def getNumberChecked(obj, key, mandatory=False):
     '''
     return __getTypeChecked(obj, key, [ int, long ], mandatory)
 
+def getObjectOrStringChecked(obj, key, mandatory=False):
+    '''
+        Retrieve an object or string from the given object using the given key
+        
+        @type obj: map
+        @param obj: Source object
+        
+        @type key: string
+        @param key: Key to retrieve from obj
+        
+        @type mandatory: bool
+        @param mandatory: If True, throws an exception if the key is not found
+        
+        @rtype: string or dict
+        @return: String/Object object retrieved from object
+    '''
+    return __getTypeChecked(obj, key, [ basestring, dict ], mandatory)
+
 def getNumberOrStringChecked(obj, key, mandatory=False):
     '''
-        Retrieve an integer from the given object using the given key
+        Retrieve a number or string from the given object using the given key
         
         @type obj: map
         @param obj: Source object
