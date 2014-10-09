@@ -22,6 +22,8 @@ x64Registers = [ "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8",
 armRegisters = [ "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
                  "r10", "r11", "r12", "sp", "lr", "pc", "cpsr" ]
 
+x86OnlyRegisters = list(set(x86Registers + x64Registers) - set(armRegisters))
+
 validRegisters = {
                   "X86" : x86Registers,
                   "X64" : x64Registers,
@@ -140,4 +142,7 @@ def isX86Compatible(registerMap):
         @rtype: bool
         @return: True if the architecture is X86 compatible, False otherwise
     '''
-    return "rax" in registerMap or "eax" in registerMap
+    for register in x86OnlyRegisters:
+        if register in registerMap:
+            return True
+    return False
