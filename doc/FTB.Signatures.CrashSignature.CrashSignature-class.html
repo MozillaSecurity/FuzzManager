@@ -94,12 +94,13 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
+      <span class="summary-type">bool</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="matches"></a><span class="summary-sig-name">matches</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">crashInfo</span>)</span></td>
+          <td><span class="summary-sig"><a href="FTB.Signatures.CrashSignature.CrashSignature-class.html#matches" class="summary-sig-name">matches</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">crashInfo</span>)</span><br />
+      Match this signature against the given crash information</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="FTB.Signatures.CrashSignature-pysrc.html#CrashSignature.matches">source&nbsp;code</a></span>
             
@@ -145,8 +146,37 @@
   </tr></table>
   
   <p>Constructor</p>
-  <p>:param rawSignature:</p>
   <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>rawSignature</code></strong> (string) - A JSON-formatted string representing the crash signature</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="matches"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">matches</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">crashInfo</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="FTB.Signatures.CrashSignature-pysrc.html#CrashSignature.matches">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Match this signature against the given crash information</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>crashInfo</code></strong> (CrashInfo) - The crash info to match the signature against</li>
+    </ul></dd>
+    <dt>Returns: bool</dt>
+        <dd>True if the signature matches, False otherwise</dd>
   </dl>
 </td></tr></table>
 </div>
