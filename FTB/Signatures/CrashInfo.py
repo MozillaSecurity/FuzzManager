@@ -22,8 +22,11 @@ from abc import ABCMeta, abstractmethod
 import re
 import sys
 from FTB.Signatures import RegisterHelper
+from CrashSignature import CrashSignature
 
 from numpy import int32, int64
+import json
+from FTB import AssertionHelper
 
 class CrashInfo():
     '''
@@ -96,12 +99,87 @@ class CrashInfo():
         # e.g. stdout/stderr output with signatures.
         return NoCrashInfo(stdout, stderr, crashData, platform, product, os)
     
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, numFrames=8):
+    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8):
         '''
+        @param forceCrashAddress: If True, the crash address will be included in any case
+        @type forceCrashAddress: bool
+        @param forceCrashInstruction: If True, the crash instruction will be included in any case
+        @type forceCrashInstruction: bool
+        @param maxFrames: How many frames (at most) should be included in the signature
+        @type maxFrames: int
+        
         @rtype: CrashSignature
         @return: A crash signature object
         '''
-        pass # TODO: Implement crash signature creation
+        # Determine the actual number of frames based on how many we got
+        if len(self.backtrace) > maxFrames:
+            numFrames = maxFrames
+        else:
+            numFrames = len(self.backtrace)
+        
+        # See if we have an abort message and if so, get a sanitized version of it
+        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
+        if abortMsg != None:
+            abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+        
+        # Consider the first four frames as top stack
+        topStackLimit = 4
+        
+        symptomArr = []
+        
+        if abortMsg != None:
+            # Compose StringMatch object with PCRE pattern
+            stringObj = { "value" : abortMsg, "matchType" : "pcre" }
+            symptomObj = { "type" : "output", "src" : "stderr", "value" : stringObj }            
+            symptomArr.append(symptomObj)
+        
+        # If we have less than topStackLimit frames available anyway, count the difference
+        # between topStackLimit and the available frames already as missing.
+        # E.g. if the trace has only three entries anyway, one will be considered missing
+        # right from the start. This should prevent that very short stack frames are used
+        # for signatures without additional crash information that narrows the signature.
+        
+        if numFrames >= topStackLimit:
+            topStackMissCount = 0
+        else:
+            topStackMissCount = topStackLimit - numFrames
+
+        for idx in range(0, numFrames):
+            functionName = self.backtrace[idx]
+            if not functionName == "??":
+                symptomObj = { "type" : "stackFrame", "frameNumber" : idx, "functionName" : functionName }
+                symptomArr.append(symptomObj)
+            elif idx < 4:
+                # If we're in the top 4, we count this as a miss
+                topStackMissCount += 1
+        
+        # Missing too much of the top stack frames, add additional crash information
+        stackIsInsufficient = topStackMissCount >= 2 and abortMsg == None 
+        
+        includeCrashAddress = stackIsInsufficient or forceCrashAddress
+        includeCrashInstruction = (stackIsInsufficient and self.crashInstruction != None) or forceCrashInstruction
+        
+        if includeCrashAddress:
+            if self.crashAddress == None:
+                return None
+
+            crashAddress = hex(self.crashAddress).rstrip("L")
+            
+            crashAddressSymptomObj = { "type" : "crashAddress", "address" : crashAddress }
+            symptomArr.append(crashAddressSymptomObj)
+        
+        if includeCrashInstruction:
+            if self.crashInstruction == None:
+                return None
+
+            crashAddress = hex(self.crashAddress).rstrip("L")
+            
+            crashInstructionSymptomObj = { "type" : "instruction", "instructionName" : self.crashInstruction }
+            symptomArr.append(crashInstructionSymptomObj)
+        
+        sigObj = { "symptoms" : symptomArr }
+        
+        return CrashSignature(json.dumps(sigObj, indent=2))
 
 class NoCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):

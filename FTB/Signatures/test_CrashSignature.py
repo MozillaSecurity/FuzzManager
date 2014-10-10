@@ -96,6 +96,10 @@ testSignature3 = '''{"symptoms": [
     "frameNumber": 1,
     "type": "stackFrame"
   },
+  {
+    "address": "0x2b2b2b2b",
+    "type": "crashAddress"
+  },
     {
     "type": "instruction",
     "instructionName": "mov    (%rax),%r8"
@@ -108,9 +112,9 @@ class SignatureCreateTest(unittest.TestCase):
 
     def runTest(self):
         crashInfo = CrashInfo.fromRawCrashData([], [], testTrace1.splitlines())
-        crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, numFrames=4)
-        crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, numFrames=3)
-        crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, numFrames=2)
+        crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4)
+        crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3)
+        crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2)
 
         # Check that all generated signatures match their originating crashInfo
         self.assert_(crashSig1.matches(crashInfo))
@@ -120,6 +124,9 @@ class SignatureCreateTest(unittest.TestCase):
         # Check that the generated signatures look as expected
         self.assertEqual(json.loads(str(crashSig1)), json.loads(testSignature1))
         self.assertEqual(json.loads(str(crashSig2)), json.loads(testSignature2))
+        
+        #  The third crashInfo misses 2 frames from the top 4 frames, so it will
+        #  also include the crash address, even though we did not request it.
         self.assertEqual(json.loads(str(crashSig3)), json.loads(testSignature3))
         
 
