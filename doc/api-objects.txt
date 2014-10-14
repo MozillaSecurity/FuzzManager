@@ -41,6 +41,12 @@ FTB.Signatures.RegisterHelper.armRegisters	FTB.Signatures.RegisterHelper-module.
 FTB.Signatures.RegisterHelper.getRegisterValue	FTB.Signatures.RegisterHelper-module.html#getRegisterValue
 FTB.Signatures.Symptom	FTB.Signatures.Symptom-module.html
 FTB.Signatures.Symptom.__package__	FTB.Signatures.Symptom-module.html#__package__
+FTB.Signatures.test_CrashSignature	FTB.Signatures.test_CrashSignature-module.html
+FTB.Signatures.test_CrashSignature.testSignature1	FTB.Signatures.test_CrashSignature-module.html#testSignature1
+FTB.Signatures.test_CrashSignature.testSignature2	FTB.Signatures.test_CrashSignature-module.html#testSignature2
+FTB.Signatures.test_CrashSignature.testSignature3	FTB.Signatures.test_CrashSignature-module.html#testSignature3
+FTB.Signatures.test_CrashSignature.__package__	FTB.Signatures.test_CrashSignature-module.html#__package__
+FTB.Signatures.test_CrashSignature.testTrace1	FTB.Signatures.test_CrashSignature-module.html#testTrace1
 FTB.Signatures.tests	FTB.Signatures.tests-module.html
 FTB.Signatures.tests.asanTraceUAF	FTB.Signatures.tests-module.html#asanTraceUAF
 FTB.Signatures.tests.asanTraceCrash	FTB.Signatures.tests-module.html#asanTraceCrash
@@ -104,6 +110,7 @@ FTB.Signatures.CrashInfo.CrashInfo._abc_negative_cache_version	FTB.Signatures.Cr
 FTB.Signatures.CrashInfo.CrashInfo._abc_registry	FTB.Signatures.CrashInfo.CrashInfo-class.html#_abc_registry
 FTB.Signatures.CrashSignature.CrashSignature	FTB.Signatures.CrashSignature.CrashSignature-class.html
 FTB.Signatures.CrashSignature.CrashSignature.matches	FTB.Signatures.CrashSignature.CrashSignature-class.html#matches
+FTB.Signatures.CrashSignature.CrashSignature.__str__	FTB.Signatures.CrashSignature.CrashSignature-class.html#__str__
 FTB.Signatures.CrashSignature.CrashSignature.__init__	FTB.Signatures.CrashSignature.CrashSignature-class.html#__init__
 FTB.Signatures.Matchers.NumberMatch	FTB.Signatures.Matchers.NumberMatch-class.html
 FTB.Signatures.Matchers.NumberMatch.matches	FTB.Signatures.Matchers.NumberMatch-class.html#matches
@@ -175,6 +182,9 @@ FTB.Signatures.Symptom.Symptom.matches	FTB.Signatures.Symptom.Symptom-class.html
 FTB.Signatures.Symptom.Symptom.fromJSONObject	FTB.Signatures.Symptom.Symptom-class.html#fromJSONObject
 FTB.Signatures.Symptom.Symptom._abc_negative_cache_version	FTB.Signatures.Symptom.Symptom-class.html#_abc_negative_cache_version
 FTB.Signatures.Symptom.Symptom._abc_registry	FTB.Signatures.Symptom.Symptom-class.html#_abc_registry
+FTB.Signatures.test_CrashSignature.SignatureCreateTest	FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html
+unittest.case.TestCase.failureException	exceptions.AssertionError-class.html
+FTB.Signatures.test_CrashSignature.SignatureCreateTest.runTest	FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html#runTest
 FTB.Signatures.tests.ASanDetectionTest	FTB.Signatures.tests.ASanDetectionTest-class.html
 unittest.case.TestCase.failureException	exceptions.AssertionError-class.html
 FTB.Signatures.tests.ASanDetectionTest.runTest	FTB.Signatures.tests.ASanDetectionTest-class.html#runTest

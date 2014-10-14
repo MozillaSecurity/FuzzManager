@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>FTB.Signatures.test_CrashSignature</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="FTB-module.html">Package&nbsp;FTB</a> ::
+        <a href="FTB.Signatures-module.html">Package&nbsp;Signatures</a> ::
+        Module&nbsp;test_CrashSignature
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="FTB.Signatures.test_CrashSignature-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="FTB.Signatures.test_CrashSignature-module.html">Module FTB.Signatures.test_CrashSignature</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno">  1</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L2"></a><tt class="py-lineno">  2</tt>  <tt class="py-line"><tt class="py-docstring">Created on Oct 9, 2014</tt> </tt>
+<a name="L3"></a><tt class="py-lineno">  3</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L4"></a><tt class="py-lineno">  4</tt>  <tt class="py-line"><tt class="py-docstring">@author: decoder</tt> </tt>
+<a name="L5"></a><tt class="py-lineno">  5</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L6"></a><tt class="py-lineno">  6</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">unittest</tt> </tt>
+<a name="L7"></a><tt class="py-lineno">  7</tt>  <tt class="py-line"><tt class="py-keyword">from</tt> <tt id="link-0" class="py-name" targets="Package FTB=FTB-module.html"><a title="FTB" class="py-name" href="#" onclick="return doclink('link-0', 'FTB', 'link-0');">FTB</a></tt><tt class="py-op">.</tt><tt id="link-1" class="py-name" targets="Package FTB.Signatures=FTB.Signatures-module.html"><a title="FTB.Signatures" class="py-name" href="#" onclick="return doclink('link-1', 'Signatures', 'link-1');">Signatures</a></tt><tt class="py-op">.</tt><tt id="link-2" class="py-name" targets="Module FTB.Signatures.CrashInfo=FTB.Signatures.CrashInfo-module.html,Class FTB.Signatures.CrashInfo.CrashInfo=FTB.Signatures.CrashInfo.CrashInfo-class.html"><a title="FTB.Signatures.CrashInfo
+FTB.Signatures.CrashInfo.CrashInfo" class="py-name" href="#" onclick="return doclink('link-2', 'CrashInfo', 'link-2');">CrashInfo</a></tt> <tt class="py-keyword">import</tt> <tt id="link-3" class="py-name"><a title="FTB.Signatures.CrashInfo
+FTB.Signatures.CrashInfo.CrashInfo" class="py-name" href="#" onclick="return doclink('link-3', 'CrashInfo', 'link-2');">CrashInfo</a></tt> </tt>
+<a name="L8"></a><tt class="py-lineno">  8</tt>  <tt class="py-line"><tt class="py-keyword">import</tt> <tt class="py-name">json</tt> </tt>
+<a name="L9"></a><tt class="py-lineno">  9</tt>  <tt class="py-line"> </tt>
+<a name="L10"></a><tt class="py-lineno"> 10</tt>  <tt class="py-line"><tt id="link-4" class="py-name" targets="Variable FTB.Signatures.test_CrashSignature.testTrace1=FTB.Signatures.test_CrashSignature-module.html#testTrace1"><a title="FTB.Signatures.test_CrashSignature.testTrace1" class="py-name" href="#" onclick="return doclink('link-4', 'testTrace1', 'link-4');">testTrace1</a></tt> <tt class="py-op">=</tt> <tt class="py-string">"""Program received signal SIGSEGV, Segmentation fault.</tt> </tt>
+<a name="L11"></a><tt class="py-lineno"> 11</tt>  <tt class="py-line"><tt class="py-string">GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369</tt> </tt>
+<a name="L12"></a><tt class="py-lineno"> 12</tt>  <tt class="py-line"><tt class="py-string">369         if (obj-&gt;is&lt;ArrayObject&gt;()) {</tt> </tt>
+<a name="L13"></a><tt class="py-lineno"> 13</tt>  <tt class="py-line"><tt class="py-string">#0  GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369</tt> </tt>
+<a name="L14"></a><tt class="py-lineno"> 14</tt>  <tt class="py-line"><tt class="py-string">#1  js::Nursery::moveToTenured (this=0x1673be0, trc=0x7fffffffa2d0, src=&lt;optimized out&gt;) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:570</tt> </tt>
+<a name="L15"></a><tt class="py-lineno"> 15</tt>  <tt class="py-line"><tt class="py-string">#2  0x00000000004d167a in MinorGCCallback (thingp=0x7fffffff9fd0, jstrc=&lt;optimized out&gt;, kind=&lt;optimized out&gt;) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:721</tt> </tt>
+<a name="L16"></a><tt class="py-lineno"> 16</tt>  <tt class="py-line"><tt class="py-string">#3  js::Nursery::MinorGCCallback (jstrc=&lt;optimized out&gt;, thingp=0x7fffffff9fd0, kind=&lt;optimized out&gt;) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:717</tt> </tt>
+<a name="L17"></a><tt class="py-lineno"> 17</tt>  <tt class="py-line"><tt class="py-string">#4  0x00000000004b8690 in MarkInternal&lt;JSObject&gt; (trc=0x7fffffffa2d0, thingp=&lt;optimized out&gt;) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:317</tt> </tt>
+<a name="L18"></a><tt class="py-lineno"> 18</tt>  <tt class="py-line"><tt class="py-string">#5  0x00000000004cc55e in MarkValueInternal (v=0x7fffffffa5d8, trc=0x7fffffffa2d0) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:804</tt> </tt>
+<a name="L19"></a><tt class="py-lineno"> 19</tt>  <tt class="py-line"><tt class="py-string">#6  MarkValueInternal (v=0x7fffffffa5d8, trc=0x7fffffffa2d0) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:827</tt> </tt>
+<a name="L20"></a><tt class="py-lineno"> 20</tt>  <tt class="py-line"><tt class="py-string">#7  js::gc::MarkValueRoot (trc=&lt;optimized out&gt;, v=0x7fffffffa5d8, name=&lt;optimized out&gt;) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:831</tt> </tt>
+<a name="L21"></a><tt class="py-lineno"> 21</tt>  <tt class="py-line"><tt class="py-string">rax     0x2b2b2b2b      3110627432037296939</tt> </tt>
+<a name="L22"></a><tt class="py-lineno"> 22</tt>  <tt class="py-line"><tt class="py-string">rbx     0xf54001b0      140737308000688</tt> </tt>
+<a name="L23"></a><tt class="py-lineno"> 23</tt>  <tt class="py-line"><tt class="py-string">rcx     0xbad0bad1      3134241489</tt> </tt>
+<a name="L24"></a><tt class="py-lineno"> 24</tt>  <tt class="py-line"><tt class="py-string">rdx     0x1656120       23421216</tt> </tt>
+<a name="L25"></a><tt class="py-lineno"> 25</tt>  <tt class="py-line"><tt class="py-string">rsi     0xffffa2d0      140737488331472</tt> </tt>
+<a name="L26"></a><tt class="py-lineno"> 26</tt>  <tt class="py-line"><tt class="py-string">rdi     0x1673be0       23542752</tt> </tt>
+<a name="L27"></a><tt class="py-lineno"> 27</tt>  <tt class="py-line"><tt class="py-string">rbp     0xf54001b0      140737308000688</tt> </tt>
+<a name="L28"></a><tt class="py-lineno"> 28</tt>  <tt class="py-line"><tt class="py-string">rsp     0xffff9f10      140737488330512</tt> </tt>
+<a name="L29"></a><tt class="py-lineno"> 29</tt>  <tt class="py-line"><tt class="py-string">r8      0x0     0</tt> </tt>
+<a name="L30"></a><tt class="py-lineno"> 30</tt>  <tt class="py-line"><tt class="py-string">r9      0x0     0</tt> </tt>
+<a name="L31"></a><tt class="py-lineno"> 31</tt>  <tt class="py-line"><tt class="py-string">r10     0x1     1</tt> </tt>
+<a name="L32"></a><tt class="py-lineno"> 32</tt>  <tt class="py-line"><tt class="py-string">r11     0x1     1</tt> </tt>
+<a name="L33"></a><tt class="py-lineno"> 33</tt>  <tt class="py-line"><tt class="py-string">r12     0x0     -1266637395197952</tt> </tt>
+<a name="L34"></a><tt class="py-lineno"> 34</tt>  <tt class="py-line"><tt class="py-string">r13     0xffffa2d0      140737488331472</tt> </tt>
+<a name="L35"></a><tt class="py-lineno"> 35</tt>  <tt class="py-line"><tt class="py-string">r14     0x1673be0       23542752</tt> </tt>
+<a name="L36"></a><tt class="py-lineno"> 36</tt>  <tt class="py-line"><tt class="py-string">r15     0x201   513</tt> </tt>
+<a name="L37"></a><tt class="py-lineno"> 37</tt>  <tt class="py-line"><tt class="py-string">rip     0x4d0b32 &lt;js::Nursery::moveToTenured(js::gc::MinorCollectionTracer*, JSObject*)+34&gt;</tt> </tt>
+<a name="L38"></a><tt class="py-lineno"> 38</tt>  <tt class="py-line"><tt class="py-string">=&gt; 0x4d0b32 &lt;js::Nursery::moveToTenured(js::gc::MinorCollectionTracer*, JSObject*)+34&gt;: mov    (%rax),%r8</tt> </tt>
+<a name="L39"></a><tt class="py-lineno"> 39</tt>  <tt class="py-line"><tt class="py-string">"""</tt> </tt>
+<a name="L40"></a><tt class="py-lineno"> 40</tt>  <tt class="py-line"> </tt>
+<a name="L41"></a><tt class="py-lineno"> 41</tt>  <tt class="py-line"><tt id="link-5" class="py-name" targets="Variable FTB.Signatures.test_CrashSignature.testSignature1=FTB.Signatures.test_CrashSignature-module.html#testSignature1"><a title="FTB.Signatures.test_CrashSignature.testSignature1" class="py-name" href="#" onclick="return doclink('link-5', 'testSignature1', 'link-5');">testSignature1</a></tt> <tt class="py-op">=</tt> <tt class="py-string">'''{"symptoms": [</tt> </tt>
+<a name="L42"></a><tt class="py-lineno"> 42</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L43"></a><tt class="py-lineno"> 43</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "GetObjectAllocKindForCopy",</tt> </tt>
+<a name="L44"></a><tt class="py-lineno"> 44</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 0,</tt> </tt>
+<a name="L45"></a><tt class="py-lineno"> 45</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L46"></a><tt class="py-lineno"> 46</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L47"></a><tt class="py-lineno"> 47</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L48"></a><tt class="py-lineno"> 48</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "js::Nursery::moveToTenured",</tt> </tt>
+<a name="L49"></a><tt class="py-lineno"> 49</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 1,</tt> </tt>
+<a name="L50"></a><tt class="py-lineno"> 50</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L51"></a><tt class="py-lineno"> 51</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L52"></a><tt class="py-lineno"> 52</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L53"></a><tt class="py-lineno"> 53</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "MinorGCCallback",</tt> </tt>
+<a name="L54"></a><tt class="py-lineno"> 54</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 2,</tt> </tt>
+<a name="L55"></a><tt class="py-lineno"> 55</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L56"></a><tt class="py-lineno"> 56</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L57"></a><tt class="py-lineno"> 57</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L58"></a><tt class="py-lineno"> 58</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "js::Nursery::MinorGCCallback",</tt> </tt>
+<a name="L59"></a><tt class="py-lineno"> 59</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 3,</tt> </tt>
+<a name="L60"></a><tt class="py-lineno"> 60</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L61"></a><tt class="py-lineno"> 61</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L62"></a><tt class="py-lineno"> 62</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L63"></a><tt class="py-lineno"> 63</tt>  <tt class="py-line"><tt class="py-string">    "address": "0x2b2b2b2b",</tt> </tt>
+<a name="L64"></a><tt class="py-lineno"> 64</tt>  <tt class="py-line"><tt class="py-string">    "type": "crashAddress"</tt> </tt>
+<a name="L65"></a><tt class="py-lineno"> 65</tt>  <tt class="py-line"><tt class="py-string">  }</tt> </tt>
+<a name="L66"></a><tt class="py-lineno"> 66</tt>  <tt class="py-line"><tt class="py-string">]}</tt> </tt>
+<a name="L67"></a><tt class="py-lineno"> 67</tt>  <tt class="py-line"><tt class="py-string">'''</tt> </tt>
+<a name="L68"></a><tt class="py-lineno"> 68</tt>  <tt class="py-line"> </tt>
+<a name="L69"></a><tt class="py-lineno"> 69</tt>  <tt class="py-line"><tt id="link-6" class="py-name" targets="Variable FTB.Signatures.test_CrashSignature.testSignature2=FTB.Signatures.test_CrashSignature-module.html#testSignature2"><a title="FTB.Signatures.test_CrashSignature.testSignature2" class="py-name" href="#" onclick="return doclink('link-6', 'testSignature2', 'link-6');">testSignature2</a></tt> <tt class="py-op">=</tt> <tt class="py-string">'''{"symptoms": [</tt> </tt>
+<a name="L70"></a><tt class="py-lineno"> 70</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L71"></a><tt class="py-lineno"> 71</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "GetObjectAllocKindForCopy",</tt> </tt>
+<a name="L72"></a><tt class="py-lineno"> 72</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 0,</tt> </tt>
+<a name="L73"></a><tt class="py-lineno"> 73</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L74"></a><tt class="py-lineno"> 74</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L75"></a><tt class="py-lineno"> 75</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L76"></a><tt class="py-lineno"> 76</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "js::Nursery::moveToTenured",</tt> </tt>
+<a name="L77"></a><tt class="py-lineno"> 77</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 1,</tt> </tt>
+<a name="L78"></a><tt class="py-lineno"> 78</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L79"></a><tt class="py-lineno"> 79</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L80"></a><tt class="py-lineno"> 80</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L81"></a><tt class="py-lineno"> 81</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "MinorGCCallback",</tt> </tt>
+<a name="L82"></a><tt class="py-lineno"> 82</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 2,</tt> </tt>
+<a name="L83"></a><tt class="py-lineno"> 83</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L84"></a><tt class="py-lineno"> 84</tt>  <tt class="py-line"><tt class="py-string">  }</tt> </tt>
+<a name="L85"></a><tt class="py-lineno"> 85</tt>  <tt class="py-line"><tt class="py-string">]}</tt> </tt>
+<a name="L86"></a><tt class="py-lineno"> 86</tt>  <tt class="py-line"><tt class="py-string">'''</tt> </tt>
+<a name="L87"></a><tt class="py-lineno"> 87</tt>  <tt class="py-line"> </tt>
+<a name="L88"></a><tt class="py-lineno"> 88</tt>  <tt class="py-line"><tt id="link-7" class="py-name" targets="Variable FTB.Signatures.test_CrashSignature.testSignature3=FTB.Signatures.test_CrashSignature-module.html#testSignature3"><a title="FTB.Signatures.test_CrashSignature.testSignature3" class="py-name" href="#" onclick="return doclink('link-7', 'testSignature3', 'link-7');">testSignature3</a></tt> <tt class="py-op">=</tt> <tt class="py-string">'''{"symptoms": [</tt> </tt>
+<a name="L89"></a><tt class="py-lineno"> 89</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L90"></a><tt class="py-lineno"> 90</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "GetObjectAllocKindForCopy",</tt> </tt>
+<a name="L91"></a><tt class="py-lineno"> 91</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 0,</tt> </tt>
+<a name="L92"></a><tt class="py-lineno"> 92</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L93"></a><tt class="py-lineno"> 93</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L94"></a><tt class="py-lineno"> 94</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L95"></a><tt class="py-lineno"> 95</tt>  <tt class="py-line"><tt class="py-string">    "functionName": "js::Nursery::moveToTenured",</tt> </tt>
+<a name="L96"></a><tt class="py-lineno"> 96</tt>  <tt class="py-line"><tt class="py-string">    "frameNumber": 1,</tt> </tt>
+<a name="L97"></a><tt class="py-lineno"> 97</tt>  <tt class="py-line"><tt class="py-string">    "type": "stackFrame"</tt> </tt>
+<a name="L98"></a><tt class="py-lineno"> 98</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L99"></a><tt class="py-lineno"> 99</tt>  <tt class="py-line"><tt class="py-string">  {</tt> </tt>
+<a name="L100"></a><tt class="py-lineno">100</tt>  <tt class="py-line"><tt class="py-string">    "address": "0x2b2b2b2b",</tt> </tt>
+<a name="L101"></a><tt class="py-lineno">101</tt>  <tt class="py-line"><tt class="py-string">    "type": "crashAddress"</tt> </tt>
+<a name="L102"></a><tt class="py-lineno">102</tt>  <tt class="py-line"><tt class="py-string">  },</tt> </tt>
+<a name="L103"></a><tt class="py-lineno">103</tt>  <tt class="py-line"><tt class="py-string">    {</tt> </tt>
+<a name="L104"></a><tt class="py-lineno">104</tt>  <tt class="py-line"><tt class="py-string">    "type": "instruction",</tt> </tt>
+<a name="L105"></a><tt class="py-lineno">105</tt>  <tt class="py-line"><tt class="py-string">    "instructionName": "mov    (%rax),%r8"</tt> </tt>
+<a name="L106"></a><tt class="py-lineno">106</tt>  <tt class="py-line"><tt class="py-string">  }</tt> </tt>
+<a name="L107"></a><tt class="py-lineno">107</tt>  <tt class="py-line"><tt class="py-string">]}</tt> </tt>
+<a name="L108"></a><tt class="py-lineno">108</tt>  <tt class="py-line"><tt class="py-string">'''</tt> </tt>
+<a name="L109"></a><tt class="py-lineno">109</tt>  <tt class="py-line"> </tt>
+<a name="SignatureCreateTest"></a><div id="SignatureCreateTest-def"><a name="L110"></a><tt class="py-lineno">110</tt> <a class="py-toggle" href="#" id="SignatureCreateTest-toggle" onclick="return toggle('SignatureCreateTest');">-</a><tt class="py-line"><tt class="py-keyword">class</tt> <a class="py-def-name" href="FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html">SignatureCreateTest</a><tt class="py-op">(</tt><tt class="py-base-class">unittest</tt><tt class="py-op">.</tt><tt class="py-base-class">TestCase</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SignatureCreateTest-collapsed" style="display:none;" pad="+++" indent="++++"></div><div id="SignatureCreateTest-expanded"><a name="L111"></a><tt class="py-lineno">111</tt>  <tt class="py-line"> </tt>
+<a name="L112"></a><tt class="py-lineno">112</tt>  <tt class="py-line"> </tt>
+<a name="SignatureCreateTest.runTest"></a><div id="SignatureCreateTest.runTest-def"><a name="L113"></a><tt class="py-lineno">113</tt> <a class="py-toggle" href="#" id="SignatureCreateTest.runTest-toggle" onclick="return toggle('SignatureCreateTest.runTest');">-</a><tt class="py-line">    <tt class="py-keyword">def</tt> <a class="py-def-name" href="FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html#runTest">runTest</a><tt class="py-op">(</tt><tt class="py-param">self</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="SignatureCreateTest.runTest-collapsed" style="display:none;" pad="+++" indent="++++++++"></div><div id="SignatureCreateTest.runTest-expanded"><a name="L114"></a><tt class="py-lineno">114</tt>  <tt class="py-line">        <tt class="py-name">crashInfo</tt> <tt class="py-op">=</tt> <tt id="link-8" class="py-name"><a title="FTB.Signatures.CrashInfo
+FTB.Signatures.CrashInfo.CrashInfo" class="py-name" href="#" onclick="return doclink('link-8', 'CrashInfo', 'link-2');">CrashInfo</a></tt><tt class="py-op">.</tt><tt id="link-9" class="py-name" targets="Static Method FTB.Signatures.CrashInfo.CrashInfo.fromRawCrashData()=FTB.Signatures.CrashInfo.CrashInfo-class.html#fromRawCrashData"><a title="FTB.Signatures.CrashInfo.CrashInfo.fromRawCrashData" class="py-name" href="#" onclick="return doclink('link-9', 'fromRawCrashData', 'link-9');">fromRawCrashData</a></tt><tt class="py-op">(</tt><tt class="py-op">[</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt class="py-op">[</tt><tt class="py-op">]</tt><tt class="py-op">,</tt> <tt id="link-10" class="py-name"><a title="FTB.Signatures.test_CrashSignature.testTrace1" class="py-name" href="#" onclick="return doclink('link-10', 'testTrace1', 'link-4');">testTrace1</a></tt><tt class="py-op">.</tt><tt class="py-name">splitlines</tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L115"></a><tt class="py-lineno">115</tt>  <tt class="py-line">        <tt class="py-name">crashSig1</tt> <tt class="py-op">=</tt> <tt class="py-name">crashInfo</tt><tt class="py-op">.</tt><tt id="link-11" class="py-name" targets="Method FTB.Signatures.CrashInfo.CrashInfo.createCrashSignature()=FTB.Signatures.CrashInfo.CrashInfo-class.html#createCrashSignature"><a title="FTB.Signatures.CrashInfo.CrashInfo.createCrashSignature" class="py-name" href="#" onclick="return doclink('link-11', 'createCrashSignature', 'link-11');">createCrashSignature</a></tt><tt class="py-op">(</tt><tt class="py-name">forceCrashAddress</tt><tt class="py-op">=</tt><tt class="py-name">True</tt><tt class="py-op">,</tt> <tt class="py-name">maxFrames</tt><tt class="py-op">=</tt><tt class="py-number">4</tt><tt class="py-op">)</tt> </tt>
+<a name="L116"></a><tt class="py-lineno">116</tt>  <tt class="py-line">        <tt class="py-name">crashSig2</tt> <tt class="py-op">=</tt> <tt class="py-name">crashInfo</tt><tt class="py-op">.</tt><tt id="link-12" class="py-name"><a title="FTB.Signatures.CrashInfo.CrashInfo.createCrashSignature" class="py-name" href="#" onclick="return doclink('link-12', 'createCrashSignature', 'link-11');">createCrashSignature</a></tt><tt class="py-op">(</tt><tt class="py-name">forceCrashAddress</tt><tt class="py-op">=</tt><tt class="py-name">False</tt><tt class="py-op">,</tt> <tt class="py-name">maxFrames</tt><tt class="py-op">=</tt><tt class="py-number">3</tt><tt class="py-op">)</tt> </tt>
+<a name="L117"></a><tt class="py-lineno">117</tt>  <tt class="py-line">        <tt class="py-name">crashSig3</tt> <tt class="py-op">=</tt> <tt class="py-name">crashInfo</tt><tt class="py-op">.</tt><tt id="link-13" class="py-name"><a title="FTB.Signatures.CrashInfo.CrashInfo.createCrashSignature" class="py-name" href="#" onclick="return doclink('link-13', 'createCrashSignature', 'link-11');">createCrashSignature</a></tt><tt class="py-op">(</tt><tt class="py-name">forceCrashInstruction</tt><tt class="py-op">=</tt><tt class="py-name">True</tt><tt class="py-op">,</tt> <tt class="py-name">maxFrames</tt><tt class="py-op">=</tt><tt class="py-number">2</tt><tt class="py-op">)</tt> </tt>
+<a name="L118"></a><tt class="py-lineno">118</tt>  <tt class="py-line"> </tt>
+<a name="L119"></a><tt class="py-lineno">119</tt>  <tt class="py-line">        <tt class="py-comment"># Check that all generated signatures match their originating crashInfo</tt> </tt>
+<a name="L120"></a><tt class="py-lineno">120</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assert_</tt><tt class="py-op">(</tt><tt class="py-name">crashSig1</tt><tt class="py-op">.</tt><tt id="link-14" class="py-name" targets="Method FTB.Signatures.CrashSignature.CrashSignature.matches()=FTB.Signatures.CrashSignature.CrashSignature-class.html#matches,Method FTB.Signatures.Matchers.NumberMatch.matches()=FTB.Signatures.Matchers.NumberMatch-class.html#matches,Method FTB.Signatures.Matchers.StringMatch.matches()=FTB.Signatures.Matchers.StringMatch-class.html#matches,Method FTB.Signatures.Symptom.CrashAddressSymptom.matches()=FTB.Signatures.Symptom.CrashAddressSymptom-class.html#matches,Method FTB.Signatures.Symptom.InstructionSymptom.matches()=FTB.Signatures.Symptom.InstructionSymptom-class.html#matches,Method FTB.Signatures.Symptom.OutputSymptom.matches()=FTB.Signatures.Symptom.OutputSymptom-class.html#matches,Method FTB.Signatures.Symptom.StackFrameSymptom.matches()=FTB.Signatures.Symptom.StackFrameSymptom-class.html#matches,Method FTB.Signatures.Symptom.StackSizeSymptom.matches()=FTB.Signatures.Symptom.StackSizeSymptom-class.html#matches,Method FTB.Signatures.Symptom.Symptom.matches()=FTB.Signatures.Symptom.Symptom-class.html#matches"><a title="FTB.Signatures.CrashSignature.CrashSignature.matches
+FTB.Signatures.Matchers.NumberMatch.matches
+FTB.Signatures.Matchers.StringMatch.matches
+FTB.Signatures.Symptom.CrashAddressSymptom.matches
+FTB.Signatures.Symptom.InstructionSymptom.matches
+FTB.Signatures.Symptom.OutputSymptom.matches
+FTB.Signatures.Symptom.StackFrameSymptom.matches
+FTB.Signatures.Symptom.StackSizeSymptom.matches
+FTB.Signatures.Symptom.Symptom.matches" class="py-name" href="#" onclick="return doclink('link-14', 'matches', 'link-14');">matches</a></tt><tt class="py-op">(</tt><tt class="py-name">crashInfo</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L121"></a><tt class="py-lineno">121</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assert_</tt><tt class="py-op">(</tt><tt class="py-name">crashSig2</tt><tt class="py-op">.</tt><tt id="link-15" class="py-name"><a title="FTB.Signatures.CrashSignature.CrashSignature.matches
+FTB.Signatures.Matchers.NumberMatch.matches
+FTB.Signatures.Matchers.StringMatch.matches
+FTB.Signatures.Symptom.CrashAddressSymptom.matches
+FTB.Signatures.Symptom.InstructionSymptom.matches
+FTB.Signatures.Symptom.OutputSymptom.matches
+FTB.Signatures.Symptom.StackFrameSymptom.matches
+FTB.Signatures.Symptom.StackSizeSymptom.matches
+FTB.Signatures.Symptom.Symptom.matches" class="py-name" href="#" onclick="return doclink('link-15', 'matches', 'link-14');">matches</a></tt><tt class="py-op">(</tt><tt class="py-name">crashInfo</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L122"></a><tt class="py-lineno">122</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assert_</tt><tt class="py-op">(</tt><tt class="py-name">crashSig3</tt><tt class="py-op">.</tt><tt id="link-16" class="py-name"><a title="FTB.Signatures.CrashSignature.CrashSignature.matches
+FTB.Signatures.Matchers.NumberMatch.matches
+FTB.Signatures.Matchers.StringMatch.matches
+FTB.Signatures.Symptom.CrashAddressSymptom.matches
+FTB.Signatures.Symptom.InstructionSymptom.matches
+FTB.Signatures.Symptom.OutputSymptom.matches
+FTB.Signatures.Symptom.StackFrameSymptom.matches
+FTB.Signatures.Symptom.StackSizeSymptom.matches
+FTB.Signatures.Symptom.Symptom.matches" class="py-name" href="#" onclick="return doclink('link-16', 'matches', 'link-14');">matches</a></tt><tt class="py-op">(</tt><tt class="py-name">crashInfo</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L123"></a><tt class="py-lineno">123</tt>  <tt class="py-line">         </tt>
+<a name="L124"></a><tt class="py-lineno">124</tt>  <tt class="py-line">        <tt class="py-comment"># Check that the generated signatures look as expected</tt> </tt>
+<a name="L125"></a><tt class="py-lineno">125</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assertEqual</tt><tt class="py-op">(</tt><tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">crashSig1</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt id="link-17" class="py-name"><a title="FTB.Signatures.test_CrashSignature.testSignature1" class="py-name" href="#" onclick="return doclink('link-17', 'testSignature1', 'link-5');">testSignature1</a></tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L126"></a><tt class="py-lineno">126</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assertEqual</tt><tt class="py-op">(</tt><tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">crashSig2</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt id="link-18" class="py-name"><a title="FTB.Signatures.test_CrashSignature.testSignature2" class="py-name" href="#" onclick="return doclink('link-18', 'testSignature2', 'link-6');">testSignature2</a></tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L127"></a><tt class="py-lineno">127</tt>  <tt class="py-line">         </tt>
+<a name="L128"></a><tt class="py-lineno">128</tt>  <tt class="py-line">        <tt class="py-comment">#  The third crashInfo misses 2 frames from the top 4 frames, so it will</tt> </tt>
+<a name="L129"></a><tt class="py-lineno">129</tt>  <tt class="py-line">        <tt class="py-comment">#  also include the crash address, even though we did not request it.</tt> </tt>
+<a name="L130"></a><tt class="py-lineno">130</tt>  <tt class="py-line">        <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">assertEqual</tt><tt class="py-op">(</tt><tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">crashSig3</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">,</tt> <tt class="py-name">json</tt><tt class="py-op">.</tt><tt class="py-name">loads</tt><tt class="py-op">(</tt><tt id="link-19" class="py-name"><a title="FTB.Signatures.test_CrashSignature.testSignature3" class="py-name" href="#" onclick="return doclink('link-19', 'testSignature3', 'link-7');">testSignature3</a></tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+</div></div><a name="L131"></a><tt class="py-lineno">131</tt>  <tt class="py-line">         </tt>
+<a name="L132"></a><tt class="py-lineno">132</tt>  <tt class="py-line"> </tt>
+<a name="L133"></a><tt class="py-lineno">133</tt>  <tt class="py-line"><tt class="py-keyword">if</tt> <tt class="py-name">__name__</tt> <tt class="py-op">==</tt> <tt class="py-string">"__main__"</tt><tt class="py-op">:</tt> </tt>
+<a name="L134"></a><tt class="py-lineno">134</tt>  <tt class="py-line">    <tt class="py-comment">#import sys;sys.argv = ['', 'Test.testName']</tt> </tt>
+<a name="L135"></a><tt class="py-lineno">135</tt>  <tt class="py-line">    <tt class="py-name">unittest</tt><tt class="py-op">.</tt><tt id="link-20" class="py-name" targets="Function Collector.Collector.main()=Collector.Collector-module.html#main"><a title="Collector.Collector.main" class="py-name" href="#" onclick="return doclink('link-20', 'main', 'link-20');">main</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt> </tt>
+<a name="L136"></a><tt class="py-lineno">136</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

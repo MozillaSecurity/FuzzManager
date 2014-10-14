@@ -1,7 +1,5 @@
 '''
-Crash Signature
-
-Represents a crash signature as specified in https://wiki.mozilla.org/Security/CrashSignatures
+Helper methods around registers 
 
 @author:     Christian Holler (:decoder)
 

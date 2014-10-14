@@ -1,7 +1,7 @@
 '''
-Symptom
+Matchers
 
-Represents one symptom which may appear in a crash signature.
+Various matcher classes required by crash signatures
 
 @author:     Christian Holler (:decoder)
 

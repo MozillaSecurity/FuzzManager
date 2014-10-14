@@ -57,8 +57,8 @@ class Collector():
     
     def submit(self, crashInfo, testCase=None, metaData=None):
         '''
-        Refresh signatures by contacting the server, downloading new signatures
-        and invalidating old ones.
+        Submit the given crash information and an optional testcase/metadata
+        to the server for processing and storage.
         
         @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
