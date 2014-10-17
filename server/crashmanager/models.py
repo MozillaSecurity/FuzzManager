@@ -1,15 +1,16 @@
 from django.db import models
+from django.utils import timezone
 
 class Platform(models.Model):
     name = models.CharField(max_length=63)
 
 class Product(models.Model):
     name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127)
+    version = models.CharField(max_length=127, blank=True, null=True)
     
 class OS(models.Model):
     name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127)
+    version = models.CharField(max_length=127, blank=True, null=True)
     
 class TestCase(models.Model):
     test = models.BinaryField()
@@ -30,20 +31,21 @@ class Bug(models.Model):
     reported = models.BooleanField(default=False)
     
 class Bucket(models.Model):
-    bug = models.ForeignKey(Bug)
+    bug = models.ForeignKey(Bug, blank=True, null=True)
     signature = models.TextField()
 
 class CrashEntry(models.Model):
+    created = models.DateTimeField(default=timezone.now)
     platform = models.ForeignKey(Platform)
     product = models.ForeignKey(Product)
     os = models.ForeignKey(OS)
-    testcase = models.ForeignKey(TestCase)
+    testcase = models.ForeignKey(TestCase, blank=True, null=True)
     client = models.ForeignKey(Client)
-    bucket = models.ForeignKey(Bucket)
-    rawStdout = models.TextField()
-    rawStderr = models.TextField()
-    rawCrashData = models.TextField()
-    metadata = models.TextField()
+    bucket = models.ForeignKey(Bucket, blank=True, null=True)
+    rawStdout = models.TextField(blank=True)
+    rawStderr = models.TextField(blank=True)
+    rawCrashData = models.TextField(blank=True)
+    metadata = models.TextField(blank=True)
 
 
     
