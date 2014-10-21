@@ -22,11 +22,13 @@ from __future__ import print_function
 
 import sys
 import os
+import json
 
 from argparse import ArgumentParser
 from FTB.Signatures.CrashSignature import CrashSignature
 import hashlib
 from FTB.Signatures.CrashInfo import CrashInfo
+import requests
 
 __all__ = []
 __version__ = 0.1
@@ -34,7 +36,9 @@ __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
 class Collector():
-    def __init__(self, sigCacheDir, serverHost=None, serverPort=8080):
+    def __init__(self, sigCacheDir, serverHost=None, serverPort=8080,
+                 serverProtocol="https", serverUser=None, serverPass=None,
+                 clientId=None):
         '''
         @type sigCacheDir: string
         @param sigCacheDir: Directory to be used for caching signatures
@@ -42,18 +46,51 @@ class Collector():
         @param serverHost: Server host to contact for refreshing signatures
         @type serverPort: int
         @param serverPort: Server port to use when contacting server
+        @type serverUser: string
+        @param serverUser: Username for server authentication
+        @type serverPass: string
+        @param serverPass: Password for server authentication
+        @type clientId: string
+        @param clientId: Client ID stored in the server when submitting issues
         '''
         self.sigCacheDir = sigCacheDir
         self.serverHost = serverHost
         self.serverPort = serverPort
-    
+        self.serverProtocol = serverProtocol
+        self.serverCreds = (serverUser, serverPass)
+        self.clientId = clientId
+        
+        if self.serverHost != None and self.clientId == None:
+            raise RuntimeError("Must specify clientId when instantiating with server parameters")
     
     def refresh(self):
         '''
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        pass #TODO: Define JSON interface on server and call it here
+        url = "%s://%s:%s/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        
+        response = requests.get(url, auth=self.serverCreds)
+        
+        if response.status_code != requests.codes["ok"]:
+            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+        
+        json = response.json()
+        
+        if not isinstance(json, list):
+            raise RuntimeError("Server sent malformed JSON response: %s" % json)
+        
+        for sigFile in os.listdir(self.sigCacheDir):
+            if sigFile.endwith(".signature"):
+                os.remove(os.path.join(self.sigCacheDir, sigFile))
+            else:
+                print("Warning: Skipping deletion of non-signature file: %s" % sigFile, file=sys.stderr)
+        
+        for rawBucketObj in json:
+            try:
+                self.__store_signature_hashed(CrashSignature(rawBucketObj["signature"]))
+            except RuntimeError, e:
+                print("Warning: Received broken signature (%s): %s" % (e, rawBucketObj["signature"]), file=sys.stderr)
     
     def submit(self, crashInfo, testCase=None, metaData=None):
         '''
@@ -70,9 +107,35 @@ class Collector():
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format.
         '''
-        pass #TODO: Define JSON interface on server and call it here
-    
-    
+        url = "%s://%s:%s/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        
+        # Serialize our crash information, testcase and metadata into a dictionary to POST
+        data = {}
+        
+        data["rawStdout"] = os.linesep.join(crashInfo.rawStdout)
+        data["rawStderr"] = os.linesep.join(crashInfo.rawStderr)
+        data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
+        
+        if testCase:
+            data["testcase"] = testCase
+            
+        data["platform"] = crashInfo.configuration.platform
+        data["product"] = crashInfo.configuration.product
+        data["os"] = crashInfo.configuration.os
+        
+        if crashInfo.configuration.version:
+            data["product_version"] = crashInfo.configuration.version
+        
+        data["client"] = self.clientId
+        
+        if metaData:
+            data["metadata"] = json.JSONEncoder.encode(self, metaData)
+        
+        response = requests.post(url, data, auth=self.serverCreds)
+        
+        if response.status_code != requests.codes["created"]:
+            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+
     def search(self, crashInfo):
         '''
         Searches within the local signature cache directory for a signature matching the
@@ -118,11 +181,21 @@ class Collector():
         sig = crashInfo.createCrashSignature(forceCrashAddress, forceCrashInstruction, numFrames)
         
         # Write the file to a unique file name
-        h = hashlib.new('sha1')
-        h.update(sig)
-        with open(os.path.join(self.sigCacheDir, h.hexdigest() + ".signature"), 'w') as f:
-            f.write(sig) 
+        self.__store_signature_hashed(sig)
         
+        return sig
+            
+    def __store_signature_hashed(self, signature):
+        '''
+        Store a signature, using the sha1 hash hex representation as filename.
+        
+        @type signature: CrashSignature
+        @param signature: CrashSignature to store
+        '''
+        h = hashlib.new('sha1')
+        h.update(str(signature))
+        with open(os.path.join(self.sigCacheDir, h.hexdigest() + ".signature"), 'w') as f:
+            f.write(str(signature))
 
 def main(argv=None):
     '''Command line options.'''

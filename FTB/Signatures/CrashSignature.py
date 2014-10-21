@@ -19,10 +19,6 @@ from FTB.Signatures import JSONHelper
 from FTB.Signatures.Symptom import Symptom
 
 class CrashSignature():
-    '''
-    classdocs
-    '''
-
     def __init__(self, rawSignature):
         '''
         Constructor
@@ -59,6 +55,11 @@ class CrashSignature():
         self.platforms = JSONHelper.getArrayChecked(obj, "platforms")
         self.operatingSystems = JSONHelper.getArrayChecked(obj, "operatingSystems")
         self.products = JSONHelper.getArrayChecked(obj, "products")
+    
+    @staticmethod
+    def fromFile(signatureFile):
+        with open(signatureFile, 'r') as sigFd:
+            return CrashSignature(sigFd.read())
     
     def __str__(self):
         return self.rawSignature
