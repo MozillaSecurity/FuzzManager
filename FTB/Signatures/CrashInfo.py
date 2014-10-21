@@ -22,11 +22,13 @@ from abc import ABCMeta
 import re
 import sys
 from FTB.Signatures import RegisterHelper
-from CrashSignature import CrashSignature
+from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 from numpy import int32, int64
 import json
 from FTB import AssertionHelper
+import os
 
 class CrashInfo():
     '''
@@ -47,13 +49,11 @@ class CrashInfo():
         self.crashAddress = None
         self.crashInstruction = None
         
-        # Store optional environment information
-        self.os = None
-        self.product = None
-        self.platform = None
+        # Store configuration data (platform, product, os, etc.)
+        self.configuration = None
     
     @staticmethod
-    def fromRawCrashData(stdout, stderr, crashData=None, platform=None, product=None, os=None):
+    def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None):
         '''
         Create appropriate CrashInfo instance from raw crash data
         
@@ -61,14 +61,10 @@ class CrashInfo():
         @param stdout: List of lines as they appeared on stdout
         @type stderr: List of strings
         @param stderr: List of lines as they appeared on stderr
-        @type crashData: List of strings
-        @param crashData: Optional crash output (e.g. GDB). If not specified, assumed to be on stderr.
-        @type platform: string
-        @param platform: Optional platform to match the signature platform attribute
-        @type product: string
-        @param product: Optional product to match the signature product attribute
-        @type os: string
-        @param os: Optional OS to match the signature OS attribute
+        @type configuration: ProgramConfiguration
+        @param configuration: Exact program configuration that is associated with the crash
+        @type auxCrashData: List of strings
+        @param auxCrashData: Optional additional crash output (e.g. GDB). If not specified, stderr is used.
         
         @rtype: CrashInfo
         @return: Crash information object
@@ -76,7 +72,9 @@ class CrashInfo():
         
         assert stdout == None or isinstance(stdout, list)
         assert stderr == None or isinstance(stderr, list)
-        assert crashData ==None or isinstance(crashData, list)
+        assert auxCrashData ==None or isinstance(auxCrashData, list)
+        
+        assert isinstance(configuration, ProgramConfiguration)
         
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "Program received signal "
@@ -84,20 +82,20 @@ class CrashInfo():
         
         # Search both crashData and stderr, but prefer crashData
         lines = []
-        if (crashData != None):
-            lines = crashData
+        if (auxCrashData != None):
+            lines = auxCrashData
         lines.extend(stderr)
         
         for line in lines:
             if asanString in line:
-                return ASanCrashInfo(stdout, stderr, crashData, platform, product, os)
+                return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
-                return GDBCrashInfo(stdout, stderr, crashData, platform, product, os)
+                return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
         
         # Default fallback to be used if there is neither ASan nor GDB output.
         # This is still useful in case there is no crash but we want to match
         # e.g. stdout/stderr output with signatures.
-        return NoCrashInfo(stdout, stderr, crashData, platform, product, os)
+        return NoCrashInfo(stdout, stderr, configuration, auxCrashData)
     
     def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8):
         '''
@@ -182,7 +180,7 @@ class CrashInfo():
         return CrashSignature(json.dumps(sigObj, indent=2))
 
 class NoCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -197,12 +195,10 @@ class NoCrashInfo(CrashInfo):
         if crashData != None:
             self.rawCrashData.extend(crashData)
         
-        self.platform = platform
-        self.product = product
-        self.os = os
+        self.configuration = configuration
     
 class ASanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -217,9 +213,7 @@ class ASanCrashInfo(CrashInfo):
         if crashData != None:
             self.rawCrashData.extend(crashData)
         
-        self.platform = platform
-        self.product = product
-        self.os = os
+        self.configuration = configuration
         
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         if crashData == None:
@@ -289,7 +283,7 @@ class ASanCrashInfo(CrashInfo):
             expectedIndex += 1
         
 class GDBCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, crashData=None, platform=None, product=None, os=None):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -304,9 +298,7 @@ class GDBCrashInfo(CrashInfo):
         if crashData != None:
             self.rawCrashData.extend(crashData)
             
-        self.platform = platform
-        self.product = product
-        self.os = os
+        self.configuration = configuration
         
         # If crashData is given, use that to find the GDB trace, otherwise use stderr
         if crashData == None:

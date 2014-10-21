@@ -18,6 +18,7 @@ from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
 from numpy import int64, uint64, int32, uint32
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 asanTraceCrash = """
 ASAN:SIGSEGV
@@ -195,7 +196,9 @@ Program terminated with signal 11, Segmentation fault.
 
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
-        crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines())
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "js::AbstractFramePtr::asRematerializedFrame() const")
         self.assertEqual(crashInfo.backtrace[2], "EvalInFrame(JSContext*, unsigned int, JS::Value*)")
@@ -208,7 +211,9 @@ class ASanParserTestCrash(unittest.TestCase):
         
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
-        crashInfo = ASanCrashInfo([], asanTraceUAF.splitlines())
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanTraceUAF.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 23)
         self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long)")
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native() const")
@@ -217,15 +222,19 @@ class ASanParserTestUAF(unittest.TestCase):
         
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], asanTraceCrash.splitlines())
-        crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines())
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=asanTraceCrash.splitlines())
+        crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines(), config)
         
         self.assertIsInstance(crashInfo1, ASanCrashInfo)
         self.assertIsInstance(crashInfo2, ASanCrashInfo)
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
-        crashInfo = GDBCrashInfo([], gdbSampleTrace1.splitlines())
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo = GDBCrashInfo([], gdbSampleTrace1.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 8)
         self.assertEqual(crashInfo.backtrace[0], "internalAppend<js::ion::MDefinition*>")
         self.assertEqual(crashInfo.backtrace[2], "js::ion::MPhi::addInput")
@@ -237,9 +246,11 @@ class GDBParserTestCrash(unittest.TestCase):
 
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
-        crashInfo1 = GDBCrashInfo([], gdbCrashAddress1.splitlines())
-        crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines())
-        crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines())
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        
+        crashInfo1 = GDBCrashInfo([], gdbCrashAddress1.splitlines(), config)
+        crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines(), config)
+        crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
 
         self.assertEqual(crashInfo1.crashAddress, 0x1L)
         self.assertEqual(crashInfo2.crashAddress, None)
@@ -283,6 +294,8 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        
         crashSignature1 = '{ "symptoms" : [ { "type" : "output", "value" : "test" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : "test" } ] }'
         crashSignature2 = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : { "value" : "^fest$", "matchType" : "pcre" } } ] }'
@@ -300,7 +313,7 @@ class CrashSignatureOutputTest(unittest.TestCase):
         stdout.append("Baz")
         stderr.append("hackfest")
         
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, gdbOutput)
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
         
         self.assertIsInstance(crashInfo, NoCrashInfo)
         
@@ -315,18 +328,20 @@ class CrashSignatureOutputTest(unittest.TestCase):
         
         # Add something the PCRE should match, then retry
         stderr.append("fest")
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, gdbOutput)
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
         self.assert_(outputSignature2.matches(crashInfo))
         
 class CrashSignatureAddressTest(unittest.TestCase):
     def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
         crashSignature1 = '{ "symptoms" : [ { "type" : "crashAddress", "address" : "< 0x1000" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "crashAddress", "address" : "0x1000" } ] }'
         addressSig1 = CrashSignature(crashSignature1)
         addressSig1Neg = CrashSignature(crashSignature1Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
-        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3.splitlines())
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
+        crashInfo3 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace3.splitlines())
 
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
         
@@ -339,6 +354,8 @@ class CrashSignatureAddressTest(unittest.TestCase):
         
 class CrashSignatureRegisterTest(unittest.TestCase):
     def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        
         crashSignature1 = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14"] } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14", "rax"] } ] }'
         crashSignature2 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov" } ] }'
@@ -355,8 +372,8 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         instructionSig3 = CrashSignature(crashSignature3)
         instructionSig3Neg = CrashSignature(crashSignature3Neg)
         
-        crashInfo2 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace2.splitlines())
-        crashInfo3 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace3.splitlines())
+        crashInfo2 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace2.splitlines())
+        crashInfo3 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace3.splitlines())
         
         self.assertIsInstance(crashInfo2, GDBCrashInfo)
         self.assertIsInstance(crashInfo3, GDBCrashInfo)
@@ -377,6 +394,8 @@ class CrashSignatureRegisterTest(unittest.TestCase):
 
 class CrashSignatureStackFrameTest(unittest.TestCase):
     def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
         crashSignature1 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "internalAppend" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "foobar" } ] }'
         
@@ -389,7 +408,7 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
         stackFrameSig2 = CrashSignature(crashSignature2)
         stackFrameSig2Neg = CrashSignature(crashSignature2Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
         
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
         
@@ -401,6 +420,8 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
         
 class CrashSignatureStackSizeTest(unittest.TestCase):
     def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
         crashSignature1 = '{ "symptoms" : [ { "type" : "stackSize", "size" : 8 } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackSize", "size" : 9 } ] }'
         
@@ -413,7 +434,7 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
         stackSizeSig2 = CrashSignature(crashSignature2)
         stackSizeSig2Neg = CrashSignature(crashSignature2Neg)
         
-        crashInfo1 = CrashInfo.fromRawCrashData([], [], gdbSampleTrace1.splitlines())
+        crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
         
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
         

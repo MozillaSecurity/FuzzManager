@@ -6,6 +6,7 @@ Created on Oct 9, 2014
 import unittest
 from FTB.Signatures.CrashInfo import CrashInfo
 import json
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -111,7 +112,9 @@ class SignatureCreateTest(unittest.TestCase):
 
 
     def runTest(self):
-        crashInfo = CrashInfo.fromRawCrashData([], [], testTrace1.splitlines())
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
         crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4)
         crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3)
         crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2)
