@@ -1,0 +1,48 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+            <p>
+		{% if crashcount %} 
+			{{ crashcount }} unbucketed entries in database (showing only {{ crashlist|length }}):
+		{% else %}
+			Your search matched {{ crashlist|length }} entries in database:
+		{% endif %}
+	    </p>
+            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+                <thead>
+                    <tr>
+			<th style="width: 50px;">Date added</th>
+			<th style="width: 25px;">Bucket</th>
+			<th style="width: 100px;">Short Signature</th>
+			<th style="width: 50px;">Crash Address</th>
+			<th style="width: 50px;">Product</th>
+			<th style="width: 50px;">Version</th>
+			<th style="width: 50px;">Platform</th>
+			<th style="width: 60px;">OS</th>
+                    </tr>
+                </thead>
+                <tbody>
+	          {% for entry in crashlist %}<tr class="{% cycle odd,even %}">
+                    <td>{{ entry.created|date }}</td>
+		    <td>
+			{% if entry.bucket %} 
+				<a href="{% url 'crashmanager:viewsignature' entry.pk %}">{{ entry.bucket.pk }}</a>
+			{% else %}
+				<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a>
+			{% endif %}
+		    </td>
+		    <td>{{ entry.shortSignature|escape }}</td>
+		    <td>{{ entry.crashAddress|escape }}</td>
+                    <td>{{ entry.product.name|escape }}</td>
+		    <td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&version={{ entry.version|urlencode }}">[x]</a></td>
+		    <td>{{ entry.platform.name|escape }}</td>
+                    <td>{{ entry.os.name|escape }}</td>
+                    </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+{% endblock 1 %}

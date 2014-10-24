@@ -1,0 +1,38 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+            <p>
+			Showing {{ siglist|length }} signature entries from the database:
+	    </p>
+            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+                <thead>
+                    <tr>
+			<th style="width: 50px;">ID</th>
+			<th style="width: 100px;">Short Description</th>
+			<th style="width: 50px;">External Bug</th>
+			<th style="width: 50px;">Signature</th>
+                    </tr>
+                </thead>
+                <tbody>
+	          {% for entry in siglist %}<tr class="{% cycle odd,even %}">
+                    <td>{{ entry.pk }}</td>
+		    <td>{{ entry.shortDescription|escape }}</td>
+		    <td>
+			{% if entry.bug %}	    
+			    {{ entry.bug.externalId }}
+			{% else %}
+			    <a title="Assign an external bug" href="{% url 'crashmanager:linkextbug' entry.pk %}">Assign</a>
+			{% endif %}
+		    </td>
+		    <td>
+			    <a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">View</a>
+		    </td>
+                    </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+{% endblock 1 %}

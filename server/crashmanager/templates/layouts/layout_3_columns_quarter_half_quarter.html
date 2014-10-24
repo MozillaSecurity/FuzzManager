@@ -1,0 +1,30 @@
+{% extends 'layout_overrides.html' %}
+
+{% block yahooui %}id="doc3"{% endblock yahooui %}
+
+{% block body_content %}
+	<div id="yui-main">
+		<div class="yui-b">
+			<div class="yui-gf">
+				<div class="yui-u first">
+					{% block 1 %}
+					{% endblock 1 %}
+				</div>
+                <div class="yui-u">
+                    <div class="yui-b">
+                        <div class="yui-ge">
+                            <div class="yui-u first">
+                                {% block 2 %}
+                                {% endblock 2 %}
+                            </div>
+                        </div>
+                        <div class="yui-u">
+                            {% block 3 %}
+                            {% endblock 3 %}
+                        </div>
+                    </div>
+                </div>
+			</div>
+		</div>
+	</div>
+{% endblock body_content %} 

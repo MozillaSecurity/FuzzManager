@@ -1,0 +1,21 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+		<form action="{% url 'crashmanager:sigdel' bucket.pk %}" method="post">
+		{% csrf_token %}
+
+		<p><strong>Are you sure that you want to delete this signature?</strong></p>
+
+		<div class="field">
+			<span class="label">Short Description: </span><span class="code">{{ bucket.shortDescription|escape }}</span>
+		</div>
+
+		<input type="submit" value="Delete" />
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

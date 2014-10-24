@@ -1,0 +1,29 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		<div class="field">
+			<span class="label">Short Description: </span><span class="code">{{ bucket.shortDescription|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Current size (# of crashes covered by this signature): </span><span class="code">{{ crashcount }}</span>
+		</div>
+		
+		<div class="field">
+			<div class="label">Signature:</div><br/>
+			<pre class="code"><code>
+			{{ bucket.signature }}
+			</code></pre>
+		</div>
+
+		<div class="field">
+			<span class="label">Actions:</span>
+			<a href="{% url 'crashmanager:sigedit' bucket.pk %}">Edit</a>
+			<a href="{% url 'crashmanager:sigdel' bucket.pk %}">Delete</a>
+		</div>
+        </div>
+</div>
+{% endblock 1 %}

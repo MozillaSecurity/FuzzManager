@@ -1,0 +1,65 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+            <p>
+		{% if crashcount %} 
+			{{ crashcount }} entries in database (showing only {{ crashlist|length }}):
+		{% else %}
+			Your search matched {{ crashlist|length }} entries in database:
+		{% endif %}
+	    </p>
+            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+                <!--<col width="1"></col>
+                <col></col>
+		<col width="1"></col>-->
+                <thead>
+                    <tr>
+			<th style="width: 50px;">Date added</th>
+			<th style="width: 100px;">Crash UUID</th>
+			<th style="width: 100px;">Signature</th>
+			<th style="width: 50px;">Crash Address</th>
+			<th style="width: 100px;">Crash URL</th>
+			<th style="width: 100px;">Malware URL</th>
+			<th style="width: 150px;">Malware Info</th>
+			<th style="width: 50px;">Product</th>
+			<th style="width: 50px;">Version</th>
+			<th style="width: 60px;">OS</th>
+			<th style="width: 50px;">OS Version</th>
+			<th style="width: 50px;">Flash Version</th>
+                    </tr>
+                </thead>
+                <tbody>
+	          {% for entry in crashlist %}<tr class="{% cycle odd,even %}">
+                    <td>{{ entry.dateadded|date }}</td>
+                   {% if user.is_authenticated %}
+		    <td>
+			    <a title="View crash report in Socorro crash database" target="_blank" href="https://crash-stats.mozilla.com/report/index/{{ entry.crashuuid|urlencode }}">{{ entry.crashuuid|escape }}</a> <a title="View crash report in Socorro crash database" target="_blank" href="https://crash-stats.mozilla.com/rawdumps/{{ entry.crashuuid|urlencode }}.dump">Download</a>
+		    </td>
+		   {% else %}
+		   <td><a href="{% url 'django.contrib.auth.views.login' %}?next={{request.path}}?{{request.GET.urlencode}}">Login</a> to see crash UUID</td>
+                   {% endif %}
+		    <td>
+			    <a title="Search this signature in Socorro crash database" target="_blank" href="https://crash-stats.mozilla.com/report/list?product={{ entry.product|urlencode }}&query_search=signature&query_type=exact&query={{ entry.signature|urlencode }}&reason_type=contains&range_value=1&range_unit=weeks&hang_type=any&process_type=any&do_query=1&signature={{ entry.signature|urlencode }}&page=1">{{ entry.signature|escape }}</a>
+		    </td>
+		    <td>{{ entry.crashaddr|escape }}</td>
+                   {% if user.is_authenticated %}
+		    <td>{{ entry.crashurl|escape }}</td>
+		   {% else %}
+		   <td><a href="{% url 'django.contrib.auth.views.login' %}?next={{request.path}}?{{request.GET.urlencode}}">Login</a> to see crash URL</td>
+                   {% endif %}
+                    <td>{{ entry.malwareurl|escape }}</td>
+                    <td>{{ entry.malwareinfo|escape }}</td>
+                    <td>{{ entry.product|escape }}</td>
+		    <td>{{ entry.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&version={{ entry.version|urlencode }}">[x]</a></td>
+                    <td>{{ entry.osname|escape }}</td>
+		    <td>{{ entry.osversion|escape }}</td>
+		    <td>{{ entry.flashversion|escape }}</td>
+                    </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+{% endblock 1 %}
