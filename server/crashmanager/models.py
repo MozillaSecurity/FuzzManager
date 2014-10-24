@@ -33,6 +33,7 @@ class Bug(models.Model):
 class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
     signature = models.TextField()
+    shortDescription = models.CharField(max_length=1023, blank=True)
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
