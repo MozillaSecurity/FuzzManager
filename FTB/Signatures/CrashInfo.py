@@ -70,11 +70,20 @@ class CrashInfo():
         @return: Crash information object
         '''
         
-        assert stdout == None or isinstance(stdout, list)
-        assert stderr == None or isinstance(stderr, list)
-        assert auxCrashData ==None or isinstance(auxCrashData, list)
+        assert stdout == None or isinstance(stdout, list) or isinstance(stdout, basestring)
+        assert stderr == None or isinstance(stderr, list) or isinstance(stderr, basestring)
+        assert auxCrashData ==None or isinstance(auxCrashData, list) or isinstance(auxCrashData, basestring)
         
         assert isinstance(configuration, ProgramConfiguration)
+        
+        if isinstance(stdout, basestring):
+            stdout = stdout.splitlines()
+        
+        if isinstance(stderr, basestring):
+            stderr = stderr.splitlines()
+        
+        if isinstance(auxCrashData, basestring):
+            auxCrashData = auxCrashData.splitlines()
         
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "Program received signal "
