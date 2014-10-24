@@ -2,6 +2,9 @@ from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestC
 from rest_framework import serializers
 from django.forms import widgets
 from django.core.exceptions import MultipleObjectsReturned
+from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 class CrashEntrySerializer(serializers.ModelSerializer):
     # We need to redefine several fields explicitly because we flatten our
@@ -55,12 +58,22 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             # Not allowed to update existing instances
             return instance
         
+
+        
         product = attrs.pop('product', None)
         product_version = attrs.pop('product_version', None)
         platform = attrs.pop('platform', None)
         os = attrs.pop('os', None)
         client = attrs.pop('client', None)
         testcase = attrs.pop('testcase', None)
+        
+        # Parse the incoming data using the crash signature package from FTB
+        configuration = ProgramConfiguration(product, platform, os, product_version)
+        crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'].splitlines(), attrs['rawStderr'].splitlines(), configuration, attrs['rawCrashData'].splitlines())
+        
+        # Populate certain fields here from the CrashInfo object we just got
+        attrs['crashAddress'] = hex(crashInfo.crashAddress)
+        attrs['shortSignature'] = crashInfo.createShortSignature()
         
         def createOrGetModelByName(model, attrs):
             '''
