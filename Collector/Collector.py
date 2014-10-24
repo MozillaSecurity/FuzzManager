@@ -29,6 +29,7 @@ from FTB.Signatures.CrashSignature import CrashSignature
 import hashlib
 from FTB.Signatures.CrashInfo import CrashInfo
 import requests
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 __all__ = []
 __version__ = 0.1
@@ -227,9 +228,10 @@ def main(argv=None):
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    parser.add_argument("--platform", dest="platform", help="Restrict matching to the specified platform", metavar="(x86|x86-64|arm)")
-    parser.add_argument("--product", dest="product", help="Restrict matching to the specified product", metavar="PRODUCT")
-    parser.add_argument("--os", dest="os", help="Restrict matching to the specified OS", metavar="(windows|linux|macosx|b2g|android)")
+    parser.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    parser.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
+    parser.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
+    parser.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
     
     parser.add_argument("--forcecrashaddr", dest="forcecrashaddr", action='store_true', help="Force including the crash address into the signature")
     parser.add_argument("--forcecrashinst", dest="forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
@@ -266,7 +268,8 @@ def main(argv=None):
             with open(crashdata) as f:
                 crashdata = f.readLines()
                 
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, crashdata, opts.platform, opts.product, opts.os)
+        configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version)
+        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
 
             
     collector = Collector(opts.sigdir, opts.serverhost, opts.serverport)
