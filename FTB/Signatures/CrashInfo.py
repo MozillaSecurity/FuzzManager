@@ -106,6 +106,21 @@ class CrashInfo():
         # e.g. stdout/stderr output with signatures.
         return NoCrashInfo(stdout, stderr, configuration, auxCrashData)
     
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+        # See if we have an abort message and if so, use that as short signature
+        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
+        if abortMsg != None:
+            return abortMsg
+        
+        if not len(self.backtrace):
+            return "No crash detected"
+        
+        return "[@ %s]" % self.backtrace[0]
+    
     def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8):
         '''
         @param forceCrashAddress: If True, the crash address will be included in any case
