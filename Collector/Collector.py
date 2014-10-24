@@ -68,7 +68,7 @@ class Collector():
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        url = "%s://%s:%s/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%s/rest/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
         response = requests.get(url, auth=self.serverCreds)
         
@@ -107,7 +107,7 @@ class Collector():
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format.
         '''
-        url = "%s://%s:%s/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%s/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
         # Serialize our crash information, testcase and metadata into a dictionary to POST
         data = {}

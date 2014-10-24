@@ -17,7 +17,7 @@ import requests
 from requests.exceptions import ConnectionError
 
 # Server and credentials (user/password) used for testing
-testServerURL = "http://127.0.0.1:8000/"
+testServerURL = "http://127.0.0.1:8000/rest/"
 testAuthCreds = ("admin", "admin")
 
 # Check if we have a remote server for testing, if not, skip tests
