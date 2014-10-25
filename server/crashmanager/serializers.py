@@ -58,8 +58,6 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             # Not allowed to update existing instances
             return instance
         
-
-        
         product = attrs.pop('product', None)
         product_version = attrs.pop('product_version', None)
         platform = attrs.pop('platform', None)
@@ -69,7 +67,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         
         # Parse the incoming data using the crash signature package from FTB
         configuration = ProgramConfiguration(product, platform, os, product_version)
-        crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'].splitlines(), attrs['rawStderr'].splitlines(), configuration, attrs['rawCrashData'].splitlines())
+        crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'], attrs['rawStderr'], configuration, attrs['rawCrashData'])
         
         # Populate certain fields here from the CrashInfo object we just got
         attrs['crashAddress'] = hex(crashInfo.crashAddress)
