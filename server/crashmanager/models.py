@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils import timezone
+from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.ProgramConfiguration import ProgramConfiguration
 
 class Platform(models.Model):
     name = models.CharField(max_length=63)
@@ -34,6 +37,9 @@ class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
     signature = models.TextField()
     shortDescription = models.CharField(max_length=1023, blank=True)
+    
+    def getSignature(self):
+        return CrashSignature(self.signature)
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -49,6 +55,12 @@ class CrashEntry(models.Model):
     metadata = models.TextField(blank=True)
     crashAddress = models.CharField(max_length=255, blank=True)
     shortSignature = models.CharField(max_length=255, blank=True)
+    
+    def getCrashInfo(self):
+        # TODO: This should be cached at some level
+        # TODO: Need to include environment and program arguments here
+        configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
+        return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
 
 
     
