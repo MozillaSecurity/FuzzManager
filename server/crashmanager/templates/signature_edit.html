@@ -6,21 +6,32 @@
 	<div class="body notitle">
 		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-		{% if bucket.pk %}
+		{% if inCount != None %}<p><strong>New issues that will be assigned to this bucket: {{ inCount }}</strong></p>{% endif %}
+		{% if outCount != None %}<p><strong>Issues that will be removed from this bucket: {{ outCount }}</strong></p>{% endif %}
+
+		{% if bucket.pk != None %}
 			<form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
 		{% else %}
 			<form action="{% url 'crashmanager:signew' %}" method="post">
 		{% endif %}
 
 		{% csrf_token %}
-		<label for="id_shortDescription">Short Description:</label><br/>
-		<input id="id_shortDescription" maxlength="1023" style="width:100em;" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
+		<label class="label" for="id_shortDescription">Short Description:</label><br/>
+		<input id="id_shortDescription" maxlength="1023" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
 		<br/>
 		<br/>
-		<label class="required" for="id_signature">Signature:</label><br/>
-                <textarea id="id_signature" name="signature" rows="40" style="width:100em;">{{ bucket.signature }}</textarea>
+		<label class="label" for="id_signature">Signature:</label><br/>
+                <textarea id="id_signature" name="signature">{{ bucket.signature }}</textarea>
 		<br/>
-		<input type="submit" value="Save" />
+
+		<div class="field">
+		<input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
+		<label class="label" for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
+		</div>
+		
+
+		<input type="submit" name="submit_save" value="Save" />
+		<input type="submit" name="submit_preview" value="Preview" />
 		</form>
         </div>
 </div>

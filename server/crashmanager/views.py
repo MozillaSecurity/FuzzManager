@@ -101,8 +101,42 @@ def editSignature(request, sigid):
         bucket.shortDescription = request.POST['shortDescription']
         #TODO: FIXME: Update bug here as well
         
-        bucket.save()
-        return redirect('crashmanager:sigview', sigid=bucket.pk)
+        try:
+            signature = bucket.getSignature()
+        except RuntimeError, e:
+            context = RequestContext(request, { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e })
+            return render(request, 'signature_edit.html', context)
+        
+        if 'submit_save' in request.POST:
+            bucket.save()
+        
+        if "reassign" in request.POST:
+            (inCount, outCount) = (0,0)
+            
+            signature = bucket.getSignature()
+            entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
+            
+            for entry in entries:
+                match = signature.matches(entry.getCrashInfo())
+                if match and entry.bucket == None:
+                    inCount += 1
+                    if 'submit_save' in request.POST:
+                        entry.bucket = bucket
+                        entry.save()
+                elif not match and entry.bucket != None:
+                    outCount += 1
+                    if 'submit_save' in request.POST:
+                        entry.bucket = None
+                        entry.save()
+                        
+        if 'submit_save' in request.POST:
+            return redirect('crashmanager:sigview', sigid=bucket.pk)
+        
+        context = RequestContext(request, { 'bucket' : bucket, 
+                                           'error_message' : "This is a preview, don't forget to save!",
+                                           'inCount' : inCount, 'outCount' : outCount
+                                           })
+        return render(request, 'signature_edit.html', context)
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
