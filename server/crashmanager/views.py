@@ -15,8 +15,7 @@ def logout_view(request):
 
 @login_required(login_url='/login/')
 def index(request):
-    context = RequestContext(request, {})
-    return render(request, 'index.html', context)
+    return redirect('crashmanager:crashes')
 
 @login_required(login_url='/login/')
 def signatures(request):
