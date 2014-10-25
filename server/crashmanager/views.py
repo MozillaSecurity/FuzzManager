@@ -8,6 +8,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from django.core.exceptions import SuspiciousOperation
+from django.db.models import Q
+from django.db.models.aggregates import Count
 
 def logout_view(request):
     logout(request)
@@ -19,7 +21,7 @@ def index(request):
 
 @login_required(login_url='/login/')
 def signatures(request):
-    entries = Bucket.objects.all()
+    entries = Bucket.objects.annotate(size=Count('crashentry'))
     context = RequestContext(request, { 'siglist' : entries })
     return render(request, 'signatures.html', context)
 

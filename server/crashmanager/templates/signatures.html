@@ -10,8 +10,9 @@
             <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
                 <thead>
                     <tr>
-			<th style="width: 50px;">ID</th>
-			<th style="width: 100px;">Short Description</th>
+			<th style="width: 20px;">ID</th>
+			<th style="width: 150px;">Short Description</th>
+			<th style="width: 20px;">Bucket Size</th>
 			<th style="width: 50px;">External Bug</th>
 			<th style="width: 50px;">Signature</th>
                     </tr>
@@ -20,6 +21,7 @@
 	          {% for entry in siglist %}<tr class="{% cycle odd,even %}">
                     <td>{{ entry.pk }}</td>
 		    <td>{{ entry.shortDescription|escape }}</td>
+		    <td>{{ entry.size }}</td>
 		    <td>
 			{% if entry.bug %}	    
 			    {{ entry.bug.externalId }}
