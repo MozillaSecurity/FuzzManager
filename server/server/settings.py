@@ -42,6 +42,13 @@ INSTALLED_APPS = (
     'rest_framework',
 )
 
+# This tiny middleware module allows us to see exceptions on stderr
+# when running a Django instance with runserver.py
+class ExceptionLoggingMiddleware(object):
+    def process_exception(self, request, exception):
+        import traceback
+        print traceback.format_exc()
+
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -49,6 +56,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'server.settings.ExceptionLoggingMiddleware',
 )
 
 ROOT_URLCONF = 'server.urls'
