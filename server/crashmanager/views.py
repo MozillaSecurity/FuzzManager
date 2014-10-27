@@ -31,15 +31,63 @@ def crashes(request):
     context = RequestContext(request, { 'crashlist' : entries })
     return render(request, 'crashes.html', context)
 
+def __handleSignaturePost(request, bucket):
+    # This method contains code shared between newSignature and editSignature
+    # and handles the POST request processing after the bucket object has been
+    # either fetched or created.
+    try:
+        signature = bucket.getSignature()
+    except RuntimeError, e:
+        context = RequestContext(request, { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e })
+        return render(request, 'signature_edit.html', context)
+    
+    # Only save if we hit "save" (not e.g. "preview")
+    if 'submit_save' in request.POST:
+        bucket.save()
+    
+    # If the reassign checkbox is checked, assign all unassigned issues that match
+    # our signature to this bucket. Furthermore, remove all non-matching issues
+    # from our bucket.
+    #
+    # Again, we only actually save if we hit "save". For previewing, we just count
+    # how many issues would be assigned and removed.
+    if "reassign" in request.POST:
+        (inCount, outCount) = (0,0)
+        
+        signature = bucket.getSignature()
+        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
+        
+        for entry in entries:
+            match = signature.matches(entry.getCrashInfo())
+            if match and entry.bucket == None:
+                inCount += 1
+                if 'submit_save' in request.POST:
+                    entry.bucket = bucket
+                    entry.save()
+            elif not match and entry.bucket != None:
+                outCount += 1
+                if 'submit_save' in request.POST:
+                    entry.bucket = None
+                    entry.save()
+    
+    # Save bucket and redirect to viewing it       
+    if 'submit_save' in request.POST:
+        return redirect('crashmanager:sigview', sigid=bucket.pk)
+    
+    # Render the preview page
+    context = RequestContext(request, { 'bucket' : bucket, 
+                                       'error_message' : "This is a preview, don't forget to save!",
+                                       'inCount' : inCount, 'outCount' : outCount
+                                       })
+    return render(request, 'signature_edit.html', context)
+
 @login_required(login_url='/login/')
 def newSignature(request):
     if request.method == 'POST':
         #TODO: FIXME: Update bug here as well
         bucket = Bucket(signature=request.POST['signature'], 
                             shortDescription=request.POST['shortDescription'])
-        
-        bucket.save()
-        return redirect('crashmanager:sigview', sigid=bucket.pk)
+        return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
         if 'crashid' in request.GET:
             crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
@@ -85,7 +133,7 @@ def deleteSignature(request, sigid):
         return render(request, 'signature_del.html', context)
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def viewSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
@@ -100,69 +148,11 @@ def editSignature(request, sigid):
         bucket.signature = request.POST['signature']
         bucket.shortDescription = request.POST['shortDescription']
         #TODO: FIXME: Update bug here as well
-        
-        try:
-            signature = bucket.getSignature()
-        except RuntimeError, e:
-            context = RequestContext(request, { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e })
-            return render(request, 'signature_edit.html', context)
-        
-        if 'submit_save' in request.POST:
-            bucket.save()
-        
-        if "reassign" in request.POST:
-            (inCount, outCount) = (0,0)
-            
-            signature = bucket.getSignature()
-            entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
-            
-            for entry in entries:
-                match = signature.matches(entry.getCrashInfo())
-                if match and entry.bucket == None:
-                    inCount += 1
-                    if 'submit_save' in request.POST:
-                        entry.bucket = bucket
-                        entry.save()
-                elif not match and entry.bucket != None:
-                    outCount += 1
-                    if 'submit_save' in request.POST:
-                        entry.bucket = None
-                        entry.save()
-                        
-        if 'submit_save' in request.POST:
-            return redirect('crashmanager:sigview', sigid=bucket.pk)
-        
-        context = RequestContext(request, { 'bucket' : bucket, 
-                                           'error_message' : "This is a preview, don't forget to save!",
-                                           'inCount' : inCount, 'outCount' : outCount
-                                           })
-        return render(request, 'signature_edit.html', context)
+        return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
             context = RequestContext(request, { 'bucket' : bucket })
-        elif 'crashid' in request.GET:
-            crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
-            
-            configuration = ProgramConfiguration(crashEntry.product.name, 
-                                                 crashEntry.platform.name, 
-                                                 crashEntry.os.name, 
-                                                 crashEntry.product.version)
-            
-            crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout, 
-                                                   crashEntry.rawStderr, 
-                                                   configuration, 
-                                                   crashEntry.rawCrashData)
-            
-            proposedSignature = str(crashInfo.createCrashSignature())
-            proposedShortDesc = crashInfo.createShortSignature()
-            
-            context = RequestContext(request, { 'bucket' : { 
-                                                            'pk' : None, 
-                                                            'bug' : None,
-                                                            'signature' : proposedSignature,
-                                                            'shortDescription' : proposedShortDesc,
-                                                            } })
         else:
             raise SuspiciousOperation
     else:
