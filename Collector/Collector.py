@@ -68,8 +68,11 @@ class Collector():
         '''
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
-        '''
-        url = "%s://%s:%s/rest/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        '''     
+        if not self.serverHost:
+            raise RuntimeError("Must specify serverHost to use remote features.")
+        
+        url = "%s://%s:%s/crashmanager/rest/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
         response = requests.get(url, auth=self.serverCreds)
         
@@ -108,7 +111,10 @@ class Collector():
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format.
         '''
-        url = "%s://%s:%s/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        if not self.serverHost:
+            raise RuntimeError("Must specify serverHost to use remote features.")
+        
+        url = "%s://%s:%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
         # Serialize our crash information, testcase and metadata into a dictionary to POST
         data = {}
@@ -130,7 +136,13 @@ class Collector():
         data["client"] = self.clientId
         
         if metaData:
-            data["metadata"] = json.JSONEncoder.encode(self, metaData)
+            data["metadata"] = json.dumps(metaData)
+        
+        if crashInfo.configuration.env:
+            data["env"] = json.dumps(crashInfo.configuration.env)
+        
+        if crashInfo.configuration.args:
+            data["metadata"] = json.dumps(crashInfo.configuration.args)
         
         response = requests.post(url, data, auth=self.serverCreds)
         
@@ -212,6 +224,7 @@ def main(argv=None):
 
     # setup argparser
     parser = ArgumentParser()
+    
     parser.add_argument('--version', action='version', version=program_version_string)
     
     # Crash information
@@ -221,61 +234,95 @@ def main(argv=None):
 
     # Actions
     parser.add_argument("--refresh", dest="refresh", action='store_true', help="Perform a signature refresh")
+    parser.add_argument("--submit", dest="submit", action='store_true', help="Submit a signature to the server")
     parser.add_argument("--search", dest="search", action='store_true', help="Search cached signatures for the given crash")
-    parser.add_argument("--generate", dest="generate", help="Create a (temporary) local signature in the cache directory")
+    parser.add_argument("--generate", dest="generate", action='store_true', help="Create a (temporary) local signature in the cache directory")
 
     # Settings
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    parser.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
-    parser.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
+    parser.add_argument("--serverproto", dest="serverproto", default="https", help="Server protocol to use (default is https)", metavar="PROTO")
+    parser.add_argument("--servercreds", dest="servercreds", help="Credentials file (contains username and password on separate lines)", metavar="FILE")
+    parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
+    parser.add_argument("--platform", required=True, dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    parser.add_argument("--product", required=True, dest="product", help="Product this crash appeared on", metavar="PRODUCT")
     parser.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
-    parser.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    parser.add_argument("--os", required=True, dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    parser.add_argument('--args', dest='args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
+    parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
+
+    parser.add_argument("--testcase", dest="testcase", help="File containing testcase", metavar="FILE")
+
     
     parser.add_argument("--forcecrashaddr", dest="forcecrashaddr", action='store_true', help="Force including the crash address into the signature")
     parser.add_argument("--forcecrashinst", dest="forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
     parser.add_argument("--numframes", dest="numframes", type=int, help="How many frames to include into the signature (default is 8)")
+
+
 
     if len(argv) == 0:
         parser.print_help()
         return 2
 
     # process options
-    (opts, args) = parser.parse_args(argv)
+    opts = parser.parse_args(argv)
     
-    if opts.search and opts.create:
+    if opts.search and opts.generate:
         print("Error: Can't --search and --generate at the same time", file=sys.stderr)
 
     stdout = None
     stderr = None
     crashdata = None
     crashInfo = None
+    args = None
+    env = None
 
-    if opts.search or opts.create:
+    if opts.search or opts.generate or opts.submit:
         if opts.stderr == None and opts.crashdata == None:
             print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
+            return 2
         
-        if stdout:
-            with open(stdout) as f:
-                stdout = f.readLines()
+        if opts.stdout:
+            with open(opts.stdout) as f:
+                stdout = f.read()
         
-        if stderr:
-            with open(stderr) as f:
-                stderr = f.readLines()
+        if opts.stderr:
+            with open(opts.stderr) as f:
+                stderr = f.read()
             
-        if crashdata:
-            with open(crashdata) as f:
-                crashdata = f.readLines()
+        if opts.crashdata:
+            with open(opts.crashdata) as f:
+                crashdata = f.read()
                 
-        configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version)
+        if opts.args:
+            args = [arg.replace('\\', '') for arg in opts.args]
+            
+        if opts.env:
+            env = dict(kv.split('=', 1) for kv in opts.env)
+                
+        configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args)
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
 
+    serveruser = None
+    serverpass = None
+    
+    if opts.servercreds:
+        with open(opts.servercreds) as f:
+            (serveruser, serverpass) = f.read().splitlines()
             
-    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport)
+    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serveruser, serverpass, opts.clientid)
+    
+    if opts.refresh or opts.submit:
+        if not opts.serverhost:
+            print("Error: Must specify --serverhost for remote features.", file=sys.stderr)
+            return 2
     
     if opts.refresh:
         collector.refresh()
+        
+    if opts.submit:
+        collector.submit(crashInfo, opts.testcase, None)
     
     if opts.search:
         sig = collector.search(crashInfo)
