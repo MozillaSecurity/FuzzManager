@@ -21,7 +21,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 class ProgramConfiguration():
-    def __init__(self, product, platform, os, version=None, environment=None, args=None):
+    def __init__(self, product, platform, os, version=None, env=None, args=None):
         '''
         @type product: string
         @param product: The name of the product/program/branch tested
@@ -35,14 +35,14 @@ class ProgramConfiguration():
         self.os = os.lower()
         self.version = version
         
-        if environment is None:
-            environment = {}
+        if env is None:
+            env = {}
         
         if args is None:
             args = []
         
-        assert isinstance(environment, dict)
+        assert isinstance(env, dict)
         assert isinstance(args, list)
         
-        self.environment = environment
+        self.env = env
         self.args = args
