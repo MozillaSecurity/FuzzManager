@@ -9,7 +9,6 @@ router.register(r'crashes', views.CrashEntryViewSet)
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^logout/$', views.logout_view, name='logout'),
-    url(r'^login/$', 'django.contrib.auth.views.login'),
     url(r'^$', views.index, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
     url(r'^signatures/new/$', views.newSignature, name='signew'),
