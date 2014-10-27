@@ -70,7 +70,8 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'], attrs['rawStderr'], configuration, attrs['rawCrashData'])
         
         # Populate certain fields here from the CrashInfo object we just got
-        attrs['crashAddress'] = hex(crashInfo.crashAddress)
+        if crashInfo.crashAddress != None:
+            attrs['crashAddress'] = hex(crashInfo.crashAddress)
         attrs['shortSignature'] = crashInfo.createShortSignature()
         
         def createOrGetModelByName(model, attrs):
