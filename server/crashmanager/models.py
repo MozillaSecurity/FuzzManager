@@ -53,6 +53,8 @@ class CrashEntry(models.Model):
     rawStderr = models.TextField(blank=True)
     rawCrashData = models.TextField(blank=True)
     metadata = models.TextField(blank=True)
+    env = models.TextField(blank=True)
+    args = models.TextField(blank=True)
     crashAddress = models.CharField(max_length=255, blank=True)
     shortSignature = models.CharField(max_length=255, blank=True)
     

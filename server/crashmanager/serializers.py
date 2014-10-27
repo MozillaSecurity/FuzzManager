@@ -20,7 +20,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CrashEntry
-        fields = ('rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 'testcase', 'platform', 'product', 'product_version', 'os', 'client')
+        fields = ('rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 'testcase', 'platform', 'product', 'product_version', 'os', 'client', 'env', 'args')
 
     def to_native(self, obj):
         '''
