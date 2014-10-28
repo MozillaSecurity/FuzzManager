@@ -1,0 +1,91 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		<div class="field">
+			<span class="label">Created: </span><span class="code">{{ entry.created|date }}</span>
+			<span class="label">by Client: </span><span class="code">{{ entry.client.name|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Short Signature: </span><span class="code">{{ entry.shortSignature|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Product: </span><span class="code">{{ entry.product.name }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Version: </span><span class="code">{{ entry.product.version }}</span>
+		</div>
+		
+		<div class="field">
+			<span class="label">Platform: </span><span class="code">{{ entry.platform.name }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">OS: </span><span class="code">{{ entry.os.name }}</span>
+		</div>
+
+		{% if entry.rawStdout %}
+		<div class="field">
+			<div class="label">Data on stdout:</div><br/>
+			<pre class="code"><code>{{ entry.rawStdout }}</code></pre>
+		</div>
+		{% endif %}
+
+		{% if entry.rawStderr %}
+		<div class="field">
+			<div class="label">Data on stderr:</div><br/>
+			<pre class="code"><code>{{ entry.rawStderr }}</code></pre>
+		</div>
+		{% endif %}
+
+		{% if entry.rawCrashData %}
+		<div class="field">
+			<div class="label">Additional Crash Data:</div><br/>
+			<pre class="code"><code>{{ entry.rawCrashData }}</code></pre>
+		</div>
+		{% endif %}
+
+		{% if entry.testcase %}
+		<div class="field">
+			<div class="label">Testcase:</div><br/>
+			{% if entry.testcase.isBinary %}
+			<a href="">Download</a>
+			{% else %}
+			<pre class="code"><code>{{ entry.testcase.test }}</code></pre>
+			{% endif %}
+		</div>
+		{% endif %}
+
+		{% if entry.argsList %}
+		<div class="field">
+			<span class="label">Command line arguments: </span>
+			{% for arg in entry.argsList %}
+			<span class="code">{{ arg }}</span>
+			{% endfor %}
+		</div>
+		{% endif %}
+
+		{% if entry.envList %}
+		<div class="field">
+			<span class="label">Environment variables: </span>
+			{% for arg in entry.envList %}
+			<div class="code">{{ arg }}</div>
+			{% endfor %}
+		</div>
+		{% endif %}
+
+		{% if notImplemented %}
+		<div class="field">
+			<span class="label">Actions:</span>
+			<a href="{% url 'crashmanager:crashedit' bucket.pk %}">Edit</a>
+			<a href="{% url 'crashmanager:crashdel' bucket.pk %}">Delete</a>
+		</div>
+		{% endif %}
+        </div>
+</div>
+{% endblock 1 %}

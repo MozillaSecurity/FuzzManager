@@ -31,6 +31,20 @@ def crashes(request):
     context = RequestContext(request, { 'crashlist' : entries })
     return render(request, 'crashes.html', context)
 
+@login_required(login_url='/login/')
+def viewCrashEntry(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    
+    if entry.args:
+        entry.argsList = json.loads(entry.args)
+
+    if entry.env:
+        envDict = json.loads(entry.env)
+        entry.envList = ["%s=%s" % (s,envDict[s]) for s in envDict.keys()]
+    
+    context = RequestContext(request, { 'entry' : entry })
+    return render(request, 'crash_view.html', context)
+
 def __handleSignaturePost(request, bucket):
     # This method contains code shared between newSignature and editSignature
     # and handles the POST request processing after the bucket object has been
