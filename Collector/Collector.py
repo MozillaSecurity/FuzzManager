@@ -24,6 +24,10 @@ import sys
 import os
 import json
 
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
+sys.path += [FTB_PATH]
+
 from argparse import ArgumentParser
 from FTB.Signatures.CrashSignature import CrashSignature
 import hashlib
