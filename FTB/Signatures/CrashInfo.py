@@ -93,7 +93,8 @@ class CrashInfo():
         lines = []
         if (auxCrashData != None):
             lines = auxCrashData
-        lines.extend(stderr)
+        if (stderr != None):
+            lines.extend(stderr)
         
         for line in lines:
             if asanString in line:
