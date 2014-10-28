@@ -10,6 +10,7 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q
 from django.db.models.aggregates import Count
+import json
 
 def logout_view(request):
     logout(request)
@@ -27,8 +28,37 @@ def signatures(request):
 
 @login_required(login_url='/login/')
 def crashes(request):
-    entries = CrashEntry.objects.filter(bucket=None)
-    context = RequestContext(request, { 'crashlist' : entries })
+    filters = {}
+    isSearch = True
+    
+    # These are all keys that are allowed for exact filtering
+    exactFilterKeys = [
+                       "bucket", 
+                       "os__name",
+                       "product__name",
+                       "product__version",
+                       "platform__name",
+                       ]
+    
+    for key in exactFilterKeys:
+        if key in request.GET:
+            filters[key] = request.GET[key]
+    
+    if "sig" in request.GET:
+        filters["shortSignature__contains"] = request.GET["sig"]
+
+    # If we end up without any filters, the default is to show all issues that
+    # have no bucket/signature associated yet, as they are considered untriaged
+    if not filters:
+        filters["bucket"] = None
+        isSearch = False
+    
+    entries = CrashEntry.objects.filter(**filters)
+    context = RequestContext(request, {
+                                       'isSearch' : isSearch, 
+                                       'crashlist' : entries 
+                                       })
+    
     return render(request, 'crashes.html', context)
 
 @login_required(login_url='/login/')
