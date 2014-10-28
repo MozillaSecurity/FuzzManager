@@ -85,7 +85,7 @@ class Collector():
             raise RuntimeError("Server sent malformed JSON response: %s" % json)
         
         for sigFile in os.listdir(self.sigCacheDir):
-            if sigFile.endwith(".signature"):
+            if sigFile.endswith(".signature"):
                 os.remove(os.path.join(self.sigCacheDir, sigFile))
             else:
                 print("Warning: Skipping deletion of non-signature file: %s" % sigFile, file=sys.stderr)
@@ -142,7 +142,7 @@ class Collector():
             data["env"] = json.dumps(crashInfo.configuration.env)
         
         if crashInfo.configuration.args:
-            data["metadata"] = json.dumps(crashInfo.configuration.args)
+            data["args"] = json.dumps(crashInfo.configuration.args)
         
         response = requests.post(url, data, auth=self.serverCreds)
         
@@ -164,6 +164,7 @@ class Collector():
         cachedSigFiles = os.listdir(self.sigCacheDir)
         
         for sigFile in cachedSigFiles:
+            sigFile = os.path.join(self.sigCacheDir, sigFile)
             with open(sigFile) as f:
                 sigData = f.read()
                 crashSig = CrashSignature(sigData)
@@ -194,9 +195,7 @@ class Collector():
         sig = crashInfo.createCrashSignature(forceCrashAddress, forceCrashInstruction, numFrames)
         
         # Write the file to a unique file name
-        self.__store_signature_hashed(sig)
-        
-        return sig
+        return self.__store_signature_hashed(sig)
             
     def __store_signature_hashed(self, signature):
         '''
@@ -204,11 +203,18 @@ class Collector():
         
         @type signature: CrashSignature
         @param signature: CrashSignature to store
+        
+        @rtype: string
+        @return: Name of the file that the signature was written to
+        
         '''
         h = hashlib.new('sha1')
         h.update(str(signature))
-        with open(os.path.join(self.sigCacheDir, h.hexdigest() + ".signature"), 'w') as f:
+        sigfile = os.path.join(self.sigCacheDir, h.hexdigest() + ".signature")
+        with open(sigfile, 'w') as f:
             f.write(str(signature))
+            
+        return sigfile
 
 def main(argv=None):
     '''Command line options.'''
@@ -245,19 +251,19 @@ def main(argv=None):
     parser.add_argument("--serverproto", dest="serverproto", default="https", help="Server protocol to use (default is https)", metavar="PROTO")
     parser.add_argument("--servercreds", dest="servercreds", help="Credentials file (contains username and password on separate lines)", metavar="FILE")
     parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
-    parser.add_argument("--platform", required=True, dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
-    parser.add_argument("--product", required=True, dest="product", help="Product this crash appeared on", metavar="PRODUCT")
+    parser.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    parser.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
     parser.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
-    parser.add_argument("--os", required=True, dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    parser.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
     parser.add_argument('--args', dest='args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
     parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
 
     parser.add_argument("--testcase", dest="testcase", help="File containing testcase", metavar="FILE")
 
-    
+    # Options that affect how signatures are generated
     parser.add_argument("--forcecrashaddr", dest="forcecrashaddr", action='store_true', help="Force including the crash address into the signature")
     parser.add_argument("--forcecrashinst", dest="forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
-    parser.add_argument("--numframes", dest="numframes", type=int, help="How many frames to include into the signature (default is 8)")
+    parser.add_argument("--numframes", dest="numframes", default=8, type=int, help="How many frames to include into the signature (default is 8)")
 
 
 
@@ -277,8 +283,19 @@ def main(argv=None):
     crashInfo = None
     args = None
     env = None
+    
+    if opts.search or opts.generate or opts.refresh:
+        if opts.sigdir == None:
+            print("Error: Must specify --sigdir", file=sys.stderr)
+            return 2
+            
+
 
     if opts.search or opts.generate or opts.submit:
+        if opts.platform == None or opts.product == None or opts.os == None:
+            print("Error: Must specify at least --platform, --product and --os", file=sys.stderr)
+            return 2
+        
         if opts.stderr == None and opts.crashdata == None:
             print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
             return 2
@@ -322,19 +339,25 @@ def main(argv=None):
         collector.refresh()
         
     if opts.submit:
-        collector.submit(crashInfo, opts.testcase, None)
+        testcase = None
+        if opts.testcase:
+            with open(opts.testcase) as f:
+                testcase = f.read()
+        
+        collector.submit(crashInfo, testcase, None)
     
     if opts.search:
         sig = collector.search(crashInfo)
         if sig == None:
             print("No match found")
-            return 1
+            return 3
         print(sig)
         return 0
     
     if opts.generate:
         sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
         print(sigFile)
+        return 0
 
 
 
