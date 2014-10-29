@@ -23,6 +23,7 @@ from __future__ import print_function
 import sys
 import os
 import json
+import base64
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -100,7 +101,7 @@ class Collector():
             except RuntimeError, e:
                 print("Warning: Received broken signature (%s): %s" % (e, rawBucketObj["signature"]), file=sys.stderr)
     
-    def submit(self, crashInfo, testCase=None, metaData=None):
+    def submit(self, crashInfo, testCase=None, testCaseQuality=0, metaData=None):
         '''
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
@@ -110,6 +111,9 @@ class Collector():
         
         @type testCase: string
         @param testCase: A file containing a testcase for reproduction
+        
+        @type testCaseQuality: int
+        @param testCaseQuality: A value indicating the quality of the test (less is better)
         
         @type metaData: map
         @param metaData: A map containing arbitrary (application-specific) data which
@@ -128,7 +132,16 @@ class Collector():
         data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
         
         if testCase:
+            textBytes = bytearray([7,8,9,10,12,13,27]) + bytearray(range(0x20, 0x100))
+            isBinary = lambda input: bool(input.translate(None, textBytes))
+            if isBinary(testCase): 
+                testCase = base64.b64encode(testCase)
+                data["testcase_isbinary"] = True
+            else:
+                data["testcase_isbinary"] = False
+
             data["testcase"] = testCase
+            data["testcase_quality"] = testCaseQuality
             
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
@@ -263,6 +276,7 @@ def main(argv=None):
     parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
 
     parser.add_argument("--testcase", dest="testcase", help="File containing testcase", metavar="FILE")
+    parser.add_argument("--testcasequality", dest="testcasequality", default="0", help="Integer indicating test case quality (0 is best and default)", metavar="VAL")
 
     # Options that affect how signatures are generated
     parser.add_argument("--forcecrashaddr", dest="forcecrashaddr", action='store_true', help="Force including the crash address into the signature")
@@ -348,7 +362,7 @@ def main(argv=None):
             with open(opts.testcase) as f:
                 testcase = f.read()
         
-        collector.submit(crashInfo, testcase, None)
+        collector.submit(crashInfo, testcase, opts.testcasequality, None)
     
     if opts.search:
         sig = collector.search(crashInfo)

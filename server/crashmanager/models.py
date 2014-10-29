@@ -4,6 +4,8 @@ from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 
+from django.core.files.storage import FileSystemStorage
+
 class Platform(models.Model):
     name = models.CharField(max_length=63)
 
@@ -16,7 +18,8 @@ class OS(models.Model):
     version = models.CharField(max_length=127, blank=True, null=True)
     
 class TestCase(models.Model):
-    test = models.BinaryField()
+    test = models.FileField(storage=FileSystemStorage(), upload_to="tests")
+    quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
 
 class Client(models.Model):
@@ -63,6 +66,3 @@ class CrashEntry(models.Model):
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
         return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
-
-
-    

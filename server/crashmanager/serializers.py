@@ -2,9 +2,12 @@ from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestC
 from rest_framework import serializers
 from django.forms import widgets
 from django.core.exceptions import MultipleObjectsReturned
-from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
+
+from django.core.files.base import ContentFile
+import hashlib
+import base64
 
 class CrashEntrySerializer(serializers.ModelSerializer):
     # We need to redefine several fields explicitly because we flatten our
@@ -17,10 +20,16 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     os = serializers.CharField(max_length=63)
     client = serializers.CharField(max_length=255)
     testcase = serializers.CharField(widget=widgets.Textarea, required=False)
+    testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
+    testcase_isbinary = serializers.BooleanField(required=False, default=False, write_only=True)
 
     class Meta:
         model = CrashEntry
-        fields = ('rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 'testcase', 'platform', 'product', 'product_version', 'os', 'client', 'env', 'args')
+        fields = (
+                  'rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 
+                  'testcase', 'testcase_quality', 'testcase_isbinary',
+                  'platform', 'product', 'product_version', 'os', 'client', 'env', 'args'
+                  )
 
     def to_native(self, obj):
         '''
@@ -40,6 +49,8 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             serialized["client"] = obj.client.name
             
             if obj.testcase:
+                serialized["testcase_isbinary"] = obj.testcase.isBinary
+                serialized["testcase_quality"] = obj.testcase.quality
                 if obj.testcase.isBinary:
                     serialized["testcase"] = "<binary>"
                 else:
@@ -64,6 +75,8 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         os = attrs.pop('os', None)
         client = attrs.pop('client', None)
         testcase = attrs.pop('testcase', None)
+        testcase_quality = attrs.pop('testcase_quality', 0)
+        testcase_isbinary = attrs.pop('testcase_isbinary', False)
         
         # Parse the incoming data using the crash signature package from FTB
         configuration = ProgramConfiguration(product, platform, os, product_version)
@@ -109,7 +122,14 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         # If a testcase is supplied, create a testcase object and store it
         if testcase:
-            dbobj = TestCase(test=testcase)
+            if testcase_isbinary:
+                testcase = base64.b64decode(testcase)
+            
+            h = hashlib.new('sha1')
+            h.update(str(testcase))
+
+            dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary)
+            dbobj.test.save(h.hexdigest(), ContentFile(testcase))
             dbobj.save()
             attrs['testcase'] = dbobj
         else:
