@@ -1,5 +1,6 @@
 {% extends 'layouts/layout_1_column_full_width.html' %}
 {% load url from future %}
+{% load extratags %}
 
 {% block 1 %}
 <div class="panel">
@@ -54,9 +55,9 @@
 		<div class="field">
 			<div class="label">Testcase:</div><br/>
 			{% if entry.testcase.isBinary %}
-			<a href="">Download</a>
+			<a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}">Download</a>
 			{% else %}
-			<pre class="code"><code>{{ entry.testcase.test }}</code></pre>
+			<pre class="code"><code>{{ entry.testcase.content }}</code></pre>
 			{% endif %}
 		</div>
 		{% endif %}

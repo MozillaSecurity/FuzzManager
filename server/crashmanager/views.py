@@ -71,6 +71,11 @@ def viewCrashEntry(request, crashid):
     if entry.env:
         envDict = json.loads(entry.env)
         entry.envList = ["%s=%s" % (s,envDict[s]) for s in envDict.keys()]
+        
+    if entry.testcase and not entry.testcase.isBinary:
+        entry.testcase.test.open(mode='r')
+        entry.testcase.content = entry.testcase.test.read()
+        entry.testcase.test.close()
     
     context = RequestContext(request, { 'entry' : entry })
     return render(request, 'crash_view.html', context)

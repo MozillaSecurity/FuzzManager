@@ -1,6 +1,8 @@
 from django.conf.urls import patterns, include, url
 from rest_framework import routers
 from crashmanager import views
+from server import settings
+import os
 
 router = routers.DefaultRouter()
 router.register(r'signatures', views.BucketViewSet)
@@ -20,3 +22,8 @@ urlpatterns = patterns('',
     url(r'^crashes/(?P<crashid>\d+)/$', views.viewCrashEntry, name='crashview'),
     url(r'^rest/', include(router.urls)),
 )
+
+# This makes Django serve our testcases from the tests/ URL. When hosting this
+# project in production, one should consider serving tests directly through
+# the webserver rather than through Django for performance reasons.
+urlpatterns += patterns('', url(r'^tests/(.*)$', 'django.views.static.serve', name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')}), )
