@@ -19,10 +19,11 @@
 			<th style="width: 25px;">Bucket</th>
 			<th style="width: 100px;">Short Signature</th>
 			<th style="width: 50px;">Crash Address</th>
+			<th style="width: 50px;">Test status</th>
 			<th style="width: 50px;">Product</th>
 			<th style="width: 50px;">Version</th>
-			<th style="width: 50px;">Platform</th>
-			<th style="width: 60px;">OS</th>
+			<th style="width: 25px;">Platform</th>
+			<th style="width: 40px;">OS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,6 +39,16 @@
 		    </td>
 		    <td>{{ entry.shortSignature|escape }}</td>
 		    <td>{{ entry.crashAddress|escape }}</td>
+		    <td>
+			    {% if entry.testcase %}
+			    	Q{{entry.testcase.quality}} {{ entry.testcase.test|length }}
+				{% if entry.testcase.isBinary %}
+				(binary)
+				{% endif %}
+			    {% else %}
+			    	No test
+			    {% endif %}
+		    </td>
                     <td>{{ entry.product.name|escape }}</td>
 		    <td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&version={{ entry.version|urlencode }}">[x]</a></td>
 		    <td>{{ entry.platform.name|escape }}</td>
