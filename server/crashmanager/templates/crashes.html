@@ -5,10 +5,12 @@
 <div class="panel">
 	<div class="body notitle">
             <p>
-		{% if crashcount %} 
-			{{ crashcount }} unbucketed entries in database (showing only {{ crashlist|length }}):
-		{% else %}
+		{% if isSearch %} 
 			Your search matched {{ crashlist|length }} entries in database:
+		{% else %}
+			{{ crashlist|length }} unbucketed entries in database (
+			<a href="{% url 'crashmanager:autoassign' %}">Try to assign to existing buckets</a>
+			):
 		{% endif %}
 	    </p>
             <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">

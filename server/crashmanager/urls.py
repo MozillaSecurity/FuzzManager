@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     url(r'^signatures/(?P<sigid>\d+)/$', views.viewSignature, name='sigview'),
     url(r'^signatures/(?P<sigid>\d+)/delete/$', views.deleteSignature, name='sigdel'),
     url(r'^crashes/$', views.crashes, name='crashes'),
+    url(r'^crashes/autoassign/$', views.autoAssignCrashEntries, name='autoassign'),
     url(r'^crashes/(?P<crashid>\d+)/$', views.viewCrashEntry, name='crashview'),
     url(r'^rest/', include(router.urls)),
 )

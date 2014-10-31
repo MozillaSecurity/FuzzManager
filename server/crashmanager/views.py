@@ -62,6 +62,20 @@ def crashes(request):
     return render(request, 'crashes.html', context)
 
 @login_required(login_url='/login/')
+def autoAssignCrashEntries(request):
+    entries = CrashEntry.objects.filter(bucket=None)
+    buckets = Bucket.objects.all()
+    
+    for bucket in buckets:
+        signature = bucket.getSignature()
+        for entry in entries:
+            if signature.matches(entry.getCrashInfo()):
+                entry.bucket = bucket
+                entry.save()
+    
+    return redirect('crashmanager:crashes')
+
+@login_required(login_url='/login/')
 def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     
