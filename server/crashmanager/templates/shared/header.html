@@ -12,3 +12,20 @@
             <input type="submit" class="hidden" />
         </form>
     </div>
+
+    <div class="menu">
+        <div class="body notitle">
+		<div class="entry">
+			<a href="{% url 'crashmanager:crashes' %}">
+				<p><img src="/static/img/crashes.png"/></p>
+				<p>Crashes</p>
+			</a>
+		</div>
+		<div class="entry">
+			<a href="{% url 'crashmanager:signatures' %}">
+				<p><img src="/static/img/signatures.png"/></p>
+				<p>Signatures</p>
+			</a>
+		</div>
+        </div>
+    </div>
