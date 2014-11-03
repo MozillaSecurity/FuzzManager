@@ -21,8 +21,20 @@ def index(request):
     return redirect('crashmanager:crashes')
 
 @login_required(login_url='/login/')
-def signatures(request):
+def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'))
+    context = RequestContext(request, { 'siglist' : entries })
+    return render(request, 'signatures.html', context)
+
+@login_required(login_url='/login/')
+def allCrashes(request):
+    entries = CrashEntry.objects.all()
+    context = RequestContext(request, { 'crashlist' : entries })
+    return render(request, 'crashes.html', context)
+
+@login_required(login_url='/login/')
+def signatures(request):
+    entries = Bucket.objects.filter(bug=None).annotate(size=Count('crashentry'))
     context = RequestContext(request, { 'siglist' : entries })
     return render(request, 'signatures.html', context)
 
