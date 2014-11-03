@@ -43,6 +43,13 @@ class Bucket(models.Model):
     
     def getSignature(self):
         return CrashSignature(self.signature)
+    
+    def save(self, *args, **kwargs):
+        # Sanitize signature line endings so we end up with the same hash
+        # TODO: We might want to just parse the JSON here, and re-serialize
+        # it to a canonical string representation.
+        self.signature = self.signature.replace(r"\r\n", r"\n")
+        super(Bucket, self).save(*args, **kwargs)
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
