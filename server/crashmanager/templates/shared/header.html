@@ -1,4 +1,6 @@
-    <div class="page-header">
+     <script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
+     <script type="text/javascript" src="/static/js/search.js"></script>
+     <div class="page-header">
 
     	<h1>
     		<a href="/crashmanager">
@@ -7,8 +9,8 @@
     		</a>
     	</h1>
 
-        <form id="simple_search" method="get" action="search">
-		<input type="text" id="q" name="signature" value="{{ signature|default:"Search for Signature" }}" />
+	<form id="simple_search" method="get" action="{% url 'crashmanager:crashes' %}">
+		<input type="text" id="search" name="q" value="{{ q|default:"Search for Crash" }}" />
             <input type="submit" class="hidden" />
         </form>
     </div>

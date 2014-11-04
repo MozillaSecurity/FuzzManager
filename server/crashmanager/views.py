@@ -41,7 +41,10 @@ def signatures(request):
 @login_required(login_url='/login/')
 def crashes(request):
     filters = {}
+    q = None
     isSearch = True
+    
+    entries = CrashEntry.objects.all();
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -50,6 +53,7 @@ def crashes(request):
                        "product__name",
                        "product__version",
                        "platform__name",
+                       "testcase__quality",
                        ]
     
     for key in exactFilterKeys:
@@ -58,15 +62,25 @@ def crashes(request):
     
     if "sig" in request.GET:
         filters["shortSignature__contains"] = request.GET["sig"]
+        
+    if "q" in request.GET:
+        q = request.GET["q"]
+        entries = entries.filter(
+                                 Q(shortSignature__contains=q)
+                                 | Q(rawStderr__contains=q)
+                                 | Q(rawCrashData__contains=q)
+                                 )
 
     # If we end up without any filters, the default is to show all issues that
     # have no bucket/signature associated yet, as they are considered untriaged
-    if not filters:
+    if not filters and q == None:
         filters["bucket"] = None
         isSearch = False
     
-    entries = CrashEntry.objects.filter(**filters)
+    entries = entries.filter(**filters)
     context = RequestContext(request, {
+                                       'q' : q,
+                                       'request' : request,
                                        'isSearch' : isSearch, 
                                        'crashlist' : entries 
                                        })
