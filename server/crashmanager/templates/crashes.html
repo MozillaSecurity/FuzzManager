@@ -43,7 +43,8 @@
 		    <td>{{ entry.crashAddress|escape }}</td>
 		    <td>
 			    {% if entry.testcase %}
-			    	Q{{entry.testcase.quality}} {{ entry.testcase.test|length }}
+			    	Q{{entry.testcase.quality}} <a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&testcase__quality={{ entry.testcase.quality|urlencode }}"> [x]</a>
+				{{ entry.testcase.test|length }}
 				{% if entry.testcase.isBinary %}
 				(binary)
 				{% endif %}
@@ -51,10 +52,10 @@
 			    	No test
 			    {% endif %}
 		    </td>
-                    <td>{{ entry.product.name|escape }}</td>
-		    <td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&version={{ entry.version|urlencode }}">[x]</a></td>
-		    <td>{{ entry.platform.name|escape }}</td>
-                    <td>{{ entry.os.name|escape }}</td>
+		    <td>{{ entry.product.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__name={{ entry.product.name|urlencode }}"> [x]</a></td>
+		    <td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__version={{ entry.product.version|urlencode }}"> [x]</a></td>
+		    <td>{{ entry.platform.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}"> [x]</a> </td>
+		    <td>{{ entry.os.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}"> [x]</a></td>
                     </tr>{% endfor %}
                 </tbody>
             </table>
