@@ -23,6 +23,8 @@ urlpatterns = patterns('',
     url(r'^crashes/all/$', views.allCrashes, name='allcrashes'),
     url(r'^crashes/autoassign/$', views.autoAssignCrashEntries, name='autoassign'),
     url(r'^crashes/(?P<crashid>\d+)/$', views.viewCrashEntry, name='crashview'),
+    url(r'^crashes/(?P<crashid>\d+)/createbug/$', views.createExternalBug, name='createbug'),
+    
     url(r'^rest/', include(router.urls)),
 )
 

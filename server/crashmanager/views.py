@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
-from crashmanager.models import CrashEntry, Bucket
+from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug
 from django.template.context import RequestContext
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
@@ -248,6 +248,32 @@ def editSignature(request, sigid):
         raise SuspiciousOperation
         
     return render(request, 'signature_edit.html', context)
+
+@login_required(login_url='/login/')
+def createExternalBug(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    if request.method == 'POST':
+        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
+        
+        # Let the provider handle the POST request, which will file the bug
+        # and return us the external bug ID
+        extBugId = provider.getInstance().handlePOSTCreate(request)
+        
+        # Now create a bug in our database with that ID and assign it to the bucket
+        extBug = Bug(externalId = extBugId, externalType = provider)
+        entry.bucket.bug = extBug
+        entry.bucket.save()
+        
+        return redirect('crashmanager:sigview', sigid=entry.bucket.pk)
+    elif request.method == 'GET':
+        if 'provider' in request.GET:
+            provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
+        else:
+            provider = get_object_or_404(BugProvider, pk=1)
+        
+        return provider.getInstance().renderContextCreate(request, entry)
+    else:
+        raise SuspiciousOperation
 
 class CrashEntryViewSet(viewsets.ModelViewSet):
     """
