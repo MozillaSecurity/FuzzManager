@@ -25,16 +25,18 @@ class TestCase(models.Model):
 class Client(models.Model):
     name = models.CharField(max_length=255)
     
+class BugProvider(models.Model):
+    className = models.CharField(max_length=255)
+    
+    def getInstance(self):
+        # Dynamically instantiate the provider as requested
+        providerModule = __import__('crashmanager.Bugtracker.%s' % self.className, fromlist=[self.className])
+        providerClass = getattr(providerModule, self.className)
+        return providerClass()
+
 class Bug(models.Model):
-    NONE=0
-    BUGZILLA=1
-    EXT_TYPE_CHOICES=(
-        (NONE, 'None'),
-        (BUGZILLA, 'Bugzilla'),
-    )
     externalId = models.CharField(max_length=255, blank=True)
-    externalType = models.IntegerField(choices=EXT_TYPE_CHOICES, default=NONE)
-    reported = models.BooleanField(default=False)
+    externalType = models.ForeignKey(BugProvider)
     
 class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
