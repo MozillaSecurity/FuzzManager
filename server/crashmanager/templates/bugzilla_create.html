@@ -1,0 +1,114 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+		<select name="template">
+		{% for t in templates %}
+		    <option value="{{ t.pk }}">{{ t.name }}</option>
+		{% endfor %}
+		</select>
+
+		<p><strong>You are about to submit this information to: {{ hostname }}</strong></p>
+
+
+		<form action="{% url 'crashmanager:createbug' entry.pk %}" method="post">
+		{% csrf_token %}
+
+		<input type="hidden" name="entry" value="{{ entry.pk }}" />
+		<input type="hidden" name="bugprovider" value="{{ provider.pk }}" />
+
+		
+		<div class="field">
+			<label class="label" for="id_username">Username:</label>
+			<input id="id_username" maxlength="254" name="username" type="text" value="{{ username|default:'' }}" />
+		</div>
+		<div class="field">
+			<label class="label" for="id_password">Password:</label>
+			<input id="id_password" name="password" type="password" />
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_summary">Bug Summary:</label><br/>
+			<input id="id_summary" maxlength="1023" name="summary" type="text" value="{{ template.summary }}">
+		</div>
+
+
+		<div class="field">
+			<label class="label" for="id_product">Product:</label>
+			<input id="id_product" maxlength="1023" name="product" type="text" value="{{ template.product }}">
+
+			<label class="label" for="id_component">Component:</label>
+			<input id="id_component" maxlength="1023" name="component" type="text" value="{{ template.component }}">
+
+			<label class="label" for="id_version">Version:</label>
+			<input id="id_version" maxlength="1023" name="version" type="text" value="{{ template.version }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_op_sys">OS:</label>
+			<input id="id_op_sys" maxlength="1023" name="op_sys" type="text" value="{{ template.op_sys }}">
+
+			<label class="label" for="id_platform">Platform:</label>
+			<input id="id_platform" maxlength="1023" name="platform" type="text" value="{{ template.platform }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_cc">Cc:</label>
+			<input id="id_cc" maxlength="1023" name="cc" type="text" value="{{ template.cc }}">
+
+			<label class="label" for="id_assigned_to">Assigned To:</label>
+			<input id="id_assigned_to" maxlength="1023" name="assigned_to" type="text" value="{{ template.assigned_to }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_priority">Priority:</label>
+			<input id="id_priority" maxlength="1023" name="priority" type="text" value="{{ template.priority }}">
+			
+			<label class="label" for="id_severity">Severity:</label>
+			<input id="id_severity" maxlength="1023" name="severity" type="text" value="{{ template.severity }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_alias">Alias:</label>
+			<input id="id_alias" maxlength="1023" name="alias" type="text" value="{{ template.alias }}">
+			
+			<label class="label" for="id_qa_contact">QA Contact:</label>
+			<input id="id_qa_contact" maxlength="1023" name="qa_contact" type="text" value="{{ template.qa_contact }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_status">Status:</label>
+			<input id="id_status" maxlength="1023" name="status" type="text" value="{{ template.status }}">
+			
+			<label class="label" for="id_resolution">Resolution:</label>
+			<input id="id_resolution" maxlength="1023" name="resolution" type="text" value="{{ template.resolution }}">
+			
+			<label class="label" for="id_target_milestone">Target Milestone:</label>
+			<input id="id_target_milestone" maxlength="1023" name="target_milestone" type="text" value="{{ template.target_milestone }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_flags">Flags:</label><br/>
+			<input id="id_flags" maxlength="1023" name="flags" type="text" value="{{ template.flags }}">
+		</div>
+
+		<div class="field">
+		<input type="checkbox" id="id_security" name="security" value="unassigned" checked/>
+		<label class="label" for="id_security">Make this bug a security bug</label>
+		</div>
+
+		<div class="field">
+		<label class="label" for="id_description">Bug Description:</label><br/>
+                <textarea id="id_description" name="description">{{ template.description }}</textarea>
+		</div>
+		
+
+		<input type="submit" name="submit_save" value="Submit" />
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

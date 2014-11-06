@@ -376,10 +376,11 @@ div.field {
 		margin-right: auto;
 	}
 
-#id_signature, #id_shortDescription {
+
+#id_signature, #id_shortDescription, #id_summary, #id_description {
 	width: 90%;
 }
 
-#id_signature {
+#id_signature, #id_description {
 	height: 600px;
 }

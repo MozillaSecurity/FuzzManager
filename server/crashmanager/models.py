@@ -75,3 +75,23 @@ class CrashEntry(models.Model):
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
         return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
+    
+class BugzillaTemplate(models.Model):
+    hostname = models.TextField()
+    product = models.TextField()
+    component = models.TextField()
+    summary = models.TextField(blank=True)
+    version = models.TextField()
+    description = models.TextField(blank=True)
+    op_sys = models.TextField(blank=True)
+    platform = models.TextField(blank=True)
+    priority = models.TextField(blank=True)
+    severity = models.TextField(blank=True)
+    alias = models.TextField(blank=True)
+    cc = models.TextField(blank=True)
+    assigned_to = models.TextField(blank=True)
+    qa_contact = models.TextField(blank=True)
+    target_milestone = models.TextField(blank=True)
+    flags = models.TextField(blank=True)
+    attrs = models.TextField(blank=True)
+
