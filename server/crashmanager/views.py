@@ -250,6 +250,50 @@ def editSignature(request, sigid):
     return render(request, 'signature_edit.html', context)
 
 @login_required(login_url='/login/')
+def linkSignature(request, sigid):
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    providers = BugProvider.objects.all() 
+    
+    data = { 'bucket' : bucket, 'providers' : providers }
+    
+    if request.method == 'POST':
+        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
+        bugId = request.POST['bugId']
+        username = request.POST['username']
+        password = request.POST['password']
+
+        bug = Bug.objects.filter(externalId = bugId, externalType = provider)
+        
+        if 'submit_save' in request.POST:
+            if not bug:
+                bug = Bug(externalId = bugId, externalType = provider)
+                bug.save()
+                
+            bucket.bug = bug
+            bucket.save()
+            return redirect('crashmanager:sigview', sigid=bucket.pk)
+        else:
+            # This is a preview request
+            bugData = provider.getInstance().getBugData(bugId, username, password)
+            
+            if bugData == None:
+                data['error_message'] = 'Bug not found in external database.'
+            else:
+                data['summary'] = bugData['summary']
+            
+            data['provider'] = provider
+            data['bugId'] = bugId
+            data['username'] = username
+                
+            return render(request, 'signature_link.html', RequestContext(request, data))
+    elif request.method == 'GET':
+        context = RequestContext(request, data)
+    else:
+        raise SuspiciousOperation
+        
+    return render(request, 'signature_link.html', context)
+
+@login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     if request.method == 'POST':
