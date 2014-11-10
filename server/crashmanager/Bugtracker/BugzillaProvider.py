@@ -63,6 +63,11 @@ class BugzillaProvider(Provider):
             raise RuntimeError("Failed to create bug: %s", ret)
         
         return ret["id"]
+    
+    def getBugData(self, bugId, username, password):
+        bz = BugzillaREST(self.hostname, username, password)
+        return bz.getBug(bugId)
+
 
 
 class BugzillaREST():
@@ -91,6 +96,24 @@ class BugzillaREST():
             raise RuntimeError('Login failed: %s', response.text)
         
         self.authToken = json["token"]
+        
+    def getBug(self, bugId):
+        # Ensure we're logged in
+        self.login()
+        
+        bugUrl = "%s/bug/%s?token=%s" % (self.baseUrl, bugId, self.authToken)
+        response = requests.get(bugUrl)
+        json = response.json()
+        
+        if not "bugs" in json:
+            return None
+        
+        bugs = json["bugs"]
+        
+        if not bugs:
+            return None
+        
+        return bugs[0]
     
     def createBug(self, product, component, summary, version, description=None, op_sys=None, 
                   platform=None, priority=None, severity=None, alias=None, 
