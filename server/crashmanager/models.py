@@ -29,6 +29,9 @@ class BugProvider(models.Model):
     classname = models.CharField(max_length=255, blank=False)
     hostname = models.CharField(max_length=255, blank=False)
     
+    # This is used to annotate bugs with the URL linking to them
+    urlTemplate = models.CharField(max_length=1023, blank=False)
+    
     def getInstance(self):
         # Dynamically instantiate the provider as requested
         providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])

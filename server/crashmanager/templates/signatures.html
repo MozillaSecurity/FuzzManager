@@ -1,5 +1,6 @@
 {% extends 'layouts/layout_1_column_full_width.html' %}
 {% load url from future %}
+{% load extratags %}
 
 {% block 1 %}
 <div class="panel">
@@ -24,9 +25,9 @@
 		    <td>{{ entry.size }}</td>
 		    <td>
 			{% if entry.bug %}	    
-			    {{ entry.bug.externalId }}
+			<a href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}">{{ entry.bug.externalId }}</a>
 			{% else %}
-			    <a title="Assign an external bug" href="{% url 'crashmanager:linkextbug' entry.pk %}">Assign</a>
+			    <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
 			{% endif %}
 		    </td>
 		    <td>
