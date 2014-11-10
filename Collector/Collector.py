@@ -132,16 +132,20 @@ class Collector():
         data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
         
         if testCase:
+            with open(testCase) as f:
+                testCaseData = f.read()
+            
             textBytes = bytearray([7,8,9,10,12,13,27]) + bytearray(range(0x20, 0x100))
             isBinary = lambda input: bool(input.translate(None, textBytes))
-            if isBinary(testCase): 
-                testCase = base64.b64encode(testCase)
+            if isBinary(testCaseData): 
+                testCaseData = base64.b64encode(testCaseData)
                 data["testcase_isbinary"] = True
             else:
                 data["testcase_isbinary"] = False
 
-            data["testcase"] = testCase
+            data["testcase"] = testCaseData
             data["testcase_quality"] = testCaseQuality
+            data["testcase_ext"] = os.path.splitext(testCase)[1][1:]
             
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
@@ -357,11 +361,7 @@ def main(argv=None):
         collector.refresh()
         
     if opts.submit:
-        testcase = None
-        if opts.testcase:
-            with open(opts.testcase) as f:
-                testcase = f.read()
-        
+        testcase = opts.testcase        
         collector.submit(crashInfo, testcase, opts.testcasequality, None)
     
     if opts.search:

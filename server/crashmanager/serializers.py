@@ -20,6 +20,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     os = serializers.CharField(max_length=63)
     client = serializers.CharField(max_length=255)
     testcase = serializers.CharField(widget=widgets.Textarea, required=False)
+    testcase_ext = serializers.CharField(required=True, write_only=True)
     testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
     testcase_isbinary = serializers.BooleanField(required=False, default=False, write_only=True)
 
@@ -27,7 +28,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         model = CrashEntry
         fields = (
                   'rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 
-                  'testcase', 'testcase_quality', 'testcase_isbinary',
+                  'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
                   'platform', 'product', 'product_version', 'os', 'client', 'env', 'args'
                   )
 
@@ -75,6 +76,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         os = attrs.pop('os', None)
         client = attrs.pop('client', None)
         testcase = attrs.pop('testcase', None)
+        testcase_ext = attrs.pop('testcase_ext', None)
         testcase_quality = attrs.pop('testcase_quality', 0)
         testcase_isbinary = attrs.pop('testcase_isbinary', False)
         
@@ -129,7 +131,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             h.update(str(testcase))
 
             dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary)
-            dbobj.test.save(h.hexdigest(), ContentFile(testcase))
+            dbobj.test.save("%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase))
             dbobj.save()
             attrs['testcase'] = dbobj
         else:
