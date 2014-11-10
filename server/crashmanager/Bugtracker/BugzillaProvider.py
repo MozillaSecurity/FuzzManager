@@ -21,8 +21,8 @@ from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
 
 class BugzillaProvider(Provider):
-    def __init__(self):
-        super(BugzillaProvider, self).__init__()
+    def __init__(self, hostname):
+        super(BugzillaProvider, self).__init__(hostname)
 
     def renderContextCreate(self, request, crashEntry):
         if 'template' in request.GET:
@@ -40,6 +40,7 @@ class BugzillaProvider(Provider):
         # in summary/description, etc.
         
         context = RequestContext(request, {
+                                           'hostname' : self.hostname,
                                            'templates' : templates,
                                            'template' : template,
                                            'entry' : crashEntry,
@@ -49,14 +50,13 @@ class BugzillaProvider(Provider):
         return render(request, 'bugzilla_create.html', context)
     
     def handlePOSTCreate(self, request):
-        hostname = request.pop('hostname')
         username = request.pop('username')
         password = request.pop('password')
         
         # TODO: Here we need to pull out cc, alias, groups and flags
         # and re-add them in their proper array form
         
-        bz = BugzillaREST(hostname, username, password)
+        bz = BugzillaREST(self.hostname, username, password)
         
         ret = bz.createBug(**request)
         if not "id" in ret:

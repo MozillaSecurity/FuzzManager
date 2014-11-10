@@ -26,13 +26,14 @@ class Client(models.Model):
     name = models.CharField(max_length=255)
     
 class BugProvider(models.Model):
-    className = models.CharField(max_length=255)
+    classname = models.CharField(max_length=255, blank=False)
+    hostname = models.CharField(max_length=255, blank=False)
     
     def getInstance(self):
         # Dynamically instantiate the provider as requested
-        providerModule = __import__('crashmanager.Bugtracker.%s' % self.className, fromlist=[self.className])
-        providerClass = getattr(providerModule, self.className)
-        return providerClass()
+        providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])
+        providerClass = getattr(providerModule, self.classname)
+        return providerClass(self.hostname)
 
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)
@@ -77,7 +78,6 @@ class CrashEntry(models.Model):
         return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
     
 class BugzillaTemplate(models.Model):
-    hostname = models.TextField()
     product = models.TextField()
     component = models.TextField()
     summary = models.TextField(blank=True)
