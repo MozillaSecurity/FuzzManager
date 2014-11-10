@@ -23,8 +23,8 @@ class Provider():
     '''
     __metaclass__ = ABCMeta
     
-    def __init__(self):
-        pass
+    def __init__(self, hostname):
+        self.hostname = hostname
     
     @abstractmethod
     def renderContextCreate(self, request, crashEntry):
@@ -34,4 +34,7 @@ class Provider():
     def handlePOSTCreate(self, request):
         return
     
+    @abstractmethod
+    def getBugData(self, bugId, username, password):
+        return
     
