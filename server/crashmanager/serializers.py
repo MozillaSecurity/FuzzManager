@@ -20,7 +20,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     os = serializers.CharField(max_length=63)
     client = serializers.CharField(max_length=255)
     testcase = serializers.CharField(widget=widgets.Textarea, required=False)
-    testcase_ext = serializers.CharField(required=True, write_only=True)
+    testcase_ext = serializers.CharField(required=False, write_only=True)
     testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
     testcase_isbinary = serializers.BooleanField(required=False, default=False, write_only=True)
 
@@ -124,6 +124,9 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         # If a testcase is supplied, create a testcase object and store it
         if testcase:
+            if testcase_ext == None:
+                raise RuntimeError("Must provide testcase extension when providing testcase")
+            
             if testcase_isbinary:
                 testcase = base64.b64decode(testcase)
             
