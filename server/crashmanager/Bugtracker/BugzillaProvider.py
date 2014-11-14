@@ -19,10 +19,32 @@ import requests
 from django.template.context import RequestContext
 from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
+from django.forms.models import model_to_dict
 
 class BugzillaProvider(Provider):
-    def __init__(self, hostname):
-        super(BugzillaProvider, self).__init__(hostname)
+    def __init__(self, pk, hostname):
+        super(BugzillaProvider, self).__init__(pk, hostname)
+        
+        self.templateFields = [
+                    "templateName",
+                    "product",
+                    "component",
+                    "summary",
+                    "version",
+                    "description",
+                    "op_sys",
+                    "platform",
+                    "priority",
+                    "severity",
+                    "alias",
+                    "cc",
+                    "assigned_to",
+                    "qa_contact",
+                    "target_milestone",
+                    "flags",
+                    "whiteboard",
+                    "keywords",
+                ]
 
     def renderContextCreate(self, request, crashEntry):
         if 'template' in request.GET:
@@ -32,37 +54,137 @@ class BugzillaProvider(Provider):
             
             if not template:
                 template = {}
+            else:
+                template = model_to_dict(template[0])
         
         templates = BugzillaTemplate.objects.all()
         
-        # TODO: Here we must populate the template further with data from
-        # our crashEntry. That means, set the proper OS, substitute variables
-        # in summary/description, etc.
+        if template:
+            # Set the summary if empty
+            if not template["summary"]:
+                if crashEntry.shortSignature.startswith("[@"):
+                    template["summary"] = "Crash %s" % crashEntry.shortSignature
+                else:
+                    template["summary"] = crashEntry.shortSignature
+            
+            # Determine the state of the testcase
+            testcase = "(Test not available)"
+            if crashEntry.testcase:
+                if crashEntry.testcase.isBinary:
+                    testcase = "See attachment."
+                else:
+                    crashEntry.testcase.test.open(mode='r')
+                    testcase = crashEntry.testcase.test.read()
+                    crashEntry.testcase.test.close()
+            
+            # Substitute various variables in the description
+            template["description"] = template["description"].replace('%testcase%', testcase)
+            
+            if crashEntry.rawCrashData:
+                crashData = crashEntry.rawCrashData
+            else:
+                crashData = crashEntry.rawStderr
+        
+            template["description"] = template["description"].replace('%crashdata%', crashData)
+            template["description"] = template["description"].replace('%shortsig%', crashEntry.shortSignature)
+            
+            version = crashEntry.product.version
+            if not version:
+                version = "(Version not available)"
+            
+            template["description"] = template["description"].replace('%product%', crashEntry.product.name)
+            template["description"] = template["description"].replace('%version%', version)
+
+            # Now try to guess platform/OS if empty
+
+            # FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
+            if not template["op_sys"]:
+                if crashEntry.os.name == "linux":
+                    template["op_sys"] = "Linux"
+                elif crashEntry.os.name == "macosx":
+                    template["op_sys"] = "Mac OS X"
+                elif crashEntry.os.name.startswith("win"):
+                    # Translate win7 -> Windows 7, win8 -> Windows 8
+                    # Doesn't work for Vista, XP, needs to be improved
+                    template["op_sys"] = crashEntry.os.name.replace("win", "Windows ")
+                    
+            if not template["platform"]:
+                # BMO uses x86_64, not x86-64, and ARM instead of arm
+                template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
+                
         
         context = RequestContext(request, {
                                            'hostname' : self.hostname,
                                            'templates' : templates,
                                            'template' : template,
                                            'entry' : crashEntry,
-                                           'provider' : None
+                                           'provider' : self.pk,
                                        })
     
-        return render(request, 'bugzilla_create.html', context)
+        return render(request, 'bugzilla/create.html', context)
     
-    def handlePOSTCreate(self, request):
-        username = request.pop('username')
-        password = request.pop('password')
+    def handlePOSTCreate(self, request, crashEntry):
+        args = request.POST.dict()
         
-        # TODO: Here we need to pull out cc, alias, groups and flags
-        # and re-add them in their proper array form
+        username = request.POST['username']
+        password = request.POST['password']
         
+        # Remove any other variables that we don't want to pass on
+        for key in request.POST:
+            if not key in self.templateFields:
+                del(args[key])
+        
+        for fn in ["cc", "alias", "flags"]:
+            args[fn] = [x.strip() for x in args[fn].split(',')]
+        
+        if request.POST['security']:
+            args["groups"] = ["core-security"]
+            
         bz = BugzillaREST(self.hostname, username, password)
         
-        ret = bz.createBug(**request)
+        ret = bz.createBug(**args)
         if not "id" in ret:
             raise RuntimeError("Failed to create bug: %s", ret)
         
         return ret["id"]
+    
+    def renderContextCreateTemplate(self, request):
+        if 'template' in request.GET:
+            template = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
+        else:
+            template = {}
+        
+        context = RequestContext(request, {
+                                           'createTemplate' : True,
+                                           'template' : template,
+                                           'provider' : self.pk,
+                                       })
+    
+        return render(request, 'bugzilla/create.html', context)
+    
+    def renderContextViewTemplate(self, request, templateId):
+        template = get_object_or_404(BugzillaTemplate, pk=templateId)
+        templates = BugzillaTemplate.objects.all()
+        
+        context = RequestContext(request, {
+                                           'provider' : self.pk,
+                                           'templates' : templates,
+                                           'template' : template,
+                                       })
+    
+        return render(request, 'bugzilla/viewEditTemplate.html', context)
+    
+    def handlePOSTCreateEditTemplate(self, request):
+        if 'template' in request.POST:
+            bugTemplate = get_object_or_404(BugzillaTemplate, pk=request.POST['template'])
+        else:
+            bugTemplate = BugzillaTemplate()
+            
+        for field in self.templateFields:
+            setattr(bugTemplate, field, request.POST[field])
+        
+        bugTemplate.save()
+        return bugTemplate.pk
     
     def getBugData(self, bugId, username, password):
         bz = BugzillaREST(self.hostname, username, password)
@@ -119,7 +241,7 @@ class BugzillaREST():
                   platform=None, priority=None, severity=None, alias=None, 
                   cc=None, assigned_to=None, comment_is_private=None, is_markdown=None,
                   groups=None, qa_contact=None, status=None, resolution=None,
-                  target_milestone=None, flags=None, attrs=None):
+                  target_milestone=None, flags=None, whiteboard=None, keywords=None, attrs=None):
         
         # Compose our bug attribute using all given arguments with special
         # handling of the self and attrs arguments

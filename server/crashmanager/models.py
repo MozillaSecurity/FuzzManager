@@ -36,7 +36,7 @@ class BugProvider(models.Model):
         # Dynamically instantiate the provider as requested
         providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])
         providerClass = getattr(providerModule, self.classname)
-        return providerClass(self.hostname)
+        return providerClass(self.pk, self.hostname)
 
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)

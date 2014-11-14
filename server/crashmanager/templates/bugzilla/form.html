@@ -1,36 +1,3 @@
-{% extends 'layouts/layout_1_column_full_width.html' %}
-{% load url from future %}
-
-{% block 1 %}
-<div class="panel">
-	<div class="body notitle">
-		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-		<select name="template">
-		{% for t in templates %}
-		    <option value="{{ t.pk }}">{{ t.name }}</option>
-		{% endfor %}
-		</select>
-
-		<p><strong>You are about to submit this information to: {{ hostname }}</strong></p>
-
-
-		<form action="{% url 'crashmanager:createbug' entry.pk %}" method="post">
-		{% csrf_token %}
-
-		<input type="hidden" name="entry" value="{{ entry.pk }}" />
-		<input type="hidden" name="bugprovider" value="{{ provider.pk }}" />
-
-		
-		<div class="field">
-			<label class="label" for="id_username">Username:</label>
-			<input id="id_username" maxlength="254" name="username" type="text" value="{{ username|default:'' }}" />
-		</div>
-		<div class="field">
-			<label class="label" for="id_password">Password:</label>
-			<input id="id_password" name="password" type="password" />
-		</div>
-
 		<div class="field">
 			<label class="label" for="id_summary">Bug Summary:</label><br/>
 			<input id="id_summary" maxlength="1023" name="summary" type="text" value="{{ template.summary }}">
@@ -46,6 +13,14 @@
 
 			<label class="label" for="id_version">Version:</label>
 			<input id="id_version" maxlength="1023" name="version" type="text" value="{{ template.version }}">
+		</div>
+
+		<div class="field">
+			<label class="label" for="id_whiteboard">Whiteboard:</label>
+			<input id="id_whiteboard" maxlength="1023" name="whiteboard" type="text" value="{{ template.whiteboard }}">
+
+			<label class="label" for="id_keywords">Keywords:</label>
+			<input id="id_keywords" maxlength="1023" name="keywords" type="text" value="{{ template.keywords }}">
 		</div>
 
 		<div class="field">
@@ -105,10 +80,3 @@
 		<label class="label" for="id_description">Bug Description:</label><br/>
                 <textarea id="id_description" name="description">{{ template.description }}</textarea>
 		</div>
-		
-
-		<input type="submit" name="submit_save" value="Submit" />
-		</form>
-        </div>
-</div>
-{% endblock 1 %}

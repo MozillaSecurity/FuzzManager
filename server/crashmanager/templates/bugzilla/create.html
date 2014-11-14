@@ -1,0 +1,50 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+		{% if createTemplate %}
+			<form action="{% url 'crashmanager:createtemplate' provider %}" method="post">
+		{% else %}
+			<select name="template">
+			{% for t in templates %}
+			    <option value="{{ t.pk }}">{{ t.name }}</option>
+			{% endfor %}
+			</select>
+
+			<p><strong>You are about to submit this information to: {{ hostname }}</strong></p>
+
+			<form action="{% url 'crashmanager:createbug' entry.pk %}" method="post">
+				<input type="hidden" name="entry" value="{{ entry.pk }}" />
+		{% endif %}
+		
+		{% csrf_token %}
+
+		<input type="hidden" name="provider" value="{{ provider }}" />
+		
+		{% if createTemplate %}
+			<div class="field">
+				<label class="label" for="id_templateName">Template Name:</label>
+				<input id="id_templateName" maxlength="255" name="templateName" type="text" />
+			</div>
+		{% else %}
+			<div class="field">
+				<label class="label" for="id_username">Username:</label>
+				<input id="id_username" maxlength="254" name="username" type="text" value="{{ username|default:'' }}" />
+			</div>
+			<div class="field">
+				<label class="label" for="id_password">Password:</label>
+				<input id="id_password" name="password" type="password" />
+			</div>
+		{% endif %}
+
+		{% include "bugzilla/form.html" %}
+
+		<input type="submit" name="submit_save" value="Submit" />
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

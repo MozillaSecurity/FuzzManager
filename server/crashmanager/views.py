@@ -301,7 +301,7 @@ def createExternalBug(request, crashid):
         
         # Let the provider handle the POST request, which will file the bug
         # and return us the external bug ID
-        extBugId = provider.getInstance().handlePOSTCreate(request)
+        extBugId = provider.getInstance().handlePOSTCreate(request, entry)
         
         # Now create a bug in our database with that ID and assign it to the bucket
         extBug = Bug(externalId = extBugId, externalType = provider)
@@ -318,6 +318,28 @@ def createExternalBug(request, crashid):
         return provider.getInstance().renderContextCreate(request, entry)
     else:
         raise SuspiciousOperation
+    
+@login_required(login_url='/login/')
+def createBugTemplate(request, providerId):
+    provider = get_object_or_404(BugProvider, pk=providerId)
+    if request.method == 'POST':
+        # Let the provider handle the template creation
+        templateId = provider.getInstance().handlePOSTCreateTemplate(request)
+        
+        return redirect('crashmanager:viewtemplate', providerId=provider.pk, templateId=templateId)
+    elif request.method == 'GET':
+        return provider.getInstance().renderContextCreateTemplate(request)
+    else:
+        raise SuspiciousOperation
+    
+@login_required(login_url='/login/')
+def viewEditBugTemplate(request, providerId, templateId):
+    provider = get_object_or_404(BugProvider, pk=providerId)
+    if request.method == 'GET':
+        return provider.getInstance().renderContextViewTemplate(request, templateId)
+    elif request.method == 'POST':
+        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
+        return provider.getInstance().renderContextViewTemplate(request, templateId)
 
 class CrashEntryViewSet(viewsets.ModelViewSet):
     """

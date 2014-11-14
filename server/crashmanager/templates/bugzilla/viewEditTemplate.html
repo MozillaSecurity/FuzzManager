@@ -1,0 +1,28 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		<form action="{% url 'crashmanager:viewtemplate' provider template.pk %}" method="post">
+		{% csrf_token %}
+
+		<select name="template">
+		{% for t in templates %}
+		<option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected"{% endif %}>{{ t.name }}</option>
+		{% endfor %}
+		</select>
+
+		<div class="field">
+			<label class="label" for="id_templateName">Template Name:</label>
+			<input id="id_templateName" maxlength="255" name="templateName" type="text" value="{{ template.name }}">
+		</div>
+
+		{% include "bugzilla/form.html" %}
+
+                <input type="submit" name="submit_save" value="Save" />
+
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

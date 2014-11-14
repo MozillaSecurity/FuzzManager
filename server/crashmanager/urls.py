@@ -24,6 +24,9 @@ urlpatterns = patterns('',
     url(r'^crashes/autoassign/$', views.autoAssignCrashEntries, name='autoassign'),
     url(r'^crashes/(?P<crashid>\d+)/$', views.viewCrashEntry, name='crashview'),
     url(r'^crashes/(?P<crashid>\d+)/createbug/$', views.createExternalBug, name='createbug'),
+    url(r'^bugprovider/(?P<providerId>\d+)/templates/create/$', views.createBugTemplate, name='createtemplate'),
+    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/$', views.viewEditBugTemplate, name='viewtemplate'),
+
     
     url(r'^rest/', include(router.urls)),
 )
