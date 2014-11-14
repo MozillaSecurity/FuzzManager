@@ -81,11 +81,14 @@ class CrashEntry(models.Model):
         return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
     
 class BugzillaTemplate(models.Model):
+    name = models.TextField()
     product = models.TextField()
     component = models.TextField()
     summary = models.TextField(blank=True)
     version = models.TextField()
     description = models.TextField(blank=True)
+    whiteboard = models.TextField(blank=True)
+    keywords = models.TextField(blank=True)
     op_sys = models.TextField(blank=True)
     platform = models.TextField(blank=True)
     priority = models.TextField(blank=True)
