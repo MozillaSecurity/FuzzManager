@@ -11,6 +11,9 @@ from django.db.models import Q
 from django.db.models.aggregates import Count
 import json
 
+def renderError(request, err):
+    return render(request, 'error.html', { 'error_message' : err })
+
 def logout_view(request):
     logout(request)
     # Redirect to a success page.
@@ -282,6 +285,10 @@ def linkSignature(request, sigid):
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    
+    if not entry.bucket:
+        return renderError(request, "Cannot create an external bug for an issue that is not associated to a bucket/signature")
+    
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
         
