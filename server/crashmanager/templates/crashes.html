@@ -31,7 +31,7 @@
                 <tbody>
 	          {% for entry in crashlist %}<tr class="{% cycle odd,even %}">
 		    <td>{{ entry.pk }} <a href="{% url 'crashmanager:crashview' entry.pk %}">View</a></td>
-                    <td>{{ entry.created|date }}</td>
+                    <td>{{ entry.created|date:"r" }}</td>
 		    <td>
 			{% if entry.bucket %} 
 			{{ entry.bucket.pk }} <a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">View</a>

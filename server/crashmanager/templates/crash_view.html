@@ -6,7 +6,23 @@
 <div class="panel">
 	<div class="body notitle">
 		<div class="field">
-			<span class="label">Created: </span><span class="code">{{ entry.created|date }}</span>
+			 <span class="label">Status:</span>
+			 	<span>
+					{% if entry.bucket %}
+						Assigned to bucket <a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
+						{% if entry.bucket.bug %}
+							Reported as <a href="{{ entry.bucket.bug.externalType.urlTemplate|varformat:entry.bucket.bug.externalId }}">bug {{ entry.bucket.bug.externalId }}</a>.
+						{% else %}
+							Unreported, <a href="{% url 'crashmanager:createbug' entry.pk %}">file a bug</a>.
+						{% endif %}
+					{% else %}
+						Not assigned to any bucket. <a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a>
+					{% endif %}
+				</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Created: </span><span class="code">{{ entry.created|date:"r" }}</span>
 			<span class="label">by Client: </span><span class="code">{{ entry.client.name|escape }}</span>
 		</div>
 
@@ -83,9 +99,9 @@
 		{% if notImplemented %}
 		<div class="field">
 			<span class="label">Actions:</span>
-			<a href="{% url 'crashmanager:crashedit' bucket.pk %}">Edit</a>
+			<a href="{% url 'crashmanager:crashedit' entry.pk %}">Edit</a>
 			-
-			<a href="{% url 'crashmanager:crashdel' bucket.pk %}">Delete</a>
+			<a href="{% url 'crashmanager:crashdel' entry.pk %}">Delete</a>
 		</div>
 		{% endif %}
         </div>
