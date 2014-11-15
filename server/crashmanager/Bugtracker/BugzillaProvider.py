@@ -16,7 +16,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 from crashmanager.Bugtracker.Provider import Provider
 import requests
-from django.template.context import RequestContext
 from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
 from django.forms.models import model_to_dict
@@ -111,17 +110,16 @@ class BugzillaProvider(Provider):
             if not template["platform"]:
                 # BMO uses x86_64, not x86-64, and ARM instead of arm
                 template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
-                
         
-        context = RequestContext(request, {
-                                           'hostname' : self.hostname,
-                                           'templates' : templates,
-                                           'template' : template,
-                                           'entry' : crashEntry,
-                                           'provider' : self.pk,
-                                       })
+        data = {
+                   'hostname' : self.hostname,
+                   'templates' : templates,
+                   'template' : template,
+                   'entry' : crashEntry,
+                   'provider' : self.pk,
+                }
     
-        return render(request, 'bugzilla/create.html', context)
+        return render(request, 'bugzilla/create.html', data)
     
     def handlePOSTCreate(self, request, crashEntry):
         args = request.POST.dict()
@@ -154,25 +152,25 @@ class BugzillaProvider(Provider):
         else:
             template = {}
         
-        context = RequestContext(request, {
-                                           'createTemplate' : True,
-                                           'template' : template,
-                                           'provider' : self.pk,
-                                       })
+        data = {
+                'createTemplate' : True,
+                'template' : template,
+                'provider' : self.pk,
+                }
     
-        return render(request, 'bugzilla/create.html', context)
+        return render(request, 'bugzilla/create.html', data)
     
     def renderContextViewTemplate(self, request, templateId):
         template = get_object_or_404(BugzillaTemplate, pk=templateId)
         templates = BugzillaTemplate.objects.all()
         
-        context = RequestContext(request, {
-                                           'provider' : self.pk,
-                                           'templates' : templates,
-                                           'template' : template,
-                                       })
+        data = {
+                'provider' : self.pk,
+                'templates' : templates,
+                'template' : template,
+                }
     
-        return render(request, 'bugzilla/viewEditTemplate.html', context)
+        return render(request, 'bugzilla/viewEditTemplate.html', data)
     
     def handlePOSTCreateEditTemplate(self, request):
         if 'template' in request.POST:

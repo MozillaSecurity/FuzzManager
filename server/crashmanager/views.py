@@ -1,7 +1,6 @@
 from rest_framework import viewsets
 from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
 from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug
-from django.template.context import RequestContext
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -23,20 +22,17 @@ def index(request):
 @login_required(login_url='/login/')
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'))
-    context = RequestContext(request, { 'siglist' : entries })
-    return render(request, 'signatures.html', context)
+    return render(request, 'signatures.html', { 'siglist' : entries })
 
 @login_required(login_url='/login/')
 def allCrashes(request):
     entries = CrashEntry.objects.all()
-    context = RequestContext(request, { 'crashlist' : entries })
-    return render(request, 'crashes.html', context)
+    return render(request, 'crashes.html', { 'crashlist' : entries })
 
 @login_required(login_url='/login/')
 def signatures(request):
     entries = Bucket.objects.filter(bug=None).annotate(size=Count('crashentry'))
-    context = RequestContext(request, { 'siglist' : entries })
-    return render(request, 'signatures.html', context)
+    return render(request, 'signatures.html', { 'siglist' : entries })
 
 @login_required(login_url='/login/')
 def crashes(request):
@@ -78,14 +74,9 @@ def crashes(request):
         isSearch = False
     
     entries = entries.filter(**filters)
-    context = RequestContext(request, {
-                                       'q' : q,
-                                       'request' : request,
-                                       'isSearch' : isSearch, 
-                                       'crashlist' : entries 
-                                       })
+    data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
     
-    return render(request, 'crashes.html', context)
+    return render(request, 'crashes.html', data)
 
 @login_required(login_url='/login/')
 def autoAssignCrashEntries(request):
@@ -117,8 +108,7 @@ def viewCrashEntry(request, crashid):
         entry.testcase.content = entry.testcase.test.read()
         entry.testcase.test.close()
     
-    context = RequestContext(request, { 'entry' : entry })
-    return render(request, 'crash_view.html', context)
+    return render(request, 'crash_view.html', { 'entry' : entry })
 
 def __handleSignaturePost(request, bucket):
     # This method contains code shared between newSignature and editSignature
@@ -127,8 +117,8 @@ def __handleSignaturePost(request, bucket):
     try:
         signature = bucket.getSignature()
     except RuntimeError, e:
-        context = RequestContext(request, { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e })
-        return render(request, 'signature_edit.html', context)
+        data = { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e }
+        return render(request, 'signature_edit.html', data)
     
     # Only save if we hit "save" (not e.g. "preview")
     if 'submit_save' in request.POST:
@@ -164,11 +154,12 @@ def __handleSignaturePost(request, bucket):
         return redirect('crashmanager:sigview', sigid=bucket.pk)
     
     # Render the preview page
-    context = RequestContext(request, { 'bucket' : bucket, 
-                                       'error_message' : "This is a preview, don't forget to save!",
-                                       'inCount' : inCount, 'outCount' : outCount
-                                       })
-    return render(request, 'signature_edit.html', context)
+    data = { 
+            'bucket' : bucket, 
+            'error_message' : "This is a preview, don't forget to save!",
+            'inCount' : inCount, 'outCount' : outCount
+            }
+    return render(request, 'signature_edit.html', data)
 
 @login_required(login_url='/login/')
 def newSignature(request):
@@ -194,18 +185,19 @@ def newSignature(request):
             proposedSignature = str(crashInfo.createCrashSignature())
             proposedShortDesc = crashInfo.createShortSignature()
             
-            context = RequestContext(request, { 'new' : True, 'bucket' : { 
-                                                            'pk' : None, 
-                                                            'bug' : None,
-                                                            'signature' : proposedSignature,
-                                                            'shortDescription' : proposedShortDesc,
-                                                            } })
+            data = { 'new' : True, 'bucket' : { 
+                                                'pk' : None, 
+                                                'bug' : None,
+                                                'signature' : proposedSignature,
+                                                'shortDescription' : proposedShortDesc,
+                                            }
+                   }
         else:
-            context = RequestContext(request, { 'new' : True })
+            data = { 'new' : True }
     else:
         raise SuspiciousOperation
         
-    return render(request, 'signature_edit.html', context)
+    return render(request, 'signature_edit.html', data)
 
 @login_required(login_url='/login/')
 def deleteSignature(request, sigid):
@@ -218,8 +210,7 @@ def deleteSignature(request, sigid):
         bucket.delete()
         return redirect('crashmanager:signatures')
     elif request.method == 'GET':
-        context = RequestContext(request, { 'bucket' : bucket })
-        return render(request, 'signature_del.html', context)
+        return render(request, 'signature_del.html', { 'bucket' : bucket })
     else:
         raise SuspiciousOperation
 
@@ -227,8 +218,7 @@ def deleteSignature(request, sigid):
 def viewSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     count = len(CrashEntry.objects.filter(bucket=bucket))
-    context = RequestContext(request, { 'bucket' : bucket, 'crashcount' : count })
-    return render(request, 'signature_view.html', context)
+    return render(request, 'signature_view.html', { 'bucket' : bucket, 'crashcount' : count })
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):
@@ -241,13 +231,11 @@ def editSignature(request, sigid):
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
-            context = RequestContext(request, { 'bucket' : bucket })
+            return render(request, 'signature_edit.html', { 'bucket' : bucket })
         else:
             raise SuspiciousOperation
     else:
         raise SuspiciousOperation
-        
-    return render(request, 'signature_edit.html', context)
 
 @login_required(login_url='/login/')
 def linkSignature(request, sigid):
@@ -285,13 +273,11 @@ def linkSignature(request, sigid):
             data['bugId'] = bugId
             data['username'] = username
                 
-            return render(request, 'signature_link.html', RequestContext(request, data))
+            return render(request, 'signature_link.html', data)
     elif request.method == 'GET':
-        context = RequestContext(request, data)
+        return render(request, 'signature_link.html', data)
     else:
         raise SuspiciousOperation
-        
-    return render(request, 'signature_link.html', context)
 
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
