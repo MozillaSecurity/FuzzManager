@@ -298,6 +298,7 @@ def createExternalBug(request, crashid):
         
         # Now create a bug in our database with that ID and assign it to the bucket
         extBug = Bug(externalId = extBugId, externalType = provider)
+        extBug.save()
         entry.bucket.bug = extBug
         entry.bucket.save()
         
