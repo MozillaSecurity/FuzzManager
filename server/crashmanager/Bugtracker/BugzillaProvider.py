@@ -150,8 +150,8 @@ class BugzillaProvider(Provider):
     def handlePOSTCreate(self, request, crashEntry):
         args = request.POST.dict()
         
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST['bugzilla_username']
+        password = request.POST['bugzilla_password']
         
         # Remove any other variables that we don't want to pass on
         for key in request.POST:

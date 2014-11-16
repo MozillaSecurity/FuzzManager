@@ -32,12 +32,12 @@
 			</div>
 		{% else %}
 			<div class="field">
-				<label class="label" for="id_username">Username:</label>
-				<input id="id_username" maxlength="254" name="username" type="text" value="{{ username|default:'' }}" />
+                               <label class="label" for="id_bugzilla_username">Bugzilla Username:</label>
+                               <input id="id_bugzilla_username" name="bugzilla_username" type="text" value="{{ username|default:'' }}" />
 			</div>
 			<div class="field">
-				<label class="label" for="id_password">Password:</label>
-				<input id="id_password" name="password" type="password" />
+                               <label class="label" for="id_bugzilla_password">Bugzilla Password:</label>
+                               <input id="id_bugzilla_password" name="bugzilla_password" type="password" />
 			</div>
 		{% endif %}
 
