@@ -40,9 +40,9 @@ class BugzillaProvider(Provider):
                     "assigned_to",
                     "qa_contact",
                     "target_milestone",
-                    "flags",
                     "whiteboard",
                     "keywords",
+                    "attrs",
                 ]
 
     def renderContextCreate(self, request, crashEntry):
@@ -132,8 +132,9 @@ class BugzillaProvider(Provider):
             if not key in self.templateFields:
                 del(args[key])
         
-        for fn in ["cc", "alias", "flags"]:
-            args[fn] = [x.strip() for x in args[fn].split(',')]
+        # Convert the attrs field to a dict
+        if "attrs" in args:
+            args["attrs"] = dict([x.split("=") for x in args["attrs"].splitlines()])
         
         if request.POST['security']:
             args["groups"] = ["core-security"]
