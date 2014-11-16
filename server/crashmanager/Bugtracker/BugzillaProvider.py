@@ -15,10 +15,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 from crashmanager.Bugtracker.Provider import Provider
+import re
 import requests
 from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
 from django.forms.models import model_to_dict
+import json
 
 class BugzillaProvider(Provider):
     def __init__(self, pk, hostname):
@@ -59,6 +61,11 @@ class BugzillaProvider(Provider):
         templates = BugzillaTemplate.objects.all()
         
         if template:
+            # Load metadata that we need for various things
+            metadata = {}
+            if crashEntry.metadata:
+                metadata =  json.loads(crashEntry.metadata)
+            
             # Set the summary if empty
             if not template["summary"]:
                 if crashEntry.shortSignature.startswith("[@"):
@@ -93,6 +100,14 @@ class BugzillaProvider(Provider):
             
             template["description"] = template["description"].replace('%product%', crashEntry.product.name)
             template["description"] = template["description"].replace('%version%', version)
+
+            # Find all metadata variables requested for subtitution
+            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", template["description"])
+            for mVar in metadataVars:
+                if not mVar in metadata:
+                    metadata[mVar] = "(%s not available)" % mVar
+                
+                template["description"] = template["description"].replace('%metadata.' + mVar + '%', metadata[mVar])
 
             # Now try to guess platform/OS if empty
 
