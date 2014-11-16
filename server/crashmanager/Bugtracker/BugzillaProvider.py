@@ -101,6 +101,12 @@ class BugzillaProvider(Provider):
             template["description"] = template["description"].replace('%product%', crashEntry.product.name)
             template["description"] = template["description"].replace('%version%', version)
 
+            args = ""
+            if crashEntry.args:
+                args = " ".join(json.loads(crashEntry.args))
+
+            template["description"] = template["description"].replace('%args%', args)
+
             # Find all metadata variables requested for subtitution
             metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", template["description"])
             for mVar in metadataVars:
