@@ -322,7 +322,7 @@ def createBugTemplate(request, providerId):
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
         # Let the provider handle the template creation
-        templateId = provider.getInstance().handlePOSTCreateTemplate(request)
+        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
         
         return redirect('crashmanager:viewtemplate', providerId=provider.pk, templateId=templateId)
     elif request.method == 'GET':
