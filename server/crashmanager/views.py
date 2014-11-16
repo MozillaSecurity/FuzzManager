@@ -25,12 +25,12 @@ def index(request):
 @login_required(login_url='/login/')
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'))
-    return render(request, 'signatures.html', { 'siglist' : entries })
+    return render(request, 'signatures.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
 def allCrashes(request):
     entries = CrashEntry.objects.all()
-    return render(request, 'crashes.html', { 'crashlist' : entries })
+    return render(request, 'crashes.html', { 'isAll': True, 'crashlist' : entries })
 
 @login_required(login_url='/login/')
 def signatures(request):

@@ -7,9 +7,13 @@
             <p>
 		{% if isSearch %} 
 			Your search matched {{ crashlist|length }} entries in database:
+		{% elif isAll %}
+			Displaying all {{ crashlist|length }} entries in database:
 		{% else %}
 			{{ crashlist|length }} unbucketed entries in database (
 			<a href="{% url 'crashmanager:autoassign' %}">Try to assign to existing buckets</a>
+			or
+			<a href="{% url 'crashmanager:allcrashes' %}">View all entries</a>
 			):
 		{% endif %}
 	    </p>

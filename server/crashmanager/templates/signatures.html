@@ -6,7 +6,14 @@
 <div class="panel">
 	<div class="body notitle">
             <p>
-			Showing {{ siglist|length }} signature entries from the database:
+			{% if isAll %}
+				Displaying all {{ siglist|length }} unreported signature entries in database:
+			{% else %}
+				Displaying {{ siglist|length }} unreported signature entries from the database (
+				<a href="{% url 'crashmanager:allsignatures' %}">View all entries</a>
+				):
+			{% endif %}
+
 	    </p>
             <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
                 <thead>
