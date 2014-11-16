@@ -105,6 +105,10 @@ def viewCrashEntry(request, crashid):
     if entry.env:
         envDict = json.loads(entry.env)
         entry.envList = ["%s=%s" % (s,envDict[s]) for s in envDict.keys()]
+
+    if entry.metadata:
+        metadataDict = json.loads(entry.metadata)
+        entry.metadataList = ["%s=%s" % (s,metadataDict[s]) for s in metadataDict.keys()]
         
     if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.test.open(mode='r')

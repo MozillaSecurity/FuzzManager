@@ -278,6 +278,7 @@ def main(argv=None):
     parser.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
     parser.add_argument('--args', dest='args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
     parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
+    parser.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
 
     parser.add_argument("--testcase", dest="testcase", help="File containing testcase", metavar="FILE")
     parser.add_argument("--testcasequality", dest="testcasequality", default="0", help="Integer indicating test case quality (0 is best and default)", metavar="VAL")
@@ -305,6 +306,7 @@ def main(argv=None):
     crashInfo = None
     args = None
     env = None
+    metadata = None
     
     if opts.search or opts.generate or opts.refresh:
         if opts.sigdir == None:
@@ -339,6 +341,9 @@ def main(argv=None):
             
         if opts.env:
             env = dict(kv.split('=', 1) for kv in opts.env)
+        
+        if opts.metadata:
+            metadata = dict(kv.split('=', 1) for kv in opts.metadata)
                 
         configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args)
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
@@ -362,7 +367,7 @@ def main(argv=None):
         
     if opts.submit:
         testcase = opts.testcase        
-        collector.submit(crashInfo, testcase, opts.testcasequality, None)
+        collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
     
     if opts.search:
         sig = collector.search(crashInfo)

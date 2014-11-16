@@ -96,6 +96,15 @@
 		</div>
 		{% endif %}
 
+		{% if entry.metadataList %}
+		<div class="field">
+			<span class="label">Metadata: </span>
+			{% for arg in entry.metadataList %}
+			<div class="code">{{ arg }}</div>
+			{% endfor %}
+		</div>
+		{% endif %}
+
 		{% if notImplemented %}
 		<div class="field">
 			<span class="label">Actions:</span>
