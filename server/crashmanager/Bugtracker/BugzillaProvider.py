@@ -131,6 +131,11 @@ class BugzillaProvider(Provider):
             if not template["platform"]:
                 # BMO uses x86_64, not x86-64, and ARM instead of arm
                 template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
+            
+            # Remove the specified pathPrefix from traces and assertion     
+            if "pathPrefix" in metadata:
+                template["summary"] = template["summary"].replace(metadata["pathPrefix"], "")
+                template["description"] = template["description"].replace(metadata["pathPrefix"], "")
         
         data = {
                    'hostname' : self.hostname,
