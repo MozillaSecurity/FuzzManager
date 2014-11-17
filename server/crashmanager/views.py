@@ -263,6 +263,8 @@ def linkSignature(request, sigid):
             if not bug:
                 bug = Bug(externalId = bugId, externalType = provider)
                 bug.save()
+            else:
+                bug = bug[0]
                 
             bucket.bug = bug
             bucket.save()
