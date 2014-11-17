@@ -162,7 +162,7 @@ class BugzillaProvider(Provider):
         if "attrs" in args:
             args["attrs"] = dict([x.split("=") for x in args["attrs"].splitlines()])
         
-        if request.POST['security']:
+        if 'security' in request.POST and request.POST['security']:
             args["groups"] = ["core-security"]
             
         bz = BugzillaREST(self.hostname, username, password)
