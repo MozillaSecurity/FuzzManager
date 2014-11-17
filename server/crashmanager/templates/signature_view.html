@@ -1,11 +1,23 @@
 {% extends 'layouts/layout_1_column_full_width.html' %}
 {% load url from future %}
+{% load extratags %}
 
 {% block 1 %}
 <div class="panel">
 	<div class="body notitle">
 		<div class="field">
 			<span class="label">Short Description: </span><span class="code">{{ bucket.shortDescription|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">External Bug Status: </span>
+				<span>
+					{% if bucket.bug %}
+						Reported as <a href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}">bug {{ bucket.bug.externalId }}</a>.
+					{% else %}
+						Unreported.
+					{% endif %}
+				</span>
 		</div>
 
 		<div class="field">
