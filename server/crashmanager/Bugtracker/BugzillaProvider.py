@@ -136,6 +136,9 @@ class BugzillaProvider(Provider):
             if "pathPrefix" in metadata:
                 template["summary"] = template["summary"].replace(metadata["pathPrefix"], "")
                 template["description"] = template["description"].replace(metadata["pathPrefix"], "")
+                
+            if crashEntry.shortSignature.startswith("[@"):
+                template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
         
         data = {
                    'hostname' : self.hostname,
