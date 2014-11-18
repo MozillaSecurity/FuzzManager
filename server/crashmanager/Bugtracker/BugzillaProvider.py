@@ -21,6 +21,8 @@ from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
 from django.forms.models import model_to_dict
 import json
+import base64
+import os
 
 class BugzillaProvider(Provider):
     def __init__(self, pk, hostname):
@@ -174,6 +176,16 @@ class BugzillaProvider(Provider):
         if not "id" in ret:
             raise RuntimeError("Failed to create bug: %s", ret)
         
+        # If we have a binary testcase, attach it here in a second step
+        if crashEntry.testcase != None and crashEntry.testcase.isBinary:
+            crashEntry.testcase.test.open(mode='rb')
+            data = crashEntry.testcase.test.read()
+            crashEntry.testcase.test.close()
+            filename = os.path.basename(crashEntry.testcase.test.name)
+            
+            aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
+            ret["attachmentResponse"] = aRet
+        
         return ret["id"]
     
     def renderContextCreateTemplate(self, request):
@@ -288,3 +300,27 @@ class BugzillaREST():
         createUrl = "%s/bug?token=%s" % (self.baseUrl, self.authToken)
         response = requests.post(createUrl, bug)
         return response.json()
+    
+    def addAttachment(self, ids, data, file_name, summary, comment=None, is_private=None, is_binary=False):
+        # Compose our request using all given arguments with special
+        # handling of the self and is_binary arguments
+        l = locals()
+        attachment = {}
+        for k in l:
+            if l[k] != None and l[k] != '' and k != "self" and k != "is_binary":
+                attachment[k] = l[k]
+        
+        # Do the necessary base64 encoding 
+        if is_binary:
+            attachment["content_type"] = "application/octet-stream"
+            attachment["data"] = base64.b64encode(attachment["data"])
+        else:
+            attachment["content_type"] = "text/plain"
+        
+        # Ensure we're logged in
+        self.login()
+        
+        attachUrl = "%s/bug/%s/attachment?token=%s" % (self.baseUrl, ids, self.authToken)
+        response = requests.post(attachUrl, attachment)
+        return response.json()
+        
