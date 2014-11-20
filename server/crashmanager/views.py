@@ -47,7 +47,8 @@ def crashes(request):
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
-                       "bucket", 
+                       "bucket",
+                       "client__name",
                        "os__name",
                        "product__name",
                        "product__version",
