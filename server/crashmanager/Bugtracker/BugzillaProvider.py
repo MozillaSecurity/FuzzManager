@@ -61,7 +61,7 @@ class BugzillaProvider(Provider):
                 template = {}
             else:
                 template = model_to_dict(obj[0])
-                template["pk"] = obj.pk
+                template["pk"] = obj[0].pk
         
         templates = BugzillaTemplate.objects.all()
         
