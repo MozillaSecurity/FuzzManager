@@ -117,11 +117,11 @@ class CrashEntry(models.Model):
             self.args = json.dumps(self.argsList)
     
         if self.envList:
-            envDict = dict([x.split("=") for x in self.envList])
+            envDict = dict([x.split("=", 1) for x in self.envList])
             self.env = json.dumps(envDict)
     
         if self.metadataList:
-            metadataDict = dict([x.split("=") for x in self.metadataList])
+            metadataDict = dict([x.split("=", 1) for x in self.metadataList])
             self.metadata = json.dumps(metadataDict)
         
         super(CrashEntry, self).save(*args, **kwargs)

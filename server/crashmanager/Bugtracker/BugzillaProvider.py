@@ -165,7 +165,7 @@ class BugzillaProvider(Provider):
         
         # Convert the attrs field to a dict
         if "attrs" in args:
-            args["attrs"] = dict([x.split("=") for x in args["attrs"].splitlines()])
+            args["attrs"] = dict([x.split("=", 1) for x in args["attrs"].splitlines()])
         
         if 'security' in request.POST and request.POST['security']:
             args["groups"] = ["core-security"]
