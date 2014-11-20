@@ -133,7 +133,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             h = hashlib.new('sha1')
             h.update(str(testcase))
 
-            dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary)
+            dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary, size=len(testcase))
             dbobj.test.save("%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase))
             dbobj.save()
             attrs['testcase'] = dbobj
