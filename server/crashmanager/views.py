@@ -8,8 +8,8 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q
-from django.db.models.aggregates import Count
-import json
+from django.db.models.aggregates import Count, Min
+from django.http.response import Http404
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -24,7 +24,7 @@ def index(request):
 
 @login_required(login_url='/login/')
 def allSignatures(request):
-    entries = Bucket.objects.annotate(size=Count('crashentry'))
+    entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
     return render(request, 'signatures.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
@@ -34,7 +34,7 @@ def allCrashes(request):
 
 @login_required(login_url='/login/')
 def signatures(request):
-    entries = Bucket.objects.filter(bug=None).annotate(size=Count('crashentry'))
+    entries = Bucket.objects.filter(bug=None).annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
     return render(request, 'signatures.html', { 'siglist' : entries })
 
 @login_required(login_url='/login/')
@@ -98,22 +98,10 @@ def autoAssignCrashEntries(request):
 @login_required(login_url='/login/')
 def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    entry.deserializeFields()
     
-    if entry.args:
-        entry.argsList = json.loads(entry.args)
-
-    if entry.env:
-        envDict = json.loads(entry.env)
-        entry.envList = ["%s=%s" % (s,envDict[s]) for s in envDict.keys()]
-
-    if entry.metadata:
-        metadataDict = json.loads(entry.metadata)
-        entry.metadataList = ["%s=%s" % (s,metadataDict[s]) for s in metadataDict.keys()]
-        
-    if entry.testcase and not entry.testcase.isBinary:
-        entry.testcase.test.open(mode='r')
-        entry.testcase.content = entry.testcase.test.read()
-        entry.testcase.test.close()
+    if not entry.testcase.isBinary:
+        entry.testcase.loadTest()
     
     return render(request, 'crash_view.html', { 'entry' : entry })
 
@@ -223,9 +211,22 @@ def deleteSignature(request, sigid):
 
 @login_required(login_url='/login/')
 def viewSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    count = len(CrashEntry.objects.filter(bucket=bucket))
-    return render(request, 'signature_view.html', { 'bucket' : bucket, 'crashcount' : count })
+    #bucket = get_object_or_404(Bucket, pk=sigid)
+    #count = len(CrashEntry.objects.filter(bucket=bucket))
+    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
+    
+    if not bucket:
+        raise Http404
+    
+    bucket = bucket[0]
+    
+    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size')
+    
+    bucket.bestEntry = None
+    if entries:
+        bucket.bestEntry = entries[0]
+    
+    return render(request, 'signature_view.html', { 'bucket' : bucket })
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):

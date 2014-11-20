@@ -5,6 +5,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 
 from django.core.files.storage import FileSystemStorage
+import json
 
 class Platform(models.Model):
     name = models.CharField(max_length=63)
@@ -19,8 +20,31 @@ class OS(models.Model):
     
 class TestCase(models.Model):
     test = models.FileField(storage=FileSystemStorage(), upload_to="tests")
+    size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
+    
+    def __init__(self, *args, **kwargs):
+        # This variable can hold the testcase data temporarily
+        self.content = None
+        
+        # For performance reasons we do not load the test here
+        # automatically. You must call the loadTest method if you
+        # want to access the test content
+        
+        super(TestCase, self).__init__(*args, **kwargs)
+    
+    def loadTest(self):
+        self.test.open(mode='rb')
+        self.content = self.test.read()
+        self.test.close()
+        
+    def storeTestAndSave(self):
+        self.size = len(self.content)
+        self.test.open(mode='w')
+        self.test.write(self.content)
+        self.test.close()
+        self.save()
 
 class Client(models.Model):
     name = models.CharField(max_length=255)
@@ -73,6 +97,47 @@ class CrashEntry(models.Model):
     args = models.TextField(blank=True)
     crashAddress = models.CharField(max_length=255, blank=True)
     shortSignature = models.CharField(max_length=255, blank=True)
+    
+    def __init__(self, *args, **kwargs):
+        # These variables can hold temporarily deserialized data
+        self.argsList = None
+        self.envList = None
+        self.metadataList = None
+        
+        # For performance reasons we do not deserialize these fields
+        # automaticlly here. You need to explicitely call the 
+        # deserializeFields method if you need this data.
+        
+        super(CrashEntry, self).__init__(*args, **kwargs)
+        
+        
+    def save(self, *args, **kwargs):
+        # Reserialize data, then call regular save method
+        if self.argsList:
+            self.args = json.dumps(self.argsList)
+    
+        if self.envList:
+            envDict = dict([x.split("=") for x in self.envList])
+            self.env = json.dumps(envDict)
+    
+        if self.metadataList:
+            metadataDict = dict([x.split("=") for x in self.metadataList])
+            self.metadata = json.dumps(metadataDict)
+        
+        super(CrashEntry, self).save(*args, **kwargs)
+    
+    def deserializeFields(self):
+        if self.args:
+            self.argsList = json.loads(self.args)
+    
+        if self.env:
+            envDict = json.loads(self.env)
+            self.envList = ["%s=%s" % (s,envDict[s]) for s in envDict.keys()]
+    
+        if self.metadata:
+            metadataDict = json.loads(self.metadata)
+            self.metadataList = ["%s=%s" % (s,metadataDict[s]) for s in metadataDict.keys()]
+    
     
     def getCrashInfo(self):
         # TODO: This should be cached at some level

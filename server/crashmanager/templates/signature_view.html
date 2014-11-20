@@ -21,7 +21,11 @@
 		</div>
 
 		<div class="field">
-			<span class="label">Current size (# of crashes covered by this signature): </span><span class="code">{{ crashcount }}</span>
+			<span class="label">Current size (# of crashes covered by this signature): </span><span class="code">{{ bucket.size }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Best Crash Entry: </span><span class="code"><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{ bucket.bestEntry.testcase.size }})</span>
 		</div>
 		
 		<div class="field">
