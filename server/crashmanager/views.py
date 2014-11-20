@@ -105,6 +105,53 @@ def viewCrashEntry(request, crashid):
     
     return render(request, 'crash_view.html', { 'entry' : entry })
 
+@login_required(login_url='/login/')
+def editCrashEntry(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    entry.deserializeFields()
+    
+    if entry.testcase:
+        entry.testcase.loadTest()
+    
+    if request.method == 'POST':
+        entry.rawStdout = request.POST['rawStdout']
+        entry.rawStderr = request.POST['rawStderr']
+        entry.rawStderr = request.POST['rawStderr']
+        entry.rawCrashData = request.POST['rawCrashData']
+        
+        entry.envList = request.POST['env'].splitlines()
+        entry.argsList = request.POST['args'].splitlines()
+        entry.metadataList = request.POST['metadata'].splitlines()
+        
+        # Regenerate crash information and fields depending on it
+        crashInfo = entry.getCrashInfo()
+        entry.crashAddress = hex(crashInfo.crashAddress)
+        entry.shortSignature = crashInfo.createShortSignature()
+        
+        # If the entry has a bucket, check if it still fits into
+        # this bucket, otherwise remove it.
+        if entry.bucket:
+            sig = entry.bucket.getSignature()
+            if not sig.matches(crashInfo):
+                entry.bucket = None
+        
+        if entry.testcase:
+            if entry.testcase.isBinary:
+                if request.POST['testcase'] != "(binary)":
+                    entry.testcase.content = request.POST['testcase']
+                    entry.testcase.isBinary = False
+                    #TODO: The file extension stored on the server remains and is likely to be wrong
+                    entry.testcase.storeTestAndSave()
+            else:
+                if request.POST['testcase'] != entry.testcase.content:
+                    entry.testcase.content = request.POST['testcase']
+                    entry.testcase.storeTestAndSave()
+        
+        entry.save()
+        return redirect('crashmanager:crashview', crashid = entry.pk)
+    else:
+        return render(request, 'crash_edit.html', { 'entry' : entry })
+
 def __handleSignaturePost(request, bucket):
     # This method contains code shared between newSignature and editSignature
     # and handles the POST request processing after the bucket object has been
