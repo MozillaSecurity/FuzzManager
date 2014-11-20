@@ -105,7 +105,7 @@ class CrashEntry(models.Model):
         self.metadataList = None
         
         # For performance reasons we do not deserialize these fields
-        # automaticlly here. You need to explicitely call the 
+        # automatically here. You need to explicitly call the 
         # deserializeFields method if you need this data.
         
         super(CrashEntry, self).__init__(*args, **kwargs)

@@ -29,7 +29,7 @@ class BugzillaProvider(Provider):
         super(BugzillaProvider, self).__init__(pk, hostname)
         
         self.templateFields = [
-                    "templateName",
+                    "name",
                     "product",
                     "component",
                     "summary",
@@ -51,18 +51,22 @@ class BugzillaProvider(Provider):
 
     def renderContextCreate(self, request, crashEntry):
         if 'template' in request.GET:
-            template = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
+            obj = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
+            template = model_to_dict(obj)
+            template["pk"] = obj.pk
         else:
-            template = BugzillaTemplate.objects.filter(pk=1)
+            obj = BugzillaTemplate.objects.filter(pk=1)
             
-            if not template:
+            if not obj:
                 template = {}
             else:
-                template = model_to_dict(template[0])
+                template = model_to_dict(obj[0])
+                template["pk"] = obj.pk
         
         templates = BugzillaTemplate.objects.all()
         
         if template:
+            
             # Load metadata that we need for various things
             metadata = {}
             if crashEntry.metadata:

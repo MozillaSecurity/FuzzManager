@@ -2,20 +2,23 @@
 {% load url from future %}
 
 {% block 1 %}
+
+<script type="text/javascript" src="/static/js/bugzilla-template.js"></script>
+
 <div class="panel">
 	<div class="body notitle">
 		<form action="{% url 'crashmanager:viewtemplate' provider template.pk %}" method="post">
 		{% csrf_token %}
 
-		<select name="template">
+		<select id="template" name="template">
 		{% for t in templates %}
 		<option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected"{% endif %}>{{ t.name }}</option>
 		{% endfor %}
 		</select>
 
 		<div class="field">
-			<label class="label" for="id_templateName">Template Name:</label>
-			<input id="id_templateName" maxlength="255" name="templateName" type="text" value="{{ template.name }}">
+			<label class="label" for="id_name">Template Name:</label>
+			<input id="id_name" maxlength="255" name="name" type="text" value="{{ template.name }}">
 		</div>
 
 		{% include "bugzilla/form.html" %}
