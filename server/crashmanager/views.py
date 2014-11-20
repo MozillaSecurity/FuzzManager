@@ -100,7 +100,7 @@ def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     entry.deserializeFields()
     
-    if not entry.testcase.isBinary:
+    if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.loadTest()
     
     return render(request, 'crash_view.html', { 'entry' : entry })
