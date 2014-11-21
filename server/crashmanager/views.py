@@ -126,7 +126,8 @@ def editCrashEntry(request, crashid):
         
         # Regenerate crash information and fields depending on it
         crashInfo = entry.getCrashInfo()
-        entry.crashAddress = hex(crashInfo.crashAddress)
+        if crashInfo.crashAddress != None:
+            entry.crashAddress = hex(crashInfo.crashAddress)
         entry.shortSignature = crashInfo.createShortSignature()
         
         # If the entry has a bucket, check if it still fits into
