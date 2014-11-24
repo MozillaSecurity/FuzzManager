@@ -413,7 +413,7 @@ def main(argv=None):
         if opts.metadata:
             metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
                 
-        configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args)
+        configuration = ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"], mainConfig["product_version"], env, args)
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
 
     serveruser = None
