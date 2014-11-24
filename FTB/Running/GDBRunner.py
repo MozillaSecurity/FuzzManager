@@ -68,16 +68,16 @@ class GDBRunner():
         
         (self.stdout, self.stderr) = process.communicate()
         
-        traceStart = self.stderr.rfind("Program received signal")
-        traceStop = self.stderr.rfind("A debugging session is active")
+        traceStart = self.stdout.rfind("Program received signal")
+        traceStop = self.stdout.rfind("A debugging session is active")
         
         if traceStart < 0:
             return False
         
         if traceStop < 0:
-            traceStop = len(self.stderr)
+            traceStop = len(self.stdout)
         
-        self.auxCrashData = self.stderr[traceStart:traceStop]
+        self.auxCrashData = self.stdout[traceStart:traceStop]
         return True
     
     def getCrashInfo(self, configuration):
@@ -85,38 +85,3 @@ class GDBRunner():
             return None
         
         return CrashInfo.fromRawCrashData(self.stdout, self.stderr, configuration, self.auxCrashData)
-
-# The following definitions are used by GDB directly when loading this file
-
-def is64bit():
-    return not str(gdb.parse_and_eval("$rax"))=="void"
-
-def isARM():
-    return not str(gdb.parse_and_eval("$r0"))=="void"
-
-def regAsHexStr(reg):
-    if is64bit():
-        mask = 0xffffffffffffffff
-    else:
-        mask = 0xffffffff
-    return "0x%x"%(int(str(gdb.parse_and_eval("$" + reg)),0) & mask)
-
-def regAsIntStr(reg):
-    return str(int(str(gdb.parse_and_eval("$" + reg)),0))
-
-def regAsRaw(reg):
-    return str(gdb.parse_and_eval("$" + reg))
-
-def printImportantRegisters():
-    if is64bit(): 
-        regs = "rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15 rip".split(" ")
-    elif isARM():
-        regs = "r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc cpsr".split(" ")
-    else:
-        regs = "eax ebx ecx edx esi edi ebp esp eip".split(" ")
-
-    for reg in regs:
-        try:
-            print(reg + "\t" + regAsHexStr(reg) + "\t" + regAsIntStr(reg))
-        except:
-            print(reg + "\t" + regAsRaw(reg))
