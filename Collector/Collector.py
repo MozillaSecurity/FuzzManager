@@ -419,10 +419,14 @@ def main(argv=None):
     serveruser = None
     serverpass = None
     
-    if mainConfig["servercreds"]:
+    # Allow specifying serveruser/pass directly in config, but servercreds has priority
+    if "serveruser" in mainConfig and "serverpass" in mainConfig and not mainConfig["servercreds"]:
+        serveruser = mainConfig["serveruser"]
+        serverpass = mainConfig["serverpass"]
+    elif mainConfig["servercreds"]:
         with open(mainConfig["servercreds"]) as f:
             (serveruser, serverpass) = f.read().splitlines()
-            
+
     collector = Collector(mainConfig["sigdir"], mainConfig["serverhost"], mainConfig["serverport"], mainConfig["serverproto"], serveruser, serverpass, mainConfig["clientid"])
     
     if opts.refresh or opts.submit or opts.autosubmit:
