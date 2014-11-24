@@ -39,6 +39,17 @@ class Configuration():
             self.parser.read(configFiles)
             self.mainConfig = self.getSectionMap("Main")
             self.metadataConfig = self.getSectionMap("Metadata")
+            
+            # Produce warnings for unrecognized sections to make
+            # debugging easier. Especially main vs. Main is hard
+            # to figure out sometimes.
+            sections = self.parser.sections()
+            for section in ["Main", "Metadata"]:
+                if section in sections:
+                    sections.remove(section)
+            if sections:
+                print("Warning: Ignoring the following config file sections: %s" % " ".join(sections), file=sys.stderr)
+                
         
     def getSectionMap(self, section):
         ret = {}
