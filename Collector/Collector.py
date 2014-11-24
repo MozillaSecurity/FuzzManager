@@ -24,17 +24,26 @@ import sys
 import os
 import json
 import base64
+import argparse
+import hashlib
+import requests
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
-from argparse import ArgumentParser
-from FTB.Signatures.CrashSignature import CrashSignature
-import hashlib
-from FTB.Signatures.CrashInfo import CrashInfo
-import requests
 from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Running.GDBRunner import GDBRunner
+from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures.CrashInfo import CrashInfo
+
+from Configuration import Configuration
+
 
 __all__ = []
 __version__ = 0.1
@@ -250,7 +259,7 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     # setup argparser
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
     
     parser.add_argument('--version', action='version', version=program_version_string)
     
@@ -264,6 +273,7 @@ def main(argv=None):
     parser.add_argument("--submit", dest="submit", action='store_true', help="Submit a signature to the server")
     parser.add_argument("--search", dest="search", action='store_true', help="Search cached signatures for the given crash")
     parser.add_argument("--generate", dest="generate", action='store_true', help="Create a (temporary) local signature in the cache directory")
+    parser.add_argument("--autosubmit", dest="autosubmit", action='store_true', help="Go into auto-submit mode. In this mode, all remaining arguments are interpreted as the crashing command. This tool will automatically obtain GDB crash information and submit it.")
 
     # Settings
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
@@ -288,7 +298,7 @@ def main(argv=None):
     parser.add_argument("--forcecrashinst", dest="forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
     parser.add_argument("--numframes", dest="numframes", default=8, type=int, help="How many frames to include into the signature (default is 8)")
 
-
+    parser.add_argument('args', nargs=argparse.REMAINDER)
 
     if len(argv) == 0:
         parser.print_help()
@@ -297,8 +307,62 @@ def main(argv=None):
     # process options
     opts = parser.parse_args(argv)
     
-    if opts.search and opts.generate:
-        print("Error: Can't --search and --generate at the same time", file=sys.stderr)
+    # Check that one action is specified
+    actions = [ "refresh", "submit", "search", "generate", "autosubmit" ]
+    
+    haveAction = False
+    for action in actions:
+        if getattr(opts, action):
+            if haveAction:
+                print("Error: Cannot specify multiple actions at the same time", file=sys.stderr)
+                return 2
+            haveAction = True
+    if not haveAction:
+        print("Error: Cannot specify multiple actions at the same time", file=sys.stderr)
+        return 2
+    
+    # Find configuration files
+    globalConfig = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
+    configFiles = []
+    if os.path.exists(globalConfig):
+        configFiles.append(globalConfig)
+    
+    # In autosubmit mode, we try to open a configuration file for the binary specified
+    # on the command line. It should contain the binary-specific settings for submitting.
+    if opts.autosubmit:
+        if not opts.args:
+            print("Error: Action --autosubmit requires test arguments to be specified", file=sys.stderr)
+            return 2
+        binaryConfig = "%s.fuzzmanagerconf" % opts.args[0]
+        if not os.path.exists(binaryConfig):
+            print("Warning: No binary configuration found at %s", file=sys.stderr)
+        else:
+            configFiles.append(binaryConfig)
+            
+        # We also need to check that first argument is a binary that exists, and that (apart from the binary),
+        # there is only one file on the command line (the testcase).
+        if not os.path.exists(opts.args[0]):
+            print("Error: Specified binary does not exist: %s" % opts.args[0])
+            return 2
+        
+        testcase = None
+        for arg in opts.args[1:]:
+            if os.path.exists(arg):
+                if testcase:
+                    print("Error: Multiple potential testcases specified on command line.")
+                    return 2
+                testcase = arg
+
+                
+            
+    config = Configuration(configFiles)
+    mainConfig = config.mainConfig
+    
+    # Allow overriding settings from the command line
+    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "servercreds", "clientid", "platform", "product", "os"]
+    for cmdlineSetting in cmdlineSettings:
+        if (not cmdlineSetting in mainConfig) or getattr(opts, cmdlineSetting) != None:
+            mainConfig[cmdlineSetting] = getattr(opts, cmdlineSetting)
 
     stdout = None
     stderr = None
@@ -306,18 +370,16 @@ def main(argv=None):
     crashInfo = None
     args = None
     env = None
-    metadata = None
+    metadata = config.metadataConfig
     
     if opts.search or opts.generate or opts.refresh:
-        if opts.sigdir == None:
-            print("Error: Must specify --sigdir", file=sys.stderr)
+        if mainConfig["sigdir"] == None:
+            print("Error: Must specify/configure --sigdir", file=sys.stderr)
             return 2
             
-
-
-    if opts.search or opts.generate or opts.submit:
-        if opts.platform == None or opts.product == None or opts.os == None:
-            print("Error: Must specify at least --platform, --product and --os", file=sys.stderr)
+    if opts.search or opts.generate or opts.submit or opts.autosubmit:
+        if mainConfig["platform"] == None or mainConfig["product"] == None or mainConfig["os"] == None:
+            print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
             return 2
         
         if opts.stderr == None and opts.crashdata == None:
@@ -343,7 +405,7 @@ def main(argv=None):
             env = dict(kv.split('=', 1) for kv in opts.env)
         
         if opts.metadata:
-            metadata = dict(kv.split('=', 1) for kv in opts.metadata)
+            metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
                 
         configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args)
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
@@ -351,23 +413,25 @@ def main(argv=None):
     serveruser = None
     serverpass = None
     
-    if opts.servercreds:
-        with open(opts.servercreds) as f:
+    if mainConfig["servercreds"]:
+        with open(mainConfig["servercreds"]) as f:
             (serveruser, serverpass) = f.read().splitlines()
             
-    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serveruser, serverpass, opts.clientid)
+    collector = Collector(mainConfig["sigdir"], mainConfig["serverhost"], mainConfig["serverport"], mainConfig["serverproto"], serveruser, serverpass, mainConfig["clientid"])
     
-    if opts.refresh or opts.submit:
-        if not opts.serverhost:
+    if opts.refresh or opts.submit or opts.autosubmit:
+        if not mainConfig["serverhost"]:
             print("Error: Must specify --serverhost for remote features.", file=sys.stderr)
             return 2
     
     if opts.refresh:
         collector.refresh()
+        return 0
         
     if opts.submit:
         testcase = opts.testcase        
         collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
+        return 0
     
     if opts.search:
         sig = collector.search(crashInfo)
@@ -381,6 +445,16 @@ def main(argv=None):
         sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
         print(sigFile)
         return 0
+    
+    if opts.autosubmit:
+        gdb = GDBRunner(opts.args[0], opts.args[1:])
+        if gdb.run():
+            crashInfo = gdb.getCrashInfo(configuration)
+            collector.submit(crashInfo, testcase, 0, metadata)
+        else:
+            print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
+            return 2
+
 
 
 
