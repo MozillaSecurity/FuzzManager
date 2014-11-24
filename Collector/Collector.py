@@ -335,7 +335,7 @@ def main(argv=None):
             return 2
         binaryConfig = "%s.fuzzmanagerconf" % opts.args[0]
         if not os.path.exists(binaryConfig):
-            print("Warning: No binary configuration found at %s", file=sys.stderr)
+            print("Warning: No binary configuration found at %s" % binaryConfig, file=sys.stderr)
         else:
             configFiles.append(binaryConfig)
             
@@ -346,12 +346,14 @@ def main(argv=None):
             return 2
         
         testcase = None
-        for arg in opts.args[1:]:
+        testcaseidx = None
+        for idx, arg in enumerate(opts.args[1:]):
             if os.path.exists(arg):
                 if testcase:
                     print("Error: Multiple potential testcases specified on command line.")
                     return 2
                 testcase = arg
+                testcaseidx = idx
 
                 
             
@@ -388,33 +390,45 @@ def main(argv=None):
             print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
             return 2
         
-        if opts.stderr == None and opts.crashdata == None:
-            print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
-            return 2
+        if opts.metadata:
+            metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
         
-        if opts.stdout:
-            with open(opts.stdout) as f:
-                stdout = f.read()
-        
-        if opts.stderr:
-            with open(opts.stderr) as f:
-                stderr = f.read()
-            
-        if opts.crashdata:
-            with open(opts.crashdata) as f:
-                crashdata = f.read()
-                
-        if opts.args:
-            args = [arg.replace('\\', '') for arg in opts.args]
+        if opts.autosubmit:
+            # Try to automatically get arguments from the command line
+            # If the testcase is not the last argument, leave it in the
+            # command line arguments and replace it with a generic placeholder.
+            if testcaseidx == len(opts.args[1:]) - 1:
+                args = opts[1:-1]
+            else:
+                args = opts[1:]
+                args[testcaseidx] = "TESTFILE"
+        else:
+            if opts.args:
+                args = [arg.replace('\\', '') for arg in opts.args]
             
         if opts.env:
             env = dict(kv.split('=', 1) for kv in opts.env)
-        
-        if opts.metadata:
-            metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
-                
+            
         configuration = ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"], mainConfig["product_version"], env, args)
-        crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
+        
+        if not opts.autosubmit:
+            if opts.stderr == None and opts.crashdata == None:
+                print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
+                return 2
+            
+            if opts.stdout:
+                with open(opts.stdout) as f:
+                    stdout = f.read()
+            
+            if opts.stderr:
+                with open(opts.stderr) as f:
+                    stderr = f.read()
+                
+            if opts.crashdata:
+                with open(opts.crashdata) as f:
+                    crashdata = f.read()
+
+            crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
 
     serveruser = None
     serverpass = None
