@@ -398,9 +398,9 @@ def main(argv=None):
             # If the testcase is not the last argument, leave it in the
             # command line arguments and replace it with a generic placeholder.
             if testcaseidx == len(opts.args[1:]) - 1:
-                args = opts[1:-1]
+                args = opts.args[1:-1]
             else:
-                args = opts[1:]
+                args = opts.args[1:]
                 args[testcaseidx] = "TESTFILE"
         else:
             if opts.args:
