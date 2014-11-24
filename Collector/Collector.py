@@ -279,7 +279,7 @@ def main(argv=None):
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    parser.add_argument("--serverproto", dest="serverproto", default="https", help="Server protocol to use (default is https)", metavar="PROTO")
+    parser.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
     parser.add_argument("--servercreds", dest="servercreds", help="Credentials file (contains username and password on separate lines)", metavar="FILE")
     parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
     parser.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
@@ -358,8 +358,14 @@ def main(argv=None):
     config = Configuration(configFiles)
     mainConfig = config.mainConfig
     
+    # Set certain defaults (we cannot use the argparse defaults here, they would override config file settings)
+    defaultSettings = { "serverproto" : "https"  }
+    for defaultSetting in defaultSettings:
+        if not defaultSetting in mainConfig:
+            mainConfig[defaultSetting] = defaultSettings[defaultSetting]
+    
     # Allow overriding settings from the command line
-    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "servercreds", "clientid", "platform", "product", "os"]
+    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "servercreds", "clientid", "platform", "product", "product_version", "os"]
     for cmdlineSetting in cmdlineSettings:
         if (not cmdlineSetting in mainConfig) or getattr(opts, cmdlineSetting) != None:
             mainConfig[cmdlineSetting] = getattr(opts, cmdlineSetting)
