@@ -37,7 +37,7 @@ class GDBRunner():
         assert isinstance(self.env, dict)
         assert isinstance(self.args, list)
         
-        classPath = os.path.abspath(__file__)
+        classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
                         '--batch',
                         '-ex', 'source %s' % classPath,
