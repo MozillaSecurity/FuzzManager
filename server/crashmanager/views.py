@@ -398,7 +398,6 @@ class CrashEntryViewSet(viewsets.ModelViewSet):
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
 
-
 class BucketViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows reading of signatures

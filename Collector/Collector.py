@@ -226,6 +226,46 @@ class Collector():
         
         # Write the file to a unique file name
         return self.__store_signature_hashed(sig)
+    
+    def download(self, crashId):
+        '''
+        Download the testcase for the specified crashId.
+        
+        @type crashId: int
+        @param crashId: ID of the requested crash entry on the server side
+        
+        @rtype: string
+        @return: Name of the file where the test was stored
+        '''     
+        if not self.serverHost:
+            raise RuntimeError("Must specify serverHost to use remote features.")
+        
+        url = "%s://%s:%s/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
+        
+        response = requests.get(url, auth=self.serverCreds)
+        
+        if response.status_code != requests.codes["ok"]:
+            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+        
+        json = response.json()
+        
+        if not isinstance(json, dict):
+            raise RuntimeError("Server sent malformed JSON response: %s" % json)
+        
+        if not json["testcase"]:
+            return None
+        
+        url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, json["testcase"])
+        response = requests.get(url, auth=self.serverCreds)
+        
+        if response.status_code != requests.codes["ok"]:
+            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+        
+        localFile = os.path.basename(json["testcase"])
+        with open(localFile, 'w') as f:
+            f.write(response.content)
+        
+        return localFile
             
     def __store_signature_hashed(self, signature):
         '''
@@ -274,6 +314,7 @@ def main(argv=None):
     parser.add_argument("--search", dest="search", action='store_true', help="Search cached signatures for the given crash")
     parser.add_argument("--generate", dest="generate", action='store_true', help="Create a (temporary) local signature in the cache directory")
     parser.add_argument("--autosubmit", dest="autosubmit", action='store_true', help="Go into auto-submit mode. In this mode, all remaining arguments are interpreted as the crashing command. This tool will automatically obtain GDB crash information and submit it.")
+    parser.add_argument("--download", dest="download", type=int, help="Download the testcase for the specified crash entry", metavar="ID")
 
     # Settings
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
@@ -308,7 +349,7 @@ def main(argv=None):
     opts = parser.parse_args(argv)
     
     # Check that one action is specified
-    actions = [ "refresh", "submit", "search", "generate", "autosubmit" ]
+    actions = [ "refresh", "submit", "search", "generate", "autosubmit", "download" ]
     
     haveAction = False
     for action in actions:
@@ -479,6 +520,13 @@ def main(argv=None):
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
             return 2
 
+    if opts.download:
+        retFile = collector.download(opts.download)
+        if not retFile:
+            print("Specified crash entry does not have a testcase", file=sys.stderr)
+            return 2
+        print(retFile)
+        return 0
 
 
 
