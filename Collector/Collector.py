@@ -381,22 +381,21 @@ def main(argv=None):
             configFiles.append(binaryConfig)
             
         # We also need to check that first argument is a binary that exists, and that (apart from the binary),
-        # there is only one file on the command line (the testcase).
+        # there is only one file on the command line (the testcase), if it hasn't been explicitely specified.
         if not os.path.exists(opts.args[0]):
             print("Error: Specified binary does not exist: %s" % opts.args[0])
             return 2
         
-        testcase = None
+        testcase = opts.testcase
         testcaseidx = None
-        for idx, arg in enumerate(opts.args[1:]):
-            if os.path.exists(arg):
-                if testcase:
-                    print("Error: Multiple potential testcases specified on command line.")
-                    return 2
-                testcase = arg
-                testcaseidx = idx
-
-                
+        if testcase == None:
+            for idx, arg in enumerate(opts.args[1:]):
+                if os.path.exists(arg):
+                    if testcase:
+                        print("Error: Multiple potential testcases specified on command line. Must explicitely specify test using --testcase.")
+                        return 2
+                    testcase = arg
+                    testcaseidx = idx
             
     config = Configuration(configFiles)
     mainConfig = config.mainConfig
@@ -442,7 +441,8 @@ def main(argv=None):
                 args = opts.args[1:-1]
             else:
                 args = opts.args[1:]
-                args[testcaseidx] = "TESTFILE"
+                if testcaseidx != None:
+                    args[testcaseidx] = "TESTFILE"
         else:
             if opts.args:
                 args = [arg.replace('\\', '') for arg in opts.args]
@@ -515,7 +515,7 @@ def main(argv=None):
         gdb = GDBRunner(opts.args[0], opts.args[1:])
         if gdb.run():
             crashInfo = gdb.getCrashInfo(configuration)
-            collector.submit(crashInfo, testcase, 0, metadata)
+            collector.submit(crashInfo, testcase, testcasequality, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
             return 2
