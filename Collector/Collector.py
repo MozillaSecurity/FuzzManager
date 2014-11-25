@@ -515,7 +515,7 @@ def main(argv=None):
         gdb = GDBRunner(opts.args[0], opts.args[1:])
         if gdb.run():
             crashInfo = gdb.getCrashInfo(configuration)
-            collector.submit(crashInfo, testcase, testcasequality, metadata)
+            collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
             return 2
