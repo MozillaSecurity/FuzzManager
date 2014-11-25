@@ -25,7 +25,7 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.ProgramConfiguration import ProgramConfiguration
 
-from numpy import int32, int64
+from numpy import int32, int64, uint32, uint64
 import json
 from FTB import AssertionHelper
 import os
@@ -507,10 +507,10 @@ class GDBCrashInfo(CrashInfo):
                             failureReason = "Missing value for register %s " % match.group(2)
                         else:
                             if RegisterHelper.getBitWidth(registerMap) == 32:
-                                return long(int32(offset) + int32(val))
+                                return long(int32(uint32(offset)) + int32(uint32(val)))
                             else:
                                 # Assume 64 bit width
-                                return long(int64(offset) + int64(val))
+                                return long(int64(uint64(offset)) + int64(uint64(val)))
                 else:
                     # We might still be reading from/writing to a hardcoded address.
                     # Note that it's not possible to have two hardcoded addresses
@@ -577,10 +577,10 @@ class GDBCrashInfo(CrashInfo):
                     return (None, "Missing value for register %s" % match.group(3))
             
             if RegisterHelper.getBitWidth(registerMap) == 32:
-                val = int32(regA) + int32(offset) + (int32(regB) * int32(mult))
+                val = int32(uint32(regA)) + int32(uint32(offset)) + (int32(uint32(regB)) * int32(uint32(mult)))
             else:
                 # Assume 64 bit width
-                val = int64(regA) + int64(offset) + (int64(regB) * int64(mult))
+                val = int64(uint64(regA)) + int64(uint64(offset)) + (int64(uint64(regB)) * int64(uint64(mult)))
             return (long(val), None)
                 
         return (None, "Unknown failure.")
