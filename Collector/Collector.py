@@ -224,6 +224,9 @@ class Collector():
         
         sig = crashInfo.createCrashSignature(forceCrashAddress, forceCrashInstruction, numFrames)
         
+        if not sig:
+            return None
+        
         # Write the file to a unique file name
         return self.__store_signature_hashed(sig)
     
@@ -508,6 +511,9 @@ def main(argv=None):
     
     if opts.generate:
         sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
+        if not sigFile:
+            print("Failed to generate a signature for the given crash information.", file=sys.stderr)
+            return 2
         print(sigFile)
         return 0
     
