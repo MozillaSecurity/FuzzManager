@@ -36,6 +36,10 @@ class Configuration():
         
         if configFiles:
             self.parser = configparser.ConfigParser()
+            
+            # Make sure keys are kept case-sensitive
+            self.parser.optionxform = str
+            
             self.parser.read(configFiles)
             self.mainConfig = self.getSectionMap("Main")
             self.metadataConfig = self.getSectionMap("Metadata")
