@@ -68,6 +68,7 @@ class GDBRunner():
         
         (self.stdout, self.stderr) = process.communicate()
         
+        # Detect where the GDB trace starts/ends
         traceStart = self.stdout.rfind("Program received signal")
         traceStop = self.stdout.rfind("A debugging session is active")
         
@@ -77,7 +78,10 @@ class GDBRunner():
         if traceStop < 0:
             traceStop = len(self.stdout)
         
+        # Move the trace from stdout to auxCrashData
         self.auxCrashData = self.stdout[traceStart:traceStop]
+        self.stdout = self.stdout[:traceStart] + self.stdout[traceStop:]
+        
         return True
     
     def getCrashInfo(self, configuration):
