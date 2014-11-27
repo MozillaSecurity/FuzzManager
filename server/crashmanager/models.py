@@ -65,7 +65,8 @@ class BugProvider(models.Model):
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)
     externalType = models.ForeignKey(BugProvider)
-    
+    closed = models.DateTimeField(blank=True, null=True)
+
 class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
     signature = models.TextField()
