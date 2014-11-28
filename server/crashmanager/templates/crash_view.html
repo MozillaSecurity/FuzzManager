@@ -23,6 +23,13 @@
 		</div>
 
 		<div class="field">
+			<span class="label">Actions:</span>
+			<a href="{% url 'crashmanager:crashedit' entry.pk %}">Edit</a>
+			-
+			<a href="{% url 'crashmanager:crashdel' entry.pk %}">Delete</a>
+		</div>
+
+		<div class="field">
 			<span class="label">Created: </span><span class="code">{{ entry.created|date:"r" }}</span>
 			<span class="label">by Client: </span><span class="code">{{ entry.client.name|escape }}</span>
 		</div>
@@ -103,15 +110,6 @@
 			{% for arg in entry.metadataList %}
 			<div class="code">{{ arg }}</div>
 			{% endfor %}
-		</div>
-		{% endif %}
-
-		{% if notImplemented %}
-		<div class="field">
-			<span class="label">Actions:</span>
-			<a href="{% url 'crashmanager:crashedit' entry.pk %}">Edit</a>
-			-
-			<a href="{% url 'crashmanager:crashdel' entry.pk %}">Delete</a>
 		</div>
 		{% endif %}
         </div>

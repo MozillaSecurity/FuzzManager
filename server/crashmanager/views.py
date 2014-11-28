@@ -153,6 +153,17 @@ def editCrashEntry(request, crashid):
         return redirect('crashmanager:crashview', crashid = entry.pk)
     else:
         return render(request, 'crash_edit.html', { 'entry' : entry })
+    
+@login_required(login_url='/login/')
+def deleteCrashEntry(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    if request.method == 'POST':            
+        entry.delete()
+        return redirect('crashmanager:crashes')
+    elif request.method == 'GET':
+        return render(request, 'crash_del.html', { 'entry' : entry })
+    else:
+        raise SuspiciousOperation
 
 def __handleSignaturePost(request, bucket):
     # This method contains code shared between newSignature and editSignature
