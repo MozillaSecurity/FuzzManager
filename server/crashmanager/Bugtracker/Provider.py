@@ -48,6 +48,10 @@ class Provider():
         return
     
     @abstractmethod
-    def getBugData(self, bugId, username, password):
+    def getBugData(self, bugId, username=None, password=None):
+        return
+    
+    @abstractmethod
+    def getBugStatus(self, bugIds, username=None, password=None):
         return
     

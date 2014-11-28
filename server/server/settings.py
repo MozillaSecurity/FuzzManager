@@ -98,3 +98,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     )
 }
+
+# Crashmanager configuration
+#
+#BUGZILLA_USERNAME = "example@exampke.com"
+#BUGZILLA_PASSWORD = "secret"
+#CLEANUP_CRASHES_AFTER_DAYS = 14
+#CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3

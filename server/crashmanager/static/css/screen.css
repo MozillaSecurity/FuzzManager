@@ -384,3 +384,7 @@ div.field {
 #id_signature, #id_description {
 	height: 600px;
 }
+
+a.fixedbug, a.fixedbug:link, a.fixedbug:hover, a.fixedbug:active {
+	text-decoration: line-through;
+}

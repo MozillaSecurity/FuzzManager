@@ -20,6 +20,7 @@ import requests
 from django.shortcuts import render, get_object_or_404
 from crashmanager.models import BugzillaTemplate
 from django.forms.models import model_to_dict
+from datetime import datetime
 import json
 import base64
 import os
@@ -230,10 +231,24 @@ class BugzillaProvider(Provider):
         bugTemplate.save()
         return bugTemplate.pk
     
-    def getBugData(self, bugId, username, password):
+    def getBugData(self, bugId, username=None, password=None):
         bz = BugzillaREST(self.hostname, username, password)
         return bz.getBug(bugId)
+    
+    def getBugStatus(self, bugIds, username=None, password=None):
+        ret = {}
+        bz = BugzillaREST(self.hostname, username, password)
+        bugs = bz.getBugStatus(bugIds)
 
+        for bugId in bugs:
+            if bugs[bugId]["is_open"]:
+                ret[bugId] = None
+            elif bugs[bugId]["dupe_of"]:
+                ret[bugId] = str(bugs[bugId]["dupe_of"])
+            else:
+                ret[bugId] = datetime.strptime(bugs[bugId]["cf_last_resolved"], "%Y-%m-%dT%H:%M:%SZ")
+        
+        return ret
 
 
 class BugzillaREST():
@@ -246,7 +261,10 @@ class BugzillaREST():
     
     def login(self, forceLogin=False):
         if self.username == None or self.password == None:
-            raise RuntimeError("Need username/password to login.")
+            if forceLogin:
+                raise RuntimeError("Need username/password to login.")
+            else:
+                return False
         
         if forceLogin:
             self.authToken = None
@@ -262,24 +280,51 @@ class BugzillaREST():
             raise RuntimeError('Login failed: %s', response.text)
         
         self.authToken = json["token"]
+        return True
         
     def getBug(self, bugId):
-        # Ensure we're logged in
-        self.login()
-        
-        bugUrl = "%s/bug/%s?token=%s" % (self.baseUrl, bugId, self.authToken)
-        response = requests.get(bugUrl)
-        json = response.json()
-        
-        if not "bugs" in json:
-            return None
-        
-        bugs = json["bugs"]
+        bugs = self.getBugs([ bugId ])
         
         if not bugs:
             return None
         
         return bugs[0]
+    
+    def getBugStatus(self, bugIds):
+        return self.getBugs(bugIds, include_fields= [ "id", "is_open", "resolution", "dupe_of", "cf_last_resolved" ])
+    
+    def getBugs(self, bugIds, include_fields=None, exclude_fields=None):
+        if not isinstance(bugIds, list):
+            bugIds = [ bugIds ]
+        
+        bugUrl = "%s/bug?id=%s" % (self.baseUrl, ",".join(bugIds))
+        
+        extraParams = []
+        
+        if self.login():
+            extraParams.append("&token=%s" % self.authToken)
+            
+        if include_fields:
+            extraParams.append("&include_fields=%s" % ",".join(include_fields))
+            
+        if exclude_fields:
+            extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
+        
+        print(bugUrl + "".join(extraParams))
+        
+        response = requests.get(bugUrl + "".join(extraParams))
+        json = response.json()
+        
+        print(json)
+        
+        if not "bugs" in json:
+            return None
+        
+        ret = {}
+        for bug in json["bugs"]:
+            ret[bug["id"]] = bug
+
+        return ret
     
     def createBug(self, product, component, summary, version, description=None, op_sys=None, 
                   platform=None, priority=None, severity=None, alias=None, 
