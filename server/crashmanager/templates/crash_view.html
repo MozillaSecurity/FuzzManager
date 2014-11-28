@@ -13,7 +13,8 @@
 						{% if entry.bucket.bug %}
 							Reported as <a href="{{ entry.bucket.bug.externalType.urlTemplate|varformat:entry.bucket.bug.externalId }}">bug {{ entry.bucket.bug.externalId }}</a>.
 						{% else %}
-							Unreported, <a href="{% url 'crashmanager:createbug' entry.pk %}">file a bug</a>.
+							Unreported, <a href="{% url 'crashmanager:createbug' entry.pk %}">file a bug</a> or 
+							<a href="{% url 'crashmanager:siglink' entry.bucket.pk %}">assign an existing bug</a>.
 						{% endif %}
 					{% else %}
 						Not assigned to any bucket. <a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a>
