@@ -52,10 +52,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             if obj.testcase:
                 serialized["testcase_isbinary"] = obj.testcase.isBinary
                 serialized["testcase_quality"] = obj.testcase.quality
-                if obj.testcase.isBinary:
-                    serialized["testcase"] = "<binary>"
-                else:
-                    serialized["testcase"] = str(obj.testcase.test)
+                serialized["testcase"] = str(obj.testcase.test)
         
         return serialized
 
