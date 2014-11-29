@@ -26,6 +26,7 @@ import json
 import base64
 import argparse
 import hashlib
+import platform
 import requests
 
 try:
@@ -76,7 +77,7 @@ class Collector():
         self.clientId = clientId
         
         if self.serverHost != None and self.clientId == None:
-            raise RuntimeError("Must specify clientId when instantiating with server parameters")
+            self.clientId = platform.node()
     
     def refresh(self):
         '''
