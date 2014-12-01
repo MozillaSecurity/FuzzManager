@@ -53,7 +53,7 @@ __updated__ = '2014-10-01'
 
 class Collector():
     def __init__(self, sigCacheDir, serverHost=None, serverPort=8080,
-                 serverProtocol="https", serverUser=None, serverPass=None,
+                 serverProtocol="https", serverAuthToken=None,
                  clientId=None):
         '''
         @type sigCacheDir: string
@@ -62,10 +62,8 @@ class Collector():
         @param serverHost: Server host to contact for refreshing signatures
         @type serverPort: int
         @param serverPort: Server port to use when contacting server
-        @type serverUser: string
-        @param serverUser: Username for server authentication
-        @type serverPass: string
-        @param serverPass: Password for server authentication
+        @type serverAuthToken: string
+        @param serverAuthToken: Token for server authentication
         @type clientId: string
         @param clientId: Client ID stored in the server when submitting issues
         '''
@@ -73,7 +71,7 @@ class Collector():
         self.serverHost = serverHost
         self.serverPort = serverPort
         self.serverProtocol = serverProtocol
-        self.serverCreds = (serverUser, serverPass)
+        self.serverAuthToken = serverAuthToken
         self.clientId = clientId
         
         if self.serverHost != None and self.clientId == None:
@@ -89,7 +87,7 @@ class Collector():
         
         url = "%s://%s:%s/crashmanager/rest/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
-        response = requests.get(url, auth=self.serverCreds)
+        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
         
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
@@ -132,7 +130,11 @@ class Collector():
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost to use remote features.")
         
+        #if self.serverPort == "443" and self.serverProtocol == "https":
+        #    url = "%s://%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost)
+        #else:
         url = "%s://%s:%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+
         
         # Serialize our crash information, testcase and metadata into a dictionary to POST
         data = {}
@@ -175,9 +177,10 @@ class Collector():
         if crashInfo.configuration.args:
             data["args"] = json.dumps(crashInfo.configuration.args)
         
-        response = requests.post(url, data, auth=self.serverCreds)
+        response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
         
         if response.status_code != requests.codes["created"]:
+            print(response.content)
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
 
     def search(self, crashInfo):
@@ -246,7 +249,7 @@ class Collector():
         
         url = "%s://%s:%s/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
         
-        response = requests.get(url, auth=self.serverCreds)
+        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
         
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
@@ -260,7 +263,7 @@ class Collector():
             return None
         
         url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, json["testcase"])
-        response = requests.get(url, auth=self.serverCreds)
+        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
         
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
@@ -325,7 +328,7 @@ def main(argv=None):
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
     parser.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
-    parser.add_argument("--servercreds", dest="servercreds", help="Credentials file (contains username and password on separate lines)", metavar="FILE")
+    parser.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
     parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
     parser.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
     parser.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
@@ -411,7 +414,7 @@ def main(argv=None):
             mainConfig[defaultSetting] = defaultSettings[defaultSetting]
     
     # Allow overriding settings from the command line
-    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "servercreds", "clientid", "platform", "product", "product_version", "os"]
+    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "serverauthtokenfile", "clientid", "platform", "product", "product_version", "os"]
     for cmdlineSetting in cmdlineSettings:
         if (not cmdlineSetting in mainConfig) or getattr(opts, cmdlineSetting) != None:
             mainConfig[cmdlineSetting] = getattr(opts, cmdlineSetting)
@@ -475,18 +478,14 @@ def main(argv=None):
 
             crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
 
-    serveruser = None
-    serverpass = None
-    
-    # Allow specifying serveruser/pass directly in config, but servercreds has priority
-    if "serveruser" in mainConfig and "serverpass" in mainConfig and not mainConfig["servercreds"]:
-        serveruser = mainConfig["serveruser"]
-        serverpass = mainConfig["serverpass"]
-    elif mainConfig["servercreds"]:
-        with open(mainConfig["servercreds"]) as f:
-            (serveruser, serverpass) = f.read().splitlines()
+    # Allow specifying serverauthtoken directly in config, but serverauthtokenfile has priority
+    if "serverauthtoken" in mainConfig and not mainConfig["serverauthtokenfile"]:
+        serverauthtoken = mainConfig["serverauthtoken"]
+    elif mainConfig["serverauthtokenfile"]:
+        with open(mainConfig["serverauthtokenfile"]) as f:
+            serverauthtoken = f.read().rstrip()
 
-    collector = Collector(mainConfig["sigdir"], mainConfig["serverhost"], mainConfig["serverport"], mainConfig["serverproto"], serveruser, serverpass, mainConfig["clientid"])
+    collector = Collector(mainConfig["sigdir"], mainConfig["serverhost"], mainConfig["serverport"], mainConfig["serverproto"], serverauthtoken, mainConfig["clientid"])
     
     if opts.refresh or opts.submit or opts.autosubmit:
         if not mainConfig["serverhost"]:

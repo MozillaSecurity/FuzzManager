@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'crashmanager',
     'rest_framework',
+    'rest_framework.authtoken',
 )
 
 # This tiny middleware module allows us to see exceptions on stderr
@@ -54,10 +55,19 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    #'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
 )
+
+# For basic auth, uncomment the following lines and the line
+# in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
+# You still have to configure basic auth through your webserver.
+#
+#AUTHENTICATION_BACKENDS = (
+#    'django.contrib.auth.backends.RemoteUserBackend',
+#)
 
 ROOT_URLCONF = 'server.urls'
 
@@ -101,7 +111,7 @@ REST_FRAMEWORK = {
 
 # Crashmanager configuration
 #
-#BUGZILLA_USERNAME = "example@exampke.com"
+#BUGZILLA_USERNAME = "example@example.com"
 #BUGZILLA_PASSWORD = "secret"
 #CLEANUP_CRASHES_AFTER_DAYS = 14
 #CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3

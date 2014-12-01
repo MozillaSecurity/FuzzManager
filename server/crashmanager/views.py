@@ -10,6 +10,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q
 from django.db.models.aggregates import Count, Min
 from django.http.response import Http404
+from rest_framework.authentication import TokenAuthentication
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -406,6 +407,7 @@ class CrashEntryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows adding/viewing CrashEntries
     """
+    authentication_classes = (TokenAuthentication,)
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
 
@@ -413,5 +415,6 @@ class BucketViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows reading of signatures
     """
+    authentication_classes = (TokenAuthentication,)
     queryset = Bucket.objects.all()
     serializer_class = BucketSerializer
