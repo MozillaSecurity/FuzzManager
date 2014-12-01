@@ -1,9 +1,9 @@
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
-
 from django.core.files.storage import FileSystemStorage
 import json
 
@@ -19,7 +19,7 @@ class OS(models.Model):
     version = models.CharField(max_length=127, blank=True, null=True)
     
 class TestCase(models.Model):
-    test = models.FileField(storage=FileSystemStorage(), upload_to="tests")
+    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)), upload_to="tests")
     size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)

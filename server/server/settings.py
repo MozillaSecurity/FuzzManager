@@ -19,7 +19,7 @@ sys.path += [FTB_PATH]
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_KEY = '#pd41av)c)o@djbn!*jnhc0lv(&)xm359aysp4r*$qx_v2u!c0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -115,3 +115,7 @@ REST_FRAMEWORK = {
 #BUGZILLA_PASSWORD = "secret"
 #CLEANUP_CRASHES_AFTER_DAYS = 14
 #CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
+
+# This is the base directory where the tests/ subdirectory will
+# be created for storing submitted test files.
+TEST_STORAGE = os.path.join(BASE_DIR)
