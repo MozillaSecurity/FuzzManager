@@ -1,10 +1,14 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.core.files.storage import FileSystemStorage
+from django.db.models.signals import post_delete
+from django.dispatch.dispatcher import receiver
+
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
-from django.core.files.storage import FileSystemStorage
+
 import json
 
 class Platform(models.Model):
@@ -145,7 +149,17 @@ class CrashEntry(models.Model):
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
         return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
-    
+
+# This post_delete handler ensures that the corresponding testcase
+# is also deleted when the CrashEntry is gone. It also explicitely
+# deletes the file on the filesystem which would otherwise remain.
+@receiver(post_delete, sender=CrashEntry)
+def CrashEntry_delete(sender, instance, **kwargs):
+    if instance.testcase:
+        if instance.testcase.test:
+            instance.testcase.test.delete(False)
+        instance.testcase.delete(False)
+
 class BugzillaTemplate(models.Model):
     name = models.TextField()
     product = models.TextField()
