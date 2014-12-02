@@ -310,12 +310,8 @@ class BugzillaREST():
         if exclude_fields:
             extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
         
-        print(bugUrl + "".join(extraParams))
-        
         response = requests.get(bugUrl + "".join(extraParams))
         json = response.json()
-        
-        print(json)
         
         if not "bugs" in json:
             return None

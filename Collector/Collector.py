@@ -180,7 +180,6 @@ class Collector():
         response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
         
         if response.status_code != requests.codes["created"]:
-            print(response.content)
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
 
     def search(self, crashInfo):
