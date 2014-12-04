@@ -281,7 +281,7 @@ def viewSignature(request, sigid):
     
     bucket = bucket[0]
     
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size')
+    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')
     
     bucket.bestEntry = None
     if entries:
