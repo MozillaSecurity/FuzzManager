@@ -288,7 +288,7 @@ class BugzillaREST():
         if not bugs:
             return None
         
-        return bugs[0]
+        return bugs[bugId]
     
     def getBugStatus(self, bugIds):
         return self.getBugs(bugIds, include_fields= [ "id", "is_open", "resolution", "dupe_of", "cf_last_resolved" ])
