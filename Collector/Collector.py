@@ -198,11 +198,12 @@ class Collector():
         
         for sigFile in cachedSigFiles:
             sigFile = os.path.join(self.sigCacheDir, sigFile)
-            with open(sigFile) as f:
-                sigData = f.read()
-                crashSig = CrashSignature(sigData)
-                if crashSig.matches(crashInfo):
-                    return sigFile
+            if not os.path.isdir(sigFile):
+                with open(sigFile) as f:
+                    sigData = f.read()
+                    crashSig = CrashSignature(sigData)
+                    if crashSig.matches(crashInfo):
+                        return sigFile
         
         return None
     
