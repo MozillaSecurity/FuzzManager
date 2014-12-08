@@ -39,7 +39,7 @@ FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
 from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Running.GDBRunner import GDBRunner
+from FTB.Running.AutoRunner import AutoRunner
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
 
@@ -518,9 +518,9 @@ def main(argv=None):
         return 0
     
     if opts.autosubmit:
-        gdb = GDBRunner(opts.args[0], opts.args[1:])
-        if gdb.run():
-            crashInfo = gdb.getCrashInfo(configuration)
+        runner = AutoRunner.fromBinaryArgs(opts.args[0], opts.args[1:])
+        if runner.run():
+            crashInfo = runner.getCrashInfo(configuration)
             collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
