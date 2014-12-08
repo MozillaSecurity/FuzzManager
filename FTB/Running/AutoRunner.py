@@ -100,7 +100,42 @@ class GDBRunner(AutoRunner):
         self.cmdArgs.extend(self.gdbArgs)
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
+
+    def run(self):
+        process = subprocess.Popen(
+                                   self.cmdArgs,
+                                   stdin = subprocess.PIPE,
+                                   stdout = subprocess.PIPE,
+                                   stderr = subprocess.PIPE,
+                                   cwd=self.cwd, env=self.env
+                                   )
         
+        (self.stdout, self.stderr) = process.communicate()
+        
+        # Detect where the GDB trace starts/ends
+        traceStart = self.stdout.rfind("Program received signal")
+        traceStop = self.stdout.rfind("A debugging session is active")
+        
+        if traceStart < 0:
+            return False
+        
+        if traceStop < 0:
+            traceStop = len(self.stdout)
+        
+        # Move the trace from stdout to auxCrashData
+        self.auxCrashData = self.stdout[traceStart:traceStop]
+        self.stdout = self.stdout[:traceStart] + self.stdout[traceStop:]
+        
+        return True
+
+    
+class ASanRunner(AutoRunner):
+    def __init__(self, binary, args=None, env=None, cwd=None):
+        AutoRunner.__init__(self, binary, args, env, cwd)
+        
+        self.cmdArgs.append(self.binary)
+        self.cmdArgs.extend(self.args)
+    
     def run(self):
         process = subprocess.Popen(
                                    self.cmdArgs,
@@ -129,39 +164,5 @@ class GDBRunner(AutoRunner):
         # Move the trace from stdout to auxCrashData
         self.auxCrashData = os.linesep.join(self.auxCrashData)
         self.stderr = os.linesep.join(self.stderr)
-        
-        return True
-    
-class ASanRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None):
-        AutoRunner.__init__(self, binary, args, env, cwd)
-        
-        self.cmdArgs.append(self.binary)
-        self.cmdArgs.extend(self.args)
-        
-    def run(self):
-        process = subprocess.Popen(
-                                   self.cmdArgs,
-                                   stdin = subprocess.PIPE,
-                                   stdout = subprocess.PIPE,
-                                   stderr = subprocess.PIPE,
-                                   cwd=self.cwd, env=self.env
-                                   )
-        
-        (self.stdout, self.stderr) = process.communicate()
-        
-        # Detect where the GDB trace starts/ends
-        traceStart = self.stdout.rfind("Program received signal")
-        traceStop = self.stdout.rfind("A debugging session is active")
-        
-        if traceStart < 0:
-            return False
-        
-        if traceStop < 0:
-            traceStop = len(self.stdout)
-        
-        # Move the trace from stdout to auxCrashData
-        self.auxCrashData = self.stdout[traceStart:traceStop]
-        self.stdout = self.stdout[:traceStart] + self.stdout[traceStop:]
         
         return True
