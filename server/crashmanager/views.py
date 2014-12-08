@@ -238,7 +238,7 @@ def newSignature(request):
                                                    configuration, 
                                                    crashEntry.rawCrashData)
             
-            proposedSignature = str(crashInfo.createCrashSignature())
+            proposedSignature = str(crashInfo.createCrashSignature(forceCrashAddress=True))
             proposedShortDesc = crashInfo.createShortSignature()
             
             data = { 'new' : True, 'bucket' : { 
