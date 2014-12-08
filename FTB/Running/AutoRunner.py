@@ -136,6 +136,9 @@ class ASanRunner(AutoRunner):
         
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
+
+        if not "ASAN_SYMBOLIZER_PATH" in self.env and "ASAN_SYMBOLIZER_PATH" in os.environ:
+            self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
         
         if "ASAN_SYMBOLIZER_PATH" in self.env:
             if not os.path.exists(self.env["ASAN_SYMBOLIZER_PATH"]):
