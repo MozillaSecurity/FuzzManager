@@ -21,6 +21,7 @@ from __future__ import print_function
 import subprocess
 
 from abc import ABCMeta
+from distutils import spawn
 from FTB.Signatures.CrashInfo import CrashInfo
 import os
 
@@ -135,6 +136,16 @@ class ASanRunner(AutoRunner):
         
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
+        
+        if "ASAN_SYMBOLIZER_PATH" in self.env:
+            if not os.path.exists(self.env["ASAN_SYMBOLIZER_PATH"]):
+                raise RuntimeError("Misconfigured ASAN_SYMBOLIZER_PATH: %s")
+        else:
+            llvmSymbolizer = spawn.find_executable("llvm-symbolizer")
+            if llvmSymbolizer:
+                self.env["ASAN_SYMBOLIZER_PATH"] = llvmSymbolizer
+            else:
+                raise RuntimeError("Unable to locate llvm-symbolizer for ASAN_SYMBOLIZER_PATH")
     
     def run(self):
         process = subprocess.Popen(
