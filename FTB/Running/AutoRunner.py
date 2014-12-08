@@ -78,7 +78,7 @@ class AutoRunner():
             return GDBRunner(binary, args, env, cwd)
         
         
-class GDBRunner():
+class GDBRunner(AutoRunner):
     def __init__(self, binary, args=None, env=None, cwd=None):
         AutoRunner.__init__(self, binary, args, env, cwd)
         
@@ -132,7 +132,7 @@ class GDBRunner():
         
         return True
     
-class ASanRunner():
+class ASanRunner(AutoRunner):
     def __init__(self, binary, args=None, env=None, cwd=None):
         AutoRunner.__init__(self, binary, args, env, cwd)
         
