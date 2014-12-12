@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.db.models.aggregates import Count, Min
 from django.http.response import Http404
 from rest_framework.authentication import TokenAuthentication
+from datetime import datetime, timedelta
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -22,6 +23,35 @@ def logout_view(request):
 @login_required(login_url='/login/')
 def index(request):
     return redirect('crashmanager:crashes')
+
+@login_required(login_url='/login/')
+def stats(request):
+    lastHourDelta = datetime.now() - timedelta(hours=1)
+    print(lastHourDelta)
+    entries = CrashEntry.objects.filter(created__gt = lastHourDelta)
+    
+    bucketFrequencyMap = {}
+    for entry in entries:
+        if entry.bucket != None:
+            if entry.bucket.pk in bucketFrequencyMap:
+                bucketFrequencyMap[entry.bucket.pk] += 1
+            else:
+                bucketFrequencyMap[entry.bucket.pk] = 1
+    
+    frequentBuckets = []
+    
+    if bucketFrequencyMap:
+        bucketFrequencyMap = sorted(bucketFrequencyMap.items(), key=lambda t: t[1], reverse=True)[:10]
+        for pk, freq in bucketFrequencyMap:
+            obj = Bucket.objects.get(pk=pk)
+            obj.rph = freq
+            frequentBuckets.append(obj)
+        
+    return render(request, 'stats.html', { 'total_reports_per_hour': len(entries), 'frequentBuckets' : frequentBuckets })
+
+@login_required(login_url='/login/')
+def settings(request):
+    return render(request, 'settings.html')
 
 @login_required(login_url='/login/')
 def allSignatures(request):

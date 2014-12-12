@@ -1,0 +1,36 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+{% load extratags %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		<div>Total reports in the last hour: {{ total_reports_per_hour }}</div>
+
+            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+                <thead>
+                    <tr>
+			<th style="width: 25px;">Bucket</th>
+			<th style="width: 150px;">Short Description</th>
+			<th style="width: 25px;">Reports in the last hour</th>
+			<th style="width: 50px;">External Bug</th>
+                    </tr>
+                </thead>
+                <tbody>
+	          {% for entry in frequentBuckets %}<tr class="{% cycle odd,even %}">
+			  <td>{{ entry.pk }} <a href="{% url 'crashmanager:sigview' entry.pk %}">View</a></td>
+			  <td>{{ entry.shortDescription|escape }}</td>
+			  <td>{{ entry.rph }}</td>
+			  <td>
+				{% if entry.bug %}	    
+				<a {% if entry.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}">{{ entry.bug.externalId }}</a>
+				{% else %}
+				    <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
+				{% endif %}
+			  </td>
+                    </tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+</div>
+{% endblock 1 %}
