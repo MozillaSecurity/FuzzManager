@@ -101,12 +101,15 @@ def crashes(request):
                                  | Q(rawStderr__contains=q)
                                  | Q(rawCrashData__contains=q)
                                  )
-
-    # If we end up without any filters, the default is to show all issues that
-    # have no bucket/signature associated yet, as they are considered untriaged
-    if not filters and q == None:
-        filters["bucket"] = None
+    
+    # If we don't have any filters up to this point, don't consider it a search
+    if not filters and q == None:        
         isSearch = False
+        
+    # Do not display triaged crash entries unless there is an all=1 parameter
+    # specified in the search query. Otherwise only show untriaged entries.
+    if not "all" in request.GET or not request.GET["all"]:
+        filters["bucket"] = None
     
     entries = entries.filter(**filters)
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
