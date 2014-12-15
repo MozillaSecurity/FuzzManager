@@ -80,6 +80,7 @@ def crashes(request):
     exactFilterKeys = [
                        "bucket",
                        "client__name",
+                       "client__name__contains",
                        "os__name",
                        "product__name",
                        "product__version",
