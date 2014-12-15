@@ -88,3 +88,12 @@ class CrashSignature():
                 return False
         
         return True
+    
+    def getSymptomsDiff(self, crashInfo):
+        symptomsDiff = []
+        for symptom in self.symptoms:
+            if symptom.matches(crashInfo):
+                symptomsDiff.append({ 'offending' : False, 'symptom' : symptom })
+            else:
+                symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
+        return symptomsDiff

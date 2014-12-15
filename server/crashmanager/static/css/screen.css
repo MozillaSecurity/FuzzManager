@@ -388,3 +388,7 @@ div.field {
 a.fixedbug, a.fixedbug:link, a.fixedbug:hover, a.fixedbug:active {
 	text-decoration: line-through;
 }
+
+pre.red {
+	color: red;
+}

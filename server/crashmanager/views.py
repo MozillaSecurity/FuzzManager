@@ -383,6 +383,18 @@ def linkSignature(request, sigid):
         return render(request, 'signature_link.html', data)
     else:
         raise SuspiciousOperation
+    
+@login_required(login_url='/login/')
+def trySignature(request, sigid, crashid):
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    
+    entry.crashinfo = entry.getCrashInfo()
+    signature = bucket.getSignature()
+    
+    symptoms = signature.getSymptomsDiff(entry.crashinfo)
+    
+    return render(request, 'signature_try.html', { 'bucket' : bucket, 'entry' : entry, 'symptoms' : symptoms })
 
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
