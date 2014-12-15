@@ -18,6 +18,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
+import json
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
@@ -27,6 +28,13 @@ class Symptom():
     It also supports generating a CrashSignature based on the stored information.
     '''
     __metaclass__ = ABCMeta
+    
+    def __init__(self, jsonObj):
+        # Store the original source so we can return it if someone wants to stringify us
+        self.src = json.dumps(jsonObj, indent=2)
+    
+    def __str__(self):
+        return self.src
     
     @staticmethod
     def fromJSONObject(obj):
@@ -76,6 +84,7 @@ class OutputSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
+        Symptom.__init__(self, obj)
         self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
         self.src = JSONHelper.getStringChecked(obj, "src")
         
@@ -115,6 +124,7 @@ class StackFrameSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
+        Symptom.__init__(self, obj)
         self.functionName = StringMatch(JSONHelper.getNumberOrStringChecked(obj, "functionName", True))        
         self.frameNumber = JSONHelper.getNumberOrStringChecked(obj, "frameNumber")
 
@@ -148,6 +158,7 @@ class StackSizeSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
+        Symptom.__init__(self, obj)
         self.stackSize = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "size", True))
     
     def matches(self, crashInfo):
@@ -167,6 +178,7 @@ class CrashAddressSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
+        Symptom.__init__(self, obj)
         self.address = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "address", True))
     
     def matches(self, crashInfo):
@@ -188,7 +200,7 @@ class InstructionSymptom(Symptom):
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
-        
+        Symptom.__init__(self, obj)
         self.registerNames = JSONHelper.getArrayChecked(obj, "registerNames")
         self.instructionName = JSONHelper.getObjectOrStringChecked(obj, "instructionName")
         

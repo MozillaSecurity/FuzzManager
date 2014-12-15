@@ -52,6 +52,28 @@ class CrashInfo():
         # Store configuration data (platform, product, os, etc.)
         self.configuration = None
     
+    def __str__(self):
+        buf = []
+        buf.append("Crash trace:")
+        buf.append("")
+        for idx, frame in enumerate(self.backtrace):
+            buf.append("# %02d    %s" %(idx, frame))
+        buf.append("")
+        
+        if self.crashAddress:
+            buf.append("Crash address: %s" % self.crashAddress)
+            
+        if self.crashInstruction:
+            buf.append("Crash instruction: %s" % self.crashInstruction)
+        
+        if self.crashAddress or self.crashInstruction:
+            buf.append("")
+        
+        buf.append("Last 5 lines on stderr:")
+        buf.extend(self.rawStderr[-5:])
+        
+        return "\n".join(buf)
+    
     @staticmethod
     def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None):
         '''
