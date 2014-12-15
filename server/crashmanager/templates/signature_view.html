@@ -37,7 +37,7 @@
 
 		<div class="field">
 			<span class="label">Actions:</span>
-			<a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}">View associated crashes</a>
+			<a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}&all=1">View associated crashes</a>
 			-
 			<a href="{% url 'crashmanager:sigedit' bucket.pk %}">Edit</a>
 			-
