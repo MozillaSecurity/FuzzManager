@@ -194,6 +194,20 @@ Program terminated with signal 11, Segmentation fault.
 #7  0xf772bb76 in ?? ()
 """
 
+gdbRegressionTrace1 = """
+Program received signal SIGSEGV, Segmentation fault.
+js::ScriptedIndirectProxyHandler::defineProperty (this=0x930fad4, cx=0x9339130, proxy=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), desc={obj = (JSObject *) 0xf6247040 [object Proxy], attrs = 61524, getter = 0xf6700120, setter = 0, value = $jsval(-nan(0xfff88f62460d0))}) at /srv/repos/mozilla-central/js/src/proxy/ScriptedIndirectProxyHandler.cpp:201
+201         RootedObject handler(cx, GetIndirectProxyHandlerObject(proxy));
+#0  js::ScriptedIndirectProxyHandler::defineProperty (this=0x930fad4, cx=0x9339130, proxy=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), desc={obj = (JSObject *) 0xf6247040 [object Proxy], attrs = 61524, getter = 0xf6700120, setter = 0, value = $jsval(-nan(0xfff88f62460d0))}) at /srv/repos/mozilla-central/js/src/proxy/ScriptedIndirectProxyHandler.cpp:201
+#1  0x084ac820 in js::SetPropertyIgnoringNamedGetter (cx=0x9339130, handler=0x930fad4, proxy=(JSObject * const) 0xf6247040 [object Proxy], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), desc={obj = (JSObject *) 0xf6247040 [object Proxy], attrs = 61524, getter = 0xf6700120, setter = 0, value = $jsval(-nan(0xfff88f62460d0))}, descIsOwn=true, strict=false, vp=$jsval(-nan(0xfff88f62460d0))) at /srv/repos/mozilla-central/js/src/proxy/BaseProxyHandler.cpp:186
+#2  0x084b0677 in js::ScriptedIndirectProxyHandler::derivedSet (this=0x930fad4, cx=0x9339130, proxy=(JSObject * const) 0xf6247040 [object Proxy], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), strict=false, vp=$jsval(-nan(0xfff88f62460d0))) at /srv/repos/mozilla-central/js/src/proxy/ScriptedIndirectProxyHandler.cpp:311
+#3  0x084b08a8 in js::ScriptedIndirectProxyHandler::set (this=0x930fad4, cx=0x9339130, proxy=(JSObject * const) 0xf6247040 [object Proxy], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), strict=false, vp=$jsval(-nan(0xfff88f62460d0))) at /srv/repos/mozilla-central/js/src/proxy/ScriptedIndirectProxyHandler.cpp:290
+#4  0x084aeb59 in js::Proxy::set (cx=0x9339130, proxy=(JSObject * const) 0xf6247040 [object Proxy], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), strict=false, vp=$jsval(-nan(0xfff88f62460d0))) at /srv/repos/mozilla-central/js/src/proxy/Proxy.cpp:336
+#5  0x08535ec0 in setGeneric (strict=<optimized out>, vp=..., id=..., receiver=..., obj=(JSObject * const) 0xf6247040 [object Proxy], cx=0x9339130) at /srv/repos/mozilla-central/js/src/vm/NativeObject.h:1428
+#6  js::baseops::SetPropertyHelper<(js::ExecutionMode)0> (cxArg=0x9339130, obj=(js::NativeObject * const) 0xf6700050 [object Array], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), qualified=js::baseops::Qualified, vp=$jsval(-nan(0xfff88f62460d0)), strict=false) at /srv/repos/mozilla-central/js/src/vm/NativeObject.cpp:2353
+#7  0x08519490 in setGeneric (strict=false, vp=..., id=..., receiver=..., obj=(JSObject * const) 0xf6700050 [object Array], cx=0x9339130) at /srv/repos/mozilla-central/js/src/vm/NativeObject.h:1430
+"""
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -291,6 +305,15 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffeL)))
+
+class GDBParserTestRegression1(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo1 = GDBCrashInfo([], gdbRegressionTrace1.splitlines(), config)
+
+        self.assertEqual(crashInfo1.backtrace[0], "js::ScriptedIndirectProxyHandler::defineProperty")
+        self.assertEqual(crashInfo1.backtrace[1], "js::SetPropertyIgnoringNamedGetter")
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):

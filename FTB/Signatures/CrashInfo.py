@@ -354,8 +354,8 @@ class GDBCrashInfo(CrashInfo):
             gdbOutput = crashData
         
         gdbFramePatterns = [
-                            "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+) \\(.*?\\)( at .+)?",
-                            "\\s*#(\\d+)\\s+()(.+) \\(.*?\\)( at .+)?"
+                            "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
+                            "\\s*#(\\d+)\\s+()(.+?) \\(.*?\\)( at .+)?"
                             ]
         
         gdbRegisterPattern = RegisterHelper.getRegisterPattern() + "\\s+0x([0-9a-f]+)"
