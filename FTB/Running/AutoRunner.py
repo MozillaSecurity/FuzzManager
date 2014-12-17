@@ -37,9 +37,13 @@ class AutoRunner():
         self.binary = binary
         self.cwd = cwd
         
-        self.env = env
-        if self.env is None:
-            self.env = {}
+        # Certain debuggers like GDB can run into problems when certain
+        # environment variables are missing. Hence we copy the system environment
+        # variables by default and overwrite them if they are specified through env.
+        self.env = dict(os.environ)
+        if env:
+            for envkey in env:
+                self.env[envkey] = env[envkey]
         
         self.args = args
         if self.args is None:
@@ -90,7 +94,6 @@ class GDBRunner(AutoRunner):
                         '-ex', 'run',
                         '-ex', 'set pagination 0',
                         '-ex', 'set backtrace limit 128',
-                        '-ex', 'set print elements 1',
                         '-ex', 'bt',
                         '-ex', 'python printImportantRegisters()',
                         '-ex', 'x/2i $pc',
