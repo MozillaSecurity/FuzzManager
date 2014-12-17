@@ -17,7 +17,8 @@
 							<a href="{% url 'crashmanager:siglink' entry.bucket.pk %}">assign an existing bug</a>.
 						{% endif %}
 					{% else %}
-						Not assigned to any bucket. <a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a>
+						Not assigned to any bucket. <a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a> or
+						<a href="{% url 'crashmanager:findsigs' entry.pk %}">Search bucket</a>
 					{% endif %}
 				</span>
 		</div>

@@ -397,6 +397,34 @@ def trySignature(request, sigid, crashid):
     return render(request, 'signature_try.html', { 'bucket' : bucket, 'entry' : entry, 'symptoms' : symptoms })
 
 @login_required(login_url='/login/')
+def findSignatures(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    
+    entry.crashinfo = entry.getCrashInfo()
+    
+    buckets = Bucket.objects.all()
+    similarBuckets = []
+    
+    for bucket in buckets:
+        signature = bucket.getSignature()
+        offLen = len(bucket.getSignature().getOffendingSymptoms(entry.crashinfo))
+        
+        # TODO: This offset is kind of arbitrary. It is supposed to keep signatures
+        # from being considered as similar if the number of remaining symptoms is
+        # likely just not enough for providing a useful signature. 
+        if (len(signature.symptoms) - offLen < 2):
+            continue
+    
+        # TODO: This could be made configurable through a GET parameter
+        if offLen <= 3:
+            bucket.offCount = offLen
+            similarBuckets.append(bucket)
+            
+    similarBuckets.sort(key=lambda x: x.offCount)
+    
+    return render(request, 'signature_find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
+
+@login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     
