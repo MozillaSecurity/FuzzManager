@@ -90,6 +90,7 @@ class GDBRunner(AutoRunner):
                         '-ex', 'run',
                         '-ex', 'set pagination 0',
                         '-ex', 'set backtrace limit 128',
+                        '-ex', 'set print elements 1',
                         '-ex', 'bt',
                         '-ex', 'python printImportantRegisters()',
                         '-ex', 'x/2i $pc',
