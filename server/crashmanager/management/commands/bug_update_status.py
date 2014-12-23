@@ -22,7 +22,16 @@ class Command(NoArgsCommand):
             if not bugStatus:
                 raise RuntimeError("Error getting bug status from bug provider.")
             
+            # Map to memorize which bugs we have duped to others
+            bugDupMap = {}
+            
             for bugId in bugStatus:
+                # It is possible that two buckets are linked to one bug which has been marked
+                # as a duplicate of another. Once the first bug has been processed, we don't
+                # need to process any more bugs with the same bug id.
+                if bugId in bugDupMap:
+                    continue
+                
                 bug = providerBugs.filter(externalId=bugId)[0]
                 if bugStatus[bugId] == None and bug.closed != None:
                     bug.closed = None
@@ -31,6 +40,7 @@ class Command(NoArgsCommand):
                     # The bug has been marked as a duplicate, so we change the externalId
                     # to match the duped bug. If that bug is also closed, then it will be
                     # picked up the next time this command runs.
+                    bugDupMap[bug.externalId] = bugStatus[bugId]
                     bug.externalId = bugStatus[bugId]
                     bug.closed = None
                     bug.save()
