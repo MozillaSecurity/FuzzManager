@@ -3,10 +3,14 @@ from crashmanager.models import CrashEntry, Bucket, Bug
 from django.db.models.aggregates import Count
 from datetime import datetime, timedelta
 from django.conf import settings
+import warnings
 
 class Command(NoArgsCommand):
     help = "Cleanup old crash entries."
     def handle_noargs(self, **options):
+        # Suppress warnings about native datetime vs. timezone
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
+
         cleanup_crashes_after_days = getattr(settings, 'CLEANUP_CRASHES_AFTER_DAYS', 14)
         cleanup_fixed_buckets_after_days = getattr(settings, 'CLEANUP_FIXED_BUCKETS_AFTER_DAYS', 3)
 
