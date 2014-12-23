@@ -1,10 +1,14 @@
 from django.core.management.base import NoArgsCommand
 from crashmanager.models import Bug, BugProvider
 from django.conf import settings
+import warnings
 
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     def handle_noargs(self, **options):
+        # Suppress warnings about native datetime vs. timezone
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
+        
         providers = BugProvider.objects.all()
         for provider in providers:
             providerInstance = provider.getInstance()
