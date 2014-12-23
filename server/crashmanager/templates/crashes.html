@@ -48,7 +48,7 @@
 		    <td>
 			    {% if entry.testcase %}
 			    	Q{{entry.testcase.quality}} <a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&testcase__quality={{ entry.testcase.quality|urlencode }}"> [x]</a>
-				{{ entry.testcase.test|length }}
+				{{ entry.testcase.size }}
 				{% if entry.testcase.isBinary %}
 				(binary)
 				{% endif %}
