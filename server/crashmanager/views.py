@@ -65,8 +65,43 @@ def allCrashes(request):
 
 @login_required(login_url='/login/')
 def signatures(request):
-    entries = Bucket.objects.filter(bug=None).annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
-    return render(request, 'signatures.html', { 'siglist' : entries })
+    entries = Bucket.objects.all().annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
+
+    filters = {}
+    q = None
+    isSearch = True
+    
+    # These are all keys that are allowed for exact filtering
+    exactFilterKeys = [
+                       "bug",
+                       "shortDescription__contains",
+                       "signature__contains",
+                       ]
+    
+    for key in exactFilterKeys:
+        if key in request.GET:
+            filters[key] = request.GET[key]
+        
+    if "q" in request.GET:
+        q = request.GET["q"]
+        entries = entries.filter(
+                                 Q(shortDescription__contains=q)
+                                 | Q(signature__contains=q)
+                                 )
+    
+    # If we don't have any filters up to this point, don't consider it a search
+    if not filters and q == None:        
+        isSearch = False
+        
+    # Do not display triaged crash entries unless there is an all=1 parameter
+    # specified in the search query. Otherwise only show untriaged entries.
+    if not "all" in request.GET or not request.GET["all"]:
+        filters["bug"] = None
+    
+    entries = entries.filter(**filters)
+    
+    data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
+    return render(request, 'signatures.html', data)
 
 @login_required(login_url='/login/')
 def crashes(request):
