@@ -19,7 +19,18 @@ sys.path += [FTB_PATH]
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_FILE = "settings.secret"
+try:
+    SECRET_KEY = open(SECRET_FILE).read().strip()
+except:
+    try:
+        with open(SECRET_FILE, 'w') as f:
+            import random
+            chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
+            SECRET_KEY = ''.join([random.choice(chars) for i in range(64)])
+            f.write(SECRET_KEY)
+    except IOError:
+        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE) 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
