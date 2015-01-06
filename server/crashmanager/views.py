@@ -60,7 +60,7 @@ def allSignatures(request):
 
 @login_required(login_url='/login/')
 def allCrashes(request):
-    entries = CrashEntry.objects.all()
+    entries = CrashEntry.objects.all().order_by('-id')
     return render(request, 'crashes.html', { 'isAll': True, 'crashlist' : entries })
 
 @login_required(login_url='/login/')
@@ -109,7 +109,7 @@ def crashes(request):
     q = None
     isSearch = True
     
-    entries = CrashEntry.objects.all();
+    entries = CrashEntry.objects.all().order_by('-id')
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
