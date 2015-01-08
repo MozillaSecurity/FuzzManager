@@ -29,11 +29,6 @@ import hashlib
 import platform
 import requests
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
