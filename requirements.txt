@@ -2,3 +2,4 @@ Django==1.7.1
 numpy==1.9.1
 djangorestframework==2.4.4
 requests>=2.5.0
+lockfile>=0.8

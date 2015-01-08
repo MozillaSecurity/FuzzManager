@@ -3,10 +3,12 @@ from crashmanager.models import CrashEntry, Bucket, Bug
 from django.db.models.aggregates import Count
 from datetime import datetime, timedelta
 from django.conf import settings
+from crashmanager.management.common import mgmt_lock_required
 import warnings
 
 class Command(NoArgsCommand):
     help = "Cleanup old crash entries."
+    @mgmt_lock_required
     def handle_noargs(self, **options):
         # Suppress warnings about native datetime vs. timezone
         warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
