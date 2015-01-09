@@ -332,6 +332,8 @@ def main(argv=None):
     parser.add_argument('--args', dest='args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
     parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
     parser.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
+    parser.add_argument("--binary", dest="binary", help="Binary that has a configuration file for reading", metavar="BINARY")
+
 
     parser.add_argument("--testcase", dest="testcase", help="File containing testcase", metavar="FILE")
     parser.add_argument("--testcasequality", dest="testcasequality", default="0", help="Integer indicating test case quality (0 is best and default)", metavar="VAL")
@@ -376,18 +378,13 @@ def main(argv=None):
         if not opts.args:
             print("Error: Action --autosubmit requires test arguments to be specified", file=sys.stderr)
             return 2
-        binaryConfig = "%s.fuzzmanagerconf" % opts.args[0]
-        if not os.path.exists(binaryConfig):
-            print("Warning: No binary configuration found at %s" % binaryConfig, file=sys.stderr)
-        else:
-            configFiles.append(binaryConfig)
-            
-        # We also need to check that first argument is a binary that exists, and that (apart from the binary),
-        # there is only one file on the command line (the testcase), if it hasn't been explicitely specified.
-        if not os.path.exists(opts.args[0]):
-            print("Error: Specified binary does not exist: %s" % opts.args[0])
-            return 2
+    
+        # Store the binary candidate only if --binary wasn't also specified
+        if not opts.binary:
+            opts.binary = opts.args[0]
         
+        # We also need to check that (apart from the binary), there is only one file on the command line 
+        # (the testcase), if it hasn't been explicitely specified.
         testcase = opts.testcase
         testcaseidx = None
         if testcase == None:
@@ -398,6 +395,20 @@ def main(argv=None):
                         return 2
                     testcase = arg
                     testcaseidx = idx
+    
+    # Either --autosubmit was specified, or someone specified --binary manually
+    if opts.binary:
+        binaryConfig = "%s.fuzzmanagerconf" % opts.binary
+        if not os.path.exists(binaryConfig):
+            print("Warning: No binary configuration found at %s" % binaryConfig, file=sys.stderr)
+        else:
+            configFiles.append(binaryConfig)
+            
+        # We also need to check that first argument is a binary that exists, and that (apart from the binary),
+        # there is only one file on the command line (the testcase), if it hasn't been explicitely specified.
+        if not os.path.exists(opts.binary):
+            print("Error: Specified binary does not exist: %s" % opts.binary)
+            return 2
             
     config = Configuration(configFiles)
     mainConfig = config.mainConfig
