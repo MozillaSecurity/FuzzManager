@@ -139,18 +139,13 @@ class Collector():
         data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
         
         if testCase:
-            with open(testCase) as f:
-                testCaseData = f.read()
+            (testCaseData, isBinary) = Collector.__read_testcase(testCase)
             
-            textBytes = bytearray([7,8,9,10,12,13,27]) + bytearray(range(0x20, 0x100))
-            isBinary = lambda input: bool(input.translate(None, textBytes))
-            if isBinary(testCaseData): 
+            if isBinary:
                 testCaseData = base64.b64encode(testCaseData)
-                data["testcase_isbinary"] = True
-            else:
-                data["testcase_isbinary"] = False
-
+                
             data["testcase"] = testCaseData
+            data["testcase_isbinary"] = isBinary
             data["testcase_quality"] = testCaseQuality
             data["testcase_ext"] = os.path.splitext(testCase)[1][1:]
             
@@ -287,6 +282,26 @@ class Collector():
             f.write(str(signature))
             
         return sigfile
+    
+    @staticmethod
+    def __read_testcase(testCase):
+        '''
+        Read a testcase file, return the content and indicate if it is binary or not.
+        
+        @type testCase: string
+        @param testCase: Filename of the file to open
+        
+        @rtype: tuple(string, bool)
+        @return: Tuple containing the file contents and a boolean indicating if the content is binary
+        
+        '''
+        with open(testCase) as f:
+            testCaseData = f.read()
+            
+            textBytes = bytearray([7,8,9,10,12,13,27]) + bytearray(range(0x20, 0x100))
+            isBinary = lambda input: bool(input.translate(None, textBytes))
+            
+            return (testCaseData, isBinary(testCaseData))
 
 def main(argv=None):
     '''Command line options.'''
