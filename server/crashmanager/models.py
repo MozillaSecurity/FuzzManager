@@ -144,11 +144,17 @@ class CrashEntry(models.Model):
             self.metadataList = ["%s=%s" % (s,metadataDict[s]) for s in metadataDict.keys()]
     
     
-    def getCrashInfo(self):
+    def getCrashInfo(self, attachTestcase=False):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
-        return CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
+        crashInfo = CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
+        
+        if attachTestcase and self.testcase != None and not self.testcase.isBinary:
+            self.testcase.loadTest()
+            crashInfo.testcase = self.testcase.content
+        
+        return crashInfo
 
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely

@@ -498,7 +498,11 @@ def main(argv=None):
                     crashdata = f.read()
 
             crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
-
+            if opts.testcase:
+                (testCaseData, isBinary) = Collector.__read_testcase(opts.testcase)
+                if not isBinary:
+                    crashInfo.testcase = testCaseData
+                
     # Allow specifying serverauthtoken directly in config, but serverauthtokenfile has priority
     if "serverauthtoken" in mainConfig and not mainConfig["serverauthtokenfile"]:
         serverauthtoken = mainConfig["serverauthtoken"]

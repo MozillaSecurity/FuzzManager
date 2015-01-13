@@ -159,8 +159,10 @@ def autoAssignCrashEntries(request):
     
     for bucket in buckets:
         signature = bucket.getSignature()
+        needTest = signature.matchRequiresTest()
+        
         for entry in entries:
-            if signature.matches(entry.getCrashInfo()):
+            if signature.matches(entry.getCrashInfo(attachTestcase=needTest)):
                 entry.bucket = bucket
                 entry.save()
     
@@ -200,13 +202,6 @@ def editCrashEntry(request, crashid):
             entry.crashAddress = hex(crashInfo.crashAddress)
         entry.shortSignature = crashInfo.createShortSignature()
         
-        # If the entry has a bucket, check if it still fits into
-        # this bucket, otherwise remove it.
-        if entry.bucket:
-            sig = entry.bucket.getSignature()
-            if not sig.matches(crashInfo):
-                entry.bucket = None
-        
         if entry.testcase:
             if entry.testcase.isBinary:
                 if request.POST['testcase'] != "(binary)":
@@ -218,6 +213,16 @@ def editCrashEntry(request, crashid):
                 if request.POST['testcase'] != entry.testcase.content:
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.storeTestAndSave()
+                    
+                # Directly attach the testcase here, since we have it
+                crashInfo.testcase = entry.testcase.content
+        
+        # If the entry has a bucket, check if it still fits into
+        # this bucket, otherwise remove it.
+        if entry.bucket:
+            sig = entry.bucket.getSignature()
+            if not sig.matches(crashInfo):
+                entry.bucket = None
         
         entry.save()
         return redirect('crashmanager:crashview', crashid = entry.pk)
@@ -259,10 +264,11 @@ def __handleSignaturePost(request, bucket):
         (inCount, outCount) = (0,0)
         
         signature = bucket.getSignature()
+        needTest = signature.matchRequiresTest()
         entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
         
         for entry in entries:
-            match = signature.matches(entry.getCrashInfo())
+            match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
             if match and entry.bucket == None:
                 inCount += 1
                 if 'submit_save' in request.POST:
@@ -424,8 +430,8 @@ def trySignature(request, sigid, crashid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     entry = get_object_or_404(CrashEntry, pk=crashid)
     
-    entry.crashinfo = entry.getCrashInfo()
     signature = bucket.getSignature()
+    entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
     
     symptoms = signature.getSymptomsDiff(entry.crashinfo)
     
@@ -435,7 +441,7 @@ def trySignature(request, sigid, crashid):
 def findSignatures(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     
-    entry.crashinfo = entry.getCrashInfo()
+    entry.crashinfo = entry.getCrashInfo(attachTestcase=True)
     
     buckets = Bucket.objects.all()
     similarBuckets = []

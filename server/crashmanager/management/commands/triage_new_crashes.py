@@ -11,7 +11,9 @@ class Command(NoArgsCommand):
     
         for bucket in buckets:
             signature = bucket.getSignature()
+            needTest = signature.matchRequiresTest()
+            
             for entry in entries:
-                if signature.matches(entry.getCrashInfo()):
+                if signature.matches(entry.getCrashInfo(attachTestcase=needTest)):
                     entry.bucket = bucket
                     entry.save()
