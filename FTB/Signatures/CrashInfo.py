@@ -51,6 +51,11 @@ class CrashInfo():
         
         # Store configuration data (platform, product, os, etc.)
         self.configuration = None
+        
+        # This is an optional testcase that is not stored with the crashInfo but
+        # can be "attached" before matching signatures that might require the
+        # testcase.
+        self.testcase = None
     
     def __str__(self):
         buf = []
