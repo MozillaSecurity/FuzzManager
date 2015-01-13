@@ -436,6 +436,12 @@ class GDBCrashInfo(CrashInfo):
         # If we have no crash address but the instruction, try to calculate the crash address
         if self.crashAddress == None and self.crashInstruction != None:
             self.crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
+            if (self.crashAddress != None and self.crashAddress < 0):
+                if RegisterHelper.getBitWidth(self.registers) == 32:
+                    self.crashAddress = uint32(self.crashAddress)
+                else:
+                    # Assume 64 bit width
+                    self.crashAddress = uint64(self.crashAddress)
         
     @staticmethod
     def calculateCrashAddress(crashInstruction, registerMap):

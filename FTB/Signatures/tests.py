@@ -208,6 +208,22 @@ js::ScriptedIndirectProxyHandler::defineProperty (this=0x930fad4, cx=0x9339130, 
 #7  0x08519490 in setGeneric (strict=false, vp=..., id=..., receiver=..., obj=(JSObject * const) 0xf6700050 [object Array], cx=0x9339130) at /srv/repos/mozilla-central/js/src/vm/NativeObject.h:1430
 """
 
+gdbRegressionTrace2 = """
+Program received signal SIGSEGV, Segmentation fault.
+0xf7673132 in ?? ()
+#0  0xf7673132 in ?? ()
+eax            0xf6043040    -167497664
+ecx            0xf651f4b0    -162401104
+edx            0xf651f4d0    -162401072
+ebx            0xf651f4f0    -162401040
+esp            0xfffd573c    0xfffd573c
+ebp            0xfffd57e4    0xfffd57e4
+esi            0x0    0
+edi            0x934d3d0    154457040
+eip            0xf7673132    0xf7673132
+=> 0xf7673132:    vmovaps %xmm1,0x60(%esp)
+"""
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -268,7 +284,7 @@ class GDBParserTestCrashAddress(unittest.TestCase):
 
         self.assertEqual(crashInfo1.crashAddress, 0x1L)
         self.assertEqual(crashInfo2.crashAddress, None)
-        self.assertEqual(crashInfo3.crashAddress, -0x60L)
+        self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0L)
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
     def runTest(self):
@@ -314,6 +330,14 @@ class GDBParserTestRegression1(unittest.TestCase):
 
         self.assertEqual(crashInfo1.backtrace[0], "js::ScriptedIndirectProxyHandler::defineProperty")
         self.assertEqual(crashInfo1.backtrace[1], "js::SetPropertyIgnoringNamedGetter")
+
+class GDBParserTestCrashAddressRegression2(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo2 = GDBCrashInfo([], gdbRegressionTrace2.splitlines(), config)
+        
+        self.assertEqual(crashInfo2.crashAddress, 0xfffd579cL)
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
