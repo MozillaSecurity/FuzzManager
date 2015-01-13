@@ -7,6 +7,7 @@ import unittest
 from FTB.Signatures.CrashInfo import CrashInfo
 import json
 from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashSignature import CrashSignature
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -108,9 +109,73 @@ testSignature3 = '''{"symptoms": [
 ]}
 '''
 
+testSignature4 = '''{"symptoms": [
+    {
+    "functionName": "GetObjectAllocKindForCopy",
+    "frameNumber": 0,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "js::Nursery::moveToTenured",
+    "frameNumber": 1,
+    "type": "stackFrame"
+  },
+    {
+    "type": "testcase", 
+    "value": {
+      "matchType": "pcre", 
+      "value": "SIMD\\\.float\\\d+x"
+    }
+  }
+]}
+'''
+
+testSignature5 = '''{"symptoms": [
+    {
+    "functionName": "GetObjectAllocKindForCopy",
+    "frameNumber": 0,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "js::Nursery::moveToTenured",
+    "frameNumber": 1,
+    "type": "stackFrame"
+  },
+    {
+    "type": "testcase", 
+    "value": "SIMD.float32x4"
+  }
+]}
+'''
+
+testSignature6 = '''{"symptoms": [
+    {
+    "functionName": "GetObjectAllocKindForCopy",
+    "frameNumber": 0,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "js::Nursery::moveToTenured",
+    "frameNumber": 1,
+    "type": "stackFrame"
+  },
+    {
+    "type": "testcase", 
+    "value": "SIMD.float64x4"
+  }
+]}
+'''
+
+testCase1 = '''
+function test() {
+  var a = SIMD.float32x4();
+  if (typeof reportCompare === "function")
+    reportCompare(true, true);
+}
+test();
+'''
+
 class SignatureCreateTest(unittest.TestCase):
-
-
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
         
@@ -131,7 +196,36 @@ class SignatureCreateTest(unittest.TestCase):
         #  The third crashInfo misses 2 frames from the top 4 frames, so it will
         #  also include the crash address, even though we did not request it.
         self.assertEqual(json.loads(str(crashSig3)), json.loads(testSignature3))
+
+class SignatureTestCaseMatchTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
         
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
+        
+        testSig3 = CrashSignature(testSignature3)
+        testSig4 = CrashSignature(testSignature4)
+        testSig5 = CrashSignature(testSignature5)
+        testSig6 = CrashSignature(testSignature6)
+        
+        self.assertFalse(testSig3.matchRequiresTest())
+        self.assertTrue(testSig4.matchRequiresTest())
+        self.assertTrue(testSig5.matchRequiresTest())
+        
+        # Must not match without testcase provided
+        self.assertFalse(testSig4.matches(crashInfo))
+        self.assertFalse(testSig5.matches(crashInfo))
+        self.assertFalse(testSig6.matches(crashInfo))
+        
+        # Attach testcase
+        crashInfo.testcase = testCase1
+
+        # Must match with testcase provided
+        self.assertTrue(testSig4.matches(crashInfo))
+        self.assertTrue(testSig5.matches(crashInfo))
+        
+        # This one does not match at all
+        self.assertFalse(testSig6.matches(crashInfo))
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

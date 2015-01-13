@@ -16,7 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
 from FTB.Signatures import JSONHelper
-from FTB.Signatures.Symptom import Symptom
+from FTB.Signatures.Symptom import Symptom, TestcaseSymptom
 
 class CrashSignature():
     def __init__(self, rawSignature):
@@ -88,6 +88,22 @@ class CrashSignature():
                 return False
         
         return True
+    
+    def matchRequiresTest(self):
+        '''
+        Check if the signature requires a testcase to match.
+        
+        This method can be used to avoid attaching a testcase to the crashInfo
+        before matching, avoiding unnecessary I/O on testcase files.
+        
+        @rtype: bool
+        @return: True if the signature requires a testcase to match
+        '''
+        for symptom in self.symptoms:
+            if isinstance(symptom, TestcaseSymptom):
+                return True
+        
+        return False
     
     def getOffendingSymptoms(self, crashInfo):
         offendingSymptoms = []

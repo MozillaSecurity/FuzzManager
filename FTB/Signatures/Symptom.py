@@ -62,6 +62,8 @@ class Symptom():
             return CrashAddressSymptom(obj)
         elif (stype == "instruction"):
             return InstructionSymptom(obj)
+        elif (stype == "testcase"):
+            return TestcaseSymptom(obj)
         else:
             raise RuntimeError("Unknown symptom type: %s" % type)
 
@@ -233,3 +235,34 @@ class InstructionSymptom(Symptom):
                 return False
         
         return True
+
+class TestcaseSymptom(Symptom):
+    def __init__(self, obj):
+        '''
+        Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
+        '''
+        Symptom.__init__(self, obj)
+        self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
+        
+    def matches(self, crashInfo):
+        '''
+        Check if the symptom matches the given crash information
+        
+        @type crashInfo: CrashInfo
+        @param crashInfo: The crash information to check against 
+        
+        @rtype: bool
+        @return: True if the symptom matches, False otherwise
+        '''
+        
+        # No testcase means to fail matching
+        if crashInfo.testcase == None:
+            return False
+        
+        testLines = crashInfo.testcase.splitlines()
+            
+        for line in testLines:
+            if self.output.matches(line):
+                return True
+            
+        return False
