@@ -313,7 +313,13 @@ def newSignature(request):
                                                    configuration, 
                                                    crashEntry.rawCrashData)
             
-            proposedSignature = str(crashInfo.createCrashSignature(forceCrashAddress=True))
+            # First try to create the signature with the crash address included.
+            # However, if that fails, try without forcing the crash signature.
+            proposedSignature = crashInfo.createCrashSignature(forceCrashAddress=True)
+            if (proposedSignature == None):
+                proposedSignature = crashInfo.createCrashSignature()
+                
+            proposedSignature = str(proposedSignature)
             proposedShortDesc = crashInfo.createShortSignature()
             
             data = { 'new' : True, 'bucket' : { 
