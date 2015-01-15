@@ -139,7 +139,7 @@ class Collector():
         data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
         
         if testCase:
-            (testCaseData, isBinary) = Collector.__read_testcase(testCase)
+            (testCaseData, isBinary) = Collector.read_testcase(testCase)
             
             if isBinary:
                 testCaseData = base64.b64encode(testCaseData)
@@ -284,7 +284,7 @@ class Collector():
         return sigfile
     
     @staticmethod
-    def __read_testcase(testCase):
+    def read_testcase(testCase):
         '''
         Read a testcase file, return the content and indicate if it is binary or not.
         
@@ -499,7 +499,7 @@ def main(argv=None):
 
             crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
             if opts.testcase:
-                (testCaseData, isBinary) = Collector.__read_testcase(opts.testcase)
+                (testCaseData, isBinary) = Collector.read_testcase(opts.testcase)
                 if not isBinary:
                     crashInfo.testcase = testCaseData
                 
