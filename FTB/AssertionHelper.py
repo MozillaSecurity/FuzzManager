@@ -69,6 +69,9 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif not onlyProgramAssertions and "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
             lastLine = line
+        elif "MOZ_CRASH" in line and re.search("MOZ_CRASH\(.+\)", line):
+            # MOZ_CRASH line, but with a message (we should only look at these)
+            lastLine = line
         
     return lastLine
 

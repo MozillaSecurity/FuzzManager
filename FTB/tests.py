@@ -21,6 +21,10 @@ ASAN:SIGSEGV
 ==26289==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fac9b54873a sp 0x7fff085f2120 bp 0x7fff085f2130 T0)
 """
 
+jsshellMozCrash = """
+Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
+"""
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
@@ -44,6 +48,15 @@ class AssertionHelperTestSanitizing(unittest.TestCase):
         expectedMsg = "###!!! ASSERTION: Unexpected non\-ASCII character: '!\(\*s2 & ~0x[0-9a-fA-F]+\)', file \.\./\.\./\.\./dist/include/nsCharTraits\.h, line [0-9]+"
         
         self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestMozCrash(unittest.TestCase):
+    def runTest(self):
+        err = jsshellMozCrash.splitlines()
         
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
+        expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at /.+/ScopeObject\\.cpp:[0-9]+"
+        
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
 if __name__ == "__main__":
     unittest.main()
