@@ -1,0 +1,28 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+		{% if provider.pk != None %}
+			<form action="{% url 'crashmanager:bugprovideredit' provider.pk %}" method="post">
+		{% else %}
+			<form action="{% url 'crashmanager:bugprovidercreate' %}" method="post">
+		{% endif %}
+		{% csrf_token %}
+		<label class="label" for="id_classname">Provider Class Name:</label>
+		<input id="id_classname" maxlength="1023" name="classname" type="text" value="{{ provider.classname }}">
+		<br/>
+		<label class="label" for="id_hostname">Provider Host Name:</label>
+		<input id="id_hostname" maxlength="1023" name="hostname" type="text" value="{{ provider.hostname }}">
+		<br/>
+		<label class="label" for="id_urlTemplate">Provider Bug URL Template:</label>
+		<input id="id_urlTemplate" maxlength="1023" name="urlTemplate" type="text" value="{{ provider.urlTemplate }}">
+		<br/>
+		<input type="submit" name="submit_save" value="Save" />
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

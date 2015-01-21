@@ -524,6 +524,79 @@ def viewEditBugTemplate(request, providerId, templateId):
         templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
         return provider.getInstance().renderContextViewTemplate(request, templateId)
 
+
+
+@login_required(login_url='/login/')
+def viewBugProviders(request):
+    providers = BugProvider.objects.annotate(size=Count('bug'))
+    return render(request, 'bugproviders.html', { 'providers' : providers })
+
+@login_required(login_url='/login/')
+def deleteBugProvider(request, providerId):
+    provider = get_object_or_404(BugProvider, pk=providerId)
+    if request.method == 'POST':
+        # Deassociate all bugs
+        bugs = Bug.objects.filter(externalType=provider.pk)
+        buckets = Bucket.objects.filter(bug__in=bugs)
+        for bucket in buckets:
+            bucket.bug = None
+            bucket.save()
+        
+        provider.delete()
+        return redirect('crashmanager:bugproviders')
+    elif request.method == 'GET':
+        return render(request, 'bugprovider_del.html', { 'provider' : provider })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def viewBugProvider(request, providerId):
+    provider = BugProvider.objects.filter(pk=providerId).annotate(size=Count('bug'))
+    
+    if not provider:
+        raise Http404
+    
+    provider = provider[0]
+    
+    return render(request, 'bugprovider_view.html', { 'provider' : provider })
+
+@login_required(login_url='/login/')
+def editBugProvider(request, providerId):
+    provider = get_object_or_404(BugProvider, pk=providerId)
+    if request.method == 'POST':
+        provider.classname = request.POST['classname']
+        provider.hostname = request.POST['hostname']
+        provider.urlTemplate = request.POST['urlTemplate']
+        
+        try:
+            provider.getInstance()
+        except Exception as e:
+            return render(request, 'bugprovider_edit.html', { 'provider' : provider, 'error_message' : e })
+        
+        provider.save()
+        return redirect('crashmanager:bugproviders')
+    elif request.method == 'GET':
+        return render(request, 'bugprovider_edit.html', { 'provider' : provider })
+    else:
+        raise SuspiciousOperation
+    
+@login_required(login_url='/login/')
+def createBugProvider(request):
+    if request.method == 'POST':
+        provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'], urlTemplate=request.POST['urlTemplate'])
+        
+        try:
+            provider.getInstance()
+        except Exception as e:
+            return render(request, 'bugprovider_edit.html', { 'provider' : provider, 'error_message' : e })
+        
+        provider.save()
+        return redirect('crashmanager:bugproviders')
+    elif request.method == 'GET':
+        return render(request, 'bugprovider_edit.html', {})
+    else:
+        raise SuspiciousOperation
+
 class CrashEntryViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows adding/viewing CrashEntries

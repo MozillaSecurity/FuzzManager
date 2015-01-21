@@ -28,11 +28,16 @@ urlpatterns = patterns('',
     url(r'^crashes/(?P<crashid>\d+)/delete/$', views.deleteCrashEntry, name='crashdel'),
     url(r'^crashes/(?P<crashid>\d+)/createbug/$', views.createExternalBug, name='createbug'),
     url(r'^crashes/(?P<crashid>\d+)/findsignatures/$', views.findSignatures, name='findsigs'),
+    url(r'^bugprovider/$', views.viewBugProviders, name='bugproviders'),
+    url(r'^bugprovider/create/$', views.createBugProvider, name='bugprovidercreate'),
+    url(r'^bugprovider/(?P<providerId>\d+)/$', views.viewBugProvider, name='bugproviderview'),
+    url(r'^bugprovider/(?P<providerId>\d+)/edit/$', views.editBugProvider, name='bugprovideredit'),
+    url(r'^bugprovider/(?P<providerId>\d+)/delete/$', views.deleteBugProvider, name='bugproviderdel'),
     url(r'^bugprovider/(?P<providerId>\d+)/templates/create/$', views.createBugTemplate, name='createtemplate'),
     url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/$', views.viewEditBugTemplate, name='viewtemplate'),
+
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
-
     
     url(r'^rest/', include(router.urls)),
 )

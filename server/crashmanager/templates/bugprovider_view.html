@@ -1,0 +1,29 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		<div class="field">
+			<span class="label">Provider Class Name: </span><span>{{ provider.classname|escape }}</span>
+		</div>
+		<div class="field">
+			<span class="label">Provider Host Name: </span><span>{{ provider.hostname|escape }}</span>
+		</div>
+		<div class="field">
+			<span class="label">Provider Bug URL Template: </span><span>{{ provider.urlTemplate|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label"># of bugs using this provider: </span><span>{{ provider.size|escape }}</span>
+		</div>
+
+		<div class="field">
+			<span class="label">Actions:</span>
+			<a href="{% url 'crashmanager:bugprovideredit' provider.pk %}">Edit</a>
+			-
+			<a href="{% url 'crashmanager:bugproviderdel' provider.pk %}">Delete</a>
+		</div>
+        </div>
+</div>
+{% endblock 1 %}
