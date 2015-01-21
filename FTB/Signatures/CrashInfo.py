@@ -492,7 +492,10 @@ class GDBCrashInfo(CrashInfo):
             if len(parts) == 1:
                 if instruction == "callq" or instruction == "push":
                     return RegisterHelper.getStackPointer(registerMap)
+                else:
+                    failureReason = "Unsupported single-operand instruction."
             elif len(parts) == 2:
+                failureReason = "Unknown failure with two-operand instruction."
                 derefOp = None
                 if "(" in parts[0] and ")" in parts[0]:
                     derefOp = parts[0]
@@ -545,15 +548,19 @@ class GDBCrashInfo(CrashInfo):
                                 # Assume 64 bit width
                                 return long(int64(uint64(offset)) + int64(uint64(val)))
                 else:
+                    failureReason = "Failed to decode two-operand instruction: No dereference operation or hardcoded address detected."
                     # We might still be reading from/writing to a hardcoded address.
                     # Note that it's not possible to have two hardcoded addresses
                     # in one instruction, one operand must be a register or immediate
-                    # constant (denoted by leading $).
-
-                    if re.match("\\-?0x[0-9a-f]+", parts[0]) != None:
-                        return long(parts[0], 16)
-                    elif re.match("\\-?0x[0-9a-f]+", parts[1]) != None:
-                        return long(parts[1], 16)
+                    # constant (denoted by leading $). In some cases, like a movabs
+                    # instruction, the immediate constant however is dereferenced
+                    # and is the first operator. So we first check parts[1] then
+                    # parts[0] in case it's a dereferencing operation.
+                    
+                    for x in (parts[1],parts[0]):
+                        result = re.match("\\$?(\\-?0x[0-9a-f]+)", x)
+                        if  result != None:
+                            return long(result.group(1), 16)
             elif len(parts) == 3:
                 # Example instruction: shrb   -0x69(%rdx,%rbx,8)
                 if "(" in parts[0] and ")" in parts[2]:
