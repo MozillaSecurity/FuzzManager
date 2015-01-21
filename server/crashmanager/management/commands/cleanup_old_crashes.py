@@ -37,3 +37,10 @@ class Command(NoArgsCommand):
         entries = CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None)
         for entry in entries:
             entry.delete()
+            
+        # Cleanup all bugs that don't belong to any bucket anymore
+        bugs = Bug.objects.all()
+        associatedBugIds = Bucket.objects.values_list('bug', flat=True)
+        for bug in bugs:
+            if not bug.pk in associatedBugIds:
+                bug.delete()
