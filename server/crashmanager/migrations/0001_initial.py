@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('externalId', models.CharField(max_length=255, blank=True)),
+                ('closed', models.DateTimeField(null=True, blank=True)),
             ],
             options={
             },
@@ -138,7 +139,7 @@ class Migration(migrations.Migration):
             name='TestCase',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('test', models.FileField(storage=django.core.files.storage.FileSystemStorage(), upload_to=b'tests')),
+                ('test', models.FileField(storage=django.core.files.storage.FileSystemStorage(location=b'/home/decoder/Mozilla/repos/FuzzManager/server'), upload_to=b'tests')),
                 ('size', models.IntegerField(default=0)),
                 ('quality', models.IntegerField(default=0)),
                 ('isBinary', models.BooleanField(default=False)),
