@@ -72,7 +72,7 @@
 		</div>
 
 		<div class="field">
-		<input type="checkbox" id="id_security" name="security" value="unassigned" checked/>
+			<input type="checkbox" id="id_security" name="security" value="unassigned" {% if template.security %}checked{% endif %} />
 		<label class="label" for="id_security">Make this bug a security bug</label>
 		</div>
 

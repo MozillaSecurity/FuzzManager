@@ -185,4 +185,5 @@ class BugzillaTemplate(models.Model):
     qa_contact = models.TextField(blank=True)
     target_milestone = models.TextField(blank=True)
     attrs = models.TextField(blank=True)
+    security = models.BooleanField(blank=False, default=False)
 

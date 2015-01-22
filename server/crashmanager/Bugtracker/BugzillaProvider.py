@@ -49,6 +49,10 @@ class BugzillaProvider(Provider):
                     "keywords",
                     "attrs",
                 ]
+        
+        self.templateFlags = [
+                    "security",
+                ]
 
     def renderContextCreate(self, request, crashEntry):
         if 'template' in request.GET:
@@ -227,6 +231,9 @@ class BugzillaProvider(Provider):
             
         for field in self.templateFields:
             setattr(bugTemplate, field, request.POST[field])
+            
+        for flag in self.templateFlags:
+            setattr(bugTemplate, flag, flag in request.POST)
         
         bugTemplate.save()
         return bugTemplate.pk
