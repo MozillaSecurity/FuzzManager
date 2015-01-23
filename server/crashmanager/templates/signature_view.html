@@ -9,6 +9,12 @@
 			<span class="label">Short Description: </span><span class="code">{{ bucket.shortDescription|escape }}</span>
 		</div>
 
+		{% if bucket.frequent %}
+		<div class="field">
+			<span class="label red">Frequent bucket</span>
+		</div>
+		{% endif %}
+
 		<div class="field">
 			<span class="label">External Bug Status: </span>
 				<span>

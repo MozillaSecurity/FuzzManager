@@ -296,8 +296,11 @@ def __handleSignaturePost(request, bucket):
 def newSignature(request):
     if request.method == 'POST':
         #TODO: FIXME: Update bug here as well
-        bucket = Bucket(signature=request.POST['signature'], 
-                            shortDescription=request.POST['shortDescription'])
+        bucket = Bucket(
+                        signature=request.POST['signature'], 
+                        shortDescription=request.POST['shortDescription'],
+                        frequent="frequent" in request.POST
+                        )
         return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
         if 'crashid' in request.GET:
@@ -376,6 +379,8 @@ def editSignature(request, sigid):
         bucket = get_object_or_404(Bucket, pk=sigid)
         bucket.signature = request.POST['signature']
         bucket.shortDescription = request.POST['shortDescription']
+        bucket.frequent = "frequent" in request.POST
+
         #TODO: FIXME: Update bug here as well
         return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':

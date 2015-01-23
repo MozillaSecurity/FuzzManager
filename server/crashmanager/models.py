@@ -75,6 +75,8 @@ class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
     signature = models.TextField()
     shortDescription = models.CharField(max_length=1023, blank=True)
+    frequent = models.BooleanField(blank=False, default=False)
+
     
     def getSignature(self):
         return CrashSignature(self.signature)
