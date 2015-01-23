@@ -31,7 +31,7 @@ class Command(LabelCommand):
                     if bucket.bug != None:
                         metadata['bug__id'] = bucket.bug.externalId 
                         
-                    if bucket.bestEntry != None:
+                    if bucket.bestEntry != None and bucket.bestEntry.testcase != None:
                         metadata['testcase__quality'] = bucket.bestEntry.testcase.quality
                         metadata['testcase__size'] = bucket.bestEntry.testcase.size
                     
