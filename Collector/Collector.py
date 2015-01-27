@@ -152,7 +152,9 @@ class Collector():
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
         
-        (zipFile, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
+        (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
+        
+        zipFile = os.fdopen(zipFileFd, 'w')
         
         for chunk in response.iter_content(chunk_size=1024): 
             if chunk:
