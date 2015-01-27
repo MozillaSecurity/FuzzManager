@@ -48,11 +48,33 @@ __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
+def remote_checks(f):
+    'Decorator to perform error checks before using remote features'
+    def decorator(self, *args):
+        if not self.serverHost:
+            raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
+        if not self.serverHost:
+            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
+        return f(self, *args)
+    return decorator
+
+def signature_checks(f):
+    'Decorator to perform error checks before using signature features'
+    def decorator(self, *args):
+        if not self.sigCacheDir:
+            raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
+        return f(self, *args)
+    return decorator
+
 class Collector():
-    def __init__(self, sigCacheDir, serverHost=None, serverPort=8080,
-                 serverProtocol="https", serverAuthToken=None,
+    def __init__(self, sigCacheDir=None, serverHost=None, serverPort=None,
+                 serverProtocol=None, serverAuthToken=None,
                  clientId=None):
         '''
+        Initialize the Collector. This constructor will also attempt to read
+        a configuration file to populate any missing properties that have not
+        been passed to this constructor. 
+        
         @type sigCacheDir: string
         @param sigCacheDir: Directory to be used for caching signatures
         @type serverHost: string
@@ -71,17 +93,58 @@ class Collector():
         self.serverAuthToken = serverAuthToken
         self.clientId = clientId
         
+        # Now search for the global configuration file. If it exists, read its contents
+        # and set all Collector settings that haven't been explicitely set by the user.
+        globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
+        if os.path.exists(globalConfigFile):
+            configInstance = Configuration([ globalConfigFile ])
+            globalConfig = configInstance.mainConfig
+            
+            if self.sigCacheDir == None and "sigdir" in globalConfig:
+                self.sigCacheDir = globalConfig["sigdir"]
+            
+            if self.serverHost == None and "serverhost" in globalConfig:
+                self.serverHost = globalConfig["serverhost"]
+                
+            if self.serverPort == None and "serverport" in globalConfig:
+                self.serverPort = globalConfig["serverport"]
+                
+            if self.serverProtocol == None and "serverproto" in globalConfig:
+                self.serverProtocol = globalConfig["serverproto"]
+                
+            if self.serverAuthToken == None:
+                if "serverauthtoken" in globalConfig:
+                    self.serverAuthToken = globalConfig["serverauthtoken"]
+                elif "serverauthtokenfile" in globalConfig:
+                    with open(globalConfig["serverauthtokenfile"]) as f:
+                        self.serverAuthToken = f.read().rstrip()
+                
+            if self.clientId == None and "clientid" in globalConfig:
+                self.clientId = globalConfig["clientid"]
+
+        
+        # Set some defaults that we can't set through default arguments, otherwise
+        # they would overwrite configuration file settings
+        if self.serverProtocol == None:
+            self.serverProtocol = "https"
+        
+        # Try to be somewhat intelligent about the default port, depending on protocol
+        if self.serverPort == None:
+            if self.serverProtocol == "https":
+                self.serverPort = 433
+            else:
+                self.serverPort = 80
+        
         if self.serverHost != None and self.clientId == None:
             self.clientId = platform.node()
     
+    @remote_checks
+    @signature_checks
     def refresh(self):
         '''
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''     
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost to use remote features.")
-        
         url = "%s://%s:%s/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
         
         # We need to use basic authentication here because these files are directly served by the HTTP server
@@ -112,7 +175,8 @@ class Collector():
             zipFile.extractall(self.sigCacheDir)
             
         os.remove(zipFileName)
-    
+
+    @remote_checks
     def submit(self, crashInfo, testCase=None, testCaseQuality=0, metaData=None):
         '''
         Submit the given crash information and an optional testcase/metadata
@@ -131,14 +195,7 @@ class Collector():
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format.
         '''
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost to use remote features.")
-        
-        #if self.serverPort == "443" and self.serverProtocol == "https":
-        #    url = "%s://%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost)
-        #else:
         url = "%s://%s:%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
-
         
         # Serialize our crash information, testcase and metadata into a dictionary to POST
         data = {}
@@ -181,6 +238,7 @@ class Collector():
         if response.status_code != requests.codes["created"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
 
+    @signature_checks
     def search(self, crashInfo):
         '''
         Searches within the local signature cache directory for a signature matching the
@@ -206,6 +264,7 @@ class Collector():
         
         return None
     
+    @signature_checks
     def generate(self, crashInfo, forceCrashAddress=None, forceCrashInstruction=None, numFrames=None):
         '''
         Generates a signature in the local cache directory. It will be deleted when L{refresh} is called
@@ -233,6 +292,7 @@ class Collector():
         # Write the file to a unique file name
         return self.__store_signature_hashed(sig)
     
+    @remote_checks
     def download(self, crashId):
         '''
         Download the testcase for the specified crashId.
@@ -387,14 +447,8 @@ def main(argv=None):
                 return 2
             haveAction = True
     if not haveAction:
-        print("Error: Cannot specify multiple actions at the same time", file=sys.stderr)
+        print("Error: Must specify an action", file=sys.stderr)
         return 2
-    
-    # Find configuration files
-    globalConfig = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
-    configFiles = []
-    if os.path.exists(globalConfig):
-        configFiles.append(globalConfig)
     
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for submitting.
@@ -420,6 +474,9 @@ def main(argv=None):
                     testcase = arg
                     testcaseidx = idx
     
+    # Find configuration files
+    configFiles = []
+    
     # Either --autosubmit was specified, or someone specified --binary manually
     if opts.binary:
         binaryConfig = "%s.fuzzmanagerconf" % opts.binary
@@ -437,14 +494,8 @@ def main(argv=None):
     config = Configuration(configFiles)
     mainConfig = config.mainConfig
     
-    # Set certain defaults (we cannot use the argparse defaults here, they would override config file settings)
-    defaultSettings = { "serverproto" : "https"  }
-    for defaultSetting in defaultSettings:
-        if not defaultSetting in mainConfig:
-            mainConfig[defaultSetting] = defaultSettings[defaultSetting]
-    
     # Allow overriding settings from the command line
-    cmdlineSettings = ["sigdir", "serverhost", "serverport", "serverproto", "serverauthtokenfile", "clientid", "platform", "product", "product_version", "os"]
+    cmdlineSettings = ["platform", "product", "product_version", "os"]
     for cmdlineSetting in cmdlineSettings:
         if (not cmdlineSetting in mainConfig) or getattr(opts, cmdlineSetting) != None:
             mainConfig[cmdlineSetting] = getattr(opts, cmdlineSetting)
@@ -456,11 +507,6 @@ def main(argv=None):
     args = None
     env = None
     metadata = config.metadataConfig
-    
-    if opts.search or opts.generate or opts.refresh:
-        if mainConfig["sigdir"] == None:
-            print("Error: Must specify/configure --sigdir", file=sys.stderr)
-            return 2
             
     if opts.search or opts.generate or opts.submit or opts.autosubmit:
         if mainConfig["platform"] == None or mainConfig["product"] == None or mainConfig["os"] == None:
@@ -512,19 +558,12 @@ def main(argv=None):
                 if not isBinary:
                     crashInfo.testcase = testCaseData
                 
-    # Allow specifying serverauthtoken directly in config, but serverauthtokenfile has priority
-    if "serverauthtoken" in mainConfig and not mainConfig["serverauthtokenfile"]:
-        serverauthtoken = mainConfig["serverauthtoken"]
-    elif mainConfig["serverauthtokenfile"]:
-        with open(mainConfig["serverauthtokenfile"]) as f:
+    serverauthtoken = None
+    if opts.serverauthtokenfile:
+        with open(opts.serverauthtokenfile) as f:
             serverauthtoken = f.read().rstrip()
 
-    collector = Collector(mainConfig["sigdir"], mainConfig["serverhost"], mainConfig["serverport"], mainConfig["serverproto"], serverauthtoken, mainConfig["clientid"])
-    
-    if opts.refresh or opts.submit or opts.autosubmit:
-        if not mainConfig["serverhost"]:
-            print("Error: Must specify --serverhost for remote features.", file=sys.stderr)
-            return 2
+    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid)
     
     if opts.refresh:
         collector.refresh()
