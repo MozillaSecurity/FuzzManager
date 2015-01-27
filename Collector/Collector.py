@@ -28,6 +28,8 @@ import argparse
 import hashlib
 import platform
 import requests
+from tempfile import mkstemp
+from zipfile import ZipFile
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -80,29 +82,36 @@ class Collector():
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost to use remote features.")
         
-        url = "%s://%s:%s/crashmanager/rest/signatures/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%s/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
         
-        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+        # We need to use basic authentication here because these files are directly served by the HTTP server
+        response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
         
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
         
-        json = response.json()
+        (zipFile, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
         
-        if not isinstance(json, list):
-            raise RuntimeError("Server sent malformed JSON response: %s" % json)
+        for chunk in response.iter_content(chunk_size=1024): 
+            if chunk:
+                zipFile.write(chunk)
+                zipFile.flush()
+        zipFile.close()
         
-        for sigFile in os.listdir(self.sigCacheDir):
-            if sigFile.endswith(".signature"):
-                os.remove(os.path.join(self.sigCacheDir, sigFile))
-            else:
-                print("Warning: Skipping deletion of non-signature file: %s" % sigFile, file=sys.stderr)
-        
-        for rawBucketObj in json:
-            try:
-                self.__store_signature_hashed(CrashSignature(rawBucketObj["signature"]))
-            except RuntimeError, e:
-                print("Warning: Received broken signature (%s): %s" % (e, rawBucketObj["signature"]), file=sys.stderr)
+        with ZipFile(zipFileName, "r") as zipFile:
+            if zipFile.testzip() != None:
+                raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
+            
+            # Now clean the signature directory, only deleting signatures and metadata
+            for sigFile in os.listdir(self.sigCacheDir):
+                if sigFile.endswith(".signature") or sigFile.endswith(".metadata"):
+                    os.remove(os.path.join(self.sigCacheDir, sigFile))
+                else:
+                    print("Warning: Skipping deletion of non-signature file: %s" % sigFile, file=sys.stderr)
+            
+            zipFile.extractall(self.sigCacheDir)
+            
+        os.remove(zipFileName)
     
     def submit(self, crashInfo, testCase=None, testCaseQuality=0, metaData=None):
         '''
