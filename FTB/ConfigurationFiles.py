@@ -23,11 +23,6 @@ except ImportError:
     import ConfigParser as configparser
 
 import sys
-import os
-
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
-sys.path += [FTB_PATH]
 
 class ConfigurationFiles():
     def __init__(self, configFiles):
@@ -59,7 +54,7 @@ class ConfigurationFiles():
         ret = {}
         try:
             options = self.parser.options(section)
-        except configparser.NoSectionError, e:
+        except configparser.NoSectionError:
             return {}
         for o in options:
             ret[o] = self.parser.get(section, o)
