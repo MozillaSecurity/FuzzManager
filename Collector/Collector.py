@@ -255,22 +255,31 @@ class Collector():
         @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
         
-        @rtype: string
-        @return: Filename of the signature file matching, or None if no match.
+        @rtype: tuple
+        @return: Tuple containing filename of the signature and metadata matching, or None if no match.
         '''
                 
         cachedSigFiles = os.listdir(self.sigCacheDir)
         
         for sigFile in cachedSigFiles:
+            if not sigFile.endswith('.signature'):
+                continue
+            
             sigFile = os.path.join(self.sigCacheDir, sigFile)
             if not os.path.isdir(sigFile):
                 with open(sigFile) as f:
                     sigData = f.read()
                     crashSig = CrashSignature(sigData)
                     if crashSig.matches(crashInfo):
-                        return sigFile
+                        metadataFile = sigFile.replace('.signature', '.metadata')
+                        metadata = None
+                        if os.path.exists(metadataFile):
+                            with open(metadataFile) as m:
+                                metadata = json.loads(m.read())
+                        
+                        return (sigFile, metadata)
         
-        return None
+        return (None, None)
     
     @signature_checks
     def generate(self, crashInfo, forceCrashAddress=None, forceCrashInstruction=None, numFrames=None):
@@ -580,11 +589,12 @@ def main(argv=None):
         return 0
     
     if opts.search:
-        sig = collector.search(crashInfo)
+        (sig, metadata) = collector.search(crashInfo)
         if sig == None:
             print("No match found")
             return 3
         print(sig)
+        print(json.dumps(metadata, indent=4))
         return 0
     
     if opts.generate:
