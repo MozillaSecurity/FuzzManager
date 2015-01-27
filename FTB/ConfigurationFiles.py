@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-BuildConfig -- Represents one build configuration
+ConfigurationFiles -- Generic class used in FuzzManager to read one or more configuration files
 
 @author:     Christian Holler (:decoder)
 
@@ -29,7 +29,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
-class Configuration():
+class ConfigurationFiles():
     def __init__(self, configFiles):
         self.mainConfig = {}
         self.metadataConfig = {}

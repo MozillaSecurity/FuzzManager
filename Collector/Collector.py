@@ -39,8 +39,7 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
-
-from Configuration import Configuration
+from FTB.ConfigurationFiles import ConfigurationFiles
 
 
 __all__ = []
@@ -97,7 +96,7 @@ class Collector():
         # and set all Collector settings that haven't been explicitely set by the user.
         globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
         if os.path.exists(globalConfigFile):
-            configInstance = Configuration([ globalConfigFile ])
+            configInstance = ConfigurationFiles([ globalConfigFile ])
             globalConfig = configInstance.mainConfig
             
             if self.sigCacheDir == None and "sigdir" in globalConfig:
@@ -491,7 +490,7 @@ def main(argv=None):
             print("Error: Specified binary does not exist: %s" % opts.binary)
             return 2
             
-    config = Configuration(configFiles)
+    config = ConfigurationFiles(configFiles)
     mainConfig = config.mainConfig
     
     # Allow overriding settings from the command line
