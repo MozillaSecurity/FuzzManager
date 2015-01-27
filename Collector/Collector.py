@@ -192,7 +192,8 @@ class Collector():
         
         @type metaData: map
         @param metaData: A map containing arbitrary (application-specific) data which
-                         will be stored on the server in JSON format.
+                         will be stored on the server in JSON format. This metadata is combined
+                         with possible metadata stored in the L{ProgramConfiguration} inside crashInfo.
         '''
         url = "%s://%s:%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
         
@@ -223,8 +224,16 @@ class Collector():
         
         data["client"] = self.clientId
         
-        if metaData:
-            data["metadata"] = json.dumps(metaData)
+        if crashInfo.configuration.metadata or metaData:
+            aggrMetaData = {}
+            
+            if crashInfo.configuration.metadata:
+                aggrMetaData.update(crashInfo.configuration.metadata)
+            
+            if metaData:
+                aggrMetaData.update(metaData)
+            
+            data["metadata"] = json.dumps(aggrMetaData)
         
         if crashInfo.configuration.env:
             data["env"] = json.dumps(crashInfo.configuration.env)
@@ -473,45 +482,21 @@ def main(argv=None):
                     testcase = arg
                     testcaseidx = idx
     
-    # Find configuration files
-    configFiles = []
-    
     # Either --autosubmit was specified, or someone specified --binary manually
-    if opts.binary:
-        binaryConfig = "%s.fuzzmanagerconf" % opts.binary
-        if not os.path.exists(binaryConfig):
-            print("Warning: No binary configuration found at %s" % binaryConfig, file=sys.stderr)
-        else:
-            configFiles.append(binaryConfig)
-            
-        # We also need to check that first argument is a binary that exists, and that (apart from the binary),
-        # there is only one file on the command line (the testcase), if it hasn't been explicitely specified.
-        if not os.path.exists(opts.binary):
+    # Check that the binary actually exists
+    if opts.binary and not os.path.exists(opts.binary):
             print("Error: Specified binary does not exist: %s" % opts.binary)
             return 2
-            
-    config = ConfigurationFiles(configFiles)
-    mainConfig = config.mainConfig
-    
-    # Allow overriding settings from the command line
-    cmdlineSettings = ["platform", "product", "product_version", "os"]
-    for cmdlineSetting in cmdlineSettings:
-        if (not cmdlineSetting in mainConfig) or getattr(opts, cmdlineSetting) != None:
-            mainConfig[cmdlineSetting] = getattr(opts, cmdlineSetting)
-
+        
     stdout = None
     stderr = None
     crashdata = None
     crashInfo = None
     args = None
     env = None
-    metadata = config.metadataConfig
+    metadata = {}
             
     if opts.search or opts.generate or opts.submit or opts.autosubmit:
-        if mainConfig["platform"] == None or mainConfig["product"] == None or mainConfig["os"] == None:
-            print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
-            return 2
-        
         if opts.metadata:
             metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
         
@@ -532,7 +517,28 @@ def main(argv=None):
         if opts.env:
             env = dict(kv.split('=', 1) for kv in opts.env)
             
-        configuration = ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"], mainConfig["product_version"], env, args)
+        # Start without any ProgramConfiguration
+        configuration = None
+        
+        # If we have a binary, try using that to create our ProgramConfiguration
+        if opts.binary:
+            configuration = ProgramConfiguration.fromBinary(opts.binary)
+            if configuration:
+                if env:
+                    configuration.addEnvironmentVariables(env)
+                if args:
+                    configuration.addProgramArguments(args)
+                if metadata:
+                    configuration.addMetadata(metadata)
+        
+        # If configuring through binary failed, try to manually create ProgramConfiguration from command line arguments
+        if configuration == None:
+            if opts.platform == None or opts.product == None or opts.os == None:
+                print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
+                return 2
+            
+            configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args, metadata)
+
         
         if not opts.autosubmit:
             if opts.stderr == None and opts.crashdata == None:
@@ -605,8 +611,6 @@ def main(argv=None):
             return 2
         print(retFile)
         return 0
-
-
 
 if __name__ == "__main__":
     sys.exit(main())
