@@ -136,6 +136,7 @@ def crashes(request):
                                  Q(shortSignature__contains=q)
                                  | Q(rawStderr__contains=q)
                                  | Q(rawCrashData__contains=q)
+                                 | Q(args__contains=q)
                                  )
     
     # If we don't have any filters up to this point, don't consider it a search
