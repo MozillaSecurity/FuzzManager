@@ -446,7 +446,7 @@ def main(argv=None):
     parser.add_argument("--forcecrashinst", dest="forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
     parser.add_argument("--numframes", dest="numframes", default=8, type=int, help="How many frames to include into the signature (default is 8)")
 
-    parser.add_argument('args', nargs=argparse.REMAINDER)
+    parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
     if len(argv) == 0:
         parser.print_help()
@@ -515,10 +515,10 @@ def main(argv=None):
             # Try to automatically get arguments from the command line
             # If the testcase is not the last argument, leave it in the
             # command line arguments and replace it with a generic placeholder.
-            if testcaseidx == len(opts.args[1:]) - 1:
-                args = opts.args[1:-1]
+            if testcaseidx == len(opts.rargs[1:]) - 1:
+                args = opts.rargs[1:-1]
             else:
-                args = opts.args[1:]
+                args = opts.rargs[1:]
                 if testcaseidx != None:
                     args[testcaseidx] = "TESTFILE"
         else:
@@ -608,7 +608,7 @@ def main(argv=None):
         return 0
     
     if opts.autosubmit:
-        runner = AutoRunner.fromBinaryArgs(opts.args[0], opts.args[1:])
+        runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
         if runner.run():
             crashInfo = runner.getCrashInfo(configuration)
             collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
