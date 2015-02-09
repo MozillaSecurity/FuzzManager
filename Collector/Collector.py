@@ -472,20 +472,20 @@ def main(argv=None):
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for submitting.
     if opts.autosubmit:
-        if not opts.args:
+        if not opts.rargs:
             print("Error: Action --autosubmit requires test arguments to be specified", file=sys.stderr)
             return 2
     
         # Store the binary candidate only if --binary wasn't also specified
         if not opts.binary:
-            opts.binary = opts.args[0]
+            opts.binary = opts.rargs[0]
         
         # We also need to check that (apart from the binary), there is only one file on the command line 
         # (the testcase), if it hasn't been explicitely specified.
         testcase = opts.testcase
         testcaseidx = None
         if testcase == None:
-            for idx, arg in enumerate(opts.args[1:]):
+            for idx, arg in enumerate(opts.rargs[1:]):
                 if os.path.exists(arg):
                     if testcase:
                         print("Error: Multiple potential testcases specified on command line. Must explicitely specify test using --testcase.")
