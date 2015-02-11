@@ -128,7 +128,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
                 testcase = base64.b64decode(testcase)
             
             h = hashlib.new('sha1')
-            h.update(str(testcase))
+            h.update(str(testcase.encode('utf-8')))
 
             dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary, size=len(testcase))
             dbobj.test.save("%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase))
