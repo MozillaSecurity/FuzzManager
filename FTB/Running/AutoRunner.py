@@ -84,27 +84,38 @@ class AutoRunner():
         
         
 class GDBRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None):
+    def __init__(self, binary, args=None, env=None, cwd=None, core=None):
         AutoRunner.__init__(self, binary, args, env, cwd)
         
         classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
                         '--batch',
                         '-ex', 'source %s' % classPath,
-                        '-ex', 'run',
-                        '-ex', 'set pagination 0',
-                        '-ex', 'set backtrace limit 128',
-                        '-ex', 'bt',
-                        '-ex', 'python printImportantRegisters()',
-                        '-ex', 'x/2i $pc',
-                        '-ex', 'quit',
-                        '--args',
                         ]
+        
+        if core == None:
+            self.gdbArgs.extend(['-ex', 'run'])
+            
+        self.gdbArgs.extend([
+                            '-ex', 'set pagination 0',
+                            '-ex', 'set backtrace limit 128',
+                            '-ex', 'bt',
+                            '-ex', 'python printImportantRegisters()',
+                            '-ex', 'x/2i $pc',
+                            '-ex', 'quit',
+                            ])
+        
+        if core == None:
+            self.gdbArgs.append('--args')
         
         self.cmdArgs.append("gdb")
         self.cmdArgs.extend(self.gdbArgs)
         self.cmdArgs.append(self.binary)
-        self.cmdArgs.extend(self.args)
+        
+        if core != None:
+            self.cmdArgs.append(core)
+        else:
+            self.cmdArgs.extend(self.args)
 
     def run(self):
         process = subprocess.Popen(
@@ -120,6 +131,10 @@ class GDBRunner(AutoRunner):
         # Detect where the GDB trace starts/ends
         traceStart = self.stdout.rfind("Program received signal")
         traceStop = self.stdout.rfind("A debugging session is active")
+        
+        # Alternative GDB start version when using core dumps
+        if traceStart < 0:
+            traceStart = self.stdout.rfind("Program terminated with signal")
         
         if traceStart < 0:
             return False
