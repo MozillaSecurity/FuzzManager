@@ -180,9 +180,9 @@ class SignatureCreateTest(unittest.TestCase):
         config = ProgramConfiguration("test", "x86", "linux")
         
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
-        crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4)
-        crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3)
-        crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2)
+        crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4, forceSeparateStackFrameSymptoms=True)
+        crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3, forceSeparateStackFrameSymptoms=True)
+        crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2, forceSeparateStackFrameSymptoms=True)
 
         # Check that all generated signatures match their originating crashInfo
         self.assert_(crashSig1.matches(crashInfo))
