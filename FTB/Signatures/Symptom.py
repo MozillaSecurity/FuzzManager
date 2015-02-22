@@ -31,10 +31,11 @@ class Symptom():
     
     def __init__(self, jsonObj):
         # Store the original source so we can return it if someone wants to stringify us
-        self.src = json.dumps(jsonObj, indent=2)
+        self.jsonsrc = json.dumps(jsonObj, indent=2)
+        self.jsonobj = jsonObj
     
     def __str__(self):
-        return self.src
+        return self.jsonsrc
     
     @staticmethod
     def fromJSONObject(obj):
