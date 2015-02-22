@@ -21,8 +21,9 @@
 	    <table id="diffList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">Signature Symptom</th>
-                        <th style="width: 50%;">CrashInfo</th>
+                        <th style="width: 35%;">Signature Symptom</th>
+                        <th style="width: 20%;">Proposed Change</th>
+                        <th style="width: 45%;">CrashInfo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -32,6 +33,15 @@
 		    <tr>
 			    <td>
 				    <pre class="code {%if symptom.offending %}red{%endif%}"><code>{{ symptom.symptom }}</code></pre>
+			    </td>
+			    <td>
+				    {% if symptom.offending %}
+					    {% if symptom.proposed %}
+					    <pre class="code green"><code>{{ symptom.proposed }}</code></pre>
+					    {% else %}
+					    <pre class="code green"><code>(Remove)</code></pre>
+					    {% endif %}
+				    {% endif %}
 			    </td>
 			    {% if forloop.counter == 1 %}
 			    <td rowspan="{{ symptoms|length }}"><pre class="code"><code>{{ entry.crashinfo }}</code></pre></td> 
