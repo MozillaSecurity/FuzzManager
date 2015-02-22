@@ -16,7 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
 from FTB.Signatures import JSONHelper
-from FTB.Signatures.Symptom import Symptom, TestcaseSymptom
+from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
 
 class CrashSignature():
     def __init__(self, rawSignature):
@@ -105,12 +105,51 @@ class CrashSignature():
         
         return False
     
-    def getOffendingSymptoms(self, crashInfo):
-        offendingSymptoms = []
+    def getDistance(self, crashInfo):
+        total = len(self.symptoms)
+        distance = 0
+        
         for symptom in self.symptoms:
-            if not symptom.matches(crashInfo):
-                offendingSymptoms.append(symptom)
-        return offendingSymptoms
+            if isinstance(symptom, StackFramesSymptom):
+                symptomDistance = symptom.diff(crashInfo)[0]
+                if symptomDistance != None:
+                    distance += symptomDistance
+                else:
+                    # If we can't find the distance, assume worst-case
+                    distance += len(symptom.functionNames)
+                total += len(symptom.functionNames)
+            else:
+                total += 1
+                if not symptom.matches(crashInfo):
+                    distance +=1
+                
+        return (distance, total)
+        
+    def fit(self, crashInfo):
+        sigObj = {}
+        sigSymptoms = []
+        
+        sigObj['symptoms'] = sigSymptoms
+        
+        if self.platforms:
+            sigObj['platforms'] = self.platforms
+        
+        if self.operatingSystems:
+            sigObj['operatingSystems'] = self.operatingSystems
+            
+        if self.products:
+            sigObj['products'] = self.products
+            
+        symptomsDiff = self.getSymptomsDiff(crashInfo)
+        
+        for symptomDiff in symptomsDiff:
+            if symptomDiff['offending']:
+                if symptomDiff['proposed']:
+                    sigSymptoms.append(symptomDiff['proposed'].jsonobj) 
+            else:
+                sigSymptoms.append(symptomDiff['symptom'].jsonobj)
+            
+        return CrashSignature(json.dumps(sigObj, indent=2))
     
     def getSymptomsDiff(self, crashInfo):
         symptomsDiff = []
@@ -118,5 +157,12 @@ class CrashSignature():
             if symptom.matches(crashInfo):
                 symptomsDiff.append({ 'offending' : False, 'symptom' : symptom })
             else:
-                symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
+                # Special-case StackFramesSymptom because we would like to get a fine-grained
+                # view on the offending parts *inside* that symptom. By calling matchWithDiff,
+                # we annotate internals of the symptom with distance information to display.
+                if isinstance(symptom, StackFramesSymptom):
+                    proposedSymptom  = symptom.diff(crashInfo)[1]
+                    
+                symptomsDiff.append({ 'offending' : True, 'symptom' : symptom, 'proposed' : proposedSymptom })
         return symptomsDiff
+        

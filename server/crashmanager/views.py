@@ -460,17 +460,17 @@ def findSignatures(request, crashid):
     
     for bucket in buckets:
         signature = bucket.getSignature()
-        offLen = len(bucket.getSignature().getOffendingSymptoms(entry.crashinfo))
-        
+        (distance, total) = signature.getDistance(entry.crashinfo)
+
         # TODO: This offset is kind of arbitrary. It is supposed to keep signatures
         # from being considered as similar if the number of remaining symptoms is
         # likely just not enough for providing a useful signature. 
-        if (len(signature.symptoms) - offLen < 2):
+        if (total - distance < 2):
             continue
     
         # TODO: This could be made configurable through a GET parameter
-        if offLen <= 3:
-            bucket.offCount = offLen
+        if distance <= 4:
+            bucket.offCount = distance
             similarBuckets.append(bucket)
             
     similarBuckets.sort(key=lambda x: x.offCount)
