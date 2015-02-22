@@ -44,6 +44,15 @@ class StringMatch():
             return self.value.search(val) != None
         else:
             return self.value in val
+    
+    def __str__(self):
+        return self.value
+    
+    def __repr__(self):
+        if (self.isPCRE):
+            return '/%s/' % self.value
+        
+        return self.value
 
 class NumberMatchType:
     GE, GT, LE, LT = range(4)
