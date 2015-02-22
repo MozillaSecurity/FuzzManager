@@ -175,6 +175,47 @@ function test() {
 test();
 '''
 
+testSignatureStackFrames1 = '''{"symptoms": [
+    {
+    "type": "stackFrames", 
+    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MarkInternal<JSObject>" ]
+  }
+]}
+'''
+
+testSignatureStackFrames2 = '''{"symptoms": [
+    {
+    "type": "stackFrames", 
+    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MinorGCCallback", "MarkInternal<JSObject>" ]
+  }
+]}
+'''
+
+testSignatureStackFrames3 = '''{"symptoms": [
+    {
+    "type": "stackFrames", 
+    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "?", "MarkInternal<JSObject>" ]
+  }
+]}
+'''
+
+testSignatureStackFrames4 = '''{"symptoms": [
+    {
+    "type": "stackFrames", 
+    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "???", "MarkInternal<JSObject>" ]
+  }
+]}
+'''
+
+testSignatureStackFrames5 = '''{"symptoms": [
+    {
+    "type": "stackFrames", 
+    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MarkInternal<JSObject>" ]
+  }
+]}
+'''
+
+
 class SignatureCreateTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -227,6 +268,23 @@ class SignatureTestCaseMatchTest(unittest.TestCase):
         # This one does not match at all
         self.assertFalse(testSig6.matches(crashInfo))
 
+class SignatureStackFramesTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
+        
+        testSig1 = CrashSignature(testSignatureStackFrames1)
+        testSig2 = CrashSignature(testSignatureStackFrames2)
+        testSig3 = CrashSignature(testSignatureStackFrames3)
+        testSig4 = CrashSignature(testSignatureStackFrames4)
+        testSig5 = CrashSignature(testSignatureStackFrames5)
+        
+        self.assertTrue(testSig1.matches(crashInfo))
+        self.assertTrue(testSig2.matches(crashInfo))
+        self.assertTrue(testSig3.matches(crashInfo))
+        self.assertTrue(testSig4.matches(crashInfo))
+        self.assertFalse(testSig5.matches(crashInfo))
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
