@@ -8,6 +8,8 @@ from FTB.Signatures.CrashInfo import CrashInfo
 import json
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures.Matchers import StringMatch
+from FTB.Signatures.Symptom import StackFramesSymptom
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -285,6 +287,28 @@ class SignatureStackFramesTest(unittest.TestCase):
         self.assertTrue(testSig3.matches(crashInfo))
         self.assertTrue(testSig4.matches(crashInfo))
         self.assertFalse(testSig5.matches(crashInfo))
+
+class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
+    def runTest(self):      
+        # Do some direct matcher tests on edge cases
+        self.assertTrue(StackFramesSymptom._match([], [StringMatch('???')]))
+        self.assertFalse(StackFramesSymptom._match([], [StringMatch('???'), StringMatch('a')]))
+        
+        # Test the diff algorithm, test array contains:
+        # stack, signature, expected distance, proposed signature
+        testArray = [
+                     (['a', 'b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 1, ['a', 'b', '???', 'a', 'b', '?', 'c']),
+                     (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
+                     (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 3, ['?', 'b', '???', 'a', '?', 'x', '?']),
+                     ]
+        
+        for (stack, rawSig, expectedDepth, expectedSig) in testArray:
+            for maxDepth in (expectedDepth, 3):
+                (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [ StringMatch(x) for x in rawSig ], 0, 1, maxDepth)
+                self.assertEqual(expectedDepth, actualDepth)
+                self.assertEqual(expectedSig, [ str(x) for x in actualSig ])
+
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
