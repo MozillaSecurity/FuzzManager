@@ -149,7 +149,7 @@ class CrashInfo():
         
         return "[@ %s]" % self.backtrace[0]
     
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8):
+    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, forceSeparateStackFrameSymptoms=False):
         '''
         @param forceCrashAddress: If True, the crash address will be included in any case
         @type forceCrashAddress: bool
@@ -194,15 +194,30 @@ class CrashInfo():
         else:
             topStackMissCount = topStackLimit - numFrames
 
-        for idx in range(0, numFrames):
-            functionName = self.backtrace[idx]
-            if not functionName == "??":
-                symptomObj = { "type" : "stackFrame", "frameNumber" : idx, "functionName" : functionName }
-                symptomArr.append(symptomObj)
-            elif idx < 4:
-                # If we're in the top 4, we count this as a miss
-                topStackMissCount += 1
-        
+        if forceSeparateStackFrameSymptoms:
+            for idx in range(0, numFrames):
+                functionName = self.backtrace[idx]
+                if not functionName == "??":
+                    symptomObj = { "type" : "stackFrame", "frameNumber" : idx, "functionName" : functionName }
+                    symptomArr.append(symptomObj)
+                elif idx < 4:
+                    # If we're in the top 4, we count this as a miss
+                    topStackMissCount += 1
+        else:
+            framesArray = []
+            framesSymptomObj = { "type" : "stackFrames", "functionNames" : framesArray }
+            symptomArr.append(framesSymptomObj)
+            
+            for idx in range(0, numFrames):
+                functionName = self.backtrace[idx]
+                if not functionName == "??":
+                    framesArray.append(functionName)
+                else:
+                    framesArray.append("?")
+                    if idx < 4:
+                        # If we're in the top 4, we count this as a miss
+                        topStackMissCount += 1
+
         # Missing too much of the top stack frames, add additional crash information
         stackIsInsufficient = topStackMissCount >= 2 and abortMsg == None 
         
