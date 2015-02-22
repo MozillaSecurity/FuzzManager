@@ -65,6 +65,8 @@ class Symptom():
             return InstructionSymptom(obj)
         elif (stype == "testcase"):
             return TestcaseSymptom(obj)
+        elif (stype == "stackFrames"):
+            return StackFramesSymptom(obj)
         else:
             raise RuntimeError("Unknown symptom type: %s" % type)
 
@@ -267,3 +269,126 @@ class TestcaseSymptom(Symptom):
                 return True
             
         return False
+    
+class StackFramesSymptom(Symptom):
+    def __init__(self, obj):
+        '''
+        Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
+        '''
+        Symptom.__init__(self, obj)
+        self.functionNames = []
+        
+        rawFunctionNames = JSONHelper.getArrayChecked(obj, "functionNames", True)
+        
+        for fn in rawFunctionNames:
+            self.functionNames.append(StringMatch(fn))
+        
+    def matches(self, crashInfo):
+        '''
+        Check if the symptom matches the given crash information
+        
+        @type crashInfo: CrashInfo
+        @param crashInfo: The crash information to check against 
+        
+        @rtype: bool
+        @return: True if the symptom matches, False otherwise
+        '''
+            
+        return self._match(crashInfo.backtrace, self.functionNames)
+    
+    def diff(self, crashInfo):
+        for depth in range(1,4):
+            (bestDepth, bestGuess) = self._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
+            if bestDepth != None:
+                return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : [str(x) for x in bestGuess] }))
+        
+        return (None, None)
+    
+    def _diff(self, stack, signatureGuess, startIdx, depth, maxDepth):     
+        singleWildcardMatch = StringMatch("?")
+        
+        newSignatureGuess = []
+        newSignatureGuess.extend(signatureGuess)
+        
+        bestDepth = None
+        bestGuess = None
+        
+        for idx in range(startIdx,len(newSignatureGuess)):
+            newSignatureGuess.insert(idx, singleWildcardMatch)
+            
+            # Check if we have a match with our modification
+            if self._match(stack, newSignatureGuess):
+                return (depth, newSignatureGuess)
+            
+            # If we don't have a match but we're not at our current depth limit,
+            # add one more level of depth for our search.
+            if depth < maxDepth:
+                (newBestDepth, newBestGuess) = self._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                
+                if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
+                    bestDepth = newBestDepth
+                    bestGuess = newBestGuess
+                    
+            newSignatureGuess.pop(idx)
+            
+            # Now repeat the same with replacing instead of adding
+            # unless the match at idx is a wildcard itself
+            
+            if str(newSignatureGuess[idx]) == '?' or str(newSignatureGuess[idx]) == '???':
+                continue
+            
+            origMatch = newSignatureGuess[idx]
+            newSignatureGuess[idx] = singleWildcardMatch
+            
+            # Check if we have a match with our modification
+            if self._match(stack, newSignatureGuess):
+                return (depth, newSignatureGuess)
+            
+            # If we don't have a match but we're not at our current depth limit,
+            # add one more level of depth for our search.
+            if depth < maxDepth:
+                (newBestDepth, newBestGuess) = self._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                
+                if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
+                    bestDepth = newBestDepth
+                    bestGuess = newBestGuess
+            
+            newSignatureGuess[idx] = origMatch
+         
+        return (bestDepth, bestGuess)
+    
+    def _match(self, partialStack, partialFunctionNames):    
+        # Process as many non-wildcard chars as we can find iteratively for performance reasons
+        while partialFunctionNames and partialStack and str(partialFunctionNames[0]) != '?' and str(partialFunctionNames[0]) != '???':
+            if not partialFunctionNames[0].matches(partialStack[0]):
+                return False
+            
+            # Change the view on partialStack and partialFunctionNames without actually
+            # modifying the underlying arrays. They have to be preserved for the caller.
+            partialStack = partialStack[1:]
+            partialFunctionNames = partialFunctionNames[1:]
+            
+        if not partialFunctionNames:
+            # End of function names to match, accept
+            return True    
+
+        if str(partialFunctionNames[0]) == '?' or str(partialFunctionNames[0]) == '???':
+            if self._match(partialStack, partialFunctionNames[1:]):
+                # We recursively consumed 0 to N stack frames and can now
+                # get a match for the remaining stack without the current
+                # wildcard element, so we're done and accept the stack.
+                return True
+            else:
+                if not partialStack:
+                    # Out of stack to match, reject
+                    return False
+                
+                if str(partialFunctionNames[0]) == '?':
+                    # Recurse, consume one stack frame and the question mark
+                    return self._match(partialStack[1:], partialFunctionNames[1:])
+                else:
+                    # Recurse, consume one stack frame and keep triple question mark
+                    return self._match(partialStack[1:], partialFunctionNames)
+        elif not partialStack:
+            # Out of stack to match, reject
+            return False
