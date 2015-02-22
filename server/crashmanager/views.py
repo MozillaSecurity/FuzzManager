@@ -387,6 +387,11 @@ def editSignature(request, sigid):
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
+            
+            if 'fit' in request.GET:
+                entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
+                bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
+            
             return render(request, 'signature_edit.html', { 'bucket' : bucket })
         else:
             raise SuspiciousOperation

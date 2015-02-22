@@ -50,7 +50,14 @@
 		    </tbody>
             </table>
 
-
+		<div class="field">
+			<span class="label">Actions:</span>
+			<a href="{% url 'crashmanager:sigedit' bucket.pk %}">Edit</a>
+			-
+			<a href="{% url 'crashmanager:sigedit' bucket.pk %}?fit={{ entry.pk }}">Edit with proposed changes</a>
+			-
+			<a href="{% url 'crashmanager:sigdel' bucket.pk %}">Delete</a>
+		</div>
 <!--
 		<div class="field">
 			<span class="label">Actions:</span>
