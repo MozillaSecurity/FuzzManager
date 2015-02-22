@@ -294,17 +294,18 @@ class StackFramesSymptom(Symptom):
         @return: True if the symptom matches, False otherwise
         '''
             
-        return self._match(crashInfo.backtrace, self.functionNames)
+        return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
     
     def diff(self, crashInfo):
         for depth in range(1,4):
-            (bestDepth, bestGuess) = self._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
+            (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
             if bestDepth != None:
                 return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : [str(x) for x in bestGuess] }))
         
         return (None, None)
     
-    def _diff(self, stack, signatureGuess, startIdx, depth, maxDepth):     
+    @staticmethod
+    def _diff(stack, signatureGuess, startIdx, depth, maxDepth):     
         singleWildcardMatch = StringMatch("?")
         
         newSignatureGuess = []
@@ -317,13 +318,13 @@ class StackFramesSymptom(Symptom):
             newSignatureGuess.insert(idx, singleWildcardMatch)
             
             # Check if we have a match with our modification
-            if self._match(stack, newSignatureGuess):
+            if StackFramesSymptom._match(stack, newSignatureGuess):
                 return (depth, newSignatureGuess)
             
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = self._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
                 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth
@@ -341,13 +342,13 @@ class StackFramesSymptom(Symptom):
             newSignatureGuess[idx] = singleWildcardMatch
             
             # Check if we have a match with our modification
-            if self._match(stack, newSignatureGuess):
+            if StackFramesSymptom._match(stack, newSignatureGuess):
                 return (depth, newSignatureGuess)
             
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = self._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
                 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth
@@ -357,7 +358,8 @@ class StackFramesSymptom(Symptom):
          
         return (bestDepth, bestGuess)
     
-    def _match(self, partialStack, partialFunctionNames):    
+    @staticmethod
+    def _match(partialStack, partialFunctionNames):    
         # Process as many non-wildcard chars as we can find iteratively for performance reasons
         while partialFunctionNames and partialStack and str(partialFunctionNames[0]) != '?' and str(partialFunctionNames[0]) != '???':
             if not partialFunctionNames[0].matches(partialStack[0]):
@@ -373,7 +375,7 @@ class StackFramesSymptom(Symptom):
             return True    
 
         if str(partialFunctionNames[0]) == '?' or str(partialFunctionNames[0]) == '???':
-            if self._match(partialStack, partialFunctionNames[1:]):
+            if StackFramesSymptom._match(partialStack, partialFunctionNames[1:]):
                 # We recursively consumed 0 to N stack frames and can now
                 # get a match for the remaining stack without the current
                 # wildcard element, so we're done and accept the stack.
@@ -385,10 +387,10 @@ class StackFramesSymptom(Symptom):
                 
                 if str(partialFunctionNames[0]) == '?':
                     # Recurse, consume one stack frame and the question mark
-                    return self._match(partialStack[1:], partialFunctionNames[1:])
+                    return StackFramesSymptom._match(partialStack[1:], partialFunctionNames[1:])
                 else:
                     # Recurse, consume one stack frame and keep triple question mark
-                    return self._match(partialStack[1:], partialFunctionNames)
+                    return StackFramesSymptom._match(partialStack[1:], partialFunctionNames)
         elif not partialStack:
             # Out of stack to match, reject
             return False
