@@ -117,9 +117,12 @@ class CrashSignature():
                 else:
                     # If we can't find the distance, assume worst-case
                     distance += len(symptom.functionNames)
+                    
+                # Weight the StackFramesSymptom not as a single Symptom but
+                # by the number of stack frames it has
                 total += len(symptom.functionNames)
+                total -= 1
             else:
-                total += 1
                 if not symptom.matches(crashInfo):
                     distance +=1
                 
