@@ -147,7 +147,7 @@ class CrashSignature():
         
         for symptomDiff in symptomsDiff:
             if symptomDiff['offending']:
-                if symptomDiff['proposed']:
+                if 'proposed' in symptomDiff:
                     sigSymptoms.append(symptomDiff['proposed'].jsonobj) 
             else:
                 sigSymptoms.append(symptomDiff['symptom'].jsonobj)
