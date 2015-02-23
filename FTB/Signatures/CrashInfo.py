@@ -217,6 +217,19 @@ class CrashInfo():
                         # If we're in the top 4, we count this as a miss
                         topStackMissCount += 1
             
+            lastSymbolizedFrame = None
+            for frameIdx in range(0,len(framesArray)):
+                if framesArray[frameIdx] != '?':
+                    lastSymbolizedFrame = frameIdx
+            
+            if lastSymbolizedFrame != None:
+                # Remove all elements behind the last symbolized frame
+                framesArray = framesArray[:lastSymbolizedFrame + 1]
+            else:
+                # We don't have a single symbolized frame, so it doesn't make sense
+                # to keep any wildcards in case we added some for unsymbolized frames.
+                framesArray = []
+                
             if framesArray:
                 symptomArr.append(framesSymptomObj)
 
