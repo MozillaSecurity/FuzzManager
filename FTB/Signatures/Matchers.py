@@ -23,9 +23,16 @@ from FTB.Signatures import JSONHelper
 class StringMatch():
     def __init__(self, obj):
         self.isPCRE = False
+        self.compiledValue = None
         
         if isinstance(obj, str) or isinstance(obj, unicode):
             self.value = obj
+            
+            # Support the short form using forward slashes to indicate a PCRE
+            if self.value.startswith("/") and self.value.endswith("/"):
+                self.isPCRE = True
+                self.value = self.value[1:-1]
+                self.compiledValue = re.compile(self.value)
         else:
             self.value = JSONHelper.getStringChecked(obj, "value", True)
             
@@ -35,13 +42,13 @@ class StringMatch():
                     pass
                 elif matchType.lower() == "pcre":
                     self.isPCRE = True
-                    self.value = re.compile(self.value)
+                    self.compiledValue = re.compile(self.value)
                 else:
                     raise RuntimeError("Unknown match operator specified: %s" % matchType)
 
     def matches(self, val):
         if self.isPCRE:
-            return self.value.search(val) != None
+            return self.compiledValue.search(val) != None
         else:
             return self.value in val
     

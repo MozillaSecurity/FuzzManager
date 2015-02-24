@@ -218,6 +218,22 @@ testSignatureStackFrames5 = '''{"symptoms": [
 '''
 
 
+testSignaturePCREShort1 = '''{"symptoms": [
+    {
+    "functionName": "/.+KindForCopy/",
+    "type": "stackFrame"
+  }
+]}
+'''
+
+testSignaturePCREShort2 = '''{"symptoms": [
+    {
+    "functionName": "/^.KindForCopy/",
+    "type": "stackFrame"
+  }
+]}
+'''
+
 class SignatureCreateTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -307,6 +323,18 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
                 (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [ StringMatch(x) for x in rawSig ], 0, 1, maxDepth)
                 self.assertEqual(expectedDepth, actualDepth)
                 self.assertEqual(expectedSig, [ str(x) for x in actualSig ])
+
+class SignaturePCREShortTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
+        
+        testSig1 = CrashSignature(testSignaturePCREShort1)
+        testSig2 = CrashSignature(testSignaturePCREShort2)
+        
+        self.assertTrue(testSig1.matches(crashInfo))
+        self.assertFalse(testSig2.matches(crashInfo))
 
 
 if __name__ == "__main__":
