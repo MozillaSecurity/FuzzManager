@@ -149,7 +149,7 @@ class CrashInfo():
         
         return "[@ %s]" % self.backtrace[0]
     
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, forceSeparateStackFrameSymptoms=False):
+    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, minimumSupportedVersion=12):
         '''
         @param forceCrashAddress: If True, the crash address will be included in any case
         @type forceCrashAddress: bool
@@ -157,6 +157,10 @@ class CrashInfo():
         @type forceCrashInstruction: bool
         @param maxFrames: How many frames (at most) should be included in the signature
         @type maxFrames: int
+        
+        @param minimumSupportedVersion: The minimum crash signature standard version that the 
+                                        generated signature should be valid for (10 => 1.0, 12 => 1.2)
+        @type minimumSupportedVersion: int
         
         @rtype: CrashSignature
         @return: A crash signature object
@@ -178,11 +182,16 @@ class CrashInfo():
         symptomArr = []
         
         if abortMsg != None:
-            # Compose StringMatch object with PCRE pattern
-            stringObj = { "value" : abortMsg, "matchType" : "pcre" }
-            symptomObj = { "type" : "output", "src" : "stderr", "value" : stringObj }            
+            # Compose StringMatch object with PCRE pattern.
+            # Versions below 1.2 only support the full object PCRE style,
+            # for anything newer, use the short form with forward slashes
+            # to increase the readability of the signatures. 
+            if minimumSupportedVersion < 12:
+                stringObj = { "value" : abortMsg, "matchType" : "pcre" }
+                symptomObj = { "type" : "output", "src" : "stderr", "value" : stringObj }            
+            else:
+                symptomObj = { "type" : "output", "src" : "stderr", "value" : "/%s/" % abortMsg }
             symptomArr.append(symptomObj)
-        
         # If we have less than topStackLimit frames available anyway, count the difference
         # between topStackLimit and the available frames already as missing.
         # E.g. if the trace has only three entries anyway, one will be considered missing
@@ -194,7 +203,9 @@ class CrashInfo():
         else:
             topStackMissCount = topStackLimit - numFrames
 
-        if forceSeparateStackFrameSymptoms:
+        # StackFramesSymptom is only supported in 1.2 and higher,
+        # for everything else, use multiple stackFrame symptoms
+        if minimumSupportedVersion < 12:
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
                 if not functionName == "??":
