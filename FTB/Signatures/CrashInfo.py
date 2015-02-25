@@ -216,7 +216,6 @@ class CrashInfo():
                     topStackMissCount += 1
         else:
             framesArray = []
-            framesSymptomObj = { "type" : "stackFrames", "functionNames" : framesArray }
             
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
@@ -230,7 +229,7 @@ class CrashInfo():
             
             lastSymbolizedFrame = None
             for frameIdx in range(0,len(framesArray)):
-                if framesArray[frameIdx] != '?':
+                if str(framesArray[frameIdx]) != '?':
                     lastSymbolizedFrame = frameIdx
             
             if lastSymbolizedFrame != None:
@@ -242,7 +241,7 @@ class CrashInfo():
                 framesArray = []
                 
             if framesArray:
-                symptomArr.append(framesSymptomObj)
+                symptomArr.append({ "type" : "stackFrames", "functionNames" : framesArray })
 
         # Missing too much of the top stack frames, add additional crash information
         stackIsInsufficient = topStackMissCount >= 2 and abortMsg == None 
