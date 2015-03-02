@@ -596,7 +596,8 @@ def main(argv=None):
             print("No match found")
             return 3
         print(sig)
-        print(json.dumps(metadata, indent=4))
+        if metadata:
+            print(json.dumps(metadata, indent=4))
         return 0
     
     if opts.generate:
