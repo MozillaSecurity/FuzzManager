@@ -297,6 +297,9 @@ class StackFramesSymptom(Symptom):
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
     
     def diff(self, crashInfo):
+        if self.matches(crashInfo):
+            return (0, None)
+        
         for depth in range(1,4):
             (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
             if bestDepth != None:
