@@ -119,7 +119,7 @@ class CrashInfo():
         # Search both crashData and stderr, but prefer crashData
         lines = []
         if (auxCrashData != None):
-            lines = auxCrashData
+            lines.extend(auxCrashData)
         if (stderr != None):
             lines.extend(stderr)
         
