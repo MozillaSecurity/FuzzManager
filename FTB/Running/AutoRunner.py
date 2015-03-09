@@ -193,6 +193,9 @@ class ASanRunner(AutoRunner):
                 inTrace = True
             else:
                 self.stderr.append(line)
+        
+        if not self.auxCrashData:
+            return False
                 
         # Move the trace from stdout to auxCrashData
         self.auxCrashData = os.linesep.join(self.auxCrashData)
