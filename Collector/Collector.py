@@ -49,20 +49,20 @@ __updated__ = '2014-10-01'
 
 def remote_checks(f):
     'Decorator to perform error checks before using remote features'
-    def decorator(self, *args):
+    def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
         if not self.serverHost:
             raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
-        return f(self, *args)
+        return f(self, *args, **kwargs)
     return decorator
 
 def signature_checks(f):
     'Decorator to perform error checks before using signature features'
-    def decorator(self, *args):
+    def decorator(self, *args, **kwargs):
         if not self.sigCacheDir:
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
-        return f(self, *args)
+        return f(self, *args, **kwargs)
     return decorator
 
 class Collector():
