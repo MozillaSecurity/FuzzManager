@@ -20,6 +20,7 @@
 				<span>
 					{% if bucket.bug %}
 						Reported as <a href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}">bug {{ bucket.bug.externalId }}</a>.
+						<a href="{% url 'crashmanager:sigunlink' bucket.pk %}">Unlink</a>.
 					{% else %}
 						Unreported. <a href="{% url 'crashmanager:siglink' bucket.pk %}">Assign an existing bug</a>.
 					{% endif %}

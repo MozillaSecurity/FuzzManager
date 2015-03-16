@@ -441,6 +441,19 @@ def linkSignature(request, sigid):
         return render(request, 'signature_link.html', data)
     else:
         raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def unlinkSignature(request, sigid):
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    
+    if request.method == 'POST':
+        bucket.bug = None
+        bucket.save()        
+        return redirect('crashmanager:sigview', sigid=bucket.pk)
+    elif request.method == 'GET':
+        return render(request, 'signature_unlink.html', { 'bucket' : bucket })
+    else:
+        raise SuspiciousOperation
     
 @login_required(login_url='/login/')
 def trySignature(request, sigid, crashid):
