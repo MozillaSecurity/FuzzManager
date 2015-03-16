@@ -18,7 +18,7 @@ def renderError(request, err):
 
 def logout_view(request):
     logout(request)
-    # Redirect to a success page.
+    return redirect('crashmanager:index')
 
 @login_required(login_url='/login/')
 def index(request):
