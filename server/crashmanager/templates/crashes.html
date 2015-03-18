@@ -40,7 +40,8 @@
 			{% if entry.bucket %} 
 			{{ entry.bucket.pk }} <a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">View</a>
 			{% else %}
-				<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a>
+			<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}">Create new</a><br/>
+			<a href="{% url 'crashmanager:findsigs' entry.pk %}">Search bucket</a>
 			{% endif %}
 		    </td>
 		    <td>{{ entry.shortSignature|escape }}</td>
