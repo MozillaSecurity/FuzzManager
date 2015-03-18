@@ -306,8 +306,12 @@ class StackFramesSymptom(Symptom):
                 guessedFunctionNames = [repr(x) for x in bestGuess]
                 
                 # Remove trailing wildcards as they are of no use
-                while guessedFunctionNames[-1] == '?' or guessedFunctionNames[-1] == '???':
+                while guessedFunctionNames and (guessedFunctionNames[-1] == '?' or guessedFunctionNames[-1] == '???'):
                     guessedFunctionNames.pop()
+                    
+                if not guessedFunctionNames:
+                    # Do not return empty matches. This happens if there's nothing left except wildcards.
+                    return (None, None)
                         
                 return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : guessedFunctionNames }))
         
