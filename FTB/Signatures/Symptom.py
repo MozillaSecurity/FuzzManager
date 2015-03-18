@@ -303,7 +303,7 @@ class StackFramesSymptom(Symptom):
         for depth in range(1,4):
             (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
             if bestDepth != None:
-                return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : [str(x) for x in bestGuess] }))
+                return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : [repr(x) for x in bestGuess] }))
         
         return (None, None)
     
