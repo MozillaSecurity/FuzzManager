@@ -19,7 +19,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     product_version = serializers.CharField(max_length=63, required=False, write_only=True)
     os = serializers.CharField(max_length=63)
     client = serializers.CharField(max_length=255)
-    tool = serializers.CharField(max_length=255)
+    tool = serializers.CharField(max_length=63)
     testcase = serializers.CharField(widget=widgets.Textarea, required=False)
     testcase_ext = serializers.CharField(required=False, write_only=True)
     testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
