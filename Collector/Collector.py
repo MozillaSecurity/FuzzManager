@@ -54,6 +54,8 @@ def remote_checks(f):
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
         if not self.serverHost:
             raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
+        if not self.tool:
+            raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
         return f(self, *args, **kwargs)
     return decorator
 
@@ -68,7 +70,7 @@ def signature_checks(f):
 class Collector():
     def __init__(self, sigCacheDir=None, serverHost=None, serverPort=None,
                  serverProtocol=None, serverAuthToken=None,
-                 clientId=None):
+                 clientId=None, tool=None):
         '''
         Initialize the Collector. This constructor will also attempt to read
         a configuration file to populate any missing properties that have not
@@ -84,6 +86,8 @@ class Collector():
         @param serverAuthToken: Token for server authentication
         @type clientId: string
         @param clientId: Client ID stored in the server when submitting issues
+        @type tool: string
+        @param tool: Name of the tool that found this issue
         '''
         self.sigCacheDir = sigCacheDir
         self.serverHost = serverHost
@@ -91,6 +95,7 @@ class Collector():
         self.serverProtocol = serverProtocol
         self.serverAuthToken = serverAuthToken
         self.clientId = clientId
+        self.tool = tool
         
         # Now search for the global configuration file. If it exists, read its contents
         # and set all Collector settings that haven't been explicitely set by the user.
@@ -120,7 +125,9 @@ class Collector():
                 
             if self.clientId == None and "clientid" in globalConfig:
                 self.clientId = globalConfig["clientid"]
-
+                
+            if self.tool == None and "tool" in globalConfig:
+                self.tool = globalConfig["tool"]
         
         # Set some defaults that we can't set through default arguments, otherwise
         # they would overwrite configuration file settings
@@ -225,6 +232,7 @@ class Collector():
             data["product_version"] = crashInfo.configuration.version
         
         data["client"] = self.clientId
+        data["tool"] = self.tool
         
         if crashInfo.configuration.metadata or metaData:
             aggrMetaData = {}
@@ -432,6 +440,7 @@ def main(argv=None):
     parser.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
     parser.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
     parser.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    parser.add_argument("--tool", dest="tool", help="Name of the tool that found this issue", metavar="NAME")
     parser.add_argument('--args', dest='args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
     parser.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
     parser.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
@@ -579,7 +588,7 @@ def main(argv=None):
         with open(opts.serverauthtokenfile) as f:
             serverauthtoken = f.read().rstrip()
 
-    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid)
+    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid, opts.tool)
     
     if opts.refresh:
         collector.refresh()

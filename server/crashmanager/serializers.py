@@ -1,4 +1,4 @@
-from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestCase, Client
+from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestCase, Client, Tool
 from rest_framework import serializers
 from django.forms import widgets
 from django.core.exceptions import MultipleObjectsReturned
@@ -19,6 +19,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     product_version = serializers.CharField(max_length=63, required=False, write_only=True)
     os = serializers.CharField(max_length=63)
     client = serializers.CharField(max_length=255)
+    tool = serializers.CharField(max_length=255)
     testcase = serializers.CharField(widget=widgets.Textarea, required=False)
     testcase_ext = serializers.CharField(required=False, write_only=True)
     testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
@@ -29,7 +30,8 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         fields = (
                   'rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 
                   'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
-                  'platform', 'product', 'product_version', 'os', 'client', 'env', 'args'
+                  'platform', 'product', 'product_version', 'os', 'client', 'tool', 
+                  'env', 'args'
                   )
 
     def to_native(self, obj):
@@ -48,6 +50,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             serialized["os"] = obj.os.name
             serialized["platform"] = obj.platform.name
             serialized["client"] = obj.client.name
+            serialized["tool"] = obj.tool.name
             
             if obj.testcase:
                 serialized["testcase_isbinary"] = obj.testcase.isBinary
@@ -72,6 +75,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         platform = attrs.pop('platform', None)
         os = attrs.pop('os', None)
         client = attrs.pop('client', None)
+        tool = attrs.pop('tool', None)
         testcase = attrs.pop('testcase', None)
         testcase_ext = attrs.pop('testcase_ext', None)
         testcase_quality = attrs.pop('testcase_quality', 0)
@@ -113,11 +117,12 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             else:
                 return objs.first()
         
-        # Get or instantiate objects for product, platform, or and client
+        # Get or instantiate objects for product, platform, os, client and tool
         attrs['product'] = createOrGetModelByName(Product, { 'name' : product, 'version' : product_version })
         attrs['platform'] = createOrGetModelByName(Platform, { 'name' : platform })
         attrs['os'] = createOrGetModelByName(OS, { 'name' : os })
         attrs['client'] = createOrGetModelByName(Client, { 'name' : client })
+        attrs['tool'] = createOrGetModelByName(Tool, { 'name' : tool })
 
         # If a testcase is supplied, create a testcase object and store it
         if testcase:
