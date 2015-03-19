@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
 from django.db.models.signals import post_delete
 from django.dispatch.dispatcher import receiver
+from django.contrib.auth.models import User as DjangoUser
 
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
@@ -192,4 +193,12 @@ class BugzillaTemplate(models.Model):
     target_milestone = models.TextField(blank=True)
     attrs = models.TextField(blank=True)
     security = models.BooleanField(blank=False, default=False)
+
+
+class User(models.Model):
+    user = models.OneToOneField(DjangoUser)
+    # Explicitely do not store this as a ForeignKey to e.g. BugzillaTemplate
+    # because the bug provider has to decide how to interpret this ID.
+    defaultTemplateId = models.IntegerField(default=0)
+    defaultToolsFilter = models.ManyToManyField(Tool)
 
