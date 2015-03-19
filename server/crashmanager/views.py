@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
-from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug
+from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,6 +12,7 @@ from django.db.models.aggregates import Count, Min
 from django.http.response import Http404
 from rest_framework.authentication import TokenAuthentication
 from datetime import datetime, timedelta
+import operator
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -110,6 +111,11 @@ def crashes(request):
     isSearch = True
     
     entries = CrashEntry.objects.all().order_by('-id')
+    
+    (user, created) = User.objects.get_or_create(user = request.user)
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -619,6 +625,33 @@ def createBugProvider(request):
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
         return render(request, 'bugprovider_edit.html', {})
+    else:
+        raise SuspiciousOperation
+    
+@login_required(login_url='/login/')
+def userSettings(request):
+    (user, created) = User.objects.get_or_create(user = request.user)
+    tools = Tool.objects.all()
+    currentToolsFilter = user.defaultToolsFilter.all()
+        
+    for tool in tools:
+        tool.checked = tool in currentToolsFilter
+    
+    if request.method == 'POST':     
+        if "changefilter" in request.POST:
+            user.defaultToolsFilter.clear()
+            user.defaultToolsFilter = [Tool.objects.get(name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
+            msg = "Tools filter updated successfully."
+        elif "changetemplate" in request.POST:
+            user.defaultTemplateId = request.POST['defaultTemplateId']
+            user.save()
+            msg = "Default template updated successfully."
+        else:
+            raise SuspiciousOperation
+        
+        return render(request, 'usersettings.html', { "user" : user, "tools" : tools, "msg" : msg })
+    elif request.method == 'GET':
+        return render(request, 'usersettings.html', { "user" : user, "tools" : tools })
     else:
         raise SuspiciousOperation
 

@@ -1,0 +1,25 @@
+{% extends 'layouts/layout_1_column_full_width.html' %}
+{% load url from future %}
+
+{% block 1 %}
+<div class="panel">
+	<div class="body notitle">
+		{% if msg %}<p><i>{{ msg }}</i></p>{% endif %}
+
+		<form action="{% url 'crashmanager:usersettings' %}" method="post">
+		{% csrf_token %}
+		
+		<p><b>Select the tools you would like to include in your default views:</b></p>
+
+		{% for tool in tools %}
+			<div class="field">
+				<input type="checkbox" id="id_tool_{{ tool.name }}" name="tool_{{ tool.name }}" value="unassigned" {% if tool.checked %}checked{% endif %} />
+				<label class="label" for="id_tool_{{ tool.name }}">{{ tool.name }}</label>
+			</div>
+		{% endfor %}
+			<input type="hidden" name="changefilter" value="1" />
+			<input type="submit" name="submit" value="Save Tool Filters" />
+		</form>
+        </div>
+</div>
+{% endblock 1 %}

@@ -39,6 +39,7 @@ urlpatterns = patterns('',
 
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
+    url(r'^usersettings/$', views.userSettings, name='usersettings'),
     
     url(r'^rest/', include(router.urls)),
 )
