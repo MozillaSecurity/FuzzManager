@@ -11,6 +11,9 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 
 import json
 
+class Tool(models.Model):
+    name = models.CharField(max_length=63)
+
 class Platform(models.Model):
     name = models.CharField(max_length=63)
 
@@ -90,6 +93,7 @@ class Bucket(models.Model):
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
+    tool = models.ForeignKey(Tool)
     platform = models.ForeignKey(Platform)
     product = models.ForeignKey(Product)
     os = models.ForeignKey(OS)
