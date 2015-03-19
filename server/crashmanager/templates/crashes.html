@@ -24,12 +24,13 @@
 			<th style="width: 50px;">Date added</th>
 			<th style="width: 25px;">Bucket</th>
 			<th style="width: 100px;">Short Signature</th>
-			<th style="width: 50px;">Crash Address</th>
+			<th style="width: 40px;">Crash Address</th>
 			<th style="width: 50px;">Test status</th>
 			<th style="width: 50px;">Product</th>
 			<th style="width: 50px;">Version</th>
 			<th style="width: 25px;">Platform</th>
 			<th style="width: 40px;">OS</th>
+			<th style="width: 40px;">Tool</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,6 +62,8 @@
 		    <td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__version={{ entry.product.version|urlencode }}"> [x]</a></td>
 		    <td>{{ entry.platform.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}"> [x]</a> </td>
 		    <td>{{ entry.os.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}"> [x]</a></td>
+		    <td>{{ entry.tool.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&tool__name={{ entry.tool.name|urlencode }}"> [x]</a></td>
+		    
                     </tr>{% endfor %}
                 </tbody>
             </table>

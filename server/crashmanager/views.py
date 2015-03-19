@@ -121,6 +121,7 @@ def crashes(request):
                        "product__version",
                        "platform__name",
                        "testcase__quality",
+                       "tool__name",
                        ]
     
     for key in exactFilterKeys:
