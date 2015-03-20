@@ -527,7 +527,8 @@ def createExternalBug(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            provider = get_object_or_404(BugProvider, pk=1)
+            (user, created) = User.objects.get_or_create(user = request.user)
+            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
         
         return provider.getInstance().renderContextCreate(request, entry)
     else:
@@ -631,27 +632,47 @@ def createBugProvider(request):
 @login_required(login_url='/login/')
 def userSettings(request):
     (user, created) = User.objects.get_or_create(user = request.user)
-    tools = Tool.objects.all()
-    currentToolsFilter = user.defaultToolsFilter.all()
-        
-    for tool in tools:
-        tool.checked = tool in currentToolsFilter
     
+    def createUserSettingsData(user, msg = None):
+        tools = Tool.objects.all()
+        currentToolsFilter = user.defaultToolsFilter.all()
+            
+        for tool in tools:
+            tool.checked = tool in currentToolsFilter
+        
+        providers = BugProvider.objects.all()
+        provider = providers.filter(pk = user.defaultProviderId)
+        templates = None
+        if provider:
+            provider = provider[0]
+            templates = provider.getInstance().getTemplateList()
+            
+        return { 
+                "user" : user, 
+                "tools" : tools,
+                "providers" : providers,
+                "templates" : templates,
+                "defaultProviderId" : user.defaultProviderId,
+                "defaultTemplateId" : user.defaultTemplateId,
+                "msg" : msg,
+                }
+
     if request.method == 'POST':     
         if "changefilter" in request.POST:
             user.defaultToolsFilter.clear()
             user.defaultToolsFilter = [Tool.objects.get(name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
-            msg = "Tools filter updated successfully."
+            data = createUserSettingsData(user, msg = "Tools filter updated successfully.")
         elif "changetemplate" in request.POST:
-            user.defaultTemplateId = request.POST['defaultTemplateId']
+            user.defaultProviderId = int(request.POST['defaultProvider'])
+            user.defaultTemplateId = int(request.POST['defaultTemplate'])
             user.save()
-            msg = "Default template updated successfully."
+            data = createUserSettingsData(user, msg = "Default provider/template updated successfully.")
         else:
             raise SuspiciousOperation
         
-        return render(request, 'usersettings.html', { "user" : user, "tools" : tools, "msg" : msg })
+        return render(request, 'usersettings.html', data)
     elif request.method == 'GET':
-        return render(request, 'usersettings.html', { "user" : user, "tools" : tools })
+        return render(request, 'usersettings.html', createUserSettingsData(user))
     else:
         raise SuspiciousOperation
 

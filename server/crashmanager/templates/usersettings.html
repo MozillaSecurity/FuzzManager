@@ -20,6 +20,34 @@
 			<input type="hidden" name="changefilter" value="1" />
 			<input type="submit" name="submit" value="Save Tool Filters" />
 		</form>
+		
+		<hr/>
+
+		<form action="{% url 'crashmanager:usersettings' %}" method="post">
+		{% csrf_token %}
+
+			<div class="field">
+			<label class="label" for="provider">Default Provider:</label>
+			<select id="provider" name="defaultProvider">
+			{% for p in providers %}
+			    <option value="{{ p.pk }}" {% if p.pk == defaultProviderId %}selected="selected"{% endif %}>{{ p.hostname }}</option>
+			{% endfor %}
+			</select>
+			</div>
+
+			<div class="field">
+			<label class="label" for="template">Default Template:</label>
+			<select id="template" name="defaultTemplate">
+			{% for t in templates %}
+			    <option value="{{ t.pk }}" {% if t.pk == defaultTemplateId %}selected="selected"{% endif %}>{{ t.name }}</option>
+			{% endfor %}
+			</select>
+
+			</div>
+
+			<input type="hidden" name="changetemplate" value="1" />
+			<input type="submit" name="submit" value="Save Default Provider/Template" />
+		</form>
         </div>
 </div>
 {% endblock 1 %}

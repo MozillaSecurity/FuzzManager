@@ -200,5 +200,6 @@ class User(models.Model):
     # Explicitely do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
     defaultTemplateId = models.IntegerField(default=0)
+    defaultProviderId = models.IntegerField(default=1)
     defaultToolsFilter = models.ManyToManyField(Tool)
 

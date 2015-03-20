@@ -18,7 +18,7 @@ from crashmanager.Bugtracker.Provider import Provider
 import re
 import requests
 from django.shortcuts import render, get_object_or_404
-from crashmanager.models import BugzillaTemplate
+from crashmanager.models import BugzillaTemplate, User
 from django.forms.models import model_to_dict
 from datetime import datetime
 import json
@@ -60,7 +60,12 @@ class BugzillaProvider(Provider):
             template = model_to_dict(obj)
             template["pk"] = obj.pk
         else:
-            obj = BugzillaTemplate.objects.filter(pk=1)
+            (user, created) = User.objects.get_or_create(user = request.user)
+            defaultTemplateId = user.defaultTemplateId
+            if not defaultTemplateId:
+                defaultTemplateId = 1
+            
+            obj = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
             
             if not obj:
                 template = {}
@@ -237,6 +242,9 @@ class BugzillaProvider(Provider):
         
         bugTemplate.save()
         return bugTemplate.pk
+    
+    def getTemplateList(self):
+        return BugzillaTemplate.objects.all()
     
     def getBugData(self, bugId, username=None, password=None):
         bz = BugzillaREST(self.hostname, username, password)

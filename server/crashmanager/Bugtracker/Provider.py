@@ -46,6 +46,10 @@ class Provider():
     @abstractmethod
     def handlePOSTCreateEditTemplate(self, request):
         return
+
+    @abstractmethod
+    def getTemplateList(self):
+        return
     
     @abstractmethod
     def getBugData(self, bugId, username=None, password=None):
@@ -54,4 +58,3 @@ class Provider():
     @abstractmethod
     def getBugStatus(self, bugIds, username=None, password=None):
         return
-    
