@@ -349,7 +349,7 @@ class Collector():
             return None
         
         url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, json["testcase"])
-        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+        response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
         
         if response.status_code != requests.codes["ok"]:
             raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
