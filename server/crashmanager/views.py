@@ -490,7 +490,7 @@ def findSignatures(request, crashid):
         # TODO: This could be made configurable through a GET parameter
         if distance <= 4:
             proposedCrashSignature = signature.fit(entry.crashinfo)
-            if proposedCrashSignature.sanityCheck():
+            if proposedCrashSignature and proposedCrashSignature.sanityCheck():
                 bucket.offCount = distance
                 similarBuckets.append(bucket)
             

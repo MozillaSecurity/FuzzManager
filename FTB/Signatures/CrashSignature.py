@@ -146,6 +146,9 @@ class CrashSignature():
                     sigSymptoms.append(symptomDiff['proposed'].jsonobj) 
             else:
                 sigSymptoms.append(symptomDiff['symptom'].jsonobj)
+        
+        if not sigSymptoms:
+            return None
             
         return CrashSignature(json.dumps(sigObj, indent=2))
     
