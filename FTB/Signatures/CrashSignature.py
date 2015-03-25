@@ -163,9 +163,11 @@ class CrashSignature():
                 # we annotate internals of the symptom with distance information to display.
                 if isinstance(symptom, StackFramesSymptom):
                     proposedSymptom  = symptom.diff(crashInfo)[1]
-                    symptomsDiff.append({ 'offending' : True, 'symptom' : symptom, 'proposed' : proposedSymptom })
-                else:
-                    symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
+                    if proposedSymptom:
+                        symptomsDiff.append({ 'offending' : True, 'symptom' : symptom, 'proposed' : proposedSymptom })
+                        continue
+                
+                symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
         return symptomsDiff
     
     def sanityCheck(self):
