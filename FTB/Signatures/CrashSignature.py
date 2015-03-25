@@ -17,6 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
+import FTB.Signatures
 
 class CrashSignature():
     def __init__(self, rawSignature):
@@ -106,7 +107,6 @@ class CrashSignature():
         return False
     
     def getDistance(self, crashInfo):
-        total = len(self.symptoms)
         distance = 0
         
         for symptom in self.symptoms:
@@ -117,16 +117,11 @@ class CrashSignature():
                 else:
                     # If we can't find the distance, assume worst-case
                     distance += len(symptom.functionNames)
-                    
-                # Weight the StackFramesSymptom not as a single Symptom but
-                # by the number of stack frames it has
-                total += len(symptom.functionNames)
-                total -= 1
             else:
                 if not symptom.matches(crashInfo):
                     distance +=1
                 
-        return (distance, total)
+        return distance
         
     def fit(self, crashInfo):
         sigObj = {}
@@ -169,4 +164,7 @@ class CrashSignature():
                 else:
                     symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
         return symptomsDiff
+    
+    def sanityCheck(self):
+        return True
         
