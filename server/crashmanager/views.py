@@ -490,8 +490,27 @@ def findSignatures(request, crashid):
         # TODO: This could be made configurable through a GET parameter
         if distance <= 4:
             proposedCrashSignature = signature.fit(entry.crashinfo)
-            if proposedCrashSignature and proposedCrashSignature.sanityCheck():
+            if proposedCrashSignature:
+                # We now try to determine how this signature will behave in other buckets
+                # If the signature matches lots of other buckets as well, it is likely too
+                # broad and we should not consider it (or later rate it worse than others).
+                matchesInOtherBuckets = 0
+                nonMatchesInOtherBuckets = 0
+                for bucket in buckets:
+                    bucketEntries = CrashEntry.objects.filter(bucket=bucket)
+                    firstEntry = list(bucketEntries[:1])
+                    if firstEntry:
+                        firstEntry = firstEntry[0]
+                        # Omit testcase for performance reasons for now
+                        if proposedCrashSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
+                            matchesInOtherBuckets += 1
+                        else:
+                            nonMatchesInOtherBuckets += 1
+                
+                 
+                            
                 bucket.offCount = distance
+                bucket.foreignMatchPercentage = (float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100
                 similarBuckets.append(bucket)
             
     similarBuckets.sort(key=lambda x: x.offCount)

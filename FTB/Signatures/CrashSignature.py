@@ -169,7 +169,4 @@ class CrashSignature():
                 
                 symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
         return symptomsDiff
-    
-    def sanityCheck(self):
-        return True
         
