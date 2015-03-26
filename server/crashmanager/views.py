@@ -70,7 +70,7 @@ def signatures(request):
 
     filters = {}
     q = None
-    isSearch = True
+    isSearch = False
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -81,18 +81,21 @@ def signatures(request):
     
     for key in exactFilterKeys:
         if key in request.GET:
+            isSearch = True
             filters[key] = request.GET[key]
         
     if "q" in request.GET:
+        isSearch = True
         q = request.GET["q"]
         entries = entries.filter(
                                  Q(shortDescription__contains=q)
                                  | Q(signature__contains=q)
                                  )
     
-    # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q == None:        
-        isSearch = False
+    if "ids" in request.GET:
+        isSearch = True
+        ids = [int(x) for x in request.GET["ids"].split(",")]
+        entries = entries.filter(pk__in=ids)
         
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
