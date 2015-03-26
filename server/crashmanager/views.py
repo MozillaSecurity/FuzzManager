@@ -501,6 +501,9 @@ def findSignatures(request, crashid):
                 nonMatchesInOtherBuckets = 0
                 otherMatchingBucketIds = []
                 for otherBucket in buckets:
+                    if otherBucket.pk == bucket.pk:
+                        continue
+                    
                     bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
                     firstEntry = list(bucketEntries[:1])
                     if firstEntry:
