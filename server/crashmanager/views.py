@@ -496,8 +496,8 @@ def findSignatures(request, crashid):
                 # broad and we should not consider it (or later rate it worse than others).
                 matchesInOtherBuckets = 0
                 nonMatchesInOtherBuckets = 0
-                for bucket in buckets:
-                    bucketEntries = CrashEntry.objects.filter(bucket=bucket)
+                for otherBucket in buckets:
+                    bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
                     firstEntry = list(bucketEntries[:1])
                     if firstEntry:
                         firstEntry = firstEntry[0]
@@ -507,8 +507,6 @@ def findSignatures(request, crashid):
                         else:
                             nonMatchesInOtherBuckets += 1
                 
-                 
-                            
                 bucket.offCount = distance
                 bucket.foreignMatchPercentage = (float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100
                 similarBuckets.append(bucket)
