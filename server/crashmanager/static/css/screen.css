@@ -396,7 +396,3 @@ a.fixedbug, a.fixedbug:link, a.fixedbug:hover, a.fixedbug:active {
 .green {
 	color: green;
 }
-
-table.vcenter td {
-	vertical-align: middle;
-}

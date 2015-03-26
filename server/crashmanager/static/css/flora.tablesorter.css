@@ -32,6 +32,12 @@ table.tablesorter tbody td {
 	padding: 4px;
 	vertical-align: top;
 }
+table.vcenter tbody td {
+        vertical-align: middle;
+}
+table.vcenter img {
+        vertical-align: middle;
+}
 table.tablesorter thead tr .headerSortUp {
 	background-image: url(i/asc.gif);
 }
