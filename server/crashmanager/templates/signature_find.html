@@ -34,9 +34,8 @@
 		    <td>{{ entry.shortDescription|escape }}</td>
 		    <td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>
 		    <td>{{ entry.foreignMatchPercentage }} %, 
-			    
 			    {% if entry.linkToOthers %}
-			    	<a title="Show differences" href="{% url 'crashmanager:signatures' %}?ids={{ entry.linkToOthers }}">
+			    	<a title="Show differences" href="{% url 'crashmanager:signatures' %}?all=1&ids={{ entry.linkToOthers }}">
 			    	{{ entry.foreignMatchCount }} other buckets
 				</a>
 			    {% else %}
