@@ -520,7 +520,7 @@ def findSignatures(request, crashid):
                 # if the number is rather low and we would like to keep the URL short.
                 bucket.linkToOthers = None
                 if matchesInOtherBuckets <= 10:
-                    bucket.linkToOthers = ",".join(otherMatchingBucketIds)
+                    bucket.linkToOthers = ",".join([str(x) for x in otherMatchingBucketIds])
                 
                 
                 similarBuckets.append(bucket)
