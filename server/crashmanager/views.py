@@ -519,6 +519,13 @@ def findSignatures(request, crashid):
                 bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
                 bucket.foreignMatchCount = matchesInOtherBuckets
                 
+                if matchesInOtherBuckets == 0:
+                    bucket.foreignColor = "green"
+                elif matchesInOtherBuckets < 3:
+                    bucket.foreignColor = "yellow"
+                else:
+                    bucket.foreignColor = "red"    
+                
                 # Set a limit to linking to the other matching buckets. It only makes sense to look at these
                 # if the number is rather low and we would like to keep the URL short.
                 bucket.linkToOthers = None
