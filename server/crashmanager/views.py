@@ -499,6 +499,7 @@ def findSignatures(request, crashid):
                 # broad and we should not consider it (or later rate it worse than others).
                 matchesInOtherBuckets = 0
                 nonMatchesInOtherBuckets = 0
+                otherMatchingBucketIds = []
                 for otherBucket in buckets:
                     bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
                     firstEntry = list(bucketEntries[:1])
@@ -507,12 +508,21 @@ def findSignatures(request, crashid):
                         # Omit testcase for performance reasons for now
                         if proposedCrashSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
                             matchesInOtherBuckets += 1
+                            otherMatchingBucketIds.append(otherBucket.pk)
                         else:
                             nonMatchesInOtherBuckets += 1
                 
                 bucket.offCount = distance
                 bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
                 bucket.foreignMatchCount = matchesInOtherBuckets
+                
+                # Set a limit to linking to the other matching buckets. It only makes sense to look at these
+                # if the number is rather low and we would like to keep the URL short.
+                bucket.linkToOthers = None
+                if matchesInOtherBuckets <= 10:
+                    bucket.linkToOthers = ",".join(otherMatchingBucketIds)
+                
+                
                 similarBuckets.append(bucket)
             
     similarBuckets.sort(key=lambda x: x.offCount)
