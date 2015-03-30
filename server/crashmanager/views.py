@@ -485,11 +485,17 @@ def findSignatures(request, crashid):
     
     buckets = Bucket.objects.all()
     similarBuckets = []
+    matchingBucket = None
     
     for bucket in buckets:
         signature = bucket.getSignature()
         distance = signature.getDistance(entry.crashinfo)
-    
+        
+        # We found a matching bucket, no need to display/calculate similar buckets
+        if distance == 0:
+            matchingBucket = bucket
+            break
+            
         # TODO: This could be made configurable through a GET parameter
         if distance <= 4:
             proposedCrashSignature = signature.fit(entry.crashinfo)
@@ -534,10 +540,14 @@ def findSignatures(request, crashid):
                 
                 
                 similarBuckets.append(bucket)
-            
-    similarBuckets.sort(key=lambda x: x.offCount)
     
-    return render(request, 'signature_find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
+    if matchingBucket:
+        entry.bucket = matchingBucket
+        entry.save()
+        return render(request, 'signature_find.html', { 'bucket' : matchingBucket, 'crashentry' : entry })
+    else:
+        similarBuckets.sort(key=lambda x: x.offCount)
+        return render(request, 'signature_find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
 
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):

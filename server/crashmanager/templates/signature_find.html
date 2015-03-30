@@ -6,17 +6,17 @@
 <div class="panel">
 	<div class="body notitle">
             <p>
-	    	<!--
-			{% if isAll %}
-				Displaying all {{ siglist|length }} unreported signature entries in database:
+			{% if bucket %}
+				A matching bucket was found for the requested crash entry. The entry has been
+				assigned to bucket <a href="{% url 'crashmanager:sigview' bucket.pk  %}">{{ bucket.pk }}</a>.
 			{% else %}
-				Displaying {{ siglist|length }} unreported signature entries from the database (
-				<a href="{% url 'crashmanager:allsignatures' %}">View all entries</a>
-				):
+				{% if not buckets %}
+				No similar buckets could be found.
+				{% endif %}
 			{% endif %}
-			-->
 
 	    </p>
+	    {% if buckets %}
             <table id="signatureList" class="tablesorter vcenter" style="table-layout:fixed; word-wrap:break-word;">
                 <thead>
                     <tr>
@@ -55,6 +55,7 @@
                     </tr>{% endfor %}
                 </tbody>
             </table>
+	    {% endif %}
         </div>
 </div>
 {% endblock 1 %}
