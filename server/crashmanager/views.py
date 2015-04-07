@@ -328,7 +328,7 @@ def newSignature(request):
                                                    crashEntry.rawCrashData)
             
             
-            maxStackFrames = None
+            maxStackFrames = 8
             forceCrashInstruction = False
             forceCrashAddress = True
             errorMsg = None
