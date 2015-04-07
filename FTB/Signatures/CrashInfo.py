@@ -254,8 +254,8 @@ class CrashInfo():
         
         if includeCrashAddress:
             if self.crashAddress == None:
-                if self.failureReason == None:
-                    self.failureReason = "No crash address available from crash data."
+                failureReason = self.failureReason
+                self.failureReason = "No crash address available from crash data. Reason: " % failureReason    
                 return None
 
             crashAddress = hex(self.crashAddress).rstrip("L")
@@ -265,8 +265,8 @@ class CrashInfo():
         
         if includeCrashInstruction:
             if self.crashInstruction == None:
-                if self.failureReason == None:
-                    self.failureReason = "No crash instruction available from crash data."
+                failureReason = self.failureReason
+                self.failureReason = "No crash instruction available from crash data. Reason: " % failureReason    
                 return None
             
             crashInstructionSymptomObj = { "type" : "instruction", "instructionName" : self.crashInstruction }
