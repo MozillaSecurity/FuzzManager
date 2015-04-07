@@ -485,7 +485,7 @@ class GDBCrashInfo(CrashInfo):
         if self.crashAddress == None and self.crashInstruction != None:
             crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
             
-            if isinstance(crashAddress, str):
+            if isinstance(crashAddress, basestring):
                 self.failureReason = crashAddress
                 return
             
