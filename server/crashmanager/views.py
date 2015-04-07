@@ -331,6 +331,7 @@ def newSignature(request):
             maxStackFrames = None
             forceCrashInstruction = False
             forceCrashAddress = True
+            errorMsg = None
             
             if 'stackframes' in request.GET:
                 maxStackFrames = int(request.GET['stackframes'])
@@ -349,6 +350,7 @@ def newSignature(request):
                                                                maxFrames = maxStackFrames
                                                                )
             if (proposedSignature == None):
+                errorMsg = crashInfo.failureReason
                 proposedSignature = crashInfo.createCrashSignature(maxFrames = maxStackFrames)
                 
             proposedSignature = str(proposedSignature)
@@ -359,6 +361,7 @@ def newSignature(request):
                                                 'bug' : None,
                                                 'signature' : proposedSignature,
                                                 'shortDescription' : proposedShortDesc,
+                                                'error_message' : errorMsg
                                             }
                    }
         else:
