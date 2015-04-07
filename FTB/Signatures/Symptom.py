@@ -68,7 +68,7 @@ class Symptom():
         elif (stype == "stackFrames"):
             return StackFramesSymptom(obj)
         else:
-            raise RuntimeError("Unknown symptom type: %s" % type)
+            raise RuntimeError("Unknown symptom type: %s" % stype)
 
     @abstractmethod
     def matches(self, crashInfo):
