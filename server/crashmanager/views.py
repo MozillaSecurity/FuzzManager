@@ -327,11 +327,29 @@ def newSignature(request):
                                                    configuration, 
                                                    crashEntry.rawCrashData)
             
+            
+            maxStackFrames = None
+            forceCrashInstruction = False
+            forceCrashAddress = True
+            
+            if 'stackframes' in request.GET:
+                maxStackFrames = int(request.GET['stackframes'])
+                
+            if 'forcecrashaddress' in request.GET:
+                forceCrashAddress = bool(int(request.GET['forcecrashaddress']))
+            
+            if 'forcecrashinstruction' in request.GET:
+                forceCrashInstruction = bool(int(request.GET['forcecrashinstruction']))
+            
             # First try to create the signature with the crash address included.
             # However, if that fails, try without forcing the crash signature.
-            proposedSignature = crashInfo.createCrashSignature(forceCrashAddress=True)
+            proposedSignature = crashInfo.createCrashSignature(
+                                                               forceCrashAddress=forceCrashAddress,
+                                                               forceCrashInstruction=forceCrashInstruction,
+                                                               maxFrames = maxStackFrames
+                                                               )
             if (proposedSignature == None):
-                proposedSignature = crashInfo.createCrashSignature()
+                proposedSignature = crashInfo.createCrashSignature(maxFrames = maxStackFrames)
                 
             proposedSignature = str(proposedSignature)
             proposedShortDesc = crashInfo.createShortSignature()
