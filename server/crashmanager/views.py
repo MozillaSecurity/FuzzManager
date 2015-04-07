@@ -360,9 +360,9 @@ def newSignature(request):
                                                 'pk' : None, 
                                                 'bug' : None,
                                                 'signature' : proposedSignature,
-                                                'shortDescription' : proposedShortDesc,
-                                                'error_message' : errorMsg
-                                            }
+                                                'shortDescription' : proposedShortDesc
+                                            },
+                     'error_message' : errorMsg
                    }
         else:
             data = { 'new' : True }
