@@ -56,6 +56,9 @@ class CrashInfo():
         # can be "attached" before matching signatures that might require the
         # testcase.
         self.testcase = None
+        
+        # This can be used to record failures during signature creation
+        self.failureReason = None
     
     def __str__(self):
         buf = []
@@ -480,7 +483,14 @@ class GDBCrashInfo(CrashInfo):
         
         # If we have no crash address but the instruction, try to calculate the crash address
         if self.crashAddress == None and self.crashInstruction != None:
-            self.crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
+            crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
+            
+            if isinstance(self.crashAddress, str):
+                self.failureReason = crashAddress
+                return
+            
+            self.crashAddress = crashAddress
+            
             if (self.crashAddress != None and self.crashAddress < 0):
                 if RegisterHelper.getBitWidth(self.registers) == 32:
                     self.crashAddress = uint32(self.crashAddress)
@@ -500,6 +510,8 @@ class GDBCrashInfo(CrashInfo):
         
         @rtype: long
         @return The calculated crash address
+        
+        On error, a string containing the failure message is returned instead.
         '''
         parts = crashInstruction.split(None, 1)
         
@@ -633,7 +645,7 @@ class GDBCrashInfo(CrashInfo):
         
         print("Unable to calculate crash address from instruction: %s " % crashInstruction, file=sys.stderr)
         print("Reason: %s" % failureReason, file=sys.stderr)
-        return None
+        return failureReason
     
     @staticmethod
     def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
