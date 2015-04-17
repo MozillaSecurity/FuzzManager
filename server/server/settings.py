@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crashmanager',
+    'ec2spotmanager',
     'rest_framework',
     'rest_framework.authtoken',
 )
@@ -130,3 +131,4 @@ REST_FRAMEWORK = {
 # This is the base directory where the tests/ subdirectory will
 # be created for storing submitted test files.
 TEST_STORAGE = os.path.join(BASE_DIR)
+USERDATA_STORAGE = os.path.join(BASE_DIR)
