@@ -8,13 +8,9 @@
 	<meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
 	<meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
 	{% endblock meta %}
-	
     <title>{% block title %}{% endblock title %}</title>
-	
 	{% block css %}
 	{% block css.shared %}
-	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.6.0/build/reset-fonts-grids/reset-fonts-grids.css" />
-	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.6.0/build/base/base-min.css" />
 	{% endblock css.shared %}
 	{% block css.custom %}{% endblock css.custom %}
 	{% endblock css%}
@@ -38,7 +34,7 @@
 		
 		{% block body %}
         <!-- BEGIN body -->
-        <div id="bd" style="padding-top:30px">
+        <div id="bd" style="padding-top:15px">
             {% block body_content %}{% endblock body_content %}
         </div>
         <!-- END body -->

@@ -1,6 +1,0 @@
-{% load url from future %}
-{% if user.is_authenticated %}
-<p>You are currently logged in as {{ user.username }}. <a href="{% url 'crashmanager:crashmanager.views.logout_view' %}?next={{request.path}}?{{request.GET.urlencode}}">Logout</a></p>
-{% else %}
-<p>You are currently not logged in. <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.path}}?{{request.GET.urlencode}}">Login</a> here.</p>
-{% endif %}

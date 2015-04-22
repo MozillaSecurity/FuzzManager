@@ -3,7 +3,6 @@
  */
 
 html {
-	background: #fff url(../img/page-bg.png);
 	color: #333;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 12px;
@@ -54,15 +53,6 @@ p {
     margin-bottom: 1em;
 }
 
-a, a:link, a:hover, a:active  {
-    color: #0033FF;
-    text-decoration: underline;
-}
-
-a:visited {
-    color: #800080;
-}
-
 .clear {
     clear: both;
 }
@@ -79,90 +69,12 @@ a:visited {
     display: none;
 }
 
-table thead tr th, 
-table tbody tr td {
-    border: solid 1px #CCC; 
-}
-
-th {
-    font-weight: bold;
-    padding: 0 .25em;
-}
-
-.bold {
-    font-weight: bold;
-}
-
-
 html.production { margin: 0; }
 html.production body > h1 { display: none; }
 html.production .page-heading { margin: 20px; margin-top: 30px; }
 html.production .panel { margin: 20px; }
 html.production .page-footer { margin-top: 80px; }
 
-.panel .title {
-	font-family: Trebuchet MS, Helvetica, sans-serif;
-	font-size: 12px;
-	background: transparent repeat-x left top;
-	}
-
-.page-header {
-	position: relative;
-	height: 64px;
-	background-color: #0a2533;
-	background-image: url(../img/header-bg.png);
-	}
-	.page-header h1,
-	.page-header h1 a {
-		position: absolute;
-		display: block;
-		left: 0;
-		top: 0;
-		}
-		.page-header h1 .icon,
-		.page-header h1 .title {
-			position: absolute;
-			display: block;
-			}
-		.page-header h1 .icon {
-			left: 18px;
-			top: 13px;
-			width: 88px;
-			height: 78px;
-			background: url(../img/logo2.png) no-repeat top left;
-			z-index: 1;
-			}
-		.page-header h1 .title {
-			text-indent: -1000em;
-			left: 124px;
-			top: 15px;
-			width: 343px;
-			/*height: 36px;*/
-			height: 90px;
-			background: url(../img/title.png) no-repeat top left;
-			}
-			
-	.page-header form,
-	.page-header form input {
-		position: absolute;
-		right: 0;
-		}
-		.page-header form input {
-			right: 20px;
-			top: 20px;
-			width: 212px;
-			padding: 3px 4px 4px 28px;
-			border: 1px solid #a0a0a0;
-			border-width: 1px 0 0 1px;
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 12px;
-			color: #808080;
-			background: #fff url(../img/search.png) no-repeat 5px center;
-			-moz-border-radius: .5em;
-			}
-		.page-header form input:focus {
-			color: #303030;
-			}
 
 .panel {
 	color: #303030;
@@ -206,7 +118,7 @@ html.production .page-footer { margin-top: 80px; }
 	.panel .body {
 		background: #fff;
 		border: 1px solid #c0c0c0;
-		border-top: 0;	
+		
 		padding: 8px;
 		min-height: 4em;
                 -webkit-border-radius: 0 0 8px 8px;
@@ -216,7 +128,7 @@ html.production .page-footer { margin-top: 80px; }
 	.panel .table {
 		font-size: 10px;
 		border-collapse: collapse;
-		border: 1px solid #c0c0c0;
+		
 		border-top: 0;
 		width: 100%;
 		}
@@ -243,7 +155,7 @@ html.production .page-footer { margin-top: 80px; }
 				background: #f0f0f0 url(../img/panel-bg.png) repeat-x left bottom;
 				}
 			.panel .table thead th {
-				border: 1px solid #c0c0c0;
+				
 				border-top: 0;
 				font-weight: bold;
 				}
@@ -272,7 +184,7 @@ html.production .page-footer { margin-top: 80px; }
 					}
 			.panel .table tbody td,
 			.panel .table tbody th {
-				border-left: 1px dotted #e0e0e0;
+				
 				border-top: 1px solid #e0e0e0;
 				}
 			.panel .table tbody tr:first-child td,
@@ -285,7 +197,7 @@ html.production .page-footer { margin-top: 80px; }
 				}
 			.panel .table tbody td.separated,
 			.panel .table tbody th.separated {
-				border-left: 1px solid #c0c0c0;
+				
 				}
 			.panel .table tbody th {
 				font-weight: bold;
@@ -313,7 +225,7 @@ html.production .page-footer { margin-top: 80px; }
 			display: none;
 			}
     .panel .notitle {
-    	border: 1px solid #c0c0c0;
+    	
         -moz-border-radius: 8px;
     }
 
@@ -332,7 +244,7 @@ span.code {
 }
 
 .label {
-	font-weight: bold;
+	color: #000;
 }
 
 div.field {

@@ -1,55 +1,56 @@
-     <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/img/favicon.png"/>
-     <script type="text/javascript" src="/static/js/jquery-1.11.1.min.js"></script>
-     <script type="text/javascript" src="/static/js/search.js"></script>
-     <div class="page-header">
+<link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}/img/favicon.png"/>
 
-    	<h1>
-    		<a href="/crashmanager">
-    			<span class="icon"></span>
-    			<span class="title">Mozilla FuzzManager - Crash Management</span>
-    		</a>
-    	</h1>
+<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
 
-	<form id="simple_search" method="get" action="{% url 'crashmanager:crashes' %}">
-		<input type="text" id="search" name="q" value="{{ q|default:"Search for Crash" }}" />
-            <input type="submit" class="hidden" />
-        </form>
-    </div>
-
-    <div class="menu">
-        <div class="body notitle">
-		<div class="entry">
-			<a href="{% url 'crashmanager:crashes' %}">
-				<p><img src="/static/img/crashes.png"/></p>
-				<p>Crashes</p>
-			</a>
-		</div>
-		<div class="entry">
-			<a href="{% url 'crashmanager:signatures' %}">
-				<p><img src="/static/img/signatures.png"/></p>
-				<p>Signatures</p>
-			</a>
-		</div>
-
-		<div class="entry">
-			<a href="{% url 'crashmanager:stats' %}">
-				<p><img src="/static/img/stats.png"/></p>
-				<p>Statistics</p>
-			</a>
-		</div>
-
-		<div class="entry">
-			<a href="{% url 'crashmanager:bugproviders' %}">
-				<p><img src="/static/img/bugproviders.png"/></p>
-				<p>Bug Providers</p>
-			</a>
-		</div>
-		
-		<div class="entry">
-			<a href="{% url 'crashmanager:usersettings' %}">
-				<p><img src="/static/img/usersettings.png"/></p>
-				<p>User Settings</p>
-			</a>
-		</div>
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#"><img alt="Mozilla" width="20" height="20" src="{{STATIC_URL}}/img/logo2.png"></a>
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">FuzzManager</a>
         </div>
-    </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li><a href="{% url 'crashmanager:crashes' %}"><i class="glyphicon glyphicon-list-alt"></i> Crashes</a></li>
+                <li><a href="{% url 'crashmanager:signatures' %}"><i class="glyphicon glyphicon-tag"></i> Signatures</a></li>
+                <li><a href="{% url 'crashmanager:stats' %}"><i class="glyphicon glyphicon-object-align-bottom"></i> Statistics</a></li>
+                <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="glyphicon glyphicon-globe"></i> Providers</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <form class="navbar-form navbar-right" role="search" id="simple_search" method="get" action="{% url 'crashmanager:crashes' %}">
+                        <div class="form-group has-feedback">
+                            <input type="text" class="form-control" id="search" name="q" placeholder="{{ q|default:"Search" }}"/>
+                            <i class="glyphicon glyphicon-search form-control-feedback"></i>
+                        </div>
+                    </form>
+                </li>
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">
+                        <i class="glyphicon glyphicon-user"></i>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li>
+                            {% load url from future %}
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'crashmanager:crashmanager.views.logout_view' %}?next={{request.path}}?{{request.GET.urlencode}}"><i class="glyphicon glyphicon-lock"></i> Logout</a>
+                            {% else %}
+                                <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.path}}?{{request.GET.urlencode}}"><i class="glyphicon glyphicon-lock"></i> Login</a>
+                            {% endif %}
+                        </li>
+                        <li class="divider" role="presentation"></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-cog"></i> Settings</a></li>
+                        <li><a href="#"><i class="glyphicon glyphicon-envelope"></i> Contact</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
