@@ -2,8 +2,9 @@
 {% load url from future %}
 
 {% block 1 %}
-<div class="panel">
-	<div class="body notitle">
+<div class="panel panel-default">
+	<div class="panel-heading">Crashes</div>
+	<div class="panel-body">
             <p>
 		{% if isSearch %} 
 			Your search matched {{ crashlist|length }} entries in database:
@@ -17,7 +18,7 @@
 			):
 		{% endif %}
 	    </p>
-            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+            <table id="signatureList" class="table table-bordered">
                 <thead>
                     <tr>
 			<th style="width: 25px;">ID</th>

@@ -6,17 +6,17 @@
 <div class="panel">
 	<div class="body notitle">
 		<div class="field">
-			<span class="label">Short Description: </span><span class="code">{{ bucket.shortDescription|escape }}</span>
+			<strong>Short Description: </strong><span class="code">{{ bucket.shortDescription|escape }}</span>
 		</div>
 
 		{% if bucket.frequent %}
 		<div class="field">
-			<span class="label red">Frequent bucket</span>
+			<strong>Frequent bucket</strong>
 		</div>
 		{% endif %}
 
 		<div class="field">
-			<span class="label">External Bug Status: </span>
+			<strong>External Bug Status: </strong>
 				<span>
 					{% if bucket.bug %}
 						Reported as <a href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}">bug {{ bucket.bug.externalId }}</a>.
@@ -28,22 +28,23 @@
 		</div>
 
 		<div class="field">
-			<span class="label">Current size (# of crashes covered by this signature): </span><span class="code">{{ bucket.size }}</span>
+			<strong>Current size (# of crashes covered by this signature): </strong><span class="code">{{ bucket.size }}</span>
 		</div>
 
 		{% if bucket.bestEntry %}
 		<div class="field">
-			<span class="label">Best Crash Entry: </span><span class="code"><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{ bucket.bestEntry.testcase.size }})</span>
+			<strong>Best Crash Entry: </strong><span class="code"><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{ 
+bucket.bestEntry.testcase.size }})</span>
 		</div>
 		{% endif %}
 		
 		<div class="field">
-			<div class="label">Signature:</div><br/>
+			<strong>Signature:</strong><br/>
 			<pre class="code"><code>{{ bucket.signature }}</code></pre>
 		</div>
 
 		<div class="field">
-			<span class="label">Actions:</span>
+			<strong>Actions:</strong>
 			<a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}&all=1">View associated crashes</a>
 			-
 			<a href="{% url 'crashmanager:sigedit' bucket.pk %}">Edit</a>

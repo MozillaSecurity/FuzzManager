@@ -3,11 +3,12 @@
 {% load extratags %}
 
 {% block 1 %}
-<div class="panel">
-	<div class="body notitle">
+<div class="panel panel-default">
+	<div class="panel-heading">Statistics</div>
+	<div class="panel-body">
 		<div>Total reports in the last hour: {{ total_reports_per_hour }}</div>
 
-            <table id="signatureList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+            <table id="signatureList" class="table table-bordered">
                 <thead>
                     <tr>
 			<th style="width: 25px;">Bucket</th>

@@ -3,10 +3,11 @@
 {% load extratags %}
 
 {% block 1 %}
-<div class="panel">
-	<div class="body notitle">
+<div class="panel panel-default">
+	<div class="panel-heading">Providers</div>
+	<div class="panel-body">
 	    {% if providers %}
-            <table id="providerList" class="tablesorter" style="table-layout:fixed; word-wrap:break-word;">
+            <table id="providerList" class="table table-bordered">
                 <thead>
                     <tr>
 			<th style="width: 20px;">ID</th>
