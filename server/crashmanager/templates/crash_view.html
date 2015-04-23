@@ -6,7 +6,7 @@
 <div class="panel">
 	<div class="body notitle">
 		<div class="field">
-			 <span class="label">Status:</span>
+			 <strong>Status:</strong>
 			 	<span>
 					{% if entry.bucket %}
 						Assigned to bucket <a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
@@ -24,39 +24,39 @@
 		</div>
 
 		<div class="field">
-			<span class="label">Actions:</span>
+			<strong>Actions:</strong>
 			<a href="{% url 'crashmanager:crashedit' entry.pk %}">Edit</a>
 			-
 			<a href="{% url 'crashmanager:crashdel' entry.pk %}">Delete</a>
 		</div>
 
 		<div class="field">
-			<span class="label">Created: </span><span class="code">{{ entry.created|date:"r" }}</span>
-			<span class="label">by Client: </span><span class="code">{{ entry.client.name|escape }}</span>
+			<strong>Created: </strong><span class="code">{{ entry.created|date:"r" }}</span>
+			<strong>by Client: </strong><span class="code">{{ entry.client.name|escape }}</span>
 		</div>
 
 		<div class="field">
-			<span class="label">Short Signature: </span><span class="code">{{ entry.shortSignature|escape }}</span>
+			<strong>Short Signature: </strong><span class="code">{{ entry.shortSignature|escape }}</span>
 		</div>
 
 		<div class="field">
-			<span class="label">Product: </span><span class="code">{{ entry.product.name }}</span>
+			<strong>Product: </strong><span class="code">{{ entry.product.name }}</span>
 		</div>
 
 		<div class="field">
-			<span class="label">Version: </span><span class="code">{{ entry.product.version }}</span>
+			<strong>Version: </strong><span class="code">{{ entry.product.version }}</span>
 		</div>
 		
 		<div class="field">
-			<span class="label">Platform: </span><span class="code">{{ entry.platform.name }}</span>
+			<strong>Platform: </strong><span class="code">{{ entry.platform.name }}</span>
 		</div>
 
 		<div class="field">
-			<span class="label">OS: </span><span class="code">{{ entry.os.name }}</span>
+			<strong>OS: </strong><span class="code">{{ entry.os.name }}</span>
 		</div>
 		
 		<div class="field">
-			<span class="label">Reported by Tool: </span><span class="code">{{ entry.tool.name }}</span>
+			<strong>Reported by Tool: </strong><span class="code">{{ entry.tool.name }}</span>
 		</div>
 
 		{% if entry.rawStdout %}
@@ -68,21 +68,21 @@
 
 		{% if entry.rawStderr %}
 		<div class="field">
-			<div class="label">Data on stderr:</div><br/>
+			<strong>Data on stderr:</strong><br/>
 			<pre class="code"><code>{{ entry.rawStderr }}</code></pre>
 		</div>
 		{% endif %}
 
 		{% if entry.rawCrashData %}
 		<div class="field">
-			<div class="label">Additional Crash Data:</div><br/>
+			<strong>Additional Crash Data:</strong><br/>
 			<pre class="code"><code>{{ entry.rawCrashData }}</code></pre>
 		</div>
 		{% endif %}
 
 		{% if entry.testcase %}
 		<div class="field">
-			<div class="label">Testcase:</div><br/>
+			<strong>Testcase:</strong><br/>
 			{% if entry.testcase.isBinary %}
 			<a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}">Download</a>
 			{% else %}
@@ -93,7 +93,7 @@
 
 		{% if entry.argsList %}
 		<div class="field">
-			<span class="label">Command line arguments: </span>
+			<strong>Command line arguments: </strong>
 			{% for arg in entry.argsList %}
 			<span class="code">{{ arg }}</span>
 			{% endfor %}
@@ -102,7 +102,7 @@
 
 		{% if entry.envList %}
 		<div class="field">
-			<span class="label">Environment variables: </span>
+			<strong>Environment variables: </strong>
 			{% for arg in entry.envList %}
 			<div class="code">{{ arg }}</div>
 			{% endfor %}
@@ -111,7 +111,7 @@
 
 		{% if entry.metadataList %}
 		<div class="field">
-			<span class="label">Metadata: </span>
+			<strong>Metadata: </strong>
 			{% for arg in entry.metadataList %}
 			<div class="code">{{ arg }}</div>
 			{% endfor %}
