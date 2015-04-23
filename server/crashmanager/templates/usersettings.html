@@ -14,7 +14,8 @@
 		{% for tool in tools %}
 			<div class="field">
 				<input type="checkbox" id="id_tool_{{ tool.name }}" name="tool_{{ tool.name }}" value="unassigned" {% if tool.checked %}checked{% endif %} />
-				<label class="label" for="id_tool_{{ tool.name }}">{{ tool.name }}</label>
+				<!-- <label class="label" for="id_tool_{{ tool.name }}">{{ tool.name }}</label> -->
+				<strong>{{ tool.name }}</strong>
 			</div>
 		{% endfor %}
 			<input type="hidden" name="changefilter" value="1" />
@@ -27,7 +28,7 @@
 		{% csrf_token %}
 
 			<div class="field">
-			<label class="label" for="provider">Default Provider:</label>
+			<strong>Default Provider:</strong>
 			<select id="provider" name="defaultProvider">
 			{% for p in providers %}
 			    <option value="{{ p.pk }}" {% if p.pk == defaultProviderId %}selected="selected"{% endif %}>{{ p.hostname }}</option>
@@ -36,7 +37,7 @@
 			</div>
 
 			<div class="field">
-			<label class="label" for="template">Default Template:</label>
+			<strong>Default Template:</strong>
 			<select id="template" name="defaultTemplate">
 			{% for t in templates %}
 			    <option value="{{ t.pk }}" {% if t.pk == defaultTemplateId %}selected="selected"{% endif %}>{{ t.name }}</option>

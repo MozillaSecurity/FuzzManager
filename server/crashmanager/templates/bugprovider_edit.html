@@ -12,13 +12,13 @@
 			<form action="{% url 'crashmanager:bugprovidercreate' %}" method="post">
 		{% endif %}
 		{% csrf_token %}
-		<label class="label" for="id_classname">Provider Class Name:</label>
+		<strong>Provider Class Name:</strong>
 		<input id="id_classname" maxlength="1023" name="classname" type="text" value="{{ provider.classname }}">
 		<br/>
-		<label class="label" for="id_hostname">Provider Host Name:</label>
+		<strong>Provider Host Name:</strong>
 		<input id="id_hostname" maxlength="1023" name="hostname" type="text" value="{{ provider.hostname }}">
 		<br/>
-		<label class="label" for="id_urlTemplate">Provider Bug URL Template:</label>
+		<strong>Provider Bug URL Template:</strong>
 		<input id="id_urlTemplate" maxlength="1023" name="urlTemplate" type="text" value="{{ provider.urlTemplate }}">
 		<br/>
 		<input type="submit" name="submit_save" value="Save" />

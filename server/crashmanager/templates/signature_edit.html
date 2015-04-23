@@ -16,22 +16,22 @@
 		{% endif %}
 
 		{% csrf_token %}
-		<label class="label" for="id_shortDescription">Short Description:</label><br/>
+		<strong>Short Description:</strong><br/>
 		<input id="id_shortDescription" maxlength="1023" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
 		<br/>
 		<br/>
-		<label class="label" for="id_signature">Signature:</label><br/>
+		<strong>Signature:</strong><br/>
                 <textarea id="id_signature" name="signature">{{ bucket.signature }}</textarea>
 		<br/>
 
 		<div class="field">
 		<input type="checkbox" id="id_frequent" name="frequent" value="unassigned" {% if bucket.frequent %}checked{% endif %} />
-		<label class="label" for="id_frequent">Mark this bucket as a frequent bucket</label>
+		<strong>Mark this bucket as a frequent bucket</strong>
 		</div>
 
 		<div class="field">
 		<input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
-		<label class="label" for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
+		<strong>Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</strong>
 		</div>
 		
 
