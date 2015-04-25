@@ -33,8 +33,7 @@
 
 		{% if bucket.bestEntry %}
 		<div class="field">
-			<strong>Best Crash Entry: </strong><span class="code"><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{ 
-bucket.bestEntry.testcase.size }})</span>
+			<strong>Best Crash Entry: </strong><span class="code"><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{ bucket.bestEntry.testcase.size }})</span>
 		</div>
 		{% endif %}
 		
