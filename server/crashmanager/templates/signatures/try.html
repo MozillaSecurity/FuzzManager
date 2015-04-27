@@ -34,15 +34,15 @@
             <!--<tr class="{% cycle odd,even %}">-->
             <tr>
                 <td>
-                    <pre class="code {%if symptom.offending %}red{%endif%}"><code>{{ symptom.symptom }}</code></pre>
+                    <pre><code {%if symptom.offending %}class="text-danger"{%endif%}>{{ symptom.symptom }}</code></pre>
                 </td>
                 <td>
                     {% if symptom.offending %}
-                    {% if symptom.proposed %}
-                    <pre><code>{{ symptom.proposed }}</code></pre>
-                    {% else %}
-                    <pre><code>(Remove)</code></pre>
-                    {% endif %}
+                        {% if symptom.proposed %}
+                            <pre><code class="text-success">{{ symptom.proposed }}</code></pre>
+                        {% else %}
+                            <pre><code class="text-success">(Remove)</code></pre>
+                        {% endif %}
                     {% endif %}
                 </td>
                 {% if forloop.counter == 1 %}
