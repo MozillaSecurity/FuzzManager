@@ -175,11 +175,10 @@ class Command(NoArgsCommand):
                     boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
                     
                     # Data consistency checks
-                    print(len(boto_instances))
-                    print(len(instance_ids_by_region[region]))
-                    assert len(boto_instances) == len(instance_ids_by_region[region])
                     for boto_instance in boto_instances:
-                        assert boto_instance.id in instance_ids_by_region[region]
+                        assert ((boto_instance.id in instance_ids_by_region[region])
+                                or (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
+                                or boto_instance.state_code == INSTANCE_STATE['terminated']))
                         
                     cluster.terminate(boto_instances)
                 else:
@@ -223,14 +222,25 @@ class Command(NoArgsCommand):
                 boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
                 
                 for boto_instance in boto_instances:
-                    # If this assertion fails, we have an instance in EC2 that is not represented by
-                    # an instance object in our database, indicating a data consistency problem.
-                    assert boto_instance.id in instance_ids_by_region[region]
+                    # Whenever we see an instance that is not in our instance list for that region,
+                    # make sure it's a terminated instance because we should never have running instance
+                    if not boto_instance.id in instance_ids_by_region[region]:
+                        assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
+                            or boto_instance.state_code == INSTANCE_STATE['terminated'])
+                        
+                        continue
+                    
                     instance = instances_by_ids[boto_instance.id]
                     
                     # Check the status code and update if necessary
                     if instance.status_code != boto_instance.state_code:
                         instance.status_code = boto_instance.state_code
+                        instance.save()
+                        
+                    # If for some reason we don't have a hostname yet,
+                    # update it accordingly.
+                    if not instance.hostname:
+                        instance.hostname = boto_instance.public_dns_name
                         instance.save()
                     
             except boto.exception.EC2ResponseError as msg:
