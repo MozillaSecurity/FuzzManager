@@ -20,7 +20,7 @@
 		{% endif %}
 	    </p>
 	</div>
-	<table class="table table-condensed table-hover table-bordered">
+	<table class="table table-condensed table-hover table-bordered" style="table-layout:fixed; word-wrap:break-word;">
 		<thead>
 			<tr>
 				<th style="width: 25px;">ID</th>
@@ -44,7 +44,7 @@
 	{% if entry.bucket %}
 	<a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }} </a>
 	{% else %}
-	<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add"><i class="glyphicon glyphicon-plus"></i></a>
+	<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add"><i class="glyphicon glyphicon glyphicon-oil"></i></a>
 	<a href="{% url 'crashmanager:findsigs' entry.pk %}" data-toggle="tooltip" data-placement="top" title="Search"><i class="glyphicon glyphicon-search"></i></a>
 	{% endif %}
 	</td>

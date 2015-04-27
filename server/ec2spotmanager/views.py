@@ -44,7 +44,7 @@ def pools(request):
     entries = entries.filter(**filters)
     data = { 'isSearch' : isSearch, 'poollist' : entries }
     
-    return render(request, 'pools.html', data)
+    return render(request, 'pools/index.html', data)
 
 
 @login_required(login_url='/login/')
@@ -67,7 +67,7 @@ def viewPool(request, poolid):
     
     data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances }
     
-    return render(request, 'pool_view.html', data)
+    return render(request, 'pools/view.html', data)
 
 @login_required(login_url='/login/')
 def viewConfig(request, configid):
@@ -75,7 +75,7 @@ def viewConfig(request, configid):
     
     data = { 'config' : config }
     
-    return render(request, 'config_view.html', data)
+    return render(request, 'pools/config.html', data)
 
 @login_required(login_url='/login/')
 def deletePool(request, poolid):
