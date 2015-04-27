@@ -2,6 +2,7 @@
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
+            <!--
             <a class="navbar-brand" href="#"><img alt="Mozilla" width="20" height="20" src="{{STATIC_URL}}img/logo.png"></a>
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
                 <span class="sr-only">Toggle navigation</span>
@@ -10,6 +11,23 @@
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand" href="#">FuzzManager</a>
+            -->
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a class="navbar-brand" href="#"><img alt="Mozilla" width="20" height="20" src="{{STATIC_URL}}img/logo.png"></a>
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a id="drop1" class="dropdown-toggle navbar-brand" data-toggle="dropdown" href="#menu">FuzzManager</a>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+                        <li><a href="/ec2spotmanager">CrashManager</a></li>
+                        <li><a href="/crashmanager">EC2SpotManager</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
@@ -20,7 +38,7 @@
                 <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="glyphicon glyphicon-globe"></i> Providers</a></li>
             {% elif app_name == 'ec2spotmanager' %}
                 <li><a href="{% url 'ec2spotmanager:pools' %}"><i class="glyphicon glyphicon-scale"></i> Pools</a></li>
-	    {% endif %}
+	        {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li>
