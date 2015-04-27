@@ -1,0 +1,41 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+
+{% block body_content %}
+<div class="panel panel-info">
+    <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Edit Signature</div>
+    <div class="panel-body">
+        {% if error_message %}<div class="alert alert-warning" role="alert">{{ error_message }}</div>{% endif %}
+
+        {% if inCount != None %}<p>New issues that will be assigned to this bucket: <span class="badge">{{ inCount }}</span></p>{% endif %}
+        {% if outCount != None %}<p>Issues that will be removed from this bucket: <span class="badge">{{ outCount }}</span></p>{% endif %}
+
+        {% if bucket.pk != None %}
+            <form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
+                {% else %}
+                <form action="{% url 'crashmanager:signew' %}" method="post">
+            {% endif %}
+            {% csrf_token %}
+            <label for="id_shortDescription">Description</label><br/>
+            <input id="id_shortDescription" class="form-control" maxlength="1023" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
+            <br/>
+            <label for="id_signature">Signature</label><br/>
+            <textarea id="id_signature" class="form-control" name="signature" spellcheck='false'>{{ bucket.signature }}</textarea>
+
+            <div class="field">
+                <input type="checkbox" id="id_frequent" name="frequent" value="unassigned" {% if bucket.frequent %}checked{% endif %}/>
+                <label for="id_frequent">Mark this bucket as a frequent bucket</label>
+            </div>
+
+            <div class="field">
+                <input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
+                <label for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
+            </div>
+
+            <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
+            <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
+        </form>
+    </div>
+</div>
+{% endblock body_content %}

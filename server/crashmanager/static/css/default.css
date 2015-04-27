@@ -1,0 +1,78 @@
+html {
+	color: #333;
+    margin: 0px;
+    padding: 0px;
+	/* for sticky footer */
+	position: relative;
+  	min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+a {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.clear {
+    clear: both;
+}
+
+.hidden {
+    display: none;
+}
+
+pre.code {
+	padding: 5px;
+	font-family: Consolas, Menlo, monospace, serif;
+	margin-bottom: 10px;
+	background-color: #eee;
+	overflow: auto;
+	width: auto;
+}
+
+span.code {
+	padding: 5px;
+	font-family: Consolas, Menlo, monospace, serif;
+}
+
+div.field {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+#id_signature, #id_shortDescription, #id_summary, #id_description {
+	width: 90%;
+}
+
+#id_signature, #id_description {
+	height: 600px;
+}
+
+a.fixedbug, a.fixedbug:link, a.fixedbug:hover, a.fixedbug:active {
+	text-decoration: line-through;
+}
+
+.panel {
+    margin-left: 3%;
+    margin-right: 3%;
+}
+
+th {
+	background: #eee;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 80px;
+  background-color: #f7f7f7;
+  padding:10px;
+  border-top: 1px solid #dfdfdf;
+}

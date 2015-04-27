@@ -1,56 +1,66 @@
 {% block layout.base %}
-{% block doctype %}<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">{% endblock doctype %}
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" class="production">
+<!DOCTYPE html>
+<html lang="en">
 {% block head %}
 <head>
 	{% block meta %}
     <meta http-equiv="content-type" content="{% block meta.content-type %}text/html;charset=UTF-8{% endblock meta.content-type %}" />
 	<meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
 	<meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 	{% endblock meta %}
     <title>{% block title %}{% endblock title %}</title>
+    <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/favicon.png"/>
 	{% block css %}
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/default.css">
 	{% block css.shared %}
 	{% endblock css.shared %}
 	{% block css.custom %}{% endblock css.custom %}
 	{% endblock css%}
 	
 	{% block js %}
+    <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.js"></script>
 	{% block js.shared %}{% endblock js.shared %}
 	{% block js.custom %}{% endblock js.custom %}
 	{% endblock js%}
+    <script>
+        $(function(){
+            $('[data-toggle="popover"]').popover({trigger: 'hover','placement': 'top'});
+        });
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        });
+    </script>
 </head>
 {% endblock head %}
 
-<body{% block bodyonload %}{% endblock bodyonload %}>
-    <div {% block yahooui %}{% endblock yahooui %}>
+<body>
+    <div>
 		{% block header %}
-		<!-- BEGIN header -->
         <div id="hd">
             {% block header_content %}{% include 'shared/header.html' %}{% endblock header_content %}
         </div>
-        <!-- END header -->
 		{% endblock header %}
 		
 		{% block body %}
-        <!-- BEGIN body -->
-        <div id="bd" style="padding-top:15px">
+        <div id="bd" style="padding-top:15px; padding-bottom: 20px">
             {% block body_content %}{% endblock body_content %}
         </div>
-        <!-- END body -->
 		{% endblock body %}
 		
 		{% block footer %}
-		<!-- BEGIN footer -->
         <div id="ft">
             {% block footer_content %}{% include 'shared/footer.html' %}{% endblock footer_content %}
         </div>
-        <!-- END footer -->
 		{% endblock footer %}
 		
 		{% block sql_debug %}
 		{% if debug %}
-        <!--  BEGIN debug -->
         <div id="debug">
             <h2>Queries</h2>
             <p>{{ sql_queries|length }} Queries {% ifnotequal sql_queries|length 0 %} (<span style="cursor: pointer;" onclick="document.getElementById('debugQueryTable').style.display='';">Show</span>) {% endifnotequal %}</p>
@@ -74,7 +84,6 @@
                 </tbody>
             </table>
         </div>
-        <!--  END debug -->
 		{% endif %}
 		{% endblock sql_debug %}
     </div>

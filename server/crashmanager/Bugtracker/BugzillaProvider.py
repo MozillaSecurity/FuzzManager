@@ -226,7 +226,7 @@ class BugzillaProvider(Provider):
                 'template' : template,
                 }
     
-        return render(request, 'bugzilla/viewEditTemplate.html', data)
+        return render(request, 'bugzilla/view_edit_template.html', data)
     
     def handlePOSTCreateEditTemplate(self, request):
         if 'template' in request.POST:

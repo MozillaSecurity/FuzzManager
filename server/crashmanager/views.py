@@ -57,12 +57,12 @@ def settings(request):
 @login_required(login_url='/login/')
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
-    return render(request, 'signatures.html', { 'isAll': True, 'siglist' : entries })
+    return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
 def allCrashes(request):
     entries = CrashEntry.objects.all().order_by('-id')
-    return render(request, 'crashes.html', { 'isAll': True, 'crashlist' : entries })
+    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : entries })
 
 @login_required(login_url='/login/')
 def signatures(request):
@@ -105,7 +105,7 @@ def signatures(request):
     entries = entries.filter(**filters)
     
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
-    return render(request, 'signatures.html', data)
+    return render(request, 'signatures/index.html', data)
 
 @login_required(login_url='/login/')
 def crashes(request):
@@ -161,7 +161,7 @@ def crashes(request):
     entries = entries.filter(**filters)
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
     
-    return render(request, 'crashes.html', data)
+    return render(request, 'crashes/index.html', data)
 
 @login_required(login_url='/login/')
 def autoAssignCrashEntries(request):
@@ -187,7 +187,7 @@ def viewCrashEntry(request, crashid):
     if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.loadTest()
     
-    return render(request, 'crash_view.html', { 'entry' : entry })
+    return render(request, 'crashes/view.html', { 'entry' : entry })
 
 @login_required(login_url='/login/')
 def editCrashEntry(request, crashid):
@@ -238,7 +238,7 @@ def editCrashEntry(request, crashid):
         entry.save()
         return redirect('crashmanager:crashview', crashid = entry.pk)
     else:
-        return render(request, 'crash_edit.html', { 'entry' : entry })
+        return render(request, 'crashes/edit.html', { 'entry' : entry })
     
 @login_required(login_url='/login/')
 def deleteCrashEntry(request, crashid):
@@ -247,7 +247,7 @@ def deleteCrashEntry(request, crashid):
         entry.delete()
         return redirect('crashmanager:crashes')
     elif request.method == 'GET':
-        return render(request, 'crash_del.html', { 'entry' : entry })
+        return render(request, 'crashes/remove.html', { 'entry' : entry })
     else:
         raise SuspiciousOperation
 
@@ -259,7 +259,7 @@ def __handleSignaturePost(request, bucket):
         signature = bucket.getSignature()
     except RuntimeError, e:
         data = { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e }
-        return render(request, 'signature_edit.html', data)
+        return render(request, 'signatures/edit.html', data)
     
     # Only save if we hit "save" (not e.g. "preview")
     if 'submit_save' in request.POST:
@@ -301,7 +301,7 @@ def __handleSignaturePost(request, bucket):
             'error_message' : "This is a preview, don't forget to save!",
             'inCount' : inCount, 'outCount' : outCount
             }
-    return render(request, 'signature_edit.html', data)
+    return render(request, 'signatures/edit.html', data)
 
 @login_required(login_url='/login/')
 def newSignature(request):
@@ -369,7 +369,7 @@ def newSignature(request):
     else:
         raise SuspiciousOperation
         
-    return render(request, 'signature_edit.html', data)
+    return render(request, 'signatures/edit.html', data)
 
 @login_required(login_url='/login/')
 def deleteSignature(request, sigid):
@@ -382,7 +382,7 @@ def deleteSignature(request, sigid):
         bucket.delete()
         return redirect('crashmanager:signatures')
     elif request.method == 'GET':
-        return render(request, 'signature_del.html', { 'bucket' : bucket })
+        return render(request, 'signatures/remove.html', { 'bucket' : bucket })
     else:
         raise SuspiciousOperation
 
@@ -403,7 +403,7 @@ def viewSignature(request, sigid):
     if entries:
         bucket.bestEntry = entries[0]
     
-    return render(request, 'signature_view.html', { 'bucket' : bucket })
+    return render(request, 'signatures/view.html', { 'bucket' : bucket })
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):
@@ -423,7 +423,7 @@ def editSignature(request, sigid):
                 entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
                 bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
             
-            return render(request, 'signature_edit.html', { 'bucket' : bucket })
+            return render(request, 'signatures/edit.html', { 'bucket' : bucket })
         else:
             raise SuspiciousOperation
     else:
@@ -467,9 +467,9 @@ def linkSignature(request, sigid):
             data['bugId'] = bugId
             data['username'] = username
                 
-            return render(request, 'signature_link.html', data)
+            return render(request, 'signatures/link.html', data)
     elif request.method == 'GET':
-        return render(request, 'signature_link.html', data)
+        return render(request, 'signatures/link.html', data)
     else:
         raise SuspiciousOperation
 
@@ -482,7 +482,7 @@ def unlinkSignature(request, sigid):
         bucket.save()        
         return redirect('crashmanager:sigview', sigid=bucket.pk)
     elif request.method == 'GET':
-        return render(request, 'signature_unlink.html', { 'bucket' : bucket })
+        return render(request, 'signatures/unlink.html', { 'bucket' : bucket })
     else:
         raise SuspiciousOperation
     
@@ -496,7 +496,7 @@ def trySignature(request, sigid, crashid):
     
     symptoms = signature.getSymptomsDiff(entry.crashinfo)
     
-    return render(request, 'signature_try.html', { 'bucket' : bucket, 'entry' : entry, 'symptoms' : symptoms })
+    return render(request, 'signatures/try.html', { 'bucket' : bucket, 'entry' : entry, 'symptoms' : symptoms })
 
 @login_required(login_url='/login/')
 def findSignatures(request, crashid):
@@ -570,10 +570,10 @@ def findSignatures(request, crashid):
     if matchingBucket:
         entry.bucket = matchingBucket
         entry.save()
-        return render(request, 'signature_find.html', { 'bucket' : matchingBucket, 'crashentry' : entry })
+        return render(request, 'signatures/find.html', { 'bucket' : matchingBucket, 'crashentry' : entry })
     else:
         similarBuckets.sort(key=lambda x: x.offCount)
-        return render(request, 'signature_find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
+        return render(request, 'signatures/find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
 
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
@@ -634,7 +634,7 @@ def viewEditBugTemplate(request, providerId, templateId):
 @login_required(login_url='/login/')
 def viewBugProviders(request):
     providers = BugProvider.objects.annotate(size=Count('bug'))
-    return render(request, 'bugproviders.html', { 'providers' : providers })
+    return render(request, 'providers/index.html', { 'providers' : providers })
 
 @login_required(login_url='/login/')
 def deleteBugProvider(request, providerId):
@@ -650,7 +650,7 @@ def deleteBugProvider(request, providerId):
         provider.delete()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
-        return render(request, 'bugprovider_del.html', { 'provider' : provider })
+        return render(request, 'providers/remove.html', { 'provider' : provider })
     else:
         raise SuspiciousOperation
 
@@ -663,7 +663,7 @@ def viewBugProvider(request, providerId):
     
     provider = provider[0]
     
-    return render(request, 'bugprovider_view.html', { 'provider' : provider })
+    return render(request, 'providers/view.html', { 'provider' : provider })
 
 @login_required(login_url='/login/')
 def editBugProvider(request, providerId):
@@ -676,12 +676,12 @@ def editBugProvider(request, providerId):
         try:
             provider.getInstance()
         except Exception as e:
-            return render(request, 'bugprovider_edit.html', { 'provider' : provider, 'error_message' : e })
+            return render(request, 'providers/edit.html', { 'provider' : provider, 'error_message' : e })
         
         provider.save()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
-        return render(request, 'bugprovider_edit.html', { 'provider' : provider })
+        return render(request, 'providers/edit.html', { 'provider' : provider })
     else:
         raise SuspiciousOperation
     
@@ -693,12 +693,12 @@ def createBugProvider(request):
         try:
             provider.getInstance()
         except Exception as e:
-            return render(request, 'bugprovider_edit.html', { 'provider' : provider, 'error_message' : e })
+            return render(request, 'providers/edit.html', { 'provider' : provider, 'error_message' : e })
         
         provider.save()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
-        return render(request, 'bugprovider_edit.html', {})
+        return render(request, 'providers/edit.html', {})
     else:
         raise SuspiciousOperation
     

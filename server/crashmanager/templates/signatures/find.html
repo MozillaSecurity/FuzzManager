@@ -1,0 +1,68 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+{% load extratags %}
+
+{% block body_content %}
+<div class="panel panel-default">
+    <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Find Signature</div>
+	<div class="panel-body">
+		<p>
+		{% if bucket %}
+			A matching bucket was found for the requested crash entry. The entry has been
+			assigned to bucket <a href="{% url 'crashmanager:sigview' bucket.pk  %}">{{ bucket.pk }}</a>.
+		{% else %}
+			{% if not buckets %}
+			No similar buckets could be found.
+			{% endif %}
+		{% endif %}
+		</p>
+	</div>
+	{% if buckets %}
+	<table class="table table-condensed table-hover table-bordered" style="table-layout:fixed; word-wrap:break-word;">
+		<thead>
+			<tr>
+				<th style="width: 20px;">ID</th>
+				<th style="width: 150px;">Short Description</th>
+				<th style="width: 150px;">Difference Count</th>
+				<th style="width: 150px;">Foreign Matches
+					<i class="glyphicon glyphicon-question-sign" data-toggle="popover" title="Foreign Matches" data-content="% / count"></i>
+				</th>
+				<th style="width: 50px;">External Bug</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for entry in buckets %}
+			<tr class="{% cycle odd,even %}">
+				<td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+				<td>{{ entry.shortDescription|escape }}</td>
+				<td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>
+				<td>
+					{% if entry.foreignColor == "green" %}
+						<span class="label label-success">{{ entry.foreignMatchPercentage }} %</span>
+					{% endif %}
+					{% if entry.foreignColor == "yellow" %}
+						<span class="label label-warning">{{ entry.foreignMatchPercentage }} %</span>
+					{% endif %}
+					{% if entry.foreignColor == "red" %}
+						<span class="label label-danger">{{ entry.foreignMatchPercentage }} %</span>
+					{% endif %}
+					-
+					{% if entry.linkToOthers %}
+					<a title="Show differences" href="{% url 'crashmanager:signatures' %}?all=1&ids={{ entry.linkToOthers }}">{{ entry.foreignMatchCount }} other buckets</a>
+					{% else %}
+						{{ entry.foreignMatchCount }} other buckets
+					{% endif %}
+				</td>
+				<td>
+					{% if entry.bug %}
+					<a {% if entry.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}">{{ entry.bug.externalId }}</a>
+					{% endif %}
+				</td>
+			</tr>{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+	</div>
+</div>
+{% endblock body_content %}
