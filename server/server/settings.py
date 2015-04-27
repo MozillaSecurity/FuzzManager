@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os, sys
+from django.conf import global_settings
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -49,8 +50,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crashmanager',
     'ec2spotmanager',
+    'crashmanager',
     'rest_framework',
     'rest_framework.authtoken',
 )
@@ -62,6 +63,7 @@ class ExceptionLoggingMiddleware(object):
         import traceback
         print traceback.format_exc()
 
+
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -72,6 +74,16 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
 )
+
+# We add a custom context processor to make our application name
+# and certain other variables available in all our templates
+def resolver_context_processor(request):
+    return {
+        'app_name': request.resolver_match.app_name,
+        'namespace': request.resolver_match.namespace,
+        'url_name': request.resolver_match.url_name
+    }
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + ( 'server.settings.resolver_context_processor', )
 
 # For basic auth, uncomment the following lines and the line
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
