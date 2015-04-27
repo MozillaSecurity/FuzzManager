@@ -543,7 +543,12 @@ def findSignatures(request, crashid):
                             nonMatchesInOtherBuckets += 1
                 
                 bucket.offCount = distance
-                bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
+                
+                if matchesInOtherBuckets+nonMatchesInOtherBuckets > 0:
+                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
+                else:
+                    bucket.foreignMatchPercentage = 0
+                    
                 bucket.foreignMatchCount = matchesInOtherBuckets
                 
                 if matchesInOtherBuckets == 0:
