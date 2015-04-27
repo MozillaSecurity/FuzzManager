@@ -52,7 +52,7 @@
 	<td>{{ entry.crashAddress|escape }}</td>
 	<td>
 		{% if entry.testcase %}
-			Q{{entry.testcase.quality}} <a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&testcase__quality={{ entry.testcase.quality|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a>
+			<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&testcase__quality={{ entry.testcase.quality|urlencode }}">Q{{entry.testcase.quality}}</a>
 		{{ entry.testcase.size }}
 		{% if entry.testcase.isBinary %}
 		(binary)
@@ -61,11 +61,11 @@
 			No test
 		{% endif %}
 	</td>
-	<td>{{ entry.product.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__name={{ entry.product.name|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a></td>
-	<td>{{ entry.product.version|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__version={{ entry.product.version|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a></td>
-	<td>{{ entry.platform.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a></td>
-	<td>{{ entry.os.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a></td>
-	<td>{{ entry.tool.name|escape }}<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&tool__name={{ entry.tool.name|urlencode }}"> <i class="glyphicon glyphicon-zoom-in"></i></a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__name={{ entry.product.name|urlencode }}">{{ entry.product.name|escape }}</a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__version={{ entry.product.version|urlencode }}">{{ entry.product.version|escape }}</a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}">{{ entry.platform.name|escape }}</a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}">{{ entry.os.name|escape }}</a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&tool__name={{ entry.tool.name|urlencode }}">{{ entry.tool.name|escape }}</a></td>
 			</tr>{% endfor %}
 		</tbody>
 	</table>
