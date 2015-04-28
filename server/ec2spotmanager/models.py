@@ -41,6 +41,7 @@ class PoolConfiguration(models.Model):
         self.ec2_userdata_macros_dict = None
         self.ec2_userdata = None
         self.ec2_security_groups_list = None
+        self.ec2_allowed_regions_list = None
         
         # For performance reasons we do not deserialize these fields
         # automatically here. You need to explicitly call the 
@@ -60,6 +61,7 @@ class PoolConfiguration(models.Model):
         flat_parent_config.ec2_raw_config = {}
         flat_parent_config.ec2_userdata_macros = {}
         flat_parent_config.ec2_security_groups = []
+        flat_parent_config.ec2_allowed_regions = []
         
         # If we are not the top-most confifugration, recursively call flatten
         # and proceed with the configuration provided by our parent.
@@ -70,7 +72,7 @@ class PoolConfiguration(models.Model):
         # All fields of our model except for the parent and name
         # fields are inheritable and follow the precedence model.
         #
-        # The fields which are dictionaries get special treatment
+        # The fields which are dictionaries/lists get special treatment
         # because they should behave in an additive manner.
         config_fields = [
                          'size',
@@ -78,7 +80,6 @@ class PoolConfiguration(models.Model):
                          'aws_secret_access_key',
                          'cycle_interval',
                          'ec2_key_name',
-                         'ec2_allowed_regions',
                          'ec2_image_name',
                          'ec2_instance_type',
                          'ec2_max_price',
@@ -100,6 +101,9 @@ class PoolConfiguration(models.Model):
             
         if self.ec2_security_groups_list:
             flat_parent_config.ec2_security_groups.extend(self.ec2_security_groups_list)
+        
+        if self.ec2_allowed_regions_list:
+            flat_parent_config.ec2_allowed_regions.extend(self.ec2_allowed_regions_list)
             
         return flat_parent_config
         
@@ -116,6 +120,9 @@ class PoolConfiguration(models.Model):
             
         if self.ec2_security_groups_list:
             self.ec2_security_groups = json.dumps(self.ec2_security_groups_list)
+        
+        if self.ec2_allowed_regions_list:
+            self.ec2_allowed_regions = json.dumps(self.ec2_allowed_regions_list)
                 
         super(PoolConfiguration, self).save(*args, **kwargs)
     
@@ -136,6 +143,9 @@ class PoolConfiguration(models.Model):
             
         if self.ec2_security_groups:
             self.ec2_security_groups_list = json.loads(self.ec2_security_groups)
+            
+        if self.ec2_allowed_regions:
+            self.ec2_allowed_regions_list = json.loads(self.ec2_allowed_regions)
         
     def storeTestAndSave(self):
         if self.ec2_userdata:
