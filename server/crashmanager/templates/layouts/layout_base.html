@@ -10,17 +10,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 	{% endblock meta %}
     <title>{% block title %}{% endblock title %}</title>
-    <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/favicon.png"/>
+    <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/logo.png"/>
 	{% block css %}
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.css">
+    <link rel='stylesheet' href='http://fonts.googleapis.com/css?family=Open+Sans'>
     <link rel="stylesheet" type="text/css" href="/static/css/default.css">
 	{% block css.shared %}
 	{% endblock css.shared %}
 	{% block css.custom %}{% endblock css.custom %}
 	{% endblock css%}
-	
 	{% block js %}
     <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>

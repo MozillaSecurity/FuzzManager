@@ -7,20 +7,7 @@
 <div class="panel panel-default">
     <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Try Signature</div>
     <div class="panel-body">
-        <!--
-        <div class="left field">
-            <div class="label">Signature Symptoms:</div><br/>
-                        {% for symptom in symptoms %}
-            <pre class="code {%if symptom.offending %}red{%endif%}"><code>{{ symptom.src }}</code></pre>
-            {% endfor %}
-        </div>
-        <div class="right field">
-            <div class="label">Signature Symptoms:</div><br/>
-                        {% for symptom in symptoms %}
-            <pre class="code {%if symptom.offending %}red{%endif%}"><code>{{ symptom.src }}</code></pre>
-            {% endfor %}
-        </div>-->
-        <table class="table table-condensed table-hover table-bordered" style="table-layout:fixed; word-wrap:break-word;">
+        <table class="table table-condensed table-hover table-bordered table-db">
             <thead>
             <tr>
                 <th style="width: 35%;">Signature Symptom</th>
@@ -29,9 +16,7 @@
             </tr>
             </thead>
             <tbody>
-            <!--<tr> <td></td>   <td rowspan="{{ symptoms.length }}">blah</td> </tr>-->
             {% for symptom in symptoms %}
-            <!--<tr class="{% cycle odd,even %}">-->
             <tr>
                 <td>
                     <pre><code {%if symptom.offending %}class="text-danger"{%endif%}>{{ symptom.symptom }}</code></pre>
@@ -55,9 +40,9 @@
             </tbody>
         </table>
         <div class="btn-group">
-            <a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}&all=1" class="btn btn-default">Associated crashes</a>
+            <a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}&all=1" class="btn btn-default">Associated Crashes</a>
             <a href="{% url 'crashmanager:sigedit' bucket.pk %}" class="btn btn-default">Edit</a>
-            <a href="{% url 'crashmanager:sigedit' bucket.pk %}?fit={{ entry.pk }}" class="btn btn-default">Edit with changes</a>
+            <a href="{% url 'crashmanager:sigedit' bucket.pk %}?fit={{ entry.pk }}" class="btn btn-default">Edit With Changes</a>
             <a href="{% url 'crashmanager:sigdel' bucket.pk %}" class="btn btn-danger">Delete</a>
         </div>
     </div>

@@ -9,13 +9,13 @@
     <title>FuzzManager</title>
     <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/favicon.png"/>
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Rancho&effect=shadow-multiple|3d' rel='stylesheet' type='text/css'>
     <style>
         body {
           padding-top: 40px;
           padding-bottom: 40px;
           background-color: #eee;
         }
-
         .form-signin {
           max-width: 330px;
           padding: 15px;
@@ -49,15 +49,19 @@
           border-top-left-radius: 0;
           border-top-right-radius: 0;
         }
+        .login_text {
+            font-size: 64px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     {% if form.errors %}
-    <div class="alert alert-danger" role="alert">Your username and password didn't match. Please try again.</div>
+    <div class="alert alert-danger" role="alert"><center>Your username and password didn't match. Please try again.</center></div>
     {% endif %}
+    <center><div class="font-effect-3d login_text">FUZZMANAGER</div></center><br/>
     <form class="form-signin" method="post" action="{% url 'django.contrib.auth.views.login' %}">
         {% csrf_token %}
-        <center><h2 class="form-signin-heading">FuzzManager</h2></center>
         <input type="username" name="username" id="username" class="form-control" placeholder="Username" required autofocus>
         <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
         <div class="checkbox">

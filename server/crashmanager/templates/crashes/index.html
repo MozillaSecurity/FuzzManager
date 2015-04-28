@@ -20,7 +20,7 @@
 		{% endif %}
 	    </p>
 	</div>
-	<table class="table table-condensed table-hover table-bordered" style="table-layout:fixed; word-wrap:break-word;">
+	<table class="table table-condensed table-hover table-bordered table-db">
 		<thead>
 			<tr>
 				<th style="width: 25px;">ID</th>
@@ -32,7 +32,7 @@
 				<th style="width: 50px;">Product</th>
 				<th style="width: 50px;">Version</th>
 				<th style="width: 25px;">Platform</th>
-				<th style="width: 40px;">OS</th>
+				<th style="width: 25px;">OS</th>
 				<th style="width: 40px;">Tool</th>
 			</tr>
 		</thead>
@@ -42,10 +42,10 @@
 		  <td>{{ entry.created|date:"r" }}</td>
 	<td>
 	{% if entry.bucket %}
-	<a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }} </a>
+		<a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }} </a>
 	{% else %}
-	<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add"><i class="glyphicon glyphicon glyphicon-oil"></i></a>
-	<a href="{% url 'crashmanager:findsigs' entry.pk %}" data-toggle="tooltip" data-placement="top" title="Search"><i class="glyphicon glyphicon-search"></i></a>
+		<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add" class="glyphicon glyphicon glyphicon-oil" style="color:dimgray"></a>
+		<a href="{% url 'crashmanager:findsigs' entry.pk %}" data-toggle="tooltip" data-placement="top" title="Search" class="glyphicon glyphicon-search" style="color:dimgray"></a>
 	{% endif %}
 	</td>
 	<td>{{ entry.shortSignature|escape }}</td>
@@ -53,10 +53,10 @@
 	<td>
 		{% if entry.testcase %}
 			<a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&testcase__quality={{ entry.testcase.quality|urlencode }}">Q{{entry.testcase.quality}}</a>
-		{{ entry.testcase.size }}
-		{% if entry.testcase.isBinary %}
-		(binary)
-		{% endif %}
+			{{ entry.testcase.size }}
+			{% if entry.testcase.isBinary %}
+				(binary)
+			{% endif %}
 		{% else %}
 			No test
 		{% endif %}
@@ -64,7 +64,17 @@
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__name={{ entry.product.name|urlencode }}">{{ entry.product.name|escape }}</a></td>
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&product__version={{ entry.product.version|urlencode }}">{{ entry.product.version|escape }}</a></td>
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}">{{ entry.platform.name|escape }}</a></td>
-	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}">{{ entry.os.name|escape }}</a></td>
+	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}">
+		{% if entry.os.name|escape == 'linux' %}
+			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/linux.png"/>
+		{% elif entry.os.name|escape == 'macosx' %}
+			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/macosx.png"/>
+		{% elif entry.os.name|escape == 'windows' %}
+			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/windows.png"/>
+		{% else %}
+			{{ entry.os.name|escape }}
+		{% endif %}
+	</a></td>
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&tool__name={{ entry.tool.name|urlencode }}">{{ entry.tool.name|escape }}</a></td>
 			</tr>{% endfor %}
 		</tbody>
