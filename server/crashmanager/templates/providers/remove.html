@@ -10,11 +10,13 @@
         <form action="{% url 'crashmanager:bugproviderdel' provider.pk %}" method="post">
             {% csrf_token %}
             <div class="alert alert-danger" role="alert">Are you sure that you want to delete this bug provider? All associated bugs will be lost and buckets will be deassociated.</div>
-            <div class="field">
+            <p>
                 <strong>Host Name:</strong> {{ provider.hostname|escape }}
+            </p>
+            <div class="btn-group">
+                <input type="submit" value="Yes" class="btn btn-danger"/>
+                <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
             </div>
-            <input type="submit" value="Remove" class="btn btn-danger"/>
-            <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
         </form>
     </div>
 </div>

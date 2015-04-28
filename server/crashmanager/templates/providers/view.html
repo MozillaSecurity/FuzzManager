@@ -6,18 +6,28 @@
 <div class="panel panel-default">
     <div class="panel-heading"><i class="glyphicon glyphicon-globe"></i> Provider: {{ provider.classname|escape }}</div>
     <div class="panel-body">
-
-		<table class="table">
-            <tr><td>Provider Class Name</td><td>{{ provider.classname|escape }}</td></tr>
-            <tr><td>Provider Host Name</td><td>{{ provider.hostname|escape }}</td></tr>
-            <tr><td>Provider Bug URL Template</td><td>{{ provider.urlTemplate|escape }}</td></tr>
-            <tr><td>Bugs using this provider</td><td>{{ provider.size|escape }}</td></tr>
-        </table>
-
-		<div class="field">
-			<a title="Edit" href="{% url 'crashmanager:bugprovideredit' provider.pk %}" class="btn btn-default">Edit</a>
-			<a title="Remove" href="{% url 'crashmanager:bugproviderdel' provider.pk %}" class="btn btn-danger">Remove</a>
-		</div>
+        <div class="row">
+          <div class="col-md-2">Provider Class Name</div>
+          <div class="col-md-4">{{ provider.classname|escape }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-2">Provider Host Name</div>
+          <div class="col-md-4">{{ provider.hostname|escape }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-2">Provider Bug URL Template</div>
+          <div class="col-md-4">{{ provider.urlTemplate|escape }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-2">Bugs using this provider</div>
+          <div class="col-md-4">{{ provider.size|escape }}</div>
+        </div>
+        <p>
+            <div class="btn-group">
+                <a title="Edit" href="{% url 'crashmanager:bugprovideredit' provider.pk %}" class="btn btn-default">Edit</a>
+                <a title="Remove" href="{% url 'crashmanager:bugproviderdel' provider.pk %}" class="btn btn-danger">Remove</a>
+            </div>
+        </p>
 	</div>
 </div>
 {% endblock body_content %}

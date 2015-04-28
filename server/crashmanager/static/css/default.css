@@ -131,3 +131,8 @@ div.field {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+/* input fields for provider page */
+.provider_input {
+    width: 100%;
+}
