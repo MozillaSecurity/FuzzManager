@@ -41,6 +41,7 @@ class PoolConfiguration(models.Model):
         self.ec2_userdata_macros_dict = None
         self.ec2_userdata = None
         self.ec2_security_groups_list = None
+        self.ec2_allowed_regions_list = None
         
         # For performance reasons we do not deserialize these fields
         # automatically here. You need to explicitly call the 
