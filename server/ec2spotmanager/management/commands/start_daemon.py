@@ -14,8 +14,6 @@ from laniakea.core.manager import Laniakea
 import boto.ec2
 import boto.exception
 
-
-
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     @mgmt_lock_required
@@ -119,9 +117,8 @@ class Command(NoArgsCommand):
         
         # This method will run async to spawn our machines
         def start_instances_async(pool, config, count, images, region, zone, instances):
-            lcl = LaniakeaCommandLine()
-            userdata = lcl.handle_import_tags(config.ec2_userdata)
-            userdata = lcl.handle_tags(userdata, config.ec2_userdata_macros)
+            userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata)
+            userdata = LaniakeaCommandLine.handle_tags(userdata, config.ec2_userdata_macros)
             if not userdata:
                 raise RuntimeError("start_instance: Failed to compile userdata")
             
