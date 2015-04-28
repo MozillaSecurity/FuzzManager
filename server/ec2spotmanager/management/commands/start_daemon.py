@@ -136,7 +136,7 @@ class Command(NoArgsCommand):
             config.ec2_tags['SpotManager-PoolId'] = str(pool.pk)
     
             try:
-                print("Creating %s instances", count)
+                print("Creating %s instances" % count)
                 boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags)
                 
                 assert len(boto_instances) == len(instances) == count
