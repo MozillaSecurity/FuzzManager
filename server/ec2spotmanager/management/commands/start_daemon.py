@@ -3,9 +3,11 @@ from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INS
 from django.conf import settings
 from ec2spotmanager.management.common import mgmt_lock_required
 import warnings
+import datetime
 import time
 import logging
 import threading
+
 
 from django.utils import timezone
 
