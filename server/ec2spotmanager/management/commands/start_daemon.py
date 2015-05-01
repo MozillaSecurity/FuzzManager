@@ -284,12 +284,19 @@ class Command(NoArgsCommand):
                 for boto_instance in boto_instances:
                     # Whenever we see an instance that is not in our instance list for that region,
                     # make sure it's a terminated instance because we should never have running instance
+                    #
+                    # We must however not perform this check if we still have pending instances.
+                    # In this case, the thread that is monitoring the pending instances must first
+                    # redeclare them with their proper id in the database before we perform *any*
+                    # updates on it. Otherwise, parallel save operations on the instance object
+                    # might lead to inconsistent states of the database model    
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
-                            or boto_instance.state_code == INSTANCE_STATE['terminated'])
-                        
+                        if not None in instance_ids_by_region:
+                            assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
+                                or boto_instance.state_code == INSTANCE_STATE['terminated'])
+                            
                         continue
-                    
+                        
                     instance = instances_by_ids[boto_instance.id]
                     
                     # Check the status code and update if necessary
