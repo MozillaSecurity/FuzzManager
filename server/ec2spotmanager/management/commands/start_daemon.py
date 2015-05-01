@@ -74,8 +74,64 @@ class Command(NoArgsCommand):
                 print("[Main] Pool size ok.")
                 
     def get_best_region_zone(self, config):
-        # TODO: Implement algorithm to determine best region/zone
-        return ("us-east-1", "us-east-1d")
+        def get_spot_price_per_region(region_name, profile_name, instance_type):
+            '''Gets spot prices of the specified region and instance type'''
+            now = datetime.datetime.now()
+            start = now - datetime.timedelta(hours=6)
+            r = boto.ec2.connect_to_region(region_name, profile_name=profile_name).get_spot_price_history(
+                                                             start_time=start.isoformat(),
+                                                             end_time=now.isoformat(),
+                                                             instance_type=instance_type,
+                                                             product_description="Linux/UNIX") #TODO: Make configurable
+            return r
+
+        def get_price_median(data):
+            sdata = sorted(data)
+            n = len(sdata)
+            if not n % 2:
+                return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
+            return sdata[n / 2]
+
+        from multiprocessing import Pool, cpu_count
+        pool = Pool(cpu_count())
+        results = []
+        for region in config.allowed_regions:
+            f = pool.apply_async(get_spot_price_per_region, [region, "laniakea", config.instance_type])
+            results.append(f)
+
+        prices = {}
+        for result in results:
+            #r = result.get()
+            for entry in result.get():
+                if not entry.region.name in prices:
+                    prices[entry.region.name] = {}
+                    
+                zone = entry.availability_zone
+                
+                if not zone in prices[entry.region.name]:
+                    prices[entry.region.name][zone] = []
+                    
+                prices[entry.region.name][zone].append(entry.price)
+                
+        # Calculate median values for all availability zones and best zone/price
+        best_zone = None
+        best_region = None
+        best_median = None
+        for region in prices:
+            for zone in prices[region]:
+                # Do not consider a zone/region combination that has a current
+                # price higher than the maximum price we are willing to pay,
+                # even if the median would end up being lower than our maximum.
+                if prices[region][zone][-1] > config.ec2_max_price:
+                    continue
+                
+                median = get_price_median(prices[region][zone])
+                if best_median == None or best_median > median:
+                    best_median = median
+                    best_zone = zone
+                    best_region = region
+        
+        return (best_region, best_zone)
     
     def create_laniakea_images(self, config):
         images = { "default" : {} }
