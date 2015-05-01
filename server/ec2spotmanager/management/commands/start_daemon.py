@@ -137,15 +137,20 @@ class Command(NoArgsCommand):
     
             try:
                 print("Creating %s instances" % count)
-                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags)
+                (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags)
                 
-                assert len(boto_instances) == len(instances) == count
+                assert (len(boto_instances) + len(boto_pending)) == len(instances) == count
                 
-                for i in range(0,count):
+                for i in range(0,len(boto_instances)):
                     instances[i].hostname = boto_instances[i].public_dns_name
                     instances[i].ec2_instance_id = boto_instances[i].id
                     instances[i].status_code = boto_instances[i].state_code
                     instances[i].save()
+                    
+                if boto_pending:
+                    for i in range(len(boto_instances),len(boto_pending)):
+                        # Delete instances belong to canceled spot requests
+                        instances[i].delete()
                 
             except boto.exception.EC2ResponseError as msg:
                 logging.error("%s: boto failure: %s" % ("start_instances_async", msg))
