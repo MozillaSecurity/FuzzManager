@@ -195,7 +195,7 @@ class Command(NoArgsCommand):
     
             try:
                 print("Creating %s instances" % count)
-                (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags)
+                (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, timeout=20*60)
                 
                 assert (len(boto_instances) + len(boto_pending)) == len(instances) == count
                 
