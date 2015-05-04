@@ -206,11 +206,18 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
+                logging.error("%s: laniakea failure: %s" % ("start_instances_async", msg))
+                
+                # Log this error to the pool status messages
                 entry = PoolStatusEntry()
                 entry.pool = pool
                 entry.msg = str(msg)
                 entry.save()
-                logging.error("%s: laniakea failure: %s" % ("start_instances_async", msg))
+                
+                # Delete all pending instances as we failed to create them
+                for instance in instances:
+                    instance.delete()
+                    
                 return
             
             config.ec2_tags['SpotManager-PoolId'] = str(pool.pk)
