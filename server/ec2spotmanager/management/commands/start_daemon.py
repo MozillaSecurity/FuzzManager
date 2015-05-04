@@ -18,14 +18,18 @@ import boto.exception
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
-def get_spot_price_per_region(region_name, profile_name, instance_type):
+def get_spot_price_per_region(region_name, config):
     '''Gets spot prices of the specified region and instance type'''
     now = datetime.datetime.now()
     start = now - datetime.timedelta(hours=6)
-    r = boto.ec2.connect_to_region(region_name, profile_name=profile_name).get_spot_price_history(
-                                                            start_time=start.isoformat(),
-                                                            instance_type=instance_type,
-                                                            product_description="Linux/UNIX") #TODO: Make configurable
+    r = boto.ec2.connect_to_region(region_name, 
+                                   aws_access_key_id=config.aws_access_key_id,
+                                   aws_secret_access_key=config.aws_secret_access_key
+                                   ).get_spot_price_history(
+                                        start_time=start.isoformat(),
+                                        instance_type=config.ec2_instance_type,
+                                        product_description="Linux/UNIX"
+                                        ) #TODO: Make configurable
     return r
 
 class Command(NoArgsCommand):
@@ -98,7 +102,7 @@ class Command(NoArgsCommand):
         pool = Pool(cpu_count())
         results = []
         for region in config.ec2_allowed_regions:
-            f = pool.apply_async(get_spot_price_per_region, [region, "laniakea", config.ec2_instance_type])
+            f = pool.apply_async(get_spot_price_per_region, [region, config])
             results.append(f)
 
         prices = {}
