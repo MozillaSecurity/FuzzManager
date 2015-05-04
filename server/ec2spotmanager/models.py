@@ -173,6 +173,6 @@ class InstanceStatusEntry(models.Model):
     msg = models.CharField(max_length=4095)
     
 class PoolStatusEntry(models.Model):
-    instance = models.ForeignKey(Instance)
+    pool = models.ForeignKey(InstancePool)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
