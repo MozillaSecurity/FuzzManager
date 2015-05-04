@@ -97,7 +97,7 @@ class Command(NoArgsCommand):
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
         results = []
-        for region in config.allowed_regions:
+        for region in config.ec2_allowed_regions:
             f = pool.apply_async(get_spot_price_per_region, [region, "laniakea", config.instance_type])
             results.append(f)
 
