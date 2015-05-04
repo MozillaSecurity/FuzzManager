@@ -7,7 +7,10 @@ import datetime
 import time
 import logging
 import threading
-from multiprocessing import Pool, cpu_count
+
+use_multiprocess_price_fetch = False
+if use_multiprocess_price_fetch:
+    from multiprocessing import Pool, cpu_count
 
 from django.utils import timezone
 
@@ -102,13 +105,17 @@ class Command(NoArgsCommand):
         pool = Pool(cpu_count())
         results = []
         for region in config.ec2_allowed_regions:
-            f = pool.apply_async(get_spot_price_per_region, [region, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type])
+            if use_multiprocess_price_fetch:
+                f = pool.apply_async(get_spot_price_per_region, [region, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type])
+            else:
+                f = get_spot_price_per_region(region, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
             results.append(f)
 
         prices = {}
         for result in results:
-            #r = result.get()
-            for entry in result.get():
+            if use_multiprocess_price_fetch:
+                result = result.get()
+            for entry in result:
                 if not entry.region.name in prices:
                     prices[entry.region.name] = {}
                     
