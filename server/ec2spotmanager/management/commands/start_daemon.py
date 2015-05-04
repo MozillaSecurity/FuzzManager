@@ -98,7 +98,7 @@ class Command(NoArgsCommand):
         pool = Pool(cpu_count())
         results = []
         for region in config.ec2_allowed_regions:
-            f = pool.apply_async(get_spot_price_per_region, [region, "laniakea", config.instance_type])
+            f = pool.apply_async(get_spot_price_per_region, [region, "laniakea", config.ec2_instance_type])
             results.append(f)
 
         prices = {}
