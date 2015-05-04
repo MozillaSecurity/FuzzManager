@@ -29,9 +29,17 @@
                 <td><a href="{% url 'ec2spotmanager:poolview' pool.pk %}">{{ pool.pk }} </a></td>
                 <td>{{ pool.config.name }}</td>
                 <td>{{ pool.size }}</td>
-		<td>{% for msg in pool.msgs %}
-			<div><a href="{% url 'ec2spotmanager:poolmsgdel' msg.pk %}">[x]</a> {{ msg.msg }}</div>
-            	    {% endfor %}
+		<td>
+			{% if pool.msgs %}
+				{% for msg in pool.msgs %}
+				<div>
+					<a href="{% url 'ec2spotmanager:poolmsgdel' msg.pk %}">[x]</a>
+					<span class="label label-danger">{{ msg.msg }}</span>
+				</div>
+            	    		{% endfor %}
+			{% else %}
+				<span class="label label-success">Healthy</span>
+			{% endif %}
 		</td>
             </tr>{% endfor %}
         </tbody>
