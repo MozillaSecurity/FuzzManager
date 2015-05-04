@@ -30,7 +30,7 @@
                 <td>{{ pool.config.name }}</td>
                 <td>{{ pool.size }}</td>
 		<td>{% for msg in pool.msgs %}
-			<div>{{ msg }}</div>
+			<div><a href="{% url 'ec2spotmanager:poolmsgdel' msg.pk %}">[x]</a> {{ msg.msg }}</div>
             	    {% endfor %}
 		</td>
             </tr>{% endfor %}

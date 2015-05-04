@@ -4,6 +4,7 @@ from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance,\
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout
 from django.db.models.aggregates import Count
+from django.core.exceptions import SuspiciousOperation
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -82,7 +83,25 @@ def viewConfig(request, configid):
 
 @login_required(login_url='/login/')
 def deletePool(request, poolid):
-    pass
+    entry = get_object_or_404(InstancePool, pk=poolid)
+    if request.method == 'POST':            
+        entry.delete()
+        return redirect('ec2spotmanager:pools')
+    elif request.method == 'GET':
+        return render(request, 'pools/delete.html', { 'entry' : entry })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def deletePoolMsg(request, msgid):
+    entry = get_object_or_404(PoolStatusEntry, pk=msgid)
+    if request.method == 'POST':            
+        entry.delete()
+        return redirect('ec2spotmanager:pools')
+    elif request.method == 'GET':
+        return render(request, 'pools/messages/delete.html', { 'entry' : entry })
+    else:
+        raise SuspiciousOperation
 
 @login_required(login_url='/login/')
 def deleteConfig(request, configid):
