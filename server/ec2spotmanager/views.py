@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance,\
-    INSTANCE_STATE_CODE
+    INSTANCE_STATE_CODE, PoolStatusEntry
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout
 from django.db.models.aggregates import Count
@@ -42,6 +42,9 @@ def pools(request):
         isSearch = False
     
     entries = entries.filter(**filters)
+    for entry in entries:
+        entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')[:3]
+        
     data = { 'isSearch' : isSearch, 'poollist' : entries }
     
     return render(request, 'pools/index.html', data)

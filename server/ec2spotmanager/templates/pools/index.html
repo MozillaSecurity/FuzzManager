@@ -29,7 +29,9 @@
                 <td><a href="{% url 'ec2spotmanager:poolview' pool.pk %}">{{ pool.pk }} </a></td>
                 <td>{{ pool.config.name }}</td>
                 <td>{{ pool.size }}</td>
-                <td>{{ pool.status }}</td>
+		<td>{% for msg in pool.msgs %}
+			<div>{{ msg }}</div>
+		</td>
             </tr>{% endfor %}
         </tbody>
     </table>
