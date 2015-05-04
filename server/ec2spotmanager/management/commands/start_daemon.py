@@ -1,5 +1,6 @@
 from django.core.management.base import NoArgsCommand
-from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE
+from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE,\
+    PoolStatusEntry
 from django.conf import settings
 from ec2spotmanager.management.common import pid_lock_file
 import warnings
@@ -205,6 +206,10 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
+                entry = PoolStatusEntry()
+                entry.pool = pool
+                entry.msg = str(msg)
+                entry.save()
                 logging.error("%s: laniakea failure: %s" % ("start_instances_async", msg))
                 return
             
