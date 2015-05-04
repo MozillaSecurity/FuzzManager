@@ -7,7 +7,7 @@ import datetime
 import time
 import logging
 import threading
-
+from multiprocessing import Pool, cpu_count
 
 from django.utils import timezone
 
@@ -15,6 +15,18 @@ from laniakea.laniakea import LaniakeaCommandLine
 from laniakea.core.manager import Laniakea
 import boto.ec2
 import boto.exception
+
+# This function must be defined at the module level so it can be pickled
+# by the multiprocessing module when calling this asynchronously.
+def get_spot_price_per_region(region_name, profile_name, instance_type):
+    '''Gets spot prices of the specified region and instance type'''
+    now = datetime.datetime.now()
+    start = now - datetime.timedelta(hours=6)
+    r = boto.ec2.connect_to_region(region_name, profile_name=profile_name).get_spot_price_history(
+                                                            start_time=start.isoformat(),
+                                                            instance_type=instance_type,
+                                                            product_description="Linux/UNIX") #TODO: Make configurable
+    return r
 
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
@@ -76,25 +88,13 @@ class Command(NoArgsCommand):
                 print("[Main] Pool size ok.")
                 
     def get_best_region_zone(self, config):
-        def get_spot_price_per_region(region_name, profile_name, instance_type):
-            '''Gets spot prices of the specified region and instance type'''
-            now = datetime.datetime.now()
-            start = now - datetime.timedelta(hours=6)
-            r = boto.ec2.connect_to_region(region_name, profile_name=profile_name).get_spot_price_history(
-                                                             start_time=start.isoformat(),
-                                                             end_time=now.isoformat(),
-                                                             instance_type=instance_type,
-                                                             product_description="Linux/UNIX") #TODO: Make configurable
-            return r
-
         def get_price_median(data):
             sdata = sorted(data)
             n = len(sdata)
             if not n % 2:
                 return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
             return sdata[n / 2]
-
-        from multiprocessing import Pool, cpu_count
+        
         pool = Pool(cpu_count())
         results = []
         for region in config.ec2_allowed_regions:
