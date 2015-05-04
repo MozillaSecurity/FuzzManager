@@ -160,7 +160,11 @@ class Command(NoArgsCommand):
         """ Start an instance with the given configuration """
         
         images = self.create_laniakea_images(config)
+        
+        # Figure out where to put our instances
         (region, zone) = self.get_best_region_zone(config)
+        print("Using region %s with availability zone %s" % (region,zone))
+        
         instances = []
         
         # Create all our instances as pending, the async thread will update them once
@@ -197,6 +201,8 @@ class Command(NoArgsCommand):
                 print("Creating %s instances" % count)
                 (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20*60)
                 
+                print("Successfully created %s instances, %s requests timed out and were canceled" % (len(boto_instances), len(boto_pending)))
+                
                 assert (len(boto_instances) + len(boto_pending)) == len(instances) == count
                 
                 for i in range(0,len(boto_instances)):
@@ -208,6 +214,7 @@ class Command(NoArgsCommand):
                 if boto_pending:
                     for i in range(len(boto_instances),len(boto_pending)):
                         # Delete instances belong to canceled spot requests
+                        print("Deleting instance with id %s (belongs to canceled request)" % instances[i].pk)
                         instances[i].delete()
                 
             except boto.exception.EC2ResponseError as msg:
