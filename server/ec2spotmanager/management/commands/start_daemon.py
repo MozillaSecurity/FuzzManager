@@ -102,7 +102,9 @@ class Command(NoArgsCommand):
                 return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
             return sdata[n / 2]
         
-        pool = Pool(cpu_count())
+        if use_multiprocess_price_fetch:
+            pool = Pool(cpu_count())
+            
         results = []
         for region in config.ec2_allowed_regions:
             if use_multiprocess_price_fetch:
