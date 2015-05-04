@@ -27,15 +27,15 @@ class PIDLock():
     
     def release(self):
         if self.pidlock:
-            os.remove(self.pidlock)
+            os.remove(self.filename)
 
 
-def pid_lock_file(method, fileprefix="default"):
+def pid_lock_file(method):
     """
     Decorator to use on management methods that shouldn't run in parallel
     """
     def decorator(self, *args, **options):
-        lock = PIDLock(os.path.join(PIDFILE_BASEDIR, fileprefix + ".pid"))
+        lock = PIDLock(os.path.join(PIDFILE_BASEDIR, "daemon.pid"))
         lock.aquire()
         try:
             method(self, *args, **options)
