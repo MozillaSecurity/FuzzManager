@@ -1,7 +1,7 @@
 from django.core.management.base import NoArgsCommand
 from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE
 from django.conf import settings
-from ec2spotmanager.management.common import mgmt_lock_required
+from ec2spotmanager.management.common import pid_lock_file
 import warnings
 import datetime
 import time
