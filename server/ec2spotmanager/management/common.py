@@ -2,46 +2,40 @@
 from __future__ import print_function
 
 from django.conf import settings
-from lockfile import FileLock, LockTimeout
 import os
-import sys
+import errno
 
-LOCK_PATH = os.path.join(settings.BASE_DIR, 'mgmt')
+PIDFILE_BASEDIR = settings.BASE_DIR
 
-class ManagementLock():
-    def __init__(self):
-        self.lock = None
+class PIDLock():
+    def __init__(self, filename):
+        self.pidlock = None
+        self.filename = filename
         
     def aquire(self):
-        self.lock = FileLock(LOCK_PATH)
-        reported = False
-        
-        # Attempt to obtain a lock, retry every 10 seconds. Wait at most 10 minutes.
-        # The retrying is necessary so we can report on stderr that we are waiting
-        # for a lock. Otherwise, a user trying to run the command manually might
-        # get confused why the command execution is delayed.
-        for idx in range(0,30):  # @UnusedVariable
-            try:
-                self.lock.acquire(10)
-                return
-            except LockTimeout:
-                if not reported:
-                    print("Another management command is running, waiting for lock...", file=sys.stderr)
-                    reported = True
-        
-        raise RuntimeError("Failed to aquire lock.")
+        try:
+            self.pidlock = os.open(self.filename, os.O_CREAT|os.O_WRONLY|os.O_EXCL)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                # TODO: Here we could check if the process still exists and is really running
+                raise RuntimeError('Another process instance is already running')
+            else:
+                raise
+                    
+        os.write(self.pidlock, str(os.getpid()))
+        os.close(self.pidlock)
     
     def release(self):
-        if self.lock:
-            self.lock.release()
+        if self.pidlock:
+            os.remove(self.pidlock)
 
 
-def mgmt_lock_required(method):
+def pid_lock_file(method, fileprefix="default"):
     """
     Decorator to use on management methods that shouldn't run in parallel
     """
     def decorator(self, *args, **options):
-        lock = ManagementLock()
+        lock = PIDLock(os.path.join(PIDFILE_BASEDIR, fileprefix + ".pid"))
         lock.aquire()
         try:
             method(self, *args, **options)

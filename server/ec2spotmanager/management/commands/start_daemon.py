@@ -34,7 +34,7 @@ def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_
 
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
-    @mgmt_lock_required
+    @pid_lock_file("ec2_spotdaemon")
     def handle_noargs(self, **options):
         while True:
             self.check_instance_pools()
