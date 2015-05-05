@@ -171,8 +171,11 @@ class InstanceStatusEntry(models.Model):
     instance = models.ForeignKey(Instance)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
+    isCritical = models.BooleanField(default=False)
     
 class PoolStatusEntry(models.Model):
     pool = models.ForeignKey(InstancePool)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
+    isCritical = models.BooleanField(default=False)
+

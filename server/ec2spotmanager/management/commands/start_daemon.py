@@ -49,10 +49,10 @@ class Command(NoArgsCommand):
         
         # Process all instance pools
         for instance_pool in instance_pools:
-            poolEntries = PoolStatusEntry.objects.filter(pool = instance_pool)
+            criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool = instance_pool, isCritical = True)
             
-            if poolEntries:
-                print("Instance Pool has unchecked errors, ignoring...")
+            if criticalPoolStatusEntries:
+                print("Instance Pool has unchecked critical errors, ignoring...")
                 continue
             
             config = instance_pool.config.flatten()
@@ -218,6 +218,7 @@ class Command(NoArgsCommand):
                 entry = PoolStatusEntry()
                 entry.pool = pool
                 entry.msg = str(msg)
+                entry.isCritical = True
                 entry.save()
                 
                 # Delete all pending instances as we failed to create them

@@ -44,8 +44,8 @@ def pools(request):
     
     entries = entries.filter(**filters)
     for entry in entries:
-        entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')[:3]
-        
+        entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
+                
     data = { 'isSearch' : isSearch, 'poollist' : entries }
     
     return render(request, 'pools/index.html', data)

@@ -34,7 +34,11 @@
 				{% for msg in pool.msgs %}
 				<div>
 					<a href="{% url 'ec2spotmanager:poolmsgdel' msg.pk %}">[x]</a>
+					{% if msg.isCritical %}
 					<span class="label label-danger">{{ msg.msg }}</span>
+					{% else %}
+					<span class="label label-warning">{{ msg.msg }}</span>
+					{% endif %}
 				</div>
             	    		{% endfor %}
 			{% else %}
