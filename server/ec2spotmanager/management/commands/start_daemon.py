@@ -49,6 +49,12 @@ class Command(NoArgsCommand):
         
         # Process all instance pools
         for instance_pool in instance_pools:
+            poolEntries = PoolStatusEntry.objects.filter(pool = instance_pool)
+            
+            if poolEntries:
+                print("Instance Pool has unchecked errors, ignoring...")
+                continue
+            
             config = instance_pool.config.flatten()
             instances = Instance.objects.filter(pool=instance_pool)
             
