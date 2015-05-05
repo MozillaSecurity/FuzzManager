@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout
 from django.db.models.aggregates import Count
 from django.core.exceptions import SuspiciousOperation
+from django.conf import settings
+
+import os
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -45,8 +48,19 @@ def pools(request):
     entries = entries.filter(**filters)
     for entry in entries:
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
+    
+    # Figure out if our daemon is running
+    daemonPidFile = os.path.join(settings.BASE_DIR, "daemon.pid")
+    with open(daemonPidFile, 'r') as f:
+        pid = str(f.read())
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            daemonRunning = False
+        else:
+            daemonRunning = True
                 
-    data = { 'isSearch' : isSearch, 'poollist' : entries }
+    data = { 'isSearch' : isSearch, 'poollist' : entries, 'daemonRunning' : daemonRunning }
     
     return render(request, 'pools/index.html', data)
 
