@@ -8,6 +8,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.conf import settings
 
 import os
+import errno
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -51,14 +52,20 @@ def pools(request):
     
     # Figure out if our daemon is running
     daemonPidFile = os.path.join(settings.BASE_DIR, "daemon.pid")
-    with open(daemonPidFile, 'r') as f:
-        pid = str(f.read())
-        try:
-            os.kill(pid, 0)
-        except OSError:
-            daemonRunning = False
-        else:
+    daemonRunning = False
+    try:
+        with open(daemonPidFile, 'r') as f:
             daemonRunning = True
+            pid = int(f.read())
+            try:
+                os.kill(pid, 0)
+            except OSError as e:
+                if e.errno == errno.ESRCH:
+                    daemonRunning = False
+                elif e.errno == errno.EPERM:
+                    daemonRunning = True
+    except IOError:
+        pass
                 
     data = { 'isSearch' : isSearch, 'poollist' : entries, 'daemonRunning' : daemonRunning }
     
