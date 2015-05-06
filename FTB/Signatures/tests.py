@@ -13,7 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import unittest
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo,\
-    NoCrashInfo
+    NoCrashInfo, MinidumpCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
@@ -277,6 +277,7 @@ class ASanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
         self.assertEqual(crashInfo.registers["sp"], 0xffc57860L)
         self.assertEqual(crashInfo.registers["bp"], 0xffc57f18L)
+
 class ASanParserTestHeapCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -566,6 +567,21 @@ class RegisterHelperValueTest(unittest.TestCase):
         self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640L)
         self.assertEqual(RegisterHelper.getRegisterValue("bh", registerMap), 0x76L)
         self.assertEqual(RegisterHelper.getRegisterValue("bl", registerMap), 0x40L)
+
+class MinidumpParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        with open('minidump-example.txt', 'r') as f:
+            crashInfo = MinidumpCrashInfo([], f.read().splitlines(), config)
+            
+        self.assertEqual(len(crashInfo.backtrace), 44)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[5], "??")
+        self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent(bool)")
+        self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent(bool, unsigned int)")
+        
+        self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
 
 if __name__ == "__main__":
