@@ -37,6 +37,16 @@ SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/R
 ==5854==ABORTING
 """
 
+asanTraceHeapCrash = """
+ASAN:SIGSEGV
+=================================================================
+==11923==ERROR: AddressSanitizer: SEGV on unknown address 0x00000019 (pc 0xf718072e sp 0xff87d130 bp 0x000006a1 T0)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV ??:0 ??
+==11923==ABORTING
+"""
+
 asanTraceUAF = """
 ==19462==ERROR: AddressSanitizer: heap-use-after-free on address 0x7fd766c42800 at pc 0xe1f587 bp 0x7fffcb1b6ed0 sp 0x7fffcb1b6ec8
 READ of size 6143520 at 0x7fd766c42800 thread T0
@@ -267,6 +277,19 @@ class ASanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
         self.assertEqual(crashInfo.registers["sp"], 0xffc57860L)
         self.assertEqual(crashInfo.registers["bp"], 0xffc57f18L)
+class ASanParserTestHeapCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = ASanCrashInfo([], asanTraceHeapCrash.splitlines(), config)
+        self.assertEqual(len(crashInfo.backtrace), 0)
+        
+        self.assertEqual(crashInfo.crashAddress, 0x00000019L)
+        self.assertEqual(crashInfo.registers["pc"], 0xf718072eL)
+        self.assertEqual(crashInfo.registers["sp"], 0xff87d130L)
+        self.assertEqual(crashInfo.registers["bp"], 0x000006a1L)
+        
+        print(crashInfo.createCrashSignature())
         
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
