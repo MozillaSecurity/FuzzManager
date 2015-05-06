@@ -678,3 +678,43 @@ class GDBCrashInfo(CrashInfo):
             return (long(val), None)
                 
         return (None, "Unknown failure.")
+
+class MinidumpCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+        
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+            
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+        
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+        
+        self.configuration = configuration
+        
+        # If crashData is given, use that to find the Minidump trace, otherwise use stderr
+        if crashData == None:
+            minidumpOuput = stderr
+        else:
+            minidumpOuput = crashData
+
+        crashThread = None
+        for traceLine in minidumpOuput:
+            if crashThread != None:
+                if traceLine.startswith("%s|" % crashThread):
+                    components = traceLine.split("|")
+                    
+                    # If we have no symbols, don't use addresses for now (they are not portable for signature generation)
+                    if not len(components[3]):
+                        self.backtrace.append("??")
+                    else:
+                        self.backtrace.append(components[3])
+            elif (traceLine.startswith("Crash|")):
+                components = traceLine.split("|")
+                crashThread = int(components[3])
+                self.crashAddress = long(components[2], 16)
