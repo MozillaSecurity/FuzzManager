@@ -312,7 +312,7 @@ class GDBParserTestCrashAddress(unittest.TestCase):
         crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
 
         self.assertEqual(crashInfo1.crashAddress, 0x1L)
-        self.assertEqual(crashInfo2.crashAddress, 'Architecture is not supported.')
+        self.assertEqual(crashInfo2.crashAddress, None)
         self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0L)
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
