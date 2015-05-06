@@ -583,6 +583,16 @@ class MinidumpParserTestCrash(unittest.TestCase):
         
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
+class MinidumpSelectorTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        with open('minidump-example.txt', 'r') as f:
+            crashData = f.read().splitlines()
+        
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
+
 
 if __name__ == "__main__":
     unittest.main()

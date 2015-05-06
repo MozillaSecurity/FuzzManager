@@ -119,6 +119,11 @@ class CrashInfo():
         gdbString = "Program received signal "
         gdbCoreString = "Program terminated with signal "
         
+        # Use two strings for detecting Minidumps to avoid false positives
+        minidumpFirstString = "OS|"
+        minidumpSecondString = "CPU|"
+        minidumpFirstDetected = False
+        
         # Search both crashData and stderr, but prefer crashData
         lines = []
         if (auxCrashData != None):
@@ -131,6 +136,14 @@ class CrashInfo():
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif not minidumpFirstDetected and minidumpFirstString in line:
+                # Only match Minidump output if the *next* line also contains
+                # the second search string defined above.
+                minidumpFirstDetected = True
+            elif minidumpFirstDetected and minidumpSecondString in line:
+                return MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif minidumpFirstDetected:
+                minidumpFirstDetected = False
         
         # Default fallback to be used if there is neither ASan nor GDB output.
         # This is still useful in case there is no crash but we want to match
