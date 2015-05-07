@@ -78,14 +78,7 @@ class TestRESTSignatureInterface(unittest.TestCase):
         url = testServerURL + "signatures/"
         
         # Must yield forbidden without authentication
-        self.assertEqual(requests.get(url).status_code, requests.codes["forbidden"])
-        self.assertEqual(requests.post(url, {}).status_code, requests.codes["forbidden"])
-        self.assertEqual(requests.put(url, {}).status_code, requests.codes["forbidden"])
-        
-        # Retry with authentication
-        response = requests.get(url,  auth=testAuthCreds)
-
-        self.assertEqual(response.json(), [])
+        self.assertEqual(requests.get(url).status_code, requests.codes["not_found"])
 
 
 if __name__ == "__main__":

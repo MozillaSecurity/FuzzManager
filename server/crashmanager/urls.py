@@ -5,7 +5,6 @@ from server import settings
 import os
 
 router = routers.DefaultRouter()
-router.register(r'signatures', views.BucketViewSet)
 router.register(r'crashes', views.CrashEntryViewSet)
 
 urlpatterns = patterns('',

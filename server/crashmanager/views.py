@@ -756,11 +756,3 @@ class CrashEntryViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
-
-class BucketViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows reading of signatures
-    """
-    authentication_classes = (TokenAuthentication,)
-    queryset = Bucket.objects.all()
-    serializer_class = BucketSerializer
