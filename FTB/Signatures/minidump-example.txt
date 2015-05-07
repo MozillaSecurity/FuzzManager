@@ -1,0 +1,811 @@
+OS|Linux|0.0.0 Linux 3.2.0-23-generic #36-Ubuntu SMP Tue Apr 10 20:39:51 UTC 2012 x86_64
+CPU|amd64|family 6 model 30 stepping 5|8
+Crash|SIGSEGV|0x3e800006acb|0
+Module|firefox-bin||firefox-bin|0D19D899740636ED3DFD7E676772A1D80|0x00400000|0x00428fff|1
+Module|libXss.so.1.0.0||libXss.so.1.0.0|1C6D41787DF49947006B88449F69AA540|0x7fafe19fc000|0x7fafe1bfffff|0
+Module|libcroco-0.6.so.3.0.1||libcroco-0.6.so.3.0.1|22664AB68E5BEB3A7EFE5FB23DA9CE8C0|0x7fafe4c8e000|0x7fafe4ec7fff|0
+Module|librsvg-2.so.2.36.1||librsvg-2.so.2.36.1|5E7887C693FFC7801F9F2D0AE68F20CB0|0x7fafe4ec8000|0x7fafe50fcfff|0
+Module|libpixbufloader-svg.so||libpixbufloader-svg.so|7D5337AA457155C701380177FB8482920|0x7fafe50fd000|0x7fafe52fffff|0
+Module|Ubuntu-L.ttf||Ubuntu-L.ttf|000000000000000000000000000000000|0x7fafe9733000|0x7fafe97fefff|0
+Module|DejaVuSans.ttf||DejaVuSans.ttf|000000000000000000000000000000000|0x7fafebe3d000|0x7fafebeecfff|0
+Module|Ubuntu-R.ttf||Ubuntu-R.ttf|000000000000000000000000000000000|0x7fafed951000|0x7fafed9fefff|0
+Module|libpixbufloader-png.so||libpixbufloader-png.so|C44D4C71D3F787F134AFB3044425AED00|0x7fafee5d5000|0x7fafee7dafff|0
+Module|icon-theme.cache||icon-theme.cache|000000000000000000000000000000000|0x7fafee7db000|0x7fafefe9afff|0
+Module|icon-theme.cache||icon-theme.cache|000000000000000000000000000000000|0x7fafefe9b000|0x7faff40fffff|0
+Module|DroidSerif-Regular.ttf||DroidSerif-Regular.ttf|000000000000000000000000000000000|0x7faff44a4000|0x7faff44cefff|0
+Module|libnssckbi.so||libnssckbi.so|E70DC15381A536C15F890A72C96628BA0|0x7faff672a000|0x7faff69d6fff|0
+Module|libfreebl3.so||libfreebl3.so|0ACA871B0359A52F8948419A28D020A30|0x7faff69d7000|0x7faff6c84fff|0
+Module|libnssdbm3.so||libnssdbm3.so|7D772AB0DE05613945E1C0CC633164980|0x7faff6c89000|0x7faff6eb4fff|0
+Module|libsoftokn3.so||libsoftokn3.so|E70A781902D609967FFBAD8C9513A8180|0x7faff6eb5000|0x7faff70fffff|0
+Module|webappsstore.sqlite-shm||webappsstore.sqlite-shm|000000000000000000000000000000000|0x7faff7406000|0x7faff740dfff|0
+Module|places.sqlite-shm||places.sqlite-shm|000000000000000000000000000000000|0x7faff740e000|0x7faff7415fff|0
+Module|icon-theme.cache||icon-theme.cache|000000000000000000000000000000000|0x7faff7416000|0x7faff74fefff|0
+Module|SYSV00000000 (deleted)||SYSV00000000 (deleted)|000000000000000000000000000000000|0x7faff8201000|0x7faff8260fff|0
+Module|mime.cache||mime.cache|000000000000000000000000000000000|0x7faff8261000|0x7faff827ffff|0
+Module|icon-theme.cache||icon-theme.cache|000000000000000000000000000000000|0x7faff8280000|0x7faff828afff|0
+Module|icon-theme.cache||icon-theme.cache|000000000000000000000000000000000|0x7faff828b000|0x7faff82adfff|0
+Module|libibus-1.0.so.0.401.0||libibus-1.0.so.0.401.0|E702D690AE6BED7B45E625E55308CA630|0x7faff82ae000|0x7faff84f3fff|0
+Module|im-ibus.so||im-ibus.so|2D54EC404DE29598D386B63CA6BF12F90|0x7faff84f5000|0x7faff86fbfff|0
+Module|pango-basic-fc.so||pango-basic-fc.so|B7268AAC58CEE3550C7DFA5D9D85113F0|0x7faff86fc000|0x7faff88fefff|0
+Module|Ubuntu-R.ttf||Ubuntu-R.ttf|000000000000000000000000000000000|0x7faff94a8000|0x7faff94fefff|0
+Module|mime.cache||mime.cache|000000000000000000000000000000000|0x7faffad07000|0x7faffad08fff|0
+Module|DroidSansMono.ttf||DroidSansMono.ttf|000000000000000000000000000000000|0x7faffad1a000|0x7faffad36fff|0
+Module|c05880de57d1f5e948fdfacc138775d9-le64.cache-3||c05880de57d1f5e948fdfacc138775d9-le64.cache-3|000000000000000000000000000000000|0x7faffad37000|0x7faffad37fff|0
+Module|945677eb7aeaf62f1d50efc3fb3ec7d8-le64.cache-3||945677eb7aeaf62f1d50efc3fb3ec7d8-le64.cache-3|000000000000000000000000000000000|0x7faffad38000|0x7faffad40fff|0
+Module|99e8ed0e538f840c565b6ed5dad60d56-le64.cache-3||99e8ed0e538f840c565b6ed5dad60d56-le64.cache-3|000000000000000000000000000000000|0x7faffad41000|0x7faffad42fff|0
+Module|a6d8cf8e4ec09cdbc8633c31745a07dd-le64.cache-3||a6d8cf8e4ec09cdbc8633c31745a07dd-le64.cache-3|000000000000000000000000000000000|0x7faffad43000|0x7faffad4afff|0
+Module|2cd17615ca594fa2959ae173292e504c-le64.cache-3||2cd17615ca594fa2959ae173292e504c-le64.cache-3|000000000000000000000000000000000|0x7faffad4b000|0x7faffad4efff|0
+Module|fd9505950c048a77dc4b710eb6a628ed-le64.cache-3||fd9505950c048a77dc4b710eb6a628ed-le64.cache-3|000000000000000000000000000000000|0x7faffad4f000|0x7faffad4ffff|0
+Module|ddc79d3ea06a7c6ffa86ede85f3bb5df-le64.cache-3||ddc79d3ea06a7c6ffa86ede85f3bb5df-le64.cache-3|000000000000000000000000000000000|0x7faffad50000|0x7faffad52fff|0
+Module|e7071f4a29fa870f4323321c154eba04-le64.cache-3||e7071f4a29fa870f4323321c154eba04-le64.cache-3|000000000000000000000000000000000|0x7faffad53000|0x7faffad53fff|0
+Module|a2ab74764b07279e7c36ddb1d302cf26-le64.cache-3||a2ab74764b07279e7c36ddb1d302cf26-le64.cache-3|000000000000000000000000000000000|0x7faffad54000|0x7faffad54fff|0
+Module|c69f04ab05004e31a6d5e715764f16d8-le64.cache-3||c69f04ab05004e31a6d5e715764f16d8-le64.cache-3|000000000000000000000000000000000|0x7faffad55000|0x7faffad56fff|0
+Module|b5ea634b0fb353b8ea17632d1f9ef766-le64.cache-3||b5ea634b0fb353b8ea17632d1f9ef766-le64.cache-3|000000000000000000000000000000000|0x7faffad57000|0x7faffad59fff|0
+Module|646addb8444faa74ee138aa00ab0b6a0-le64.cache-3||646addb8444faa74ee138aa00ab0b6a0-le64.cache-3|000000000000000000000000000000000|0x7faffad5a000|0x7faffad5bfff|0
+Module|a755afe4a08bf5b97852ceb7400b47bc-le64.cache-3||a755afe4a08bf5b97852ceb7400b47bc-le64.cache-3|000000000000000000000000000000000|0x7faffad5c000|0x7faffad61fff|0
+Module|20bd79ad97094406f7d1b9654bfbd926-le64.cache-3||20bd79ad97094406f7d1b9654bfbd926-le64.cache-3|000000000000000000000000000000000|0x7faffad62000|0x7faffad63fff|0
+Module|libbrowsercomps.so||libbrowsercomps.so|3CC53D32E284DB3BD998919704B6DEB30|0x7faffb0eb000|0x7faffb2fffff|0
+Module|9c0624108b9a2ae8552f664125be8356-le64.cache-3||9c0624108b9a2ae8552f664125be8356-le64.cache-3|000000000000000000000000000000000|0x7faffb400000|0x7faffb404fff|0
+Module|6d41288fd70b0be22e8c3a91e032eec0-le64.cache-3||6d41288fd70b0be22e8c3a91e032eec0-le64.cache-3|000000000000000000000000000000000|0x7faffb405000|0x7faffb40dfff|0
+Module|da1bd5ca8443ffe22927a23ce431d198-le64.cache-3||da1bd5ca8443ffe22927a23ce431d198-le64.cache-3|000000000000000000000000000000000|0x7faffb40e000|0x7faffb40ffff|0
+Module|04aabc0a78ac019cf9454389977116d2-le64.cache-3||04aabc0a78ac019cf9454389977116d2-le64.cache-3|000000000000000000000000000000000|0x7faffb410000|0x7faffb41ffff|0
+Module|385c0604a188198f04d133e54aba7fe7-le64.cache-3||385c0604a188198f04d133e54aba7fe7-le64.cache-3|000000000000000000000000000000000|0x7faffb420000|0x7faffb422fff|0
+Module|ddd4086aec35a5275babba44bb759c3c-le64.cache-3||ddd4086aec35a5275babba44bb759c3c-le64.cache-3|000000000000000000000000000000000|0x7faffb423000|0x7faffb424fff|0
+Module|4794a0821666d79190d59a36cb4f44b5-le64.cache-3||4794a0821666d79190d59a36cb4f44b5-le64.cache-3|000000000000000000000000000000000|0x7faffb425000|0x7faffb425fff|0
+Module|8801497958630a81b71ace7c5f9b32a8-le64.cache-3||8801497958630a81b71ace7c5f9b32a8-le64.cache-3|000000000000000000000000000000000|0x7faffb426000|0x7faffb428fff|0
+Module|365b55f210c0a22e9a19e35191240f32-le64.cache-3||365b55f210c0a22e9a19e35191240f32-le64.cache-3|000000000000000000000000000000000|0x7faffb429000|0x7faffb456fff|0
+Module|52f7bdb7ce746bfd7eaa1985bd9cfa93-le64.cache-3||52f7bdb7ce746bfd7eaa1985bd9cfa93-le64.cache-3|000000000000000000000000000000000|0x7faffb457000|0x7faffb45efff|0
+Module|libmozgnome.so||libmozgnome.so|2A849C7077320B1D5BDB9D9A16AE841C0|0x7faffc4e2000|0x7faffc6f6fff|0
+Module|libdbusservice.so||libdbusservice.so|0EC37D3542DD394C6F96153A4E474B610|0x7faffc6f7000|0x7faffc8fffff|0
+Module|0d8c3b2ac0904cb8a57a757ad11a4a08-le64.cache-3||0d8c3b2ac0904cb8a57a757ad11a4a08-le64.cache-3|000000000000000000000000000000000|0x7faffca00000|0x7faffca00fff|0
+Module|3047814df9a2f067bd2d96a2b9c36e5a-le64.cache-3||3047814df9a2f067bd2d96a2b9c36e5a-le64.cache-3|000000000000000000000000000000000|0x7faffca01000|0x7faffca05fff|0
+Module|omni.ja||omni.ja|000000000000000000000000000000000|0x7faffca06000|0x7faffd51afff|0
+Module|omni.ja||omni.ja|000000000000000000000000000000000|0x7faffd51b000|0x7faffe039fff|0
+Module|libgpg-error.so.0.8.0||libgpg-error.so.0.8.0|5AD2FB740865668A171A37912C5FD4CF0|0x7faffe83b000|0x7faffea3efff|0
+Module|libp11-kit.so.0.0.0||libp11-kit.so.0.0.0|1B58E7771DC59DBA0D1D9D72AE9F8DE40|0x7faffea3f000|0x7faffec50fff|0
+Module|libtasn1.so.3.1.12||libtasn1.so.3.1.12|425E8D1B35A9CACAD55D4B9E208AAE2A0|0x7faffec51000|0x7faffee61fff|0
+Module|libORBitCosNaming-2.so.0.1.0||libORBitCosNaming-2.so.0.1.0|952A0448200ABF9A3F8FFCEB3D0F77F90|0x7faffee62000|0x7fafff068fff|0
+Module|libgcrypt.so.11.7.0||libgcrypt.so.11.7.0|C0BB9281FA6D4AAE0D58199D5E9BFFEB0|0x7fafff069000|0x7fafff2e6fff|0
+Module|libutil-2.15.so||libutil-2.15.so|6FF8867791C7874100B82302B5ED2F9F0|0x7fafff2e7000|0x7fafff4e9fff|0
+Module|libavahi-client.so.3.2.9||libavahi-client.so.3.2.9|81AF3A2B95968204957317231F995E020|0x7fafff4ea000|0x7fafff6fafff|0
+Module|libavahi-common.so.3.5.3||libavahi-common.so.3.5.3|45F54D483C5EB3C56D1BCCB1CDF1170F0|0x7fafff6fb000|0x7fafff906fff|0
+Module|libavahi-glib.so.1.0.2||libavahi-glib.so.1.0.2|531736E78B3E3E7103694008A0FE28F90|0x7fafff907000|0x7fafffb0afff|0
+Module|libgnutls.so.26.21.8||libgnutls.so.26.21.8|D0797B18564E20075594A5BCAED9C0C60|0x7fafffb0b000|0x7fafffdc5fff|0
+Module|libgailutil.so.18.0.1||libgailutil.so.18.0.1|72ACC6E9E767156C75BA9658D91015D50|0x7fafffdc7000|0x7faffffcefff|0
+Module|libpopt.so.0.0.0||libpopt.so.0.0.0|53CF6E63E2963051093E39CDC63B59EB0|0x7faffffcf000|0x7fb0001dafff|0
+Module|libxml2.so.2.7.8||libxml2.so.2.7.8|17BDD9D9537B18BAD637B288144345B20|0x7fb0001db000|0x7fb000534fff|0
+Module|libORBit-2.so.0.1.0||libORBit-2.so.0.1.0|721699122CCECE63A6E2A74492E71DCD0|0x7fb000536000|0x7fb0007a3fff|0
+Module|libbonobo-activation.so.4.0.0||libbonobo-activation.so.4.0.0|6B32741B5548A425AA5EE68457F19DF40|0x7fb0007a4000|0x7fb0009bdfff|0
+Module|libbonobo-2.so.0.0.0||libbonobo-2.so.0.0.0|D897FF610210D8618CFE5907022D24950|0x7fb0009be000|0x7fb000c32fff|0
+Module|libgnome-keyring.so.0.2.0||libgnome-keyring.so.0.2.0|50934FF6988C62EF2485132784971F060|0x7fb000c33000|0x7fb000e54fff|0
+Module|libgconf-2.so.4.1.5||libgconf-2.so.4.1.5|78D27F8280A740A8D28DA95341D922E50|0x7fb000e55000|0x7fb001082fff|0
+Module|libgnomevfs-2.so.0.2400.4||libgnomevfs-2.so.0.2400.4|A1072EFFBB949558CFB122C96358B7FE0|0x7fb001083000|0x7fb0012edfff|0
+Module|libart_lgpl_2.so.2.3.21||libart_lgpl_2.so.2.3.21|921CD218C8F7A9DC14191D2419D37C340|0x7fb0012ef000|0x7fb001507fff|0
+Module|libgnome-2.so.0.3200.1||libgnome-2.so.0.3200.1|F7B54C36941CEC98656804CB5DEBA2A50|0x7fb001508000|0x7fb00171efff|0
+Module|libgnomecanvas-2.so.0.3000.3||libgnomecanvas-2.so.0.3000.3|A4B011436BAFDE331FD59A11B38274DE0|0x7fb00171f000|0x7fb001953fff|0
+Module|libbonoboui-2.so.0.0.0||libbonoboui-2.so.0.0.0|849E31076BC867928491E763B01722210|0x7fb001954000|0x7fb001bc0fff|0
+Module|libgnomeui-2.so.0.2400.5||libgnomeui-2.so.0.2400.5|AC622823C087F1E741F8E24D44622F5B0|0x7fb001bc2000|0x7fb001e5bfff|0
+Module|libogg.so.0.7.1||libogg.so.0.7.1|7CE65CFFE1B17992BD92FE37057278080|0x7fb001e5d000|0x7fb002063fff|0
+Module|libvorbis.so.0.4.5||libvorbis.so.0.4.5|27C649ED8648B8DE0C0D1C927A80D0D10|0x7fb002064000|0x7fb00228ffff|0
+Module|libltdl.so.7.3.0||libltdl.so.7.3.0|7BE3533A4405F6BBB1B845FD45BB6BE30|0x7fb002290000|0x7fb002499fff|0
+Module|libtdb.so.1.2.9||libtdb.so.1.2.9|97146C5E103A9352B4A804F435255AB70|0x7fb00249a000|0x7fb0026aafff|0
+Module|libvorbisfile.so.3.3.4||libvorbisfile.so.3.3.4|4E3CC52B1F33A13045018DA670EDC8660|0x7fb0026ab000|0x7fb0028b2fff|0
+Module|libcanberra.so.0.2.5||libcanberra.so.0.2.5|FDE735E04FD3D9D0B5044A096A13AEA20|0x7fb0028b3000|0x7fb002ac2fff|0
+Module|libcanberra-gtk.so.0.1.8||libcanberra-gtk.so.0.1.8|1D8BEEADE64BADDEC610E1576DEE6B990|0x7fb002ac3000|0x7fb002cc7fff|0
+Module|libcanberra-gtk-module.so||libcanberra-gtk-module.so|464DC0156A5FA84FAC9FCE1E8325E28B0|0x7fb002cc8000|0x7fb002ecdfff|0
+Module|libmurrine.so||libmurrine.so|56A56852CAE0D5FEB3447AF00A58DF620|0x7fb002ece000|0x7fb0030fefff|0
+Module|56cf4f4769d0f4abc89a4895d7bd3ae1-le64.cache-3||56cf4f4769d0f4abc89a4895d7bd3ae1-le64.cache-3|000000000000000000000000000000000|0x7fb003a00000|0x7fb003a00fff|0
+Module|libdconfsettings.so||libdconfsettings.so|AAA0B3FAC1F9932AE94C47E1E4FDDCDD0|0x7fb003a82000|0x7fb003c89fff|0
+Module|liboverlay-scrollbar-0.2.so.0.0.16||liboverlay-scrollbar-0.2.so.0.0.16|343EDF37DE058829301797C8495160AC0|0x7fb003c8a000|0x7fb003e9afff|0
+Module|libnss_files-2.15.so||libnss_files-2.15.so|1C734D5F2B5C3610309A92B6E8A30B360|0x7fb003e9b000|0x7fb0040a7fff|0
+Module|libnss_nis-2.15.so||libnss_nis-2.15.so|8233136DF7FFA42BBDFF65766B57ECE10|0x7fb0040a8000|0x7fb0042b3fff|0
+Module|libnsl-2.15.so||libnsl-2.15.so|7F6EA508230A652EDF2D8A5E011C06610|0x7fb0042b4000|0x7fb0044cbfff|0
+Module|libnss_compat-2.15.so||libnss_compat-2.15.so|6D33FE1C9B7112BC70B118A6580DC3710|0x7fb0044ce000|0x7fb0046d6fff|0
+Module|UTF-16.so||UTF-16.so|F483538C59760F4799491B9373FB8B460|0x7fb0046d7000|0x7fb0048dafff|0
+Module|locale-archive||locale-archive|000000000000000000000000000000000|0x7fb0048db000|0x7fb004d1dfff|0
+Module|libuuid.so.1.3.0||libuuid.so.1.3.0|037E18FB575A87D9023DD035D91A4BAA0|0x7fb00551f000|0x7fb005723fff|0
+Module|libXdmcp.so.6.0.0||libXdmcp.so.6.0.0|D347AE60E4BF77744E66850C9808F9740|0x7fb005724000|0x7fb005929fff|0
+Module|libXau.so.6.0.0||libXau.so.6.0.0|D7A73167BC2EEF9029813AE5658A46F80|0x7fb00592a000|0x7fb005b2cfff|0
+Module|libICE.so.6.3.0||libICE.so.6.3.0|FFF38C3C84584E4FF36B7A774838500F0|0x7fb005b2d000|0x7fb005d43fff|0
+Module|libSM.so.6.0.1||libSM.so.6.0.1|76EE351B24B6C4C90EA61295C8418F470|0x7fb005d47000|0x7fb005f4efff|0
+Module|libxcb.so.1.1.0||libxcb.so.1.1.0|C95AB2CAC726A1E597FDE920942A9D370|0x7fb005f4f000|0x7fb00616cfff|0
+Module|libxcb-render.so.0.0.0||libxcb-render.so.0.0.0|12379286A5FC1108AEE4EFB17E618C840|0x7fb00616d000|0x7fb006376fff|0
+Module|libxcb-shm.so.0.0.0||libxcb-shm.so.0.0.0|77C14B0F157DE886CEE2761A5A43E7AA0|0x7fb006377000|0x7fb006579fff|0
+Module|libpng12.so.0.46.0||libpng12.so.0.46.0|4A2127A3BE4729BFBC602AE1F64BB2110|0x7fb00657a000|0x7fb0067a1fff|0
+Module|libpixman-1.so.0.24.4||libpixman-1.so.0.24.4|B9997FF15D5DB7DDD6E300FABE6F319B0|0x7fb0067a2000|0x7fb006a28fff|0
+Module|libXcursor.so.1.0.2||libXcursor.so.1.0.2|8BE2FFC59D6737AB92BE5CC674AE56A40|0x7fb006a29000|0x7fb006c32fff|0
+Module|libXrandr.so.2.2.0||libXrandr.so.2.2.0|802E879DE6FC03D3E30A388D1A7048B00|0x7fb006c33000|0x7fb006e3bfff|0
+Module|libXi.so.6.1.0||libXi.so.6.1.0|99C16AC55063CCAE3BA5D3804569EBFE0|0x7fb006e3c000|0x7fb00704afff|0
+Module|libXinerama.so.1.0.0||libXinerama.so.1.0.0|264CDEE62F23276313EDA6A67DB77A4C0|0x7fb00704b000|0x7fb00724dfff|0
+Module|libresolv-2.15.so||libresolv-2.15.so|E0E46E8814494E526A28601CB19B39160|0x7fb00724e000|0x7fb007467fff|0
+Module|libselinux.so.1||libselinux.so.1|D6AB0928E3C1FF183F3531FAA90ECF6C0|0x7fb00746a000|0x7fb007687fff|0
+Module|libpcre.so.3.12.1||libpcre.so.3.12.1|AE2C57A4C060656D726044F50CB6157C0|0x7fb007689000|0x7fb0078c5fff|0
+Module|libffi.so.6.0.0||libffi.so.6.0.0|42A1B026EC977965C9307A512B0CAF360|0x7fb0078c6000|0x7fb007acdfff|0
+Module|libexpat.so.1.5.2||libexpat.so.1.5.2|3B42437F3CB4CF8D6D2A684BF416A07F0|0x7fb007ace000|0x7fb007cf7fff|0
+Module|libz.so.1.2.3.4||libz.so.1.2.3.4|FCEC95F691F35D8D34989398A14B7ECD0|0x7fb007cf8000|0x7fb007f0efff|0
+Module|libgthread-2.0.so.0.3200.1||libgthread-2.0.so.0.3200.1|C1226354620C103F73EEA1B5FB7893010|0x7fb007f0f000|0x7fb008110fff|0
+Module|libXt.so.6.0.0||libXt.so.6.0.0|8135EEBF46BB9BD5E86CFAE6212742A00|0x7fb008111000|0x7fb008375fff|0
+Module|libX11.so.6.3.0||libX11.so.6.3.0|8C39D4DF4B38C9E4F96A4BFA63E4D8BE0|0x7fb008377000|0x7fb0086aafff|0
+Module|libgmodule-2.0.so.0.3200.1||libgmodule-2.0.so.0.3200.1|C66A8AB87D16694CF937DAC0F6B664FE0|0x7fb0086ab000|0x7fb0088aefff|0
+Module|libcairo.so.2.11000.2||libcairo.so.2.11000.2|004D8C7F57D6CB9C78B06248BF6F693C0|0x7fb0088af000|0x7fb008b69fff|0
+Module|libpango-1.0.so.0.3000.0||libpango-1.0.so.0.3000.0|0B6484B366839F9BF893C4DB919339F10|0x7fb008b6d000|0x7fb008db5fff|0
+Module|libpangocairo-1.0.so.0.3000.0||libpangocairo-1.0.so.0.3000.0|7399CB0203754BE8423998526C341E330|0x7fb008db6000|0x7fb008fc1fff|0
+Module|libgdk_pixbuf-2.0.so.0.2600.1||libgdk_pixbuf-2.0.so.0.2600.1|DD9021B2B36B59B6A7BADEE89691AACC0|0x7fb008fc2000|0x7fb0091e1fff|0
+Module|libgdk-x11-2.0.so.0.2400.10||libgdk-x11-2.0.so.0.2400.10|1960A8873DF41407FD59D74CBF7D82630|0x7fb0091e2000|0x7fb009493fff|0
+Module|libpangoft2-1.0.so.0.3000.0||libpangoft2-1.0.so.0.3000.0|D8A3307209551AF5DEE20873B11FA7F30|0x7fb009494000|0x7fb0096bdfff|0
+Module|libgio-2.0.so.0.3200.1||libgio-2.0.so.0.3200.1|3254E51FD3C9E24591957B11F0AFCC8F0|0x7fb0096be000|0x7fb009a0afff|0
+Module|libatk-1.0.so.0.20409.1||libatk-1.0.so.0.20409.1|2DF4A21F3F393CFE003DACC1115DE6500|0x7fb009a0d000|0x7fb009c2efff|0
+Module|libgtk-x11-2.0.so.0.2400.10||libgtk-x11-2.0.so.0.2400.10|FE0171FDF49D945524BB3F5A55FE7D8C0|0x7fb009c2f000|0x7fb00a266fff|0
+Module|libglib-2.0.so.0.3200.1||libglib-2.0.so.0.3200.1|591CE068AF1ED2994F588DAAB7DBF8D50|0x7fb00a269000|0x7fb00a55cfff|0
+Module|libgobject-2.0.so.0.3200.1||libgobject-2.0.so.0.3200.1|DDB5411470C81C34A74AF761A403BABB0|0x7fb00a55e000|0x7fb00a7acfff|0
+Module|libdbus-1.so.3.5.8||libdbus-1.so.3.5.8|14DF88D8296067351AA73723270CEFF00|0x7fb00a7ad000|0x7fb00a9f0fff|0
+Module|libdbus-glib-1.so.2.2.2||libdbus-glib-1.so.2.2.2|43DADC5BB1EB2202A20A4EFA5428AAB10|0x7fb00a9f1000|0x7fb00ac17fff|0
+Module|libasound.so.2.0.0||libasound.so.2.0.0|896C3492FAD29202B4C06B6350B60B2B0|0x7fb00ac18000|0x7fb00af04fff|0
+Module|libXcomposite.so.1.0.0||libXcomposite.so.1.0.0|97F3C5EFD90926A6E10C735BECB8DF5F0|0x7fb00af05000|0x7fb00b107fff|0
+Module|libXfixes.so.3.1.0||libXfixes.so.3.1.0|7A77FFC53CFBA7CE9A005472E748108E0|0x7fb00b108000|0x7fb00b30dfff|0
+Module|libXdamage.so.1.1.0||libXdamage.so.1.1.0|3A428B268049BDD9441ADBDA982CC0960|0x7fb00b30e000|0x7fb00b510fff|0
+Module|libXext.so.6.4.0||libXext.so.6.4.0|C0A8D6FF2E55C2A80ADB6344E5A1D5C80|0x7fb00b511000|0x7fb00b721fff|0
+Module|libXrender.so.1.3.0||libXrender.so.1.3.0|223BF9CD7303011C68BBAA246F9207720|0x7fb00b722000|0x7fb00b92bfff|0
+Module|libfontconfig.so.1.4.4||libfontconfig.so.1.4.4|75729F923954F8363FBC14AD02152B4E0|0x7fb00b92c000|0x7fb00bb61fff|0
+Module|libfreetype.so.6.8.0||libfreetype.so.6.8.0|1414E18E6804ACCEEBB283FC33EE0F780|0x7fb00bb62000|0x7fb00bdfdfff|0
+Module|libxul.so||libxul.so|2E110ACEEBDD217E61ECFE13D97D63B20|0x7fb00bdfe000|0x7fb0113bbfff|0
+Module|libmozsqlite3.so||libmozsqlite3.so|1634A084C336B51601918912331BF2360|0x7fb0114ad000|0x7fb01178afff|0
+Module|libssl3.so||libssl3.so|DF3D6916CE7D7116A5B29211FC893B2C0|0x7fb01178b000|0x7fb0119e8fff|0
+Module|libsmime3.so||libsmime3.so|AD809EB2480CDA697A07EBDD21F0C67C0|0x7fb0119e9000|0x7fb011c18fff|0
+Module|libnss3.so||libnss3.so|C05FEE6A1D99B3157111A2A65F038F490|0x7fb011c19000|0x7fb011f7afff|0
+Module|libnssutil3.so||libnssutil3.so|5EC5EE9D732F04C3657305593046F3790|0x7fb011f7c000|0x7fb0121affff|0
+Module|libplds4.so||libplds4.so|AE047F3EB887A6F907FDD9A4F546D6310|0x7fb0121b1000|0x7fb0123b3fff|0
+Module|libplc4.so||libplc4.so|4BA74C15641F4585EFC08180AAEED5D50|0x7fb0123b4000|0x7fb0125b7fff|0
+Module|libnspr4.so||libnspr4.so|87988E2199DC9895B24BBA7B959FFB660|0x7fb0125b8000|0x7fb0127fcfff|0
+Module|de9486f0b47a4d768a594cb4198cb1c6-le64.cache-3||de9486f0b47a4d768a594cb4198cb1c6-le64.cache-3|000000000000000000000000000000000|0x7fb012a00000|0x7fb012a02fff|0
+Module|libc-2.15.so||libc-2.15.so|45AF61A258D312D4EBECFC54D3317BDF0|0x7fb012a03000|0x7fb012dbafff|0
+Module|libgcc_s.so.1||libgcc_s.so.1|ADD74D5C94FA5A3E18AD415D91D5E5090|0x7fb012dc0000|0x7fb012fd5fff|0
+Module|libm-2.15.so||libm-2.15.so|5C4748B68510CE72C8605CFF06F62AE50|0x7fb012fd6000|0x7fb0132cffff|0
+Module|libstdc++.so.6.0.18||libstdc++.so.6.0.18|C8C3FB885A6714123E0C6EE228D355F60|0x7fb0132d0000|0x7fb0135befff|0
+Module|librt-2.15.so||librt-2.15.so|375B2C35503AC4E6AB881A5DB6F5766F0|0x7fb0135d4000|0x7fb0137dbfff|0
+Module|libdl-2.15.so||libdl-2.15.so|55AF81D1BB1D3EC49D55913D532635FD0|0x7fb0137dc000|0x7fb0139dffff|0
+Module|libpthread-2.15.so||libpthread-2.15.so|9DAF40C397EE7CC1730F7D03693286C50|0x7fb0139e0000|0x7fb013bf8fff|0
+Module|ld-2.15.so||ld-2.15.so|3719FB5302A0741ADF25B3DBDA629B630|0x7fb013bfd000|0x7fb013c1efff|0
+Module|b9d506c9ac06c20b433354fa67a72993-le64.cache-3||b9d506c9ac06c20b433354fa67a72993-le64.cache-3|000000000000000000000000000000000|0x7fb013c1f000|0x7fb013c1ffff|0
+Module|d52a8644073d54c13679302ca1180695-le64.cache-3||d52a8644073d54c13679302ca1180695-le64.cache-3|000000000000000000000000000000000|0x7fb013c20000|0x7fb013c2ffff|0
+Module|e13b20fdb08344e0e664864cc2ede53d-le64.cache-3||e13b20fdb08344e0e664864cc2ede53d-le64.cache-3|000000000000000000000000000000000|0x7fb013c30000|0x7fb013c42fff|0
+Module|gschemas.compiled||gschemas.compiled|000000000000000000000000000000000|0x7fb013dc6000|0x7fb013debfff|0
+Module|b47c4e1ecd0709278f4910c18777a504-le64.cache-3||b47c4e1ecd0709278f4910c18777a504-le64.cache-3|000000000000000000000000000000000|0x7fb013df2000|0x7fb013df6fff|0
+Module|3f7329c5293ffd510edef78f73874cfd-le64.cache-3||3f7329c5293ffd510edef78f73874cfd-le64.cache-3|000000000000000000000000000000000|0x7fb013df7000|0x7fb013dfcfff|0
+Module|7ef2298fde41cc6eeb7af42e48b7d293-le64.cache-3||7ef2298fde41cc6eeb7af42e48b7d293-le64.cache-3|000000000000000000000000000000000|0x7fb013dfd000|0x7fb013e01fff|0
+Module|user||user|000000000000000000000000000000000|0x7fb013e12000|0x7fb013e14fff|0
+Module|gconv-modules.cache||gconv-modules.cache|000000000000000000000000000000000|0x7fb013e15000|0x7fb013e1bfff|0
+Module|user||user|000000000000000000000000000000000|0x7fb013e1c000|0x7fb013e1cfff|0
+Module|linux-gate.so||linux-gate.so|75C70C0C697CFC3335A55C90475D300A0|0x7fff353ff000|0x7fff353fffff|0
+
+0|0|libc-2.15.so||||0xe6b03
+0|1|libxul.so|PollWrapper|hg:hg.mozilla.org/mozilla-central:widget/gtk/nsAppShell.cpp:944fb6e682b8|44|0xf
+0|2|libpopt.so.0.0.0||||0x30ffe
+0|3|libpopt.so.0.0.0||||0x31006
+0|4|libglib-2.0.so.0.3200.1||||0x47ff5
+0|5|libglib-2.0.so.0.3200.1||||0x48123
+0|6|libxul.so|nsAppShell::ProcessNextNativeEvent(bool)|hg:hg.mozilla.org/mozilla-central:widget/gtk/nsAppShell.cpp:944fb6e682b8|156|0x4
+0|7|libxul.so|nsBaseAppShell::DoProcessNextNativeEvent(bool, unsigned int)|hg:hg.mozilla.org/mozilla-central:widget/nsBaseAppShell.cpp:944fb6e682b8|140|0xf
+0|8|libpopt.so.0.0.0||||0x30fff
+0|9|libxul.so|nsBaseAppShell::OnProcessNextEvent(nsIThreadInternal*, bool, unsigned int)|hg:hg.mozilla.org/mozilla-central:widget/nsBaseAppShell.cpp:944fb6e682b8|298|0xa
+0|10|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|812|0x1f
+0|11|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+0|12|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+0|13|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+0|14|libxul.so|mozilla::ipc::MessagePump::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|140|0xd
+0|15|libxul.so|_fini|||0x1fb8de7
+0|16|libxul.so|_fini|||0x2384f07
+0|17|libxul.so||||0x9ea75d
+0|18|libxul.so|nsLocalFile::AppendRelativePath(nsAString_internal const&)|hg:hg.mozilla.org/mozilla-central:xpcom/io/nsLocalFileUnix.cpp:944fb6e682b8|2121|0xb
+0|19|||||0x7fff3534a7cf
+0|20|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+0|21|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+0|22|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+0|23|libxul.so|nsBaseAppShell::Run()|hg:hg.mozilla.org/mozilla-central:widget/nsBaseAppShell.cpp:944fb6e682b8|164|0xc
+0|24|libxul.so|nsAppStartup::Run()|hg:hg.mozilla.org/mozilla-central:toolkit/components/startup/nsAppStartup.cpp:944fb6e682b8|281|0x5
+0|25|libc-2.15.so||||0x8a3ff
+0|26|libxul.so|XREMain::XRE_mainRun()|hg:hg.mozilla.org/mozilla-central:toolkit/xre/nsAppRunner.cpp:944fb6e682b8|4173|0x14
+0|27|libxul.so|NS_LogAddRef|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsTraceRefcnt.cpp:944fb6e682b8|983|0x4
+0|28|libxul.so|NS_LogRelease|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsTraceRefcnt.cpp:944fb6e682b8|1038|0x4
+0|29|libxul.so|_fini|||0x518e49
+0|30|libxul.so|nsLocalFile::AppendRelativePath(nsAString_internal const&)|hg:hg.mozilla.org/mozilla-central:xpcom/io/nsLocalFileUnix.cpp:944fb6e682b8|2121|0xb
+0|31|||||0x7fff3534a93f
+0|32|libxul.so|nsComponentManagerImpl::Release()|hg:hg.mozilla.org/mozilla-central:xpcom/components/nsComponentManager.cpp:944fb6e682b8|934|0xa
+0|33|libxul.so|nsLocalFile::AppendRelativePath(nsAString_internal const&)|hg:hg.mozilla.org/mozilla-central:xpcom/io/nsLocalFileUnix.cpp:944fb6e682b8|2121|0xb
+0|34|||||0x7fff3534a9af
+0|35|libxul.so|XREMain::XRE_main(int, char**, nsXREAppData const*)|hg:hg.mozilla.org/mozilla-central:toolkit/xre/nsAppRunner.cpp:944fb6e682b8|4249|0x4
+0|36|libxul.so|XRE_main|hg:hg.mozilla.org/mozilla-central:toolkit/xre/nsAppRunner.cpp:944fb6e682b8|4469|0x4
+0|37|libxul.so|_fini|||0x23090e7
+0|38|libxul.so|_fini|||0x230912f
+0|39|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+0|40|libnspr4.so|PR_GetThreadPrivate|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/threads/prtpd.c:944fb6e682b8|204|0x4
+0|41|libpopt.so.0.0.0||||0x3103e
+0|42|firefox-bin|do_main|hg:hg.mozilla.org/mozilla-central:browser/app/nsBrowserApp.cpp:944fb6e682b8|294|0x5
+0|43|firefox-bin|_fini|||0x375
+1|0|libc-2.15.so||||0xe6b03
+1|1|libglib-2.0.so.0.3200.1||||0x47ff5
+1|2|libglib-2.0.so.0.3200.1||||0x48459
+1|3|libdconfsettings.so||||0x498a
+1|4|libglib-2.0.so.0.3200.1||||0x699a4
+1|5|libpthread-2.15.so||||0x7e99
+2|0|libc-2.15.so||||0xe6b03
+2|1|libglib-2.0.so.0.3200.1||||0x47ff5
+2|2|libglib-2.0.so.0.3200.1||||0x48459
+2|3|libgio-2.0.so.0.3200.1||||0xc92c5
+2|4|libglib-2.0.so.0.3200.1||||0x699a4
+2|5|libpthread-2.15.so||||0x7e99
+3|0|libc-2.15.so||||0xee6d9
+3|1|libxul.so|epoll_wait|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/third_party/libevent/epoll_sub.c:944fb6e682b8|63|0x9
+3|2|libxul.so|epoll_dispatch|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/third_party/libevent/epoll.c:944fb6e682b8|407|0x14
+3|3|libxul.so|event_base_loop|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/third_party/libevent/event.c:944fb6e682b8|1607|0x8
+3|4|libxul.so|_fini|||0x1f031c7
+3|5|libxul.so|MessageLoop::DoWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|442|0x7
+3|6|libxul.so|base::MessagePumpLibevent::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_pump_libevent.cc:944fb6e682b8|357|0xd
+3|7|libstdc++.so.6.0.18||||0x10487
+3|8|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+3|9|libxul.so|LockImpl::Unlock()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/lock_impl_posix.cc:944fb6e682b8|46|0x4
+3|10|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+3|11|libxul.so|base::Thread::ThreadMain()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/thread.cc:944fb6e682b8|170|0x7
+3|12|libxul.so|_fini|||0x1fded17
+4|0|libpthread-2.15.so||||0xbd84
+4|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+4|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+4|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+4|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+4|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+4|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+4|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+4|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+4|9|libxul.so|_fini|||0x1fb8de7
+4|10|libxul.so|_fini|||0x2384f07
+4|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+4|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+4|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+4|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+4|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+4|16|libpthread-2.15.so||||0x7e99
+5|0|libc-2.15.so||||0xe6b03
+5|1|libnspr4.so|_pr_poll_with_poll|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptio.c:944fb6e682b8|3922|0x11
+5|2|libpopt.so.0.0.0||||0x31000
+5|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+5|4|libxul.so|PLDHashEntryHdr* PLDHashTable::SearchTable<(PLDHashTable::SearchReason)0>(void const*, unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/pldhash.cpp:944fb6e682b8|388|0xc
+5|5|libxul.so|mozilla::net::nsHttpConnectionMgr::GetSpdyPreferredConn(mozilla::net::nsHttpConnectionMgr::nsConnectionEntry*)|hg:hg.mozilla.org/mozilla-central:netwerk/protocol/http/nsHttpConnectionMgr.cpp:944fb6e682b8|2329|0x7
+5|6|libxul.so|mozilla::net::nsHttpConnectionMgr::ProcessSpdyPendingQ(mozilla::net::nsHttpConnectionMgr::nsConnectionEntry*)|hg:hg.mozilla.org/mozilla-central:netwerk/protocol/http/nsHttpConnectionMgr.cpp:944fb6e682b8|2261|0x4
+5|7|libxul.so|mozilla::DeadlockDetector<mozilla::BlockingResourceBase>::CheckAcquisition(mozilla::BlockingResourceBase const*, mozilla::BlockingResourceBase const*)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/DeadlockDetector.h:944fb6e682b8|114|0x7
+5|8|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+5|9|libxul.so|mozilla::net::nsHttpConnectionMgr::ProcessPendingQForEntry(mozilla::net::nsHttpConnectionMgr::nsConnectionEntry*, bool)|hg:hg.mozilla.org/mozilla-central:netwerk/protocol/http/nsHttpConnectionMgr.cpp:944fb6e682b8|1184|0x4
+5|10|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+5|11|libplds4.so|PL_CompareStrings|hg:hg.mozilla.org/mozilla-central:nsprpub/lib/ds/plhash.c:944fb6e682b8|476|0x4
+5|12|libnspr4.so|PR_GetThreadPrivate|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/threads/prtpd.c:944fb6e682b8|204|0x4
+5|13|firefox-bin|arena_dalloc|hg:hg.mozilla.org/mozilla-central:memory/mozjemalloc/jemalloc.c:944fb6e682b8|1685|0xb
+5|14|libxul.so|_fini|||0x39793e
+5|15|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+5|16|libnspr4.so|PR_GetThreadPrivate|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/threads/prtpd.c:944fb6e682b8|204|0x4
+5|17|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+5|18|linux-gate.so||||0x958
+5|19|libxul.so|nsSocketTransportService::Poll(bool, unsigned int*, mozilla::BaseTimeDuration<mozilla::TimeDurationValueCalculator>*)|hg:hg.mozilla.org/mozilla-central:netwerk/base/nsSocketTransportService2.cpp:944fb6e682b8|427|0xd
+5|20|libxul.so|nsSocketTransportService::DoPollIteration(bool, mozilla::BaseTimeDuration<mozilla::TimeDurationValueCalculator>*)|hg:hg.mozilla.org/mozilla-central:netwerk/base/nsSocketTransportService2.cpp:944fb6e682b8|1000|0x13
+5|21|libxul.so|nsSocketTransportService::Run()|hg:hg.mozilla.org/mozilla-central:netwerk/base/nsSocketTransportService2.cpp:944fb6e682b8|793|0x16
+5|22|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+5|23|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+5|24|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+5|25|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|339|0xa
+5|26|libxul.so|_fini|||0x1fb8de7
+5|27|libxul.so|_fini|||0x2384f07
+5|28|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+5|29|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+5|30|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+5|31|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+5|32|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+5|33|libpthread-2.15.so||||0x7e99
+6|0|libpthread-2.15.so||||0xbd84
+6|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+6|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+6|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+6|4|libpthread-2.15.so||||0x7e99
+7|0|libpthread-2.15.so||||0xbd84
+7|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+7|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+7|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+7|4|libpthread-2.15.so||||0x7e99
+8|0|libpthread-2.15.so||||0xbd84
+8|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+8|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+8|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+8|4|libpthread-2.15.so||||0x7e99
+9|0|libpthread-2.15.so||||0xbd84
+9|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+9|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+9|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+9|4|libpthread-2.15.so||||0x7e99
+10|0|libpthread-2.15.so||||0xbd84
+10|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+10|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+10|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+10|4|libpthread-2.15.so||||0x7e99
+11|0|libpthread-2.15.so||||0xbd84
+11|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+11|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+11|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+11|4|libpthread-2.15.so||||0x7e99
+12|0|libpthread-2.15.so||||0xbd84
+12|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+12|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+12|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+12|4|libpthread-2.15.so||||0x7e99
+13|0|libpthread-2.15.so||||0xbd84
+13|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+13|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+13|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+13|4|libpthread-2.15.so||||0x7e99
+14|0|libpthread-2.15.so||||0xbd84
+14|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+14|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+14|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+14|4|libpthread-2.15.so||||0x7e99
+15|0|libpthread-2.15.so||||0xbd84
+15|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+15|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+15|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+15|4|libpthread-2.15.so||||0x7e99
+16|0|libpthread-2.15.so||||0xbd84
+16|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+16|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+16|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+16|4|libpthread-2.15.so||||0x7e99
+17|0|libpthread-2.15.so||||0xbd84
+17|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+17|2|libxul.so|js::HelperThread::threadLoop()|hg:hg.mozilla.org/mozilla-central:js/src/vm/HelperThreads.cpp:944fb6e682b8|550|0x9
+17|3|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+17|4|libpthread-2.15.so||||0x7e99
+18|0|libpthread-2.15.so||||0xbd84
+18|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+18|2|libxul.so|Watchdog::Sleep(unsigned int)|hg:hg.mozilla.org/mozilla-central:js/xpconnect/src/XPCJSRuntime.cpp:944fb6e682b8|1096|0x7
+18|3|libxul.so|WatchdogMain|hg:hg.mozilla.org/mozilla-central:js/xpconnect/src/XPCJSRuntime.cpp:944fb6e682b8|1091|0x4
+18|4|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+18|5|libpthread-2.15.so||||0x7e99
+19|0|libpthread-2.15.so||||0xbd84
+19|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+19|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+19|3|libxul.so|mozilla::HangMonitor::ThreadMain(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/Monitor.h:944fb6e682b8|88|0xa
+19|4|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+19|5|libpthread-2.15.so||||0x7e99
+20|0|libpthread-2.15.so||||0xc0fe
+20|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+20|2|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|387|0xa
+20|3|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+20|4|libxul.so|TimerThread::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|363|0xa
+20|5|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+20|6|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+20|7|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+20|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|339|0xa
+20|9|libxul.so|_fini|||0x1fb8de7
+20|10|libxul.so|_fini|||0x2384f07
+20|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+20|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+20|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+20|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+20|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+20|16|libpthread-2.15.so||||0x7e99
+21|0|libpthread-2.15.so||||0xbd84
+21|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+21|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+21|3|libpopt.so.0.0.0||||0x30ffe
+21|4|libxul.so|mozilla::net::CacheIOThread::ThreadFunc()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/Monitor.h:944fb6e682b8|40|0xf
+21|5|libxul.so|_fini|||0x115528
+21|6|libxul.so|mozilla::net::CacheIOThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:netwerk/cache2/CacheIOThread.cpp:944fb6e682b8|167|0x7
+21|7|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+21|8|libpthread-2.15.so||||0x7e99
+22|0|libpthread-2.15.so||||0xbd84
+22|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+22|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+22|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+22|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+22|5|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+22|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+22|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+22|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+22|9|libxul.so|_fini|||0x1fb8de7
+22|10|libxul.so|_fini|||0x2384f07
+22|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+22|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+22|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+22|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+22|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+22|16|libpthread-2.15.so||||0x7e99
+23|0|libpthread-2.15.so||||0xbd84
+23|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+23|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+23|3|libpopt.so.0.0.0||||0x30ffe
+23|4|libxul.so|nsCertVerificationThread::Run()|hg:hg.mozilla.org/mozilla-central:security/manager/ssl/src/nsCertVerificationThread.cpp:944fb6e682b8|115|0xa
+23|5|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+23|6|libpthread-2.15.so||||0x7e99
+24|0|libpthread-2.15.so||||0xbd84
+24|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+24|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+24|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+24|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+24|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+24|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+24|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+24|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+24|9|libxul.so|_fini|||0x1fb8de7
+24|10|libxul.so|_fini|||0x2384f07
+24|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+24|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+24|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+24|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+24|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+24|16|libpthread-2.15.so||||0x7e99
+25|0|libpthread-2.15.so||||0xbd84
+25|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+25|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+25|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+25|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+25|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+25|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+25|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+25|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+25|9|libxul.so|_fini|||0x1fb8de7
+25|10|libxul.so|_fini|||0x2384f07
+25|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+25|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+25|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+25|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+25|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+25|16|libpthread-2.15.so||||0x7e99
+26|0|libpthread-2.15.so||||0xbd84
+26|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+26|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+26|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+26|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+26|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+26|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+26|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+26|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+26|9|libxul.so|_fini|||0x1fb8de7
+26|10|libxul.so|_fini|||0x2384f07
+26|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+26|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+26|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+26|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+26|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+26|16|libpthread-2.15.so||||0x7e99
+27|0|libpthread-2.15.so||||0xbd84
+27|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+27|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+27|3|libxul.so|mozilla::dom::workers::WorkerPrivate::WaitForWorkerEvents(unsigned int)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5649|0x4
+27|4|libxul.so|mozilla::dom::workers::WorkerPrivate::DoRunLoop(JSContext*)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5110|0xa
+27|5|libpopt.so.0.0.0||||0x31000
+27|6|libxul.so|js::CurrentThreadCanAccessRuntime(JSRuntime*)|hg:hg.mozilla.org/mozilla-central:js/src/vm/Runtime.cpp:944fb6e682b8|804|0xb
+27|7|libxul.so|WorkerThreadPrimaryRunnable::Run|hg:hg.mozilla.org/mozilla-central:dom/workers/RuntimeService.cpp:944fb6e682b8|2725|0x4
+27|8|libnspr4.so|PR_GetThreadPrivate|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/threads/prtpd.c:944fb6e682b8|204|0x4
+27|9|libxul.so|_fini|||0x225e047
+27|10|libxul.so|_fini|||0x1fb05f7
+27|11|libxul.so|_fini|||0x1fb0657
+27|12|libxul.so|_fini|||0x1fb0f17
+27|13|libxul.so|_fini|||0x1fb0f47
+28|0|libpthread-2.15.so||||0xbd84
+28|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+28|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+28|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+28|4|libxul.so|nsTimerImpl::Release()|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc.h:944fb6e682b8|205|0x7
+28|5|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+28|6|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+28|7|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+28|8|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+28|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+28|10|libxul.so|_fini|||0x1fb8de7
+28|11|libxul.so|_fini|||0x2384f07
+28|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+28|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+28|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+28|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+28|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+28|17|libpthread-2.15.so||||0x7e99
+29|0|libpthread-2.15.so||||0xbd84
+29|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+29|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+29|3|libxul.so|mozilla::dom::workers::WorkerPrivate::WaitForWorkerEvents(unsigned int)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5649|0x4
+29|4|libxul.so|mozilla::dom::workers::WorkerPrivate::DoRunLoop(JSContext*)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5110|0xa
+29|5|libpopt.so.0.0.0||||0x31000
+29|6|libxul.so|js::CurrentThreadCanAccessRuntime(JSRuntime*)|hg:hg.mozilla.org/mozilla-central:js/src/vm/Runtime.cpp:944fb6e682b8|804|0xb
+29|7|libxul.so|WorkerThreadPrimaryRunnable::Run|hg:hg.mozilla.org/mozilla-central:dom/workers/RuntimeService.cpp:944fb6e682b8|2725|0x4
+29|8|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+29|9|libnspr4.so|PR_GetThreadPrivate|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/threads/prtpd.c:944fb6e682b8|204|0x4
+29|10|libxul.so|_fini|||0x225e047
+29|11|libxul.so|_fini|||0x1fb05f7
+29|12|libxul.so|_fini|||0x1fb0657
+29|13|libxul.so|_fini|||0x1fb0f17
+29|14|libxul.so|_fini|||0x1fb0f47
+30|0|libpthread-2.15.so||||0xbd84
+30|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+30|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+30|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+30|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+30|5|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+30|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+30|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+30|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+30|9|libxul.so|_fini|||0x1fb8de7
+30|10|libxul.so|_fini|||0x2384f07
+30|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+30|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+30|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+30|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+30|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+30|16|libpthread-2.15.so||||0x7e99
+31|0|libpthread-2.15.so||||0xc0fe
+31|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+31|2|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|693|0xe
+31|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+31|4|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+31|5|libxul.so|nsThreadPool::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0x11
+31|6|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+31|7|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+31|8|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+31|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+31|10|libxul.so|_fini|||0x1fb8de7
+31|11|libxul.so|_fini|||0x2384f07
+31|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+31|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+31|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+31|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+31|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+31|17|libc-2.15.so||||0x3b2827
+31|18|libpthread-2.15.so||||0x7e99
+32|0|libpthread-2.15.so||||0xbd84
+32|1|libxul.so|ConditionVariable::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/condition_variable_posix.cc:944fb6e682b8|40|0x8
+32|2|libxul.so|base::WaitableEvent::Enqueue(base::WaitableEvent::Waiter*)|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc.h:944fb6e682b8|181|0x4
+32|3|libxul.so|base::WaitableEvent::TimedWait(base::TimeDelta const&)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|195|0x7
+32|4|libxul.so|_fini|||0x1fdf227
+32|5|libxul.so|base::WaitableEvent::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|201|0x10
+32|6|libxul.so|base::MessagePumpDefault::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_pump_default.cc:944fb6e682b8|60|0x8
+32|7|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+32|8|libxul.so|LockImpl::Unlock()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/lock_impl_posix.cc:944fb6e682b8|46|0x4
+32|9|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+32|10|libxul.so|base::Thread::ThreadMain()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/thread.cc:944fb6e682b8|170|0x7
+32|11|libxul.so|_fini|||0x1fded17
+33|0|libpthread-2.15.so||||0xbd84
+33|1|libxul.so|ConditionVariable::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/condition_variable_posix.cc:944fb6e682b8|40|0x8
+33|2|libxul.so|base::WaitableEvent::Enqueue(base::WaitableEvent::Waiter*)|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc.h:944fb6e682b8|181|0x4
+33|3|libxul.so|base::WaitableEvent::TimedWait(base::TimeDelta const&)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|195|0x7
+33|4|libxul.so|_fini|||0x1fdf227
+33|5|libxul.so|base::WaitableEvent::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|201|0x10
+33|6|libxul.so|base::MessagePumpDefault::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_pump_default.cc:944fb6e682b8|60|0x8
+33|7|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+33|8|libxul.so|LockImpl::Unlock()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/lock_impl_posix.cc:944fb6e682b8|46|0x4
+33|9|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+33|10|libxul.so|base::Thread::ThreadMain()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/thread.cc:944fb6e682b8|170|0x7
+33|11|libxul.so|_fini|||0x1fded17
+34|0|libpthread-2.15.so||||0xbd84
+34|1|libxul.so|ConditionVariable::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/condition_variable_posix.cc:944fb6e682b8|40|0x8
+34|2|libxul.so|base::WaitableEvent::Enqueue(base::WaitableEvent::Waiter*)|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc.h:944fb6e682b8|181|0x4
+34|3|libxul.so|base::WaitableEvent::TimedWait(base::TimeDelta const&)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|195|0x7
+34|4|libxul.so|_fini|||0x1fdf227
+34|5|libxul.so|_fini|||0x14c997
+34|6|libxul.so|base::WaitableEvent::Wait()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/waitable_event_posix.cc:944fb6e682b8|201|0x10
+34|7|libxul.so|base::MessagePumpDefault::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_pump_default.cc:944fb6e682b8|60|0x8
+34|8|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+34|9|libxul.so|LockImpl::Unlock()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/lock_impl_posix.cc:944fb6e682b8|46|0x4
+34|10|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+34|11|libxul.so|base::Thread::ThreadMain()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/thread.cc:944fb6e682b8|170|0x7
+34|12|libxul.so|_fini|||0x1fded17
+35|0|libpthread-2.15.so||||0xbd84
+35|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+35|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+35|3|libxul.so|mozilla::dom::workers::WorkerPrivate::WaitForWorkerEvents(unsigned int)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5649|0x4
+35|4|libxul.so|mozilla::dom::workers::WorkerPrivate::DoRunLoop(JSContext*)|hg:hg.mozilla.org/mozilla-central:dom/workers/WorkerPrivate.cpp:944fb6e682b8|5110|0xa
+35|5|libpopt.so.0.0.0||||0x31000
+35|6|libxul.so|js::CurrentThreadCanAccessRuntime(JSRuntime*)|hg:hg.mozilla.org/mozilla-central:js/src/vm/Runtime.cpp:944fb6e682b8|804|0xb
+35|7|libxul.so|WorkerThreadPrimaryRunnable::Run|hg:hg.mozilla.org/mozilla-central:dom/workers/RuntimeService.cpp:944fb6e682b8|2725|0x4
+35|8|libxul.so|_fini|||0x225e047
+35|9|libxul.so|_fini|||0x1fb05f7
+35|10|libxul.so|_fini|||0x1fb0657
+35|11|libxul.so|_fini|||0x1fb0f17
+35|12|libxul.so|_fini|||0x1fb0f47
+36|0|libpthread-2.15.so||||0xc0fe
+36|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+36|2|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|693|0xe
+36|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+36|4|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+36|5|libxul.so|nsThreadPool::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0x11
+36|6|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+36|7|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+36|8|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+36|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|339|0xa
+36|10|libxul.so|_fini|||0x1fb8de7
+36|11|libxul.so|_fini|||0x2384f07
+36|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+36|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+36|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+36|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+36|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+36|17|libc-2.15.so||||0x3b2827
+36|18|libpthread-2.15.so||||0x7e99
+37|0|libpthread-2.15.so||||0xbd84
+37|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+37|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+37|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+37|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+37|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+37|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+37|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+37|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+37|9|libxul.so|_fini|||0x1fb8de7
+37|10|libxul.so|_fini|||0x2384f07
+37|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+37|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+37|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+37|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+37|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+37|16|libc-2.15.so||||0x3b2827
+37|17|libpthread-2.15.so||||0x7e99
+38|0|libpthread-2.15.so||||0xc0fe
+38|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+38|2|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|693|0xe
+38|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+38|4|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+38|5|libxul.so|nsThreadPool::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0x11
+38|6|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+38|7|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+38|8|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+38|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|339|0xa
+38|10|libxul.so|_fini|||0x1fb8de7
+38|11|libxul.so|_fini|||0x2384f07
+38|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+38|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+38|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+38|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+38|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+38|17|libc-2.15.so||||0x3b2827
+38|18|libpthread-2.15.so||||0x7e99
+39|0|libpthread-2.15.so||||0xc0fe
+39|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+39|2|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|693|0xe
+39|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+39|4|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+39|5|libxul.so|nsThreadPool::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0x11
+39|6|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+39|7|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+39|8|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+39|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|339|0xa
+39|10|libxul.so|_fini|||0x1fb8de7
+39|11|libxul.so|_fini|||0x2384f07
+39|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+39|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+39|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+39|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+39|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+39|17|libc-2.15.so||||0x3b2827
+39|18|libpthread-2.15.so||||0x7e99
+40|0|libpthread-2.15.so||||0xbd84
+40|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+40|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+40|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+40|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+40|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+40|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+40|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+40|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+40|9|libxul.so|_fini|||0x1fb8de7
+40|10|libxul.so|_fini|||0x2384f07
+40|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+40|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+40|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+40|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+40|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+40|16|libpthread-2.15.so||||0x7e99
+41|0|libpthread-2.15.so||||0xc0fe
+41|1|libnspr4.so|pt_TimedWait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|264|0x4
+41|2|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|693|0xe
+41|3|libnspr4.so|PR_GetCurrentThread|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|651|0xa
+41|4|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+41|5|libxul.so|nsThreadPool::Run()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0x11
+41|6|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|841|0x11
+41|7|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+41|8|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+41|9|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+41|10|libxul.so|_fini|||0x1fb8de7
+41|11|libxul.so|_fini|||0x2384f07
+41|12|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+41|13|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+41|14|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+41|15|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+41|16|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+41|17|libpthread-2.15.so||||0x7e99
+42|0|libpthread-2.15.so||||0xbd84
+42|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+42|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+42|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+42|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+42|5|libxul.so|MessageLoop::ReloadWorkQueue()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|405|0xd
+42|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+42|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+42|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+42|9|libxul.so|_fini|||0x1fb8de7
+42|10|libxul.so|_fini|||0x2384f07
+42|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+42|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+42|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+42|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+42|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+42|16|libpthread-2.15.so||||0x7e99
+43|0|libpthread-2.15.so||||0xbd84
+43|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+43|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+43|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+43|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+43|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+43|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+43|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+43|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+43|9|libxul.so|_fini|||0x1fb8de7
+43|10|libxul.so|_fini|||0x2384f07
+43|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+43|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+43|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+43|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+43|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+43|16|libpthread-2.15.so||||0x7e99
+44|0|libpthread-2.15.so||||0xbd84
+44|1|libnspr4.so|PR_WaitCondVar|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|385|0x7
+44|2|libxul.so|mozilla::CondVar::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|501|0xb
+44|3|libpopt.so.0.0.0||||0x30ffe
+44|4|libxul.so|mozilla::dom::DOMStorageDBThread::ThreadFunc()|hg:hg.mozilla.org/mozilla-central:xpcom/glue/Monitor.h:944fb6e682b8|40|0xe
+44|5|libnspr4.so|PR_SetCurrentThreadName|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|1766|0xd
+44|6|libpthread-2.15.so||||0x10daf
+44|7|libxul.so|mozilla::dom::DOMStorageDBThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:dom/storage/DOMStorageDBThread.cpp:944fb6e682b8|286|0x7
+44|8|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+44|9|libpthread-2.15.so||||0x7e99
+45|0|libpthread-2.15.so||||0xbd84
+45|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+45|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+45|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+45|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+45|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+45|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+45|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+45|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+45|9|libxul.so|_fini|||0x1fb8de7
+45|10|libxul.so|_fini|||0x2384f07
+45|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+45|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+45|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+45|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+45|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+45|16|libpthread-2.15.so||||0x7e99
+46|0|libpthread-2.15.so||||0xbd84
+46|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+46|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+46|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+46|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+46|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+46|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+46|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+46|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+46|9|libxul.so|_fini|||0x1fb8de7
+46|10|libxul.so|_fini|||0x2384f07
+46|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+46|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+46|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+46|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+46|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+46|16|libpthread-2.15.so||||0x7e99
+47|0|libpthread-2.15.so||||0xbd84
+47|1|libnspr4.so|PR_Wait|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptsynch.c:944fb6e682b8|691|0xb
+47|2|libxul.so|mozilla::ReentrantMonitor::Wait(unsigned int)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/BlockingResourceBase.cpp:944fb6e682b8|470|0xb
+47|3|libxul.so|nsEventQueue::GetEvent(bool, nsIRunnable**)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/ReentrantMonitor.h:944fb6e682b8|190|0xb
+47|4|libxul.so|nsThread::ProcessNextEvent(bool, bool*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.h:944fb6e682b8|125|0x14
+47|5|libxul.so|TimerThread::RemoveTimer(nsTimerImpl*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/TimerThread.cpp:944fb6e682b8|438|0x8
+47|6|libxul.so|NS_ProcessNextEvent(nsIThread*, bool)|hg:hg.mozilla.org/mozilla-central:xpcom/glue/nsThreadUtils.cpp:944fb6e682b8|265|0xc
+47|7|libxul.so|MessageLoop::DoIdleWork()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|487|0x4
+47|8|libxul.so|mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*)|hg:hg.mozilla.org/mozilla-central:ipc/glue/MessagePump.cpp:944fb6e682b8|368|0xd
+47|9|libxul.so|_fini|||0x1fb8de7
+47|10|libxul.so|_fini|||0x2384f07
+47|11|libxul.so|MessageLoop::RunInternal()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|233|0x16
+47|12|libxul.so|MessageLoop::MessageLoop(MessageLoop::Type)|hg:hg.mozilla.org/mozilla-central:xpcom/base/nsRefPtr.h:944fb6e682b8|134|0x7
+47|13|libxul.so|MessageLoop::Run()|hg:hg.mozilla.org/mozilla-central:ipc/chromium/src/base/message_loop.cc:944fb6e682b8|226|0x7
+47|14|libxul.so|nsThread::ThreadFunc(void*)|hg:hg.mozilla.org/mozilla-central:xpcom/threads/nsThread.cpp:944fb6e682b8|348|0x7
+47|15|libnspr4.so|_pt_root|hg:hg.mozilla.org/mozilla-central:nsprpub/pr/src/pthreads/ptthread.c:944fb6e682b8|212|0x6
+47|16|libpthread-2.15.so||||0x7e99
