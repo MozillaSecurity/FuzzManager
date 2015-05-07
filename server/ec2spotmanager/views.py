@@ -10,9 +10,7 @@ from django.conf import settings
 import os
 import errno
 
-from ec2spotmanager.common.prices import get_spot_price_per_region 
-from server.ec2spotmanager.common.prices import get_spot_prices
-
+from ec2spotmanager.common.prices import get_spot_prices
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
