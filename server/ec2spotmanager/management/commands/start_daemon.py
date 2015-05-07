@@ -8,6 +8,7 @@ import datetime
 import time
 import logging
 import threading
+from ec2spotmanager.common.prices import get_spot_prices, get_price_median
 
 use_multiprocess_price_fetch = False
 if use_multiprocess_price_fetch:
@@ -19,22 +20,6 @@ from laniakea.laniakea import LaniakeaCommandLine
 from laniakea.core.manager import Laniakea
 import boto.ec2
 import boto.exception
-
-# This function must be defined at the module level so it can be pickled
-# by the multiprocessing module when calling this asynchronously.
-def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_type):
-    '''Gets spot prices of the specified region and instance type'''
-    now = datetime.datetime.now()
-    start = now - datetime.timedelta(hours=6)
-    r = boto.ec2.connect_to_region(region_name, 
-                                   aws_access_key_id=aws_key_id,
-                                   aws_secret_access_key=aws_secret_key
-                                   ).get_spot_price_history(
-                                        start_time=start.isoformat(),
-                                        instance_type=instance_type,
-                                        product_description="Linux/UNIX"
-                                        ) #TODO: Make configurable
-    return r
 
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
@@ -106,39 +91,8 @@ class Command(NoArgsCommand):
             else:
                 print("[Main] Pool size ok.")
                 
-    def get_best_region_zone(self, config):
-        def get_price_median(data):
-            sdata = sorted(data)
-            n = len(sdata)
-            if not n % 2:
-                return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
-            return sdata[n / 2]
-        
-        if use_multiprocess_price_fetch:
-            pool = Pool(cpu_count())
-            
-        results = []
-        for region in config.ec2_allowed_regions:
-            if use_multiprocess_price_fetch:
-                f = pool.apply_async(get_spot_price_per_region, [region, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type])
-            else:
-                f = get_spot_price_per_region(region, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
-            results.append(f)
-
-        prices = {}
-        for result in results:
-            if use_multiprocess_price_fetch:
-                result = result.get()
-            for entry in result:
-                if not entry.region.name in prices:
-                    prices[entry.region.name] = {}
-                    
-                zone = entry.availability_zone
-                
-                if not zone in prices[entry.region.name]:
-                    prices[entry.region.name][zone] = []
-                    
-                prices[entry.region.name][zone].append(entry.price)
+    def get_best_region_zone(self, config):        
+        prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
                 
         # Calculate median values for all availability zones and best zone/price
         best_zone = None
