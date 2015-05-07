@@ -52,7 +52,6 @@ class Command(NoArgsCommand):
             criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool = instance_pool, isCritical = True)
             
             if criticalPoolStatusEntries:
-                print("Instance Pool has unchecked critical errors, ignoring...")
                 continue
             
             config = instance_pool.config.flatten()
