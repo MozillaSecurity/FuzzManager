@@ -1,10 +1,8 @@
 from django.core.management.base import NoArgsCommand
 from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE,\
-    PoolStatusEntry
+    PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 from django.conf import settings
 from ec2spotmanager.management.common import pid_lock_file
-import warnings
-import datetime
 import time
 import logging
 import threading
@@ -18,6 +16,7 @@ from django.utils import timezone
 
 from laniakea.laniakea import LaniakeaCommandLine
 from laniakea.core.manager import Laniakea
+
 import boto.ec2
 import boto.exception
 
@@ -98,12 +97,14 @@ class Command(NoArgsCommand):
         best_zone = None
         best_region = None
         best_median = None
+        rejected_prices = {}
         for region in prices:
             for zone in prices[region]:
                 # Do not consider a zone/region combination that has a current
                 # price higher than the maximum price we are willing to pay,
                 # even if the median would end up being lower than our maximum.
                 if prices[region][zone][-1] > config.ec2_max_price:
+                    rejected_prices[zone] = prices[region][zone][-1]
                     continue
                 
                 median = get_price_median(prices[region][zone])
@@ -112,7 +113,7 @@ class Command(NoArgsCommand):
                     best_zone = zone
                     best_region = region
         
-        return (best_region, best_zone)
+        return (best_region, best_zone, rejected_prices)
     
     def create_laniakea_images(self, config):
         images = { "default" : {} }
@@ -141,7 +142,20 @@ class Command(NoArgsCommand):
         images = self.create_laniakea_images(config)
         
         # Figure out where to put our instances
-        (region, zone) = self.get_best_region_zone(config)
+        (region, zone, rejected) = self.get_best_region_zone(config)
+        
+        if not region:
+            entries = PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['price-too-low'])
+            if not entries:
+                entry = PoolStatusEntry()
+                entry.pool = pool
+                entry.type = POOL_STATUS_ENTRY_TYPE['price-too-low']
+                entry.msg = "No allowed region was cheap enough to spawn instances."
+                for zone in rejected:
+                    entry.msg += "\n%s at %s" % (zone, rejected[zone])
+                entry.save()
+            return
+        
         print("Using region %s with availability zone %s" % (region,zone))
         
         instances = []
