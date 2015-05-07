@@ -87,8 +87,9 @@ def viewPool(request, poolid):
     while last_config.parent != None:
         last_config.parent.child = last_config
         last_config = last_config.parent
-        
-    parent_config = last_config
+    
+    if last_config != pool.config:
+        parent_config = last_config
     
     data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances }
     
