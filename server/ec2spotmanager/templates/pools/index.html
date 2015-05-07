@@ -48,6 +48,8 @@
 					{% endif %}
 				</div>
             	    		{% endfor %}
+			{% elif not pool.isEnabled %}
+				<span class="label label-warning">Disabled</span>
 			{% else %}
 				<span class="label label-success">Healthy</span>
 			{% endif %}

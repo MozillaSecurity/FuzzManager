@@ -12,6 +12,11 @@
 		</table>
 		<div class="btn-group">
 			<a href="{% url 'ec2spotmanager:pooldel' pool.pk %}" class="btn btn-default">Edit</a>
+			{% if pool.isEnabled %}
+			<a href="{% url 'ec2spotmanager:pooldisable' pool.pk %}" class="btn btn-default">Disable</a>
+			{% else %}
+			<a href="{% url 'ec2spotmanager:poolenable' pool.pk %}" class="btn btn-default">Enable</a>
+			{% endif %}
 			<a href="{% url 'ec2spotmanager:pooldel' pool.pk %}" class="btn btn-danger">Delete</a>
 		</div>
 		<br/>
