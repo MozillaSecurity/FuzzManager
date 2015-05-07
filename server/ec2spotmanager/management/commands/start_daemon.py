@@ -72,6 +72,12 @@ class Command(NoArgsCommand):
             
             # Continue working with the instances we have running
             instances = running_instances
+                    
+            if not instance_pool.isEnabled:
+                if running_instances:
+                    self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
+                    self.update_pool_instances(instance_pool, instances, config)
+                continue
             
             if (not instance_pool.last_cycled) or instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval):
                 print("[Main] Pool needs to be cycled, terminating all instances...")

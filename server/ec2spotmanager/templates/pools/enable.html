@@ -1,0 +1,21 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+
+{% block body_content %}
+<div class="panel">
+	<div class="body notitle">
+		<form action="{% url 'ec2spotmanager:poolenable' pool.pk %}" method="post">
+		{% csrf_token %}
+		<p><strong>Are you sure that you want to enable this instance pool?</strong></p>
+		<div class="field">
+			<strong>Instance Pool Name: </strong>{{ pool.name|escape }}
+		</div>
+		<div class="field">
+			<strong>{{ instanceCount }} instances will be spawned.</strong>
+		</div>
+		<input type="submit" value="Enable" />
+		</form>
+        </div>
+</div>
+{% endblock body_content %}

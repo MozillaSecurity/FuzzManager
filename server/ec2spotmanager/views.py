@@ -96,6 +96,54 @@ def viewPool(request, poolid):
     return render(request, 'pools/view.html', data)
 
 @login_required(login_url='/login/')
+def disablePool(request, poolid):
+    pool = get_object_or_404(InstancePool, pk=poolid)
+    instances = Instance.objects.filter(pool=poolid)
+    
+    if not pool.isEnabled:
+        return render(request, 'pools/error.html', { 'error_message' : 'That pool is already disabled.' })
+            
+    if request.method == 'POST':            
+        pool.isEnabled = False
+        pool.save()
+        return redirect('ec2spotmanager:poolview', poolid=pool.pk)
+    elif request.method == 'GET':
+        return render(request, 'pools/disable.html', { 'pool' : pool, 'instanceCount' : len(instances) })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def enablePool(request, poolid):
+    pool = get_object_or_404(InstancePool, pk=poolid)
+    size = pool.config.flatten().size
+    
+    if pool.isEnabled:
+        return render(request, 'pools/error.html', { 'error_message' : 'That pool is already enabled.' })
+    
+    if request.method == 'POST':            
+        pool.isEnabled = True
+        pool.last_cycled = None
+        pool.save()
+        return redirect('ec2spotmanager:poolview', poolid=pool.pk)
+    elif request.method == 'GET':
+        return render(request, 'pools/enable.html', { 'pool' : pool, 'instanceCount' : size })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def createPool(request): 
+    if request.method == 'POST':            
+        pool = InstancePool()
+        pool.config = int(request.POST['config'])
+        pool.save()
+        return redirect('ec2spotmanager:poolview', poolid=pool.pk)
+    elif request.method == 'GET':
+        configurations = PoolConfiguration.objects.all()
+        return render(request, 'pools/create.html', { 'configurations' : configurations })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
 def viewConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
     
@@ -105,12 +153,20 @@ def viewConfig(request, configid):
 
 @login_required(login_url='/login/')
 def deletePool(request, poolid):
-    entry = get_object_or_404(InstancePool, pk=poolid)
+    pool = get_object_or_404(InstancePool, pk=poolid)
+    
+    if pool.isEnabled:
+        return render(request, 'pools/error.html', { 'error_message' : 'That pool is still enabled, you must disable it first.' })
+    
+    instances = Instance.objects.filter(pool=poolid)
+    if instances:
+        return render(request, 'pools/error.html', { 'error_message' : 'That pool still has instances associated with it. Please wait for their termination first.' })
+
     if request.method == 'POST':            
-        entry.delete()
+        pool.delete()
         return redirect('ec2spotmanager:pools')
     elif request.method == 'GET':
-        return render(request, 'pools/delete.html', { 'entry' : entry })
+        return render(request, 'pools/delete.html', { 'pool' : pool })
     else:
         raise SuspiciousOperation
 

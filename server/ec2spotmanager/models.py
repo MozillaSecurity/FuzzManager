@@ -156,6 +156,7 @@ class PoolConfiguration(models.Model):
     
 class InstancePool(models.Model):
     config = models.ForeignKey(PoolConfiguration)
+    isEnabled = models.BooleanField(default=False)
     last_cycled = models.DateTimeField(blank=True, null=True)
 
 class Instance(models.Model):

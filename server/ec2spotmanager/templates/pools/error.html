@@ -1,0 +1,11 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+
+{% block body_content %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+       </div>
+</div>
+{% endblock body_content %}
