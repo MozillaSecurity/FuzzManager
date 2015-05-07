@@ -336,7 +336,7 @@ class Command(NoArgsCommand):
                     # updates on it. Otherwise, parallel save operations on the instance object
                     # might lead to inconsistent states of the database model    
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        if not None in instance_ids_by_region:
+                        if not None in instance_ids_by_region[region]:
                             assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
                                 or boto_instance.state_code == INSTANCE_STATE['terminated'])
                             
