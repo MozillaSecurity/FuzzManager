@@ -12,14 +12,14 @@
         <thead>
             <tr>
                 <th style="width: 100px;">Zone</th>
-                <th style="width: 25px;">Current Price</th>
+                <th style="width: 25px;">Current Price (USD)</th>
             </tr>
         </thead>
         <tbody>
-            {% for zone in zones %}
+            {% for zone, price in prices %}
             <tr class="{% cycle odd,even %}">
                 <td>{{ zone }}</td>
-                <td>{{ prices[zone] }}</td>
+                <td>{{ price }}</td>
             </tr>{% endfor %}
         </tbody>
     </table>

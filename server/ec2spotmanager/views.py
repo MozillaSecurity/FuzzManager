@@ -110,8 +110,12 @@ def viewPoolPrices(request, poolid):
         for zone in prices[region]:
             zones.append(zone)
             latest_price_by_zone[zone] = prices[region][zone][-1]
+        
+    prices = []    
+    for zone in sorted(zones):
+        prices.append( (zone, latest_price_by_zone[zone]) )
             
-    return render(request, 'pools/prices.html', { 'zones' : sorted(zones), 'prices' : latest_price_by_zone })
+    return render(request, 'pools/prices.html', { 'prices' : prices })
 
 @login_required(login_url='/login/')
 def disablePool(request, poolid):
