@@ -17,8 +17,12 @@ import requests
 from requests.exceptions import ConnectionError
 
 # Server and credentials (user/password) used for testing
-testServerURL = "http://127.0.0.1:8000/rest/"
+# IMPORTANT: In order for these tests to work, you must adjust
+# the credentials and auth token here to your own test setup,
+# otherwise authentication will fail.
+testServerURL = "http://127.0.0.1:8000/crashmanager/rest/"
 testAuthCreds = ("admin", "admin")
+testAuthToken = "1d7c831476c010645cf107c1b269366335a50f33"
 
 # Check if we have a remote server for testing, if not, skip tests
 haveServer = True
@@ -33,12 +37,12 @@ class TestRESTCrashEntryInterface(unittest.TestCase):
         url = testServerURL + "crashes/"
         
         # Must yield forbidden without authentication
-        self.assertEqual(requests.get(url).status_code, requests.codes["forbidden"])
-        self.assertEqual(requests.post(url, {}).status_code, requests.codes["forbidden"])
-        self.assertEqual(requests.put(url, {}).status_code, requests.codes["forbidden"])
+        self.assertEqual(requests.get(url).status_code, requests.codes["unauthorized"])
+        self.assertEqual(requests.post(url, {}).status_code, requests.codes["unauthorized"])
+        self.assertEqual(requests.put(url, {}).status_code, requests.codes["unauthorized"])
         
         # Retry with authentication
-        response = requests.get(url, auth=testAuthCreds)
+        response = requests.get(url, headers=dict(Authorization="Token %s" % testAuthToken))
 
         # Must be empty now
         self.assertEqual(response.status_code, requests.codes["ok"])
@@ -50,15 +54,19 @@ class TestRESTCrashEntryInterface(unittest.TestCase):
                 "rawStderr" : "data on\nstderr",
                 "rawCrashData" : "some\ncrash\ndata",
                 "testcase" : "foo();\ntest();",
+                "testcase_isbinary": False,
+                "testcase_quality": 0,
+                "testcase_ext" : "js",
                 "platform" : "x86",
                 "product" : "mozilla-central",
                 "product_version" : "ba0bc4f26681",
                 "os" : "linux",
                 "client" : "client1",
+                "tool" : "tool1",
                 }
         
-        self.assertEqual(requests.post(url, data, auth=testAuthCreds).status_code, requests.codes["created"])
-        response = requests.get(url, auth=testAuthCreds)
+        self.assertEqual(requests.post(url, data, headers=dict(Authorization="Token %s" % testAuthToken)).status_code, requests.codes["created"])
+        response = requests.get(url, headers=dict(Authorization="Token %s" % testAuthToken))
         
         json = response.json()
         self.assertEqual(len(json), lengthBeforePost + 1)
