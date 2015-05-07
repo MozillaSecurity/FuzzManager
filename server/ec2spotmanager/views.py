@@ -10,6 +10,10 @@ from django.conf import settings
 import os
 import errno
 
+from ec2spotmanager.common.prices import get_spot_price_per_region 
+from server.ec2spotmanager.common.prices import get_spot_prices
+
+
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
 
@@ -94,6 +98,22 @@ def viewPool(request, poolid):
     data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances }
     
     return render(request, 'pools/view.html', data)
+
+@login_required(login_url='/login/')
+def viewPoolPrices(request, poolid):
+    pool = get_object_or_404(InstancePool, pk=poolid)
+    config = pool.config.flatten()
+    prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
+
+    zones = []
+    latest_price_by_zone = {}
+    
+    for region in prices:
+        for zone in prices[region]:
+            zones.append(zone)
+            latest_price_by_zone[zone] = prices[region][zone][-1]
+            
+    return render(request, 'pools/prices.html', { 'zones' : sorted(zones), 'prices' : latest_price_by_zone })
 
 @login_required(login_url='/login/')
 def disablePool(request, poolid):
