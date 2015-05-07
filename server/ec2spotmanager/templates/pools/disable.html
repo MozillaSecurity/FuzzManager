@@ -3,13 +3,14 @@
 {% load url from future %}
 
 {% block body_content %}
-<div class="panel">
-	<div class="body notitle">
+<div class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-question-sign"></i> Disable Pool</div>
+	<div class="panel-body">
 		<form action="{% url 'ec2spotmanager:pooldisable' pool.pk %}" method="post">
 		{% csrf_token %}
 		<p><strong>Are you sure that you want to disable this instance pool?</strong></p>
 		<div class="field">
-			<strong>Instance Pool Name: </strong>{{ pool.name|escape }}
+			<strong>Instance Pool Name: </strong>{{ pool.config.name|escape }}
 		</div>
 		<div class="field">
 			<strong>{{ instanceCount }} instances will be terminated immediately.</strong>

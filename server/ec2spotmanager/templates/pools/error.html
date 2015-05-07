@@ -3,8 +3,9 @@
 {% load url from future %}
 
 {% block body_content %}
-<div class="panel">
-	<div class="body notitle">
+<div class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-exclamation-sign"></i> Error</div>
+	<div class="panel-body">
 		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
        </div>
 </div>
