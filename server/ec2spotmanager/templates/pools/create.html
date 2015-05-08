@@ -8,7 +8,7 @@
     <div class="panel-body">
 	    <p>Select the configuration that the instance pool should use:</p>
     </div>
-    <form action="{% url 'ec2spotmanager:createpool' %}" method="post">
+    <form action="{% url 'ec2spotmanager:poolcreate' %}" method="post">
         {% csrf_token %}
         <select id="config" name="config">
             {% for c in configurations %}
