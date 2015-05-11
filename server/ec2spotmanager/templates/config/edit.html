@@ -20,7 +20,7 @@
         {% if config.pk != None %}
             <form action="{% url 'ec2spotmanager:configedit' config.pk %}" method="post">
 	{% else %}
-            <form action="{% url 'ec2spotmanager:confignew' %}" method="post">
+            <form action="{% url 'ec2spotmanager:configcreate' %}" method="post">
         {% endif %}
             {% csrf_token %}
 
@@ -58,7 +58,7 @@
             <br/>
 
             <label for="id_ec2_security_groups">EC2 Security Groups</label><br/>
-            <input id="id_ec2_security_groups" class="form-control" name="ec2_security_groups" type="text" value="{{ config.ec2_security_groups|default:"" }}">
+            <input id="id_ec2_security_groups" class="form-control" name="ec2_security_groups" type="text" value="{{ config.ec2_security_groups_list|listcsv }}">
             <br/>
 
             <label for="id_ec2_instance_type">EC2 Instance Type</label><br/>
@@ -86,11 +86,12 @@
             <br/>
 
             <label for="id_ec2_tags">EC2 Additional Tags</label><br/>
-            <input id="id_ec2_tags" class="form-control" name="ec2_tags" type="text" value="{{ config.ec2_tags|default:"" }}">
+            <input id="id_ec2_tags" class="form-control" name="ec2_tags" type="text" value="{{ config.ec2_tags_dict|dictcsv }}">
             <br/>
 
             <label for="id_ec2_raw_config">Additional Raw Configuration</label><br/>
-            <textarea id="id_ec2_raw_config" class="form-control" name="ec2_raw_config" spellcheck='false'>{{ config.ec2_raw_config|default:"" }}</textarea>
+	    <input id="id_ec2_raw_config" class="form-control" name="ec2_raw_config" type="text" value="{{ config.ec2_raw_config_dict|dictcsv }}">
+	    <br/>
 
             <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
         </form>
