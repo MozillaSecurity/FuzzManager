@@ -21,6 +21,27 @@
 		</div>
 		<br/>
 		<hr/>
+
+		<div>
+			<strong>Configuration Check:</strong>
+		{% if config_params_missing %}
+			<span class="label label-danger">Failed</span>
+			<div>
+				<strong>Missing Configuration Parameters</strong>
+				<ul>
+					{% for param in config_params_missing %}
+					<li>{{ param }}</li>
+					{% endfor %}
+				</ul>
+			</div>
+		{% else %}
+			<span class="label label-success">Passed</span>
+		{% endif %}
+		</div>
+
+		<br/>
+		<hr/>
+
 		<div>
 			<strong>Configuration Hierachy:</strong>
 			<ul>
