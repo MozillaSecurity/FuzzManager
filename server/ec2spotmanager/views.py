@@ -166,12 +166,120 @@ def createPool(request):
         raise SuspiciousOperation
 
 @login_required(login_url='/login/')
+def viewConfigs(request):
+    configs = PoolConfiguration.objects.all()
+    roots = configs.filter(parent = None)
+    
+    def add_children(node):
+        node.children = []
+        children = configs.filter(parent = node)
+        for child in children:
+            node.children.append(child)
+            add_children(child)
+    
+    for root in roots:
+        add_children(root)      
+    
+    data = { 'roots' : roots }
+    
+    return render(request, 'config/index.html', data)
+
+@login_required(login_url='/login/')
 def viewConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
     
     data = { 'config' : config }
     
-    return render(request, 'pools/config.html', data)
+    return render(request, 'config/view.html', data)
+
+
+def __handleConfigPOST(request, config):
+    if int(request.POST['parent']) < 0:
+        config.parent = None
+    else:
+        # TODO: Cyclic config check
+        config.parent = get_object_or_404(PoolConfiguration, pk=int(request.POST['parent'])) 
+
+    config.name = request.POST['name']
+    
+    if request.POST['size']:
+        config.size = int(request.POST['size'])
+    else:
+        config.size = None
+    
+    if request.POST['cycle_interval']:
+        config.cycle_interval = int(request.POST['cycle_interval'])
+    else:
+        config.cycle_interval = None
+        
+    config.aws_access_key_id = request.POST['aws_access_key_id']
+    config.aws_secret_access_key = request.POST['aws_secret_access_key']
+    config.ec2_key_name = request.POST['ec2_key_name']
+    config.ec2_instance_type = request.POST['ec2_instance_type']
+    config.ec2_image_name = request.POST['ec2_image_name']
+    
+    if request.POST['ec2_max_price']:
+        config.ec2_max_price = float(request.POST['ec2_max_price'])
+    else:
+        config.ec2_max_price = None
+        
+    if request.POST['ec2_allowed_regions']:
+        config.ec2_allowed_regions_list = [x.strip() for x in request.POST['ec2_allowed_regions'].split(',')]
+        
+    if request.POST['ec2_security_groups']:
+        config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
+        
+    if request.POST['ec2_userdata']:
+        pass #TODO
+
+    if request.POST['ec2_userdata_macros']:
+        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')]) 
+        
+    if request.POST['ec2_tags']:
+        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')]) 
+    
+    if request.POST['ec2_raw_config']:
+        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')])
+        
+    config.save()
+    return redirect('ec2spotmanager:configview', configid=config.pk)
+
+@login_required(login_url='/login/')
+def createConfig(request):
+    if request.method == 'POST':
+        config = PoolConfiguration()
+        return __handleConfigPOST(request, config)
+    elif request.method == 'GET':
+        configurations = PoolConfiguration.objects.all()
+        
+        if "clone" in request.GET:
+            config = get_object_or_404(PoolConfiguration, pk=int(request.GET["clone"]))
+            config.name = "%s (Cloned)" % config.name
+            clone = True
+        else:
+            config = PoolConfiguration()
+            clone = False
+        
+        config.deserializeFields()
+        
+        data = { 'config' : config, 'configurations' : configurations, 'edit' : False, 'clone' : clone  }
+        return render(request, 'config/edit.html', data)
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def editConfig(request, configid):
+    config = get_object_or_404(PoolConfiguration, pk=configid)
+    config.deserializeFields()
+    
+    if request.method == 'POST':
+        return __handleConfigPOST(request, config)
+    elif request.method == 'GET':
+        configurations = PoolConfiguration.objects.all()
+        data = { 'config' : config, 'configurations' : configurations, 'edit' : True }
+        return render(request, 'config/edit.html', data)
+    else:
+        raise SuspiciousOperation
 
 @login_required(login_url='/login/')
 def deletePool(request, poolid):

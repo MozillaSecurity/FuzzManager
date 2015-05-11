@@ -1,8 +1,9 @@
 from django import template
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
-class RecurseConfigChain(template.Node):
+class RecurseConfigTree(template.Node):
     def __init__(self, template_nodes, config_var):
         self.template_nodes = template_nodes
         self.config_var = config_var
@@ -10,8 +11,9 @@ class RecurseConfigChain(template.Node):
     def _render_node(self, context, node):
         context.push()
         context['node'] = node
-        if node.child:
-            context['children'] = self._render_node(context, node.child)
+        children = [self._render_node(context, x) for x in node.children]
+        if node.children:
+            context['children'] = mark_safe(''.join(children))
         rendered = self.template_nodes.render(context)
         context.pop()
         return rendered
@@ -30,4 +32,4 @@ def recurseconfig(parser, token):
     template_nodes = parser.parse(('endrecurseconfig',))
     parser.delete_first_token()
 
-    return RecurseConfigChain(template_nodes, config_var)
+    return RecurseConfigTree(template_nodes, config_var)

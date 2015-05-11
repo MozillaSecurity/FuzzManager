@@ -17,3 +17,17 @@ def linejoin(value):
 @register.filter
 def varformat(arg, val):
     return arg % val
+
+@register.filter
+def listcsv(value):
+    if value:
+        return ", ".join(value)
+    else:
+        return ""
+    
+@register.filter
+def dictcsv(value):
+    if value:
+        return ", ".join(["%s=%s" % x for x in value.items()])
+    else:
+        return ""
