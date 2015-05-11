@@ -1,0 +1,33 @@
+WSGIPythonPath /path/to/repo/FuzzManager/server
+<VirtualHost *:80>
+	ServerName fuzzmanager.your.domain
+
+	Alias /static/ /path/to/repo/FuzzManager/server/crashmanager/static/
+	Alias /tests/ /path/to/repo/FuzzManager/server/tests/
+
+	WSGIScriptAlias / /path/to/repo/FuzzManager/server/server/wsgi.py
+	WSGIPassAuthorization On
+
+	<Location />
+		AuthType Basic
+		AuthName "LDAP Login"
+		AuthBasicProvider file ldap
+		AuthUserFile /path/to/.htpasswd
+		# Your LDAP configuration here, including Require directives
+
+		# This user is used by clients to download test cases and signatures
+		Require user fuzzmanager
+	</Location>
+
+	<Location /crashmanager/rest/>
+		Satisfy Any
+		Allow from all
+	</Location>
+	
+	<Directory /path/to/repo/FuzzManager/server>
+		<Files wsgi.py>
+			Order deny,allow
+			Allow from all
+		</Files>
+	</Directory>
+</VirtualHost>
