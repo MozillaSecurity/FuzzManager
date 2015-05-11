@@ -183,7 +183,8 @@ def forceCyclePool(request, poolid):
 def createPool(request): 
     if request.method == 'POST':            
         pool = InstancePool()
-        pool.config = int(request.POST['config'])
+        config = get_object_or_404(PoolConfiguration, pk=int(request.POST['config']))
+        pool.config = config
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
