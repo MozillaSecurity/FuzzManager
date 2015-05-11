@@ -73,7 +73,6 @@ def pools(request):
     
     return render(request, 'pools/index.html', data)
 
-
 @login_required(login_url='/login/')
 def viewPool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
@@ -83,17 +82,18 @@ def viewPool(request, poolid):
         instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
     
     last_config = pool.config
-    last_config.child = None
-    parent_config = None
+    last_config.children = []
     
     while last_config.parent != None:
-        last_config.parent.child = last_config
+        last_config.parent.children = [ last_config ]
         last_config = last_config.parent
     
-    if last_config != pool.config:
-        parent_config = last_config
+    parent_config = last_config
+        
+    # Figure out if any parameters are missing
+    missing = pool.config.getMissingParameters()
     
-    data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances }
+    data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances, 'config_params_missing' : missing }
     
     return render(request, 'pools/view.html', data)
 
@@ -137,6 +137,14 @@ def disablePool(request, poolid):
 @login_required(login_url='/login/')
 def enablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
+    
+    # Safety check: Figure out if any parameters are missing,
+    # even though the link to this function should not be
+    # reachable in the UI at this point already.
+    missing = pool.config.getMissingParameters()
+    if missing:
+        return render(request, 'pools/error.html', { 'error_message' : 'Pool is missing configuration parameters.' })
+    
     size = pool.config.flatten().size
     
     if pool.isEnabled:
