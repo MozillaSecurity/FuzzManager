@@ -20,15 +20,15 @@
 		</div>
 		<br/>
 		<hr/>
-		<div class="dropdown">
-			<a id="dLabel" role="button" data-toggle="dropdown" class="btn btn-primary" data-target="#" href="/page.html">Settings <span class="caret"></span></a>
-			<ul class="dropdown-menu multi-level" role="menu" aria-labelledby="dropdownMenu">
-			  {% recurseconfig parent_config %}
-			  <li class="dropdown-submenu">
-				  <a href="{% url 'ec2spotmanager:configview' node.pk %}">{{ node.name }}</a>
-				  {% if node.child %}
-				  	<ul class="dropdown-menu">{{ children }}</ul>
-				  {% endif %}
+		<div>
+			<strong>Configuration Hierachy:</strong>
+			<ul>
+			  	{% recurseconfig parent_config %}
+			  	<li>
+				 <a href="{% url 'ec2spotmanager:configview' node.pk %}">{{ node.name }}</a>
+				 {% if node.children %}
+				 	<ul>{{ children }}</ul>
+				 {% endif %}
 				 {% endrecurseconfig %}
 				</li>
 			</ul>
