@@ -2,12 +2,11 @@ from django.db import models
 from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
-import re
 import json
 import os
 
 def get_storage_path(self, name):
-    return os.path.join(re.sub("[^a-zA-Z0-9-_]", "", self.name), name)
+    return os.path.join("poolconfig-%s-files" % self.pk, name)
 
 class FlatObject(dict): 
     __getattr__ = dict.__getitem__
