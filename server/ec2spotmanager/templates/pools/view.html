@@ -11,7 +11,6 @@
 			<tr><td style="width: 100px;">Last Cycled:</td><td>{{ pool.last_cycled|date:"r" }}</td></tr>
 		</table>
 		<div class="btn-group">
-			<a href="{% url 'ec2spotmanager:pooldel' pool.pk %}" class="btn btn-default">Edit</a>
 			{% if pool.isEnabled %}
 			<a href="{% url 'ec2spotmanager:pooldisable' pool.pk %}" class="btn btn-default">Disable</a>
 			{% else %}
