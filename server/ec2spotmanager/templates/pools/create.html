@@ -7,7 +7,6 @@
     <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Create Instance Pool</div>
     <div class="panel-body">
 	    <p>Select the configuration that the instance pool should use:</p>
-    </div>
     <form action="{% url 'ec2spotmanager:poolcreate' %}" method="post">
         {% csrf_token %}
         <select id="config" name="config">
