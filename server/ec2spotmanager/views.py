@@ -153,6 +153,24 @@ def enablePool(request, poolid):
         raise SuspiciousOperation
 
 @login_required(login_url='/login/')
+def forceCyclePool(request, poolid):
+    pool = get_object_or_404(InstancePool, pk=poolid)
+
+    if not pool.isEnabled:
+        return render(request, 'pools/error.html', { 'error_message' : 'Pool is disabled.' })
+    
+    size = pool.config.flatten().size
+    
+    if request.method == 'POST':
+        pool.last_cycled = None
+        pool.save()
+        return redirect('ec2spotmanager:poolview', poolid=pool.pk)
+    elif request.method == 'GET':
+        return render(request, 'pools/cycle.html', { 'pool' : pool, 'instanceCount' : size })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
 def createPool(request): 
     if request.method == 'POST':            
         pool = InstancePool()
