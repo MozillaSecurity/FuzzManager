@@ -18,6 +18,12 @@ INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.iteritems()
 POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low" }
 POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.iteritems())
 
+class OverwritingStorage(FileSystemStorage):
+    def get_available_name(self, name):
+        if self.exists(name):
+            os.remove(os.path.join(getattr(settings, 'USERDATA_STORAGE', None), name))
+        return name
+
 
 class PoolConfiguration(models.Model):
     parent = models.ForeignKey("self", blank=True, null=True)
@@ -30,7 +36,7 @@ class PoolConfiguration(models.Model):
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_type = models.CharField(max_length=255, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_userdata_file =  models.FileField(storage=FileSystemStorage(location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
+    ec2_userdata_file =  models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
     ec2_userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
     ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
@@ -159,7 +165,7 @@ class PoolConfiguration(models.Model):
             self.ec2_userdata_file.open(mode='w')
             self.ec2_userdata_file.write(self.ec2_userdata)
             self.ec2_userdata_file.close()
-            self.save()
+        self.save()
             
     def getMissingParameters(self):
         flat_config = self.flatten()
