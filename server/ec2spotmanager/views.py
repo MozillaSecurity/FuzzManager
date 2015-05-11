@@ -11,6 +11,7 @@ import os
 import errno
 
 from ec2spotmanager.common.prices import get_spot_prices
+from django.core.files.base import ContentFile
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -254,20 +255,25 @@ def __handleConfigPOST(request, config):
         
     if request.POST['ec2_security_groups']:
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
-        
-    if request.POST['ec2_userdata']:
-        pass #TODO
 
     if request.POST['ec2_userdata_macros']:
         config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')]) 
         
     if request.POST['ec2_tags']:
-        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')]) 
+        config.ec2_tags_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')]) 
     
     if request.POST['ec2_raw_config']:
-        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')])
-        
+        config.ec2_raw_config_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_raw_config'].split(',')])
+    
+    # Ensure we have a primary key before attempting to store files
     config.save()
+    
+    if request.POST['ec2_userdata']:
+        if not config.ec2_userdata_file.name:
+            config.ec2_userdata_file.save("default.sh", ContentFile(""))
+        config.ec2_userdata = request.POST['ec2_userdata']
+        config.storeTestAndSave()
+    
     return redirect('ec2spotmanager:configview', configid=config.pk)
 
 @login_required(login_url='/login/')
@@ -281,6 +287,7 @@ def createConfig(request):
         if "clone" in request.GET:
             config = get_object_or_404(PoolConfiguration, pk=int(request.GET["clone"]))
             config.name = "%s (Cloned)" % config.name
+            config.pk = None
             clone = True
         else:
             config = PoolConfiguration()
