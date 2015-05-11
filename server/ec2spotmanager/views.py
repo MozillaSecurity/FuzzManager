@@ -239,12 +239,31 @@ def __handleConfigPOST(request, config):
         config.cycle_interval = int(request.POST['cycle_interval'])
     else:
         config.cycle_interval = None
+    
+    if request.POST['aws_access_key_id']:
+        config.aws_access_key_id = request.POST['aws_access_key_id']
+    else:
+        config.aws_access_key_id = None
+    
+    if request.POST['aws_secret_access_key']:
+        config.aws_secret_access_key = request.POST['aws_secret_access_key']
+    else:
+        config.aws_secret_access_key = None
         
-    config.aws_access_key_id = request.POST['aws_access_key_id']
-    config.aws_secret_access_key = request.POST['aws_secret_access_key']
-    config.ec2_key_name = request.POST['ec2_key_name']
-    config.ec2_instance_type = request.POST['ec2_instance_type']
-    config.ec2_image_name = request.POST['ec2_image_name']
+    if request.POST['ec2_key_name']:
+        config.ec2_key_name = request.POST['ec2_key_name']
+    else:
+        config.ec2_key_name = None
+        
+    if request.POST['ec2_instance_type']:
+        config.ec2_instance_type = request.POST['ec2_instance_type']
+    else:
+        config.ec2_instance_type = None
+        
+    if request.POST['ec2_image_name']:
+        config.ec2_image_name = request.POST['ec2_image_name']
+    else:
+        config.ec2_image_name = None
     
     if request.POST['ec2_max_price']:
         config.ec2_max_price = float(request.POST['ec2_max_price'])
