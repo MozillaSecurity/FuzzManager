@@ -11,7 +11,7 @@
         {% csrf_token %}
         <select id="template" name="template">
             {% for t in templates %}
-            <option value="{{ t.pk }}" {% if t.pk== template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
+            <option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
             {% endfor %}
         </select>
 
