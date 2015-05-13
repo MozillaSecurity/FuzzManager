@@ -280,6 +280,7 @@ class Command(NoArgsCommand):
         """ Check the state of the instances in a pool and update it in the database """
         instance_ids_by_region = self.get_instance_ids_by_region(instances)
         instances_by_ids = self.get_instances_by_ids(instances)
+        instances_left = [].extend(instances)
         
         for region in instance_ids_by_region:
             cluster = Laniakea(None)
@@ -310,6 +311,7 @@ class Command(NoArgsCommand):
                         continue
                         
                     instance = instances_by_ids[boto_instance.id]
+                    instances_left.remove(instance)
                     
                     # Check the status code and update if necessary
                     if instance.status_code != boto_instance.state_code:
@@ -325,5 +327,10 @@ class Command(NoArgsCommand):
             except boto.exception.EC2ResponseError as msg:
                 logging.error("%s: boto failure: %s" % ("update_pool_instances", msg))
                 return 1
-            
+        
+        if instances_left:
+            print("DEBUG: Deleting %s instances left in database without corresponding EC2 entry:")
+            for instance in instances_left:
+                print(instance.ec2_instance_id)
+                instance.delete()
                     
