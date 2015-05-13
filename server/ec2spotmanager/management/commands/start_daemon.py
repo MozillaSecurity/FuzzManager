@@ -38,6 +38,15 @@ class Command(NoArgsCommand):
             if criticalPoolStatusEntries:
                 continue
             
+            if instance_pool.config.isCyclic() or instance_pool.config.getMissingParameters():
+                entry = PoolStatusEntry()
+                entry.pool = instance_pool
+                entry.isCritical = True
+                entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
+                entry.msg = "Configuration error."
+                entry.save()
+                continue
+                
             config = instance_pool.config.flatten()
             instances = Instance.objects.filter(pool=instance_pool)
             
