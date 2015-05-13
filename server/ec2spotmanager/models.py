@@ -15,7 +15,7 @@ class FlatObject(dict):
 INSTANCE_STATE_CODE = { 0 : "pending", 16 : "running", 32 : "shutting-down", 48 : "terminated", 64 : "stopping", 80 : "stopped" }
 INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.iteritems())
 
-POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low" }
+POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low", 2: "config-error" }
 POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.iteritems())
 
 class OverwritingStorage(FileSystemStorage):
