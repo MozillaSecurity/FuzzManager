@@ -280,7 +280,11 @@ class Command(NoArgsCommand):
         """ Check the state of the instances in a pool and update it in the database """
         instance_ids_by_region = self.get_instance_ids_by_region(instances)
         instances_by_ids = self.get_instances_by_ids(instances)
-        instances_left = list(instances)
+        instances_left = []
+        
+        for instance_id in instances_by_ids:
+            if instance_id:
+                instances_left.append(instances_by_ids[instance_id])
         
         for region in instance_ids_by_region:
             cluster = Laniakea(None)
@@ -329,7 +333,7 @@ class Command(NoArgsCommand):
                 return 1
         
         if instances_left:
-            print("DEBUG: Deleting %s instances left in database without corresponding EC2 entry:")
+            print("DEBUG: Deleting %s instances left in database without corresponding EC2 entry:" % len(instances_left))
             for instance in instances_left:
                 print(instance.ec2_instance_id)
                 instance.delete()
