@@ -280,7 +280,7 @@ class Command(NoArgsCommand):
         """ Check the state of the instances in a pool and update it in the database """
         instance_ids_by_region = self.get_instance_ids_by_region(instances)
         instances_by_ids = self.get_instances_by_ids(instances)
-        instances_left = [].extend(instances)
+        instances_left = list(instances)
         
         for region in instance_ids_by_region:
             cluster = Laniakea(None)
