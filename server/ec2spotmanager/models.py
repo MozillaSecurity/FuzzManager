@@ -90,6 +90,9 @@ class PoolConfiguration(models.Model):
         super(PoolConfiguration, self).__init__(*args, **kwargs)
     
     def flatten(self):
+        if self.isCyclic():
+            raise RuntimeError("Attempted to flatten a cyclic configuration")
+        
         self.deserializeFields()
         
         # Start with an empty configuration
@@ -166,6 +169,16 @@ class PoolConfiguration(models.Model):
             self.ec2_userdata_file.write(self.ec2_userdata)
             self.ec2_userdata_file.close()
         self.save()
+        
+    def isCyclic(self):
+        if not self.parent:
+            return False
+        tortoise = self
+        hare = self.parent
+        while(tortoise != hare and hare.parent and hare.parent.parent):
+            tortoise = tortoise.parent
+            hare = hare.parent.parent
+        return tortoise == hare
             
     def getMissingParameters(self):
         flat_config = self.flatten()

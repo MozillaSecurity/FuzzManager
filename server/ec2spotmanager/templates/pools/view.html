@@ -24,7 +24,12 @@
 
 		<div>
 			<strong>Configuration Check:</strong>
-		{% if config_params_missing %}
+		{% if config_cyclic %}
+			<span class="label label-danger">Failed</span>
+			<div>
+				<strong>Cyclic Configuration Detected</strong>
+			</div>
+		{% elif config_params_missing %}
 			<span class="label label-danger">Failed</span>
 			<div>
 				<strong>Missing Configuration Parameters</strong>

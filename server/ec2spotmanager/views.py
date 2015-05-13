@@ -90,11 +90,15 @@ def viewPool(request, poolid):
         last_config = last_config.parent
     
     parent_config = last_config
-        
-    # Figure out if any parameters are missing
-    missing = pool.config.getMissingParameters()
     
-    data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances, 'config_params_missing' : missing }
+    cyclic = pool.config.isCyclic()
+    
+    missing = None
+    if not cyclic:
+        # Figure out if any parameters are missing
+        missing = pool.config.getMissingParameters()
+    
+    data = { 'pool' : pool, 'parent_config' : parent_config, 'instances' : instances, 'config_params_missing' : missing, 'config_cyclic' : cyclic }
     
     return render(request, 'pools/view.html', data)
 
@@ -139,9 +143,14 @@ def disablePool(request, poolid):
 def enablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     
-    # Safety check: Figure out if any parameters are missing,
-    # even though the link to this function should not be
-    # reachable in the UI at this point already.
+    # Safety check: Figure out if any parameters are missing
+    # or if the configuration is cyclic, even though the link 
+    # to this function should not be reachable in the UI at 
+    # this point already.
+    cyclic = pool.config.isCyclic()
+    if cyclic:
+        return render(request, 'pools/error.html', { 'error_message' : 'Pool configuration is cyclic.' })
+    
     missing = pool.config.getMissingParameters()
     if missing:
         return render(request, 'pools/error.html', { 'error_message' : 'Pool is missing configuration parameters.' })
@@ -367,3 +376,4 @@ def deletePoolMsg(request, msgid):
 @login_required(login_url='/login/')
 def deleteConfig(request, configid):
     pass
+    
