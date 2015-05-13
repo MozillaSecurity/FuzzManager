@@ -81,17 +81,17 @@ def viewPool(request, poolid):
     
     for instance in instances:
         instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
+        
+    cyclic = pool.config.isCyclic()
     
     last_config = pool.config
     last_config.children = []
     
-    while last_config.parent != None:
+    while not cyclic and last_config.parent != None:
         last_config.parent.children = [ last_config ]
         last_config = last_config.parent
     
     parent_config = last_config
-    
-    cyclic = pool.config.isCyclic()
     
     missing = None
     if not cyclic:
