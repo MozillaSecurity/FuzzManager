@@ -72,6 +72,8 @@ class BugzillaProvider(Provider):
             else:
                 template = model_to_dict(obj[0])
                 template["pk"] = obj[0].pk
+                
+        return template
 
     def substituteTemplateForCrash(self, template, crashEntry):
         # Load metadata that we need for various things
