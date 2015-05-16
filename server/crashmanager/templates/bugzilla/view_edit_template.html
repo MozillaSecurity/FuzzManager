@@ -19,8 +19,8 @@
 	    <label for="id_name">Template Name:</label>
             <input id="id_name" maxlength="255" name="name" type="text" value="{{ template.name }}">
         </div>
-	{% with "bugzilla/"|add:mode|add:"_form.html" as template %}
-	{% include template %}
+	{% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
+	{% include templatePath %}
 	{% endwith %}
 	<input type="hidden" name="mode" value="{{ mode }}"/>
         <input type="submit" name="submit_save" value="Save"/>

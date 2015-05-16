@@ -43,8 +43,8 @@
                 <hr/>
                 {% endif %}
 
-		{% with "bugzilla/"|add:mode|add:"_form.html" as template %}
-		{% include template %}
+		{% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
+		{% include templatePath %}
 		{% endwith %}
 
                 <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
