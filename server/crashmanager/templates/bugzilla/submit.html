@@ -20,8 +20,8 @@
             <br/><br/>
             <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
 
-	    {% with "crashmanager:create"|add:createUrlSuffix as postTarget %}
-            <form action="{% url postTarget entry.pk %}" method="post">
+	    {% with "crashmanager:"|add:postTarget as targeturl %}
+            <form action="{% url targeturl entry.pk %}" method="post">
 	    {% endwith %}
                 <input type="hidden" name="entry" value="{{ entry.pk }}"/>
         {% endif %}
