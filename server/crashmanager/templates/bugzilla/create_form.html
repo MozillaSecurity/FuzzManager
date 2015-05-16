@@ -1,0 +1,71 @@
+Summary <input id="id_summary" class="form-control" maxlength="1023" name="summary" type="text" value="{{ template.summary }}" style="width:100%">
+
+<br/>
+    <div class="row">
+      <div class="col-md-1">Product</div>
+      <div class="col-md-3"><input id="id_product" class="form-control" maxlength="1023" name="product" type="text" value="{{ template.product }}"></div>
+      <div class="col-md-1">Component</div>
+      <div class="col-md-3"><input id="id_component" class="form-control" maxlength="1023" name="component" type="text" value="{{ template.component }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Whiteboard</div>
+      <div class="col-md-3"><input id="id_whiteboard" class="form-control" maxlength="1023" name="whiteboard" type="text" value="{{ template.whiteboard }}"></div>
+      <div class="col-md-1">Keywords</div>
+      <div class="col-md-3"><input id="id_keywords" class="form-control" maxlength="1023" name="keywords" type="text" value="{{ template.keywords }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">OS</div>
+      <div class="col-md-3"><input id="id_op_sys" class="form-control" maxlength="1023" name="op_sys" type="text" value="{{ template.op_sys }}"></div>
+      <div class="col-md-1">Platform</div>
+      <div class="col-md-3"><input id="id_platform" class="form-control" maxlength="1023" name="platform" type="text" value="{{ template.platform }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Cc</div>
+      <div class="col-md-3"><input id="id_cc" class="form-control" maxlength="1023" name="cc" type="text" value="{{ template.cc }}"></div>
+      <div class="col-md-1">Assigned To</div>
+      <div class="col-md-3"><input id="id_assigned_to" class="form-control" maxlength="1023" name="assigned_to" type="text" value="{{ template.assigned_to }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Priority</div>
+      <div class="col-md-3"><input id="id_priority" class="form-control" maxlength="1023" name="priority" type="text" value="{{ template.priority }}"></div>
+      <div class="col-md-1">Severity</div>
+      <div class="col-md-3"><input id="id_severity" class="form-control" maxlength="1023" name="severity" type="text" value="{{ template.severity }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Alias</div>
+      <div class="col-md-3"><input id="id_alias" class="form-control" maxlength="1023" name="alias" type="text" value="{{ template.alias }}"></div>
+      <div class="col-md-1">QA</div>
+      <div class="col-md-3"><input id="id_qa_contact" class="form-control" maxlength="1023" name="qa_contact" type="text" value="{{ template.qa_contact }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Status</div>
+      <div class="col-md-3"><input id="id_status" class="form-control" maxlength="1023" name="status" type="text" value="{{ template.status }}"></div>
+      <div class="col-md-1">Resolution</div>
+      <div class="col-md-3"><input id="id_resolution" class="form-control" maxlength="1023" name="resolution" type="text" value="{{ template.resolution }}"></div>
+    </div>
+<br/>
+    <div class="row">
+      <div class="col-md-1">Version</div>
+      <div class="col-md-3"><input id="id_version" class="form-control" maxlength="1023" name="version" type="text" value="{{ template.version }}"></div>
+      <div class="col-md-1">Target Milestone</div>
+      <div class="col-md-3"><input id="id_target_milestone" class="form-control" maxlength="1023" name="target_milestone" type="text" value="{{ template.target_milestone }}"></div>
+    </div>
+<br/>
+    Custom Fields
+    <i class="glyphicon glyphicon-question-sign" data-toggle="popover" title="Custom Fields" data-content="name=value pairs"></i>
+    <textarea id="id_attrs" class="form-control" name="attrs" style="width:100%">{{ template.attrs }}</textarea>
+<br/>
+    Bug Description<br/>
+    <textarea id="id_description" class="form-control" name="description" style="width:100%">{{ template.description }}</textarea>
+<br/>
+    Flags<br>
+    <input type="checkbox" id="id_security" name="security" value="unassigned" {% if template.security %}checked{% endif %}/>
+    This is a security bug.
+<br/>
+<br/>

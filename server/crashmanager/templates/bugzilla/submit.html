@@ -1,0 +1,56 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+
+{% block body_content %}
+<script type="text/javascript" src="/static/js/bugzilla-template.js"></script>
+<div class="panel panel-default">
+    <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Create</div>
+    <div class="panel-body">
+        {% if error_message %}<div class="alert alert-danger" role="alert">{{ error_message }}</div>{% endif %}
+
+        {% if createTemplate %}
+        <form action="{% url 'crashmanager:createtemplate' provider %}" method="post">
+            {% else %}
+            <select id="template" name="template">
+                {% for t in templates %}
+                <option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+            <br/><br/>
+            <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
+
+	    {% with "crashmanager:create"|add:createUrlSuffix as postTarget %}
+            <form action="{% url postTarget entry.pk %}" method="post">
+	    {% endwith %}
+                <input type="hidden" name="entry" value="{{ entry.pk }}"/>
+                {% endif %}
+                {% csrf_token %}
+                <input type="hidden" name="provider" value="{{ provider }}"/>
+
+                {% if createTemplate %}
+                <div class="field">
+                    <label class="label" for="id_name">Template Name:</label>
+                    <input id="id_name" class="form-control" maxlength="255" name="name" type="text"/>
+                </div>
+                {% else %}
+                <div class="row">
+                    <div class="col-md-1">Username:</div>
+                    <div class="col-md-3"><input id="id_bugzilla_username" class="form-control" name="bugzilla_username" type="text" value="{{ username|default:'' }}"/></div>
+                    <div class="col-md-1">Password:</div>
+                    <div class="col-md-3"><input id="id_bugzilla_password" class="form-control" name="bugzilla_password" type="password"/></div>
+                </div>
+                <hr/>
+                {% endif %}
+
+		{% with "bugzilla/"|add:mode|add:"_form.html" as template %}
+		{% include template %}
+		{% endwith %}
+
+                <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
+                <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock body_content %}
