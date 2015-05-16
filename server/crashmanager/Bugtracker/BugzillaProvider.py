@@ -163,7 +163,7 @@ class BugzillaProvider(Provider):
         if crashEntry.shortSignature.startswith("[@"):
             template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
             
-    def renderContextGeneric(self, request, crashEntry, action):
+    def renderContextGeneric(self, request, crashEntry, mode):
         # This generic function works for both creating bugs and commenting
         # because they require almost the same actions
         template = self.getTemplateForUser(request)
@@ -178,9 +178,10 @@ class BugzillaProvider(Provider):
                    'template' : template,
                    'entry' : crashEntry,
                    'provider' : self.pk,
+                   'mode' : mode,
                 }
     
-        return render(request, 'bugzilla/%s.html' % action, data)
+        return render(request, 'bugzilla/submit.html', data)
 
     def renderContextCreate(self, request, crashEntry):
         return self.renderContextGeneric(request, crashEntry, "create")
