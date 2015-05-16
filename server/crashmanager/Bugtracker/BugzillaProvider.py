@@ -76,6 +76,9 @@ class BugzillaProvider(Provider):
         return template
 
     def substituteTemplateForCrash(self, template, crashEntry):
+        # Store substitution data here for later
+        sdata = {}
+        
         # Load metadata that we need for various things
         metadata = {}
         if crashEntry.metadata:
@@ -87,55 +90,39 @@ class BugzillaProvider(Provider):
                 template["summary"] = "Crash %s" % crashEntry.shortSignature
             else:
                 template["summary"] = crashEntry.shortSignature
-                
+        
+        sdata["summary"] = template["summary"]
+        
         # Determine the state of the testcase
-        testcase = "(Test not available)"
+        sdata['testcase'] = "(Test not available)"
         if crashEntry.testcase:
             if crashEntry.testcase.isBinary:
-                testcase = "See attachment."
+                sdata['testcase'] = "See attachment."
             else:
                 crashEntry.testcase.test.open(mode='r')
-                testcase = crashEntry.testcase.test.read()
+                sdata['testcase'] = crashEntry.testcase.test.read()
                 crashEntry.testcase.test.close()
         
-        # Substitute various variables in the description
-        template["description"] = template["description"].replace('%testcase%', testcase)
-        
         if crashEntry.rawCrashData:
-            crashData = crashEntry.rawCrashData
+            sdata['crashdata'] = crashEntry.rawCrashData
         else:
-            crashData = crashEntry.rawStderr
-    
-        template["description"] = template["description"].replace('%crashdata%', crashData)
-        template["description"] = template["description"].replace('%shortsig%', crashEntry.shortSignature)
+            sdata['crashdata'] = crashEntry.rawStderr
+            
+        sdata['shortsig'] = crashEntry.shortSignature
         
-        version = crashEntry.product.version
-        if not version:
-            version = "(Version not available)"
+        sdata['version'] = crashEntry.product.version
+        if not sdata['version']:
+            sdata['version'] = "(Version not available)"
+            
+        sdata['product'] = crashEntry.product.name
+        sdata['os'] = crashEntry.os.name
+        sdata['platform'] = crashEntry.platform.name
         
-        template["description"] = template["description"].replace('%product%', crashEntry.product.name)
-        template["description"] = template["description"].replace('%version%', version)
-
-        args = ""
+        sdata['args'] = ""
         if crashEntry.args:
-            args = " ".join(json.loads(crashEntry.args))
+            sdata['args'] = " ".join(json.loads(crashEntry.args))
 
-        template["description"] = template["description"].replace('%args%', args)
-        
-        def substituteMetadata(source, metadata):
-            # Find all metadata variables requested for subtitution
-            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", source)
-            for mVar in metadataVars:
-                if not mVar in metadata:
-                    metadata[mVar] = "(%s not available)" % mVar
-                
-                source = source.replace('%metadata.' + mVar + '%', metadata[mVar])
-            return source
-
-        template["description"] = substituteMetadata(template["description"], metadata)
-        template["comment"] = substituteMetadata(template["comment"], metadata)
-
-        # Now try to guess platform/OS if empty
+        # Now try to guess platform/OS for Bugzilla if empty
 
         # FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
         if not template["op_sys"]:
@@ -152,9 +139,23 @@ class BugzillaProvider(Provider):
             # BMO uses x86_64, not x86-64, and ARM instead of arm
             template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
         
-        # Process all variables also in our comment field
-        for field in ["summary", "testcase", "crashdata", "shortsig", "product, version", "args", "op_sys", "platform"]:
-            template["comment"] = template["comment"].replace('%%%s%%' % field, template[field])
+        # Process all support variables in our bug description and comment field
+        for field in ["summary", "testcase", "crashdata", "shortsig", "product, version", "args", "os", "platform"]:
+            template["description"] = template["description"].replace('%%%s%%', sdata[field])
+            template["comment"] = template["comment"].replace('%%%s%%' % field, sdata[field])
+        
+        # Also process all metadata variables in our bug description and comment field
+        def substituteMetadata(source, metadata):
+            # Find all metadata variables requested for subtitution
+            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", source)
+            for mVar in metadataVars:
+                if not mVar in metadata:
+                    metadata[mVar] = "(%s not available)" % mVar
+                
+                source = source.replace('%metadata.' + mVar + '%', metadata[mVar])
+            return source
+        template["description"] = substituteMetadata(template["description"], metadata)
+        template["comment"] = substituteMetadata(template["comment"], metadata)
         
         # Remove the specified pathPrefix from traces and assertion     
         if "pathPrefix" in metadata:
