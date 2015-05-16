@@ -622,7 +622,7 @@ def createExternalBugComment(request, crashid):
             (user, created) = User.objects.get_or_create(user = request.user)
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
         
-        return provider.getInstance().renderContextCreateComment(request, entry)
+        return provider.getInstance().renderContextComment(request, entry)
     else:
         raise SuspiciousOperation
     
