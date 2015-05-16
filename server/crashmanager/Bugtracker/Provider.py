@@ -36,6 +36,10 @@ class Provider():
         return
     
     @abstractmethod
+    def handlePOSTComment(self, request, crashEntry):
+        return
+    
+    @abstractmethod
     def renderContextCreateTemplate(self, request):
         return
     

@@ -606,6 +606,25 @@ def createExternalBug(request, crashid):
         return provider.getInstance().renderContextCreate(request, entry)
     else:
         raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def createExternalBugComment(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    
+    if request.method == 'POST':
+        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
+        provider.getInstance().handlePOSTCreateComment(request, entry)
+        return redirect('crashmanager:crashview', crashid=crashid)
+    elif request.method == 'GET':
+        if 'provider' in request.GET:
+            provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
+        else:
+            (user, created) = User.objects.get_or_create(user = request.user)
+            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
+        
+        return provider.getInstance().renderContextCreateComment(request, entry)
+    else:
+        raise SuspiciousOperation
     
 @login_required(login_url='/login/')
 def createBugTemplate(request, providerId):

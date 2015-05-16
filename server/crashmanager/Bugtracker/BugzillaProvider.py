@@ -53,8 +53,8 @@ class BugzillaProvider(Provider):
         self.templateFlags = [
                     "security",
                 ]
-
-    def renderContextCreate(self, request, crashEntry):
+        
+    def getTemplateForUser(self, request):
         if 'template' in request.GET:
             obj = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
             template = model_to_dict(obj)
@@ -72,89 +72,105 @@ class BugzillaProvider(Provider):
             else:
                 template = model_to_dict(obj[0])
                 template["pk"] = obj[0].pk
+
+    def substituteTemplateForCrash(self, template, crashEntry):
+        # Load metadata that we need for various things
+        metadata = {}
+        if crashEntry.metadata:
+            metadata =  json.loads(crashEntry.metadata)
         
-        templates = BugzillaTemplate.objects.all()
-        
-        if template:
-            
-            # Load metadata that we need for various things
-            metadata = {}
-            if crashEntry.metadata:
-                metadata =  json.loads(crashEntry.metadata)
-            
-            # Set the summary if empty
-            if not template["summary"]:
-                if crashEntry.shortSignature.startswith("[@"):
-                    template["summary"] = "Crash %s" % crashEntry.shortSignature
-                else:
-                    template["summary"] = crashEntry.shortSignature
-            
-            # Determine the state of the testcase
-            testcase = "(Test not available)"
-            if crashEntry.testcase:
-                if crashEntry.testcase.isBinary:
-                    testcase = "See attachment."
-                else:
-                    crashEntry.testcase.test.open(mode='r')
-                    testcase = crashEntry.testcase.test.read()
-                    crashEntry.testcase.test.close()
-            
-            # Substitute various variables in the description
-            template["description"] = template["description"].replace('%testcase%', testcase)
-            
-            if crashEntry.rawCrashData:
-                crashData = crashEntry.rawCrashData
+        # Set the summary if empty
+        if not template["summary"]:
+            if crashEntry.shortSignature.startswith("[@"):
+                template["summary"] = "Crash %s" % crashEntry.shortSignature
             else:
-                crashData = crashEntry.rawStderr
+                template["summary"] = crashEntry.shortSignature
+                
+        # Determine the state of the testcase
+        testcase = "(Test not available)"
+        if crashEntry.testcase:
+            if crashEntry.testcase.isBinary:
+                testcase = "See attachment."
+            else:
+                crashEntry.testcase.test.open(mode='r')
+                testcase = crashEntry.testcase.test.read()
+                crashEntry.testcase.test.close()
         
-            template["description"] = template["description"].replace('%crashdata%', crashData)
-            template["description"] = template["description"].replace('%shortsig%', crashEntry.shortSignature)
-            
-            version = crashEntry.product.version
-            if not version:
-                version = "(Version not available)"
-            
-            template["description"] = template["description"].replace('%product%', crashEntry.product.name)
-            template["description"] = template["description"].replace('%version%', version)
+        # Substitute various variables in the description
+        template["description"] = template["description"].replace('%testcase%', testcase)
+        
+        if crashEntry.rawCrashData:
+            crashData = crashEntry.rawCrashData
+        else:
+            crashData = crashEntry.rawStderr
+    
+        template["description"] = template["description"].replace('%crashdata%', crashData)
+        template["description"] = template["description"].replace('%shortsig%', crashEntry.shortSignature)
+        
+        version = crashEntry.product.version
+        if not version:
+            version = "(Version not available)"
+        
+        template["description"] = template["description"].replace('%product%', crashEntry.product.name)
+        template["description"] = template["description"].replace('%version%', version)
 
-            args = ""
-            if crashEntry.args:
-                args = " ".join(json.loads(crashEntry.args))
+        args = ""
+        if crashEntry.args:
+            args = " ".join(json.loads(crashEntry.args))
 
-            template["description"] = template["description"].replace('%args%', args)
-
+        template["description"] = template["description"].replace('%args%', args)
+        
+        def substituteMetadata(source, metadata):
             # Find all metadata variables requested for subtitution
-            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", template["description"])
+            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", source)
             for mVar in metadataVars:
                 if not mVar in metadata:
                     metadata[mVar] = "(%s not available)" % mVar
                 
-                template["description"] = template["description"].replace('%metadata.' + mVar + '%', metadata[mVar])
+                source = source.replace('%metadata.' + mVar + '%', metadata[mVar])
+            return source
 
-            # Now try to guess platform/OS if empty
+        template["description"] = substituteMetadata(template["description"], metadata)
+        template["comment"] = substituteMetadata(template["comment"], metadata)
 
-            # FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
-            if not template["op_sys"]:
-                if crashEntry.os.name == "linux":
-                    template["op_sys"] = "Linux"
-                elif crashEntry.os.name == "macosx":
-                    template["op_sys"] = "Mac OS X"
-                elif crashEntry.os.name.startswith("win"):
-                    # Translate win7 -> Windows 7, win8 -> Windows 8
-                    # Doesn't work for Vista, XP, needs to be improved
-                    template["op_sys"] = crashEntry.os.name.replace("win", "Windows ")
-                    
-            if not template["platform"]:
-                # BMO uses x86_64, not x86-64, and ARM instead of arm
-                template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
-            
-            # Remove the specified pathPrefix from traces and assertion     
-            if "pathPrefix" in metadata:
-                template["summary"] = template["summary"].replace(metadata["pathPrefix"], "")
-                template["description"] = template["description"].replace(metadata["pathPrefix"], "")
+        # Now try to guess platform/OS if empty
+
+        # FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
+        if not template["op_sys"]:
+            if crashEntry.os.name == "linux":
+                template["op_sys"] = "Linux"
+            elif crashEntry.os.name == "macosx":
+                template["op_sys"] = "Mac OS X"
+            elif crashEntry.os.name.startswith("win"):
+                # Translate win7 -> Windows 7, win8 -> Windows 8
+                # Doesn't work for Vista, XP, needs to be improved
+                template["op_sys"] = crashEntry.os.name.replace("win", "Windows ")
                 
-            if crashEntry.shortSignature.startswith("[@"):
-                template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
+        if not template["platform"]:
+            # BMO uses x86_64, not x86-64, and ARM instead of arm
+            template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
+        
+        # Process all variables also in our comment field
+        for field in ["summary", "testcase", "crashdata", "shortsig", "product, version", "args", "op_sys", "platform"]:
+            template["comment"] = template["comment"].replace('%%%s%%' % field, template[field])
+        
+        # Remove the specified pathPrefix from traces and assertion     
+        if "pathPrefix" in metadata:
+            template["summary"] = template["summary"].replace(metadata["pathPrefix"], "")
+            template["description"] = template["description"].replace(metadata["pathPrefix"], "")
+            template["comment"] = template["comment"].replace(metadata["pathPrefix"], "")
+            
+        if crashEntry.shortSignature.startswith("[@"):
+            template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
+            
+    def renderContextGeneric(self, request, crashEntry, action):
+        # This generic function works for both creating bugs and commenting
+        # because they require almost the same actions
+        template = self.getTemplateForUser(request)
+        templates = BugzillaTemplate.objects.all()
+        
+        if template:
+            self.substituteTemplateForCrash(template, crashEntry)
         
         data = {
                    'hostname' : self.hostname,
@@ -164,7 +180,13 @@ class BugzillaProvider(Provider):
                    'provider' : self.pk,
                 }
     
-        return render(request, 'bugzilla/create.html', data)
+        return render(request, 'bugzilla/%s.html' % action, data)
+
+    def renderContextCreate(self, request, crashEntry):
+        return self.renderContextGeneric(request, crashEntry, "create")
+
+    def renderContextComment(self, request, crashEntry):
+        return self.renderContextGeneric(request, crashEntry, "comment")
     
     def handlePOSTCreate(self, request, crashEntry):
         args = request.POST.dict()
@@ -201,6 +223,34 @@ class BugzillaProvider(Provider):
             ret["attachmentResponse"] = aRet
         
         return ret["id"]
+
+    def handlePOSTComment(self, request, crashEntry):
+        args = {}
+        args["id"] = request.POST["bug_id"]
+        args["comment"] = request.POST["comment"]
+        if 'is_private' in request.POST and request.POST['is_private']:
+            args["is_private"] = True
+        
+        username = request.POST['bugzilla_username']
+        password = request.POST['bugzilla_password']
+            
+        bz = BugzillaREST(self.hostname, username, password)
+        
+        ret = bz.createComment(**args)
+        if not "id" in ret:
+            raise RuntimeError("Failed to create comment: %s", ret)
+        
+        # If we have a binary testcase, attach it here in a second step
+        if crashEntry.testcase != None and crashEntry.testcase.isBinary:
+            crashEntry.testcase.test.open(mode='rb')
+            data = crashEntry.testcase.test.read()
+            crashEntry.testcase.test.close()
+            filename = os.path.basename(crashEntry.testcase.test.name)
+            
+            aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=True)
+            ret["attachmentResponse"] = aRet
+        
+        return ret["id"]
     
     def renderContextCreateTemplate(self, request):
         if 'template' in request.GET:
@@ -234,11 +284,15 @@ class BugzillaProvider(Provider):
         else:
             bugTemplate = BugzillaTemplate()
             
-        for field in self.templateFields:
-            setattr(bugTemplate, field, request.POST[field])
-            
-        for flag in self.templateFlags:
-            setattr(bugTemplate, flag, flag in request.POST)
+        if "comment" in request.POST:
+            # If we're updating the comment field of a template, then just update that field
+            bugTemplate["comment"] = request.POST["comment"]
+        else:
+            for field in self.templateFields:
+                setattr(bugTemplate, field, request.POST[field])
+                
+            for flag in self.templateFlags:
+                setattr(bugTemplate, flag, flag in request.POST)
         
         bugTemplate.save()
         return bugTemplate.pk
@@ -359,6 +413,18 @@ class BugzillaREST():
         
         createUrl = "%s/bug?token=%s" % (self.baseUrl, self.authToken)
         response = requests.post(createUrl, bug)
+        return response.json()
+
+    def createComment(self, id, comment, is_private=False):
+        comment = {}
+        comment["comment"] = comment
+        comment["is_private"] = is_private
+        
+        # Ensure we're logged in
+        self.login()
+        
+        createUrl = "%s/bug/%s/comment?token=%s" % (self.baseUrl, id, self.authToken)
+        response = requests.post(createUrl, comment)
         return response.json()
     
     def addAttachment(self, ids, data, file_name, summary, comment=None, is_private=None, is_binary=False):

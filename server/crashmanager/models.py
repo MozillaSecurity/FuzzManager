@@ -81,7 +81,6 @@ class Bucket(models.Model):
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
 
-    
     def getSignature(self):
         return CrashSignature(self.signature)
     
@@ -193,6 +192,7 @@ class BugzillaTemplate(models.Model):
     target_milestone = models.TextField(blank=True)
     attrs = models.TextField(blank=True)
     security = models.BooleanField(blank=False, default=False)
+    comment = models.TextField(blank=True)
 
 
 class User(models.Model):
