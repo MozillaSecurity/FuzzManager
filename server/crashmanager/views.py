@@ -640,15 +640,13 @@ def createBugTemplate(request, providerId):
         raise SuspiciousOperation
     
 @login_required(login_url='/login/')
-def viewEditBugTemplate(request, providerId, templateId):
+def viewEditBugTemplate(request, providerId, templateId, mode):
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'GET':
-        return provider.getInstance().renderContextViewTemplate(request, templateId)
+        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
     elif request.method == 'POST':
         templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-        return provider.getInstance().renderContextViewTemplate(request, templateId)
-
-
+        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
 
 @login_required(login_url='/login/')
 def viewBugProviders(request):

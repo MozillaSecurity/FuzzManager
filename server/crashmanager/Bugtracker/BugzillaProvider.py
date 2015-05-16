@@ -266,7 +266,7 @@ class BugzillaProvider(Provider):
     
         return render(request, 'bugzilla/create.html', data)
     
-    def renderContextViewTemplate(self, request, templateId):
+    def renderContextViewTemplate(self, request, templateId, mode):
         template = get_object_or_404(BugzillaTemplate, pk=templateId)
         templates = BugzillaTemplate.objects.all()
         
@@ -274,6 +274,7 @@ class BugzillaProvider(Provider):
                 'provider' : self.pk,
                 'templates' : templates,
                 'template' : template,
+                'mode' : mode,
                 }
     
         return render(request, 'bugzilla/view_edit_template.html', data)

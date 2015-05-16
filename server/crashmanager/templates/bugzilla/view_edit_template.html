@@ -2,11 +2,11 @@
 
 {% load url from future %}
 
-<script type="text/javascript" src="/static/js/bugzilla-template.js"></script>
-
 {% block body_content %}
+<script type="text/javascript" src="/static/js/bugzilla-template.js"></script>
 <div class="panel panel-default">
     <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Template</div>
+    <div class="panel-body">
     <form action="{% url 'crashmanager:viewtemplate' provider template.pk %}" method="post">
         {% csrf_token %}
         <select id="template" name="template">
@@ -16,10 +16,13 @@
         </select>
 
         <div class="field">
-            <label for="id_name">Template Name:</label>
+	    <label for="id_name">Template Name:</label>
             <input id="id_name" maxlength="255" name="name" type="text" value="{{ template.name }}">
         </div>
-        {% include "bugzilla/form.html" %}
+	{% with "bugzilla/"|add:mode|add:"_form.html" as template %}
+	{% include template %}
+	{% endwith %}
+	<input type="hidden" name="mode" value="{{ mode }}"/>
         <input type="submit" name="submit_save" value="Save"/>
     </form>
     </div>

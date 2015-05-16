@@ -48,7 +48,7 @@ class Provider():
         return
     
     @abstractmethod
-    def renderContextViewTemplate(self, request, templateId):
+    def renderContextViewTemplate(self, request, templateId, mode):
         return
     
     @abstractmethod
