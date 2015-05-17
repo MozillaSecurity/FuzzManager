@@ -141,7 +141,7 @@ class BugzillaProvider(Provider):
         
         # Process all support variables in our bug description and comment field
         for field in ["summary", "testcase", "crashdata", "shortsig", "product", "version", "args", "os", "platform"]:
-            template["description"] = template["description"].replace('%%%s%%', sdata[field])
+            template["description"] = template["description"].replace('%%%s%%' % field, sdata[field])
             template["comment"] = template["comment"].replace('%%%s%%' % field, sdata[field])
         
         # Also process all metadata variables in our bug description and comment field
