@@ -292,7 +292,7 @@ class BugzillaProvider(Provider):
             
         if "comment" in request.POST:
             # If we're updating the comment field of a template, then just update that field
-            bugTemplate["comment"] = request.POST["comment"]
+            bugTemplate.comment = request.POST["comment"]
         else:
             for field in self.templateFields:
                 setattr(bugTemplate, field, request.POST[field])
