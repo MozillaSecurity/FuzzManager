@@ -226,7 +226,7 @@ class Command(NoArgsCommand):
                     instances[i].save()
                     
                 if boto_pending:
-                    for i in range(len(boto_instances),len(boto_pending)):
+                    for i in range(len(boto_instances),count):
                         # Delete instances belong to canceled spot requests
                         print("Deleting instance with id %s (belongs to canceled request)" % instances[i].pk)
                         instances[i].delete()
