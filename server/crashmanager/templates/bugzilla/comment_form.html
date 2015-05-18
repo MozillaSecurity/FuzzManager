@@ -1,7 +1,5 @@
 Bug ID<br/>
-    <input type="text" id="id_bugid" class="form-control" maxlength="255" name="bug_id" value="
-    {% if entry.bucket and entry.bucket.bug %} {{ entry.bucket.bug.externalId }} {% endif %}
-    " />
+    <input type="text" id="id_bugid" class="form-control" maxlength="255" name="bug_id" value="{% if entry.bucket and entry.bucket.bug %}{{ entry.bucket.bug.externalId }}{% endif %}" />
 <br/>
     Comment<br/>
     <textarea id="id_comment" class="form-control" name="comment" style="width:100%">{{ template.comment }}</textarea>
