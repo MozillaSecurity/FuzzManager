@@ -613,7 +613,7 @@ def createExternalBugComment(request, crashid):
     
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        provider.getInstance().handlePOSTCreateComment(request, entry)
+        provider.getInstance().handlePOSTComment(request, entry)
         return redirect('crashmanager:crashview', crashid=crashid)
     elif request.method == 'GET':
         if 'provider' in request.GET:
