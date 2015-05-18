@@ -422,15 +422,19 @@ class BugzillaREST():
         return response.json()
 
     def createComment(self, id, comment, is_private=False):
-        comment = {}
-        comment["comment"] = comment
-        comment["is_private"] = is_private
+        if is_private:
+            is_private = 1
+        else:
+            is_private = 0
+        cobj = {}
+        cobj["comment"] = comment
+        cobj["is_private"] = is_private
         
         # Ensure we're logged in
         self.login()
         
         createUrl = "%s/bug/%s/comment?token=%s" % (self.baseUrl, id, self.authToken)
-        response = requests.post(createUrl, comment)
+        response = requests.post(createUrl, cobj)
         return response.json()
     
     def addAttachment(self, ids, data, file_name, summary, comment=None, is_private=None, is_binary=False):
