@@ -22,7 +22,7 @@ import boto.exception
 
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
-    @pid_lock_file
+    @pid_lock_file("monitoring_daemon")
     def handle_noargs(self, **options):
         while True:
             self.check_instance_pools()

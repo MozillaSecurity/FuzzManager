@@ -29,17 +29,20 @@ class PIDLock():
         if self.pidlock:
             os.remove(self.filename)
 
-
-def pid_lock_file(method):
+class pid_lock_file():
     """
-    Decorator to use on management methods that shouldn't run in parallel
+    Decorator to use on management methods that run as daemons and need a PID file
     """
-    def decorator(self, *args, **options):
-        lock = PIDLock(os.path.join(PIDFILE_BASEDIR, "daemon.pid"))
-        lock.aquire()
-        try:
-            method(self, *args, **options)
-        finally:
-            lock.release()
-        return
-    return decorator 
+    def __init__(self, daemon_name):
+        self.daemon_name = daemon_name
+    
+    def __call__(self, method):
+        def wrapper(*args, **options):
+            lock = PIDLock(os.path.join(PIDFILE_BASEDIR, "%s.pid" % self.daemon_name))
+            lock.aquire()
+            try:
+                method(*args, **options)
+            finally:
+                lock.release()
+            return
+        return wrapper

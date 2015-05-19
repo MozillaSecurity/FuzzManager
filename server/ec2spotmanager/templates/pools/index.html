@@ -7,8 +7,15 @@
 	<div class="panel-heading"><i class="glyphicon glyphicon-scale"></i> Instance Pools</div>
 	<div class="panel-body">
 		<table class="table table-condensed">
-			<tr><td style="width: 150px;">Pool Daemon Status:</td><td>
-				{% if daemonRunning %}
+			<tr><td style="width: 200px;">Machine Daemon Status:</td><td>
+				{% if machineDaemonRunning %}
+					<span class="label label-success">Running</span>
+				{% else %}
+					<span class="label label-danger">Not Running</span>
+				{% endif %}
+			</td></tr>
+			<tr><td style="width: 200px;">Stats Daemon Status:</td><td>
+				{% if statsDaemonRunning %}
 					<span class="label label-success">Running</span>
 				{% else %}
 					<span class="label label-danger">Not Running</span>

@@ -53,24 +53,31 @@ def pools(request):
     for entry in entries:
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
     
-    # Figure out if our daemon is running
-    daemonPidFile = os.path.join(settings.BASE_DIR, "daemon.pid")
-    daemonRunning = False
-    try:
-        with open(daemonPidFile, 'r') as f:
-            daemonRunning = True
-            pid = int(f.read())
-            try:
-                os.kill(pid, 0)
-            except OSError as e:
-                if e.errno == errno.ESRCH:
-                    daemonRunning = False
-                elif e.errno == errno.EPERM:
-                    daemonRunning = True
-    except IOError:
-        pass
+    # Figure out if our daemons are running
+    def checkDaemon(daemon_name):
+        daemonPidFile = os.path.join(settings.BASE_DIR, "%s.pid" % daemon_name)
+        daemonRunning = False
+        try:
+            with open(daemonPidFile, 'r') as f:
+                daemonRunning = True
+                pid = int(f.read())
+                try:
+                    os.kill(pid, 0)
+                except OSError as e:
+                    if e.errno == errno.ESRCH:
+                        daemonRunning = False
+                    elif e.errno == errno.EPERM:
+                        daemonRunning = True
+        except IOError:
+            pass
+        return daemonRunning
                 
-    data = { 'isSearch' : isSearch, 'poollist' : entries, 'daemonRunning' : daemonRunning }
+    data = { 
+            'isSearch' : isSearch, 
+            'poollist' : entries, 
+            'machineDaemonRunning' : checkDaemon("machine_daemon"), 
+            'statsDaemonRunning' : checkDaemon("stats_daemon"), 
+            }
     
     return render(request, 'pools/index.html', data)
 
