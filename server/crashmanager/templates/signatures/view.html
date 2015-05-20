@@ -17,10 +17,20 @@
                 <td>{{ entry.shortSignature|escape }}
             {% if bucket.bug %}
                 Reported as <a href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}">bug {{ bucket.bug.externalId }}</a>.
-                <a href="{% url 'crashmanager:sigunlink' bucket.pk %}">Unlink</a>.
             {% else %}
-                Unreported. <a href="{% url 'crashmanager:siglink' bucket.pk %}">Assign an existing bug.</a>
+                Unreported.
             {% endif %}
+	    <br/><br/>
+	    <div class="btn-group">
+		{% if bucket.bug %}
+	        <a href="{% url 'crashmanager:sigunlink' bucket.pk %}" class="btn btn-danger">Unlink</a>
+		{% else %}
+	        <a href="{% url 'crashmanager:siglink' bucket.pk %}" class="btn btn-default">Assign an existing bug</a>
+		{% if bucket.bestEntry %}
+	        <a href="{% url 'crashmanager:createbug' bucket.bestEntry.pk %}" class="btn btn-danger">File a bug with best crash entry</a>
+		{% endif %}
+		{% endif %}
+            </div>
             </td></tr>
             <tr><td>Crashes covered by this signature</td><td>{{ bucket.size }}</td></tr>
             {% if bucket.bestEntry %}
