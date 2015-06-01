@@ -12,7 +12,7 @@ class FlatObject(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
-INSTANCE_STATE_CODE = { 0 : "pending", 16 : "running", 32 : "shutting-down", 48 : "terminated", 64 : "stopping", 80 : "stopped" }
+INSTANCE_STATE_CODE = { -1 : "requested", 0 : "pending", 16 : "running", 32 : "shutting-down", 48 : "terminated", 64 : "stopping", 80 : "stopped" }
 INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.iteritems())
 
 POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low", 2: "config-error" }

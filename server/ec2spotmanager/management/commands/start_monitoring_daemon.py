@@ -174,7 +174,7 @@ class Command(NoArgsCommand):
         for i in range(0,count):
             instance = Instance()
             instance.ec2_region = region
-            instance.status_code = INSTANCE_STATE["pending"]
+            instance.status_code = INSTANCE_STATE["requested"]
             instance.pool = pool
             instance.save()
             instances.append(instance)
@@ -224,6 +224,8 @@ class Command(NoArgsCommand):
                     instances[i].ec2_instance_id = boto_instances[i].id
                     instances[i].status_code = boto_instances[i].state_code
                     instances[i].save()
+                    
+                    assert(instances[i].ec2_instance_id != None)
                     
                 if boto_pending:
                     for i in range(len(boto_instances),count):
@@ -311,11 +313,11 @@ class Command(NoArgsCommand):
                     # Whenever we see an instance that is not in our instance list for that region,
                     # make sure it's a terminated instance because we should never have running instance
                     #
-                    # We must however not perform this check if we still have pending instances.
-                    # In this case, the thread that is monitoring the pending instances must first
+                    # We must however not perform this check if we still have requested instances.
+                    # In this case, the thread that is monitoring the requested instances must first
                     # redeclare them with their proper id in the database before we perform *any*
                     # updates on it. Otherwise, parallel save operations on the instance object
-                    # might lead to inconsistent states of the database model    
+                    # might lead to inconsistent states of the database model.
                     if not boto_instance.id in instance_ids_by_region[region]:
                         if not None in instance_ids_by_region[region]:
                             assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
