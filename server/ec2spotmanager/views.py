@@ -75,7 +75,7 @@ def pools(request):
     data = { 
             'isSearch' : isSearch, 
             'poollist' : entries, 
-            'machineDaemonRunning' : checkDaemon("machine_daemon"), 
+            'machineDaemonRunning' : checkDaemon("monitoring_daemon"), 
             'statsDaemonRunning' : checkDaemon("stats_daemon"), 
             }
     
