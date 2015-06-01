@@ -57,7 +57,7 @@ class Command(NoArgsCommand):
             instances = Instance.objects.filter(pool=instance_pool)
             
             for instance in instances:
-                if instance.status_code == INSTANCE_STATE['running'] or instance.status_code == INSTANCE_STATE['pending']:
+                if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'], INSTANCE_STATE['requested']]:
                     instances_missing -= 1
                     running_instances.append(instance)
                 else:
