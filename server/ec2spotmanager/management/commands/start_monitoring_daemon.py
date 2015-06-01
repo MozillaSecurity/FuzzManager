@@ -48,12 +48,14 @@ class Command(NoArgsCommand):
                 continue
                 
             config = instance_pool.config.flatten()
-            instances = Instance.objects.filter(pool=instance_pool)
             
             instances_missing = config.size
             running_instances = []
             
-            self.update_pool_instances(instance_pool, instances, config)
+            self.update_pool_instances(instance_pool, config)
+            
+            instances = Instance.objects.filter(pool=instance_pool)
+            
             for instance in instances:
                 if instance.status_code == INSTANCE_STATE['running'] or instance.status_code == INSTANCE_STATE['pending']:
                     instances_missing -= 1
@@ -67,8 +69,13 @@ class Command(NoArgsCommand):
                     
             if not instance_pool.isEnabled:
                 if running_instances:
-                    self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
-                    self.update_pool_instances(instance_pool, instances, config)
+                    self.terminate_pool_instances(instance_pool, running_instances, config, terminateByPool=True)
+                    
+                    # Try to update our terminated instances as soon as possible. If EC2 needs longer than
+                    # the here specified sleep time, the instances will be updated with the next iteration
+                    # of this pool, allowing other actions to be processed in-between.
+                    #time.sleep(2)
+                    #self.update_pool_instances(instance_pool, config)
                 continue
             
             if (not instance_pool.last_cycled) or instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval):
@@ -76,7 +83,12 @@ class Command(NoArgsCommand):
                 instance_pool.last_cycled = timezone.now()
                 self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
                 instance_pool.save()
-                self.update_pool_instances(instance_pool, instances, config)
+                
+                # Try to update our terminated instances as soon as possible. If EC2 needs longer than
+                # the here specified sleep time, the instances will be updated with the next iteration
+                # of this pool, allowing other actions to be processed in-between.
+                #time.sleep(2)
+                #self.update_pool_instances(instance_pool, config)
                 print("[Main] Pool termination complete.")
             
             # Determine which instances need to be cycled
@@ -227,6 +239,10 @@ class Command(NoArgsCommand):
                     
                     assert(instances[i].ec2_instance_id != None)
                     
+                    # Now that we saved the object into our database, mark the instance as updatable
+                    # so our update code can pick it up and update it accordingly when it changes states 
+                    boto_instances[i].add_tag("SpotManager-Updatable", "1")
+                    
                 if boto_pending:
                     for i in range(len(boto_instances),count):
                         # Delete instances belong to canceled spot requests
@@ -287,8 +303,9 @@ class Command(NoArgsCommand):
             instances_by_ids[instance.ec2_instance_id] = instance
         return instances_by_ids
     
-    def update_pool_instances(self, pool, instances, config):
+    def update_pool_instances(self, pool, config):
         """ Check the state of the instances in a pool and update it in the database """
+        instances = Instance.objects.filter(pool=pool)
         instance_ids_by_region = self.get_instance_ids_by_region(instances)
         instances_by_ids = self.get_instances_by_ids(instances)
         instances_left = []
@@ -306,22 +323,30 @@ class Command(NoArgsCommand):
                 return None
         
             try:
-                #cluster.find(instance_ids=instance_ids_by_region[region])
-                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk), "tag:SpotManager-Updatable" : "1"})
                 
                 for boto_instance in boto_instances:
                     # Whenever we see an instance that is not in our instance list for that region,
-                    # make sure it's a terminated instance because we should never have running instance
-                    #
-                    # We must however not perform this check if we still have requested instances.
-                    # In this case, the thread that is monitoring the requested instances must first
-                    # redeclare them with their proper id in the database before we perform *any*
-                    # updates on it. Otherwise, parallel save operations on the instance object
-                    # might lead to inconsistent states of the database model.
+                    # make sure it's a terminated instance because we should never have a running 
+                    # instance that matches the search above but is not in our database.
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        if not None in instance_ids_by_region[region]:
-                            assert (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
-                                or boto_instance.state_code == INSTANCE_STATE['terminated'])
+                        if not ((boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
+                            or boto_instance.state_code == INSTANCE_STATE['terminated'])):
+                            
+                            print("BUG: No requested instances in region %s but unknown instance %s found" % (region, boto_instance.id))
+                            print("BUG: boto status code %s" % boto_instance.state_code)
+                            
+                            # Try to figure out if the instance is in our database which could indicate a race in our code
+                            if Instance.objects.filter(ec2_instance_id = boto_instance.id):
+                                print("BUG: Found the instance in the database!")
+                            else:
+                                print("BUG: Instance is also not in the database")
+                                q = Instance.objects.filter(ec2_region = region).filter(status_code = -1)
+                                if q:
+                                    print("BUG: Found %s requested instances in the DB!" % len(q))
+                            
+                            # Terminate at this point, we run in an inconsistent state
+                            assert(False)
                             
                         continue
                         
