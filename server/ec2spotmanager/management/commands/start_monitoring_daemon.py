@@ -325,7 +325,10 @@ class Command(NoArgsCommand):
             try:
                 boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk), "tag:SpotManager-Updatable" : "1"})
                 
+                
                 for boto_instance in boto_instances:
+                    instance = None
+                    
                     # Whenever we see an instance that is not in our instance list for that region,
                     # make sure it's a terminated instance because we should never have a running 
                     # instance that matches the search above but is not in our database.
@@ -333,25 +336,28 @@ class Command(NoArgsCommand):
                         if not ((boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
                             or boto_instance.state_code == INSTANCE_STATE['terminated'])):
                             
-                            print("BUG: No requested instances in region %s but unknown instance %s found" % (region, boto_instance.id))
-                            print("BUG: boto status code %s" % boto_instance.state_code)
-                            
-                            # Try to figure out if the instance is in our database which could indicate a race in our code
-                            if Instance.objects.filter(ec2_instance_id = boto_instance.id):
-                                print("BUG: Found the instance in the database!")
+                            # As a last resort, try to find the instance in our database.
+                            # If the instance was saved to our database between the entrance
+                            # to this function and the search query sent to EC2, then the instance
+                            # will not be in our instances list but returned by EC2. In this
+                            # case, we try to load it directly from the database.
+                            q = Instance.objects.filter(ec2_instance_id = boto_instance.id)
+                            if q:
+                                instance = q[0]
                             else:
                                 print("BUG: Instance is also not in the database")
                                 q = Instance.objects.filter(ec2_region = region).filter(status_code = -1)
                                 if q:
                                     print("BUG: Found %s requested instances in the DB!" % len(q))
-                            
-                            # Terminate at this point, we run in an inconsistent state
-                            assert(False)
+                                    
+                                # Terminate at this point, we run in an inconsistent state
+                                assert(False)
                             
                         continue
-                        
-                    instance = instances_by_ids[boto_instance.id]
-                    instances_left.remove(instance)
+                    
+                    if not instance:
+                        instance = instances_by_ids[boto_instance.id]
+                        instances_left.remove(instance)
                     
                     # Check the status code and update if necessary
                     if instance.status_code != boto_instance.state_code:
