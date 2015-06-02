@@ -12,6 +12,11 @@ import errno
 
 from ec2spotmanager.common.prices import get_spot_prices
 from django.core.files.base import ContentFile
+from chartjs.views.base import JSONView
+from chartjs.colors import next_color
+from django.utils.timezone import now, timedelta
+from ec2spotmanager.models import PoolUptimeDetailedEntry
+from operator import attrgetter
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -383,4 +388,68 @@ def deletePoolMsg(request, msgid):
 @login_required(login_url='/login/')
 def deleteConfig(request, configid):
     pass
+
+class UptimeChartView(JSONView):
+    def get_context_data(self, **kwargs):
+        context = super(UptimeChartView, self).get_context_data(**kwargs)
+        pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
+        pool.flat_config = pool.config.flatten()
+        
+        latest = now() - timedelta(hours=24)
+        entries = PoolUptimeDetailedEntry.objects.filter(pool=pool, created__gt=latest).order_by('created')
+        
+        context.update({
+                        'labels' : self.get_labels(pool, entries),
+                        'datasets' : self.get_datasets(pool, entries),
+                        'options' : self.get_options(pool, entries),
+                        })
+        return context
+
+    def get_colors(self):
+        return next_color()
     
+    def get_data_colors(self, entries):
+        colors = []
+        red = (204,0,0)
+        yellow = (255, 204, 0)
+        green = (0, 163, 0)
+        
+        for point in entries:
+            if point.actual == point.target:
+                colors.append("rgba(%d, %d, %d, 1)" % green)
+            elif not point.actual:
+                colors.append("rgba(%d, %d, %d, 1)" % red)
+            else:
+                colors.append("rgba(%d, %d, %d, 1)" % yellow)
+        
+        return colors
+                
+    
+    def get_options(self, pool, entries):
+        return { 
+                'scaleOverride' : True,
+                'scaleSteps' : max(entries, key=attrgetter('target')).target + 1,
+                'scaleStepWidth' : 1,
+                'scaleStartValue' : -1,
+        }
+
+    def get_datasets(self, pool, entries):
+        datasets = []
+        color_generator = self.get_colors()
+        color = tuple(next(color_generator))
+        
+        data = [x.actual for x in entries]
+        dataset = {
+                   'fillColor': self.get_data_colors(entries),
+                   #'highlightFill': "rgba(84,255,159,0.2)",
+                   'strokeColor': "rgba(%d, %d, %d, 1)" % color,
+                   'pointColor': "rgba(%d, %d, %d, 1)" % color,
+                   'pointStrokeColor': "#fff",
+                   'data': data
+                   }
+        
+        datasets.append(dataset)
+        return datasets
+
+    def get_labels(self, pool, entries):
+        return [x.created.strftime("%H:%M") for x in entries]

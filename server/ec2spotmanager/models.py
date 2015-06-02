@@ -224,3 +224,14 @@ class PoolStatusEntry(models.Model):
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
 
+class PoolUptimeDetailedEntry(models.Model):
+    pool = models.ForeignKey(InstancePool)
+    created = models.DateTimeField(default=timezone.now)
+    target = models.IntegerField()
+    actual = models.IntegerField()
+    
+class PoolUptimeAccumulatedEntry(models.Model):
+    pool = models.ForeignKey(InstancePool)
+    created = models.DateTimeField(default=timezone.now)
+    accumulated_count = models.IntegerField(default=0)
+    uptime_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)

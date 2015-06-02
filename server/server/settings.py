@@ -54,6 +54,7 @@ INSTALLED_APPS = (
     'crashmanager',
     'rest_framework',
     'rest_framework.authtoken',
+    'chartjs',
 )
 
 # This tiny middleware module allows us to see exceptions on stderr

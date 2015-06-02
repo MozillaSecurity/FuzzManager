@@ -10,6 +10,23 @@
 		<table class="table table-condensed">
 			<tr><td style="width: 100px;">Last Cycled:</td><td>{{ pool.last_cycled|date:"r" }}</td></tr>
 		</table>
+
+        <canvas id="myChart" style="height: 300px; width: 100%;"></canvas>
+
+	<script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
+        <script type="text/javascript">
+            $.get('{% url "ec2spotmanager:line_chart_json" "1" %}', function(data) {
+                var ctx = $("#myChart").get(0).getContext("2d");
+                barChart = new Chart(ctx).Bar(data, data.options);
+		for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {
+		  barChart.datasets[0].bars[i]._saved.fillColor = data.datasets[0].fillColor[i];
+		  barChart.datasets[0].bars[i].fillColor = data.datasets[0].fillColor[i];
+		  barChart.datasets[0].bars[i].highlightFill = data.datasets[0].fillColor[i];
+		}
+            });
+
+        </script>
+
 		<div class="btn-group">
 			{% if pool.isEnabled %}
 			<a href="{% url 'ec2spotmanager:poolcycle' pool.pk %}" class="btn btn-default">Force Cycle</a>

@@ -18,4 +18,5 @@ urlpatterns = patterns('',
     url(r'^configurations/(?P<configid>\d+)/$', views.viewConfig, name='configview'),
     url(r'^configurations/(?P<configid>\d+)/edit/$', views.editConfig, name='configedit'),
     url(r'^configurations/(?P<configid>\d+)/delete/$', views.deleteConfig, name='configdel'),
+    url(r'^pools/(?P<poolid>\d+)/chart_json/$', views.UptimeChartView.as_view(), name='line_chart_json'),
 )
