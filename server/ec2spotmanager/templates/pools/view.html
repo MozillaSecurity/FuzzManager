@@ -15,7 +15,7 @@
 
 	<script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
         <script type="text/javascript">
-            $.get('{% url "ec2spotmanager:line_chart_json" "1" %}', function(data) {
+            $.get("{% url 'ec2spotmanager:line_chart_json' pool.pk %}", function(data) {
                 var ctx = $("#myChart").get(0).getContext("2d");
                 barChart = new Chart(ctx).Bar(data, data.options);
 		for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {

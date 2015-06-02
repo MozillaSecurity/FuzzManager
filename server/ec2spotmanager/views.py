@@ -436,6 +436,8 @@ class UptimeChartView(JSONView):
                 'scaleSteps' : scaleSteps,
                 'scaleStepWidth' : 1,
                 'scaleStartValue' : -1,
+                'barValueSpacing' : 0,
+                'barShowStroke' : False,
         }
 
     def get_datasets(self, pool, entries):
