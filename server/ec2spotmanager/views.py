@@ -426,9 +426,14 @@ class UptimeChartView(JSONView):
                 
     
     def get_options(self, pool, entries):
+        if entries:
+            scaleSteps = max(entries, key=attrgetter('target')).target + 1
+        else:
+            # Default to the current pool size if we have no entries at all
+            scaleSteps = pool.flat_config.size
         return { 
                 'scaleOverride' : True,
-                'scaleSteps' : max(entries, key=attrgetter('target')).target + 1,
+                'scaleSteps' : scaleSteps,
                 'scaleStepWidth' : 1,
                 'scaleStartValue' : -1,
         }
