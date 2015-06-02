@@ -1,13 +1,11 @@
 from django.core.management.base import NoArgsCommand
-from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE,\
-    PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+from ec2spotmanager.models import PoolUptimeDetailedEntry, InstancePool, Instance, INSTANCE_STATE
 from django.conf import settings
 from ec2spotmanager.management.common import pid_lock_file
 import time
 import logging
 
 from django.utils import timezone
-from server.ec2spotmanager.models import PoolUptimeDetailedEntry
 from django.db.models.query_utils import Q
 
 stats_delta_secs = 60*30 # 30 minutes
