@@ -75,9 +75,9 @@ class Command(NoArgsCommand):
                         day_entry.created = entry.created
                         day_entry.uptime_percentage = 0.0
                     
-                    entry_percentage = round((float(entry.actual) / entry.target) * 100, 2)
+                    entry_percentage = (float(entry.actual) / entry.target) * 100
                     
-                    new_uptime_percentage = ((day_entry.uptime_percentage * day_entry.accumulated_count) + entry_percentage) / (day_entry.accumulated_count + 1)
+                    new_uptime_percentage = ((float(day_entry.uptime_percentage) * day_entry.accumulated_count) + entry_percentage) / (day_entry.accumulated_count + 1)
                     
                     day_entry.uptime_percentage = new_uptime_percentage
                     day_entry.accumulated_count = day_entry.accumulated_count + 1
