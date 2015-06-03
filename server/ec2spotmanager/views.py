@@ -15,7 +15,7 @@ from django.core.files.base import ContentFile
 from chartjs.views.base import JSONView
 from chartjs.colors import next_color
 from django.utils.timezone import now, timedelta
-from ec2spotmanager.models import PoolUptimeDetailedEntry
+from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from operator import attrgetter
 
 def renderError(request, err):
@@ -389,9 +389,9 @@ def deletePoolMsg(request, msgid):
 def deleteConfig(request, configid):
     pass
 
-class UptimeChartView(JSONView):
+class UptimeChartViewDetailed(JSONView):
     def get_context_data(self, **kwargs):
-        context = super(UptimeChartView, self).get_context_data(**kwargs)
+        context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
         pool.flat_config = pool.config.flatten()
         
@@ -460,3 +460,74 @@ class UptimeChartView(JSONView):
 
     def get_labels(self, pool, entries):
         return [x.created.strftime("%H:%M") for x in entries]
+    
+class UptimeChartViewAccumulated(JSONView):
+    def get_context_data(self, **kwargs):
+        context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
+        pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
+        pool.flat_config = pool.config.flatten()
+        
+        latest = now() - timedelta(days=30) # TODO: Use settings instead of hardcoding
+        entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool, created__gt=latest).order_by('created')
+        
+        context.update({
+                        'labels' : self.get_labels(pool, entries),
+                        'datasets' : self.get_datasets(pool, entries),
+                        'options' : self.get_options(pool, entries),
+                        })
+        return context
+
+    def get_colors(self):
+        return next_color()
+    
+    def get_data_colors(self, entries):
+        colors = []
+        red = (204,0,0)
+        yellow = (255, 204, 0)
+        green = (0, 163, 0)
+        
+        for point in entries:
+            if point.uptime_percentage == 100.00:
+                colors.append("rgba(%d, %d, %d, 1)" % green)
+            elif not point.uptime_percentage:
+                colors.append("rgba(%d, %d, %d, 1)" % red)
+            else:
+                colors.append("rgba(%d, %d, %d, 1)" % yellow)
+        
+        return colors
+                
+    
+    def get_options(self, pool, entries):
+        # Scale to 100% but use 110 so the red bar is actually visible
+        scaleSteps = 11
+        return { 
+                'scaleOverride' : True,
+                'scaleSteps' : scaleSteps,
+                'scaleStepWidth' : 10,
+                'scaleStartValue' : -10,
+                'scaleLabel' : '<%=value%>%',
+                'tooltipTemplate' : '<%if (label){%><%=label%>: <%}%><%= value%>%',
+                'barValueSpacing' : 0,
+                'barShowStroke' : False,
+        }
+
+    def get_datasets(self, pool, entries):
+        datasets = []
+        color_generator = self.get_colors()
+        color = tuple(next(color_generator))
+        
+        data = [x.uptime_percentage for x in entries]
+        dataset = {
+                   'fillColor': self.get_data_colors(entries),
+                   #'highlightFill': "rgba(84,255,159,0.2)",
+                   'strokeColor': "rgba(%d, %d, %d, 1)" % color,
+                   'pointColor': "rgba(%d, %d, %d, 1)" % color,
+                   'pointStrokeColor': "#fff",
+                   'data': data
+                   }
+        
+        datasets.append(dataset)
+        return datasets
+
+    def get_labels(self, pool, entries):
+        return [x.created.strftime("%b %d") for x in entries]

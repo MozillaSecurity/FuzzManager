@@ -11,12 +11,13 @@
 			<tr><td style="width: 100px;">Last Cycled:</td><td>{{ pool.last_cycled|date:"r" }}</td></tr>
 		</table>
 
-        <canvas id="myChart" style="height: 300px; width: 100%;"></canvas>
+        <canvas id="detailedChart" style="height: 300px; width: 100%;"></canvas>
+        <canvas id="accumulatedChart" style="height: 300px; width: 100%;"></canvas>
 
 	<script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
         <script type="text/javascript">
-            $.get("{% url 'ec2spotmanager:line_chart_json' pool.pk %}", function(data) {
-                var ctx = $("#myChart").get(0).getContext("2d");
+            $.get("{% url 'ec2spotmanager:line_chart_json_detailed' pool.pk %}", function(data) {
+                var ctx = $("#detailedChart").get(0).getContext("2d");
                 barChart = new Chart(ctx).Bar(data, data.options);
 		for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {
 		  barChart.datasets[0].bars[i]._saved.fillColor = data.datasets[0].fillColor[i];
@@ -25,6 +26,15 @@
 		}
             });
 
+            $.get("{% url 'ec2spotmanager:line_chart_json_accumulated' pool.pk %}", function(data) {
+                var ctx = $("#accumulatedChart").get(0).getContext("2d");
+                barChart = new Chart(ctx).Bar(data, data.options);
+		for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {
+		  barChart.datasets[0].bars[i]._saved.fillColor = data.datasets[0].fillColor[i];
+		  barChart.datasets[0].bars[i].fillColor = data.datasets[0].fillColor[i];
+		  barChart.datasets[0].bars[i].highlightFill = data.datasets[0].fillColor[i];
+		}
+            });
         </script>
 
 		<div class="btn-group">
