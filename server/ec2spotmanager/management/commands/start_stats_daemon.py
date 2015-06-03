@@ -71,6 +71,7 @@ class Command(NoArgsCommand):
                         day_entry = day_entries[0]
                     else:
                         day_entry = PoolUptimeAccumulatedEntry()
+                        day_entry.pool = pool
                         day_entry.created = entry.created
                         day_entry.uptime_percentage = 0.0
                     
