@@ -55,7 +55,7 @@ class Command(NoArgsCommand):
             # Now check if we need to aggregate some of the detail entries we have
             entries = PoolUptimeDetailedEntry.objects.filter(pool=pool).order_by('created')
             
-            n = len(entries) - (stats_total_detailed*60)/stats_delta_secs
+            n = len(entries) - (stats_total_detailed*60*60)/stats_delta_secs
             if n > 0:
                 # We need to aggregate some entries
                 entriesAggr = entries[0:n]
