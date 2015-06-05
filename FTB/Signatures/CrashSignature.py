@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import json
+import difflib
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
 import FTB.Signatures
@@ -169,4 +170,21 @@ class CrashSignature():
                 
                 symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
         return symptomsDiff
+    
+    def getSignatureUnifiedDiffTuples(self, crashInfo):
+        diffTuples = []
         
+        newRawCrashSignature = self.fit(crashInfo)
+        oldLines = self.rawSignature.splitlines()
+        newLines = newRawCrashSignature.splitlines()
+        context = max(len(oldLines),len(newLines))
+        
+        signatureDiff = difflib.unified_diff(oldLines, newLines, n=context)
+        
+        for diffLine in signatureDiff:
+            if diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or not diffLine.strip():
+                continue
+            
+            diffTuples.append((diffLine[0],diffLine[1:]))
+        
+        return diffTuples

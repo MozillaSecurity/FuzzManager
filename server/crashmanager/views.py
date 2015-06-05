@@ -494,9 +494,10 @@ def trySignature(request, sigid, crashid):
     signature = bucket.getSignature()
     entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
     
-    symptoms = signature.getSymptomsDiff(entry.crashinfo)
+    #symptoms = signature.getSymptomsDiff(entry.crashinfo)
+    diff = signature.getSignatureUnifiedDiffTuples(entry.crashinfo)
     
-    return render(request, 'signatures/try.html', { 'bucket' : bucket, 'entry' : entry, 'symptoms' : symptoms })
+    return render(request, 'signatures/try.html', { 'bucket' : bucket, 'entry' : entry, 'diff' : diff })
 
 @login_required(login_url='/login/')
 def findSignatures(request, crashid):

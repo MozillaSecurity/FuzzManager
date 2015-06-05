@@ -10,28 +10,21 @@
         <table class="table table-condensed table-hover table-bordered table-db">
             <thead>
             <tr>
-                <th style="width: 35%;">Signature Symptom</th>
-                <th style="width: 20%;">Proposed Change</th>
-                <th style="width: 45%;">CrashInfo</th>
+                <th style="width: 5px;"></th>
+                <th style="width: 50%;">Diff</th>
+                <th style="width: 50%;">CrashInfo</th>
             </tr>
             </thead>
             <tbody>
-            {% for symptom in symptoms %}
+
+            {% for (prefix, what) in diff %}
             <tr>
+		<td>{{ prefix }}</td>
                 <td>
-                    <pre><code {%if symptom.offending %}class="text-danger"{%endif%}>{{ symptom.symptom }}</code></pre>
-                </td>
-                <td>
-                    {% if symptom.offending %}
-                        {% if symptom.proposed %}
-                            <pre><code class="text-success">{{ symptom.proposed }}</code></pre>
-                        {% else %}
-                            <pre><code class="text-success">(Remove)</code></pre>
-                        {% endif %}
-                    {% endif %}
+		    <pre><code {%if prefix == '-' %}class="text-danger"{%elif prefix == '+'%}class="text-success"{%endif%}>{{ what }}</code></pre>
                 </td>
                 {% if forloop.counter == 1 %}
-                <td rowspan="{{ symptoms|length }}">
+                <td rowspan="{{ diff|length }}">
                     <pre><code class="language-bash">{{ entry.crashinfo }}</code></pre>
                 </td>
                 {% endif %}
