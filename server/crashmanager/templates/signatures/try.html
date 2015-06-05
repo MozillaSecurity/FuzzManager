@@ -7,21 +7,21 @@
 <div class="panel panel-default">
     <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Try Signature</div>
     <div class="panel-body">
-        <table class="table table-condensed table-hover table-bordered table-db">
+        <table class="table table-condensed table-hover table-db">
             <thead>
             <tr>
-                <th style="width: 5px;"></th>
+                <th style="width: 2%;"></th>
                 <th style="width: 50%;">Diff</th>
-                <th style="width: 50%;">CrashInfo</th>
+                <th style="width: 48%;">CrashInfo</th>
             </tr>
             </thead>
             <tbody>
 
-            {% for (prefix, what) in diff %}
+            {% for prefix, what in diff %}
             <tr>
-		<td>{{ prefix }}</td>
-                <td>
-		    <pre><code {%if prefix == '-' %}class="text-danger"{%elif prefix == '+'%}class="text-success"{%endif%}>{{ what }}</code></pre>
+                <td style="border-top-width: 0;">{{ prefix }}</td>
+                <td style="border-top-width: 0;">
+                    <pre style="padding: 0; border: 0; margin: 0; overflow: initial; white-space: pre-wrap; word-wrap: normal; word-break: initial; background-color: transparent;" {%if prefix == '-' %}class="text-danger"{%elif prefix == '+'%}class="text-success"{%endif%}>{{ what }}</pre>
                 </td>
                 {% if forloop.counter == 1 %}
                 <td rowspan="{{ diff|length }}">
