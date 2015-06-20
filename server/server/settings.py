@@ -134,6 +134,55 @@ REST_FRAMEWORK = {
     )
 }
 
+# Logging
+
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+# If the logging directory does not exist, try creating it.
+# If this happens to exist but is a file, we would die anyway
+# once we try to create the log file, so don't bother checking
+# this here.
+if not os.path.exists(LOG_DIR):
+  os.makedirs(LOG_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[%(asctime)s] [%(levelname)s] [%(module)s] [%(process)d] ]%(thread)d]: %(message)s'
+        },
+        'simple': {
+            'format': '[%(asctime)s] [%(levelname)s] [%(module)s]: %(message)s'
+        },
+    },
+   'handlers': {
+        'console':{
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'ec2spotmanager_logfile':{
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'ec2spotmanager.log'),
+            'maxBytes': '16777216',
+            'formatter': 'simple'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        }
+    },
+    'loggers': {
+        'ec2spotmanager': {
+            'handlers': ['ec2spotmanager_logfile'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+    },
+}
+
 # Crashmanager configuration
 #
 #BUGZILLA_USERNAME = "example@example.com"

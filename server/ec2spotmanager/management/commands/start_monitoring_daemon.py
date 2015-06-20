@@ -20,6 +20,8 @@ from laniakea.core.manager import Laniakea
 import boto.ec2
 import boto.exception
 
+logger = logging.getLogger("ec2spotmanager")
+
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("monitoring_daemon")
@@ -30,6 +32,13 @@ class Command(NoArgsCommand):
     
     def check_instance_pools(self):
         instance_pools = InstancePool.objects.all()
+
+        print("Log")        
+        logging.info("Test")
+        logging.info("[Pool %d] Test pool message." % 5)
+        print("log end")
+        
+        return 1
         
         # Process all instance pools
         for instance_pool in instance_pools:
@@ -62,6 +71,7 @@ class Command(NoArgsCommand):
                     running_instances.append(instance)
                 else:
                     # The instance is no longer running, delete it from our database
+                    logging.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database." % (instance_pool.id, instance.ec2_instance_id))
                     instance.delete()
             
             # Continue working with the instances we have running
@@ -79,7 +89,7 @@ class Command(NoArgsCommand):
                 continue
             
             if (not instance_pool.last_cycled) or instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval):
-                print("[Main] Pool needs to be cycled, terminating all instances...")
+                logger.info("[Pool %d] Needs to be cycled, terminating all instances..." % instance_pool.id)
                 instance_pool.last_cycled = timezone.now()
                 self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
                 instance_pool.save()
@@ -89,7 +99,7 @@ class Command(NoArgsCommand):
                 # of this pool, allowing other actions to be processed in-between.
                 #time.sleep(2)
                 #self.update_pool_instances(instance_pool, config)
-                print("[Main] Pool termination complete.")
+                logger.info("[Pool %d] Termination complete." % instance_pool.id)
             
             # Determine which instances need to be cycled
             #outdated_instances = instances.filter(created__lt = timezone.now() - timezone.timedelta(seconds=config.cycle_interval))
@@ -100,16 +110,16 @@ class Command(NoArgsCommand):
             #    instances_missing += 1
             
             if instances_missing > 0:
-                print("[Main] Pool needs %s more instances, starting..." % instances_missing)
+                logger.info("[Pool %d] Needs %s more instances, starting..." % (instance_pool.id, instances_missing))
                 self.start_pool_instances(instance_pool, config, count=instances_missing)
             elif instances_missing < 0:
                 # Select the oldest instances we have running and terminate
                 # them so we meet the size limitation again.
-                print("[Main] Pool has %s instances over limit, terminating..." % -instances_missing)
+                logger.info("[Pool %d] Has %s instances over limit, terminating..." % (instance_pool.id, -instances_missing))
                 instances = Instance.objects.filter(pool=instance_pool).order_by('created')[:-instances_missing]
                 self.terminate_pool_instances(instance_pool, instances, config)
             else:
-                print("[Main] Pool size ok.")
+                logger.debug("[Pool %d] Size is ok." % instance_pool.id)
                 
     def get_best_region_zone(self, config):        
         prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
@@ -166,6 +176,8 @@ class Command(NoArgsCommand):
         (region, zone, rejected) = self.get_best_region_zone(config)
         
         if not region:
+            logger.warn("[Pool %d] No allowed region was cheap enough to spawn instances." % pool.id)
+            
             entries = PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['price-too-low'])
             if not entries:
                 entry = PoolStatusEntry()
@@ -177,7 +189,7 @@ class Command(NoArgsCommand):
                 entry.save()
             return
         
-        print("Using region %s with availability zone %s" % (region,zone))
+        logger.debug("[Pool %d] Using region %s with availability zone %s." % (pool.id, region, zone))
         
         instances = []
         
@@ -196,7 +208,8 @@ class Command(NoArgsCommand):
             userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata)
             userdata = LaniakeaCommandLine.handle_tags(userdata, config.ec2_userdata_macros)
             if not userdata:
-                raise RuntimeError("start_instance: Failed to compile userdata")
+                logger.error("[Pool %d] Failed to compile userdata." % pool.id)
+                raise RuntimeError("start_instances_async: Failed to compile userdata")
             
             images["default"]['user_data'] = userdata
             images["default"]['placement'] = zone
@@ -206,7 +219,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logging.error("%s: laniakea failure: %s" % ("start_instances_async", msg))
+                logging.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "start_instances_async", msg))
                 
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
@@ -224,10 +237,10 @@ class Command(NoArgsCommand):
             config.ec2_tags['SpotManager-PoolId'] = str(pool.pk)
     
             try:
-                print("Creating %s instances" % count)
+                logging.info("[Pool %d] Creating %s instances..." % count)
                 (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20*60)
                 
-                print("Successfully created %s instances, %s requests timed out and were canceled" % (len(boto_instances), len(boto_pending)))
+                logging.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), len(boto_pending)))
                 
                 assert (len(boto_instances) + len(boto_pending)) == len(instances) == count
                 
@@ -246,11 +259,11 @@ class Command(NoArgsCommand):
                 if boto_pending:
                     for i in range(len(boto_instances),count):
                         # Delete instances belong to canceled spot requests
-                        print("Deleting instance with id %s (belongs to canceled request)" % instances[i].pk)
+                        logging.info("[Pool %d] Deleting instance with id %s (belongs to canceled request)" % (pool.id, instances[i].pk))
                         instances[i].delete()
                 
             except boto.exception.EC2ResponseError as msg:
-                logging.error("%s: boto failure: %s" % ("start_instances_async", msg))
+                logging.error("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
                 return
         
         # TODO: We don't get any information back from the async method call here, but should handle failures!
@@ -266,7 +279,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logging.error("%s: laniakea failure: %s" % ("terminate_pool_instances", msg))
+                logging.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return None
         
             try:
@@ -281,10 +294,10 @@ class Command(NoArgsCommand):
                         
                     cluster.terminate(boto_instances)
                 else:
-                    print("Terminating %s instances in region %s" % (len(instance_ids_by_region[region]),region))
+                    logging.info("[Pool %d] Terminating %s instances in region %s" % (pool.id, len(instance_ids_by_region[region]),region))
                     cluster.terminate(cluster.find(instance_ids=instance_ids_by_region[region]))
             except boto.exception.EC2ResponseError as msg:
-                logging.error("%s: boto failure: %s" % ("terminate_pool_instances", msg))
+                logging.error("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return 1
     
     def get_instance_ids_by_region(self, instances):
@@ -319,7 +332,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logging.error("%s: laniakea failure: %s" % ("update_pool_instances", msg))
+                logging.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "update_pool_instances", msg))
                 return None
         
             try:
@@ -345,10 +358,7 @@ class Command(NoArgsCommand):
                             if q:
                                 instance = q[0]
                             else:
-                                print("BUG: Instance is also not in the database")
-                                q = Instance.objects.filter(ec2_region = region).filter(status_code = -1)
-                                if q:
-                                    print("BUG: Found %s requested instances in the DB!" % len(q))
+                                logging.error("[Pool %d] Instance with EC2 ID %s is not in our database." % (pool.id, boto_instance.id))
                                     
                                 # Terminate at this point, we run in an inconsistent state
                                 assert(False)
@@ -375,8 +385,7 @@ class Command(NoArgsCommand):
                 return 1
         
         if instances_left:
-            print("DEBUG: Deleting %s instances left in database without corresponding EC2 entry:" % len(instances_left))
             for instance in instances_left:
-                print(instance.ec2_instance_id)
+                logging.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
                 instance.delete()
                     
