@@ -230,7 +230,7 @@ class Command(NoArgsCommand):
             config.ec2_tags['SpotManager-PoolId'] = str(pool.pk)
     
             try:
-                logger.info("[Pool %d] Creating %s instances..." % count)
+                logger.info("[Pool %d] Creating %s instances..." % (pool.id, count))
                 (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20*60)
                 
                 logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), len(boto_pending)))
