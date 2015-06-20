@@ -33,13 +33,6 @@ class Command(NoArgsCommand):
     def check_instance_pools(self):
         instance_pools = InstancePool.objects.all()
 
-        print("Log")        
-        logging.info("Test")
-        logging.info("[Pool %d] Test pool message." % 5)
-        print("log end")
-        
-        return 1
-        
         # Process all instance pools
         for instance_pool in instance_pools:
             criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool = instance_pool, isCritical = True)
