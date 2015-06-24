@@ -326,7 +326,7 @@ class ASanCrashInfo(CrashInfo):
         self.configuration = configuration
         
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        if crashData == None:
+        if not crashData:
             asanOutput = stderr
         else:
             asanOutput = crashData
