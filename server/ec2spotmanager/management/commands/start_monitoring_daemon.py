@@ -62,10 +62,14 @@ class Command(NoArgsCommand):
                 if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'], INSTANCE_STATE['requested']]:
                     instances_missing -= 1
                     running_instances.append(instance)
-                else:
+                elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]: 
                     # The instance is no longer running, delete it from our database
                     logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database." % (instance_pool.id, instance.ec2_instance_id))
                     instance.delete()
+                else:
+                    logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d" % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
+                    # Terminate here for now so we can see which status code we are not handling properly
+                    assert(False)
             
             # Continue working with the instances we have running
             instances = running_instances
