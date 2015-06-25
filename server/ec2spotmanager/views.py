@@ -126,7 +126,7 @@ def viewPoolPrices(request, poolid):
     for region in prices:
         for zone in prices[region]:
             zones.append(zone)
-            latest_price_by_zone[zone] = prices[region][zone][-1]
+            latest_price_by_zone[zone] = prices[region][zone][0]
         
     prices = []    
     for zone in sorted(zones):

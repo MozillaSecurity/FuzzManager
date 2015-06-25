@@ -131,8 +131,8 @@ class Command(NoArgsCommand):
                 # Do not consider a zone/region combination that has a current
                 # price higher than the maximum price we are willing to pay,
                 # even if the median would end up being lower than our maximum.
-                if prices[region][zone][-1] > config.ec2_max_price:
-                    rejected_prices[zone] = prices[region][zone][-1]
+                if prices[region][zone][0] > config.ec2_max_price:
+                    rejected_prices[zone] = prices[region][zone][0]
                     continue
                 
                 median = get_price_median(prices[region][zone])
