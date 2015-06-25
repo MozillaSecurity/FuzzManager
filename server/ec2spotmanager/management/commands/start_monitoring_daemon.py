@@ -195,6 +195,7 @@ class Command(NoArgsCommand):
         for i in range(0,count):
             instance = Instance()
             instance.ec2_region = region
+            instance.ec2_zone = zone
             instance.status_code = INSTANCE_STATE["requested"]
             instance.pool = pool
             instance.save()

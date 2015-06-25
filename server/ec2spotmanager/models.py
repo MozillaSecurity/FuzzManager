@@ -210,6 +210,7 @@ class Instance(models.Model):
     status_data = models.CharField(max_length=4095, blank=True, null=True)
     ec2_instance_id = models.CharField(max_length=255, blank=True, null=True)
     ec2_region = models.CharField(max_length=255)
+    ec2_zone = models.CharField(max_length=255)
     
 class InstanceStatusEntry(models.Model):
     instance = models.ForeignKey(Instance)
