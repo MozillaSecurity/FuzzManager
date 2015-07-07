@@ -8,7 +8,7 @@ import logging
 from django.utils import timezone
 from django.db.models.query_utils import Q
 
-stats_delta_secs = 60*30 # 30 minutes
+stats_delta_secs = 60*15 # 30 minutes
 stats_total_detailed = 24 # How many hours the detailed statistics should include
 stats_total_accumulated = 30 # How many days should we keep accumulated statistics
 
