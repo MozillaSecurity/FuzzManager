@@ -91,4 +91,5 @@ class Command(NoArgsCommand):
             
             n = len(entries) - stats_total_accumulated
             if n > 0:
-                entries[0:n].delete()
+                for entry in entries[0:n]:
+                    entry.delete()
