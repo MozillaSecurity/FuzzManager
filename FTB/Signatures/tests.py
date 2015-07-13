@@ -283,14 +283,14 @@ class ASanParserTestHeapCrash(unittest.TestCase):
         config = ProgramConfiguration("test", "x86", "linux")
         
         crashInfo = ASanCrashInfo([], asanTraceHeapCrash.splitlines(), config)
-        self.assertEqual(len(crashInfo.backtrace), 0)
+        self.assertEqual(len(crashInfo.backtrace), 1)
         
         self.assertEqual(crashInfo.crashAddress, 0x00000019L)
         self.assertEqual(crashInfo.registers["pc"], 0xf718072eL)
         self.assertEqual(crashInfo.registers["sp"], 0xff87d130L)
         self.assertEqual(crashInfo.registers["bp"], 0x000006a1L)
         
-        print(crashInfo.createCrashSignature())
+        self.assertEqual(crashInfo.createShortSignature(), "[@ ??]")
         
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):

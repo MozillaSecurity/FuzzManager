@@ -392,6 +392,12 @@ class ASanCrashInfo(CrashInfo):
             self.backtrace.append(component)
             expectedIndex += 1
         
+        if not self.backtrace and self.crashAddress != None:
+            # We've seen the crash address but no frames, so this is likely
+            # a crash on the heap with no symbols available. Add one artificial
+            # frame so it doesn't show up as "No crash detected"
+            self.backtrace.append("??")
+        
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
