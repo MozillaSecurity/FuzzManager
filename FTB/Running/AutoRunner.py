@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
-'''
+"""
 AutoRunner -- Determine the correct runner class (GDB, ASan, etc) for
               the given program, instantiate and return it.
 
@@ -13,7 +13,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -27,10 +27,10 @@ import os
 
 
 class AutoRunner():
-    '''
+    """
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.
-    '''
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, binary, args=None, env=None, cwd=None):
@@ -93,25 +93,25 @@ class GDBRunner(AutoRunner):
 
         classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
-            '--batch',
-            '-ex',
-            'source %s' % classPath,
+            "--batch",
+            "-ex",
+            "source %s" % classPath,
         ]
 
         if core is None:
-            self.gdbArgs.extend(['-ex', 'run'])
+            self.gdbArgs.extend(["-ex", "run"])
 
         self.gdbArgs.extend([
-            '-ex', 'set pagination 0',
-            '-ex', 'set backtrace limit 128',
-            '-ex', 'bt',
-            '-ex', 'python printImportantRegisters()',
-            '-ex', 'x/2i $pc',
-            '-ex', 'quit',
+            "-ex", "set pagination 0",
+            "-ex", "set backtrace limit 128",
+            "-ex", "bt",
+            "-ex", "python printImportantRegisters()",
+            "-ex", "x/2i $pc",
+            "-ex", "quit",
         ])
 
         if core is None:
-            self.gdbArgs.append('--args')
+            self.gdbArgs.append("--args")
 
         self.cmdArgs.append("gdb")
         self.cmdArgs.extend(self.gdbArgs)
