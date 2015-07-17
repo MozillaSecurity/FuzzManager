@@ -156,19 +156,19 @@ class ASanRunner(AutoRunner):
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
 
-        if not "ASAN_SYMBOLIZER_PATH" in self.env and "ASAN_SYMBOLIZER_PATH" in os.environ:
-            self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
-        
-        if "ASAN_SYMBOLIZER_PATH" in self.env:
-            if not os.path.exists(self.env["ASAN_SYMBOLIZER_PATH"]):
-                raise RuntimeError("Misconfigured ASAN_SYMBOLIZER_PATH: %s")
-        else:
-            llvmSymbolizer = spawn.find_executable("llvm-symbolizer")
-            if llvmSymbolizer:
-                self.env["ASAN_SYMBOLIZER_PATH"] = llvmSymbolizer
+        if not "ASAN_SYMBOLIZER_PATH" in self.env:
+            if "ASAN_SYMBOLIZER_PATH" in os.environ:
+                self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
             else:
-                raise RuntimeError("Unable to locate llvm-symbolizer for ASAN_SYMBOLIZER_PATH")
+                self.env["ASAN_SYMBOLIZER_PATH"] = spawn.find_executable("llvm-symbolizer")
+                if not self.env["ASAN_SYMBOLIZER_PATH"]:
+                    raise RuntimeError("Unable to locate llvm-symbolizer")
     
+        if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
+            raise RuntimeError(
+                    "Misconfigured ASAN_SYMBOLIZER_PATH: %s" % self.env["ASAN_SYMBOLIZER_PATH"]
+                  )
+
     def run(self):
         process = subprocess.Popen(
                                    self.cmdArgs,
