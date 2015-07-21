@@ -172,11 +172,12 @@ class Command(NoArgsCommand):
         # Figure out where to put our instances
         (region, zone, rejected) = self.get_best_region_zone(config)
         
+        priceLowEntries = PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['price-too-low'])
+        
         if not region:
             logger.warn("[Pool %d] No allowed region was cheap enough to spawn instances." % pool.id)
             
-            entries = PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['price-too-low'])
-            if not entries:
+            if not priceLowEntries:
                 entry = PoolStatusEntry()
                 entry.pool = pool
                 entry.type = POOL_STATUS_ENTRY_TYPE['price-too-low']
@@ -185,6 +186,9 @@ class Command(NoArgsCommand):
                     entry.msg += "\n%s at %s" % (zone, rejected[zone])
                 entry.save()
             return
+        else:
+            if priceLowEntries:
+                priceLowEntries.delete()
         
         logger.debug("[Pool %d] Using region %s with availability zone %s." % (pool.id, region, zone))
         
