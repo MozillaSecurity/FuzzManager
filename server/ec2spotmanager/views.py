@@ -370,7 +370,7 @@ def deletePool(request, poolid):
         pool.delete()
         return redirect('ec2spotmanager:pools')
     elif request.method == 'GET':
-        return render(request, 'pools/delete.html', { 'pool' : pool })
+        return render(request, 'pools/delete.html', { 'entry' : pool })
     else:
         raise SuspiciousOperation
 
@@ -387,7 +387,21 @@ def deletePoolMsg(request, msgid):
 
 @login_required(login_url='/login/')
 def deleteConfig(request, configid):
-    pass
+    config = get_object_or_404(PoolConfiguration, pk=configid)
+    
+    if InstancePool.objects.filter(config=config):
+        return render(request, 'pools/error.html', { 'error_message' : 'That configuration is still used by one or more instance pools.' })
+        
+    if PoolConfiguration.objects.filter(parent=config):
+        return render(request, 'pools/error.html', { 'error_message' : 'That configuration is still referenced by one or more other configurations.' })
+    
+    if request.method == 'POST':            
+        config.delete()
+        return redirect('ec2spotmanager:configs')
+    elif request.method == 'GET':
+        return render(request, 'config/delete.html', { 'entry' : config })
+    else:
+        raise SuspiciousOperation
 
 class UptimeChartViewDetailed(JSONView):
     def get_context_data(self, **kwargs):
