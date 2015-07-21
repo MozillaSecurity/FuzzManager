@@ -217,7 +217,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logger.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "start_instances_async", msg))
+                logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "start_instances_async", msg))
                 
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
@@ -261,7 +261,7 @@ class Command(NoArgsCommand):
                         instances[i].delete()
                 
             except boto.exception.EC2ResponseError as msg:
-                logger.error("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
+                logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
                 return
         
         # TODO: We don't get any information back from the async method call here, but should handle failures!
@@ -277,7 +277,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logger.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "terminate_pool_instances", msg))
+                logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return None
         
             try:
@@ -295,7 +295,7 @@ class Command(NoArgsCommand):
                     logger.info("[Pool %d] Terminating %s instances in region %s" % (pool.id, len(instance_ids_by_region[region]),region))
                     cluster.terminate(cluster.find(instance_ids=instance_ids_by_region[region]))
             except boto.exception.EC2ResponseError as msg:
-                logger.error("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
+                logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return 1
     
     def get_instance_ids_by_region(self, instances):
@@ -330,7 +330,7 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
-                logger.error("[Pool %d] %s: laniakea failure: %s" % (pool.id, "update_pool_instances", msg))
+                logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "update_pool_instances", msg))
                 return None
         
             try:
@@ -379,7 +379,7 @@ class Command(NoArgsCommand):
                         instance.save()
                     
             except boto.exception.EC2ResponseError as msg:
-                logger.error("%s: boto failure: %s" % ("update_pool_instances", msg))
+                logger.exception("%s: boto failure: %s" % ("update_pool_instances", msg))
                 return 1
         
         if instances_left:
