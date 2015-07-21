@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.dispatch.dispatcher import receiver
 import json
 import os
 
@@ -198,6 +199,17 @@ class PoolConfiguration(models.Model):
             missing_fields.append("ec2_allowed_regions")
         
         return missing_fields
+
+@receiver(models.signals.post_delete, sender=PoolConfiguration)
+def deletePoolConfigurationFiles(sender, instance, **kwargs):
+    if instance.ec2_userdata:
+        filename = instance.file.path
+        filedir = os.path.dirname(filename)
+        
+        os.remove(filename)
+        
+        if not os.listdir(filedir):
+            os.rmdir(filedir)
     
 class InstancePool(models.Model):
     config = models.ForeignKey(PoolConfiguration)
