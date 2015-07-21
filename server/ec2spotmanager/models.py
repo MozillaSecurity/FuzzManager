@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.core.files.storage import FileSystemStorage
+from django.core.files.base import ContentFile
 from django.conf import settings
 import json
 import os
@@ -165,9 +166,10 @@ class PoolConfiguration(models.Model):
         
     def storeTestAndSave(self):
         if self.ec2_userdata:
-            self.ec2_userdata_file.open(mode='w')
-            self.ec2_userdata_file.write(self.ec2_userdata)
-            self.ec2_userdata_file.close()
+            # Save the file using save() to avoid problems when initially
+            # creating the directory. We use os.path.split to keep the
+            # original filename assigned when saving the file.
+            self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1], ContentFile(self.ec2_userdata), save=False)
         self.save()
         
     def isCyclic(self):
