@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance,\
-    INSTANCE_STATE_CODE, PoolStatusEntry
+    INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout
 from django.db.models.aggregates import Count
@@ -37,8 +37,8 @@ def pools(request):
     entries = InstancePool.objects.annotate(size=Count('instance')).order_by('-id')
     
     for pool in entries:
-        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE_CODE['requested']).count()
-        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE_CODE['running']).count()
+        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['requested']).count()
+        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
     
     #(user, created) = User.objects.get_or_create(user = request.user)
     #defaultToolsFilter = user.defaultToolsFilter.all()
