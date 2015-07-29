@@ -33,9 +33,13 @@ class AutoRunner():
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, binary, args=None, env=None, cwd=None):
+    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
         self.binary = binary
         self.cwd = cwd
+        self.stdin = stdin
+        
+        if self.stdin and isinstance(self.stdin, list):
+            self.stdin = "\n".join(self.stdin)
 
         # Certain debuggers like GDB can run into problems when certain
         # environment variables are missing. Hence we copy the system environment
@@ -69,7 +73,7 @@ class AutoRunner():
 
 
     @staticmethod
-    def fromBinaryArgs(binary, args=None, env=None, cwd=None):
+    def fromBinaryArgs(binary, args=None, env=None, cwd=None, stdin=None):
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
@@ -82,14 +86,14 @@ class AutoRunner():
         (stdout, _) = process.communicate()
 
         if stdout.find(" __asan_init") >= 0:
-            return ASanRunner(binary, args, env, cwd)
+            return ASanRunner(binary, args, env, cwd, stdin)
 
-        return GDBRunner(binary, args, env, cwd)
+        return GDBRunner(binary, args, env, cwd, stdin)
 
 
 class GDBRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None, core=None):
-        AutoRunner.__init__(self, binary, args, env, cwd)
+    def __init__(self, binary, args=None, env=None, cwd=None, core=None, stdin=None):
+        AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
@@ -133,7 +137,7 @@ class GDBRunner(AutoRunner):
             env=self.env
         )
 
-        (self.stdout, self.stderr) = process.communicate()
+        (self.stdout, self.stderr) = process.communicate(input=self.stdin)
 
         # Detect where the GDB trace starts/ends
         traceStart = self.stdout.rfind("Program received signal")
@@ -157,8 +161,8 @@ class GDBRunner(AutoRunner):
 
 
 class ASanRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None):
-        AutoRunner.__init__(self, binary, args, env, cwd)
+    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
+        AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
@@ -187,7 +191,7 @@ class ASanRunner(AutoRunner):
             env=self.env
         )
 
-        (self.stdout, stderr) = process.communicate()
+        (self.stdout, stderr) = process.communicate(input=self.stdin)
 
         inTrace = False
         self.auxCrashData = []
