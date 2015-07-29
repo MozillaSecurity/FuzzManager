@@ -40,7 +40,7 @@
             <tr>
                 <th style="width: 25px;">ID</th>
                 <th style="width: 100px;">Name</th>
-                <th style="width: 25px;"># of Instances</th>
+                <th style="width: 75px;"># of Instances (Running/Requested)</th>
                 <th style="width: 150px;">Status</th>
             </tr>
         </thead>
@@ -49,7 +49,7 @@
             <tr class="{% cycle odd,even %}">
                 <td><a href="{% url 'ec2spotmanager:poolview' pool.pk %}">{{ pool.pk }} </a></td>
                 <td>{{ pool.config.name }}</td>
-                <td>{{ pool.size }}</td>
+		<td>{{ pool.size }} ({{ pool.instance_running_count }} / {{ pool.instance_requested_count }})</td>
 		<td>
 			{% if pool.msgs %}
 				{% for msg in pool.msgs %}

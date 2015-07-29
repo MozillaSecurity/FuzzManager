@@ -36,6 +36,10 @@ def pools(request):
     
     entries = InstancePool.objects.annotate(size=Count('instance')).order_by('-id')
     
+    for pool in entries:
+        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE_CODE['requested']).count()
+        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE_CODE['running']).count()
+    
     #(user, created) = User.objects.get_or_create(user = request.user)
     #defaultToolsFilter = user.defaultToolsFilter.all()
     #if defaultToolsFilter:
