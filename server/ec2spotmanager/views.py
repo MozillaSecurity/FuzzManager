@@ -36,10 +36,6 @@ def pools(request):
     
     entries = InstancePool.objects.annotate(size=Count('instance')).order_by('-id')
     
-    for pool in entries:
-        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['requested']).count()
-        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
-    
     #(user, created) = User.objects.get_or_create(user = request.user)
     #defaultToolsFilter = user.defaultToolsFilter.all()
     #if defaultToolsFilter:
@@ -80,6 +76,16 @@ def pools(request):
         except IOError:
             pass
         return daemonRunning
+    
+    for pool in entries:
+        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['requested']).count()
+        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
+        if pool.size == pool.instance_running_count:
+            pool.size_label = 'success'
+        elif pool.size == 0:
+            pool.size_label = 'danger'
+        else:
+            pool.size_label = 'warning'
                 
     data = { 
             'isSearch' : isSearch, 
