@@ -230,6 +230,7 @@ class Command(NoArgsCommand):
                 
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
+                entry.type = 0
                 entry.pool = pool
                 entry.msg = str(msg)
                 entry.isCritical = True
@@ -289,6 +290,7 @@ class Command(NoArgsCommand):
                 else:
                     logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
                     entry = PoolStatusEntry()
+                    entry.type = 0
                     entry.pool = pool
                     entry.isCritical = True
                     entry.msg = "Unclassified error occurred: %s" % msg
@@ -316,6 +318,7 @@ class Command(NoArgsCommand):
             except Exception as msg:
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
+                entry.type = 0
                 entry.pool = pool
                 entry.msg = str(msg)
                 entry.isCritical = True
@@ -376,6 +379,7 @@ class Command(NoArgsCommand):
             except Exception as msg:
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
+                entry.type = 0
                 entry.pool = pool
                 entry.msg = str(msg)
                 entry.isCritical = True
