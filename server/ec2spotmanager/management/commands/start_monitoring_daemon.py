@@ -68,8 +68,13 @@ class Command(NoArgsCommand):
                     instance.delete()
                 else:
                     logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d" % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
-                    # Terminate here for now so we can see which status code we are not handling properly
-                    assert(False)
+                    # In some cases, EC2 sends undocumented status codes and we don't know why
+                    # For now, reset the status code to 0, consider the instance still present
+                    # and hope that with the next update iteration, the problem will be gone.
+                    instance.status_code = 0
+                    instance.save()
+                    instances_missing -= 1
+                    running_instances.append(instance)
             
             # Continue working with the instances we have running
             instances = running_instances
