@@ -283,12 +283,11 @@ class Command(NoArgsCommand):
                         entry.save()
                 else:
                     logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
-                    if not PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['unclassified']):
-                        entry = PoolStatusEntry()
-                        entry.pool = pool
-                        entry.type = POOL_STATUS_ENTRY_TYPE['unclassified']
-                        entry.msg = "Unclassified error occurred: %s" % msg
-                        entry.save()
+                    entry = PoolStatusEntry()
+                    entry.pool = pool
+                    entry.isCritical = True
+                    entry.msg = "Unclassified error occurred: %s" % msg
+                    entry.save()
                 
                 # Delete all pending instances, assuming that an exception from laniakea
                 # means that all instance requests failed.
@@ -310,6 +309,13 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
+                # Log this error to the pool status messages
+                entry = PoolStatusEntry()
+                entry.pool = pool
+                entry.msg = str(msg)
+                entry.isCritical = True
+                entry.save()
+                
                 logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return None
         
@@ -363,6 +369,13 @@ class Command(NoArgsCommand):
             try:
                 cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
+                # Log this error to the pool status messages
+                entry = PoolStatusEntry()
+                entry.pool = pool
+                entry.msg = str(msg)
+                entry.isCritical = True
+                entry.save()
+                
                 logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "update_pool_instances", msg))
                 return None
         
