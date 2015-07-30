@@ -263,9 +263,38 @@ class Command(NoArgsCommand):
                         # Delete instances belong to canceled spot requests
                         logger.info("[Pool %d] Deleting instance with id %s (belongs to canceled request)" % (pool.id, instances[i].pk))
                         instances[i].delete()
+                        
+                # Delete certain warnings we might have created earlier that no longer apply
+                
+                # If we ever exceeded the maximum spot instance count, we can clear
+                # the warning now because we obviously succeeded in starting some instances.
+                PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']).delete()
+                
+                # Do not delete unclassified errors here for now, so the user can see them.
                 
             except boto.exception.EC2ResponseError as msg:
-                logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
+                if "MaxSpotInstanceCountExceeded" in msg:
+                    logger.warning("[Pool %d] Maximum instance count exceeded for region %s" % (pool.id, region))
+                    if not PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
+                        entry = PoolStatusEntry()
+                        entry.pool = pool
+                        entry.type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']
+                        entry.msg = "Auto-selected region exceeded its maximum spot instance count."
+                        entry.save()
+                else:
+                    logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
+                    if not PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['unclassified']):
+                        entry = PoolStatusEntry()
+                        entry.pool = pool
+                        entry.type = POOL_STATUS_ENTRY_TYPE['unclassified']
+                        entry.msg = "Unclassified error occurred: %s" % msg
+                        entry.save()
+                
+                # Delete all pending instances, assuming that an exception from laniakea
+                # means that all instance requests failed.
+                for instance in instances:
+                    instance.delete()
+                
                 return
         
         # TODO: We don't get any information back from the async method call here, but should handle failures!
