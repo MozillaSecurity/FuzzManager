@@ -26,7 +26,7 @@ class StringMatch():
         self.compiledValue = None
         
         if isinstance(obj, str) or isinstance(obj, unicode):
-            self.value = obj
+            self.value = str(obj)
             
             # Support the short form using forward slashes to indicate a PCRE
             if self.value.startswith("/") and self.value.endswith("/"):
