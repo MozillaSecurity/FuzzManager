@@ -279,7 +279,7 @@ class Command(NoArgsCommand):
                 # Do not delete unclassified errors here for now, so the user can see them.
                 
             except boto.exception.EC2ResponseError as msg:
-                if "MaxSpotInstanceCountExceeded" in msg:
+                if "MaxSpotInstanceCountExceeded" in str(msg):
                     logger.warning("[Pool %d] Maximum instance count exceeded for region %s" % (pool.id, region))
                     if not PoolStatusEntry.objects.filter(pool = pool, type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
                         entry = PoolStatusEntry()
