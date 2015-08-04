@@ -135,7 +135,7 @@ def scan_crashes(base_dir):
                 open(crash_file + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
 
-def upload_queue_dir(base_dir, bucket_name, project_name):
+def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
     '''
     Synchronize the queue directory of the specified AFL base directory
     to the specified S3 bucket. This method only uploads files that don't
@@ -149,6 +149,9 @@ def upload_queue_dir(base_dir, bucket_name, project_name):
     
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
+    
+    @type new_cov_only: Boolean
+    @param new_cov_only: Only upload files that have new coverage
     '''
     queue_dir = os.path.join(base_dir, "queue")
     queue_files = []
@@ -156,6 +159,11 @@ def upload_queue_dir(base_dir, bucket_name, project_name):
     for queue_file in os.listdir(queue_dir):
         # Ignore all files that aren't crash results
         if not queue_file.startswith("id:"):
+            continue
+        
+        # Only upload files that have new coverage if we aren't told
+        # otherwise by the caller.
+        if new_cov_only and not "+cov" in queue_file:
             continue
         
         queue_files.append(queue_file)
