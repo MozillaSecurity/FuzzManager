@@ -455,11 +455,13 @@ def main(argv=None):
         while True:
             if opts.fuzzmanager:
                 scan_crashes(opts.afloutdir)
-                
-            if opts.s3_queue_upload:
+            
+            # Only upload queue files every 20 minutes
+            if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
                 upload_queue_dir(opts.afldir, opts.s3_bucket, opts.project)
+                last_queue_upload = int(time.time())
                 
-        time.sleep(10)
+            time.sleep(10)
 
 
 
