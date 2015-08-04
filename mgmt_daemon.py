@@ -461,7 +461,7 @@ def main(argv=None):
             print("Error: Unable to locate afl-cmin binary.", file=sys.stderr)
             return 2
         
-        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', '-1']
+        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', 'none']
         afl_cmdline.extend(cmdline)
         
         subprocess.check_call(afl_cmdline, env={ 'LD_LIBRARY_PATH' : os.path.dirname(cmdline[0]) })
