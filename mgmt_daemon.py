@@ -365,9 +365,27 @@ def main(argv=None):
     # process options
     opts = parser.parse_args(argv)
     
+    afl_out_dirs = []
+    if opts.afloutdir:
+        if not os.path.exists(os.path.join(opts.afloutdir, "crashes")):
+            # The specified directory doesn't have a "crashes" sub directory.
+            # Either the wrong directory was specified, or this is an AFL multi-process
+            # sychronization directory. Try to figure this out here.
+            sync_dirs = os.listdir(opts.afloutdir)
+            
+            for sync_dir in sync_dirs:
+                if os.path.exists(os.path.join(opts.afloutdir, sync_dir, "crashes")):
+                    afl_out_dirs.append(os.path.join(opts.afloutdir, sync_dir))
+            
+            if not afl_out_dirs:
+                print("Error: Directory %s does not appear to be a valid AFL output/sync directory" % opts.afloutdir, file=sys.stderr)
+                return 2
+        else:
+            afl_out_dirs.append(opts.afloutdir)
+    
     # Upload and FuzzManager modes require specifying the AFL directory
     if opts.s3_queue_upload or opts.fuzzmanager:
-        if not opts.afldir:
+        if not opts.afloutdir:
             print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
             return 2
         
@@ -454,16 +472,16 @@ def main(argv=None):
     if opts.fuzzmanager or opts.s3_queue_upload:
         while True:
             if opts.fuzzmanager:
-                scan_crashes(opts.afloutdir)
+                for afl_out_dir in afl_out_dirs:
+                    scan_crashes(afl_out_dir)
             
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
-                upload_queue_dir(opts.afldir, opts.s3_bucket, opts.project)
+                for afl_out_dir in afl_out_dirs:
+                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project)
                 last_queue_upload = int(time.time())
                 
             time.sleep(10)
-
-
 
 if __name__ == "__main__":
     sys.exit(main())
