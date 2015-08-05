@@ -470,6 +470,7 @@ def main(argv=None):
         
     
     if opts.fuzzmanager or opts.s3_queue_upload:
+        last_queue_upload = 0
         while True:
             if opts.fuzzmanager:
                 for afl_out_dir in afl_out_dirs:
