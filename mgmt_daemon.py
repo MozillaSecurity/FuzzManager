@@ -220,9 +220,18 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
     remote_keys = list(bucket.list(remote_path))
     
     for remote_key in remote_keys:
+        # Ignore any folders
+        if remote_key.endswith("/"):
+            continue
+        
+       if remote_key.get_metadata('downloaded'):
+            # Don't download the same file twice
+            continue
+        
         # If we see a cmdline file, fetch it into the main work directory
         if os.path.basename(remote_key.name) == 'cmdline':
             remote_key.get_contents_to_filename(os.path.join(work_dir, 'cmdline'))
+            remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name, {'downloaded' : int(time.time())}, preserve_acl=True)
             continue
         
         tmp_file = os.path.join(download_dir, "tmp")
@@ -236,6 +245,56 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
         
         os.rename(tmp_file, os.path.join(download_dir, hash_name))
         
+        # Ugly, but we have to do a remote copy of the file to change the metadata
+        remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name, {'downloaded' : int(time.time())}, preserve_acl=True)
+
+def clean_queue_dirs(work_dir, bucket_name, project_name, min_age = 86400):
+    '''
+    Delete all remote queues that have a downloaded attribute that is older
+    than the specified time interval, defaulting to 24 hours.
+    
+    @type base_dir: String
+    @param base_dir: Local work directory
+    
+    @type bucket_name: String
+    @param bucket_name: Name of the S3 bucket to use
+    
+    @type project_name: String
+    @param project_name: Name of the project folder inside the S3 bucket
+    
+    @type min_age: int
+    @param min_age: Minimum age of the key before it is deleted
+    '''
+    download_dir = os.path.join(work_dir, "queues")
+    
+    if not os.path.exists(download_dir):
+        os.mkdir(download_dir)
+    
+    conn = S3Connection()
+    bucket = conn.get_bucket(bucket_name)
+    
+    remote_path = "%s/queues/" % project_name
+        
+    remote_keys = list(bucket.list(remote_path))
+    remote_keys_for_deletion = []
+    
+    for remote_key in remote_keys:
+        # Ignore any folders
+        if remote_key.endswith("/"):
+            continue
+        
+        downloaded = remote_key.get_metadata('downloaded'):
+        
+        if not downloaded or int(downloaded) > (int(time.time()) - min_age):
+            continue
+        
+        remote_keys_for_deletion.append(remote_key.name)
+    
+     for remote_key_for_deletion in remote_keys_for_deletion:
+         print("Deleting old key %s" % remote_key_for_deletion)
+         
+     bucket.delete_keys(remote_keys_for_deletion, quiet=True)
+
 def download_build(build_dir, bucket_name, project_name):
     '''
     Downloads build.zip from the specified S3 bucket and unpacks it
@@ -411,6 +470,9 @@ def main(argv=None):
             os.makedirs(opts.s3_corpus_refresh)
             
         queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
+        
+        print("Cleaning old AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
+        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
         
         print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
         download_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
