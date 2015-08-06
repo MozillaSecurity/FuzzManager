@@ -221,10 +221,10 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
     
     for remote_key in remote_keys:
         # Ignore any folders
-        if remote_key.endswith("/"):
+        if remote_key.name.endswith("/"):
             continue
         
-       if remote_key.get_metadata('downloaded'):
+        if remote_key.get_metadata('downloaded'):
             # Don't download the same file twice
             continue
         
@@ -280,20 +280,20 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age = 86400):
     
     for remote_key in remote_keys:
         # Ignore any folders
-        if remote_key.endswith("/"):
+        if remote_key.name.endswith("/"):
             continue
         
-        downloaded = remote_key.get_metadata('downloaded'):
+        downloaded = remote_key.get_metadata('downloaded')
         
         if not downloaded or int(downloaded) > (int(time.time()) - min_age):
             continue
         
         remote_keys_for_deletion.append(remote_key.name)
     
-     for remote_key_for_deletion in remote_keys_for_deletion:
-         print("Deleting old key %s" % remote_key_for_deletion)
+    for remote_key_for_deletion in remote_keys_for_deletion:
+        print("Deleting old key %s" % remote_key_for_deletion)
          
-     bucket.delete_keys(remote_keys_for_deletion, quiet=True)
+    bucket.delete_keys(remote_keys_for_deletion, quiet=True)
 
 def download_build(build_dir, bucket_name, project_name):
     '''
