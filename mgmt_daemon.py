@@ -166,6 +166,11 @@ def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
         if new_cov_only and not "+cov" in queue_file:
             continue
         
+        # Ignore files that have been obtained from other local queues
+        # to avoid duplicate uploading
+        if ",sync:" in queue_file:
+            continue
+        
         queue_files.append(queue_file)
 
     cmdline_file = os.path.join(base_dir, "cmdline")
@@ -541,7 +546,7 @@ def main(argv=None):
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
                 for afl_out_dir in afl_out_dirs:
-                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project)
+                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=False)
                 last_queue_upload = int(time.time())
                 
             time.sleep(10)
