@@ -176,7 +176,9 @@ class CrashSignature():
         
         newRawCrashSignature = self.fit(crashInfo)
         oldLines = self.rawSignature.splitlines()
-        newLines = newRawCrashSignature.rawSignature.splitlines()
+        newLines = []
+        if newRawCrashSignature:
+            newLines = newRawCrashSignature.rawSignature.splitlines()
         context = max(len(oldLines),len(newLines))
         
         signatureDiff = difflib.unified_diff(oldLines, newLines, n=context)
