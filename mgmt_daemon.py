@@ -270,10 +270,6 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age = 86400):
     @type min_age: int
     @param min_age: Minimum age of the key before it is deleted
     '''
-    download_dir = os.path.join(work_dir, "queues")
-    
-    if not os.path.exists(download_dir):
-        os.mkdir(download_dir)
     
     conn = S3Connection()
     bucket = conn.get_bucket(bucket_name)
