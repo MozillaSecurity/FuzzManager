@@ -553,7 +553,7 @@ def main(argv=None):
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
                 for afl_out_dir in afl_out_dirs:
-                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=False)
+                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=True)
                 last_queue_upload = int(time.time())
                 
             time.sleep(10)
