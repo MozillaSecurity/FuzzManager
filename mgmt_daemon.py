@@ -410,6 +410,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
+    parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
@@ -457,7 +458,11 @@ def main(argv=None):
         if not opts.s3_bucket or not opts.project:
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
-        
+    
+    if opts.s3_queue_cleanup != None:
+        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, int(opts.s3_queue_cleanup))
+        return 0
+    
     if opts.s3_build_download:
         download_build(opts.s3_build_download, opts.s3_bucket, opts.project)
         return 0
