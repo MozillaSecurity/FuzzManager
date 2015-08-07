@@ -229,6 +229,9 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
         if remote_key.name.endswith("/"):
             continue
         
+        # Perform a HEAD request to get metadata included
+        remote_key = bucket.get_key(remote_key.name)
+        
         if remote_key.get_metadata('downloaded'):
             # Don't download the same file twice
             continue
@@ -283,6 +286,9 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age = 86400):
         # Ignore any folders
         if remote_key.name.endswith("/"):
             continue
+        
+        # Perform a HEAD request to get metadata included
+        remote_key = bucket.get_key(remote_key.name)
         
         downloaded = remote_key.get_metadata('downloaded')
         
