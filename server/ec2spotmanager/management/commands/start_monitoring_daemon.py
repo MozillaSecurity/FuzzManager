@@ -59,6 +59,12 @@ class Command(NoArgsCommand):
             instances = Instance.objects.filter(pool=instance_pool)
             
             for instance in instances:
+                instance_status_code_fixed = False
+                if instance.status_code >= 256:
+                    logger.warning("[Pool %d] Instance with EC2 ID %s has weird state code %d, attempting to fix..." % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
+                    instance.status_code -= 256
+                    instance_status_code_fixed = True
+                    
                 if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'], INSTANCE_STATE['requested']]:
                     instances_missing -= 1
                     running_instances.append(instance)
@@ -67,6 +73,10 @@ class Command(NoArgsCommand):
                     logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database." % (instance_pool.id, instance.ec2_instance_id))
                     instance.delete()
                 else:
+                    if instance_status_code_fixed:
+                        # Restore original status code for error reporting
+                        instance.status_code += 256
+                    
                     logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d" % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
                     # In some cases, EC2 sends undocumented status codes and we don't know why
                     # For now, reset the status code to 0, consider the instance still present
