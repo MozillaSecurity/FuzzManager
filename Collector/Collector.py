@@ -327,8 +327,8 @@ class Collector():
         @type crashId: int
         @param crashId: ID of the requested crash entry on the server side
         
-        @rtype: string
-        @return: Name of the file where the test was stored
+        @rtype: tuple
+        @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''     
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost to use remote features.")
@@ -358,7 +358,7 @@ class Collector():
         with open(localFile, 'w') as f:
             f.write(response.content)
         
-        return localFile
+        return (localFile, json)
             
     def __store_signature_hashed(self, signature):
         '''
@@ -627,10 +627,29 @@ def main(argv=None):
             return 2
 
     if opts.download:
-        retFile = collector.download(opts.download)
+        (retFile, retJSON) = collector.download(opts.download)
         if not retFile:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
             return 2
+        
+        if "args" in retJSON and retJSON["args"]:
+            args = json.loads(retJSON["args"])
+            print("Command line arguments: %s" % " ".join(args))
+            print("")
+
+        if "env" in retJSON and retJSON["env"]:
+            env = json.loads(retJSON["env"])
+            print("Environment variables: %s", " ".join([ "%s = %s" % (k,v) for (k,v) in env.items()]))
+            print("")
+        
+        if "metadata" in retJSON and retJSON["metadata"]:
+            metadata = json.loads(retJSON["metadata"])
+            print("== Metadata ==")
+            for k, v in metadata.items():
+                print("%s = %s" % (k,v))
+            print("")
+            
+            
         print(retFile)
         return 0
 
