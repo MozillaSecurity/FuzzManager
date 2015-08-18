@@ -100,7 +100,7 @@ def scan_crashes(base_dir):
         with open(os.path.join(base_dir, "cmdline"), 'r') as cmdline_file:
             idx = 0
             for line in cmdline_file:
-                if '@@' in cmdline:
+                if '@@' in line:
                     test_idx = idx
                 cmdline.append(line.rstrip('\n'))
                 idx += 1
