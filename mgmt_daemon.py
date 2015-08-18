@@ -538,7 +538,8 @@ def main(argv=None):
         afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', 'none']
         afl_cmdline.extend(cmdline)
         
-        subprocess.check_call(afl_cmdline, env={ 'LD_LIBRARY_PATH' : os.path.dirname(cmdline[0]) })
+        with open(os.devnull, 'w') as devnull:
+            subprocess.check_call(afl_cmdline, stdout=devnull, env={ 'LD_LIBRARY_PATH' : os.path.dirname(cmdline[0]) })
         
         upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project)
         
