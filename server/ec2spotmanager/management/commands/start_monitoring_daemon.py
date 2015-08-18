@@ -256,11 +256,10 @@ class Command(NoArgsCommand):
     
             try:
                 logger.info("[Pool %d] Creating %s instances..." % (pool.id, count))
-                (boto_instances, boto_pending) = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20*60)
+                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20*60)
+                canceled_requests = count - len(boto_instances)
                 
-                logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), len(boto_pending)))
-                
-                assert (len(boto_instances) + len(boto_pending)) == len(instances) == count
+                logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), canceled_requests))
                 
                 for i in range(0,len(boto_instances)):
                     instances[i].hostname = boto_instances[i].public_dns_name
@@ -274,7 +273,7 @@ class Command(NoArgsCommand):
                     # so our update code can pick it up and update it accordingly when it changes states 
                     boto_instances[i].add_tag("SpotManager-Updatable", "1")
                     
-                if boto_pending:
+                if canceled_requests > 0:
                     for i in range(len(boto_instances),count):
                         # Delete instances belong to canceled spot requests
                         logger.info("[Pool %d] Deleting instance with id %s (belongs to canceled request)" % (pool.id, instances[i].pk))
