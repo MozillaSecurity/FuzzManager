@@ -13,6 +13,7 @@ from django.http.response import Http404
 from rest_framework.authentication import TokenAuthentication
 from datetime import datetime, timedelta
 import operator
+import json
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -112,13 +113,16 @@ def crashes(request):
     filters = {}
     q = None
     isSearch = True
+    isJSONQuery = "jqry" in request.GET
+        
     
     entries = CrashEntry.objects.all().order_by('-id')
     
-    (user, created) = User.objects.get_or_create(user = request.user)
-    defaultToolsFilter = user.defaultToolsFilter.all()
-    if defaultToolsFilter:
-        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
+    if not isJSONQuery:
+        (user, created) = User.objects.get_or_create(user = request.user)
+        defaultToolsFilter = user.defaultToolsFilter.all()
+        if defaultToolsFilter:
+            entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -150,7 +154,7 @@ def crashes(request):
                                  )
     
     # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q == None:        
+    if not filters and q == None and not isJSONQuery:        
         isSearch = False
         
     # Do not display triaged crash entries unless there is an all=1 parameter
@@ -158,7 +162,12 @@ def crashes(request):
     if not "all" in request.GET or not request.GET["all"]:
         filters["bucket"] = None
     
-    entries = entries.filter(**filters)
+    if isJSONQuery:
+        entries = entries.filter(json_to_query(request.GET["jqry"]))
+    else:
+        entries = entries.filter(**filters)
+    
+    
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
     
     return render(request, 'crashes/index.html', data)
@@ -774,3 +783,69 @@ class CrashEntryViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
+
+def json_to_query(json_str):
+    """
+    This method converts JSON objects into trees of Django Q objects.
+    It can be used to provide the user the ability to perform complex
+    queries on the database using JSON as a query string.
+    
+    The decoded JSON may only contain objects. Each object must contain
+    an "op" key that describes the operation of the object. This can either
+    be "AND", "OR" or "NOT". Right now, it is mandatory to specify an operator
+    even if there is only one element in the object.
+    
+    Any other keys in the object are interpreted as follows:
+    
+    If the value of the key is an object itself, recursively create a new
+    query object and connect all query objects in the current object together
+    using the specified operator. In this case, the key itself remains unused.
+    
+    If the value of the key is a string, directly interpret key and value as
+    a query string for the database.
+    
+    If the operator is "NOT", then only one other key can be present in the
+    object. If the operator is "AND" or "OR" and only one other key is present,
+    then the operator has no effect.
+    """
+    obj = json.loads(json_str)
+    
+    def get_query_obj(obj, key=None):
+        
+        if isinstance(obj, basestring):
+            kwargs = { key : obj }
+            qobj = Q(**kwargs)
+            return qobj
+        elif not isinstance(obj, dict):
+            raise RuntimeError("Invalid object type in query object")
+
+        qobj = Q()
+
+        for el in obj:
+            if not "op" in obj:
+                raise RuntimeError("No operator specified in query object")
+            
+            op = obj["op"]
+            
+            objkeys = obj.keys()
+            objkeys.remove("op")
+            
+            if op == 'AND':
+                for objkey in objkeys:
+                    qobj.add(get_query_obj(obj[objkey], objkey), Q.AND)
+            elif op == 'OR':
+                for objkey in objkeys:
+                    qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
+            elif op == 'NOT':
+                if len(objkeys) > 1:
+                    raise RuntimeError("Attempted to negate multiple objects at once" % op)
+                qobj = get_query_obj(obj[objkeys[0]], objkeys[0])
+                qobj.negate()
+            else:
+                raise RuntimeError("Invalid operator '%s' specified in query object" % op)
+            
+        return qobj
+    
+    return get_query_obj(obj)
+
+    
