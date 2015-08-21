@@ -107,6 +107,7 @@ class CrashEntry(models.Model):
     env = models.TextField(blank=True)
     args = models.TextField(blank=True)
     crashAddress = models.CharField(max_length=255, blank=True)
+    crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
     shortSignature = models.CharField(max_length=255, blank=True)
     
     def __init__(self, *args, **kwargs):
