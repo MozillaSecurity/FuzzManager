@@ -114,7 +114,6 @@ def crashes(request):
     q = None
     isSearch = True
     isJSONQuery = "jqry" in request.GET
-        
     
     entries = CrashEntry.objects.all().order_by('-id')
     
@@ -820,25 +819,23 @@ def json_to_query(json_str):
             raise RuntimeError("Invalid object type in query object")
 
         qobj = Q()
-
-        for el in obj:
-            if not "op" in obj:
+        
+        if not "op" in obj:
                 raise RuntimeError("No operator specified in query object")
             
-            op = obj["op"]
-            
-            objkeys = obj.keys()
-            objkeys.remove("op")
-            
+        op = obj["op"]    
+        objkeys = obj.keys()
+        objkeys.remove("op")
+        
+        if op == 'NOT' and len(objkeys) > 1:
+            raise RuntimeError("Attempted to negate multiple objects at once" % op)
+
+        for objkey in objkeys:
             if op == 'AND':
-                for objkey in objkeys:
-                    qobj.add(get_query_obj(obj[objkey], objkey), Q.AND)
+                qobj.add(get_query_obj(obj[objkey], objkey), Q.AND)
             elif op == 'OR':
-                for objkey in objkeys:
-                    qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
+                qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
             elif op == 'NOT':
-                if len(objkeys) > 1:
-                    raise RuntimeError("Attempted to negate multiple objects at once" % op)
                 qobj = get_query_obj(obj[objkeys[0]], objkeys[0])
                 qobj.negate()
             else:
