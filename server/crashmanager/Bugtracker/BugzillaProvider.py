@@ -267,6 +267,7 @@ class BugzillaProvider(Provider):
                 'createTemplate' : True,
                 'template' : template,
                 'provider' : self.pk,
+                'mode' : "create",
                 }
     
         return render(request, 'bugzilla/submit.html', data)
