@@ -122,7 +122,6 @@ class CrashEntry(models.Model):
         
         super(CrashEntry, self).__init__(*args, **kwargs)
         
-        
     def save(self, *args, **kwargs):
         # Reserialize data, then call regular save method
         if self.argsList:
@@ -135,6 +134,16 @@ class CrashEntry(models.Model):
         if self.metadataList:
             metadataDict = dict([x.split("=", 1) for x in self.metadataList])
             self.metadata = json.dumps(metadataDict)
+        
+        # When we have a crash address, keep the numeric crash address field in
+        # sync so we can search easily by crash address including ranges
+        if self.crashAddress:
+            self.crashAddressNumeric = long(self.crashAddress, 16)
+            
+            # We need to possibly convert the numeric crash address from unsigned
+            # to signed in order to store it in the database.
+            if (self.crashAddressNumeric > (2**63-1)):
+                self.crashAddressNumeric -= 2**64
         
         super(CrashEntry, self).save(*args, **kwargs)
     
