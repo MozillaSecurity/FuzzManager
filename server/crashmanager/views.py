@@ -113,15 +113,13 @@ def crashes(request):
     filters = {}
     q = None
     isSearch = True
-    isJSONQuery = "jqry" in request.GET
     
     entries = CrashEntry.objects.all().order_by('-id')
     
-    if not isJSONQuery:
-        (user, created) = User.objects.get_or_create(user = request.user)
-        defaultToolsFilter = user.defaultToolsFilter.all()
-        if defaultToolsFilter:
-            entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
+    (user, created) = User.objects.get_or_create(user = request.user)
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -153,7 +151,7 @@ def crashes(request):
                                  )
     
     # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q == None and not isJSONQuery:        
+    if not filters and q == None:        
         isSearch = False
         
     # Do not display triaged crash entries unless there is an all=1 parameter
@@ -161,13 +159,41 @@ def crashes(request):
     if not "all" in request.GET or not request.GET["all"]:
         filters["bucket"] = None
     
-    if isJSONQuery:
-        entries = entries.filter(json_to_query(request.GET["jqry"]))
-    else:
-        entries = entries.filter(**filters)
-    
+    entries = entries.filter(**filters)
     
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
+    
+    return render(request, 'crashes/index.html', data)
+
+@login_required(login_url='/login/')
+def queryCrashes(request):
+    query = None
+    entries = None
+    
+    if "query" in request.POST:
+        rawQuery = request.POST["query"]
+    elif "query" in request.GET:
+        rawQuery = request.GET["query"]
+    else:
+        return render(request, 'crashes/index.html', { 'isQuery' : True })
+        
+    query_lines = len(rawQuery.splitlines())
+        
+    try:
+        (obj, query) = json_to_query(rawQuery)
+    except RuntimeError as e:
+        return render(request, 'crashes/index.html', { 'error_message' : "Invalid query: %s" % e, 'query_lines' : query_lines, 'isQuery' : True })
+
+    # Prettify the raw query for displaying
+    rawQuery = json.dumps(obj, indent=2)
+        
+    if query:
+        entries = CrashEntry.objects.all().order_by('-id').filter(query)
+    
+    # Re-get the lines as we might have reformatted
+    query_lines = rawQuery.splitlines()
+    
+    data = { 'request' : request, 'query_lines' : query_lines, 'isQuery' : True, 'crashlist' : entries }
     
     return render(request, 'crashes/index.html', data)
 
@@ -807,7 +833,10 @@ def json_to_query(json_str):
     object. If the operator is "AND" or "OR" and only one other key is present,
     then the operator has no effect.
     """
-    obj = json.loads(json_str)
+    try:
+        obj = json.loads(json_str)
+    except ValueError as e:
+        raise RuntimeError("Invalid JSON: %s" % e)
     
     def get_query_obj(obj, key=None):
         
@@ -828,7 +857,7 @@ def json_to_query(json_str):
         objkeys.remove("op")
         
         if op == 'NOT' and len(objkeys) > 1:
-            raise RuntimeError("Attempted to negate multiple objects at once" % op)
+            raise RuntimeError("Attempted to negate multiple objects at once")
 
         for objkey in objkeys:
             if op == 'AND':
@@ -843,6 +872,6 @@ def json_to_query(json_str):
             
         return qobj
     
-    return get_query_obj(obj)
+    return (obj, get_query_obj(obj))
 
     
