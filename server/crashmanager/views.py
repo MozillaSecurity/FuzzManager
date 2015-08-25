@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 import operator
 import json
 
+from collections import OrderedDict
+
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
 
@@ -834,7 +836,7 @@ def json_to_query(json_str):
     then the operator has no effect.
     """
     try:
-        obj = json.loads(json_str)
+        obj = json.loads(json_str, object_pairs_hook=OrderedDict)
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
     

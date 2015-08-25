@@ -20,6 +20,8 @@ from FTB.Signatures import JSONHelper
 from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
 import FTB.Signatures
 
+from collections import OrderedDict
+
 class CrashSignature():
     def __init__(self, rawSignature):
         '''
@@ -38,7 +40,7 @@ class CrashSignature():
         self.symptoms = []
         
         try:
-            obj = json.loads(rawSignature)
+            obj = json.loads(rawSignature, object_pairs_hook=OrderedDict)
         except ValueError, e:
             raise RuntimeError("Invalid JSON: %s" % e)
         
