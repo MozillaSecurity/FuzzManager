@@ -177,7 +177,7 @@ def queryCrashes(request):
     else:
         return render(request, 'crashes/index.html', { 'isQuery' : True })
         
-    query_lines = len(rawQuery.splitlines())
+    query_lines = rawQuery.splitlines()
         
     try:
         (obj, query) = json_to_query(rawQuery)
