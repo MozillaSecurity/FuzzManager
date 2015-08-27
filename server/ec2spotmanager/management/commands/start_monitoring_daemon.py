@@ -342,9 +342,10 @@ class Command(NoArgsCommand):
                     
                     # Data consistency checks
                     for boto_instance in boto_instances:
-                        assert ((boto_instance.id in instance_ids_by_region[region])
+                        if not ((boto_instance.id in instance_ids_by_region[region])
                                 or (boto_instance.state_code == INSTANCE_STATE['shutting-down'] 
-                                or boto_instance.state_code == INSTANCE_STATE['terminated']))
+                                or boto_instance.state_code == INSTANCE_STATE['terminated'])):
+                            logger.error("[Pool %d] Instance with EC2 ID %s (status %d) is not in region list for region %s" % (pool.id, boto_instance.id, boto_instance.state_code, region))
                         
                     cluster.terminate(boto_instances)
                 else:
