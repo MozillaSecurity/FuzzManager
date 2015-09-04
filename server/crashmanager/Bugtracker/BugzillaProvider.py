@@ -198,6 +198,12 @@ class BugzillaProvider(Provider):
         
         username = request.POST['bugzilla_username']
         password = request.POST['bugzilla_password']
+        api_key = None
+        
+        # If we have no username, interpret the password as API key
+        if not username:
+            api_key = password
+            password = None
         
         # Remove any other variables that we don't want to pass on
         for key in request.POST:
@@ -211,7 +217,7 @@ class BugzillaProvider(Provider):
         if 'security' in request.POST and request.POST['security']:
             args["groups"] = ["core-security"]
             
-        bz = BugzillaREST(self.hostname, username, password)
+        bz = BugzillaREST(self.hostname, username, password, api_key)
         
         ret = bz.createBug(**args)
         if not "id" in ret:
@@ -238,8 +244,14 @@ class BugzillaProvider(Provider):
         
         username = request.POST['bugzilla_username']
         password = request.POST['bugzilla_password']
+        api_key = None
+        
+        # If we have no username, interpret the password as API key
+        if not username:
+            api_key = password
+            password = None
             
-        bz = BugzillaREST(self.hostname, username, password)
+        bz = BugzillaREST(self.hostname, username, password, api_key)
         
         ret = bz.createComment(**args)
         if not "id" in ret:
@@ -307,13 +319,13 @@ class BugzillaProvider(Provider):
     def getTemplateList(self):
         return BugzillaTemplate.objects.all()
     
-    def getBugData(self, bugId, username=None, password=None):
-        bz = BugzillaREST(self.hostname, username, password)
+    def getBugData(self, bugId, username=None, password=None, api_key=None):
+        bz = BugzillaREST(self.hostname, username, password, api_key)
         return bz.getBug(bugId)
     
-    def getBugStatus(self, bugIds, username=None, password=None):
+    def getBugStatus(self, bugIds, username=None, password=None, api_key=None):
         ret = {}
-        bz = BugzillaREST(self.hostname, username, password)
+        bz = BugzillaREST(self.hostname, username, password, api_key)
         bugs = bz.getBugStatus(bugIds)
 
         for bugId in bugs:
@@ -328,25 +340,38 @@ class BugzillaProvider(Provider):
 
 
 class BugzillaREST():
-    def __init__(self, hostname, username=None, password=None):
+    def __init__(self, hostname, username=None, password=None, api_key=None):
         self.hostname = hostname 
         self.baseUrl = 'https://%s/rest' % self.hostname
         self.username = username
         self.password = password
+        self.api_key = api_key
         self.authToken = None
+        
+        # The field to submit authentication information in depends on which
+        # method we use (username/password means we need to use token, with
+        # API key we can use the api_key field directly). 
+        self.authField = 'token'
+        if self.api_key != None:
+            self.authField = 'api_key'
     
     def login(self, forceLogin=False):
-        if self.username == None or self.password == None:
+        if (self.username == None or self.password == None) and self.api_key == None:
             if forceLogin:
-                raise RuntimeError("Need username/password to login.")
+                raise RuntimeError("Need username/password or API key to login.")
             else:
                 return False
         
         if forceLogin:
             self.authToken = None
-            
+        
+        if self.api_key != None:
+            self.authToken = self.api_key
+        
+        # We either use an API key which doesn't require any prior login
+        # or we still have a valid authentication token that we can use.
         if self.authToken != None:
-            return   
+            return True
 
         loginUrl = "%s/login?login=%s&password=%s" % (self.baseUrl, self.username, self.password)  
         response = requests.get(loginUrl)
@@ -378,7 +403,7 @@ class BugzillaREST():
         extraParams = []
         
         if self.login():
-            extraParams.append("&token=%s" % self.authToken)
+            extraParams.append("&%s=%s" % (self.authField, self.authToken))
             
         if include_fields:
             extraParams.append("&include_fields=%s" % ",".join(include_fields))
@@ -418,7 +443,7 @@ class BugzillaREST():
         # Ensure we're logged in
         self.login()
         
-        createUrl = "%s/bug?token=%s" % (self.baseUrl, self.authToken)
+        createUrl = "%s/bug?%s=%s" % (self.baseUrl, self.authField, self.authToken)
         response = requests.post(createUrl, bug)
         return response.json()
 
@@ -434,7 +459,7 @@ class BugzillaREST():
         # Ensure we're logged in
         self.login()
         
-        createUrl = "%s/bug/%s/comment?token=%s" % (self.baseUrl, id, self.authToken)
+        createUrl = "%s/bug/%s/comment?%s=%s" % (self.baseUrl, id, self.authField, self.authToken)
         response = requests.post(createUrl, cobj)
         return response.json()
     
@@ -457,7 +482,7 @@ class BugzillaREST():
         # Ensure we're logged in
         self.login()
         
-        attachUrl = "%s/bug/%s/attachment?token=%s" % (self.baseUrl, ids, self.authToken)
+        attachUrl = "%s/bug/%s/attachment?%s=%s" % (self.baseUrl, ids, self.authField, self.authToken)
         response = requests.post(attachUrl, attachment)
         return response.json()
         

@@ -36,10 +36,13 @@
                 {% else %}
                 <div class="row">
                     <div class="col-md-1">Username:</div>
-                    <div class="col-md-3"><input id="id_bugzilla_username" class="form-control" name="bugzilla_username" type="text" value="{{ username|default:'' }}"/></div>
+                    <div class="col-md-3"><input id="id_bugzilla_username" class="form-control" name="bugzilla_username" type="text" value=""/></div>
                     <div class="col-md-1">Password:</div>
                     <div class="col-md-3"><input id="id_bugzilla_password" class="form-control" name="bugzilla_password" type="password"/></div>
                 </div>
+		<div class="row">
+			Leave the username empty to use the password as API key instead.
+		</div>
                 <hr/>
                 {% endif %}
 
