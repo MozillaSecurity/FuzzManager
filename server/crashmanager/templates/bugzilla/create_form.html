@@ -65,7 +65,18 @@ Summary <input id="id_summary" class="form-control" maxlength="1023" name="summa
     <textarea id="id_description" class="form-control" name="description" style="width:100%">{{ template.description }}</textarea>
 <br/>
     Flags<br>
-    <input type="checkbox" id="id_security" name="security" value="unassigned" {% if template.security %}checked{% endif %}/>
-    This is a security bug.
+    <div class="row">
+    <div class="col-md-3">
+	<input type="checkbox" id="id_security" name="security" value="unassigned" {% if template.security %}checked{% endif %}/>
+	This is a security bug.
+    </div>
+    </div>
+<br/>
+    <div class="row">
+    <div class="col-md-3">Security Group (default is core-security):</div>
+    <div class="col-md-3">
+    	<input type="text" class="form-control" maxlength="1023" id="id_security_group" name="security_group" value="{{ template.security_group }}"/>
+    </div>
+    </div>
 <br/>
 <br/>

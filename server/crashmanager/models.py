@@ -202,6 +202,7 @@ class BugzillaTemplate(models.Model):
     target_milestone = models.TextField(blank=True)
     attrs = models.TextField(blank=True)
     security = models.BooleanField(blank=False, default=False)
+    security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
 
 

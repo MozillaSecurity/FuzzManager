@@ -48,6 +48,7 @@ class BugzillaProvider(Provider):
                     "whiteboard",
                     "keywords",
                     "attrs",
+                    "security_group",
                 ]
         
         self.templateFlags = [
@@ -216,6 +217,9 @@ class BugzillaProvider(Provider):
         
         if 'security' in request.POST and request.POST['security']:
             args["groups"] = ["core-security"]
+            # Allow security_group to override the default security group used
+            if 'security_group' in request.POST and request.POST['security_group']:
+                args["groups"] = [ request.POST['security_group'] ]
             
         bz = BugzillaREST(self.hostname, username, password, api_key)
         
