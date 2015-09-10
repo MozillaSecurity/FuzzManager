@@ -220,6 +220,11 @@ class BugzillaProvider(Provider):
             # Allow security_group to override the default security group used
             if 'security_group' in request.POST and request.POST['security_group']:
                 args["groups"] = [ request.POST['security_group'] ]
+        
+        # security_group is a field we need in our template, but it does not correspond
+        # to a field in Bugzilla so we need to remove it here.
+        if 'security_group' in args:
+            del(args['security_group'])
             
         bz = BugzillaREST(self.hostname, username, password, api_key)
         
