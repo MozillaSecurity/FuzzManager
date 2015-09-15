@@ -409,11 +409,16 @@ def newSignature(request):
 
 @login_required(login_url='/login/')
 def deleteSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    if request.method == 'POST':    
-        # Make sure we remove this bucket from all crash entries referring to it,
-        # otherwise these would be deleted as well through cascading.
-        CrashEntry.objects.filter(bucket=bucket).update(bucket=None)
+    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'))
+    if not bucket:
+        raise Http404
+    bucket = bucket[0]
+    
+    if request.method == 'POST':
+        if not "delentries" in request.POST:
+            # Make sure we remove this bucket from all crash entries referring to it,
+            # otherwise these would be deleted as well through cascading.
+            CrashEntry.objects.filter(bucket=bucket).update(bucket=None)
         
         bucket.delete()
         return redirect('crashmanager:signatures')

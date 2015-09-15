@@ -13,6 +13,11 @@
 		<div class="field">
 			<strong>Description:</strong> {{ bucket.shortDescription|escape }}
 		</div>
+
+		<div class="field">
+		    <input type="checkbox" id="id_delentries" name="delentries"/>
+		    <label for="id_delentries">Also delete all {{ bucket.size }} entries with this bucket</label>
+		</div>
 		<input type="submit" value="Delete" class="btn btn-danger"/>
 		<input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
 		</form>
