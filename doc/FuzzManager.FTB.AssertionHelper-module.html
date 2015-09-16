@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>FuzzManager.FTB.AssertionHelper</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;FuzzManager ::
+        <a href="FuzzManager.FTB-module.html">Package&nbsp;FTB</a> ::
+        Module&nbsp;AssertionHelper
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="FuzzManager.FTB.AssertionHelper-module.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== MODULE DESCRIPTION ==================== -->
+<h1 class="epydoc">Module AssertionHelper</h1><p class="nomargin-top"><span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html">source&nbsp;code</a></span></p>
+<p>AssertionHelper</p>
+  <p>Provides various functions around assertion handling and 
+  processing</p>
+
+<hr />
+<div class="fields">      <p><strong>Author:</strong>
+        Christian Holler (:decoder)
+      </p>
+      <p><strong>License:</strong>
+        <p>This Source Code Form is subject to the terms of the Mozilla 
+        Public License, v. 2.0. If a copy of the MPL was not distributed 
+        with this file, You can obtain one at 
+        http://mozilla.org/MPL/2.0/.</p>
+      </p>
+      <p><strong>Contact:</strong>
+        choller@mozilla.com
+      </p>
+</div><!-- ==================== FUNCTIONS ==================== -->
+<a name="section-Functions"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Functions</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Functions"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="FuzzManager.FTB.AssertionHelper-module.html#getAssertion" class="summary-sig-name">getAssertion</a>(<span class="summary-sig-arg">output</span>,
+        <span class="summary-sig-arg">onlyProgramAssertions</span>=<span class="summary-sig-default">False</span>)</span><br />
+      This helper class provides a way to extract and process the different
+      types of assertions from a given buffer.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#getAssertion">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">string</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="FuzzManager.FTB.AssertionHelper-module.html#getSanitizedAssertionPattern" class="summary-sig-name">getSanitizedAssertionPattern</a>(<span class="summary-sig-arg">msg</span>)</span><br />
+      This method provides a way to strip out unwanted dynamic information 
+      from assertions and replace it with pattern matching elements, e.g.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#getSanitizedAssertionPattern">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">string</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="FuzzManager.FTB.AssertionHelper-module.html#escapePattern" class="summary-sig-name">escapePattern</a>(<span class="summary-sig-arg">msg</span>)</span><br />
+      This method escapes regular expression characters in the string.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#escapePattern">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== VARIABLES ==================== -->
+<a name="section-Variables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Variables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__package__"></a><span class="summary-name">__package__</span> = <code title="'FuzzManager.FTB'"><code class="variable-quote">'</code><code class="variable-string">FuzzManager.FTB</code><code class="variable-quote">'</code></code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTION DETAILS ==================== -->
+<a name="section-FunctionDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Function Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-FunctionDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="getAssertion"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getAssertion</span>(<span class="sig-arg">output</span>,
+        <span class="sig-arg">onlyProgramAssertions</span>=<span class="sig-default">False</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#getAssertion">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>This helper class provides a way to extract and process the different 
+  types of assertions from a given buffer. The problem here is that pretty 
+  much every software has its own type of assertions with different output 
+  formats.</p>
+  <p>The &quot;onlyProgramAssertions&quot; boolean is to indicate that we 
+  are only interested in output from the program itself. Some aborts, like 
+  ASan or glibc, are not desirable in some cases, like signature generation
+  and lead to incompatible signatures.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>output</code></strong> (list) - List of strings to be searched</li>
+        <li><strong class="pname"><code>onlyProgramAssertions</code></strong> (bool) - Boolean, see above</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getSanitizedAssertionPattern"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getSanitizedAssertionPattern</span>(<span class="sig-arg">msg</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#getSanitizedAssertionPattern">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>This method provides a way to strip out unwanted dynamic information 
+  from assertions and replace it with pattern matching elements, e.g. for 
+  use in signature matching.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>msg</code></strong> (string) - Assertion message to be sanitized</li>
+    </ul></dd>
+    <dt>Returns: string</dt>
+        <dd>Sanitized assertion message (regular expression)</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="escapePattern"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">escapePattern</span>(<span class="sig-arg">msg</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="FuzzManager.FTB.AssertionHelper-pysrc.html#escapePattern">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>This method escapes regular expression characters in the string. And 
+  no, this is not re.escape, which would escape many more characters.</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>msg</code></strong> (string) - String that needs to be quoted</li>
+    </ul></dd>
+    <dt>Returns: string</dt>
+        <dd>Escaped string for use in regular expressions</dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

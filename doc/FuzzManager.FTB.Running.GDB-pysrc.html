@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>FuzzManager.FTB.Running.GDB</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        Package&nbsp;FuzzManager ::
+        <a href="FuzzManager.FTB-module.html">Package&nbsp;FTB</a> ::
+        <a href="FuzzManager.FTB.Running-module.html">Package&nbsp;Running</a> ::
+        Module&nbsp;GDB
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="FuzzManager.FTB.Running.GDB-pysrc.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<h1 class="epydoc">Source Code for <a href="FuzzManager.FTB.Running.GDB-module.html">Module FuzzManager.FTB.Running.GDB</a></h1>
+<pre class="py-src">
+<a name="L1"></a><tt class="py-lineno"> 1</tt>  <tt class="py-line"><tt class="py-comment">#!/usr/bin/env python</tt> </tt>
+<a name="L2"></a><tt class="py-lineno"> 2</tt>  <tt class="py-line"><tt class="py-comment"># encoding: utf-8</tt> </tt>
+<a name="L3"></a><tt class="py-lineno"> 3</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L4"></a><tt class="py-lineno"> 4</tt>  <tt class="py-line"><tt class="py-docstring">GDB - Contains functions directly used by GDB for crash processing</tt> </tt>
+<a name="L5"></a><tt class="py-lineno"> 5</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L6"></a><tt class="py-lineno"> 6</tt>  <tt class="py-line"><tt class="py-docstring">@author:     Christian Holler (:decoder)</tt> </tt>
+<a name="L7"></a><tt class="py-lineno"> 7</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L8"></a><tt class="py-lineno"> 8</tt>  <tt class="py-line"><tt class="py-docstring">@license:</tt> </tt>
+<a name="L9"></a><tt class="py-lineno"> 9</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L10"></a><tt class="py-lineno">10</tt>  <tt class="py-line"><tt class="py-docstring">This Source Code Form is subject to the terms of the Mozilla Public</tt> </tt>
+<a name="L11"></a><tt class="py-lineno">11</tt>  <tt class="py-line"><tt class="py-docstring">License, v. 2.0. If a copy of the MPL was not distributed with this</tt> </tt>
+<a name="L12"></a><tt class="py-lineno">12</tt>  <tt class="py-line"><tt class="py-docstring">file, You can obtain one at http://mozilla.org/MPL/2.0/.</tt> </tt>
+<a name="L13"></a><tt class="py-lineno">13</tt>  <tt class="py-line"><tt class="py-docstring"></tt> </tt>
+<a name="L14"></a><tt class="py-lineno">14</tt>  <tt class="py-line"><tt class="py-docstring">@contact:    choller@mozilla.com</tt> </tt>
+<a name="L15"></a><tt class="py-lineno">15</tt>  <tt class="py-line"><tt class="py-docstring">'''</tt> </tt>
+<a name="L16"></a><tt class="py-lineno">16</tt>  <tt class="py-line"> </tt>
+<a name="is64bit"></a><div id="is64bit-def"><a name="L17"></a><tt class="py-lineno">17</tt> <a class="py-toggle" href="#" id="is64bit-toggle" onclick="return toggle('is64bit');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#is64bit">is64bit</a><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="is64bit-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="is64bit-expanded"><a name="L18"></a><tt class="py-lineno">18</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-keyword">not</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">gdb</tt><tt class="py-op">.</tt><tt class="py-name">parse_and_eval</tt><tt class="py-op">(</tt><tt class="py-string">"$rax"</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">==</tt><tt class="py-string">"void"</tt>  <tt class="py-comment"># @UndefinedVariable</tt> </tt>
+</div><a name="L19"></a><tt class="py-lineno">19</tt>  <tt class="py-line"> </tt>
+<a name="isARM"></a><div id="isARM-def"><a name="L20"></a><tt class="py-lineno">20</tt> <a class="py-toggle" href="#" id="isARM-toggle" onclick="return toggle('isARM');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#isARM">isARM</a><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="isARM-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="isARM-expanded"><a name="L21"></a><tt class="py-lineno">21</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-keyword">not</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">gdb</tt><tt class="py-op">.</tt><tt class="py-name">parse_and_eval</tt><tt class="py-op">(</tt><tt class="py-string">"$r0"</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">==</tt><tt class="py-string">"void"</tt> <tt class="py-comment"># @UndefinedVariable</tt> </tt>
+</div><a name="L22"></a><tt class="py-lineno">22</tt>  <tt class="py-line"> </tt>
+<a name="regAsHexStr"></a><div id="regAsHexStr-def"><a name="L23"></a><tt class="py-lineno">23</tt> <a class="py-toggle" href="#" id="regAsHexStr-toggle" onclick="return toggle('regAsHexStr');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#regAsHexStr">regAsHexStr</a><tt class="py-op">(</tt><tt class="py-param">reg</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="regAsHexStr-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="regAsHexStr-expanded"><a name="L24"></a><tt class="py-lineno">24</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt id="link-0" class="py-name" targets="Function FuzzManager.FTB.Running.GDB.is64bit()=FuzzManager.FTB.Running.GDB-module.html#is64bit"><a title="FuzzManager.FTB.Running.GDB.is64bit" class="py-name" href="#" onclick="return doclink('link-0', 'is64bit', 'link-0');">is64bit</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L25"></a><tt class="py-lineno">25</tt>  <tt class="py-line">        <tt class="py-name">mask</tt> <tt class="py-op">=</tt> <tt class="py-number">0xffffffffffffffff</tt> </tt>
+<a name="L26"></a><tt class="py-lineno">26</tt>  <tt class="py-line">    <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L27"></a><tt class="py-lineno">27</tt>  <tt class="py-line">        <tt class="py-name">mask</tt> <tt class="py-op">=</tt> <tt class="py-number">0xffffffff</tt> </tt>
+<a name="L28"></a><tt class="py-lineno">28</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-string">"0x%x"</tt><tt class="py-op">%</tt><tt class="py-op">(</tt><tt class="py-name">int</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">gdb</tt><tt class="py-op">.</tt><tt class="py-name">parse_and_eval</tt><tt class="py-op">(</tt><tt class="py-string">"$"</tt> <tt class="py-op">+</tt> <tt class="py-name">reg</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">,</tt><tt class="py-number">0</tt><tt class="py-op">)</tt> <tt class="py-op">&amp;</tt> <tt class="py-name">mask</tt><tt class="py-op">)</tt> <tt class="py-comment"># @UndefinedVariable</tt> </tt>
+</div><a name="L29"></a><tt class="py-lineno">29</tt>  <tt class="py-line"> </tt>
+<a name="regAsIntStr"></a><div id="regAsIntStr-def"><a name="L30"></a><tt class="py-lineno">30</tt> <a class="py-toggle" href="#" id="regAsIntStr-toggle" onclick="return toggle('regAsIntStr');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#regAsIntStr">regAsIntStr</a><tt class="py-op">(</tt><tt class="py-param">reg</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="regAsIntStr-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="regAsIntStr-expanded"><a name="L31"></a><tt class="py-lineno">31</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">int</tt><tt class="py-op">(</tt><tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">gdb</tt><tt class="py-op">.</tt><tt class="py-name">parse_and_eval</tt><tt class="py-op">(</tt><tt class="py-string">"$"</tt> <tt class="py-op">+</tt> <tt class="py-name">reg</tt><tt class="py-op">)</tt><tt class="py-op">)</tt><tt class="py-op">,</tt><tt class="py-number">0</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> <tt class="py-comment"># @UndefinedVariable</tt> </tt>
+</div><a name="L32"></a><tt class="py-lineno">32</tt>  <tt class="py-line"> </tt>
+<a name="regAsRaw"></a><div id="regAsRaw-def"><a name="L33"></a><tt class="py-lineno">33</tt> <a class="py-toggle" href="#" id="regAsRaw-toggle" onclick="return toggle('regAsRaw');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#regAsRaw">regAsRaw</a><tt class="py-op">(</tt><tt class="py-param">reg</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="regAsRaw-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="regAsRaw-expanded"><a name="L34"></a><tt class="py-lineno">34</tt>  <tt class="py-line">    <tt class="py-keyword">return</tt> <tt class="py-name">str</tt><tt class="py-op">(</tt><tt class="py-name">gdb</tt><tt class="py-op">.</tt><tt class="py-name">parse_and_eval</tt><tt class="py-op">(</tt><tt class="py-string">"$"</tt> <tt class="py-op">+</tt> <tt class="py-name">reg</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> <tt class="py-comment"># @UndefinedVariable</tt> </tt>
+</div><a name="L35"></a><tt class="py-lineno">35</tt>  <tt class="py-line"> </tt>
+<a name="printImportantRegisters"></a><div id="printImportantRegisters-def"><a name="L36"></a><tt class="py-lineno">36</tt> <a class="py-toggle" href="#" id="printImportantRegisters-toggle" onclick="return toggle('printImportantRegisters');">-</a><tt class="py-line"><tt class="py-keyword">def</tt> <a class="py-def-name" href="FuzzManager.FTB.Running.GDB-module.html#printImportantRegisters">printImportantRegisters</a><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+</div><div id="printImportantRegisters-collapsed" style="display:none;" pad="++" indent="++++"></div><div id="printImportantRegisters-expanded"><a name="L37"></a><tt class="py-lineno">37</tt>  <tt class="py-line">    <tt class="py-keyword">if</tt> <tt id="link-1" class="py-name"><a title="FuzzManager.FTB.Running.GDB.is64bit" class="py-name" href="#" onclick="return doclink('link-1', 'is64bit', 'link-0');">is64bit</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt>  </tt>
+<a name="L38"></a><tt class="py-lineno">38</tt>  <tt class="py-line">        <tt class="py-name">regs</tt> <tt class="py-op">=</tt> <tt class="py-string">"rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15 rip"</tt><tt class="py-op">.</tt><tt class="py-name">split</tt><tt class="py-op">(</tt><tt class="py-string">" "</tt><tt class="py-op">)</tt> </tt>
+<a name="L39"></a><tt class="py-lineno">39</tt>  <tt class="py-line">    <tt class="py-keyword">elif</tt> <tt id="link-2" class="py-name" targets="Function FuzzManager.FTB.Running.GDB.isARM()=FuzzManager.FTB.Running.GDB-module.html#isARM"><a title="FuzzManager.FTB.Running.GDB.isARM" class="py-name" href="#" onclick="return doclink('link-2', 'isARM', 'link-2');">isARM</a></tt><tt class="py-op">(</tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
+<a name="L40"></a><tt class="py-lineno">40</tt>  <tt class="py-line">        <tt class="py-name">regs</tt> <tt class="py-op">=</tt> <tt class="py-string">"r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc cpsr"</tt><tt class="py-op">.</tt><tt class="py-name">split</tt><tt class="py-op">(</tt><tt class="py-string">" "</tt><tt class="py-op">)</tt> </tt>
+<a name="L41"></a><tt class="py-lineno">41</tt>  <tt class="py-line">    <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
+<a name="L42"></a><tt class="py-lineno">42</tt>  <tt class="py-line">        <tt class="py-name">regs</tt> <tt class="py-op">=</tt> <tt class="py-string">"eax ebx ecx edx esi edi ebp esp eip"</tt><tt class="py-op">.</tt><tt class="py-name">split</tt><tt class="py-op">(</tt><tt class="py-string">" "</tt><tt class="py-op">)</tt> </tt>
+<a name="L43"></a><tt class="py-lineno">43</tt>  <tt class="py-line"> </tt>
+<a name="L44"></a><tt class="py-lineno">44</tt>  <tt class="py-line">    <tt class="py-keyword">for</tt> <tt class="py-name">reg</tt> <tt class="py-keyword">in</tt> <tt class="py-name">regs</tt><tt class="py-op">:</tt> </tt>
+<a name="L45"></a><tt class="py-lineno">45</tt>  <tt class="py-line">        <tt class="py-keyword">try</tt><tt class="py-op">:</tt> </tt>
+<a name="L46"></a><tt class="py-lineno">46</tt>  <tt class="py-line">            <tt class="py-keyword">print</tt><tt class="py-op">(</tt><tt class="py-name">reg</tt> <tt class="py-op">+</tt> <tt class="py-string">"\t"</tt> <tt class="py-op">+</tt> <tt id="link-3" class="py-name" targets="Function FuzzManager.FTB.Running.GDB.regAsHexStr()=FuzzManager.FTB.Running.GDB-module.html#regAsHexStr"><a title="FuzzManager.FTB.Running.GDB.regAsHexStr" class="py-name" href="#" onclick="return doclink('link-3', 'regAsHexStr', 'link-3');">regAsHexStr</a></tt><tt class="py-op">(</tt><tt class="py-name">reg</tt><tt class="py-op">)</tt> <tt class="py-op">+</tt> <tt class="py-string">"\t"</tt> <tt class="py-op">+</tt> <tt id="link-4" class="py-name" targets="Function FuzzManager.FTB.Running.GDB.regAsIntStr()=FuzzManager.FTB.Running.GDB-module.html#regAsIntStr"><a title="FuzzManager.FTB.Running.GDB.regAsIntStr" class="py-name" href="#" onclick="return doclink('link-4', 'regAsIntStr', 'link-4');">regAsIntStr</a></tt><tt class="py-op">(</tt><tt class="py-name">reg</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+<a name="L47"></a><tt class="py-lineno">47</tt>  <tt class="py-line">        <tt class="py-keyword">except</tt><tt class="py-op">:</tt> </tt>
+<a name="L48"></a><tt class="py-lineno">48</tt>  <tt class="py-line">            <tt class="py-keyword">print</tt><tt class="py-op">(</tt><tt class="py-name">reg</tt> <tt class="py-op">+</tt> <tt class="py-string">"\t"</tt> <tt class="py-op">+</tt> <tt id="link-5" class="py-name" targets="Function FuzzManager.FTB.Running.GDB.regAsRaw()=FuzzManager.FTB.Running.GDB-module.html#regAsRaw"><a title="FuzzManager.FTB.Running.GDB.regAsRaw" class="py-name" href="#" onclick="return doclink('link-5', 'regAsRaw', 'link-5');">regAsRaw</a></tt><tt class="py-op">(</tt><tt class="py-name">reg</tt><tt class="py-op">)</tt><tt class="py-op">)</tt> </tt>
+</div><a name="L49"></a><tt class="py-lineno">49</tt>  <tt class="py-line"> </tt><script type="text/javascript">
+<!--
+expandto(location.href);
+// -->
+</script>
+</pre>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+      <th class="navbar" width="100%"></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

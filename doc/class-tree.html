@@ -52,20 +52,40 @@
 </b></center><br />
 <h1 class="epydoc">Class Hierarchy</h1>
 <ul class="nomargin-top">
-    <li> <strong class="uidlink"><a href="Collector.Collector.Collector-class.html" onclick="show_private();">Collector.Collector.Collector</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.PersistentApplication.ApplicationStatus-class.html">FuzzManager.FTB.Running.PersistentApplication.ApplicationStatus</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.CrashSignature.CrashSignature-class.html">FTB.Signatures.CrashSignature.CrashSignature</a></strong>:
-      <em class="summary">classdocs</em>
+    <li> <strong class="uidlink"><a href="FuzzManager.Collector.Collector.Collector-class.html" onclick="show_private();">FuzzManager.Collector.Collector.Collector</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Matchers.NumberMatch-class.html">FTB.Signatures.Matchers.NumberMatch</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.Collector.Configuration.Configuration-class.html">FuzzManager.Collector.Configuration.Configuration</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Matchers.NumberMatchType-class.html">FTB.Signatures.Matchers.NumberMatchType</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.ConfigurationFiles.ConfigurationFiles-class.html">FuzzManager.FTB.ConfigurationFiles.ConfigurationFiles</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Matchers.StringMatch-class.html">FTB.Signatures.Matchers.StringMatch</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashSignature.CrashSignature-class.html">FuzzManager.FTB.Signatures.CrashSignature.CrashSignature</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.GDBRunner.GDBRunner-class.html">FuzzManager.FTB.Running.GDBRunner.GDBRunner</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Matchers.NumberMatch-class.html">FuzzManager.FTB.Signatures.Matchers.NumberMatch</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Matchers.NumberMatchType-class.html">FuzzManager.FTB.Signatures.Matchers.NumberMatchType</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.ProgramConfiguration.ProgramConfiguration-class.html">FuzzManager.FTB.ProgramConfiguration.ProgramConfiguration</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Matchers.StringMatch-class.html">FuzzManager.FTB.Signatures.Matchers.StringMatch</a></strong>
     </li>
     <li> <strong class="uidlink">object</strong>:
       <em class="summary">The most base type</em>
     <ul>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.AutoRunner.AutoRunner-class.html">FuzzManager.FTB.Running.AutoRunner.AutoRunner</a></strong>:
+      <em class="summary">Abstract base class that provides a method to instantiate the right
+        sub class for running the given program and obtaining crash 
+        information.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.AutoRunner.ASanRunner-class.html">FuzzManager.FTB.Running.AutoRunner.ASanRunner</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.AutoRunner.GDBRunner-class.html">FuzzManager.FTB.Running.AutoRunner.GDBRunner</a></strong>
+    </li>
+    </ul>
+    </li>
     <li> <strong class="uidlink">exceptions.BaseException</strong>:
       <em class="summary">Common base class for all exceptions</em>
     <ul>
@@ -85,66 +105,120 @@
     </li>
     </ul>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.CrashInfo.CrashInfo-class.html">FTB.Signatures.CrashInfo.CrashInfo</a></strong>:
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashInfo.CrashInfo-class.html">FuzzManager.FTB.Signatures.CrashInfo.CrashInfo</a></strong>:
       <em class="summary">Abstract base class that provides a method to instantiate the right
         sub class.</em>
     <ul>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.CrashInfo.ASanCrashInfo-class.html">FTB.Signatures.CrashInfo.ASanCrashInfo</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashInfo.ASanCrashInfo-class.html">FuzzManager.FTB.Signatures.CrashInfo.ASanCrashInfo</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.CrashInfo.GDBCrashInfo-class.html">FTB.Signatures.CrashInfo.GDBCrashInfo</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashInfo.GDBCrashInfo-class.html">FuzzManager.FTB.Signatures.CrashInfo.GDBCrashInfo</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.CrashInfo.NoCrashInfo-class.html">FTB.Signatures.CrashInfo.NoCrashInfo</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashInfo.MinidumpCrashInfo-class.html">FuzzManager.FTB.Signatures.CrashInfo.MinidumpCrashInfo</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.CrashInfo.NoCrashInfo-class.html">FuzzManager.FTB.Signatures.CrashInfo.NoCrashInfo</a></strong>
     </li>
     </ul>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.Symptom-class.html">FTB.Signatures.Symptom.Symptom</a></strong>:
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.PersistentApplication.PersistentApplication-class.html">FuzzManager.FTB.Running.PersistentApplication.PersistentApplication</a></strong>:
+      <em class="summary">Abstract base class that defines the interface</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.PersistentApplication.SimplePersistentApplication-class.html">FuzzManager.FTB.Running.PersistentApplication.SimplePersistentApplication</a></strong>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.Symptom-class.html">FuzzManager.FTB.Signatures.Symptom.Symptom</a></strong>:
       <em class="summary">Abstract base class that provides a method to instantiate the right
         sub class.</em>
     <ul>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.CrashAddressSymptom-class.html">FTB.Signatures.Symptom.CrashAddressSymptom</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.CrashAddressSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.CrashAddressSymptom</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.InstructionSymptom-class.html">FTB.Signatures.Symptom.InstructionSymptom</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.InstructionSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.InstructionSymptom</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.OutputSymptom-class.html">FTB.Signatures.Symptom.OutputSymptom</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.OutputSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.OutputSymptom</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.StackFrameSymptom-class.html">FTB.Signatures.Symptom.StackFrameSymptom</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.StackFrameSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.StackFrameSymptom</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.Symptom.StackSizeSymptom-class.html">FTB.Signatures.Symptom.StackSizeSymptom</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.StackFramesSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.StackFramesSymptom</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.StackSizeSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.StackSizeSymptom</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.Symptom.TestcaseSymptom-class.html">FuzzManager.FTB.Signatures.Symptom.TestcaseSymptom</a></strong>
     </li>
     </ul>
     </li>
     <li> <strong class="uidlink">unittest.case.TestCase</strong>:
       <em class="summary">A class whose instances are single test cases.</em>
     <ul>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.ASanDetectionTest-class.html">FTB.Signatures.tests.ASanDetectionTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.ASanDetectionTest-class.html">FuzzManager.FTB.Signatures.tests.ASanDetectionTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.ASanParserTestCrash-class.html">FTB.Signatures.tests.ASanParserTestCrash</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.ASanParserTestCrash-class.html">FuzzManager.FTB.Signatures.tests.ASanParserTestCrash</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.ASanParserTestUAF-class.html">FTB.Signatures.tests.ASanParserTestUAF</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.ASanParserTestHeapCrash-class.html">FuzzManager.FTB.Signatures.tests.ASanParserTestHeapCrash</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.tests.AssertionHelperTestASanFFAbort-class.html">FTB.tests.AssertionHelperTestASanFFAbort</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.ASanParserTestUAF-class.html">FuzzManager.FTB.Signatures.tests.ASanParserTestUAF</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.tests.AssertionHelperTestSanitizing-class.html">FTB.tests.AssertionHelperTestSanitizing</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.tests.AssertionHelperTestASanFFAbort-class.html">FuzzManager.FTB.tests.AssertionHelperTestASanFFAbort</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.CrashSignatureAddressTest-class.html">FTB.Signatures.tests.CrashSignatureAddressTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.tests.AssertionHelperTestMozCrash-class.html">FuzzManager.FTB.tests.AssertionHelperTestMozCrash</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.CrashSignatureOutputTest-class.html">FTB.Signatures.tests.CrashSignatureOutputTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.tests.AssertionHelperTestSanitizing-class.html">FuzzManager.FTB.tests.AssertionHelperTestSanitizing</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.CrashSignatureRegisterTest-class.html">FTB.Signatures.tests.CrashSignatureRegisterTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.CrashSignatureAddressTest-class.html">FuzzManager.FTB.Signatures.tests.CrashSignatureAddressTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.CrashSignatureStackFrameTest-class.html">FTB.Signatures.tests.CrashSignatureStackFrameTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.CrashSignatureOutputTest-class.html">FuzzManager.FTB.Signatures.tests.CrashSignatureOutputTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.CrashSignatureStackSizeTest-class.html">FTB.Signatures.tests.CrashSignatureStackSizeTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.CrashSignatureRegisterTest-class.html">FuzzManager.FTB.Signatures.tests.CrashSignatureRegisterTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.GDBParserTestCrash-class.html">FTB.Signatures.tests.GDBParserTestCrash</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.CrashSignatureStackFrameTest-class.html">FuzzManager.FTB.Signatures.tests.CrashSignatureStackFrameTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.GDBParserTestCrashAddress-class.html">FTB.Signatures.tests.GDBParserTestCrashAddress</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.CrashSignatureStackSizeTest-class.html">FuzzManager.FTB.Signatures.tests.CrashSignatureStackSizeTest</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.GDBParserTestCrashAddressSimple-class.html">FTB.Signatures.tests.GDBParserTestCrashAddressSimple</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrash-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestCrash</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.tests.RegisterHelperValueTest-class.html">FTB.Signatures.tests.RegisterHelperValueTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddress-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddress</a></strong>
     </li>
-    <li> <strong class="uidlink"><a href="FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html">FTB.Signatures.test_CrashSignature.SignatureCreateTest</a></strong>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressRegression2-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressRegression2</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressRegression3-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressRegression3</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressSimple-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressSimple</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.GDBParserTestRegression1-class.html">FuzzManager.FTB.Signatures.tests.GDBParserTestRegression1</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.MinidumpParserTestCrash-class.html">FuzzManager.FTB.Signatures.tests.MinidumpParserTestCrash</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.MinidumpSelectorTest-class.html">FuzzManager.FTB.Signatures.tests.MinidumpSelectorTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.tests.RegisterHelperValueTest-class.html">FuzzManager.FTB.Signatures.tests.RegisterHelperValueTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureCreateTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureCreateTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignaturePCREShortTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignaturePCREShortTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesAlgorithmsTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesAlgorithmsTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesRegressionTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesRegressionTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesWildcardTailTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureStackFramesWildcardTailTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Signatures.test_CrashSignature.SignatureTestCaseMatchTest-class.html">FuzzManager.FTB.Signatures.test_CrashSignature.SignatureTestCaseMatchTest</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.Collector.tests.TestCollectorRefresh-class.html">FuzzManager.Collector.tests.TestCollectorRefresh</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="FuzzManager.Collector.tests.TestCollectorSubmit-class.html">FuzzManager.Collector.tests.TestCollectorSubmit</a></strong>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink">threading._Verbose</strong>
+    <ul>
+    <li> <strong class="uidlink">threading.Thread</strong>:
+      <em class="summary">A class that represents a thread of control.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="FuzzManager.FTB.Running.StreamCollector.StreamCollector-class.html">FuzzManager.FTB.Running.StreamCollector.StreamCollector</a></strong>
+    </li>
+    </ul>
     </li>
     </ul>
     </li>
