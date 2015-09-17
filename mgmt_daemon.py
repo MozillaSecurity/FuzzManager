@@ -388,17 +388,23 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
     remote_files = [key.name.replace(remote_path, "", 1) for key in list(bucket.list(remote_path))]
     
     upload_list = []
+    delete_list = []
     
     for test_file in test_files:
         if not test_file in remote_files:
             upload_list.append(os.path.join(corpus_dir, test_file))
+            
+    for remote_file in remote_files:
+        if not remote_file in test_files:
+            delete_list.append(remote_path + remote_file)
     
     for upload_file in upload_list:
         remote_key = Key(bucket)
         remote_key.name = remote_path + os.path.basename(upload_file)
         print("Uploading file %s -> %s" % (upload_file, remote_key.name))
         remote_key.set_contents_from_filename(upload_file)
-
+        
+    bucket.delete_keys(delete_list, quiet=True)
 
 def main(argv=None):
     '''Command line options.'''
