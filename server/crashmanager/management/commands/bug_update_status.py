@@ -38,19 +38,22 @@ class Command(NoArgsCommand):
                 if bugId in bugDupMap:
                     continue
                 
-                bug = providerBugs.filter(externalId=bugId)[0]
-                if bugStatus[bugId] == None and bug.closed != None:
-                    bug.closed = None
-                    bug.save()
-                elif isinstance(bugStatus[bugId], str):
-                    # The bug has been marked as a duplicate, so we change the externalId
-                    # to match the duped bug. If that bug is also closed, then it will be
-                    # picked up the next time this command runs.
-                    bugDupMap[bug.externalId] = bugStatus[bugId]
-                    bug.externalId = bugStatus[bugId]
-                    bug.closed = None
-                    bug.save()
-                elif bug.closed == None:
-                    bug.closed = bugStatus[bugId]
-                    bug.save()
+                # Due to how duplicating bugs works, we can end up having multiple bug objects
+                # with the same external bug id. Make sure we consider all of them.
+                bugs = providerBugs.filter(externalId=bugId)
+                for bug in bugs:
+                    if bugStatus[bugId] == None and bug.closed != None:
+                        bug.closed = None
+                        bug.save()
+                    elif isinstance(bugStatus[bugId], str):
+                        # The bug has been marked as a duplicate, so we change the externalId
+                        # to match the duped bug. If that bug is also closed, then it will be
+                        # picked up the next time this command runs.
+                        bugDupMap[bug.externalId] = bugStatus[bugId]
+                        bug.externalId = bugStatus[bugId]
+                        bug.closed = None
+                        bug.save()
+                    elif bug.closed == None:
+                        bug.closed = bugStatus[bugId]
+                        bug.save()
                     
