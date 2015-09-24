@@ -165,7 +165,7 @@ class CrashInfo():
         
         return "[@ %s]" % self.backtrace[0]
     
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, minimumSupportedVersion=12):
+    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, minimumSupportedVersion=13):
         '''
         @param forceCrashAddress: If True, the crash address will be included in any case
         @type forceCrashAddress: bool
@@ -175,7 +175,7 @@ class CrashInfo():
         @type maxFrames: int
         
         @param minimumSupportedVersion: The minimum crash signature standard version that the 
-                                        generated signature should be valid for (10 => 1.0, 12 => 1.2)
+                                        generated signature should be valid for (10 => 1.0, 13 => 1.3)
         @type minimumSupportedVersion: int
         
         @rtype: CrashSignature
