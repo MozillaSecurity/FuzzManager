@@ -95,7 +95,7 @@ class OutputSymptom(Symptom):
         
         if self.src != None:
             self.src = self.src.lower()
-            if self.src != "stderr" and self.src != "stdout":
+            if self.src != "stderr" and self.src != "stdout" and self.src != "crashdata":
                 raise RuntimeError("Invalid source specified: %s" % self.src)
     
     def matches(self, crashInfo):
@@ -113,10 +113,13 @@ class OutputSymptom(Symptom):
         if self.src == None:
             checkedOutput.extend(crashInfo.rawStdout)
             checkedOutput.extend(crashInfo.rawStderr)
+            checkedOutput.extend(crashInfo.rawCrashData)
         elif (self.src == "stdout"):
             checkedOutput = crashInfo.rawStdout
-        else:
+        elif (self.src == "stderr"):
             checkedOutput = crashInfo.rawStderr
+        else:
+            checkedOutput = crashInfo.rawCrashData
             
         for line in checkedOutput:
             if self.output.matches(line):
