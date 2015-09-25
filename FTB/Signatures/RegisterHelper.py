@@ -51,6 +51,23 @@ def getStackPointer(registerMap):
         
     raise RuntimeError("Register map does not contain a usable stack pointer!")
 
+def getInstructionPointer(registerMap):
+    '''
+        Return the instruction pointer value from the given register map
+        
+        @type registerMap: map
+        @param registerMap: Map of register names to value
+        
+        @rtype: long
+        @return: The value of the instruction pointer
+    '''
+    
+    for reg in ["rip", "eip", "pc"]:
+        if reg in registerMap:
+            return registerMap[reg]
+        
+    raise RuntimeError("Register map does not contain a usable instruction pointer!")
+
 def getRegisterValue(register, registerMap):
     '''
         Return the value of the specified register using the provided register map.

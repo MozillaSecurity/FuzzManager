@@ -263,6 +263,34 @@ rip    0x7ffff5573368    140737309520744
    0x7ffff5573372:    and    0xa08(%rax),%rbx
 """
 
+gdbRegressionTrace4 = """
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000000000 in ?? ()
+#0  0x0000000000000000 in ?? ()
+#1 0xfffc7ffff7e8a6c0 in ?? ()
+#2 0x000000000043026c in js::jit::IonCompile (cx=0xfffc7ffff7e766c0, script=<optimized out>, baselineFrame=<optimized out>, osrPc=<optimized out>, constructing=<optimized out>, recompile=<optimized out>, optimizationLevel=js::jit::Optimization_DontCompile) at /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/Ion.cpp:2253
+#3 0x00007ffff7e61160 in ?? ()
+#4 0x0000000000000000 in ?? ()
+rax    0x0    0
+rbx    0xfffc7ffff7e766c0    -985162554317120
+rcx    0x7fffffffd6c0    140737488344768
+rdx    0x7ffff6907050    140737330049104
+rsi    0x0    0
+rdi    0x7ffff6a00048    140737331069000
+rbp    0x7fffffffd270    140737488343664
+rsp    0x7fffffffd240    140737488343616
+r8    0x0    0
+r9    0xffffc000    4294950912
+r10    0x46000    286720
+r11    0x7ffff6a00121    140737331069217
+r12    0x8    8
+r13    0x7fffffffd6f0    140737488344816
+r14    0x1    1
+r15    0x7ffff6914800    140737330104320
+rip    0x0    0
+=> 0x0:    
+"""
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -399,6 +427,14 @@ class GDBParserTestCrashAddressRegression3(unittest.TestCase):
         crashInfo3 = GDBCrashInfo([], gdbRegressionTrace3.splitlines(), config)
         
         self.assertEqual(crashInfo3.crashAddress, 0x7fffffffffffL)
+
+class GDBParserTestCrashAddressRegression4(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        
+        crashInfo4 = GDBCrashInfo([], gdbRegressionTrace4.splitlines(), config)
+        
+        self.assertEqual(crashInfo4.crashAddress, 0x0L)
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):

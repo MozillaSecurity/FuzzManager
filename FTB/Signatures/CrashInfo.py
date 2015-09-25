@@ -429,7 +429,7 @@ class GDBCrashInfo(CrashInfo):
         
         gdbRegisterPattern = RegisterHelper.getRegisterPattern() + "\\s+0x([0-9a-f]+)"
         gdbCrashAddressPattern = "Crash Address:\\s+0x([0-9a-f]+)"
-        gdbCrashInstructionPattern = "=> 0x[0-9a-f]+(?: <.+>)?:\\s+(.+)"
+        gdbCrashInstructionPattern = "=> 0x[0-9a-f]+(?: <.+>)?:\\s+(.*)"
         
         lastLineBuf = ""
         
@@ -534,6 +534,13 @@ class GDBCrashInfo(CrashInfo):
         
         On error, a string containing the failure message is returned instead.
         '''
+        
+        if (len(crashInstruction) == 0):
+            # GDB shows us no instruction, so the memory at the instruction
+            # pointer address must be inaccessible and we should assume
+            # that this caused our crash.
+            return RegisterHelper.getInstructionPointer(registerMap)
+        
         parts = crashInstruction.split(None, 1)
         
         if len(parts) != 2:
