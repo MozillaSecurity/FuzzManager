@@ -23,6 +23,7 @@ import sys
 import os
 from FTB.ConfigurationFiles import ConfigurationFiles
 
+
 class ProgramConfiguration():
     def __init__(self, product, platform, os, version=None, env=None, args=None, metadata=None):
         '''
@@ -37,24 +38,24 @@ class ProgramConfiguration():
         self.platform = platform.lower()
         self.os = os.lower()
         self.version = version
-        
+
         if env is None:
             env = {}
-        
+
         if args is None:
             args = []
-            
+
         if metadata is None:
             metadata = {}
-        
+
         assert isinstance(env, dict)
         assert isinstance(args, list)
         assert isinstance(metadata, dict)
-        
+
         self.env = env
         self.args = args
         self.metadata = metadata
-    
+
     @staticmethod
     def fromBinary(binaryPath):
         binaryConfig = "%s.fuzzmanagerconf" % binaryPath
@@ -62,46 +63,46 @@ class ProgramConfiguration():
             print("Warning: No binary configuration found at %s" % binaryConfig, file=sys.stderr)
             return None
 
-        config = ConfigurationFiles([ binaryConfig ])
+        config = ConfigurationFiles([binaryConfig])
         mainConfig = config.mainConfig
-        
+
         for field in ["product", "platform", "os"]:
             if not field in mainConfig:
                 raise RuntimeError('Missing "%s" in binary configuration file %s' % (field, binaryConfig))
-            
+
         # Version field is optional
         version = None
         if "product_version" in mainConfig:
             version = mainConfig["product_version"]
-        
+
         return ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"], version=version, metadata=config.metadataConfig)
-    
+
     def addEnvironmentVariables(self, env):
         '''
         Add (additional) environment variable definitions. Existing definitions
         will be overwritten if they are redefined in the given environment.
-        
+
         @type env: dict
         @param env: Dictionary containing the environment variables
         '''
         assert isinstance(env, dict)
         self.env.update(env)
-        
+
     def addProgramArguments(self, args):
         '''
         Add (additional) program arguments.
-        
+
         @type args: list
         @param args: List containing the program arguments
         '''
         assert isinstance(args, list)
         self.args.extend(args)
-        
+
     def addMetadata(self, metadata):
         '''
         Add (additional) metadata definitions. Existing definitions
         will be overwritten if they are redefined in the given metadata.
-        
+
         @type metadata: dict
         @param metadata: Dictionary containing the metadata
         '''
