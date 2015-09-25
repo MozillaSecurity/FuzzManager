@@ -30,6 +30,7 @@ import json
 from FTB import AssertionHelper
 import os
 
+
 class CrashInfo():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
@@ -65,7 +66,7 @@ class CrashInfo():
         buf.append("Crash trace:")
         buf.append("")
         for idx, frame in enumerate(self.backtrace):
-            buf.append("# %02d    %s" %(idx, frame))
+            buf.append("# %02d    %s" % (idx, frame))
         buf.append("")
 
         if self.crashAddress:
@@ -102,7 +103,7 @@ class CrashInfo():
 
         assert stdout == None or isinstance(stdout, list) or isinstance(stdout, basestring)
         assert stderr == None or isinstance(stderr, list) or isinstance(stderr, basestring)
-        assert auxCrashData ==None or isinstance(auxCrashData, list) or isinstance(auxCrashData, basestring)
+        assert auxCrashData == None or isinstance(auxCrashData, list) or isinstance(auxCrashData, basestring)
 
         assert isinstance(configuration, ProgramConfiguration)
 
@@ -126,9 +127,9 @@ class CrashInfo():
 
         # Search both crashData and stderr, but prefer crashData
         lines = []
-        if (auxCrashData != None):
+        if auxCrashData != None:
             lines.extend(auxCrashData)
-        if (stderr != None):
+        if stderr != None:
             lines.extend(stderr)
 
         for line in lines:
@@ -244,7 +245,7 @@ class CrashInfo():
                         topStackMissCount += 1
 
             lastSymbolizedFrame = None
-            for frameIdx in range(0,len(framesArray)):
+            for frameIdx in range(0, len(framesArray)):
                 if str(framesArray[frameIdx]) != '?':
                     lastSymbolizedFrame = frameIdx
 
@@ -289,6 +290,7 @@ class CrashInfo():
 
         return CrashSignature(json.dumps(sigObj, indent=2))
 
+
 class NoCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
@@ -306,6 +308,7 @@ class NoCrashInfo(CrashInfo):
             self.rawCrashData.extend(crashData)
 
         self.configuration = configuration
+
 
 class ASanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -333,11 +336,11 @@ class ASanCrashInfo(CrashInfo):
 
         # For better readability, list all the formats here, then join them into the regular expression
         asanMessages = [
-            "on address", # The most common format, used for all overflows
-            "on unknown address", # Used in case of a SIGSEGV
-            "double-free on", # Used in case of a double-free
-            "not malloc\\(\\)\\-ed:", # Used in case of a wild free (on unallocated memory)
-            "not owned:" # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
+            "on address",  # The most common format, used for all overflows
+            "on unknown address",  # Used in case of a SIGSEGV
+            "double-free on",  # Used in case of a double-free
+            "not malloc\\(\\)\\-ed:",  # Used in case of a wild free (on unallocated memory)
+            "not owned:"  # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
         ]
 
         # TODO: Support "memory ranges [%p,%p) and [%p, %p) overlap" ?
@@ -362,7 +365,6 @@ class ASanCrashInfo(CrashInfo):
                     else:
                         raise RuntimeError("Fatal error parsing ASan trace: Failed to isolate registers in line: %s" % traceLine)
 
-
             parts = traceLine.strip().split()
 
             # We only want stack frames
@@ -376,7 +378,7 @@ class ASanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex) )
+                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
 
             component = None
             if len(parts) > 2:
@@ -397,6 +399,7 @@ class ASanCrashInfo(CrashInfo):
             # a crash on the heap with no symbols available. Add one artificial
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
+
 
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -423,9 +426,9 @@ class GDBCrashInfo(CrashInfo):
             gdbOutput = crashData
 
         gdbFramePatterns = [
-                            "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
-                            "\\s*#(\\d+)\\s+()(.+?) \\(.*?\\)( at .+)?"
-                            ]
+            "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
+            "\\s*#(\\d+)\\s+()(.+?) \\(.*?\\)( at .+)?"
+        ]
 
         gdbRegisterPattern = RegisterHelper.getRegisterPattern() + "\\s+0x([0-9a-f]+)"
         gdbCrashAddressPattern = "Crash Address:\\s+0x([0-9a-f]+)"
@@ -448,7 +451,7 @@ class GDBCrashInfo(CrashInfo):
             if not len(lastLineBuf):
                 match = re.search(gdbRegisterPattern, traceLine)
                 if match != None:
-                    pastFrames = True;
+                    pastFrames = True
                     register = match.group(1)
                     value = long(match.group(2), 16)
                     self.registers[register] = value
@@ -490,7 +493,7 @@ class GDBCrashInfo(CrashInfo):
                     self.backtrace.pop(0)
                 elif len(self.backtrace) != frameIndex:
                     print("Fatal error parsing this GDB trace (Index mismatch, wanted %s got %s ): " % (len(self.backtrace), frameIndex), file=sys.stderr)
-                    print(os.linesep.join(gdbOutput) , file=sys.stderr)
+                    print(os.linesep.join(gdbOutput), file=sys.stderr)
                     raise RuntimeError("Fatal error parsing GDB trace")
 
                 # This is a workaround for GDB throwing an error while resolving function arguments
@@ -512,7 +515,7 @@ class GDBCrashInfo(CrashInfo):
 
             self.crashAddress = crashAddress
 
-            if (self.crashAddress != None and self.crashAddress < 0):
+            if self.crashAddress != None and self.crashAddress < 0:
                 if RegisterHelper.getBitWidth(self.registers) == 32:
                     self.crashAddress = uint32(self.crashAddress)
                 else:
@@ -630,9 +633,9 @@ class GDBCrashInfo(CrashInfo):
                     # and is the first operator. So we first check parts[1] then
                     # parts[0] in case it's a dereferencing operation.
 
-                    for x in (parts[1],parts[0]):
+                    for x in (parts[1], parts[0]):
                         result = re.match("\\$?(\\-?0x[0-9a-f]+)", x)
-                        if  result != None:
+                        if result != None:
                             return long(result.group(1), 16)
             elif len(parts) == 3:
                 # Example instruction: shrb   -0x69(%rdx,%rbx,8)
@@ -684,7 +687,7 @@ class GDBCrashInfo(CrashInfo):
 
             # If we're missing any of the two register values, return None
             if regA == None or regB == None:
-                if (regA == None):
+                if regA == None:
                     return (None, "Missing value for register %s" % match.group(2))
                 else:
                     return (None, "Missing value for register %s" % match.group(3))
@@ -697,6 +700,7 @@ class GDBCrashInfo(CrashInfo):
             return (long(val), None)
 
         return (None, "Unknown failure.")
+
 
 class MinidumpCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -733,7 +737,7 @@ class MinidumpCrashInfo(CrashInfo):
                         self.backtrace.append("??")
                     else:
                         self.backtrace.append(components[3])
-            elif (traceLine.startswith("Crash|")):
+            elif traceLine.startswith("Crash|"):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
                 self.crashAddress = long(components[2], 16)
