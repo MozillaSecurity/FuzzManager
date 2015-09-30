@@ -14,7 +14,7 @@
 	{% block css %}
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.css">
-    <link rel='stylesheet' href='http://fonts.googleapis.com/css?family=Open+Sans'>
+    <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans'>
     <link rel="stylesheet" type="text/css" href="/static/css/default.css">
 	{% block css.shared %}
 	{% endblock css.shared %}
@@ -45,19 +45,19 @@
             {% block header_content %}{% include 'shared/header.html' %}{% endblock header_content %}
         </div>
 		{% endblock header %}
-		
+
 		{% block body %}
         <div id="bd" style="padding-top:15px; padding-bottom: 20px">
             {% block body_content %}{% endblock body_content %}
         </div>
 		{% endblock body %}
-		
+
 		{% block footer %}
         <div id="ft">
             {% block footer_content %}{% include 'shared/footer.html' %}{% endblock footer_content %}
         </div>
 		{% endblock footer %}
-		
+
 		{% block sql_debug %}
 		{% if debug %}
         <div id="debug">
