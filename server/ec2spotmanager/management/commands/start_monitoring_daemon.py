@@ -26,11 +26,12 @@ class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("monitoring_daemon")
     def handle_noargs(self, **options):
+        self.check_instance_pools(initialCheck=True)
         while True:
             self.check_instance_pools()
             time.sleep(10)
     
-    def check_instance_pools(self):
+    def check_instance_pools(self, initialCheck=False):
         instance_pools = InstancePool.objects.all()
 
         # Process all instance pools
@@ -55,6 +56,11 @@ class Command(NoArgsCommand):
             running_instances = []
             
             self.update_pool_instances(instance_pool, config)
+            
+            # On our initial check, we only do everything up to the pool update
+            # to ensure that for every pool, the pool update can run successfully.
+            if initialCheck:
+                continue
             
             instances = Instance.objects.filter(pool=instance_pool)
             
