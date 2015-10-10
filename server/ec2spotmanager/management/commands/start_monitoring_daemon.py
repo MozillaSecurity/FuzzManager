@@ -405,10 +405,18 @@ class Command(NoArgsCommand):
                 return None
         
             try:
-                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk), "tag:SpotManager-Updatable" : "1"})
-                
-                
+                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+
                 for boto_instance in boto_instances:
+                    if not ("SpotManager-Updatable" in boto_instance.tags and int(boto_instance.tags["SpotManager-Updatable"]) > 0):
+                        # The instance is not marked as updatable. We must not touch it because
+                        # a spawning thread is still managing this instance. However, we must also
+                        # remove this instance from the instances_left list if it's already in our
+                        # database, because otherwise our code here would delete it from the database.
+                        if boto_instance.id in instance_ids_by_region[region]:
+                            instances_left.remove(instances_by_ids[boto_instance.id])
+                        continue
+
                     instance = None
                     
                     # Whenever we see an instance that is not in our instance list for that region,
