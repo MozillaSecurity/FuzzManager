@@ -12,6 +12,11 @@
 		<div class="field">
 			<strong>Pool Configuration Name: </strong>{{ entry.name|escape }}
 		</div>
+		{% if pools %}
+		<div class="field">
+			<strong>Warning: {{ pools|length }} associated (disabled) pools will be deleted as well.</strong>
+		</div>
+		{% endif %}
 		<input type="submit" value="Delete" />
 		</form>
         </div>

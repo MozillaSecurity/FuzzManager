@@ -399,17 +399,24 @@ def deletePoolMsg(request, msgid):
 def deleteConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
     
-    if InstancePool.objects.filter(config=config):
-        return render(request, 'pools/error.html', { 'error_message' : 'That configuration is still used by one or more instance pools.' })
+    pools = InstancePool.objects.filter(config=config)
+    for pool in pools:
+        if pool.isEnabled:
+            return render(request, 'pools/error.html', { 'error_message' : 'That configuration is still used by one or more (enabled) instance pools.' })
+
+        instances = Instance.objects.filter(pool=pool)
+        if instances:
+            return render(request, 'pools/error.html', { 'error_message' : 'A pool using this configuration still has instances associated with it. Please wait for their termination first.' })
         
     if PoolConfiguration.objects.filter(parent=config):
         return render(request, 'pools/error.html', { 'error_message' : 'That configuration is still referenced by one or more other configurations.' })
     
-    if request.method == 'POST':            
+    if request.method == 'POST':
+        pools.delete()
         config.delete()
         return redirect('ec2spotmanager:configs')
     elif request.method == 'GET':
-        return render(request, 'config/delete.html', { 'entry' : config })
+        return render(request, 'config/delete.html', { 'entry' : config, 'pools' : pools })
     else:
         raise SuspiciousOperation
 
