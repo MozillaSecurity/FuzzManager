@@ -567,6 +567,7 @@ def findSignatures(request, crashid):
                 # If the signature matches lots of other buckets as well, it is likely too
                 # broad and we should not consider it (or later rate it worse than others).
                 matchesInOtherBuckets = 0
+                matchesInOtherBucketsLimitExceeded = False
                 nonMatchesInOtherBuckets = 0
                 otherMatchingBucketIds = []
                 for otherBucket in buckets:
@@ -581,34 +582,40 @@ def findSignatures(request, crashid):
                         if proposedCrashSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
                             matchesInOtherBuckets += 1
                             otherMatchingBucketIds.append(otherBucket.pk)
+                            
+                            # We already match too many foreign buckets. Abort our search here
+                            # to speed up the response time.
+                            if matchesInOtherBuckets > 5:
+                                matchesInOtherBucketsLimitExceeded = True
+                                break
                         else:
                             nonMatchesInOtherBuckets += 1
-                
+
                 bucket.offCount = distance
-                
+
                 if matchesInOtherBuckets+nonMatchesInOtherBuckets > 0:
                     bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
                 else:
                     bucket.foreignMatchPercentage = 0
-                    
+
                 bucket.foreignMatchCount = matchesInOtherBuckets
-                
+                bucket.foreignMatchLimitExceeded = matchesInOtherBucketsLimitExceeded
+
                 if matchesInOtherBuckets == 0:
                     bucket.foreignColor = "green"
                 elif matchesInOtherBuckets < 3:
                     bucket.foreignColor = "yellow"
                 else:
-                    bucket.foreignColor = "red"    
-                
+                    bucket.foreignColor = "red"
+
                 # Set a limit to linking to the other matching buckets. It only makes sense to look at these
                 # if the number is rather low and we would like to keep the URL short.
                 bucket.linkToOthers = None
-                if matchesInOtherBuckets <= 10:
+                if matchesInOtherBuckets <= 5:
                     bucket.linkToOthers = ",".join([str(x) for x in otherMatchingBucketIds])
-                
-                
+
                 similarBuckets.append(bucket)
-    
+
     if matchingBucket:
         entry.bucket = matchingBucket
         entry.save()

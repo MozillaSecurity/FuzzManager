@@ -51,7 +51,7 @@
 					{% if entry.linkToOthers %}
 					<a title="Show differences" href="{% url 'crashmanager:signatures' %}?all=1&ids={{ entry.linkToOthers }}">{{ entry.foreignMatchCount }} other buckets</a>
 					{% else %}
-						{{ entry.foreignMatchCount }} other buckets
+						{{ entry.foreignMatchCount }}{% if entry.foreignMatchLimitExceeded %}+{% endif %} other buckets
 					{% endif %}
 				</td>
 				<td>
