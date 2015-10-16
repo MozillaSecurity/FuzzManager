@@ -330,6 +330,8 @@ class StackFramesSymptom(Symptom):
         bestDepth = None
         bestGuess = None
         
+        hasVariableStackLengthQuantifier = '???' in [str(x) for x in newSignatureGuess]
+        
         for idx in range(startIdx,len(newSignatureGuess)):
             newSignatureGuess.insert(idx, singleWildcardMatch)
             
@@ -354,8 +356,26 @@ class StackFramesSymptom(Symptom):
             if str(newSignatureGuess[idx]) == '?' or str(newSignatureGuess[idx]) == '???':
                 continue
             
+            newMatch = singleWildcardMatch
+            if not hasVariableStackLengthQuantifier and len(stack) > idx:
+                # We can perform some optimizations here if we have a signature that does
+                # not contain any quantifiers that can match multiple stack frames.
+                
+                if newSignatureGuess[idx].matches(stack[idx]):
+                    # Our frame matches, so it doesn't make sense to try and mess with it
+                    continue
+            
+                if not newSignatureGuess[idx].isPCRE:
+                    # If our match is not PCRE, try some heuristics to generalize the match
+                    
+                    if stack[idx] in str(newSignatureGuess[idx]):
+                        # The stack frame is a substring of the what we try to match,
+                        # use the stack frame as new matcher to ensure a match without
+                        # using a wildcard.
+                        newMatch = StringMatch(stack[idx])
+            
             origMatch = newSignatureGuess[idx]
-            newSignatureGuess[idx] = singleWildcardMatch
+            newSignatureGuess[idx] = newMatch
             
             # Check if we have a match with our modification
             if StackFramesSymptom._match(stack, newSignatureGuess):
