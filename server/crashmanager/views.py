@@ -541,6 +541,59 @@ def trySignature(request, sigid, crashid):
     return render(request, 'signatures/try.html', { 'bucket' : bucket, 'entry' : entry, 'diff' : diff })
 
 @login_required(login_url='/login/')
+def optimizeSignature(request, sigid):
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    buckets = Bucket.objects.all()
+ 
+    # Get all unbucketed entries for that user, respecting the tools filter though
+    entries = CrashEntry.objects.filter(bucket = None).order_by('-id')
+    (user, created) = User.objects.get_or_create(user = request.user)
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
+    
+    signature = bucket.getSignature()
+
+    optimizedSignature = None 
+    matchingEntries = []
+    
+    for entry in entries:
+        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
+
+        optimizedSignature = signature.fit(entry.crashinfo)
+        if optimizedSignature:
+            # We now try to determine how this signature will behave in other buckets
+            # If the signature matches lots of other buckets as well, it is likely too
+            # broad and we should not consider it (or later rate it worse than others).
+            matchesInOtherBuckets = False
+            nonMatchesInOtherBuckets = 0
+            otherMatchingBucketIds = []
+            for otherBucket in buckets:
+                if otherBucket.pk == bucket.pk:
+                    continue
+                
+                bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
+                firstEntry = list(bucketEntries[:1])
+                if firstEntry:
+                    firstEntry = firstEntry[0]
+                    # Omit testcase for performance reasons for now
+                    if optimizedSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
+                        matchesInOtherBuckets = True
+                        break
+            
+            if not matchesInOtherBuckets:
+                for otherEntry in entries:
+                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
+                        matchingEntries.append(otherEntry)
+                break
+            
+    diff = None
+    if optimizedSignature:
+        diff = optimizedSignature.getSignatureUnifiedDiffTuples(matchingEntries[0])
+    
+    return render(request, 'signatures/optimize.html', { 'bucket' : bucket, 'optimizedSignature' : optimizedSignature, 'diff' : diff, 'matchingEntries' : matchingEntries })
+
+@login_required(login_url='/login/')
 def findSignatures(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     
