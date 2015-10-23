@@ -589,7 +589,7 @@ def optimizeSignature(request, sigid):
             
     diff = None
     if optimizedSignature:
-        diff = optimizedSignature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
+        diff = signature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
     
     return render(request, 'signatures/optimize.html', { 'bucket' : bucket, 'optimizedSignature' : optimizedSignature, 'diff' : diff, 'matchingEntries' : matchingEntries })
 
