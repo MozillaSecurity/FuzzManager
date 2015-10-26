@@ -168,7 +168,16 @@ class Collector():
                 zipFile.write(chunk)
                 zipFile.flush()
         zipFile.close()
+        self.refreshFromZip(zipFileName)
+        os.remove(zipFileName)
 
+    @signature_checks
+    def refreshFromZip(self, zipFileName):
+        '''
+        Refresh signatures from a local zip file, adding new signatures
+        and invalidating old ones. (This is a non-standard use case;
+        you probably want to use refresh() instead.)
+        '''
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip() != None:
                 raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
@@ -181,8 +190,6 @@ class Collector():
                     print("Warning: Skipping deletion of non-signature file: %s" % sigFile, file=sys.stderr)
 
             zipFile.extractall(self.sigCacheDir)
-
-        os.remove(zipFileName)
 
     @remote_checks
     def submit(self, crashInfo, testCase=None, testCaseQuality=0, metaData=None):
