@@ -329,10 +329,10 @@ class ASanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        if not crashData:
-            asanOutput = stderr
-        else:
+        if crashData:
             asanOutput = crashData
+        else:
+            asanOutput = stderr
 
         # For better readability, list all the formats here, then join them into the regular expression
         asanMessages = [
