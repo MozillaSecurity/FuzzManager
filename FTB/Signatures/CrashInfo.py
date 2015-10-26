@@ -420,10 +420,10 @@ class GDBCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the GDB trace, otherwise use stderr
-        if crashData == None:
-            gdbOutput = stderr
-        else:
+        if crashData:
             gdbOutput = crashData
+        else:
+            gdbOutput = stderr
 
         gdbFramePatterns = [
             "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
@@ -728,10 +728,10 @@ class MinidumpCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the Minidump trace, otherwise use stderr
-        if crashData == None:
-            minidumpOuput = stderr
-        else:
+        if crashData:
             minidumpOuput = crashData
+        else:
+            minidumpOuput = stderr
 
         crashThread = None
         for traceLine in minidumpOuput:
