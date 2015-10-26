@@ -40,7 +40,7 @@ def getAssertion(output, onlyProgramAssertions=False):
     addNext = False
 
     # Use this to ignore the ASan head line in case of an assertion
-    haveTrueAssertion = False
+    haveFatalAssertion = False
 
     for line in output:
         # Remove any PID output at the beginning of the line
@@ -52,17 +52,17 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif line.startswith("Assertion failure"):
             # Firefox JS assertion
             lastLine = line
-            haveTrueAssertion = True
+            haveFatalAssertion = True
         elif line.startswith("###!!! ASSERTION:"):
             # Firefox assertion
             lastLine = line
-            haveTrueAssertion = True
+            haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
             # Support v8 non-standard multi-line assertion output
             lastLine = line
-            haveTrueAssertion = True
+            haveFatalAssertion = True
             addNext = True
-        elif not onlyProgramAssertions and not haveTrueAssertion and "ERROR: AddressSanitizer" in line:
+        elif not onlyProgramAssertions and not haveFatalAssertion and "ERROR: AddressSanitizer" in line:
             lastLine = line
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
