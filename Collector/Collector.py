@@ -161,13 +161,12 @@ class Collector():
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
-        zipFile = os.fdopen(zipFileFd, 'w')
+        with os.fdopen(zipFileFd, 'w') as zipFile:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    zipFile.write(chunk)
+                    zipFile.flush()
 
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk:
-                zipFile.write(chunk)
-                zipFile.flush()
-        zipFile.close()
         self.refreshFromZip(zipFileName)
         os.remove(zipFileName)
 
