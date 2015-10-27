@@ -157,7 +157,7 @@ class Collector():
         response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+            raise self.__serverError(response)
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
@@ -261,7 +261,7 @@ class Collector():
         response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["created"]:
-            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+            raise self.__serverError(response)
 
     @signature_checks
     def search(self, crashInfo):
@@ -345,7 +345,7 @@ class Collector():
         response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+            raise self.__serverError(response)
 
         json = response.json()
 
@@ -359,7 +359,7 @@ class Collector():
         response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise RuntimeError("Server unexpectedly responded with status code %s" % response.status_code)
+            raise self.__serverError(response)
 
         localFile = os.path.basename(json["testcase"])
         with open(localFile, 'w') as f:
@@ -385,6 +385,11 @@ class Collector():
             f.write(str(signature))
 
         return sigfile
+
+    @staticmethod
+    def __serverError(response):
+        return RuntimeError("Server unexpectedly responded with status code %s: %s" %
+                            (response.status_code, response.text))
 
     @staticmethod
     def read_testcase(testCase):
