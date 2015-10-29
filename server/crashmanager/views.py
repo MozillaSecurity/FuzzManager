@@ -581,7 +581,11 @@ def optimizeSignature(request, sigid):
                         matchesInOtherBuckets = True
                         break
             
-            if not matchesInOtherBuckets:
+            if matchesInOtherBuckets:
+                # Reset, we don't actually have an optimized signature if it's matching
+                # some other bucket as well.
+                optimizedSignature = None
+            else:
                 for otherEntry in entries:
                     if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
                         matchingEntries.append(otherEntry)
