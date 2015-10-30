@@ -421,6 +421,7 @@ def main(argv=None):
     parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
+    parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
@@ -462,7 +463,7 @@ def main(argv=None):
             print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
             return 2
         
-    if opts.s3_queue_upload or opts.s3_corpus_refresh or opts.s3_build_download or opts.s3_corpus_download:
+    if opts.s3_queue_upload or opts.s3_corpus_refresh or opts.s3_build_download or opts.s3_corpus_download or opts.s3_corpus_upload:
         if not opts.s3_bucket or not opts.project:
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
@@ -477,6 +478,10 @@ def main(argv=None):
     
     if opts.s3_corpus_download:
         download_corpus(opts.s3_corpus_download, opts.s3_bucket, opts.project)
+        return 0
+    
+    if opts.s3_corpus_upload:
+        upload_corpus(opts.s3_corpus_upload, opts.s3_bucket, opts.project)
         return 0
 
     if opts.s3_corpus_refresh:
