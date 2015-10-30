@@ -232,6 +232,17 @@ class Command(NoArgsCommand):
             userdata = LaniakeaCommandLine.handle_tags(userdata, config.ec2_userdata_macros)
             if not userdata:
                 logger.error("[Pool %d] Failed to compile userdata." % pool.id)
+                
+                entry = PoolStatusEntry()
+                entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
+                entry.pool = pool
+                entry.isCritical = True
+                entry.msg = "Configuration error: Failed to compile userdata"
+                entry.save()
+                
+                for instance in instances:
+                    instance.delete()
+                
                 raise RuntimeError("start_instances_async: Failed to compile userdata")
             
             images["default"]['user_data'] = userdata
