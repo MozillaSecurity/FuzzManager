@@ -78,13 +78,13 @@ class CrashSignature():
         @rtype: bool
         @return: True if the signature matches, False otherwise
         '''
-        if self.platforms != None and not crashInfo.platform in self.platforms:
+        if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
             return False
         
-        if self.operatingSystems != None and not crashInfo.os in self.operatingSystems:
+        if self.operatingSystems != None and not crashInfo.configuration.os in self.operatingSystems:
             return False
         
-        if self.products != None and not crashInfo.product in self.products:
+        if self.products != None and not crashInfo.configuration.product in self.products:
             return False
         
         for symptom in self.symptoms:
