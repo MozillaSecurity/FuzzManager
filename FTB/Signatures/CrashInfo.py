@@ -119,6 +119,7 @@ class CrashInfo():
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "Program received signal "
         gdbCoreString = "Program terminated with signal "
+        ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
 
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
@@ -133,7 +134,9 @@ class CrashInfo():
             lines.extend(stderr)
 
         for line in lines:
-            if asanString in line:
+            if ubsanString in line:
+                return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif asanString in line:
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
@@ -160,6 +163,12 @@ class CrashInfo():
         abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
         if abortMsg != None:
             return abortMsg
+
+        # See if we have an abort message in our crash data maybe, e.g. for UBSan
+        if self.rawCrashData:
+            abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
+            if abortMsg != None:
+                return abortMsg
 
         if not len(self.backtrace):
             return "No crash detected"
@@ -400,6 +409,68 @@ class ASanCrashInfo(CrashInfo):
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
 
+class UBSanCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the UBSan trace, otherwise use stderr
+        if crashData:
+            ubsanOutput = crashData
+        else:
+            ubsanOutput = stderr
+
+        ubsanErrorPattern = ":\\d+:\\d+: runtime error:"
+        ubsanPatternSeen = False
+        
+        expectedIndex = 0
+        for traceLine in ubsanOutput:
+            if re.match(ubsanErrorPattern, traceLine) != None:
+                ubsanPatternSeen = True
+                
+            parts = traceLine.strip().split()
+            
+            # We only want stack frames
+            if not parts or not parts[0].startswith("#"):
+                continue
+
+            index = int(parts[0][1:])
+
+            if not expectedIndex == index:
+                raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+
+            component = None
+            if len(parts) > 2:
+                if parts[2] == "in":
+                    component = " ".join(parts[3:-1])
+                else:
+                    # Remove parentheses around component
+                    component = parts[2][1:-1]
+            else:
+                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                component = "<missing>"
+
+            self.backtrace.append(component)
+            expectedIndex += 1
+
+        if not self.backtrace and ubsanPatternSeen:
+            # We've seen the crash address but no frames, so this is likely
+            # a crash on the heap with no symbols available. Add one artificial
+            # frame so it doesn't show up as "No crash detected"
+            self.backtrace.append("??")
 
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):

@@ -73,6 +73,11 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif "MOZ_CRASH" in line and re.search("MOZ_CRASH\(.+\)", line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
+        elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
+            # UBSan error. Even though this is not a program assertion, we should
+            # really include it in the signature because what UBSan reports here
+            # is not really a crash.
+            lastLine = line
 
     return lastLine
 

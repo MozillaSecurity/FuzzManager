@@ -291,6 +291,22 @@ rip    0x0    0
 => 0x0:    
 """
 
+ubsanSampleTrace1 = """
+codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
+    #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
+    #1 0x51a11b in WelsDec::ParseSliceHeaderSyntaxs(WelsDec::TagWelsDecoderContext*, WelsCommon::TagBitStringAux*, bool) /home/user/code/openh264/codec/decoder/core/src/decoder_core.cpp:692:3
+    #2 0x59f649 in WelsDec::ParseNalHeader(WelsDec::TagWelsDecoderContext*, WelsCommon::TagNalUnitHeader*, unsigned char*, int, unsigned char*, int, int*) /home/user/code/openh264/codec/decoder/core/src/au_parser.cpp:392:12
+    #3 0x50d2fe in WelsDecodeBs /home/user/code/openh264/codec/decoder/core/src/decoder.cpp:749:19
+    #4 0x4f3553 in WelsDec::CWelsDecoder::DecodeFrame2(unsigned char const*, int, unsigned char**, TagBufferInfo*) /home/user/code/openh264/codec/decoder/plus/src/welsDecoderExt.cpp:502:3
+    #5 0x4f249f in WelsDec::CWelsDecoder::DecodeFrameNoDelay(unsigned char const*, int, unsigned char**, TagBufferInfo*) /home/user/code/openh264/codec/decoder/plus/src/welsDecoderExt.cpp:438:16
+    #6 0x4e719f in H264DecodeInstance(ISVCDecoder*, char const*, char const*, int&, int&, char const*, char const*) /home/user/code/openh264/codec/console/dec/src/h264dec.cpp:218:5
+    #7 0x4e8630 in main /home/user/code/openh264/codec/console/dec/src/h264dec.cpp:358:5
+    #8 0x7fe1d5eb7ec4 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287
+    #9 0x41beb5 in _start (/home/user/Desktop/openh264/h264dec_64_ub_asan+0x41beb5)
+
+SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.h:182:37 in 
+"""
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -629,6 +645,15 @@ class MinidumpSelectorTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
-
+class UBSanParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanSampleTrace1.splitlines())
+        self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*)")
+        self.assertEqual(crashInfo.backtrace[9], "_start")
+        
+        print(crashInfo.createShortSignature())
+        
 if __name__ == "__main__":
     unittest.main()
