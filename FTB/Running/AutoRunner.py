@@ -171,9 +171,11 @@ class ASanRunner(AutoRunner):
             if "ASAN_SYMBOLIZER_PATH" in os.environ:
                 self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
             else:
-                self.env["ASAN_SYMBOLIZER_PATH"] = spawn.find_executable("llvm-symbolizer")
-                if not self.env["ASAN_SYMBOLIZER_PATH"]:
-                    raise RuntimeError("Unable to locate llvm-symbolizer")
+                self.env["ASAN_SYMBOLIZER_PATH"] = os.path.join(os.path.dirname(binary), "llvm-symbolizer")
+                if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
+                    self.env["ASAN_SYMBOLIZER_PATH"] = spawn.find_executable("llvm-symbolizer")
+                    if not self.env["ASAN_SYMBOLIZER_PATH"]:
+                        raise RuntimeError("Unable to locate llvm-symbolizer")
 
         if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
             raise RuntimeError(
