@@ -24,6 +24,7 @@ from abc import ABCMeta
 from distutils import spawn
 from FTB.Signatures.CrashInfo import CrashInfo
 import os
+import re
 
 
 class AutoRunner():
@@ -181,7 +182,15 @@ class ASanRunner(AutoRunner):
             raise RuntimeError(
                 "Misconfigured ASAN_SYMBOLIZER_PATH: %s" % self.env["ASAN_SYMBOLIZER_PATH"]
             )
-
+        
+        if not "UBSAN_OPTIONS" in self.env:
+            if "UBSAN_OPTIONS" in os.environ:
+                self.env["UBSAN_OPTIONS"] = os.environ["UBSAN_OPTIONS"]
+            else:
+                # Default to print stacktraces if no other options are set. If the caller overrides
+                # these options, they need to set this themselves, otherwise this code won't be able
+                # to isolate a UBSan trace.
+                self.env["UBSAN_OPTIONS"] = "print_stacktrace=1"
 
     def run(self):
         process = subprocess.Popen(
@@ -195,17 +204,23 @@ class ASanRunner(AutoRunner):
 
         (self.stdout, stderr) = process.communicate(input=self.stdin)
 
-        inTrace = False
+        inASanTrace = False
+        inUBSanTrace = False
         self.auxCrashData = []
         self.stderr = []
         for line in stderr.splitlines():
-            if inTrace:
+            if inASanTrace or inUBSanTrace:
                 self.auxCrashData.append(line)
-                if line.find("==ABORTING") >= 0:
-                    inTrace = False
+                if inASanTrace and line.find("==ABORTING") >= 0:
+                    inASanTrace = False
+                elif inUBSanTrace and "==SUMMARY: AddressSanitizer: undefined-behavior" in line:
+                    inUBSanTrace = False
             elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.auxCrashData.append(line)
-                inTrace = True
+                inASanTrace = True
+            elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
+                self.auxCrashData.append(line)
+                inUBSanTrace = True
             else:
                 self.stderr.append(line)
 
