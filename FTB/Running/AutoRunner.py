@@ -86,7 +86,7 @@ class AutoRunner():
 
         (stdout, _) = process.communicate()
 
-        if stdout.find(" __asan_init") >= 0:
+        if stdout.find(" __asan_init") >= 0 or stdout.find("__ubsan_default_options") >= 0:
             return ASanRunner(binary, args, env, cwd, stdin)
 
         return GDBRunner(binary, args, env, cwd, stdin)
