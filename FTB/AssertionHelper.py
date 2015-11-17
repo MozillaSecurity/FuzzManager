@@ -50,7 +50,7 @@ def getAssertion(output, onlyProgramAssertions=False):
             lastLine += " "
             lastLine += line
         elif line.startswith("Assertion failure"):
-            # Firefox JS assertion
+            # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("###!!! ASSERTION:"):
