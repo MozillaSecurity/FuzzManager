@@ -67,6 +67,10 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
             lastLine = line
+        elif ": failed assertion" in line:
+            # Firefox Skia assertion (SkASSERT)
+            lastLine = line
+            haveFatalAssertion = True
         elif not onlyProgramAssertions and "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
             lastLine = line
