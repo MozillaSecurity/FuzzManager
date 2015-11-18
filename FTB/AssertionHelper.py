@@ -53,10 +53,6 @@ def getAssertion(output, onlyProgramAssertions=False):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
             lastLine = line
             haveFatalAssertion = True
-        elif line.startswith("###!!! ASSERTION:"):
-            # Firefox assertion
-            lastLine = line
-            haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
             # Support v8 non-standard multi-line assertion output
             lastLine = line
