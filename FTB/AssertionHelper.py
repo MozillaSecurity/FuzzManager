@@ -82,6 +82,9 @@ def getAssertion(output, onlyProgramAssertions=False):
             # really include it in the signature because what UBSan reports here
             # is not really a crash.
             lastLine = line
+        elif line.startswith("[Non-crash bug] "):
+            # Magic string "added" to stderr by some fuzzers.
+            lastLine = line
 
     return lastLine
 
