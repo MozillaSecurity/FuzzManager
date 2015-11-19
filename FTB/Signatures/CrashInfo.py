@@ -281,7 +281,9 @@ class CrashInfo():
                 self.failureReason = "No crash address available from crash data. Reason: %s" % failureReason
                 return None
 
-            if self.crashAddress == 0L:
+            if self.crashAddress != 0L and self.crashAddress < 0x100L:
+                # Try to match crash addresses that are small but non-zero
+                # with a generic range that is likely associated with null-deref.
                 crashAddress = "< 0x100"
             else:
                 crashAddress = hex(self.crashAddress).rstrip("L")
