@@ -281,7 +281,10 @@ class CrashInfo():
                 self.failureReason = "No crash address available from crash data. Reason: %s" % failureReason
                 return None
 
-            crashAddress = hex(self.crashAddress).rstrip("L")
+            if self.crashAddress == 0L:
+                crashAddress = "< 0x100"
+            else:
+                crashAddress = hex(self.crashAddress).rstrip("L")
 
             crashAddressSymptomObj = { "type" : "crashAddress", "address" : crashAddress }
             symptomArr.append(crashAddressSymptomObj)
