@@ -50,11 +50,7 @@ def getAssertion(output, onlyProgramAssertions=False):
             lastLine += " "
             lastLine += line
         elif line.startswith("Assertion failure"):
-            # Firefox JS assertion
-            lastLine = line
-            haveFatalAssertion = True
-        elif line.startswith("###!!! ASSERTION:"):
-            # Firefox assertion
+            # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
@@ -67,6 +63,10 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
             lastLine = line
+        elif ": failed assertion" in line:
+            # Firefox Skia assertion (SkASSERT)
+            lastLine = line
+            haveFatalAssertion = True
         elif not onlyProgramAssertions and "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
             lastLine = line
@@ -77,6 +77,9 @@ def getAssertion(output, onlyProgramAssertions=False):
             # UBSan error. Even though this is not a program assertion, we should
             # really include it in the signature because what UBSan reports here
             # is not really a crash.
+            lastLine = line
+        elif line.startswith("[Non-crash bug] "):
+            # Magic string "added" to stderr by some fuzzers.
             lastLine = line
 
     return lastLine
