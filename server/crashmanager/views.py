@@ -665,20 +665,18 @@ def findSignatures(request, crashid):
                 else:
                     bucket.foreignColor = "red"
 
-                # Set a limit to linking to the other matching buckets. It only makes sense to look at these
-                # if the number is rather low and we would like to keep the URL short.
-                bucket.linkToOthers = None
+                # Only include the bucket in our results if the number of matches in other buckets is below
+                # out limit. Otherwise, it will just distract the user.
                 if matchesInOtherBuckets <= 5:
                     bucket.linkToOthers = ",".join([str(x) for x in otherMatchingBucketIds])
-
-                similarBuckets.append(bucket)
+                    similarBuckets.append(bucket)
 
     if matchingBucket:
         entry.bucket = matchingBucket
         entry.save()
         return render(request, 'signatures/find.html', { 'bucket' : matchingBucket, 'crashentry' : entry })
     else:
-        similarBuckets.sort(key=lambda x: x.offCount)
+        similarBuckets.sort(key=lambda x: (x.foreignMatchCount, x.offCount))
         return render(request, 'signatures/find.html', { 'buckets' : similarBuckets, 'crashentry' : entry })
 
 @login_required(login_url='/login/')
