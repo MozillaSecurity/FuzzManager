@@ -313,9 +313,10 @@ class ASanParserTestCrash(unittest.TestCase):
         
         crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 7)
-        self.assertEqual(crashInfo.backtrace[0], "js::AbstractFramePtr::asRematerializedFrame() const")
-        self.assertEqual(crashInfo.backtrace[2], "EvalInFrame(JSContext*, unsigned int, JS::Value*)")
-        self.assertEqual(crashInfo.backtrace[6], "js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>)")
+        self.assertEqual(crashInfo.backtrace[0], "js::AbstractFramePtr::asRematerializedFrame")
+        self.assertEqual(crashInfo.backtrace[2], "EvalInFrame")
+        self.assertEqual(crashInfo.backtrace[3], "js::CallJSNative")
+        self.assertEqual(crashInfo.backtrace[6], "js::jit::DoCallFallback")
         
         self.assertEqual(crashInfo.crashAddress, 0x00000014L)
         self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
@@ -342,8 +343,8 @@ class ASanParserTestUAF(unittest.TestCase):
 
         crashInfo = ASanCrashInfo([], asanTraceUAF.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 23)
-        self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long)")
-        self.assertEqual(crashInfo.backtrace[4], "JSFunction::native() const")
+        self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>")
+        self.assertEqual(crashInfo.backtrace[4], "JSFunction::native")
         
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
         
@@ -630,8 +631,8 @@ class MinidumpParserTestCrash(unittest.TestCase):
         self.assertEqual(len(crashInfo.backtrace), 44)
         self.assertEqual(crashInfo.backtrace[0], "??")
         self.assertEqual(crashInfo.backtrace[5], "??")
-        self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent(bool)")
-        self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent(bool, unsigned int)")
+        self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent")
+        self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent")
         
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
@@ -650,7 +651,7 @@ class UBSanParserTestCrash(unittest.TestCase):
         config = ProgramConfiguration("test", "x86", "linux")
         
         crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanSampleTrace1.splitlines())
-        self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*)")
+        self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe")
         self.assertEqual(crashInfo.backtrace[9], "_start")
         
         print(crashInfo.createShortSignature())
