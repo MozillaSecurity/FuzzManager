@@ -25,7 +25,7 @@ class Command(NoArgsCommand):
             bug.delete()
             
         # Select all buckets that are empty and delete them
-        buckets = Bucket.objects.annotate(size=Count('crashentry')).filter(size=0, bug=None)
+        buckets = Bucket.objects.annotate(size=Count('crashentry')).filter(size=0, bug=None, permanent=False)
         for bucket in buckets:
             bucket.delete()
             
