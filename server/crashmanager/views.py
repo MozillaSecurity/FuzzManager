@@ -77,7 +77,7 @@ def signatures(request):
     
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
-                       "bug",
+                       "bug__externalId",
                        "shortDescription__contains",
                        "signature__contains",
                        ]
