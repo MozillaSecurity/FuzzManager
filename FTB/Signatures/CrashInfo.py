@@ -440,14 +440,14 @@ class UBSanCrashInfo(CrashInfo):
 
         ubsanErrorPattern = ":\\d+:\\d+: runtime error:"
         ubsanPatternSeen = False
-        
+
         expectedIndex = 0
         for traceLine in ubsanOutput:
             if re.match(ubsanErrorPattern, traceLine) != None:
                 ubsanPatternSeen = True
-                
+
             parts = traceLine.strip().split()
-            
+
             # We only want stack frames
             if not parts or not parts[0].startswith("#"):
                 continue
