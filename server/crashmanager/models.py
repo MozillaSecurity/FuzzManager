@@ -145,6 +145,9 @@ class CrashEntry(models.Model):
             # to signed in order to store it in the database.
             if (self.crashAddressNumeric > (2**63-1)):
                 self.crashAddressNumeric -= 2**64
+
+        if len(self.shortSignature) > 255:
+            self.shortSignature = self.shortSignature[0:255]
         
         super(CrashEntry, self).save(*args, **kwargs)
     
