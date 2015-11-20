@@ -80,6 +80,7 @@ class Bucket(models.Model):
     signature = models.TextField()
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
+    permanent = models.BooleanField(blank=False, default=False)
 
     def getSignature(self):
         return CrashSignature(self.signature)
