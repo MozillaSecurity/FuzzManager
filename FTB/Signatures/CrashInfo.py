@@ -303,7 +303,46 @@ class CrashInfo():
         sigObj = { "symptoms" : symptomArr }
 
         return CrashSignature(json.dumps(sigObj, indent=2))
+    
+    @staticmethod
+    def sanitizeStackFrame(frame):
+        '''
+        This function removes function arguments and other non-generic parts
+        of the function frame, returning a (hopefully) generic function name.
+        
+        @param frame: The stack frame to sanitize
+        @type forceCrashAddress: str
+        
+        @rtype: str
+        @return: Sanitized stack frame
+        '''
 
+        # Remove any trailing const declaration
+        if frame.endswith(" const"):
+            frame = frame[0:-len(" const")]
+
+        # Strip the last ( ) segment, which might also contain more parentheses
+        if frame.endswith(")"):
+            idx = len(frame) - 2
+            parlevel = 0
+            while(idx > 0):
+                if frame[idx] == "(":
+                    if parlevel > 0:
+                        parlevel -= 1
+                    else:
+                        # Done
+                        break
+                elif frame[idx] == ")":
+                    parlevel += 1
+
+                idx -= 1
+
+            # Only strip if we actually found the ( ) before we reached the
+            # beginning of our string.
+            if idx:
+                frame = frame[:idx]
+
+        return frame
 
 class NoCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -405,7 +444,7 @@ class ASanCrashInfo(CrashInfo):
                 print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                 component = "<missing>"
 
-            self.backtrace.append(component)
+            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
         if not self.backtrace and self.crashAddress != None:
@@ -468,7 +507,7 @@ class UBSanCrashInfo(CrashInfo):
                 print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                 component = "<missing>"
 
-            self.backtrace.append(component)
+            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
         if not self.backtrace and ubsanPatternSeen:
@@ -819,7 +858,7 @@ class MinidumpCrashInfo(CrashInfo):
                     if not len(components[3]):
                         self.backtrace.append("??")
                     else:
-                        self.backtrace.append(components[3])
+                        self.backtrace.append(CrashInfo.sanitizeStackFrame(components[3]))
             elif traceLine.startswith("Crash|"):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
