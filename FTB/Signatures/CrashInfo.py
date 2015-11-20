@@ -120,6 +120,7 @@ class CrashInfo():
         gdbString = "Program received signal "
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
+        appleString = "Time Awake Since Boot:"
 
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
@@ -138,6 +139,8 @@ class CrashInfo():
                 return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif asanString in line:
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif appleString in line:
+                return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
@@ -824,3 +827,55 @@ class MinidumpCrashInfo(CrashInfo):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
                 self.crashAddress = long(components[2], 16)
+
+
+class AppleCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        inCrashingThread = False
+        for line in crashData:
+            # Crash address
+            if line.startswith("Exception Codes:"):
+                # Example:
+                #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
+                #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
+                address = line.split(" ")[-1]
+                if address.startswith('0x'):
+                    self.crashAddress = long(address, 16)
+
+            # Start of stack for crashing thread
+            if re.match(r'Thread \d+ Crashed:', line):
+                inCrashingThread = True
+                continue
+
+            if line.strip() == "":
+                inCrashingThread = False
+                continue
+
+            if inCrashingThread:
+                # Examples of lines within thread stacks:
+                # 1   libsystem_c.dylib                 0x00007fff841e10ff __cxa_finalize_ranges + 345
+                # 0   XUL                               0x00000001085a093b mozilla::WritingMode::WritingMode(nsStyleContext*) + 395 (WritingModes.h:526)
+                # 0   XUL                               0x0000000102cff002 0x101c38000 + 17592322
+                # 5   ???                               0x0000000101e48547 0 + 4326720839
+                components = line.split(None, 3)
+                stackEntry = components[3]
+                if stackEntry.startswith('0'):
+                    self.backtrace.append("??")
+                else:
+                    self.backtrace.append(stackEntry)
