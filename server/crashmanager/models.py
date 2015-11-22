@@ -11,6 +11,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 
 import json
+import re
 
 class Tool(models.Model):
     name = models.CharField(max_length=63)
@@ -124,6 +125,16 @@ class CrashEntry(models.Model):
         super(CrashEntry, self).__init__(*args, **kwargs)
         
     def save(self, *args, **kwargs):
+        if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
+            # Replace 4-byte UTF-8 characters with U+FFFD if our database
+            # doesn't support them. By default, MySQL utf-8 does not support these.  
+            utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+            urepl = u"\uFFFD"
+            
+            self.rawStdout = utf8_4byte_re.sub(urepl, unicode(self.rawStdout, 'utf-8'))
+            self.rawStderr = utf8_4byte_re.sub(urepl, unicode(self.rawStderr, 'utf-8'))
+            self.rawCrashData = utf8_4byte_re.sub(urepl, unicode(self.rawCrashData, 'utf-8'))
+        
         # Reserialize data, then call regular save method
         if self.argsList:
             self.args = json.dumps(self.argsList)
