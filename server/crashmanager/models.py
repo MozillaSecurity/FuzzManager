@@ -129,11 +129,14 @@ class CrashEntry(models.Model):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.  
             utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
-            urepl = u"\uFFFD"
+            def sanitize_utf8(s):
+                if not isinstance(s, unicode):
+                    s = unicode(s, 'utf-8')
+                return utf8_4byte_re.sub(u"\uFFFD", s)
             
-            self.rawStdout = utf8_4byte_re.sub(urepl, self.rawStdout.encode('utf-8'))
-            self.rawStderr = utf8_4byte_re.sub(urepl, self.rawStderr.encode('utf-8'))
-            self.rawCrashData = utf8_4byte_re.sub(urepl, self.rawCrashData.encode('utf-8'))
+            self.rawStdout = sanitize_utf8(self.rawStdout)
+            self.rawStderr = sanitize_utf8(self.rawStderr)
+            self.rawCrashData = sanitize_utf8(self.rawCrashData)
         
         # Reserialize data, then call regular save method
         if self.argsList:
