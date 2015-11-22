@@ -131,9 +131,9 @@ class CrashEntry(models.Model):
             utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
             urepl = u"\uFFFD"
             
-            self.rawStdout = utf8_4byte_re.sub(urepl, unicode(self.rawStdout, 'utf-8'))
-            self.rawStderr = utf8_4byte_re.sub(urepl, unicode(self.rawStderr, 'utf-8'))
-            self.rawCrashData = utf8_4byte_re.sub(urepl, unicode(self.rawCrashData, 'utf-8'))
+            self.rawStdout = utf8_4byte_re.sub(urepl, self.rawStdout.encode('utf-8'))
+            self.rawStderr = utf8_4byte_re.sub(urepl, self.rawStderr.encode('utf-8'))
+            self.rawCrashData = utf8_4byte_re.sub(urepl, self.rawCrashData.encode('utf-8'))
         
         # Reserialize data, then call regular save method
         if self.argsList:
