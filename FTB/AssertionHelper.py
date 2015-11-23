@@ -112,6 +112,10 @@ def getSanitizedAssertionPattern(msg):
 
     # Strip full path
     replacementPatterns.append(" /.+/")
+    
+    # Replace larger numbers, assuming that 1-digit numbers are likely
+    # some constant that doesn't need sanitizing.
+    replacementPatterns.append("[0-9]{2,}")
 
     for replacementPattern in replacementPatterns:
         sanitizedMsg = re.sub(replacementPattern, replacementPattern, sanitizedMsg)
