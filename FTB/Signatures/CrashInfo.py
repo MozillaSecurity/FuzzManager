@@ -197,8 +197,13 @@ class CrashInfo():
         else:
             numFrames = len(self.backtrace)
 
+        # Look for abort messages both on stderr and inside crashdata (e.g. UBSan)
+        combinedErr = []
+        combinedErr.extend(self.rawStderr)
+        combinedErr.extend(self.rawCrashData)
+
         # See if we have an abort message and if so, get a sanitized version of it
-        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
+        abortMsg = AssertionHelper.getAssertion(combinedErr, True)
         if abortMsg != None:
             abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
 
