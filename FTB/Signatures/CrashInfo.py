@@ -347,6 +347,9 @@ class CrashInfo():
             if idx:
                 frame = frame[:idx]
 
+        if "lambda" in frame:
+            frame = re.sub("<lambda at .+?:\d+:\d+>", "", frame)
+
         return frame
 
 class NoCrashInfo(CrashInfo):
