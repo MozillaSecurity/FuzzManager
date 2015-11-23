@@ -197,13 +197,17 @@ class CrashInfo():
         else:
             numFrames = len(self.backtrace)
 
-        # Look for abort messages both on stderr and inside crashdata (e.g. UBSan)
-        combinedErr = []
-        combinedErr.extend(self.rawStderr)
-        combinedErr.extend(self.rawCrashData)
-
         # See if we have an abort message and if so, get a sanitized version of it
-        abortMsg = AssertionHelper.getAssertion(combinedErr, True)
+        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
+        abortMsgInCrashdata = False
+        
+        if abortMsg is None and minimumSupportedVersion >= 13:
+            # Look for abort messages also inside crashdata (e.g. UBSan)
+            # only on version 1.3 or higher, because the "crashdata" source
+            # type for output matching was added in that version.
+            abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
+            abortMsgInCrashdata = True
+
         if abortMsg != None:
             abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
 
@@ -213,15 +217,19 @@ class CrashInfo():
         symptomArr = []
 
         if abortMsg != None:
+            abortMsgSrc = "stderr"
+            if abortMsgInCrashdata:
+                abortMsgSrc = "crashdata"
+            
             # Compose StringMatch object with PCRE pattern.
             # Versions below 1.2 only support the full object PCRE style,
             # for anything newer, use the short form with forward slashes
             # to increase the readability of the signatures.
             if minimumSupportedVersion < 12:
                 stringObj = { "value" : abortMsg, "matchType" : "pcre" }
-                symptomObj = { "type" : "output", "src" : "stderr", "value" : stringObj }
+                symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
             else:
-                symptomObj = { "type" : "output", "src" : "stderr", "value" : "/%s/" % abortMsg }
+                symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
             symptomArr.append(symptomObj)
         # If we have less than topStackLimit frames available anyway, count the difference
         # between topStackLimit and the available frames already as missing.
