@@ -303,6 +303,8 @@ codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overfl
     #7 0x4e8630 in main /home/user/code/openh264/codec/console/dec/src/h264dec.cpp:358:5
     #8 0x7fe1d5eb7ec4 in __libc_start_main /build/buildd/eglibc-2.19/csu/libc-start.c:287
     #9 0x41beb5 in _start (/home/user/Desktop/openh264/h264dec_64_ub_asan+0x41beb5)
+    #10 0x0 in mozilla::image::nsBMPDecoder::WriteInternal(char const*, unsigned int)::$_0::operator()(mozilla::image::nsBMPDecoder::State, char const*, unsigned long) const /test.cpp:1:1 
+    #11 0x0 in Lex<<lambda at /builds/slave/m-in-l64-asan-0000000000000000/build/src/image/decoders/nsBMPDecoder.cpp:346:33> > /test.cpp:1:1
 
 SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.h:182:37 in 
 """
@@ -654,7 +656,8 @@ class UBSanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe")
         self.assertEqual(crashInfo.backtrace[9], "_start")
         
-        print(crashInfo.createShortSignature())
+        self.assertEqual(crashInfo.backtrace[11], "Lex< >")
+        
         
 if __name__ == "__main__":
     unittest.main()
