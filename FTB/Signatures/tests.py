@@ -13,7 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import unittest
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo,\
-    NoCrashInfo, MinidumpCrashInfo
+    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
@@ -647,6 +647,36 @@ class MinidumpSelectorTest(unittest.TestCase):
         
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
+
+class AppleParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx")
+
+        with open('apple-crash-report-example.txt', 'r') as f:
+            crashInfo = AppleCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 9)
+        self.assertEqual(crashInfo.backtrace[0], "js::jit::MacroAssembler::Pop")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::ICGetPropCallNativeCompiler::generateStubCode")
+        self.assertEqual(crashInfo.backtrace[2], "js::jit::ICStubCompiler::getStubCode")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::ICGetPropCallNativeCompiler::getStub")
+        self.assertEqual(crashInfo.backtrace[4], "js::jit::DoGetPropFallback")
+        self.assertEqual(crashInfo.backtrace[5], "??")
+        self.assertEqual(crashInfo.backtrace[6], "__cxa_finalize_ranges")
+        self.assertEqual(crashInfo.backtrace[7], "??")
+        self.assertEqual(crashInfo.backtrace[8], "-[NSApplication _nextEventMatchingEventMask:untilDate:inMode:dequeue:]")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
+
+class AppleSelectorTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx")
+
+        with open('apple-crash-report-example.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
 
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):

@@ -120,6 +120,7 @@ class CrashInfo():
         gdbString = "Program received signal "
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
+        appleString = "OS Version:            Mac OS X"
 
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
@@ -138,6 +139,8 @@ class CrashInfo():
                 return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif asanString in line:
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif appleString in line:
+                return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
@@ -879,3 +882,69 @@ class MinidumpCrashInfo(CrashInfo):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
                 self.crashAddress = long(components[2], 16)
+
+
+class AppleCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        inCrashingThread = False
+        for line in crashData:
+            # Crash address
+            if line.startswith("Exception Codes:"):
+                # Example:
+                #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
+                #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
+                address = line.split(" ")[-1]
+                if address.startswith('0x'):
+                    self.crashAddress = long(address, 16)
+
+            # Start of stack for crashing thread
+            if re.match(r'Thread \d+ Crashed:', line):
+                inCrashingThread = True
+                continue
+
+            if line.strip() == "":
+                inCrashingThread = False
+                continue
+
+            if inCrashingThread:
+                # Example:
+                # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)
+                components = line.split(None, 3)
+                stackEntry = components[3]
+                if stackEntry.startswith('0'):
+                    self.backtrace.append("??")
+                else:
+                    stackEntry = AppleCrashInfo.removeFilename(stackEntry)
+                    stackEntry = AppleCrashInfo.removeOffset(stackEntry)
+                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                    self.backtrace.append(stackEntry)
+
+    @staticmethod
+    def removeFilename(stackEntry):
+        match = re.match(r'(.*) \(\S+\)', stackEntry)
+        if match:
+            return match.group(1)
+        return stackEntry
+
+    @staticmethod
+    def removeOffset(stackEntry):
+        match = re.match(r'(.*) \+ \d+', stackEntry)
+        if match:
+            return match.group(1)
+        return stackEntry
