@@ -200,7 +200,7 @@ class CrashInfo():
         # See if we have an abort message and if so, get a sanitized version of it
         abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
         abortMsgInCrashdata = False
-        
+
         if abortMsg is None and minimumSupportedVersion >= 13:
             # Look for abort messages also inside crashdata (e.g. UBSan)
             # only on version 1.3 or higher, because the "crashdata" source
@@ -220,7 +220,7 @@ class CrashInfo():
             abortMsgSrc = "stderr"
             if abortMsgInCrashdata:
                 abortMsgSrc = "crashdata"
-            
+
             # Compose StringMatch object with PCRE pattern.
             # Versions below 1.2 only support the full object PCRE style,
             # for anything newer, use the short form with forward slashes
@@ -316,16 +316,16 @@ class CrashInfo():
         sigObj = { "symptoms" : symptomArr }
 
         return CrashSignature(json.dumps(sigObj, indent=2))
-    
+
     @staticmethod
     def sanitizeStackFrame(frame):
         '''
         This function removes function arguments and other non-generic parts
         of the function frame, returning a (hopefully) generic function name.
-        
+
         @param frame: The stack frame to sanitize
         @type forceCrashAddress: str
-        
+
         @rtype: str
         @return: Sanitized stack frame
         '''
