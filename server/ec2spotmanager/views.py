@@ -227,7 +227,7 @@ def forceCyclePoolsByConfig(request, configid):
     config_pks = recurse_get_dependent_configurations(config)
 
     # Get all pools depending on our configurations
-    pools = InstancePool.objects.filter(pk__in=config_pks, isEnabled=True)
+    pools = InstancePool.objects.filter(config__pk__in=config_pks, isEnabled=True)
 
     for pool in pools:
         pool.size = pool.config.flatten().size
