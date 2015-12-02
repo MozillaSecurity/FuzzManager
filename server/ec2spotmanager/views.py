@@ -211,8 +211,39 @@ def forceCyclePool(request, poolid):
         raise SuspiciousOperation
 
 @login_required(login_url='/login/')
-def createPool(request): 
-    if request.method == 'POST':            
+def forceCyclePoolsByConfig(request, configid):
+    config = get_object_or_404(PoolConfiguration, pk=configid)
+
+    def recurse_get_dependent_configurations(config):
+        config_pks = [ config.pk ]
+        configs = PoolConfiguration.objects.filter(parent=config)
+
+        for config in configs:
+            config_pks.extend(recurse_get_dependent_configurations(config))
+
+        return config_pks
+
+    # Recursively enumerate all configurations directly or indirectly depending on this one
+    config_pks = recurse_get_dependent_configurations(config)
+
+    # Get all pools depending on our configurations
+    pools = InstancePool.objects.filter(pk__in=config_pks, isEnabled=True)
+
+    for pool in pools:
+        pool.size = pool.config.flatten().size
+
+    if request.method == 'POST':
+        pool_pks = request.POST.getlist('poolids')
+        InstancePool.objects.filter(pk__in=pool_pks, isEnabled=True).update(last_cycled=None)
+        return redirect('ec2spotmanager:pools')
+    elif request.method == 'GET':
+        return render(request, 'config/cycle.html', { 'config' : config, 'pools' : pools })
+    else:
+        raise SuspiciousOperation
+
+@login_required(login_url='/login/')
+def createPool(request):
+    if request.method == 'POST':
         pool = InstancePool()
         config = get_object_or_404(PoolConfiguration, pk=int(request.POST['config']))
         pool.config = config

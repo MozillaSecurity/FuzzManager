@@ -1,0 +1,24 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+
+{% block body_content %}
+<div class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-question-sign"></i> Force Pool Cycle by Configuration</div>
+	<div class="panel-body">
+		<form action="{% url 'ec2spotmanager:configcycle' config.pk %}" method="post">
+		{% csrf_token %}
+		<p><strong>Are you sure that you want to force a cycle all of the following instance pools?</strong></p>
+
+		{% for pool in pools %}
+		<input type="hidden" name="poolids" value="{{ pool.pk }}" />
+		<div class="field">
+			<strong>Instance Pool Name: </strong>{{ pool.config.name|escape }} (<strong>{{ instanceCount }} instances affected.</strong>)
+		</div>
+		{% endfor %}
+
+		<input type="submit" value="Force Cycle" />
+		</form>
+        </div>
+</div>
+{% endblock body_content %}

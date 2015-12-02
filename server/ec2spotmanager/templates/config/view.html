@@ -9,6 +9,7 @@
 			<a href="{% url 'ec2spotmanager:configcreate' %}?clone={{ config.pk }}" class="btn btn-default">Clone</a>
 			<a href="{% url 'ec2spotmanager:configedit' config.pk %}" class="btn btn-default">Edit</a>
 			<a href="{% url 'ec2spotmanager:configdel' config.pk %}" class="btn btn-danger">Delete</a>
+			<a href="{% url 'ec2spotmanager:configcycle' config.pk %}" class="btn btn-danger">Cycle pools using this configuration</a>
 	</div>
 	<table class="table table-condensed table-hover table-bordered">
 		<tr><td>Name</td><td>{{ config.name }}</td></tr>
