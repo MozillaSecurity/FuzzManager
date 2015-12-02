@@ -13,7 +13,8 @@
 			assigned to bucket <a href="{% url 'crashmanager:sigview' bucket.pk  %}">{{ bucket.pk }}</a>.
 		{% else %}
 			{% if not buckets %}
-			No similar buckets could be found.<a href="{% url 'crashmanager:signew' %}?crashid={{ crashentry.pk }}" class="btn btn-default">Create a new bucket</a>
+			No similar buckets could be found.</br></br>
+			<a href="{% url 'crashmanager:signew' %}?crashid={{ crashentry.pk }}" class="btn btn-default">Create a new bucket</a>
 			{% endif %}
 		{% endif %}
 		</p>
