@@ -906,10 +906,10 @@ def json_to_query(json_str):
         obj = json.loads(json_str, object_pairs_hook=OrderedDict)
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
-    
+
     def get_query_obj(obj, key=None):
-        
-        if isinstance(obj, basestring):
+
+        if isinstance(obj, basestring) or isinstance(obj, list):
             kwargs = { key : obj }
             qobj = Q(**kwargs)
             return qobj
