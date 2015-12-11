@@ -18,7 +18,7 @@
             <input type="submit" name="submit_query" value="Search" class="btn btn-default"/>
 
 	    {% if query_lines %}
-	     <a href="{% url 'crashmanager:querycrashes' %}?query={{ query_lines|join:'' }}">Bookmark this query</a>
+	     <a href="{% url 'crashmanager:querycrashes' %}?query={{ urlQuery }}">Bookmark this query</a>
 	    {% endif %}
 
         </form>

@@ -188,15 +188,16 @@ def queryCrashes(request):
 
     # Prettify the raw query for displaying
     rawQuery = json.dumps(obj, indent=2)
-        
+    urlQuery = json.dumps(obj)
+
     if query:
         entries = CrashEntry.objects.all().order_by('-id').filter(query)
-    
+
     # Re-get the lines as we might have reformatted
     query_lines = rawQuery.splitlines()
-    
-    data = { 'request' : request, 'query_lines' : query_lines, 'isQuery' : True, 'crashlist' : entries }
-    
+
+    data = { 'request' : request, 'query_lines' : query_lines, 'urlQuery' : urlQuery, 'isQuery' : True, 'crashlist' : entries }
+
     return render(request, 'crashes/index.html', data)
 
 @login_required(login_url='/login/')
