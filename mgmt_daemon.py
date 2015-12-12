@@ -362,7 +362,7 @@ def download_corpus(corpus_dir, bucket_name, project_name, random_subset_size=No
         
     remote_keys = list(bucket.list(remote_path))
     
-    if random_subset_size and len(remote_keys) <= random_subset_size:
+    if random_subset_size and len(remote_keys) > random_subset_size:
         remote_keys = random.sample(remote_keys, random_subset_size)
     
     for remote_key in remote_keys:
