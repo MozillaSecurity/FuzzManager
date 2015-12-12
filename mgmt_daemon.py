@@ -17,21 +17,21 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import sys
-import os
-import argparse
-import time
-import hashlib
-import platform
-import subprocess
-import stat
-import shutil
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-
+from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
-from Collector.Collector import Collector
+import argparse
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
+import hashlib
+import os
+import platform
+import random
+import shutil
+import stat
+import subprocess
+import sys
+import time
 
 def get_machine_id(base_dir):
     '''
@@ -334,7 +334,7 @@ def download_build(build_dir, bucket_name, project_name):
     
     subprocess.check_call(["unzip", zip_dest, "-d", build_dir])
 
-def download_corpus(corpus_dir, bucket_name, project_name):
+def download_corpus(corpus_dir, bucket_name, project_name, random_subset_size=None):
     '''
     Downloads the test corpus from the specified S3 bucket and project
     into the specified directory, without overwriting any files.
@@ -347,6 +347,10 @@ def download_corpus(corpus_dir, bucket_name, project_name):
     
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
+    
+    @type random_subset_size: int
+    @param random_subset_size: If specified, only download a random subset of
+                               the corpus, with the specified size.
     '''
     if not os.path.exists(corpus_dir): 
         os.mkdir(corpus_dir)
@@ -357,6 +361,9 @@ def download_corpus(corpus_dir, bucket_name, project_name):
     remote_path = "%s/corpus/" % project_name
         
     remote_keys = list(bucket.list(remote_path))
+    
+    if random_subset_size and len(remote_keys) <= random_subset_size:
+        remote_keys = random.sample(remote_keys, random_subset_size)
     
     for remote_key in remote_keys:
         dest_file = os.path.join(corpus_dir, os.path.basename(remote_key.name))
@@ -421,6 +428,7 @@ def main(argv=None):
     parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
+    parser.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
     parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
@@ -477,7 +485,10 @@ def main(argv=None):
         return 0
     
     if opts.s3_corpus_download:
-        download_corpus(opts.s3_corpus_download, opts.s3_bucket, opts.project)
+        if opts.s3_corpus_download_size != None:
+            opts.s3_corpus_download_size = int(opts.s3_corpus_download_size)
+                
+        download_corpus(opts.s3_corpus_download, opts.s3_bucket, opts.project, opts.s3_corpus_download_size)
         return 0
     
     if opts.s3_corpus_upload:
