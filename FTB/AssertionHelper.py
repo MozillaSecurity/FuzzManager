@@ -70,7 +70,7 @@ def getAssertion(output, onlyProgramAssertions=False):
         elif not onlyProgramAssertions and "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
             lastLine = line
-        elif "MOZ_CRASH" in line and re.search("MOZ_CRASH\(.+\)", line):
+        elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
         elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
@@ -112,7 +112,7 @@ def getSanitizedAssertionPattern(msg):
 
     # Strip full path
     replacementPatterns.append(" /.+/")
-    
+
     # Replace larger numbers, assuming that 1-digit numbers are likely
     # some constant that doesn't need sanitizing.
     replacementPatterns.append("[0-9]{2,}")
