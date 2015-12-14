@@ -27,17 +27,34 @@
 	<div class="panel-body">
 		<p>
 		{% if isSearch or isQuery %}
-			Your search matched {{ crashlist|length }} entries in database.
+			Your search matched {{ crashlist.count }} entries in database.
 		{% elif isAll %}
-			Displaying all {{ crashlist|length }} entries in database.
+			Displaying all {{ crashlist.count }} entries in database.
 		{% else %}
-			There are {{ crashlist|length }} unbucketed entries in the database.
+			There are {{ crashlist.count }} unbucketed entries in the database.
 			<div class="btn-group" role="group">
-				<a href="{% url 'crashmanager:autoassign' %}" class="btn btn-default">Assign <span class="badge">{{ crashlist|length }}</span></a>
+				<a href="{% url 'crashmanager:autoassign' %}" class="btn btn-default">Assign <span class="badge">{{ crashlist.count }}</span></a>
 				<a href="{% url 'crashmanager:allcrashes' %}" class="btn btn-default">Show All</a>
 			</div>
 		{% endif %}
-	    </p>
+	        </p>
+		{% if crashlist.paginator %}
+		<div class="pagination">
+		    <span class="step-links">
+			{% if crashlist.has_previous %}
+			    <a href="?{{crashlist.paginator_query.urlencode}}&page={{ crashlist.previous_page_number }}" class="glyphicon glyphicon-chevron-left"></a>
+			{% endif %}
+
+			<span class="current">
+			    Page {{ crashlist.number }} of {{ crashlist.paginator.num_pages }}.
+			</span>
+
+			{% if crashlist.has_next %}
+			    <a href="?{{crashlist.paginator_query.urlencode}}&page={{ crashlist.next_page_number }}" data-toggle="tooltip" data-placement="top" title="Next" class="glyphicon glyphicon-chevron-right" style="color:dimgray"></a>
+			{% endif %}
+		    </span>
+		</div>
+		{% endif %}
 	</div>
 	<table class="table table-condensed table-hover table-bordered table-db">
 		<thead>
@@ -63,7 +80,7 @@
 	{% if entry.bucket %}
 		<a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }} </a>
 	{% else %}
-		<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add" class="glyphicon glyphicon glyphicon-oil" style="color:dimgray"></a>
+		<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add" class="glyphicon glyphicon-oil" style="color:dimgray"></a>
 		<a href="{% url 'crashmanager:findsigs' entry.pk %}" data-toggle="tooltip" data-placement="top" title="Search" class="glyphicon glyphicon-search" style="color:dimgray"></a>
 	{% endif %}
 	</td>

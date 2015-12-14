@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from django.core.exceptions import SuspiciousOperation
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.db.models.aggregates import Count, Min
 from django.http.response import Http404
@@ -23,6 +24,33 @@ def renderError(request, err):
 def logout_view(request):
     logout(request)
     return redirect('crashmanager:index')
+
+def paginate_requested_list(request, entries):
+    page_size = request.GET.get('page_size')
+    if not page_size:
+        page_size = 100
+    paginator = Paginator(entries, page_size)
+    page = request.GET.get('page')
+
+    try:
+        page_entries = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        page_entries = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        page_entries = paginator.page(paginator.num_pages)
+
+    # We need to preserve the query parameters when adding the page to the
+    # query URL, so we store the sanitized copy inside our entries object.
+    paginator_query = request.GET.copy()
+    if paginator_query.has_key('page'):
+        del paginator_query['page']
+
+    page_entries.paginator_query = paginator_query
+    page_entries.count = paginator.count
+
+    return page_entries
 
 @login_required(login_url='/login/')
 def index(request):
@@ -65,7 +93,7 @@ def allSignatures(request):
 @login_required(login_url='/login/')
 def allCrashes(request):
     entries = CrashEntry.objects.all().order_by('-id')
-    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : entries })
+    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
 
 @login_required(login_url='/login/')
 def signatures(request):
@@ -162,9 +190,9 @@ def crashes(request):
         filters["bucket"] = None
     
     entries = entries.filter(**filters)
-    
-    data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : entries }
-    
+
+    data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : paginate_requested_list(request, entries) }
+
     return render(request, 'crashes/index.html', data)
 
 @login_required(login_url='/login/')
