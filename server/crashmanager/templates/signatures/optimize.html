@@ -12,7 +12,7 @@
             <tr>
                 <th style="width: 2%;"></th>
                 <th style="width: 50%;">Diff</th>
-		<!--<th style="width: 48%;">CrashInfo</th>-->
+		<th style="width: 48%;">CrashInfo</th>
             </tr>
             </thead>
             <tbody>
@@ -24,9 +24,9 @@
                     <pre style="padding: 0; border: 0; margin: 0; overflow: initial; white-space: pre-wrap; word-wrap: normal; word-break: initial; background-color: transparent;" {%if prefix == '-' %}class="text-danger"{%elif prefix == '+'%}class="text-success"{%endif%}>{{ what }}</pre>
                 </td>
                 {% if forloop.counter == 1 %}
-                <!--<td rowspan="{{ diff|length }}">
-                    <pre><code class="language-bash">{{ entry.crashinfo }}</code></pre>
-	    </td>-->
+                <td rowspan="{{ diff|length }}">
+                    <pre><code class="language-bash">{{ matchingEntries.0.crashinfo }}</code></pre>
+	    	</td>
                 {% endif %}
             </tr>
             {% endfor %}
