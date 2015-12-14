@@ -1,22 +1,23 @@
-from rest_framework import viewsets
-from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
-from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
+from collections import OrderedDict
+from datetime import datetime, timedelta
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.ProgramConfiguration import ProgramConfiguration
 from django.core.exceptions import SuspiciousOperation
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.db.models.aggregates import Count, Min
 from django.http.response import Http404
-from rest_framework.authentication import TokenAuthentication
-from datetime import datetime, timedelta
-import operator
+from django.shortcuts import render, redirect, get_object_or_404
 import json
+import operator
+from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 
-from collections import OrderedDict
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
+from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
+from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
+
 
 def renderError(request, err):
     return render(request, 'error.html', { 'error_message' : err })
@@ -60,8 +61,8 @@ def index(request):
 def stats(request):
     lastHourDelta = datetime.now() - timedelta(hours=1)
     print(lastHourDelta)
-    entries = CrashEntry.objects.filter(created__gt = lastHourDelta)
-    
+    entries = CrashEntry.objects.filter(created__gt=lastHourDelta)
+
     bucketFrequencyMap = {}
     for entry in entries:
         if entry.bucket != None:
@@ -69,16 +70,16 @@ def stats(request):
                 bucketFrequencyMap[entry.bucket.pk] += 1
             else:
                 bucketFrequencyMap[entry.bucket.pk] = 1
-    
+
     frequentBuckets = []
-    
+
     if bucketFrequencyMap:
         bucketFrequencyMap = sorted(bucketFrequencyMap.items(), key=lambda t: t[1], reverse=True)[:10]
         for pk, freq in bucketFrequencyMap:
             obj = Bucket.objects.get(pk=pk)
             obj.rph = freq
             frequentBuckets.append(obj)
-        
+
     return render(request, 'stats.html', { 'total_reports_per_hour': len(entries), 'frequentBuckets' : frequentBuckets })
 
 @login_required(login_url='/login/')
@@ -97,24 +98,24 @@ def allCrashes(request):
 
 @login_required(login_url='/login/')
 def signatures(request):
-    entries = Bucket.objects.all().annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
+    entries = Bucket.objects.all().annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
     filters = {}
     q = None
     isSearch = False
-    
+
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
                        "bug__externalId",
                        "shortDescription__contains",
                        "signature__contains",
                        ]
-    
+
     for key in exactFilterKeys:
         if key in request.GET:
             isSearch = True
             filters[key] = request.GET[key]
-        
+
     if "q" in request.GET:
         isSearch = True
         q = request.GET["q"]
@@ -122,19 +123,19 @@ def signatures(request):
                                  Q(shortDescription__contains=q)
                                  | Q(signature__contains=q)
                                  )
-    
+
     if "ids" in request.GET:
         isSearch = True
         ids = [int(x) for x in request.GET["ids"].split(",")]
         entries = entries.filter(pk__in=ids)
-        
+
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
     if not "all" in request.GET or not request.GET["all"]:
         filters["bug"] = None
-    
+
     entries = entries.filter(**filters)
-    
+
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
 
@@ -143,14 +144,14 @@ def crashes(request):
     filters = {}
     q = None
     isSearch = True
-    
+
     entries = CrashEntry.objects.all().order_by('-id')
-    
-    (user, created) = User.objects.get_or_create(user = request.user)
+
+    (user, created) = User.objects.get_or_create(user=request.user)
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
-    
+        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
                        "bucket",
@@ -163,14 +164,14 @@ def crashes(request):
                        "testcase__quality",
                        "tool__name",
                        ]
-    
+
     for key in exactFilterKeys:
         if key in request.GET:
             filters[key] = request.GET[key]
-    
+
     if "sig" in request.GET:
         filters["shortSignature__contains"] = request.GET["sig"]
-        
+
     if "q" in request.GET:
         q = request.GET["q"]
         entries = entries.filter(
@@ -179,16 +180,16 @@ def crashes(request):
                                  | Q(rawCrashData__contains=q)
                                  | Q(args__contains=q)
                                  )
-    
+
     # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q == None:        
+    if not filters and q == None:
         isSearch = False
-        
+
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
     if not "all" in request.GET or not request.GET["all"]:
         filters["bucket"] = None
-    
+
     entries = entries.filter(**filters)
 
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : paginate_requested_list(request, entries) }
@@ -199,16 +200,16 @@ def crashes(request):
 def queryCrashes(request):
     query = None
     entries = None
-    
+
     if "query" in request.POST:
         rawQuery = request.POST["query"]
     elif "query" in request.GET:
         rawQuery = request.GET["query"]
     else:
         return render(request, 'crashes/index.html', { 'isQuery' : True })
-        
+
     query_lines = rawQuery.splitlines()
-        
+
     try:
         (obj, query) = json_to_query(rawQuery)
     except RuntimeError as e:
@@ -232,83 +233,83 @@ def queryCrashes(request):
 def autoAssignCrashEntries(request):
     entries = CrashEntry.objects.filter(bucket=None)
     buckets = Bucket.objects.all()
-    
+
     for bucket in buckets:
         signature = bucket.getSignature()
         needTest = signature.matchRequiresTest()
-        
+
         for entry in entries:
             if signature.matches(entry.getCrashInfo(attachTestcase=needTest)):
                 entry.bucket = bucket
                 entry.save()
-    
+
     return redirect('crashmanager:crashes')
 
 @login_required(login_url='/login/')
 def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     entry.deserializeFields()
-    
+
     if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.loadTest()
-    
+
     return render(request, 'crashes/view.html', { 'entry' : entry })
 
 @login_required(login_url='/login/')
 def editCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     entry.deserializeFields()
-    
+
     if entry.testcase:
         entry.testcase.loadTest()
-    
+
     if request.method == 'POST':
         entry.rawStdout = request.POST['rawStdout']
         entry.rawStderr = request.POST['rawStderr']
         entry.rawStderr = request.POST['rawStderr']
         entry.rawCrashData = request.POST['rawCrashData']
-        
+
         entry.envList = request.POST['env'].splitlines()
         entry.argsList = request.POST['args'].splitlines()
         entry.metadataList = request.POST['metadata'].splitlines()
-        
+
         # Regenerate crash information and fields depending on it
         crashInfo = entry.getCrashInfo()
         if crashInfo.crashAddress != None:
             entry.crashAddress = hex(crashInfo.crashAddress)
         entry.shortSignature = crashInfo.createShortSignature()
-        
+
         if entry.testcase:
             if entry.testcase.isBinary:
                 if request.POST['testcase'] != "(binary)":
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.isBinary = False
-                    #TODO: The file extension stored on the server remains and is likely to be wrong
+                    # TODO: The file extension stored on the server remains and is likely to be wrong
                     entry.testcase.storeTestAndSave()
             else:
                 if request.POST['testcase'] != entry.testcase.content:
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.storeTestAndSave()
-                    
+
                 # Directly attach the testcase here, since we have it
                 crashInfo.testcase = entry.testcase.content
-        
+
         # If the entry has a bucket, check if it still fits into
         # this bucket, otherwise remove it.
         if entry.bucket:
             sig = entry.bucket.getSignature()
             if not sig.matches(crashInfo):
                 entry.bucket = None
-        
+
         entry.save()
-        return redirect('crashmanager:crashview', crashid = entry.pk)
+        return redirect('crashmanager:crashview', crashid=entry.pk)
     else:
         return render(request, 'crashes/edit.html', { 'entry' : entry })
-    
+
 @login_required(login_url='/login/')
 def deleteCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
-    if request.method == 'POST':            
+    if request.method == 'POST':
         entry.delete()
         return redirect('crashmanager:crashes')
     elif request.method == 'GET':
@@ -325,11 +326,11 @@ def __handleSignaturePost(request, bucket):
     except RuntimeError, e:
         data = { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e }
         return render(request, 'signatures/edit.html', data)
-    
+
     # Only save if we hit "save" (not e.g. "preview")
     if 'submit_save' in request.POST:
         bucket.save()
-    
+
     # If the reassign checkbox is checked, assign all unassigned issues that match
     # our signature to this bucket. Furthermore, remove all non-matching issues
     # from our bucket.
@@ -337,12 +338,12 @@ def __handleSignaturePost(request, bucket):
     # Again, we only actually save if we hit "save". For previewing, we just count
     # how many issues would be assigned and removed.
     if "reassign" in request.POST:
-        (inCount, outCount) = (0,0)
-        
+        (inCount, outCount) = (0, 0)
+
         signature = bucket.getSignature()
         needTest = signature.matchRequiresTest()
         entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
-        
+
         for entry in entries:
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
             if match and entry.bucket == None:
@@ -355,14 +356,14 @@ def __handleSignaturePost(request, bucket):
                 if 'submit_save' in request.POST:
                     entry.bucket = None
                     entry.save()
-    
-    # Save bucket and redirect to viewing it       
+
+    # Save bucket and redirect to viewing it
     if 'submit_save' in request.POST:
         return redirect('crashmanager:sigview', sigid=bucket.pk)
-    
+
     # Render the preview page
-    data = { 
-            'bucket' : bucket, 
+    data = {
+            'bucket' : bucket,
             'error_message' : "This is a preview, don't forget to save!",
             'inCount' : inCount, 'outCount' : outCount
             }
@@ -371,9 +372,9 @@ def __handleSignaturePost(request, bucket):
 @login_required(login_url='/login/')
 def newSignature(request):
     if request.method == 'POST':
-        #TODO: FIXME: Update bug here as well
+        # TODO: FIXME: Update bug here as well
         bucket = Bucket(
-                        signature=request.POST['signature'], 
+                        signature=request.POST['signature'],
                         shortDescription=request.POST['shortDescription'],
                         frequent="frequent" in request.POST
                         )
@@ -381,48 +382,48 @@ def newSignature(request):
     elif request.method == 'GET':
         if 'crashid' in request.GET:
             crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
-            
-            configuration = ProgramConfiguration(crashEntry.product.name, 
-                                                 crashEntry.platform.name, 
-                                                 crashEntry.os.name, 
+
+            configuration = ProgramConfiguration(crashEntry.product.name,
+                                                 crashEntry.platform.name,
+                                                 crashEntry.os.name,
                                                  crashEntry.product.version)
-            
-            crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout, 
-                                                   crashEntry.rawStderr, 
-                                                   configuration, 
+
+            crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout,
+                                                   crashEntry.rawStderr,
+                                                   configuration,
                                                    crashEntry.rawCrashData)
-            
-            
+
+
             maxStackFrames = 8
             forceCrashInstruction = False
             forceCrashAddress = True
             errorMsg = None
-            
+
             if 'stackframes' in request.GET:
                 maxStackFrames = int(request.GET['stackframes'])
-                
+
             if 'forcecrashaddress' in request.GET:
                 forceCrashAddress = bool(int(request.GET['forcecrashaddress']))
-            
+
             if 'forcecrashinstruction' in request.GET:
                 forceCrashInstruction = bool(int(request.GET['forcecrashinstruction']))
-            
+
             # First try to create the signature with the crash address included.
             # However, if that fails, try without forcing the crash signature.
             proposedSignature = crashInfo.createCrashSignature(
                                                                forceCrashAddress=forceCrashAddress,
                                                                forceCrashInstruction=forceCrashInstruction,
-                                                               maxFrames = maxStackFrames
+                                                               maxFrames=maxStackFrames
                                                                )
             if (proposedSignature == None):
                 errorMsg = crashInfo.failureReason
-                proposedSignature = crashInfo.createCrashSignature(maxFrames = maxStackFrames)
-                
+                proposedSignature = crashInfo.createCrashSignature(maxFrames=maxStackFrames)
+
             proposedSignature = str(proposedSignature)
             proposedShortDesc = crashInfo.createShortSignature()
-            
-            data = { 'new' : True, 'bucket' : { 
-                                                'pk' : None, 
+
+            data = { 'new' : True, 'bucket' : {
+                                                'pk' : None,
                                                 'bug' : None,
                                                 'signature' : proposedSignature,
                                                 'shortDescription' : proposedShortDesc
@@ -433,7 +434,7 @@ def newSignature(request):
             data = { 'new' : True }
     else:
         raise SuspiciousOperation
-        
+
     return render(request, 'signatures/edit.html', data)
 
 @login_required(login_url='/login/')
@@ -442,13 +443,13 @@ def deleteSignature(request, sigid):
     if not bucket:
         raise Http404
     bucket = bucket[0]
-    
+
     if request.method == 'POST':
         if not "delentries" in request.POST:
             # Make sure we remove this bucket from all crash entries referring to it,
             # otherwise these would be deleted as well through cascading.
             CrashEntry.objects.filter(bucket=bucket).update(bucket=None)
-        
+
         bucket.delete()
         return redirect('crashmanager:signatures')
     elif request.method == 'GET':
@@ -458,21 +459,21 @@ def deleteSignature(request, sigid):
 
 @login_required(login_url='/login/')
 def viewSignature(request, sigid):
-    #bucket = get_object_or_404(Bucket, pk=sigid)
-    #count = len(CrashEntry.objects.filter(bucket=bucket))
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
-    
+    # bucket = get_object_or_404(Bucket, pk=sigid)
+    # count = len(CrashEntry.objects.filter(bucket=bucket))
+    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+
     if not bucket:
         raise Http404
-    
+
     bucket = bucket[0]
-    
+
     entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')
-    
+
     bucket.bestEntry = None
     if entries:
         bucket.bestEntry = entries[0]
-    
+
     return render(request, 'signatures/view.html', { 'bucket' : bucket })
 
 @login_required(login_url='/login/')
@@ -483,16 +484,16 @@ def editSignature(request, sigid):
         bucket.shortDescription = request.POST['shortDescription']
         bucket.frequent = "frequent" in request.POST
 
-        #TODO: FIXME: Update bug here as well
+        # TODO: FIXME: Update bug here as well
         return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
-            
+
             if 'fit' in request.GET:
                 entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
                 bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
-            
+
             return render(request, 'signatures/edit.html', { 'bucket' : bucket })
         else:
             raise SuspiciousOperation
@@ -502,41 +503,41 @@ def editSignature(request, sigid):
 @login_required(login_url='/login/')
 def linkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
-    providers = BugProvider.objects.all() 
-    
+    providers = BugProvider.objects.all()
+
     data = { 'bucket' : bucket, 'providers' : providers }
-    
+
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
         bugId = request.POST['bugId']
         username = request.POST['username']
         password = request.POST['password']
 
-        bug = Bug.objects.filter(externalId = bugId, externalType = provider)
-        
+        bug = Bug.objects.filter(externalId=bugId, externalType=provider)
+
         if 'submit_save' in request.POST:
             if not bug:
-                bug = Bug(externalId = bugId, externalType = provider)
+                bug = Bug(externalId=bugId, externalType=provider)
                 bug.save()
             else:
                 bug = bug[0]
-                
+
             bucket.bug = bug
             bucket.save()
             return redirect('crashmanager:sigview', sigid=bucket.pk)
         else:
             # This is a preview request
             bugData = provider.getInstance().getBugData(bugId, username, password)
-            
+
             if bugData == None:
                 data['error_message'] = 'Bug not found in external database.'
             else:
                 data['summary'] = bugData['summary']
-            
+
             data['provider'] = provider
             data['bugId'] = bugId
             data['username'] = username
-                
+
             return render(request, 'signatures/link.html', data)
     elif request.method == 'GET':
         return render(request, 'signatures/link.html', data)
@@ -546,46 +547,46 @@ def linkSignature(request, sigid):
 @login_required(login_url='/login/')
 def unlinkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
-    
+
     if request.method == 'POST':
         bucket.bug = None
-        bucket.save()        
+        bucket.save()
         return redirect('crashmanager:sigview', sigid=bucket.pk)
     elif request.method == 'GET':
         return render(request, 'signatures/unlink.html', { 'bucket' : bucket })
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def trySignature(request, sigid, crashid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     entry = get_object_or_404(CrashEntry, pk=crashid)
-    
+
     signature = bucket.getSignature()
     entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
-    
-    #symptoms = signature.getSymptomsDiff(entry.crashinfo)
+
+    # symptoms = signature.getSymptomsDiff(entry.crashinfo)
     diff = signature.getSignatureUnifiedDiffTuples(entry.crashinfo)
-    
+
     return render(request, 'signatures/try.html', { 'bucket' : bucket, 'entry' : entry, 'diff' : diff })
 
 @login_required(login_url='/login/')
 def optimizeSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     buckets = Bucket.objects.all()
- 
+
     # Get all unbucketed entries for that user, respecting the tools filter though
-    entries = CrashEntry.objects.filter(bucket = None).order_by('-id')
-    (user, created) = User.objects.get_or_create(user = request.user)
+    entries = CrashEntry.objects.filter(bucket=None).order_by('-id')
+    (user, created) = User.objects.get_or_create(user=request.user)
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
-    
+        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+
     signature = bucket.getSignature()
 
-    optimizedSignature = None 
+    optimizedSignature = None
     matchingEntries = []
-    
+
     for entry in entries:
         entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
 
@@ -600,7 +601,7 @@ def optimizeSignature(request, sigid):
             for otherBucket in buckets:
                 if otherBucket.pk == bucket.pk:
                     continue
-                
+
                 bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
                 firstEntry = list(bucketEntries[:1])
                 if firstEntry:
@@ -609,7 +610,7 @@ def optimizeSignature(request, sigid):
                     if optimizedSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
                         matchesInOtherBuckets = True
                         break
-            
+
             if matchesInOtherBuckets:
                 # Reset, we don't actually have an optimized signature if it's matching
                 # some other bucket as well.
@@ -619,32 +620,32 @@ def optimizeSignature(request, sigid):
                     if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
                         matchingEntries.append(otherEntry)
                 break
-            
+
     diff = None
     if optimizedSignature:
         diff = signature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
-    
+
     return render(request, 'signatures/optimize.html', { 'bucket' : bucket, 'optimizedSignature' : optimizedSignature, 'diff' : diff, 'matchingEntries' : matchingEntries })
 
 @login_required(login_url='/login/')
 def findSignatures(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
-    
+
     entry.crashinfo = entry.getCrashInfo(attachTestcase=True)
-    
+
     buckets = Bucket.objects.all()
     similarBuckets = []
     matchingBucket = None
-    
+
     for bucket in buckets:
         signature = bucket.getSignature()
         distance = signature.getDistance(entry.crashinfo)
-        
+
         # We found a matching bucket, no need to display/calculate similar buckets
         if distance == 0:
             matchingBucket = bucket
             break
-            
+
         # TODO: This could be made configurable through a GET parameter
         if distance <= 4:
             proposedCrashSignature = signature.fit(entry.crashinfo)
@@ -659,7 +660,7 @@ def findSignatures(request, crashid):
                 for otherBucket in buckets:
                     if otherBucket.pk == bucket.pk:
                         continue
-                    
+
                     bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
                     firstEntry = list(bucketEntries[:1])
                     if firstEntry:
@@ -668,7 +669,7 @@ def findSignatures(request, crashid):
                         if proposedCrashSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
                             matchesInOtherBuckets += 1
                             otherMatchingBucketIds.append(otherBucket.pk)
-                            
+
                             # We already match too many foreign buckets. Abort our search here
                             # to speed up the response time.
                             if matchesInOtherBuckets > 5:
@@ -679,8 +680,8 @@ def findSignatures(request, crashid):
 
                 bucket.offCount = distance
 
-                if matchesInOtherBuckets+nonMatchesInOtherBuckets > 0:
-                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets+nonMatchesInOtherBuckets)) * 100, 2)
+                if matchesInOtherBuckets + nonMatchesInOtherBuckets > 0:
+                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets + nonMatchesInOtherBuckets)) * 100, 2)
                 else:
                     bucket.foreignMatchPercentage = 0
 
@@ -711,31 +712,31 @@ def findSignatures(request, crashid):
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
-    
+
     if not entry.bucket:
         return renderError(request, "Cannot create an external bug for an issue that is not associated to a bucket/signature")
-    
+
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        
+
         # Let the provider handle the POST request, which will file the bug
         # and return us the external bug ID
         extBugId = provider.getInstance().handlePOSTCreate(request, entry)
-        
+
         # Now create a bug in our database with that ID and assign it to the bucket
-        extBug = Bug(externalId = extBugId, externalType = provider)
+        extBug = Bug(externalId=extBugId, externalType=provider)
         extBug.save()
         entry.bucket.bug = extBug
         entry.bucket.save()
-        
+
         return redirect('crashmanager:sigview', sigid=entry.bucket.pk)
     elif request.method == 'GET':
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            (user, created) = User.objects.get_or_create(user = request.user)
+            (user, created) = User.objects.get_or_create(user=request.user)
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
-        
+
         return provider.getInstance().renderContextCreate(request, entry)
     else:
         raise SuspiciousOperation
@@ -743,7 +744,7 @@ def createExternalBug(request, crashid):
 @login_required(login_url='/login/')
 def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
-    
+
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
         provider.getInstance().handlePOSTComment(request, entry)
@@ -752,26 +753,26 @@ def createExternalBugComment(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            (user, created) = User.objects.get_or_create(user = request.user)
+            (user, created) = User.objects.get_or_create(user=request.user)
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
-        
+
         return provider.getInstance().renderContextComment(request, entry)
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def createBugTemplate(request, providerId):
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
         # Let the provider handle the template creation
         templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-        
+
         return redirect('crashmanager:viewtemplate', providerId=provider.pk, templateId=templateId)
     elif request.method == 'GET':
         return provider.getInstance().renderContextCreateTemplate(request)
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def viewEditBugTemplate(request, providerId, templateId, mode):
     provider = get_object_or_404(BugProvider, pk=providerId)
@@ -796,7 +797,7 @@ def deleteBugProvider(request, providerId):
         for bucket in buckets:
             bucket.bug = None
             bucket.save()
-        
+
         provider.delete()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
@@ -807,12 +808,12 @@ def deleteBugProvider(request, providerId):
 @login_required(login_url='/login/')
 def viewBugProvider(request, providerId):
     provider = BugProvider.objects.filter(pk=providerId).annotate(size=Count('bug'))
-    
+
     if not provider:
         raise Http404
-    
+
     provider = provider[0]
-    
+
     return render(request, 'providers/view.html', { 'provider' : provider })
 
 @login_required(login_url='/login/')
@@ -822,56 +823,56 @@ def editBugProvider(request, providerId):
         provider.classname = request.POST['classname']
         provider.hostname = request.POST['hostname']
         provider.urlTemplate = request.POST['urlTemplate']
-        
+
         try:
             provider.getInstance()
         except Exception as e:
             return render(request, 'providers/edit.html', { 'provider' : provider, 'error_message' : e })
-        
+
         provider.save()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
         return render(request, 'providers/edit.html', { 'provider' : provider })
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def createBugProvider(request):
     if request.method == 'POST':
         provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'], urlTemplate=request.POST['urlTemplate'])
-        
+
         try:
             provider.getInstance()
         except Exception as e:
             return render(request, 'providers/edit.html', { 'provider' : provider, 'error_message' : e })
-        
+
         provider.save()
         return redirect('crashmanager:bugproviders')
     elif request.method == 'GET':
         return render(request, 'providers/edit.html', {})
     else:
         raise SuspiciousOperation
-    
+
 @login_required(login_url='/login/')
 def userSettings(request):
-    (user, created) = User.objects.get_or_create(user = request.user)
-    
-    def createUserSettingsData(user, msg = None):
+    (user, created) = User.objects.get_or_create(user=request.user)
+
+    def createUserSettingsData(user, msg=None):
         tools = Tool.objects.all()
         currentToolsFilter = user.defaultToolsFilter.all()
-            
+
         for tool in tools:
             tool.checked = tool in currentToolsFilter
-        
+
         providers = BugProvider.objects.all()
-        provider = providers.filter(pk = user.defaultProviderId)
+        provider = providers.filter(pk=user.defaultProviderId)
         templates = None
         if provider:
             provider = provider[0]
             templates = provider.getInstance().getTemplateList()
-            
-        return { 
-                "user" : user, 
+
+        return {
+                "user" : user,
                 "tools" : tools,
                 "providers" : providers,
                 "templates" : templates,
@@ -880,19 +881,19 @@ def userSettings(request):
                 "msg" : msg,
                 }
 
-    if request.method == 'POST':     
+    if request.method == 'POST':
         if "changefilter" in request.POST:
             user.defaultToolsFilter.clear()
             user.defaultToolsFilter = [Tool.objects.get(name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
-            data = createUserSettingsData(user, msg = "Tools filter updated successfully.")
+            data = createUserSettingsData(user, msg="Tools filter updated successfully.")
         elif "changetemplate" in request.POST:
             user.defaultProviderId = int(request.POST['defaultProvider'])
             user.defaultTemplateId = int(request.POST['defaultTemplate'])
             user.save()
-            data = createUserSettingsData(user, msg = "Default provider/template updated successfully.")
+            data = createUserSettingsData(user, msg="Default provider/template updated successfully.")
         else:
             raise SuspiciousOperation
-        
+
         return render(request, 'usersettings.html', data)
     elif request.method == 'GET':
         return render(request, 'usersettings.html', createUserSettingsData(user))
@@ -946,14 +947,14 @@ def json_to_query(json_str):
             raise RuntimeError("Invalid object type in query object")
 
         qobj = Q()
-        
+
         if not "op" in obj:
                 raise RuntimeError("No operator specified in query object")
-            
-        op = obj["op"]    
+
+        op = obj["op"]
         objkeys = obj.keys()
         objkeys.remove("op")
-        
+
         if op == 'NOT' and len(objkeys) > 1:
             raise RuntimeError("Attempted to negate multiple objects at once")
 
@@ -967,9 +968,8 @@ def json_to_query(json_str):
                 qobj.negate()
             else:
                 raise RuntimeError("Invalid operator '%s' specified in query object" % op)
-            
+
         return qobj
-    
+
     return (obj, get_query_obj(obj))
 
-    
