@@ -95,7 +95,12 @@ class CrashInfo():
         cacheObject = {}
         cacheObject['backtrace'] = self.backtrace
         cacheObject['registers'] = self.registers
-        cacheObject['crashAddress'] = long(self.crashAddress)
+
+        if self.crashAddress is not None:
+            cacheObject['crashAddress'] = long(self.crashAddress)
+        else:
+            cacheObject['crashAddress'] = None
+
         cacheObject['crashInstruction'] = self.crashInstruction
         cacheObject['failureReason'] = self.failureReason
 
