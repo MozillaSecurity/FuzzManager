@@ -111,7 +111,8 @@ class CrashEntry(models.Model):
     crashAddress = models.CharField(max_length=255, blank=True)
     crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
     shortSignature = models.CharField(max_length=255, blank=True)
-    
+    cachedCrashInfo = models.TextField(blank=True, null=True)
+
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
         self.argsList = None
@@ -138,6 +139,12 @@ class CrashEntry(models.Model):
             self.rawStderr = sanitize_utf8(self.rawStderr)
             self.rawCrashData = sanitize_utf8(self.rawCrashData)
         
+
+        if not self.cachedCrashInfo:
+            # Serialize the important fields of the CrashInfo class into a JSON blob
+            crashInfo = self.getCrashInfo()
+            self.cachedCrashInfo = json.dumps(crashInfo.toCacheObject())
+
         # Reserialize data, then call regular save method
         if self.argsList:
             self.args = json.dumps(self.argsList)
@@ -182,8 +189,13 @@ class CrashEntry(models.Model):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
-        crashInfo = CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData)
-        
+
+        cachedCrashInfo = None
+        if self.cachedCrashInfo:
+            cachedCrashInfo = json.loads(self.cachedCrashInfo)
+
+        crashInfo = CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData, cacheObject=cachedCrashInfo)
+
         if attachTestcase and self.testcase != None and not self.testcase.isBinary:
             self.testcase.loadTest()
             crashInfo.testcase = self.testcase.content

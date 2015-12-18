@@ -264,6 +264,9 @@ def editCrashEntry(request, crashid):
         entry.testcase.loadTest()
 
     if request.method == 'POST':
+        # Force the cached crash information to be repopulated
+        entry.cachedCrashInfo = None
+
         entry.rawStdout = request.POST['rawStdout']
         entry.rawStderr = request.POST['rawStderr']
         entry.rawStderr = request.POST['rawStderr']

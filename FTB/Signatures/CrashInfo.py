@@ -19,16 +19,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 from abc import ABCMeta
+import json
+from numpy import int32, int64, uint32, uint64
+import os
 import re
 import sys
+
+from FTB import AssertionHelper
+from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
-from FTB.ProgramConfiguration import ProgramConfiguration
-
-from numpy import int32, int64, uint32, uint64
-import json
-from FTB import AssertionHelper
-import os
 
 
 class CrashInfo():
@@ -83,8 +83,26 @@ class CrashInfo():
 
         return "\n".join(buf)
 
+    def toCacheObject(self):
+        '''
+        Create a cache object for restoring the class instance later on without parsing
+        the crash data again. This object includes all class fields except for the
+        storage heavy raw objects like stdout, stderr and raw crashdata.
+
+        @rtype: dict
+        @return: Dictionary containing expensive class fields
+        '''
+        cacheObject = {}
+        cacheObject['backtrace'] = self.backtrace
+        cacheObject['registers'] = self.registers
+        cacheObject['crashAddress'] = self.crashAddress
+        cacheObject['crashInstruction'] = self.crashInstruction
+        cacheObject['failureReason'] = self.failureReason
+
+        return cacheObject
+
     @staticmethod
-    def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None):
+    def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None, cacheObject=None):
         '''
         Create appropriate CrashInfo instance from raw crash data
 
@@ -96,6 +114,10 @@ class CrashInfo():
         @param configuration: Exact program configuration that is associated with the crash
         @type auxCrashData: List of strings
         @param auxCrashData: Optional additional crash output (e.g. GDB). If not specified, stderr is used.
+        @type cacheObject: Dictionary
+        @param cacheObject: The cache object that should be used to restore the class fields
+                            instead of parsing the crash data. The appropriate object can be
+                            created by calling the toCacheObject method.
 
         @rtype: CrashInfo
         @return: Crash information object
@@ -115,6 +137,27 @@ class CrashInfo():
 
         if isinstance(auxCrashData, basestring):
             auxCrashData = auxCrashData.splitlines()
+
+        if cacheObject is not None:
+            c = CrashInfo()
+
+            if stdout != None:
+                c.rawStdout.extend(stdout)
+
+            if stderr != None:
+                c.rawStderr.extend(stderr)
+
+            if auxCrashData != None:
+                c.rawCrashData.extend(auxCrashData)
+
+            c.configuration = configuration
+            c.backtrace = cacheObject['backtrace']
+            c.registers = cacheObject['registers']
+            c.crashAddress = cacheObject['crashAddress']
+            c.crashInstruction = cacheObject['crashInstruction']
+            c.failureReason = cacheObject['failureReason']
+
+            return c
 
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "Program received signal "
