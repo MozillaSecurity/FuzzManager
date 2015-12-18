@@ -95,7 +95,7 @@ class CrashInfo():
         cacheObject = {}
         cacheObject['backtrace'] = self.backtrace
         cacheObject['registers'] = self.registers
-        cacheObject['crashAddress'] = self.crashAddress
+        cacheObject['crashAddress'] = long(self.crashAddress)
         cacheObject['crashInstruction'] = self.crashInstruction
         cacheObject['failureReason'] = self.failureReason
 
