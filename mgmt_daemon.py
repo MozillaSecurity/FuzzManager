@@ -385,7 +385,11 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
     '''
-    test_files = os.listdir(corpus_dir)
+    test_files = [file for file in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, file))]
+    
+    if not test_files:
+        print("Error: Corpus is empty, refusing upload.", file=sys.stderr)
+        return
     
     conn = S3Connection()
     bucket = conn.get_bucket(bucket_name)
