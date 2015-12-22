@@ -302,6 +302,41 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age = 86400):
          
     bucket.delete_keys(remote_keys_for_deletion, quiet=True)
 
+def get_queue_status(bucket_name, project_name):
+    '''
+    Return status data for all queues in the specified S3 bucket/project
+    
+    @type bucket_name: String
+    @param bucket_name: Name of the S3 bucket to use
+    
+    @type project_name: String
+    @param project_name: Name of the project folder inside the S3 bucket
+    
+    @rtype: dict
+    @return: Dictionary containing queue size per queue
+    '''
+    
+    conn = S3Connection()
+    bucket = conn.get_bucket(bucket_name)
+    
+    remote_path = "%s/queues/" % project_name
+    remote_keys = list(bucket.list(remote_path))
+    
+    status_data = {}
+    
+    for remote_key in remote_keys:
+        # Ignore any folders
+        if remote_key.name.endswith("/"):
+            continue
+        
+        (queue_name, filename) = remote_key.name.split("/")
+        
+        if not queue_name in status_data:
+            status_data[queue_name] = 0
+        status_data[queue_name] += 1
+    
+    return status_data
+
 def download_build(build_dir, bucket_name, project_name):
     '''
     Downloads build.zip from the specified S3 bucket and unpacks it
@@ -430,6 +465,7 @@ def main(argv=None):
 
     parser.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
     parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
+    parser.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
@@ -475,10 +511,26 @@ def main(argv=None):
             print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
             return 2
         
-    if opts.s3_queue_upload or opts.s3_corpus_refresh or opts.s3_build_download or opts.s3_corpus_download or opts.s3_corpus_upload:
+    if opts.s3_queue_upload 
+    or opts.s3_corpus_refresh 
+    or opts.s3_build_download 
+    or opts.s3_corpus_download 
+    or opts.s3_corpus_upload
+    or opts.s3_queue_status:
         if not opts.s3_bucket or not opts.project:
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
+        
+    if opts.s3_queue_status:
+        status_data = get_queue_status(opts.s3_bucket, opts.project)
+        total_queue_files = 0
+        
+        for queue_name in status_data:
+            print("Queue %s: %s" % (queue_name, status_data[queue_name]))
+            total_queue_files += status_data[queue_name]
+        print("Total queue files: %s" % total_queue_files)
+        
+        return 0        
     
     if opts.s3_queue_cleanup != None:
         clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, int(opts.s3_queue_cleanup))
