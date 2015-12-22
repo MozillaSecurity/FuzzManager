@@ -329,7 +329,7 @@ def get_queue_status(bucket_name, project_name):
         if remote_key.name.endswith("/"):
             continue
         
-        (queue_name, filename) = remote_key.name.split("/")
+        (queue_name, filename) = remote_key.name.rsplit("/", 1)
         
         if not queue_name in status_data:
             status_data[queue_name] = 0
@@ -511,12 +511,12 @@ def main(argv=None):
             print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
             return 2
         
-    if opts.s3_queue_upload 
-    or opts.s3_corpus_refresh 
-    or opts.s3_build_download 
-    or opts.s3_corpus_download 
-    or opts.s3_corpus_upload
-    or opts.s3_queue_status:
+    if (opts.s3_queue_upload 
+        or opts.s3_corpus_refresh 
+        or opts.s3_build_download 
+        or opts.s3_corpus_download 
+        or opts.s3_corpus_upload
+        or opts.s3_queue_status):
         if not opts.s3_bucket or not opts.project:
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
