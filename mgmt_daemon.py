@@ -561,7 +561,7 @@ def main(argv=None):
             
         queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
         
-        print("Cleaning old AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
+        print("Cleaning old AFL queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
         clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
         
         print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
@@ -623,6 +623,14 @@ def main(argv=None):
         
         upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project)
         
+        # Prune the queues directory once we successfully uploaded the new
+        # test corpus, but leave everything that's part of our new corpus
+        # so we don't have to download those files again.
+        test_files = [file for file in os.listdir(updated_tests_dir) if os.path.isfile(os.path.join(updated_tests_dir, file))]
+        obsolete_queue_files = [file for file in os.listdir(queues_dir) if os.path.isfile(os.path.join(queues_dir, file)) and file not in test_files]
+        
+        for file in obsolete_queue_files:
+            os.remove(os.path.join(queues_dir, file))
     
     if opts.fuzzmanager or opts.s3_queue_upload:
         last_queue_upload = 0
