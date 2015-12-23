@@ -217,7 +217,7 @@ def queryCrashes(request):
 
     # Prettify the raw query for displaying
     rawQuery = json.dumps(obj, indent=2)
-    urlQuery = json.dumps(obj)
+    urlQuery = json.dumps(obj, separators=(',', ':'))
 
     if query:
         entries = CrashEntry.objects.all().order_by('-id').filter(query)
