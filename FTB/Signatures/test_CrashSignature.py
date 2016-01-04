@@ -3,13 +3,15 @@ Created on Oct 9, 2014
 
 @author: decoder
 '''
-import unittest
-from FTB.Signatures.CrashInfo import CrashInfo
 import json
+import unittest
+
 from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo, NoCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.Matchers import StringMatch
 from FTB.Signatures.Symptom import StackFramesSymptom
+
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -76,6 +78,68 @@ r15    0x0    0
 rip    0x84de35 <JSObject::markChildren(JSTracer*)+53>
 => 0x84de35 <JSObject::markChildren(JSTracer*)+53>:    mov    (%rax),%rax
    0x84de38 <JSObject::markChildren(JSTracer*)+56>:    mov    0x68(%rax),%rax
+"""
+
+testTrace3 = """ASAN:SIGSEGV
+=================================================================
+==7116==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000010 (pc 0x0000014662ba sp 0x7fffe804f180 bp 0x7fffe804f250 T0)
+    #0 0x14662b9 in JSObject::getClass() const /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:128
+    #1 0x14662b9 in bool JSObject::is<js::PropertyIteratorObject>() const /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:520
+    #2 0x14662b9 in js::CloseIterator(JSContext*, JS::Handle<JSObject*>) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsiter.cpp:1065
+    #3 0x14668e2 in js::UnwindIteratorForException(JSContext*, JS::Handle<JSObject*>) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsiter.cpp:1100
+    #4 0xe989c0 in js::jit::CloseLiveIterator(JSContext*, js::jit::InlineFrameIterator const&, unsigned int) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:388
+    #5 0xe989c0 in js::jit::HandleExceptionIon(JSContext*, js::jit::InlineFrameIterator const&, js::jit::ResumeFromException*, bool*) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:464
+    #6 0xe989c0 in js::jit::HandleException(js::jit::ResumeFromException*) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:782
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:128 JSObject::getClass() const
+==7116==ABORTING
+"""
+
+testTraceHeapWithCrashAddress = """
+Program terminated with signal 11, Segmentation fault.
+#0  0xe1afa070 in ?? ()
+#0  0xe1afa070 in ?? ()
+#1  0x00000000 in ?? ()
+eax    0xfff869cc    -497204
+ebx    0x9469ff4    155623412
+ecx    0xe20f6cc0    -502305600
+edx    0xe1afa070    -508583824
+esi    0xfff86934    -497356
+edi    0xfff868cc    -497460
+ebp    0xe20f8790    3792668560
+esp    0xfff8682c    4294469676
+eip    0xe1afa070    3786383472
+=> 0xe1afa070:    push   %edi
+   0xe1afa071:    push   %esi
+"""
+
+testTraceHeapWithoutCrashAddress = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x00007f2b41e78087 in ?? ()
+#1  0xfff9000000000000 in ?? ()
+#2  0x4275203ba1949000 in ?? ()
+#3  0x00007fff5330bb01 in ?? ()
+#4  0x00007f2b44d83e40 in ?? ()
+rax    0x7f2b42c45bc0    139823780486080
+rbx    0x0    0
+rcx    0x4275203ba1949000    4788769219264417792
+rdx    0x1    1
+rsi    0x7f2b42c4a310    139823780504336
+rdi    0x7f2b4aa19000    139823912423424
+rbp    0x7f2b42c4a310    139823780504336
+rsp    0x7fff5330bae0    140734589090528
+r8    0x7f2b46261678    139823837222520
+r9    0x0    0
+r10    0x7f2b46261688    139823837222536
+r11    0x7f2b4aa6a1e8    139823912755688
+r12    0x0    0
+r13    0x7b2    1970
+r14    0x404    1028
+r15    0x7f2b4aa19000    139823912423424
+rip    0x7f2b41e78087    139823766012039
+=> 0x7f2b41e78087:    xorpd  %xmm5,%xmm5
+   0x7f2b41e7808b:    ucomisd %xmm5,%xmm4
 """
 
 testSignature1 = '''{"symptoms": [
@@ -204,6 +268,19 @@ testSignature6 = '''{"symptoms": [
 ]}
 '''
 
+testSignature7 = '''{"symptoms": [
+    {
+      "type": "stackFrames", 
+      "functionNames": [
+        "js::UnwindIteratorForException", 
+        "CloseLiveIterator", 
+        "HandleExceptionIon", 
+        "js::jit::HandleException"
+      ]
+    }
+]}
+'''
+
 testCase1 = '''
 function test() {
   var a = SIMD.float32x4();
@@ -270,10 +347,18 @@ testSignaturePCREShort2 = '''{"symptoms": [
 ]}
 '''
 
+testSignatureEmptyCrashAddress = '''{"symptoms": [
+  {
+    "address": "",
+    "type": "crashAddress"
+  }
+]}
+'''
+
 class SignatureCreateTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
         crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4, minimumSupportedVersion=10)
         crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3, minimumSupportedVersion=10)
@@ -283,11 +368,11 @@ class SignatureCreateTest(unittest.TestCase):
         self.assert_(crashSig1.matches(crashInfo))
         self.assert_(crashSig2.matches(crashInfo))
         self.assert_(crashSig3.matches(crashInfo))
-        
+
         # Check that the generated signatures look as expected
         self.assertEqual(json.loads(str(crashSig1)), json.loads(testSignature1))
         self.assertEqual(json.loads(str(crashSig2)), json.loads(testSignature2))
-        
+
         #  The third crashInfo misses 2 frames from the top 4 frames, so it will
         #  also include the crash address, even though we did not request it.
         self.assertEqual(json.loads(str(crashSig3)), json.loads(testSignature3))
@@ -295,45 +380,45 @@ class SignatureCreateTest(unittest.TestCase):
 class SignatureTestCaseMatchTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
-        
+
         testSig3 = CrashSignature(testSignature3)
         testSig4 = CrashSignature(testSignature4)
         testSig5 = CrashSignature(testSignature5)
         testSig6 = CrashSignature(testSignature6)
-        
+
         self.assertFalse(testSig3.matchRequiresTest())
         self.assertTrue(testSig4.matchRequiresTest())
         self.assertTrue(testSig5.matchRequiresTest())
-        
+
         # Must not match without testcase provided
         self.assertFalse(testSig4.matches(crashInfo))
         self.assertFalse(testSig5.matches(crashInfo))
         self.assertFalse(testSig6.matches(crashInfo))
-        
+
         # Attach testcase
         crashInfo.testcase = testCase1
 
         # Must match with testcase provided
         self.assertTrue(testSig4.matches(crashInfo))
         self.assertTrue(testSig5.matches(crashInfo))
-        
+
         # This one does not match at all
         self.assertFalse(testSig6.matches(crashInfo))
 
 class SignatureStackFramesTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
-        
+
         testSig1 = CrashSignature(testSignatureStackFrames1)
         testSig2 = CrashSignature(testSignatureStackFrames2)
         testSig3 = CrashSignature(testSignatureStackFrames3)
         testSig4 = CrashSignature(testSignatureStackFrames4)
         testSig5 = CrashSignature(testSignatureStackFrames5)
-        
+
         self.assertTrue(testSig1.matches(crashInfo))
         self.assertTrue(testSig2.matches(crashInfo))
         self.assertTrue(testSig3.matches(crashInfo))
@@ -341,11 +426,11 @@ class SignatureStackFramesTest(unittest.TestCase):
         self.assertFalse(testSig5.matches(crashInfo))
 
 class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
-    def runTest(self):      
+    def runTest(self):
         # Do some direct matcher tests on edge cases
         self.assertTrue(StackFramesSymptom._match([], [StringMatch('???')]))
         self.assertFalse(StackFramesSymptom._match([], [StringMatch('???'), StringMatch('a')]))
-        
+
         # Test the diff algorithm, test array contains:
         # stack, signature, expected distance, proposed signature
         testArray = [
@@ -353,7 +438,7 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
                      (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
                      (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 3, ['?', 'b', '???', 'a', '?', 'x', '?']),
                      ]
-        
+
         for (stack, rawSig, expectedDepth, expectedSig) in testArray:
             for maxDepth in (expectedDepth, 3):
                 (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [ StringMatch(x) for x in rawSig ], 0, 1, maxDepth)
@@ -363,29 +448,40 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
 class SignaturePCREShortTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
-        
+
         testSig1 = CrashSignature(testSignaturePCREShort1)
         testSig2 = CrashSignature(testSignaturePCREShort2)
-        
+
         self.assertTrue(testSig1.matches(crashInfo))
         self.assertFalse(testSig2.matches(crashInfo))
 
 class SignatureStackFramesWildcardTailTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace2.splitlines())
-        
+
         testSig = crashInfo.createCrashSignature()
-        
+
         # Ensure that the last frame with a symbol is at the right place and there is nothing else,
         # espcially no wildcard, following afterwards.
         self.assertTrue(isinstance(testSig.symptoms[0], StackFramesSymptom))
         self.assertEqual(str(testSig.symptoms[0].functionNames[6]), "js::jit::CheckOverRecursedWithExtra")
         self.assertEqual(len(testSig.symptoms[0].functionNames), 7)
-        
+
+class SignatureStackFramesRegressionTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceHeapWithCrashAddress.splitlines())
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceHeapWithoutCrashAddress.splitlines())
+
+        testSigEmptyCrashAddress = CrashSignature(testSignatureEmptyCrashAddress)
+
+        self.assertTrue(testSigEmptyCrashAddress.matches(crashInfoPos))
+        self.assertFalse(testSigEmptyCrashAddress.matches(crashInfoNeg))
+
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
+    # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

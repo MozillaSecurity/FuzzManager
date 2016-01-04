@@ -24,10 +24,10 @@ class StringMatch():
     def __init__(self, obj):
         self.isPCRE = False
         self.compiledValue = None
-        
+
         if isinstance(obj, str) or isinstance(obj, unicode):
             self.value = str(obj)
-            
+
             # Support the short form using forward slashes to indicate a PCRE
             if self.value.startswith("/") and self.value.endswith("/"):
                 self.isPCRE = True
@@ -35,8 +35,8 @@ class StringMatch():
                 self.compiledValue = re.compile(self.value)
         else:
             self.value = JSONHelper.getStringChecked(obj, "value", True)
-            
-            matchType = JSONHelper.getStringChecked(obj, "matchType", False)        
+
+            matchType = JSONHelper.getStringChecked(obj, "matchType", False)
             if matchType != None:
                 if matchType.lower() == "contains":
                     pass
@@ -51,14 +51,14 @@ class StringMatch():
             return self.compiledValue.search(val) != None
         else:
             return self.value in val
-    
+
     def __str__(self):
         return self.value
-    
+
     def __repr__(self):
         if (self.isPCRE):
             return '/%s/' % self.value
-        
+
         return self.value
 
 class NumberMatchType:
@@ -67,41 +67,46 @@ class NumberMatchType:
 class NumberMatch():
     def __init__(self, obj):
         self.matchType = None
-        
+
         if isinstance(obj, str) or isinstance(obj, unicode):
-            numberMatchComponents = obj.split(None, 1)
-            numIdx = 0
-            
-            if len(numberMatchComponents) > 1:
-                numIdx = 1
-                matchType = numberMatchComponents[0]
-                
-                if matchType == "==":
-                    pass
-                elif matchType == "<":
-                    self.matchType = NumberMatchType.LT
-                elif matchType == "<=":
-                    self.matchType = NumberMatchType.LE
-                elif matchType == ">":
-                    self.matchType = NumberMatchType.GT
-                elif matchType == ">=":
-                    self.matchType = NumberMatchType.GE
-                else:
-                    raise RuntimeError("Unknown match operator specified: %s" % matchType)
-            
-            try:
-                self.value = long(numberMatchComponents[numIdx], 16)
-            except ValueError:
-                raise RuntimeError("Invalid number specified: %s" % numberMatchComponents[numIdx])
+            if len(obj) > 0:
+                numberMatchComponents = obj.split(None, 1)
+                numIdx = 0
+
+                if len(numberMatchComponents) > 1:
+                    numIdx = 1
+                    matchType = numberMatchComponents[0]
+
+                    if matchType == "==":
+                        pass
+                    elif matchType == "<":
+                        self.matchType = NumberMatchType.LT
+                    elif matchType == "<=":
+                        self.matchType = NumberMatchType.LE
+                    elif matchType == ">":
+                        self.matchType = NumberMatchType.GT
+                    elif matchType == ">=":
+                        self.matchType = NumberMatchType.GE
+                    else:
+                        raise RuntimeError("Unknown match operator specified: %s" % matchType)
+
+                try:
+                    self.value = long(numberMatchComponents[numIdx], 16)
+                except ValueError:
+                    raise RuntimeError("Invalid number specified: %s" % numberMatchComponents[numIdx])
+            else:
+                # We're trying to match the fact that we cannot calculate a crash address
+                self.value = None
+
         elif isinstance(obj, int):
             self.value = obj
         else:
             raise RuntimeError("Invalid type %s in NumberMatch." % type(obj))
-    
+
     def matches(self, value):
         if value == None:
-            return False
-        
+            return self.value == None
+
         if self.matchType == NumberMatchType.GE:
             return value >= self.value
         elif self.matchType == NumberMatchType.GT:
