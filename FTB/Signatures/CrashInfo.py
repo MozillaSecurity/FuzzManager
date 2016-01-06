@@ -341,9 +341,7 @@ class CrashInfo():
 
         if includeCrashAddress:
             if self.crashAddress == None:
-                failureReason = self.failureReason
-                self.failureReason = "No crash address available from crash data. Reason: %s" % failureReason
-                return None
+                crashAddress = ""
 
             if self.crashAddress != 0L and self.crashAddress < 0x100L:
                 # Try to match crash addresses that are small but non-zero
