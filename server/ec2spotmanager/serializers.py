@@ -9,7 +9,7 @@ class MachineStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Instance
-        fields = ('status_data')
+        fields = ['status_data']
 
     def to_native(self, obj):
         '''
