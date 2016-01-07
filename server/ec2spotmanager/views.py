@@ -11,11 +11,14 @@ from django.utils.timezone import now, timedelta
 import errno
 from operator import attrgetter
 import os
+from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 
 from ec2spotmanager.common.prices import get_spot_prices
 from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance, \
     INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
 from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
+from ec2spotmanager.serializers import MachineStatusSerializer
 
 
 def renderError(request, err):
@@ -593,3 +596,12 @@ class UptimeChartViewAccumulated(JSONView):
 
     def get_labels(self, pool, entries):
         return [x.created.strftime("%b %d") for x in entries]
+
+
+class MachineStatusViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows adding/viewing status reports
+    """
+    authentication_classes = (TokenAuthentication,)
+    queryset = Instance.objects.all()
+    serializer_class = MachineStatusSerializer
