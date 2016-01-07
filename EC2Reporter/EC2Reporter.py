@@ -128,7 +128,7 @@ class EC2Reporter():
         data = {}
 
         data["client"] = self.clientId
-        data["report"] = text
+        data["status_data"] = text
 
         response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
