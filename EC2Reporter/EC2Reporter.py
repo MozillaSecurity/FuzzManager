@@ -135,6 +135,11 @@ class EC2Reporter():
         if response.status_code != requests.codes["created"]:
             raise self.__serverError(response)
 
+    @staticmethod
+    def __serverError(response):
+        return RuntimeError("Server unexpectedly responded with status code %s: %s" %
+                            (response.status_code, response.text))
+
 def main(argv=None):
     '''Command line options.'''
 
