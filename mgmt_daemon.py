@@ -158,7 +158,13 @@ def write_aggregated_stats(base_dirs, outfile):
         for field in fields:
             if not field in aggregated_stats:
                 continue
-            f.write("%s%s:%s\n" % (field, " " * (max_keylen + 1), aggregated_stats[field]))
+            
+            val = aggregated_stats[field]
+            
+            if isinstance(val, list):
+                val = " ".join(val)
+            
+            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
     lock.release() 
     
     return
