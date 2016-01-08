@@ -26,11 +26,11 @@ import platform
 import requests
 import sys
 
-from FTB.ConfigurationFiles import ConfigurationFiles
-
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
+
+from FTB.ConfigurationFiles import ConfigurationFiles
 
 __all__ = []
 __version__ = 0.1
