@@ -217,7 +217,7 @@ def main(argv=None):
                         report = f.read()
                     reporter.report(report)
                     lock.release()
-                    time.sleep(opts.report_file)
+                    time.sleep(opts.keep_reporting)
                 except LockTimeout:
                     continue
         else:
