@@ -21,10 +21,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 import argparse
+from lockfile import FileLock, LockTimeout
 import os
 import platform
 import requests
 import sys
+import time
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -161,6 +163,9 @@ def main(argv=None):
     parser.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
     parser.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
 
+    # Options
+    parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
+
     # Settings
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
@@ -189,6 +194,10 @@ def main(argv=None):
         print("Error: Must specify an action", file=sys.stderr)
         return 2
 
+    if opts.keep_reporting and not opts.report_file:
+        print("Error: --keep-reporting is only valid with --report-from-file", file=sys.stderr)
+        return 2
+
     serverauthtoken = None
     if opts.serverauthtokenfile:
         with open(opts.serverauthtokenfile) as f:
@@ -198,8 +207,22 @@ def main(argv=None):
     report = None
 
     if opts.report_file:
-        with open(opts.report_file) as f:
-            report = f.read()
+        if opts.keep_reporting:
+            lock_path = "%s.lock" % opts.report_file
+            lock = FileLock(lock_path)
+            while True:
+                try:
+                    lock.acquire(opts.keep_reporting)
+                    with open(opts.report_file) as f:
+                        report = f.read()
+                    reporter.report(report)
+                    lock.release()
+                    time.sleep(opts.report_file)
+                except LockTimeout:
+                    continue
+        else:
+            with open(opts.report_file) as f:
+                report = f.read()
     else:
         report = opts.report
 
