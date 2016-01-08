@@ -24,6 +24,7 @@ import argparse
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 import hashlib
+from lockfile import FileLock
 import os
 import platform
 import random
@@ -32,6 +33,7 @@ import stat
 import subprocess
 import sys
 import time
+
 
 def get_machine_id(base_dir):
     '''
@@ -62,6 +64,104 @@ def get_machine_id(base_dir):
     else:
         with open(id_file, 'r') as id_fd:
             return id_fd.read()
+        
+def write_aggregated_stats(base_dirs, outfile):
+    '''
+    Generate aggregated statistics from the given base directories
+    and write them to the specified output file.
+    
+    @type base_dirs: list
+    @param base_dirs: List of AFL base directories
+
+    @type outfile: str
+    @param outfile: Output file for aggregated statistics
+    '''
+    
+    # Which fields to add
+    wanted_fields_total = [ 
+                           'execs_done', 
+                           'execs_per_sec', 
+                           'pending_favs', 
+                           'pending_total', 
+                           'variable_paths', 
+                           'unique_crashes', 
+                           'unique_hangs'  
+                           ]
+    
+    # Which fields to aggregate by mean
+    wanted_fields_mean = [ 'exec_timeout' ]
+    
+    # Which fields should be displayed per fuzzer instance
+    wanted_fields_all = [ 'cycles_done',  'bitmap_cvg' ]
+    
+    # Which fields should be aggregated by max
+    wanted_fields_max = [ 'last_path' ]
+    
+    aggregated_stats = {}
+    
+    for field in wanted_fields_total:
+        aggregated_stats[field] = 0
+    
+    for field in wanted_fields_mean:
+        aggregated_stats[field] = (0,0)
+        
+    for field in wanted_fields_all:
+        aggregated_stats[field] = []
+    
+    def convert_num(num):
+        if '.' in num:
+            return float(num)
+        return int(num)
+    
+    for base_dir in base_dirs:
+        stats_path = os.path.join(base_dir, "fuzzer_stats")
+        
+        if os.path.exists(stats_path):
+            with open(stats_path, 'r') as stats_file:
+                stats = stats_file.read()
+            
+            for line in stats.splitlines():
+                (field_name, field_val) = line.split(':', 1)
+                field_name = field_name.strip()
+                field_val = field_val.strip()
+                
+                if field_name in wanted_fields_total:
+                    aggregated_stats[field_name] += convert_num(field_val)                        
+                elif field_name in wanted_fields_mean:
+                    (val, cnt) = aggregated_stats[field_name]
+                    aggregated_stats[field_name] = (val + convert_num(field_val), cnt + 1)
+                elif field_name in wanted_fields_all:
+                    aggregated_stats[field_name].append(field_val)
+                elif field_name in wanted_fields_max:
+                    num_val = convert_num(field_val)
+                    if (not field_name in aggregated_stats) or aggregated_stats[field_name] < num_val:
+                        aggregated_stats[field_name] = num_val
+    
+    # Mean conversion
+    for field_name in wanted_fields_mean:
+        (val, cnt) = aggregated_stats[field_name]
+        aggregated_stats[field_name] = float(val) / float(cnt)
+
+    # Write out data
+    fields = []
+    fields.extend(wanted_fields_total)
+    fields.extend(wanted_fields_mean)
+    fields.extend(wanted_fields_all)
+    fields.extend(wanted_fields_max)
+    
+    max_keylen = max([len(x) for x in fields])
+    
+    lock_path = "%s.lock" % outfile
+    lock = FileLock(lock_path)
+    lock.acquire()
+    with open(outfile, 'w') as f:
+        for field in fields:
+            if not field in aggregated_stats:
+                continue
+            f.write("%s%s:%s\n" % (field, " " * (max_keylen + 1), aggregated_stats[field]))
+    lock.release() 
+    
+    return
 
 def scan_crashes(base_dir):
     '''
