@@ -9,7 +9,7 @@ router.register(r'report', views.MachineStatusViewSet)
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^rest/', include(router.urls)),
+    url(r'^rest/report/$', views.MachineStatusViewSet.as_view()),
     url(r'^logout/$', views.logout_view, name='logout'),
     url(r'^$', views.index, name='index'),
     url(r'^pools/$', views.pools, name='pools'),

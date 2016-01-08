@@ -6,13 +6,17 @@ from django.contrib.auth.views import logout
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.db.models.aggregates import Count
+from django.http.response import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import errno
 from operator import attrgetter
 import os
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import authentication_classes, api_view
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ec2spotmanager.common.prices import get_spot_prices
 from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance, \
@@ -597,11 +601,24 @@ class UptimeChartViewAccumulated(JSONView):
     def get_labels(self, pool, entries):
         return [x.created.strftime("%b %d") for x in entries]
 
+class MachineStatusViewSet(APIView):
 
-class MachineStatusViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows adding/viewing status reports
-    """
     authentication_classes = (TokenAuthentication,)
     queryset = Instance.objects.all()
-    serializer_class = MachineStatusSerializer
+
+    def get(self, request, *args, **kwargs):
+        result = {}
+        response = Response(result, status=status.HTTP_200_OK)
+        return response
+
+    def post(self, request, *args, **kwargs):
+        # When upgrading to DRF 3.x, change DATA to data
+        if not 'client' in request.DATA:
+            Response(status=status.HTTP_400_BAD_REQUEST)
+
+        instance = get_object_or_404(Instance, hostname=request.DATA['client'])
+        serializer = MachineStatusSerializer(instance=instance, partial=True, data=request.DATA)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

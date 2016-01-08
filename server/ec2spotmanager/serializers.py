@@ -1,10 +1,11 @@
-from rest_framework import serializers
+from django.http.response import Http404
+from rest_framework import serializers, exceptions
 from rest_framework.generics import get_object_or_404
 
 from ec2spotmanager.models import Instance
 
+
 class MachineStatusSerializer(serializers.ModelSerializer):
-    client = serializers.CharField(max_length=255)
     status_data = serializers.CharField(max_length=4095)
 
     class Meta:
@@ -27,13 +28,7 @@ class MachineStatusSerializer(serializers.ModelSerializer):
         Update the status_data field of a given instance
         '''
         if not instance:
-            # Try finding the instance by specified client id
-            client = attrs.pop('client', None)
-
-            if not client:
-                return None
-
-            instance = get_object_or_404(Instance, hostname=client)
+            raise Http404
 
         # Update status_data only, ignore any other data
         status_data = attrs.pop('status_data', None)
