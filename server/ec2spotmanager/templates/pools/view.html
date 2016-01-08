@@ -105,7 +105,7 @@
 			<td>{{ instance.ec2_instance_id|escape }}</td>
 			<td>{{ instance.hostname|escape }}</td>
 			<td>{{ instance.status_code|escape }} - {{ instance.status_code_text }}</td>
-			<td>{{ instance.status_data|escape }}</td>
+			<td>{{ instance.status_data|escape|linebreaks }}</td>
 			<td>{{ instance.ec2_region|escape }} / {{ instance.ec2_zone|escape }}</td>
 			</tr>{% endfor %}
 		</tbody>
