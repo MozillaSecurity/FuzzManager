@@ -574,6 +574,7 @@ def main(argv=None):
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
+    parser.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
     
     parser.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
     parser.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket", metavar="NAME")
@@ -732,7 +733,7 @@ def main(argv=None):
         for file in obsolete_queue_files:
             os.remove(os.path.join(queues_dir, file))
     
-    if opts.fuzzmanager or opts.s3_queue_upload:
+    if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
         last_queue_upload = 0
         while True:
             if opts.fuzzmanager:
@@ -744,6 +745,9 @@ def main(argv=None):
                 for afl_out_dir in afl_out_dirs:
                     upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=True)
                 last_queue_upload = int(time.time())
+            
+            if opts.aflstats:
+                write_aggregated_stats(afl_out_dirs, opts.aflstats)
                 
             time.sleep(10)
 
