@@ -33,5 +33,4 @@ class MachineStatusSerializer(serializers.ModelSerializer):
         status_data = attrs.pop('status_data', None)
         instance.status_data = status_data
 
-        # Create our CrashEntry instance
-        return super(MachineStatusSerializer, self).restore_object(attrs, instance)
+        return instance
