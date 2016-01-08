@@ -215,7 +215,11 @@ def main(argv=None):
                         lock.acquire(opts.keep_reporting)
                         with open(opts.report_file) as f:
                             report = f.read()
-                        reporter.report(report)
+                        try:
+                            reporter.report(report)
+                        except RuntimeError as e:
+                            # Ignore errors if the server is temporarily unavailable
+                            print("Failed to contact server: %s" % e, file=sys.stderr)
                         lock.release()
                     time.sleep(opts.keep_reporting)
                 except LockTimeout:
