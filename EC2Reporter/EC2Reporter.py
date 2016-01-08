@@ -208,15 +208,15 @@ def main(argv=None):
 
     if opts.report_file:
         if opts.keep_reporting:
-            lock_path = "%s.lock" % opts.report_file
-            lock = FileLock(lock_path)
+            lock = FileLock(opts.report_file)
             while True:
                 try:
-                    lock.acquire(opts.keep_reporting)
-                    with open(opts.report_file) as f:
-                        report = f.read()
-                    reporter.report(report)
-                    lock.release()
+                    if os.path.exists(opts.report_file):
+                        lock.acquire(opts.keep_reporting)
+                        with open(opts.report_file) as f:
+                            report = f.read()
+                        reporter.report(report)
+                        lock.release()
                     time.sleep(opts.keep_reporting)
                 except LockTimeout:
                     continue
