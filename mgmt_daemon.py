@@ -136,11 +136,18 @@ def write_aggregated_stats(base_dirs, outfile):
                     num_val = convert_num(field_val)
                     if (not field_name in aggregated_stats) or aggregated_stats[field_name] < num_val:
                         aggregated_stats[field_name] = num_val
+                        
+    # If we don't have any data here, then the fuzzers haven't written any statistics yet
+    if not aggregated_stats:
+        return
     
     # Mean conversion
     for field_name in wanted_fields_mean:
         (val, cnt) = aggregated_stats[field_name]
-        aggregated_stats[field_name] = float(val) / float(cnt)
+        if cnt:
+            aggregated_stats[field_name] = float(val) / float(cnt)
+        else:
+            aggregated_stats[field_name] = val
 
     # Write out data
     fields = []
@@ -151,8 +158,7 @@ def write_aggregated_stats(base_dirs, outfile):
     
     max_keylen = max([len(x) for x in fields])
     
-    lock_path = "%s.lock" % outfile
-    lock = FileLock(lock_path)
+    lock = FileLock(outfile)
     lock.acquire()
     with open(outfile, 'w') as f:
         for field in fields:
