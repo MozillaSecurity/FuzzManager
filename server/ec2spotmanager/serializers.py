@@ -1,6 +1,5 @@
 from django.http.response import Http404
-from rest_framework import serializers, exceptions
-from rest_framework.generics import get_object_or_404
+from rest_framework import serializers
 
 from ec2spotmanager.models import Instance
 

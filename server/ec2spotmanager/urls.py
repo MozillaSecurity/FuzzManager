@@ -1,11 +1,6 @@
 from django.conf.urls import patterns, url, include
-from rest_framework import routers
 
 from ec2spotmanager import views
-
-
-router = routers.DefaultRouter()
-router.register(r'report', views.MachineStatusViewSet)
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
