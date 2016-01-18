@@ -98,6 +98,9 @@ def allCrashes(request):
 
 @login_required(login_url='/login/')
 def signatures(request):
+    (user, created) = User.objects.get_or_create(user=request.user)
+    defaultToolsFilter = user.defaultToolsFilter.all()
+
     entries = Bucket.objects.all().annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
     filters = {}
@@ -135,6 +138,11 @@ def signatures(request):
         filters["bug"] = None
 
     entries = entries.filter(**filters)
+
+    # Apply default tools filter, only display buckets that contain at least one
+    # crash from a tool that we are interested in. Since this query is probably
+    # the slowest, it should run last.
+    entries = entries.filter(crashentry__tool__in=defaultToolsFilter).distinct()
 
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
