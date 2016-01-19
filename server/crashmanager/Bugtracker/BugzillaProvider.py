@@ -280,15 +280,20 @@ class BugzillaProvider(Provider):
         if not "id" in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
 
-        # If we have a binary testcase, attach it here in a second step
-        if crashEntry.testcase != None and crashEntry.testcase.isBinary:
+        # If we have a binary testcase or the testcase is too large,
+        # attach it here in a second step
+        if crashEntry.testcase != None:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
             filename = os.path.basename(crashEntry.testcase.test.name)
 
-            aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=True)
-            ret["attachmentResponse"] = aRet
+            if crashEntry.testcase.isBinary:
+                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=True)
+                ret["attachmentResponse"] = aRet
+            elif len(data) > 2048:
+                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=False)
+                ret["attachmentResponse"] = aRet
 
         return ret["id"]
 
