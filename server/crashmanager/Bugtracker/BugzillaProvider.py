@@ -495,12 +495,14 @@ class BugzillaREST():
             if l[k] != None and l[k] != '' and k != "self" and k != "is_binary":
                 attachment[k] = l[k]
 
-        # Do the necessary base64 encoding
+        # Set proper content-type
         if is_binary:
             attachment["content_type"] = "application/octet-stream"
-            attachment["data"] = base64.b64encode(attachment["data"])
         else:
             attachment["content_type"] = "text/plain"
+
+        # Attachment data must always be base64 encoded
+        attachment["data"] = base64.b64encode(attachment["data"])
 
         # Ensure we're logged in
         self.login()
