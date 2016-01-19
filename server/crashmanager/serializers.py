@@ -1,13 +1,14 @@
-from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestCase, Client, Tool
-from rest_framework import serializers
-from django.forms import widgets
-from django.core.exceptions import MultipleObjectsReturned
-from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.ProgramConfiguration import ProgramConfiguration
-
-from django.core.files.base import ContentFile
-import hashlib
 import base64
+from django.core.exceptions import MultipleObjectsReturned
+from django.core.files.base import ContentFile
+from django.forms import widgets
+import hashlib
+from rest_framework import serializers
+
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
+from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestCase, Client, Tool
+
 
 class CrashEntrySerializer(serializers.ModelSerializer):
     # We need to redefine several fields explicitly because we flatten our
@@ -28,9 +29,9 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = CrashEntry
         fields = (
-                  'rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 
+                  'rawStdout', 'rawStderr', 'rawCrashData', 'metadata',
                   'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
-                  'platform', 'product', 'product_version', 'os', 'client', 'tool', 
+                  'platform', 'product', 'product_version', 'os', 'client', 'tool',
                   'env', 'args'
                   )
 
@@ -46,17 +47,17 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             serialized["product"] = obj.product.name
             if obj.product.version:
                 serialized["product_version"] = obj.product.version
-                
+
             serialized["os"] = obj.os.name
             serialized["platform"] = obj.platform.name
             serialized["client"] = obj.client.name
             serialized["tool"] = obj.tool.name
-            
+
             if obj.testcase:
                 serialized["testcase_isbinary"] = obj.testcase.isBinary
                 serialized["testcase_quality"] = obj.testcase.quality
                 serialized["testcase"] = str(obj.testcase.test)
-        
+
         return serialized
 
     def restore_object(self, attrs, instance=None):
@@ -69,7 +70,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         if instance:
             # Not allowed to update existing instances
             return instance
-        
+
         product = attrs.pop('product', None)
         product_version = attrs.pop('product_version', None)
         platform = attrs.pop('platform', None)
@@ -80,16 +81,16 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         testcase_ext = attrs.pop('testcase_ext', None)
         testcase_quality = attrs.pop('testcase_quality', 0)
         testcase_isbinary = attrs.pop('testcase_isbinary', False)
-        
+
         # Parse the incoming data using the crash signature package from FTB
         configuration = ProgramConfiguration(product, platform, os, product_version)
         crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'], attrs['rawStderr'], configuration, attrs['rawCrashData'])
-        
+
         # Populate certain fields here from the CrashInfo object we just got
         if crashInfo.crashAddress != None:
             attrs['crashAddress'] = hex(crashInfo.crashAddress)
         attrs['shortSignature'] = crashInfo.createShortSignature()
-        
+
         def createOrGetModelByName(model, attrs):
             '''
             Generically determine if the given model with the given attributes
@@ -106,17 +107,17 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             @return The model instance
             '''
             objs = model.objects.filter(**attrs)
-                  
+
             if len(objs) > 1:
                 raise MultipleObjectsReturned("Multiple objects with same keyword combination in database!")
-        
+
             if len(objs) == 0:
                 dbobj = model(**attrs)
                 dbobj.save()
                 return dbobj
             else:
                 return objs.first()
-        
+
         # Get or instantiate objects for product, platform, os, client and tool
         attrs['product'] = createOrGetModelByName(Product, { 'name' : product, 'version' : product_version })
         attrs['platform'] = createOrGetModelByName(Platform, { 'name' : platform })
@@ -128,10 +129,10 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         if testcase:
             if testcase_ext == None:
                 raise RuntimeError("Must provide testcase extension when providing testcase")
-            
+
             if testcase_isbinary:
                 testcase = base64.b64decode(testcase)
-            
+
             h = hashlib.new('sha1')
             if testcase_isbinary:
                 h.update(str(testcase))
@@ -144,7 +145,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             attrs['testcase'] = dbobj
         else:
             attrs['testcase'] = None
-        
+
         # Create our CrashEntry instance
         return super(CrashEntrySerializer, self).restore_object(attrs, instance)
 
