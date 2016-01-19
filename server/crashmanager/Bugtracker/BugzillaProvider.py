@@ -101,9 +101,15 @@ class BugzillaProvider(Provider):
                 sdata['testcase'] = "See attachment."
             else:
                 crashEntry.testcase.test.open(mode='r')
-                sdata['testcase'] = crashEntry.testcase.test.read()
+                testcase_data = crashEntry.testcase.test.read()
                 crashEntry.testcase.test.close()
         
+                # If the file is too large, also attach it, even if plaintext
+                if len(testcase_data) <= 2048:
+                    sdata['testcase'] = testcase_data
+                else:
+                    sdata['testcase'] = "See attachment."
+
         if crashEntry.rawCrashData:
             sdata['crashdata'] = crashEntry.rawCrashData
         else:
@@ -231,17 +237,22 @@ class BugzillaProvider(Provider):
         ret = bz.createBug(**args)
         if not "id" in ret:
             raise RuntimeError("Failed to create bug: %s", ret)
-        
-        # If we have a binary testcase, attach it here in a second step
-        if crashEntry.testcase != None and crashEntry.testcase.isBinary:
+
+        # If we have a binary testcase or the testcase is too large,
+        # attach it here in a second step
+        if crashEntry.testcase != None:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
             filename = os.path.basename(crashEntry.testcase.test.name)
-            
-            aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
-            ret["attachmentResponse"] = aRet
-        
+
+            if crashEntry.testcase.isBinary:
+                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
+                ret["attachmentResponse"] = aRet
+            elif len(data) > 2048:
+                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=False)
+                ret["attachmentResponse"] = aRet
+
         return ret["id"]
 
     def handlePOSTComment(self, request, crashEntry):
