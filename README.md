@@ -35,9 +35,9 @@ configurations to avoid configuration duplication and ensures that your
 instances are always running in the desired quantity as well as in the cheapest
 zone.
 
-=== Questions ===
+# Questions
 
-Please send any questions regarding the code to choller -at- mozilla -dot- com.
+Please send any questions regarding the project to choller-at-mozilla-dot-com.
 
 
 # Getting Started
@@ -53,8 +53,22 @@ use your distribution's package management to fulfill them.
 The server part of FuzzManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
 
-You can set the server up just like any other Django project. For local
-testing, you can use the builtin debug webserver:
+You can set the server up just like any other Django project. The Django
+configuration file is found at `server/server/settings.py`. The default will
+work, but for a production setup, you should at least review the database
+settings.
+
+Afterwards, you should run the following commands
+
+```
+$ cd server
+$ python manage.py syncdb
+```
+During syncdb, make sure that you create a user as we need it later on.
+
+### Local testing
+
+For local testing, you can use the builtin debug webserver:
 
 `python manage.py runserver`
 
@@ -70,13 +84,13 @@ shows you how to run FuzzManager in an Apache+WSGI setup. Of course you should
 adjust the configuration to use HTTPs if you don't plan to use any sort of
 TLS load balancer in front of it.
 
-## Getting/Creating the authentication token for clients
+### Getting/Creating the authentication token for clients
 
 Use the following command to get an authentication token for a Django user:
 
 `python manage.py get_auth_token username`
 
-By default, the `admin` user exists and can be used for simple setups.
+You can use the user that you created during `syncdb` for simple setups.
 
 ### Server Cronjobs
 
