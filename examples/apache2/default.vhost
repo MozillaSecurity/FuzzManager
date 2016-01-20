@@ -1,11 +1,14 @@
-WSGIPythonPath /path/to/repo/FuzzManager/server
+WSGIDaemonProcess fuzzmanager.your.domain python-path=/path/to/repo/FuzzManager/server
+WSGIProcessGroup fuzzmanager.your.domain
+WSGIApplicationGroup %{GLOBAL}
+
 <VirtualHost *:80>
 	ServerName fuzzmanager.your.domain
 
 	Alias /static/ /path/to/repo/FuzzManager/server/crashmanager/static/
 	Alias /tests/ /path/to/repo/FuzzManager/server/tests/
 
-	WSGIScriptAlias / /path/to/repo/FuzzManager/server/server/wsgi.py
+	WSGIScriptAlias / /path/to/repo/FuzzManager/server/server/wsgi.py process-group=fuzzmanager.your.domain
 	WSGIPassAuthorization On
 
 	<Location />
@@ -20,6 +23,11 @@ WSGIPythonPath /path/to/repo/FuzzManager/server
 	</Location>
 
 	<Location /crashmanager/rest/>
+		Satisfy Any
+		Allow from all
+	</Location>
+
+	<Location /ec2spotmanager/rest/>
 		Satisfy Any
 		Allow from all
 	</Location>
