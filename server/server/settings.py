@@ -20,7 +20,7 @@ sys.path += [FTB_PATH]
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_FILE = "settings.secret"
+SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
     SECRET_KEY = open(SECRET_FILE).read().strip()
 except:
@@ -107,6 +107,15 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+
+# For a production setup, we recommend to not use sqlite
+# but instead a real database like MySQL or Postgres.
+#    'default': {
+#        'ENGINE': 'django.db.backends.mysql',
+#        'OPTIONS': {
+#            'read_default_file': '/path/to/my.cnf',
+#        },
+#    }
 }
 
 # Internationalization
@@ -182,6 +191,11 @@ LOGGING = {
         },
     },
 }
+
+# If you are running FuzzManager behind a TLS loadbalancer,
+# uncomment the next line to let Django know that it should
+# behave as if we were using HTTPs.
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Crashmanager configuration
 #
