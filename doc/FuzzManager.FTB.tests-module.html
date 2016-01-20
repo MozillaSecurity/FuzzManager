@@ -129,15 +129,13 @@
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
-        <a href="FuzzManager.FTB.tests-module.html#asanFFAbort" class="summary-name">asanFFAbort</a> = <code title="'''[26289] ###!!! ASSERTION: Unexpected non-ASCII character: \'!(*s2 &amp;\
- ~0x7F)\', file ../../../dist/include/nsCharTraits.h, line 168
-Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozalloc/\
-mozalloc_abort.cpp:30
+        <a href="FuzzManager.FTB.tests-module.html#asanFFAbort" class="summary-name">asanFFAbort</a> = <code title="'''Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozall\
+oc/mozalloc_abort.cpp:30
 ASAN:SIGSEGV
 =================================================================
 ==26289==ERROR: AddressSanitizer: SEGV on unknown address 0x0000000000\
 00 (pc 0x7fac9b54873a sp 0x7fff085f2120 bp 0x7fff085f2130 T0)
-..."><code class="variable-quote">'</code><code class="variable-string">[26289] ###!!! ASSERTION: Unexpected non-ASCII </code><code class="variable-ellipsis">...</code></code>
+'''"><code class="variable-quote">'</code><code class="variable-string">Hit MOZ_CRASH() at /srv/repos/browser/mozilla-c</code><code class="variable-ellipsis">...</code></code>
     </td>
   </tr>
 <tr>
@@ -188,15 +186,13 @@ Hit MOZ_CRASH(named lambda static scopes should have been skipped) at \
   <dl class="fields">
     <dt>Value:</dt>
       <dd><table><tr><td><pre class="variable">
-<code class="variable-quote">'''</code><code class="variable-string">[26289] ###!!! ASSERTION: Unexpected non-ASCII character: \'!(*s2 &amp;</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
-<code class="variable-string"> ~0x7F)\', file ../../../dist/include/nsCharTraits.h, line 168</code>
-<code class="variable-string">Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozalloc/</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
-<code class="variable-string">mozalloc_abort.cpp:30</code>
+<code class="variable-quote">'''</code><code class="variable-string">Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozall</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">oc/mozalloc_abort.cpp:30</code>
 <code class="variable-string">ASAN:SIGSEGV</code>
 <code class="variable-string">=================================================================</code>
 <code class="variable-string">==26289==ERROR: AddressSanitizer: SEGV on unknown address 0x0000000000</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
 <code class="variable-string">00 (pc 0x7fac9b54873a sp 0x7fff085f2120 bp 0x7fff085f2130 T0)</code>
-<code class="variable-ellipsis">...</code>
+<code class="variable-string"></code><code class="variable-quote">'''</code>
 </pre></td></tr></table>
 </dd>
   </dl>

@@ -161,6 +161,13 @@
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests.GDBParserTestCrashAddressRegression4-class.html" class="summary-name">GDBParserTestCrashAddressRegression4</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
         <a href="FuzzManager.FTB.Signatures.tests.CrashSignatureOutputTest-class.html" class="summary-name">CrashSignatureOutputTest</a>
     </td>
   </tr>
@@ -211,6 +218,27 @@
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
         <a href="FuzzManager.FTB.Signatures.tests.MinidumpSelectorTest-class.html" class="summary-name">MinidumpSelectorTest</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests.AppleParserTestCrash-class.html" class="summary-name">AppleParserTestCrash</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests.AppleSelectorTest-class.html" class="summary-name">AppleSelectorTest</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests.UBSanParserTestCrash-class.html" class="summary-name">UBSanParserTestCrash</a>
     </td>
   </tr>
 </table>
@@ -409,6 +437,36 @@ Program received signal SIGTRAP, Trace/breakpoint trap.
 #3  0x00007ffff5671ac0 in ?? ()
 #4  0x0000000000000000 in ?? ()
 ..."><code class="variable-quote">'</code><code class="variable-string">\nProgram received signal SIGTRAP, Trac</code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests-module.html#gdbRegressionTrace4" class="summary-name">gdbRegressionTrace4</a> = <code title="'''
+Program received signal SIGSEGV, Segmentation fault.
+0x0000000000000000 in ?? ()
+#0  0x0000000000000000 in ?? ()
+#1 0xfffc7ffff7e8a6c0 in ?? ()
+#2 0x000000000043026c in js::jit::IonCompile (cx=0xfffc7ffff7e766c0, s\
+cript=&lt;optimized out&gt;, baselineFrame=&lt;optimized out&gt;, osrPc=&lt;optimized\
+ out&gt;, constructing=&lt;optimized out&gt;, recompile=&lt;optimized out&gt;, optimi\
+..."><code class="variable-quote">'</code><code class="variable-string">\nProgram received signal SIGSEGV, Segm</code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.tests-module.html#ubsanSampleTrace1" class="summary-name">ubsanSampleTrace1</a> = <code title="'''
+codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed inte\
+ger overflow: -2147483648 - 1 cannot be represented in type \'int\'
+    #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsi\
+gned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golom\
+b.h:182:37
+    #1 0x51a11b in WelsDec::ParseSliceHeaderSyntaxs(WelsDec::TagWelsDe\
+coderContext*, WelsCommon::TagBitStringAux*, bool) /home/user/code/ope\
+..."><code class="variable-quote">'</code><code class="variable-string">\ncodec/decoder/core/inc/dec_golomb.h:182</code><code class="variable-ellipsis">...</code></code>
     </td>
   </tr>
 <tr>
@@ -743,6 +801,58 @@ Program received signal SIGTRAP, Trace/breakpoint trap.
 <code class="variable-string">#2  0x0000000000000183 in ?? ()</code>
 <code class="variable-string">#3  0x00007ffff5671ac0 in ?? ()</code>
 <code class="variable-string">#4  0x0000000000000000 in ?? ()</code>
+<code class="variable-ellipsis">...</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="gdbRegressionTrace4"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">gdbRegressionTrace4</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-quote">'''</code><code class="variable-string"></code>
+<code class="variable-string">Program received signal SIGSEGV, Segmentation fault.</code>
+<code class="variable-string">0x0000000000000000 in ?? ()</code>
+<code class="variable-string">#0  0x0000000000000000 in ?? ()</code>
+<code class="variable-string">#1 0xfffc7ffff7e8a6c0 in ?? ()</code>
+<code class="variable-string">#2 0x000000000043026c in js::jit::IonCompile (cx=0xfffc7ffff7e766c0, s</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">cript=&lt;optimized out&gt;, baselineFrame=&lt;optimized out&gt;, osrPc=&lt;optimized</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string"> out&gt;, constructing=&lt;optimized out&gt;, recompile=&lt;optimized out&gt;, optimi</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-ellipsis">...</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="ubsanSampleTrace1"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">ubsanSampleTrace1</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-quote">'''</code><code class="variable-string"></code>
+<code class="variable-string">codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed inte</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">ger overflow: -2147483648 - 1 cannot be represented in type \'int\'</code>
+<code class="variable-string">    #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsi</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">gned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golom</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">b.h:182:37</code>
+<code class="variable-string">    #1 0x51a11b in WelsDec::ParseSliceHeaderSyntaxs(WelsDec::TagWelsDe</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-string">coderContext*, WelsCommon::TagBitStringAux*, bool) /home/user/code/ope</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
 <code class="variable-ellipsis">...</code>
 </pre></td></tr></table>
 </dd>

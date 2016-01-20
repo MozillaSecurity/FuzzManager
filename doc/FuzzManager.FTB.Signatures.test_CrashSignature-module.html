@@ -194,6 +194,36 @@ nst /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:5\
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.test_CrashSignature-module.html#testTraceHeapWithCrashAddress" class="summary-name">testTraceHeapWithCrashAddress</a> = <code title="'''
+Program terminated with signal 11, Segmentation fault.
+#0  0xe1afa070 in ?? ()
+#0  0xe1afa070 in ?? ()
+#1  0x00000000 in ?? ()
+eax    0xfff869cc    -497204
+ebx    0x9469ff4    155623412
+ecx    0xe20f6cc0    -502305600
+..."><code class="variable-quote">'</code><code class="variable-string">\nProgram terminated with sig</code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.test_CrashSignature-module.html#testTraceHeapWithoutCrashAddress" class="summary-name">testTraceHeapWithoutCrashAddress</a> = <code title="'''
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x00007f2b41e78087 in ?? ()
+#1  0xfff9000000000000 in ?? ()
+#2  0x4275203ba1949000 in ?? ()
+#3  0x00007fff5330bb01 in ?? ()
+#4  0x00007f2b44d83e40 in ?? ()
+rax    0x7f2b42c45bc0    139823780486080
+..."><code class="variable-quote">'</code><code class="variable-string">\nProgram terminated with </code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
         <a href="FuzzManager.FTB.Signatures.test_CrashSignature-module.html#testSignature1" class="summary-name">testSignature1</a> = <code title="'''{&quot;symptoms&quot;: [
     {
     &quot;functionName&quot;: &quot;GetObjectAllocKindForCopy&quot;,
@@ -409,6 +439,19 @@ test();
     <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
+        <a href="FuzzManager.FTB.Signatures.test_CrashSignature-module.html#testSignatureEmptyCrashAddress" class="summary-name">testSignatureEmptyCrashAddress</a> = <code title="'''{&quot;symptoms&quot;: [
+  {
+    &quot;address&quot;: &quot;&quot;,
+    &quot;type&quot;: &quot;crashAddress&quot;
+  }
+]}
+'''"><code class="variable-quote">'</code><code class="variable-string">{&quot;symptoms&quot;: [\n  {\n    &quot;ad</code><code class="variable-ellipsis">...</code></code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
         <a name="__package__"></a><span class="summary-name">__package__</span> = <code title="'FuzzManager.FTB.Signatures'"><code class="variable-quote">'</code><code class="variable-string">FuzzManager.FTB.Signatures</code><code class="variable-quote">'</code></code>
     </td>
   </tr>
@@ -503,6 +546,58 @@ test();
 <code class="variable-string">illa/repos/mozilla-central/js/src/jsobj.h:128</code>
 <code class="variable-string">    #1 0x14662b9 in bool JSObject::is&lt;js::PropertyIteratorObject&gt;() co</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
 <code class="variable-string">nst /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:5</code><span class="variable-linewrap"><img src="crarr.png" alt="\" /></span>
+<code class="variable-ellipsis">...</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="testTraceHeapWithCrashAddress"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">testTraceHeapWithCrashAddress</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-quote">'''</code><code class="variable-string"></code>
+<code class="variable-string">Program terminated with signal 11, Segmentation fault.</code>
+<code class="variable-string">#0  0xe1afa070 in ?? ()</code>
+<code class="variable-string">#0  0xe1afa070 in ?? ()</code>
+<code class="variable-string">#1  0x00000000 in ?? ()</code>
+<code class="variable-string">eax    0xfff869cc    -497204</code>
+<code class="variable-string">ebx    0x9469ff4    155623412</code>
+<code class="variable-string">ecx    0xe20f6cc0    -502305600</code>
+<code class="variable-ellipsis">...</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="testTraceHeapWithoutCrashAddress"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">testTraceHeapWithoutCrashAddress</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-quote">'''</code><code class="variable-string"></code>
+<code class="variable-string">Program terminated with signal SIGSEGV, Segmentation fault.</code>
+<code class="variable-string">#0  0x00007f2b41e78087 in ?? ()</code>
+<code class="variable-string">#1  0xfff9000000000000 in ?? ()</code>
+<code class="variable-string">#2  0x4275203ba1949000 in ?? ()</code>
+<code class="variable-string">#3  0x00007fff5330bb01 in ?? ()</code>
+<code class="variable-string">#4  0x00007f2b44d83e40 in ?? ()</code>
+<code class="variable-string">rax    0x7f2b42c45bc0    139823780486080</code>
 <code class="variable-ellipsis">...</code>
 </pre></td></tr></table>
 </dd>
@@ -881,6 +976,30 @@ test();
 <code class="variable-string">    {</code>
 <code class="variable-string">    &quot;functionName&quot;: &quot;/^.KindForCopy/&quot;,</code>
 <code class="variable-string">    &quot;type&quot;: &quot;stackFrame&quot;</code>
+<code class="variable-string">  }</code>
+<code class="variable-string">]}</code>
+<code class="variable-string"></code><code class="variable-quote">'''</code>
+</pre></td></tr></table>
+</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="testSignatureEmptyCrashAddress"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <h3 class="epydoc">testSignatureEmptyCrashAddress</h3>
+  
+  <dl class="fields">
+  </dl>
+  <dl class="fields">
+    <dt>Value:</dt>
+      <dd><table><tr><td><pre class="variable">
+<code class="variable-quote">'''</code><code class="variable-string">{&quot;symptoms&quot;: [</code>
+<code class="variable-string">  {</code>
+<code class="variable-string">    &quot;address&quot;: &quot;&quot;,</code>
+<code class="variable-string">    &quot;type&quot;: &quot;crashAddress&quot;</code>
 <code class="variable-string">  }</code>
 <code class="variable-string">]}</code>
 <code class="variable-string"></code><code class="variable-quote">'''</code>
