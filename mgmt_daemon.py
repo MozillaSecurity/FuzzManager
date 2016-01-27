@@ -217,7 +217,7 @@ def scan_crashes(base_dir, cmdline_path=None):
         if not cmdline_path:
             cmdline_path = os.path.join(base_dir, "cmdline")
         
-        with open(cmdline_path 'r') as cmdline_file:
+        with open(cmdline_path, 'r') as cmdline_file:
             idx = 0
             for line in cmdline_file:
                 if '@@' in line:
