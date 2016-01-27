@@ -175,12 +175,16 @@ def write_aggregated_stats(base_dirs, outfile):
     
     return
 
-def scan_crashes(base_dir):
+def scan_crashes(base_dir, cmdline_path=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
     
     @type base_dir: String
     @param base_dir: AFL base directory
+    
+    @type cmdline_path: String
+    @param cmdline_path: Optional command line file to use instead of the
+                         one found inside the base directory.
     
     @rtype: int
     @return: Non-zero return code on failure
@@ -209,7 +213,11 @@ def scan_crashes(base_dir):
         # First try to read necessary information for reproducing crashes
         cmdline = []
         test_idx = None
-        with open(os.path.join(base_dir, "cmdline"), 'r') as cmdline_file:
+        
+        if not cmdline_path:
+            cmdline_path = os.path.join(base_dir, "cmdline")
+        
+        with open(cmdline_path 'r') as cmdline_file:
             idx = 0
             for line in cmdline_file:
                 if '@@' in line:
@@ -584,6 +592,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
+    parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
     parser.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
@@ -750,7 +759,7 @@ def main(argv=None):
         while True:
             if opts.fuzzmanager:
                 for afl_out_dir in afl_out_dirs:
-                    scan_crashes(afl_out_dir)
+                    scan_crashes(afl_out_dir, opts.custom_cmdline_file)
             
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
