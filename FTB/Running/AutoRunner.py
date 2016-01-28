@@ -18,13 +18,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import subprocess
-
 from abc import ABCMeta
 from distutils import spawn
-from FTB.Signatures.CrashInfo import CrashInfo
 import os
 import re
+import subprocess
+
+from FTB.Signatures.CrashInfo import CrashInfo
 
 
 class AutoRunner():
@@ -38,7 +38,7 @@ class AutoRunner():
         self.binary = binary
         self.cwd = cwd
         self.stdin = stdin
-        
+
         if self.stdin and isinstance(self.stdin, list):
             self.stdin = "\n".join(self.stdin)
 
@@ -182,7 +182,7 @@ class ASanRunner(AutoRunner):
             raise RuntimeError(
                 "Misconfigured ASAN_SYMBOLIZER_PATH: %s" % self.env["ASAN_SYMBOLIZER_PATH"]
             )
-        
+
         if not "UBSAN_OPTIONS" in self.env:
             if "UBSAN_OPTIONS" in os.environ:
                 self.env["UBSAN_OPTIONS"] = os.environ["UBSAN_OPTIONS"]
@@ -191,6 +191,15 @@ class ASanRunner(AutoRunner):
                 # these options, they need to set this themselves, otherwise this code won't be able
                 # to isolate a UBSan trace.
                 self.env["UBSAN_OPTIONS"] = "print_stacktrace=1"
+
+        if not "ASAN_OPTIONS" in self.env:
+            if "ASAN_OPTIONS" in os.environ:
+                self.env["ASAN_OPTIONS"] = os.environ["ASAN_OPTIONS"]
+            else:
+                # Default to allowing the allocator to return null to reproduce crashes mostly caused
+                # by OOM conditions rather than aborting with the ASan OOM failure. If ASAN_OPTIONS
+                # is already set, then the caller should ensure that this option is present.
+                self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1"
 
     def run(self):
         process = subprocess.Popen(
