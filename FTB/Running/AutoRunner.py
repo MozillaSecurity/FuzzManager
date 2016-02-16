@@ -50,6 +50,9 @@ class AutoRunner():
             for envkey in env:
                 self.env[envkey] = env[envkey]
 
+        if not 'LD_LIBRARY_PATH' in self.env:
+            self.env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
+
         self.args = args
         if self.args is None:
             self.args = []
