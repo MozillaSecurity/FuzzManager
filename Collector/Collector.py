@@ -257,10 +257,22 @@ class Collector():
         if crashInfo.configuration.args:
             data["args"] = json.dumps(crashInfo.configuration.args)
 
-        response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+        current_timeout = 2
+        while (True):
+            response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
-        if response.status_code != requests.codes["created"]:
-            raise self.__serverError(response)
+            if response.status_code != requests.codes["created"]:
+                # Allow for a total sleep time of up to 2 minutes if it's
+                # likely that the response codes indicate a temporary error
+                retry_codes = [500, 502, 503, 504]
+                if response.status_code in retry_codes and current_timeout <= 64:
+                    time.sleep(current_timeout)
+                    current_timeout *= 2
+                    continue
+
+                raise self.__serverError(response)
+            else:
+                break
 
     @signature_checks
     def search(self, crashInfo):
