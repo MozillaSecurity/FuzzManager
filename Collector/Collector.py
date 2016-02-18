@@ -451,6 +451,7 @@ def main(argv=None):
     parser.add_argument("--generate", dest="generate", action='store_true', help="Create a (temporary) local signature in the cache directory")
     parser.add_argument("--autosubmit", dest="autosubmit", action='store_true', help="Go into auto-submit mode. In this mode, all remaining arguments are interpreted as the crashing command. This tool will automatically obtain GDB crash information and submit it.")
     parser.add_argument("--download", dest="download", type=int, help="Download the testcase for the specified crash entry", metavar="ID")
+    parser.add_argument("--get-clientid", dest="getclientid", action='store_true', help="Print the client ID used when submitting issues")
 
     # Settings
     parser.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
@@ -488,7 +489,7 @@ def main(argv=None):
     opts = parser.parse_args(argv)
 
     # Check that one action is specified
-    actions = [ "refresh", "submit", "search", "generate", "autosubmit", "download" ]
+    actions = [ "refresh", "submit", "search", "generate", "autosubmit", "download", "getclientid" ]
 
     haveAction = False
     for action in actions:
@@ -674,6 +675,10 @@ def main(argv=None):
 
 
         print(retFile)
+        return 0
+
+    if opts.getclientid:
+        print(collector.clientId)
         return 0
 
 if __name__ == "__main__":
