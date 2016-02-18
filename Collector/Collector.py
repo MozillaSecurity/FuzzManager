@@ -20,27 +20,27 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import sys
-import os
-import json
-import base64
 import argparse
+import base64
 import hashlib
+import json
+import os
 import platform
 import requests
+import sys
 from tempfile import mkstemp
+import time
 from zipfile import ZipFile
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
+from FTB.ConfigurationFiles import ConfigurationFiles
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
-from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.ConfigurationFiles import ConfigurationFiles
-
+from FTB.Signatures.CrashSignature import CrashSignature
 
 __all__ = []
 __version__ = 0.1
@@ -405,7 +405,7 @@ class Collector():
         with open(testCase) as f:
             testCaseData = f.read()
 
-            textBytes = bytearray([7,8,9,10,12,13,27]) + bytearray(range(0x20, 0x100))
+            textBytes = bytearray([7, 8, 9, 10, 12, 13, 27]) + bytearray(range(0x20, 0x100))
             isBinary = lambda input: bool(input.translate(None, textBytes))
 
             return (testCaseData, isBinary(testCaseData))
@@ -650,14 +650,14 @@ def main(argv=None):
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
-            print("Environment variables: %s", " ".join([ "%s = %s" % (k,v) for (k,v) in env.items()]))
+            print("Environment variables: %s", " ".join([ "%s = %s" % (k, v) for (k, v) in env.items()]))
             print("")
 
         if "metadata" in retJSON and retJSON["metadata"]:
             metadata = json.loads(retJSON["metadata"])
             print("== Metadata ==")
             for k, v in metadata.items():
-                print("%s = %s" % (k,v))
+                print("%s = %s" % (k, v))
             print("")
 
 
