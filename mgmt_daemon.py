@@ -571,6 +571,36 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
         remote_key.set_contents_from_filename(upload_file)
         
     bucket.delete_keys(delete_list, quiet=True)
+    
+def upload_build(build_file, bucket_name, project_name):
+    '''
+    Synchronize the specified test corpus directory to the specified S3 bucket. 
+    This method only uploads files that don't exist yet on the receiving side. 
+    
+    @type corpus_dir: String
+    @param corpus_dir: Directory where the test corpus files are stored
+    
+    @type bucket_name: String
+    @param bucket_name: Name of the S3 bucket to use
+    
+    @type project_name: String
+    @param project_name: Name of the project folder inside the S3 bucket
+    '''
+    test_files = [file for file in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, file))]
+    
+    if not os.path.exists(build_file) or not os.path.isfile(build_file):
+        print("Error: Build must be a (zip) file.", file=sys.stderr)
+        return
+    
+    conn = S3Connection()
+    bucket = conn.get_bucket(bucket_name)
+    
+    remote_file = "%s/build.zip" % project_name
+    
+    remote_key = Key(bucket)
+    remote_key.name = remote_file
+    print("Uploading file %s -> %s" % (build_file, remote_key.name))
+    remote_key.set_contents_from_filename(build_file)
 
 def main(argv=None):
     '''Command line options.'''
@@ -587,6 +617,7 @@ def main(argv=None):
     parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
     parser.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
+    parser.add_argument("--s3-build-upload", dest="s3_build_upload", help="Use S3 to upload a new build for the specified project", metavar="FILE")
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
     parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
@@ -636,6 +667,7 @@ def main(argv=None):
     if (opts.s3_queue_upload 
         or opts.s3_corpus_refresh 
         or opts.s3_build_download 
+        or opts.s3_build_upload 
         or opts.s3_corpus_download 
         or opts.s3_corpus_upload
         or opts.s3_queue_status):
@@ -660,6 +692,10 @@ def main(argv=None):
     
     if opts.s3_build_download:
         download_build(opts.s3_build_download, opts.s3_bucket, opts.project)
+        return 0
+
+    if opts.s3_build_upload:
+        upload_build(opts.s3_build_upload, opts.s3_bucket, opts.project)
         return 0
     
     if opts.s3_corpus_download:
