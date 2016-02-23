@@ -574,11 +574,11 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
     
 def upload_build(build_file, bucket_name, project_name):
     '''
-    Synchronize the specified test corpus directory to the specified S3 bucket. 
-    This method only uploads files that don't exist yet on the receiving side. 
+    Upload the given build zip file to the specified S3 bucket/project
+    directory.
     
-    @type corpus_dir: String
-    @param corpus_dir: Directory where the test corpus files are stored
+    @type build_file: String
+    @param build_file: (ZIP) file containing the build that should be uploaded
     
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
@@ -586,8 +586,7 @@ def upload_build(build_file, bucket_name, project_name):
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
     '''
-    test_files = [file for file in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, file))]
-    
+
     if not os.path.exists(build_file) or not os.path.isfile(build_file):
         print("Error: Build must be a (zip) file.", file=sys.stderr)
         return
