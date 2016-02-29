@@ -686,7 +686,7 @@ def main(argv=None):
         
         return 0        
     
-    if opts.s3_queue_cleanup != None:
+    if opts.s3_queue_cleanup:
         clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
         return 0
     
