@@ -613,7 +613,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
-    parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", help="Cleanup S3 queue entries older than specified age", metavar="SECONDS")
+    parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true', help="Cleanup S3 queue entries older than specified refresh interval")
     parser.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
     parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
     parser.add_argument("--s3-build-upload", dest="s3_build_upload", help="Use S3 to upload a new build for the specified project", metavar="FILE")
@@ -623,6 +623,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
+    parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
     parser.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
@@ -686,7 +687,7 @@ def main(argv=None):
         return 0        
     
     if opts.s3_queue_cleanup != None:
-        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, int(opts.s3_queue_cleanup))
+        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
         return 0
     
     if opts.s3_build_download:
@@ -719,7 +720,7 @@ def main(argv=None):
         queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
         
         print("Cleaning old AFL queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
-        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
+        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
         
         print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
         download_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
