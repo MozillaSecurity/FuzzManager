@@ -109,7 +109,10 @@ def viewPool(request, poolid):
     instances = Instance.objects.filter(pool=poolid)
 
     for instance in instances:
-        instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
+        if instance.status_code in INSTANCE_STATE_CODE:
+            instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
+        else:
+            instance.status_code_text = "Unknown (%s)" % instance.status_code
 
     cyclic = pool.config.isCyclic()
 
