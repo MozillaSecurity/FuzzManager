@@ -174,6 +174,7 @@ def crashes(request):
                        "platform__name",
                        "testcase__quality",
                        "tool__name",
+                       "tool__name__contains",
                        ]
 
     for key in exactFilterKeys:
