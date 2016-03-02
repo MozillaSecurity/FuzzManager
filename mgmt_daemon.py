@@ -526,7 +526,7 @@ def download_corpus(corpus_dir, bucket_name, project_name, random_subset_size=No
         if not os.path.exists(dest_file):
             remote_key.get_contents_to_filename(dest_file)
 
-def upload_corpus(corpus_dir, bucket_name, project_name):
+def upload_corpus(corpus_dir, bucket_name, project_name, corpus_delete=False):
     '''
     Synchronize the specified test corpus directory to the specified S3 bucket. 
     This method only uploads files that don't exist yet on the receiving side. 
@@ -539,6 +539,9 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
     
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
+
+    @type corpus_delete: bool
+    @param corpus_delete: Delete all remote files that don't exist on our side
     '''
     test_files = [file for file in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, file))]
     
@@ -559,18 +562,20 @@ def upload_corpus(corpus_dir, bucket_name, project_name):
     for test_file in test_files:
         if not test_file in remote_files:
             upload_list.append(os.path.join(corpus_dir, test_file))
-            
-    for remote_file in remote_files:
-        if not remote_file in test_files:
-            delete_list.append(remote_path + remote_file)
+    
+    if corpus_delete:
+        for remote_file in remote_files:
+            if not remote_file in test_files:
+                delete_list.append(remote_path + remote_file)
     
     for upload_file in upload_list:
         remote_key = Key(bucket)
         remote_key.name = remote_path + os.path.basename(upload_file)
         print("Uploading file %s -> %s" % (upload_file, remote_key.name))
         remote_key.set_contents_from_filename(upload_file)
-        
-    bucket.delete_keys(delete_list, quiet=True)
+    
+    if corpus_delete:    
+        bucket.delete_keys(delete_list, quiet=True)
     
 def upload_build(build_file, bucket_name, project_name):
     '''
@@ -620,6 +625,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
     parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
+    parser.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
@@ -706,7 +712,7 @@ def main(argv=None):
         return 0
     
     if opts.s3_corpus_upload:
-        upload_corpus(opts.s3_corpus_upload, opts.s3_bucket, opts.project)
+        upload_corpus(opts.s3_corpus_upload, opts.s3_bucket, opts.project, opts.s3_corpus_replace)
         return 0
 
     if opts.s3_corpus_refresh:
@@ -779,7 +785,7 @@ def main(argv=None):
             env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
             subprocess.check_call(afl_cmdline, stdout=devnull, env=env)
         
-        upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project)
+        upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project, True)
         
         # Prune the queues directory once we successfully uploaded the new
         # test corpus, but leave everything that's part of our new corpus
