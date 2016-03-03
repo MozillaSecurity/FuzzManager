@@ -17,6 +17,7 @@
                 <option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
                 {% endfor %}
             </select>
+	    <a href="{% url 'crashmanager:viewtemplate' provider, t.pk %}">Edit this template</a>
             <br/><br/>
             <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
 
