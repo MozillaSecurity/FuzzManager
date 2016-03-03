@@ -58,18 +58,21 @@ class BugzillaProvider(Provider):
                     "security",
                 ]
 
-    def getTemplateForUser(self, request):
+    def getTemplateForUser(self, request, crashEntry):
         if 'template' in request.GET:
             obj = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
             template = model_to_dict(obj)
             template["pk"] = obj.pk
         else:
             (user, created) = User.objects.get_or_create(user=request.user)
-            defaultTemplateId = user.defaultTemplateId
-            if not defaultTemplateId:
-                defaultTemplateId = 1
 
-            obj = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
+            obj = BugzillaTemplate.objects.filter(name__contains=crashEntry.tool.name)
+            if not obj:
+                defaultTemplateId = user.defaultTemplateId
+                if not defaultTemplateId:
+                    defaultTemplateId = 1
+
+                obj = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
 
             if not obj:
                 template = {}
@@ -195,7 +198,7 @@ class BugzillaProvider(Provider):
     def renderContextGeneric(self, request, crashEntry, mode, postTarget):
         # This generic function works for both creating bugs and commenting
         # because they require almost the same actions
-        template = self.getTemplateForUser(request)
+        template = self.getTemplateForUser(request, crashEntry)
         templates = BugzillaTemplate.objects.all()
 
         attachmentData = {}
