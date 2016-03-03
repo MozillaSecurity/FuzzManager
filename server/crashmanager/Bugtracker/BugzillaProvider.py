@@ -105,6 +105,7 @@ class BugzillaProvider(Provider):
         if crashEntry.testcase:
             if crashEntry.testcase.isBinary:
                 sdata['testcase'] = "See attachment."
+                attachmentData['testcase_attach'] = True
             else:
                 crashEntry.testcase.test.open(mode='r')
                 testcase_data = crashEntry.testcase.test.read()
@@ -115,6 +116,7 @@ class BugzillaProvider(Provider):
                     sdata['testcase'] = testcase_data
                 else:
                     sdata['testcase'] = "See attachment."
+                    attachmentData['testcase_attach'] = True
 
         if crashEntry.rawCrashData:
             sdata['crashdata'] = crashEntry.rawCrashData
