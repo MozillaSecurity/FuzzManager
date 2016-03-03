@@ -237,6 +237,16 @@ class BugzillaProvider(Provider):
             api_key = password
             password = None
 
+        # Fiddle out attachment data/flags before POST conversion
+        # because they are not template fields and would be stripped
+        crashdata_attach = None
+        if 'crashdata_attach' in request.POST:
+            crashdata_attach = request.POST['crashdata_attach']
+
+        testcase_attach = False
+        if 'testcase_attach' in request.POST:
+            testcase_attach = True
+
         # Remove any other variables that we don't want to pass on
         for key in request.POST:
             if not key in self.templateFields:
@@ -256,17 +266,6 @@ class BugzillaProvider(Provider):
         # to a field in Bugzilla so we need to remove it here.
         if 'security_group' in args:
             del(args['security_group'])
-
-        # Fiddle out attachment data/flags
-        crashdata_attach = None
-        if 'crashdata_attach' in args:
-            crashdata_attach = args['crashdata_attach']
-            del(args['crashdata_attach'])
-
-        testcase_attach = False
-        if 'testcase_attach' in args:
-            testcase_attach = True
-            del(args['testcase_attach'])
 
         # Create the bug
         bz = BugzillaREST(self.hostname, username, password, api_key)
