@@ -83,6 +83,9 @@ class BugzillaProvider(Provider):
         # Store substitution data here for later
         sdata = {}
 
+        # Store possible attachment data/flags (e.g. crashdata)
+        attachmentData = {}
+
         # Load metadata that we need for various things
         metadata = {}
         if crashEntry.metadata:
@@ -167,14 +170,25 @@ class BugzillaProvider(Provider):
         template["description"] = substituteMetadata(template["description"], metadata)
         template["comment"] = substituteMetadata(template["comment"], metadata)
 
+        # Handle ".attached" properties
+        if '%crashdata.attached%' in template["description"] or '%crashdata.attached%' in template["comment"]:
+            template["description"] = template["description"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
+            template["comment"] = template["comment"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
+            attachmentData["crashdata_attach"] = sdata['crashdata']
+
         # Remove the specified pathPrefix from traces and assertion
         if "pathPrefix" in metadata:
             template["summary"] = template["summary"].replace(metadata["pathPrefix"], "")
             template["description"] = template["description"].replace(metadata["pathPrefix"], "")
             template["comment"] = template["comment"].replace(metadata["pathPrefix"], "")
 
+            if "crashdata_attach" in attachmentData:
+                attachmentData["crashdata_attach"] = attachmentData["crashdata_attach"].replace(metadata["pathPrefix"], "")
+
         if crashEntry.shortSignature.startswith("[@"):
             template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
+
+        return attachmentData
 
     def renderContextGeneric(self, request, crashEntry, mode, postTarget):
         # This generic function works for both creating bugs and commenting
@@ -182,8 +196,10 @@ class BugzillaProvider(Provider):
         template = self.getTemplateForUser(request)
         templates = BugzillaTemplate.objects.all()
 
+        attachmentData = {}
+
         if template:
-            self.substituteTemplateForCrash(template, crashEntry)
+            attachmentData = self.substituteTemplateForCrash(template, crashEntry)
 
         data = {
                    'hostname' : self.hostname,
@@ -193,6 +209,7 @@ class BugzillaProvider(Provider):
                    'provider' : self.pk,
                    'mode' : mode,
                    'postTarget' : postTarget,
+                   'attachmentData' : attachmentData,
                 }
 
         return render(request, 'bugzilla/submit.html', data)
@@ -235,11 +252,27 @@ class BugzillaProvider(Provider):
         if 'security_group' in args:
             del(args['security_group'])
 
-        bz = BugzillaREST(self.hostname, username, password, api_key)
+        # Fiddle out attachment data/flags
+        crashdata_attach = None
+        if 'crashdata_attach' in args:
+            crashdata_attach = args['crashdata_attach']
+            del(args['crashdata_attach'])
 
+        testcase_attach = False
+        if 'testcase_attach' in args:
+            testcase_attach = True
+            del(args['testcase_attach'])
+
+        # Create the bug
+        bz = BugzillaREST(self.hostname, username, password, api_key)
         ret = bz.createBug(**args)
         if not "id" in ret:
             raise RuntimeError("Failed to create bug: %s", ret)
+
+        # If we were told to attach the crash data, do so now
+        if crashdata_attach:
+            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
@@ -252,7 +285,7 @@ class BugzillaProvider(Provider):
             if crashEntry.testcase.isBinary:
                 aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
                 ret["attachmentResponse"] = aRet
-            elif len(data) > 2048:
+            elif len(data) > 2048 or testcase_attach:
                 aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=False)
                 ret["attachmentResponse"] = aRet
 
@@ -279,6 +312,10 @@ class BugzillaProvider(Provider):
         ret = bz.createComment(**args)
         if not "id" in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
+
+        if 'callStackAsAttachment' in ret:
+            cRet = bz.addAttachment(ret["id"], ret['callStackAsAttachment'], "call_stack.txt", "Call Stack for comment %s" % ret["id"], is_binary=False)
+            ret["callStackAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step

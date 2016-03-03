@@ -50,6 +50,16 @@
 		{% include templatePath %}
 		{% endwith %}
 
+		{% if not createTemplate %}
+		    {% if attachmentData.crashdata_attach %}
+			    The following crash data will be attached:<br/>
+			    <textarea id="id_crashdata_attach" class="form-control" name="crashdata_attach" style="width:100%">{{ attachmentData.crashdata_attach }}</textarea>
+		    {% endif %}
+		    <br/>
+		    <input type="checkbox" id="id_testcase_attach" name="testcase_attach" value="unassigned" {% if attachmentData.testcase_attach %}checked disabled{% endif %}/>
+		    This issue's testcase will be attached to the bug.
+		{% endif %}
+
                 <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
                 <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
             </form>
