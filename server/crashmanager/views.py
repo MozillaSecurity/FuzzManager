@@ -605,6 +605,11 @@ def optimizeSignature(request, sigid):
     for entry in entries:
         entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
 
+        # For optimization, disregard any issues that directly match since those could be
+        # incoming new issues and we don't want these to block the optimization.
+        if signature.matches(entry.crashinfo):
+            continue
+
         optimizedSignature = signature.fit(entry.crashinfo)
         if optimizedSignature:
             # We now try to determine how this signature will behave in other buckets
