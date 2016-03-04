@@ -22,6 +22,14 @@
 	{% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
 	{% include templatePath %}
 	{% endwith %}
+	<div class="row">
+	<div class="col-md-3">
+	    Filename that will be used for the testcase when attaching:
+	</div>
+	<div class="col-md-3">
+	    <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+	</div>
+	</div>
 	<input type="hidden" name="mode" value="{{ mode }}"/>
         <input type="submit" name="submit_save" value="Save"/>
     </form>

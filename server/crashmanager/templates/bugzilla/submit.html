@@ -63,12 +63,27 @@
 			    <textarea id="id_crashdata_attach" class="form-control" name="crashdata_attach" style="width:100%">{{ attachmentData.crashdata_attach }}</textarea>
 		    {% endif %}
 		    <br/>
-		    <input type="checkbox" id="id_testcase_attach" name="testcase_attach" value="unassigned" {% if attachmentData.testcase_attach %}checked disabled{% endif %}/>
-		    This issue's testcase will be attached to the bug. Filename:
+		    <div class="row">
+		    <div class="col-md-3">
+                        <input type="checkbox" id="id_testcase_attach" name="testcase_attach" value="unassigned" {% if attachmentData.testcase_attach %}checked disabled{% endif %}/>
+                        This issue's testcase will be attached to the bug. Filename:
+		    </div>
+		    <div class="col-md-3">
+                        <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+		    </div>
+		    </div>
 		{% else %}
-                Filename that will be used for the testcase when attaching:
+		    <div class="row">
+		    <div class="col-md-3">
+                        Filename that will be used for the testcase when attaching:
+		    </div>
+		    <div class="col-md-3">
+                        <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+		    </div>
+		    </div>
 		{% endif %}
-		<input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+
+		
 
                 <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
                 <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
