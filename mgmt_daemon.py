@@ -175,7 +175,7 @@ def write_aggregated_stats(base_dirs, outfile):
     
     return
 
-def scan_crashes(base_dir, cmdline_path=None):
+def scan_crashes(base_dir, cmdline_path=None, env_path=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
     
@@ -185,6 +185,9 @@ def scan_crashes(base_dir, cmdline_path=None):
     @type cmdline_path: String
     @param cmdline_path: Optional command line file to use instead of the
                          one found inside the base directory.
+                         
+    @type env_path: String
+    @param env_path: Optional file containing environment variables.   
     
     @rtype: int
     @return: Non-zero return code on failure
@@ -214,6 +217,17 @@ def scan_crashes(base_dir, cmdline_path=None):
         cmdline = []
         test_idx = None
         
+        base_env = None
+        test_in_env = None
+        if env_path:
+            with open(env_path, 'r') as env_file:
+                for line in env_file:
+                    (name,val) = line.split("=", 1)
+                    base_env[name] = val
+                    
+                    if '@@' in val:
+                        test_in_env = name
+        
         if not cmdline_path:
             cmdline_path = os.path.join(base_dir, "cmdline")
         
@@ -239,14 +253,20 @@ def scan_crashes(base_dir, cmdline_path=None):
         
         for crash_file in crash_files:
             stdin = None
+            env = None
             
+            if base_env:
+                env = dict(base_env)
+
             if test_idx != None:
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
+            elif test_in_env != None:
+                env[test_in_env] = env[test_in_env].replace('@@', crash_file)
             else:
                 with open(crash_file, 'r') as crash_fd:
                     stdin = crash_fd.read()
             
-            runner = AutoRunner.fromBinaryArgs(cmdline[0], cmdline[1:], stdin=stdin)
+            runner = AutoRunner.fromBinaryArgs(cmdline[0], cmdline[1:], env=env, stdin=stdin)
             if runner.run():
                 crash_info = runner.getCrashInfo(configuration)
                 collector.submit(crash_info, crash_file)
@@ -629,6 +649,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
+    parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
     parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
