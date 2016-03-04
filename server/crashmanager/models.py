@@ -233,6 +233,7 @@ class BugzillaTemplate(models.Model):
     security = models.BooleanField(blank=False, default=False)
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
+    testcase_filename = models.TextField(blank=True)
 
 
 class User(models.Model):

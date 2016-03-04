@@ -52,6 +52,7 @@ class BugzillaProvider(Provider):
                     "keywords",
                     "attrs",
                     "security_group",
+                    "testcase_filename",
                 ]
 
         self.templateFlags = [
@@ -285,6 +286,9 @@ class BugzillaProvider(Provider):
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
             filename = os.path.basename(crashEntry.testcase.test.name)
+
+            if args['testcase_filename']:
+                filename = args['testcase_filename']
 
             if crashEntry.testcase.isBinary:
                 aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)

@@ -64,8 +64,11 @@
 		    {% endif %}
 		    <br/>
 		    <input type="checkbox" id="id_testcase_attach" name="testcase_attach" value="unassigned" {% if attachmentData.testcase_attach %}checked disabled{% endif %}/>
-		    This issue's testcase will be attached to the bug.<br/>
+		    This issue's testcase will be attached to the bug. Filename:
+		{% else %}
+                Filename that will be used for the testcase when attaching:
 		{% endif %}
+		<input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
 
                 <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
                 <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
