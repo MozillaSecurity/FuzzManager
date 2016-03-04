@@ -217,12 +217,12 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None):
         cmdline = []
         test_idx = None
         
-        base_env = None
+        base_env = {}
         test_in_env = None
         if env_path:
             with open(env_path, 'r') as env_file:
                 for line in env_file:
-                    (name,val) = line.split("=", 1)
+                    (name,val) = line.rstrip('\n').split("=", 1)
                     base_env[name] = val
                     
                     if '@@' in val:
@@ -822,7 +822,7 @@ def main(argv=None):
         while True:
             if opts.fuzzmanager:
                 for afl_out_dir in afl_out_dirs:
-                    scan_crashes(afl_out_dir, opts.custom_cmdline_file)
+                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file)
             
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
