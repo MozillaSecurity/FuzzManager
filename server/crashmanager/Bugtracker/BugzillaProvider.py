@@ -271,7 +271,7 @@ class BugzillaProvider(Provider):
         # Strip the submitted testcase filename, we need to handle
         # it separately when creating our testcase attachment
         submitted_testcase_filename = None
-        if args['testcase_filename']:
+        if 'testcase_filename' in args:
             submitted_testcase_filename = args['testcase_filename']
             del(args['testcase_filename'])
 
