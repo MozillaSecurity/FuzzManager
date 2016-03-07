@@ -268,6 +268,13 @@ class BugzillaProvider(Provider):
         if 'security_group' in args:
             del(args['security_group'])
 
+        # Strip the submitted testcase filename, we need to handle
+        # it separately when creating our testcase attachment
+        submitted_testcase_filename = None
+        if args['testcase_filename']:
+            submitted_testcase_filename = args['testcase_filename']
+            del(args['testcase_filename'])
+
         # Create the bug
         bz = BugzillaREST(self.hostname, username, password, api_key)
         ret = bz.createBug(**args)
@@ -287,8 +294,8 @@ class BugzillaProvider(Provider):
             crashEntry.testcase.test.close()
             filename = os.path.basename(crashEntry.testcase.test.name)
 
-            if args['testcase_filename']:
-                filename = args['testcase_filename']
+            if submitted_testcase_filename:
+                filename = submitted_testcase_filename
 
             if crashEntry.testcase.isBinary:
                 aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
@@ -315,15 +322,29 @@ class BugzillaProvider(Provider):
             api_key = password
             password = None
 
+        # Handle testcase filename separately if requested
+        submitted_testcase_filename = None
+        if 'testcase_filename' in request.POST:
+            submitted_testcase_filename = request.POST['testcase_filename']
+
+        crashdata_attach = None
+        if 'crashdata_attach' in request.POST:
+            crashdata_attach = request.POST['crashdata_attach']
+
+        testcase_attach = False
+        if 'testcase_attach' in request.POST:
+            testcase_attach = True
+
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
         ret = bz.createComment(**args)
         if not "id" in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
 
-        if 'callStackAsAttachment' in ret:
-            cRet = bz.addAttachment(ret["id"], ret['callStackAsAttachment'], "call_stack.txt", "Call Stack for comment %s" % ret["id"], is_binary=False)
-            ret["callStackAttachmentResponse"] = cRet
+        # If we were told to attach the crash data, do so now
+        if crashdata_attach:
+            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
@@ -333,10 +354,13 @@ class BugzillaProvider(Provider):
             crashEntry.testcase.test.close()
             filename = os.path.basename(crashEntry.testcase.test.name)
 
+            if submitted_testcase_filename:
+                filename = submitted_testcase_filename
+
             if crashEntry.testcase.isBinary:
                 aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=True)
                 ret["attachmentResponse"] = aRet
-            elif len(data) > 2048:
+            elif len(data) > 2048 or testcase_attach:
                 aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["id"], is_binary=False)
                 ret["attachmentResponse"] = aRet
 
