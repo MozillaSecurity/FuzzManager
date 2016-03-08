@@ -101,7 +101,7 @@ def signatures(request):
     (user, created) = User.objects.get_or_create(user=request.user)
     defaultToolsFilter = user.defaultToolsFilter.all()
 
-    entries = Bucket.objects.all()
+    entries = Bucket.objects.all().order_by('-pk')
 
     filters = {}
     q = None
