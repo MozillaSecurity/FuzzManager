@@ -80,6 +80,9 @@
 	{% if entry.bucket %}
 		<a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }} </a>
 	{% else %}
+	        {% if not entry.triagedOnce %}
+		<span class="glyphicon glyphicon-hourglass" data-toggle="tooltip" data-placement="top" title="This item hasn't been triaged yet by the server."></span>
+		{% endif %}
 		<a href="{% url 'crashmanager:signew' %}?crashid={{ entry.pk }}" data-toggle="tooltip" data-placement="top" title="Add" class="glyphicon glyphicon-oil" style="color:dimgray"></a>
 		<a href="{% url 'crashmanager:findsigs' entry.pk %}" data-toggle="tooltip" data-placement="top" title="Search" class="glyphicon glyphicon-search" style="color:dimgray"></a>
 	{% endif %}

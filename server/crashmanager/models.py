@@ -112,6 +112,7 @@ class CrashEntry(models.Model):
     crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
     shortSignature = models.CharField(max_length=255, blank=True)
     cachedCrashInfo = models.TextField(blank=True, null=True)
+    triagedOnce = models.BooleanField(blank=False, default=False)
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data

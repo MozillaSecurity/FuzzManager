@@ -251,9 +251,23 @@ def autoAssignCrashEntries(request):
         needTest = signature.matchRequiresTest()
 
         for entry in entries:
+            entry_modified = False
+
+            if not entry.triagedOnce:
+                entry.triagedOnce = True
+                entry_modified = True
+
             if signature.matches(entry.getCrashInfo(attachTestcase=needTest)):
                 entry.bucket = bucket
+                entry_modified = True
+
+            if entry_modified:
                 entry.save()
+
+    # This query ensures that all issues that have been bucketed manually before
+    # the server had a chance to triage them will have their triageOnce flag set,
+    # so the hourglass in the UI isn't displayed anymore.
+    CrashEntry.objects.exclude(bucket=None).update(triagedOnce=True)
 
     return redirect('crashmanager:crashes')
 
