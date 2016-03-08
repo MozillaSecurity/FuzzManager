@@ -13,7 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import unittest
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo,\
-    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo
+    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures import RegisterHelper
 
@@ -677,6 +677,158 @@ class AppleSelectorTest(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
+
+class CDBParserTestCrash1(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-1.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 20)
+        self.assertEqual(crashInfo.backtrace[0], "moz_abort")
+        self.assertEqual(crashInfo.backtrace[1], "arena_run_split")
+        self.assertEqual(crashInfo.backtrace[2], "arena_run_alloc")
+        self.assertEqual(crashInfo.backtrace[3], "arena_malloc_large")
+        self.assertEqual(crashInfo.backtrace[4], "arena_ralloc")
+        self.assertEqual(crashInfo.backtrace[5], "je_realloc")
+        self.assertEqual(crashInfo.backtrace[6], "mozilla::VectorBase")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::X86Encoding::BaseAssembler::X86InstructionFormatter::oneByteOp64")
+        self.assertEqual(crashInfo.backtrace[8], "js::jit::X86Encoding::BaseAssemblerX64::movq_mr")
+        self.assertEqual(crashInfo.backtrace[9], "js::jit::MacroAssemblerX64::load64")
+        self.assertEqual(crashInfo.backtrace[10], "js::jit::CodeGenerator::visitElements")
+        self.assertEqual(crashInfo.backtrace[11], "js::jit::CodeGenerator::generateBody")
+        self.assertEqual(crashInfo.backtrace[12], "js::jit::CodeGenerator::generate")
+        self.assertEqual(crashInfo.backtrace[13], "js::jit::GenerateCode")
+        self.assertEqual(crashInfo.backtrace[14], "js::jit::IonCompile")
+        self.assertEqual(crashInfo.backtrace[15], "js::jit::Compile")
+        self.assertEqual(crashInfo.backtrace[16], "js::jit::CompileFunctionForBaseline")
+        self.assertEqual(crashInfo.backtrace[17], "js::jit::EnsureCanEnterIon")
+        self.assertEqual(crashInfo.backtrace[18], "js::jit::DoWarmUpCounterFallback")
+        self.assertEqual(crashInfo.backtrace[19], "??")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x000007fef86c13e4))
+
+class CDBSelectorTest1(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-1.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x000007fef86c13e4))
+
+class CDBParserTestCrash2(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-2.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 17)
+        self.assertEqual(crashInfo.backtrace[0], "js::jit::DoTypeMonitorFallback")
+        self.assertEqual(crashInfo.backtrace[1], "??")
+        self.assertEqual(crashInfo.backtrace[2], "??")
+        self.assertEqual(crashInfo.backtrace[3], "??")
+        self.assertEqual(crashInfo.backtrace[4], "??")
+        self.assertEqual(crashInfo.backtrace[5], "??")
+        self.assertEqual(crashInfo.backtrace[6], "??")
+        self.assertEqual(crashInfo.backtrace[7], "??")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "DoTypeMonitorFallbackInfo")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "??")
+        self.assertEqual(crashInfo.backtrace[13], "??")
+        self.assertEqual(crashInfo.backtrace[14], "??")
+        self.assertEqual(crashInfo.backtrace[15], "??")
+        self.assertEqual(crashInfo.backtrace[16], "??")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x00000001405e4703))
+
+class CDBSelectorTest2(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-2.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x00000001405e4703))
+
+class CDBParserTestCrash3(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-3.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 52)
+        self.assertEqual(crashInfo.backtrace[0], "JS::Value::isMagic")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::InvokeFunction")
+        self.assertEqual(crashInfo.backtrace[2], "??")
+        self.assertEqual(crashInfo.backtrace[3], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[4], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[5], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[6], "js::Invoke")
+        self.assertEqual(crashInfo.backtrace[7], "js::Invoke")
+        self.assertEqual(crashInfo.backtrace[8], "js::jit::InvokeFunction")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[11], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[12], "Interpret")
+        self.assertEqual(crashInfo.backtrace[13], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[14], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[15], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[16], "Evaluate")
+        self.assertEqual(crashInfo.backtrace[17], "Evaluate")
+        self.assertEqual(crashInfo.backtrace[18], "JS::Evaluate")
+        self.assertEqual(crashInfo.backtrace[19], "EvalInContext")
+        self.assertEqual(crashInfo.backtrace[20], "??")
+        self.assertEqual(crashInfo.backtrace[21], "Print")
+        self.assertEqual(crashInfo.backtrace[22], "??")
+        self.assertEqual(crashInfo.backtrace[23], "??")
+        self.assertEqual(crashInfo.backtrace[24], "??")
+        self.assertEqual(crashInfo.backtrace[25], "??")
+        self.assertEqual(crashInfo.backtrace[26], "??")
+        self.assertEqual(crashInfo.backtrace[27], "??")
+        self.assertEqual(crashInfo.backtrace[28], "js::Activation::Activation")
+        self.assertEqual(crashInfo.backtrace[29], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[30], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[31], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[32], "js::Invoke")
+        self.assertEqual(crashInfo.backtrace[33], "js::Invoke")
+        self.assertEqual(crashInfo.backtrace[34], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[35], "??")
+        self.assertEqual(crashInfo.backtrace[36], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[37], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[38], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[39], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[40], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[41], "ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[42], "JS_ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[43], "RunFile")
+        self.assertEqual(crashInfo.backtrace[44], "ProcessArgs")
+        self.assertEqual(crashInfo.backtrace[45], "Shell")
+        self.assertEqual(crashInfo.backtrace[46], "main")
+        self.assertEqual(crashInfo.backtrace[47], "__tmainCRTStartup")
+        self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
+        self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
+        self.assertEqual(crashInfo.backtrace[50], "RtlInitializeExceptionChain")
+        self.assertEqual(crashInfo.backtrace[51], "RtlInitializeExceptionChain")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000001206fbd))
+
+class CDBSelectorTest3(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        with open('cdb-crash-report-example-3.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000001206fbd))
 
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):

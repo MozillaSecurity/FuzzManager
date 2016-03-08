@@ -1,0 +1,120 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\mozillaadmin\AppData\Local\CrashDumps\js-64-prof-windows-a523d4c7efe2.exe.2512.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 7601 (Service Pack 1) MP (8 procs) Free x64
+Product: WinNt, suite: SingleUserTS
+Machine Name:
+Debug session time: Thu Nov 19 15:45:03.000 2015 (UTC - 8:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:07.000
+..........................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+*** WARNING: Unable to verify checksum for mozglue.dll
+mozglue!moz_abort+0x4:
+000007fe`f86c13e4 cc              int     3
+0:000> cdb: Reading initial command '.load C:\Program Files\Debugging Tools for Windows (x64)\winext\msec.dll;$<c:\Users\mozillaadmin\funfuzz\util\cdbCmds.txt'
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> ~kn 250
+ # Child-SP          RetAddr           Call Site
+00 00000000`0033bb10 000007fe`f86c45cd mozglue!moz_abort+0x4 [c:\users\mozillaadmin\trees\mozilla-central\memory\build\jemalloc_config.cpp @ 159]
+01 00000000`0033bb40 000007fe`f86c3de3 mozglue!arena_run_split+0x27d [c:\users\mozillaadmin\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 3481]
+02 00000000`0033bbd0 000007fe`f86c2f79 mozglue!arena_run_alloc+0x103 [c:\users\mozillaadmin\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 3651]
+03 00000000`0033bc40 000007fe`f86c39bd mozglue!arena_malloc_large+0x49 [c:\users\mozillaadmin\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 4254]
+04 00000000`0033bc80 000007fe`f86c75fd mozglue!arena_ralloc+0x25d [c:\users\mozillaadmin\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 4891]
+*** WARNING: Unable to verify checksum for js-64-prof-windows-a523d4c7efe2.exe
+05 00000000`0033bcb0 00000001`3fb93053 mozglue!je_realloc+0x3d [c:\users\mozillaadmin\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 6404]
+06 00000000`0033bce0 00000001`3fb99695 js_64_prof_windows_a523d4c7efe2!mozilla::VectorBase<unsigned char,256,js::SystemAllocPolicy,mozilla::Vector<unsigned char,256,js::SystemAllocPolicy> >::growStorageBy+0x53 [c:\users\mozillaadmin\shell-cache\js-64-prof-windows-a523d4c7efe2\objdir-js\dist\include\mozilla\vector.h @ 885]
+07 00000000`0033bd10 00000001`3fb98d1d js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssembler::X86InstructionFormatter::oneByteOp64+0x35 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\x86-shared\baseassembler-x86-shared.h @ 4341]
+08 00000000`0033bd40 00000001`3ff3d872 js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssemblerX64::movq_mr+0x7d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\x64\baseassembler-x64.h @ 469]
+09 00000000`0033bd80 00000001`3ff4684c js_64_prof_windows_a523d4c7efe2!js::jit::MacroAssemblerX64::load64+0xd2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\x64\macroassembler-x64.h @ 774]
+0a 00000000`0033bdc0 00000001`3ff38968 js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::visitElements+0x4c [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\codegenerator.cpp @ 2579]
+0b 00000000`0033bdf0 00000001`3ff381a2 js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::generateBody+0x258 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\codegenerator.cpp @ 4173]
+0c 00000000`0033bea0 00000001`3fe88759 js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::generate+0x162 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\codegenerator.cpp @ 7893]
+0d 00000000`0033bed0 00000001`3fe8cc46 js_64_prof_windows_a523d4c7efe2!js::jit::GenerateCode+0xd9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 1961]
+0e 00000000`0033bf20 00000001`3fe83398 js_64_prof_windows_a523d4c7efe2!js::jit::IonCompile+0xb86 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 2249]
+0f 00000000`0033c270 00000001`3fe8351a js_64_prof_windows_a523d4c7efe2!js::jit::Compile+0x1a8 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 2419]
+10 00000000`0033c330 00000001`3ffa43d5 js_64_prof_windows_a523d4c7efe2!js::jit::CompileFunctionForBaseline+0x9a [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 2612]
+11 00000000`0033c370 00000001`3ffa404b js_64_prof_windows_a523d4c7efe2!js::jit::EnsureCanEnterIon+0x45 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 69]
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+12 00000000`0033c3a0 00000109`f77b2630 js_64_prof_windows_a523d4c7efe2!js::jit::DoWarmUpCounterFallback+0xeb [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 230]
+13 00000000`0033c410 00000000`00000000 0x109`f77b2630
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+rax=0000000000000000 rbx=0000000000008000 rcx=00000000000005af
+rdx=0000000000000000 rsi=0000000008c52000 rdi=0000000000008000
+rip=000007fef86c13e4 rsp=000000000033bb10 rbp=0000000000000008
+ r8=0000000077440000  r9=00000000000003a6 r10=00000000c000012d
+r11=0000000000000246 r12=0000000000000008 r13=0000000000500040
+r14=0000000008c007e0 r15=0000000000000000
+iopl=0         nv up ei pl nz na pe nc
+cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000200
+mozglue!moz_abort+0x4:
+000007fe`f86c13e4 cc              int     3
+0:000> !exploitable -v
+
+!exploitable 1.6.0.0
+HostMachine\HostUser
+Executing Processor Architecture is x64
+Debuggee is in User Mode
+Debuggee is a user mode small dump file
+Event Type: Exception
+Exception Faulting Address: 0x7fef86c13e4
+Second Chance Exception Type: STATUS_BREAKPOINT (0x80000003)
+
+Faulting Instruction:000007fe`f86c13e4 int 3
+
+Basic Block:
+    000007fe`f86c13e4 int 3
+
+Exception Hash (Major/Minor): 0xc3eefb5e.0x784ac7be
+
+ Hash Usage : Stack Trace:
+Major+Minor : mozglue!moz_abort+0x4
+Major+Minor : mozglue!arena_run_split+0x27d
+Major+Minor : mozglue!arena_run_alloc+0x103
+Major+Minor : mozglue!arena_malloc_large+0x49
+Major+Minor : mozglue!arena_ralloc+0x25d
+Minor       : mozglue!je_realloc+0x3d
+Minor       : js_64_prof_windows_a523d4c7efe2!mozilla::VectorBase<unsigned char,256,js::SystemAllocPolicy,mozilla::Vector<unsigned char,256,j+0x53
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssembler::X86InstructionFormatter::oneByteOp64+0x35
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssemblerX64::movq_mr+0x7d
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::MacroAssemblerX64::load64+0xd2
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::visitElements+0x4c
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::generateBody+0x258
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::CodeGenerator::generate+0x162
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::GenerateCode+0xd9
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::IonCompile+0xb86
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::Compile+0x1a8
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::CompileFunctionForBaseline+0x9a
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::EnsureCanEnterIon+0x45
+Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::DoWarmUpCounterFallback+0xeb
+Minor       : Unknown
+Instruction Address: 0x000007fef86c13e4
+Source File: c:\users\mozillaadmin\trees\mozilla-central\memory\build\jemalloc_config.cpp
+Source Line: 159
+
+Description: Possible Stack Corruption
+Short Description: PossibleStackCorruption
+Exploitability Classification: UNKNOWN
+Recommended Bug Title: Possible Stack Corruption starting at mozglue!moz_abort+0x0000000000000004 (Hash=0xc3eefb5e.0x784ac7be)
+
+The stack trace contains one or more locations for which no symbol or module could be found. This may be a sign of stack corruption.
+0:000> q
+quit:

@@ -169,6 +169,7 @@ class CrashInfo():
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
         appleString = "OS Version:            Mac OS X"
+        cdbString = "Microsoft (R) Windows Debugger"
 
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
@@ -189,6 +190,8 @@ class CrashInfo():
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif appleString in line:
                 return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif cdbString in line:
+                return CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
@@ -993,3 +996,61 @@ class AppleCrashInfo(CrashInfo):
         if match:
             return match.group(1)
         return stackEntry
+
+
+class CDBCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        inCrashingThread = False
+        for line in crashData:
+            # Crash address
+            if line.startswith("Instruction Address:"):
+                # Example:
+                #     Instruction Address: 0x000007fef86c13e4
+                address = line.split(": ")[1]
+                self.crashAddress = long(address, 16)
+
+            # Start of stack for crashing thread
+            if re.match(r'\sHash Usage : Stack Trace:', line):
+                inCrashingThread = True
+                continue
+
+            if inCrashingThread:
+                # Example:
+                #     Major+Minor : mozglue!moz_abort+0x4
+                #     Minor       : mozglue!je_realloc+0x3d
+                #     Minor       : js_64_prof_windows_a523d4c7efe2!mozilla::VectorBase<unsigned char,256,js::SystemAllocPolicy,mozilla::Vector<unsigned char,256,j+0x53
+                #     Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssembler::X86InstructionFormatter::oneByteOp64+0x35
+                #     Minor       : Unknown
+                components = line.split(None, 4)
+                stackEntry = components[2]
+                if components[0] == "Instruction":
+                    inCrashingThread = False
+                    continue
+                if stackEntry.endswith("Unknown"):
+                    self.backtrace.append("??")
+                else:
+                    stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
+                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                    self.backtrace.append(stackEntry)
+
+    @staticmethod
+    def removeFilenameAndOffset(stackEntry):
+        # Uses !exploitable output, sometimes only !exploitable is able to extract function names
+        # Extract only the function name between "!" and "+", and also strip out "<" onwards, if any
+        return stackEntry.split("!")[1].split("+")[0].split("<")[0]
