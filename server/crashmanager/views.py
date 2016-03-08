@@ -88,7 +88,7 @@ def settings(request):
 
 @login_required(login_url='/login/')
 def allSignatures(request):
-    entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+    entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')).order_by('-id')
     return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
@@ -101,7 +101,7 @@ def signatures(request):
     (user, created) = User.objects.get_or_create(user=request.user)
     defaultToolsFilter = user.defaultToolsFilter.all()
 
-    entries = Bucket.objects.all().order_by('-pk')
+    entries = Bucket.objects.all().order_by('-id')
 
     filters = {}
     q = None
