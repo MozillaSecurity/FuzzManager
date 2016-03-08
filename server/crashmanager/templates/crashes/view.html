@@ -12,7 +12,7 @@
                 {% if entry.bucket %}
                     Assigned to bucket <a href="{% url 'crashmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
                     {% if entry.bucket.bug %}
-                        Reported as <a href="{{ entry.bucket.bug.externalType.urlTemplate|varformat:entry.bucket.bug.externalId }}"> bug {{ entry.bucket.bug.externalId }}</a>.
+		        Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bucket.bug.externalType.urlTemplate|varformat:entry.bucket.bug.externalId }}" target="_blank"> bug {{ entry.bucket.bug.externalId }}</a>.
                     {% else %}
                         Unreported.
                     {% endif %}

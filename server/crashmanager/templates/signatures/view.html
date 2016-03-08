@@ -16,7 +16,7 @@
             <tr><td>External Bug Status</td>
                 <td>{{ entry.shortSignature|escape }}
             {% if bucket.bug %}
-                Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}">bug {{ bucket.bug.externalId }}</a>.
+                Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}" target="_blank">bug {{ bucket.bug.externalId }}</a>.
             {% else %}
                 Unreported.
             {% endif %}
