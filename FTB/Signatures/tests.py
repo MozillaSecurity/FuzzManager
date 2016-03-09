@@ -764,7 +764,7 @@ class CDBParserTestCrash3(unittest.TestCase):
         with open('cdb-crash-report-example-3.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 52)
+        self.assertEqual(len(crashInfo.backtrace), 50)
         self.assertEqual(crashInfo.backtrace[0], "JS::Value::isMagic")
         self.assertEqual(crashInfo.backtrace[1], "js::jit::InvokeFunction")
         self.assertEqual(crashInfo.backtrace[2], "??")
@@ -815,8 +815,6 @@ class CDBParserTestCrash3(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[47], "__tmainCRTStartup")
         self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
-        self.assertEqual(crashInfo.backtrace[50], "RtlInitializeExceptionChain")
-        self.assertEqual(crashInfo.backtrace[51], "RtlInitializeExceptionChain")
 
         self.assertEqual(crashInfo.crashAddress, long(0x0000000001206fbd))
 

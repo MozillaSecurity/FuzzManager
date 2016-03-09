@@ -1039,7 +1039,7 @@ class CDBCrashInfo(CrashInfo):
                 #     Minor       : Unknown
                 components = line.split(None, 4)
                 stackEntry = components[2]
-                if components[0] == "Instruction":
+                if components[0] in ["Excluded", "Instruction"]:
                     inCrashingThread = False
                     continue
                 if stackEntry.endswith("Unknown"):
