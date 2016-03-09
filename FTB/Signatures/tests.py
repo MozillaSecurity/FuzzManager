@@ -712,6 +712,24 @@ class CDBParserTestCrash1(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[18], "js::jit::DoWarmUpCounterFallback")
         self.assertEqual(crashInfo.backtrace[19], "??")
 
+        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["rbx"], long(0x0000000000008000))
+        self.assertEqual(crashInfo.registers["rcx"], long(0x00000000000005af))
+        self.assertEqual(crashInfo.registers["rdx"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["rsi"], long(0x0000000008c52000))
+        self.assertEqual(crashInfo.registers["rdi"], long(0x0000000000008000))
+        self.assertEqual(crashInfo.registers["rip"], long(0x000007fef86c13e4))
+        self.assertEqual(crashInfo.registers["rsp"], long(0x000000000033bb10))
+        self.assertEqual(crashInfo.registers["rbp"], long(0x0000000000000008))
+        self.assertEqual(crashInfo.registers["r8"], long(0x0000000077440000))
+        self.assertEqual(crashInfo.registers["r9"], long(0x00000000000003a6))
+        self.assertEqual(crashInfo.registers["r10"], long(0x00000000c000012d))
+        self.assertEqual(crashInfo.registers["r11"], long(0x0000000000000246))
+        self.assertEqual(crashInfo.registers["r12"], long(0x0000000000000008))
+        self.assertEqual(crashInfo.registers["r13"], long(0x0000000000500040))
+        self.assertEqual(crashInfo.registers["r14"], long(0x0000000008c007e0))
+        self.assertEqual(crashInfo.registers["r15"], long(0x0000000000000000))
+
         self.assertEqual(crashInfo.crashAddress, long(0x7fef86c13e4))
 
 class CDBSelectorTest1(unittest.TestCase):
@@ -754,6 +772,24 @@ class CDBParserTestCrash2(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[14], "??")
         self.assertEqual(crashInfo.backtrace[15], "??")
         self.assertEqual(crashInfo.backtrace[16], "??")
+
+        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["rbx"], long(0x00000000072f5220))
+        self.assertEqual(crashInfo.registers["rcx"], long(0x000007fef884b780))
+        self.assertEqual(crashInfo.registers["rdx"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["rsi"], long(0x0000000002016400))
+        self.assertEqual(crashInfo.registers["rdi"], long(0x00000000071eb5bc))
+        self.assertEqual(crashInfo.registers["rip"], long(0x00000001405e4703))
+        self.assertEqual(crashInfo.registers["rsp"], long(0x00000000003ecb80))
+        self.assertEqual(crashInfo.registers["rbp"], long(0x00000000003ecbd0))
+        self.assertEqual(crashInfo.registers["r8"], long(0x00000000003e8c48))
+        self.assertEqual(crashInfo.registers["r9"], long(0x00000000003ecbd0))
+        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["r11"], long(0x0000000000000246))
+        self.assertEqual(crashInfo.registers["r12"], long(0x0000000000000008))
+        self.assertEqual(crashInfo.registers["r13"], long(0x0000000000000000))
+        self.assertEqual(crashInfo.registers["r14"], long(0x00000000003ecc68))
+        self.assertEqual(crashInfo.registers["r15"], long(0x0000000000000000))
 
         self.assertEqual(crashInfo.crashAddress, long(0x1405e4703))
 
@@ -830,6 +866,16 @@ class CDBParserTestCrash3(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[47], "__tmainCRTStartup")
         self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
+
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x12630a6d))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00000012))
+        self.assertEqual(crashInfo.registers["esi"], long(0x00c6b180))
+        self.assertEqual(crashInfo.registers["edi"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["eip"], long(0x01206fbd))
+        self.assertEqual(crashInfo.registers["esp"], long(0x0020d5b4))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x0020d5bc))
 
         self.assertEqual(crashInfo.crashAddress, long(0x1206fbd))
 

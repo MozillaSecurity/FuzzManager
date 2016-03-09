@@ -1016,8 +1016,48 @@ class CDBCrashInfo(CrashInfo):
 
         self.configuration = configuration
 
+        cdbRegisterPattern = RegisterHelper.getRegisterPattern() + "=([0-9a-f]+)"
+
         inCrashingThread = False
+        inEcxrData = False
+        ecxrData = []
+
         for line in crashData:
+            # Start of .ecxr data
+            if re.match(r'0:000> \.ecxr', line):
+                inEcxrData = True
+                continue
+
+            if inEcxrData:
+                # Example:
+                #     0:000> .ecxr
+                #     rax=0000000000000000 rbx=0000000000008000 rcx=00000000000005af
+                #     rdx=0000000000000000 rsi=0000000008c52000 rdi=0000000000008000
+                #     rip=000007fef86c13e4 rsp=000000000033bb10 rbp=0000000000000008
+                #      r8=0000000077440000  r9=00000000000003a6 r10=00000000c000012d
+                #     r11=0000000000000246 r12=0000000000000008 r13=0000000000500040
+                #     r14=0000000008c007e0 r15=0000000000000000
+                #     iopl=0         nv up ei pl nz na pe nc
+                #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000200
+                if line.startswith("cs="):
+                    inEcxrData = False
+                    continue
+
+                # First extract the line, example:
+                #     rax=0000000000000000 rbx=0000000000008000 rcx=00000000000005af
+                matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
+                if matchLine != None:
+                    ecxrData.extend(line.split())
+
+                # Next, put the rax, rbx, rcx, etc. entries into a list of their own, then iterate
+                match = re.search(cdbRegisterPattern, line)
+                for instr in ecxrData:
+                    match = re.search(cdbRegisterPattern, instr)
+                    if match != None:
+                        register = match.group(1)
+                        value = long(match.group(2), 16)
+                        self.registers[register] = value
+
             # Crash address
             if line.startswith("Exception Faulting Address:"):
                 # Example:
