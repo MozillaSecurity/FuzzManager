@@ -678,6 +678,11 @@ class AppleSelectorTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
 
+# Test 1 is an example with 64-bit js opt shell crashing with:
+#     Exception Faulting Address: 0x7fef86c13e4
+#     Second Chance Exception Type: STATUS_BREAKPOINT (0x80000003)
+#     Faulting Instruction:000007fe`f86c13e4 int 3
+#     Exploitability Classification: UNKNOWN
 class CDBParserTestCrash1(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -719,6 +724,11 @@ class CDBSelectorTest1(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x000007fef86c13e4))
 
+# Test 2 is an example with 64-bit js debug shell crashing with:
+#     Exception Faulting Address: 0x1405e4703
+#     Second Chance Exception Type: STATUS_BREAKPOINT (0x80000003)
+#     Faulting Instruction:00000001`405e4703 int 3
+#     Exploitability Classification: UNKNOWN
 class CDBParserTestCrash2(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -757,6 +767,11 @@ class CDBSelectorTest2(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00000001405e4703))
 
+# Test 3 is an example with 32-bit js debug shell crashing with:
+#     Exception Faulting Address: 0x1206fbd
+#     Second Chance Exception Type: STATUS_BREAKPOINT (0x80000003)
+#     Faulting Instruction:01206fbd int 3
+#     Exploitability Classification: UNKNOWN
 class CDBParserTestCrash3(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
