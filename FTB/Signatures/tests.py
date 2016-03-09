@@ -712,7 +712,7 @@ class CDBParserTestCrash1(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[18], "js::jit::DoWarmUpCounterFallback")
         self.assertEqual(crashInfo.backtrace[19], "??")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x000007fef86c13e4))
+        self.assertEqual(crashInfo.crashAddress, long(0x7fef86c13e4))
 
 class CDBSelectorTest1(unittest.TestCase):
     def runTest(self):
@@ -722,7 +722,7 @@ class CDBSelectorTest1(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x000007fef86c13e4))
+        self.assertEqual(crashInfo.crashAddress, long(0x7fef86c13e4))
 
 # Test 2 is an example with 64-bit js debug shell crashing with:
 #     Exception Faulting Address: 0x1405e4703
@@ -755,7 +755,7 @@ class CDBParserTestCrash2(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[15], "??")
         self.assertEqual(crashInfo.backtrace[16], "??")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00000001405e4703))
+        self.assertEqual(crashInfo.crashAddress, long(0x1405e4703))
 
 class CDBSelectorTest2(unittest.TestCase):
     def runTest(self):
@@ -765,7 +765,7 @@ class CDBSelectorTest2(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00000001405e4703))
+        self.assertEqual(crashInfo.crashAddress, long(0x1405e4703))
 
 # Test 3 is an example with 32-bit js debug shell crashing with:
 #     Exception Faulting Address: 0x1206fbd
@@ -831,7 +831,7 @@ class CDBParserTestCrash3(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000001206fbd))
+        self.assertEqual(crashInfo.crashAddress, long(0x1206fbd))
 
 class CDBSelectorTest3(unittest.TestCase):
     def runTest(self):
@@ -841,7 +841,7 @@ class CDBSelectorTest3(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000001206fbd))
+        self.assertEqual(crashInfo.crashAddress, long(0x1206fbd))
 
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):

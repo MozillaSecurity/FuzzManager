@@ -1019,9 +1019,9 @@ class CDBCrashInfo(CrashInfo):
         inCrashingThread = False
         for line in crashData:
             # Crash address
-            if line.startswith("Instruction Address:"):
+            if line.startswith("Exception Faulting Address:"):
                 # Example:
-                #     Instruction Address: 0x000007fef86c13e4
+                #     Exception Faulting Address: 0x7fef86c13e4
                 address = line.split(": ")[1]
                 self.crashAddress = long(address, 16)
 
