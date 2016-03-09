@@ -759,7 +759,7 @@ class CDBSelectorTest2(unittest.TestCase):
 
 class CDBParserTestCrash3(unittest.TestCase):
     def runTest(self):
-        config = ProgramConfiguration("test", "x86-64", "windows")
+        config = ProgramConfiguration("test", "x86", "windows")
 
         with open('cdb-crash-report-example-3.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
@@ -820,7 +820,7 @@ class CDBParserTestCrash3(unittest.TestCase):
 
 class CDBSelectorTest3(unittest.TestCase):
     def runTest(self):
-        config = ProgramConfiguration("test", "x86-64", "windows")
+        config = ProgramConfiguration("test", "x86", "windows")
 
         with open('cdb-crash-report-example-3.txt', 'r') as f:
             crashData = f.read().splitlines()
