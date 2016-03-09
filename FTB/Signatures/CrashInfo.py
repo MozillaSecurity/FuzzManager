@@ -1065,6 +1065,13 @@ class CDBCrashInfo(CrashInfo):
                 address = line.split(": ")[1]
                 self.crashAddress = long(address, 16)
 
+            # Crash instruction
+            if line.startswith("Faulting Instruction:"):
+                # Example:
+                #     Faulting Instruction:01206fbd int 3
+                cInstruction = line.split(":")[1].split(None, 1)[1]
+                self.crashInstruction = cInstruction
+
             # Start of stack for crashing thread
             if re.match(r'\sHash Usage : Stack Trace:', line):
                 inCrashingThread = True

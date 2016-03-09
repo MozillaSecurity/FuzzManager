@@ -712,6 +712,7 @@ class CDBParserTestCrash1(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[18], "js::jit::DoWarmUpCounterFallback")
         self.assertEqual(crashInfo.backtrace[19], "??")
 
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
         self.assertEqual(crashInfo.registers["rbx"], long(0x0000000000008000))
         self.assertEqual(crashInfo.registers["rcx"], long(0x00000000000005af))
@@ -773,6 +774,7 @@ class CDBParserTestCrash2(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[15], "??")
         self.assertEqual(crashInfo.backtrace[16], "??")
 
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
         self.assertEqual(crashInfo.registers["rbx"], long(0x00000000072f5220))
         self.assertEqual(crashInfo.registers["rcx"], long(0x000007fef884b780))
@@ -867,6 +869,7 @@ class CDBParserTestCrash3(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
 
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
         self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
         self.assertEqual(crashInfo.registers["ecx"], long(0x12630a6d))
