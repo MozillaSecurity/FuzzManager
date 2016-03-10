@@ -175,7 +175,7 @@ def write_aggregated_stats(base_dirs, outfile):
     
     return
 
-def scan_crashes(base_dir, cmdline_path=None, env_path=None):
+def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
     
@@ -249,7 +249,7 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None):
             print("Error: Creating program configuration from binary failed. Check your binary configuration file.", file=sys.stderr)
             return 2
         
-        collector = Collector()
+        collector = Collector(tool=tool_name)
         
         for crash_file in crash_files:
             stdin = None
@@ -648,6 +648,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
+    parser.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
     parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
     parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
@@ -822,7 +823,7 @@ def main(argv=None):
         while True:
             if opts.fuzzmanager:
                 for afl_out_dir in afl_out_dirs:
-                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file)
+                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname)
             
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
