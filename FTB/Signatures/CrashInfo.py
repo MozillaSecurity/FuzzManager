@@ -725,6 +725,25 @@ class GDBCrashInfo(CrashInfo):
 
         parts = crashInstruction.split(None, 1)
 
+        if len(parts) == 1:
+            # Single instruction without any operands?
+            # Only accept those that we explicitly know so far.
+
+            instruction = parts[0]
+
+            if instruction == "ret":
+                # If ret is crashing, it's most likely due to the stack pointer
+                # pointing somewhere where it shouldn't point, so use that as
+                # the crash address.
+                return RegisterHelper.getStackPointer(registerMap)
+            elif instruction == "ud2":
+                # ud2 - Raise invalid opcode exception
+                # We treat this like invalid instruction
+                return RegisterHelper.getInstructionPointer(registerMap)
+            else:
+                raise RuntimeError("Unsupported non-operand instruction: %s" % instruction)
+
+
         if len(parts) != 2:
             raise RuntimeError("Failed to split instruction and operands apart: %s" % crashInstruction)
 

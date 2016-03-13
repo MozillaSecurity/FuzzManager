@@ -291,6 +291,39 @@ rip    0x0    0
 => 0x0:    
 """
 
+gdbRegressionTrace5 = """
+Program received signal SIGSEGV, Segmentation fault.
+0xf7673132 in ?? ()
+#0  0xf7673132 in ?? ()
+eax            0xf6043040    -167497664
+ecx            0xf651f4b0    -162401104
+edx            0xf651f4d0    -162401072
+ebx            0xf651f4f0    -162401040
+esp            0xfffd573c    0xfffd573c
+ebp            0xfffd57e4    0xfffd57e4
+esi            0x0    0
+edi            0x934d3d0    154457040
+eip            0xf7673132    0xf7673132
+=> 0xf7673132:    ret
+"""
+
+gdbRegressionTrace6 = """
+Program received signal SIGSEGV, Segmentation fault.
+0xf7673132 in ?? ()
+#0  0xf7673132 in ?? ()
+eax            0xf6043040    -167497664
+ecx            0xf651f4b0    -162401104
+edx            0xf651f4d0    -162401072
+ebx            0xf651f4f0    -162401040
+esp            0xfffd573c    0xfffd573c
+ebp            0xfffd57e4    0xfffd57e4
+esi            0x0    0
+edi            0x934d3d0    154457040
+eip            0xf7673132    0xf7673132
+=> 0xf7673132:    ud2
+"""
+
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -454,6 +487,23 @@ class GDBParserTestCrashAddressRegression4(unittest.TestCase):
         crashInfo4 = GDBCrashInfo([], gdbRegressionTrace4.splitlines(), config)
         
         self.assertEqual(crashInfo4.crashAddress, 0x0L)
+
+class GDBParserTestCrashAddressRegression5(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo5 = GDBCrashInfo([], gdbRegressionTrace5.splitlines(), config)
+
+        self.assertEqual(crashInfo5.crashAddress, 0xfffd573cL)
+
+class GDBParserTestCrashAddressRegression6(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo6 = GDBCrashInfo([], gdbRegressionTrace6.splitlines(), config)
+
+        self.assertEqual(crashInfo6.crashAddress, 0xf7673132L)
+
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
