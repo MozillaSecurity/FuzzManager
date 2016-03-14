@@ -166,7 +166,7 @@ class BugzillaProvider(Provider):
         # Also process all metadata variables in our bug description and comment field
         def substituteMetadata(source, metadata):
             # Find all metadata variables requested for subtitution
-            metadataVars = re.findall("%metadata\.([a-zA-Z0-9]+)%", source)
+            metadataVars = re.findall("%metadata\.([a-zA-Z0-9_\-]+)%", source)
             for mVar in metadataVars:
                 if not mVar in metadata:
                     metadata[mVar] = "(%s not available)" % mVar
