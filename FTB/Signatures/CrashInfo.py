@@ -212,13 +212,15 @@ class CrashInfo():
         '''
         # See if we have an abort message and if so, use that as short signature
         abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
-        if abortMsg != None:
-            return abortMsg
 
         # See if we have an abort message in our crash data maybe, e.g. for UBSan
-        if self.rawCrashData:
+        if not abortMsg and self.rawCrashData:
             abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
-            if abortMsg != None:
+
+        if abortMsg != None:
+            if isinstance(abortMsg, list):
+                return " ".join(abortMsg)
+            else:
                 return abortMsg
 
         if not len(self.backtrace):
