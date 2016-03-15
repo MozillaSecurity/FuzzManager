@@ -117,7 +117,7 @@ def stats(request):
     lastHourDelta = datetime.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta)
-    entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucketFrequencyMap = {}
     for entry in entries:
