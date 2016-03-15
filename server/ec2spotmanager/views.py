@@ -43,11 +43,6 @@ def pools(request):
 
     entries = InstancePool.objects.annotate(size=Count('instance')).order_by('-id')
 
-    # (user, created) = User.objects.get_or_create(user = request.user)
-    # defaultToolsFilter = user.defaultToolsFilter.all()
-    # if defaultToolsFilter:
-    #    entries = entries.filter(reduce(operator.or_, [Q(("tool",x)) for x in defaultToolsFilter]))
-
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
                        "config__name",

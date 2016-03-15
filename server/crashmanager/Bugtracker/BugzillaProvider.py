@@ -65,7 +65,7 @@ class BugzillaProvider(Provider):
             template = model_to_dict(obj)
             template["pk"] = obj.pk
         else:
-            (user, created) = User.objects.get_or_create(user=request.user)
+            user = User.get_or_create_restricted(user=request.user)[0]
 
             obj = BugzillaTemplate.objects.filter(name__contains=crashEntry.tool.name)
             if not obj:

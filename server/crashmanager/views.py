@@ -2,7 +2,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.db.models.aggregates import Count, Min
@@ -16,7 +16,62 @@ from rest_framework.authentication import TokenAuthentication
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
-from crashmanager.serializers import BucketSerializer, CrashEntrySerializer
+from crashmanager.serializers import CrashEntrySerializer
+
+def check_authorized_for_crash_entry(request, entry):
+    user = User.get_or_create_restricted(user=request.user)[0]
+    if user.restricted:
+        defaultToolsFilter = user.defaultToolsFilter.all()
+        if not defaultToolsFilter or not entry.tool in defaultToolsFilter:
+            raise PermissionDenied({ "message" : "You don't have permission to access this crash entry." })
+
+    return
+
+def check_authorized_for_signature(request, signature):
+    user = User.get_or_create_restricted(user=request.user)[0]
+    if user.restricted:
+        defaultToolsFilter = user.defaultToolsFilter.all()
+        if not defaultToolsFilter:
+            raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
+
+        entries = CrashEntry.objects.filter(bucket=signature).filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        if not entries:
+            raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
+
+    return
+
+def deny_restricted_users(request):
+    user = User.get_or_create_restricted(user=request.user)[0]
+    if user.restricted:
+        raise PermissionDenied({ "message" : "Restricted users cannot use this feature." })
+
+def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
+    user = User.get_or_create_restricted(user=request.user)[0]
+
+    if restricted_only and not user.restricted:
+        return entries
+
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        return entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+    elif user.restricted:
+        return None
+
+    return entries
+
+def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
+    user = User.get_or_create_restricted(user=request.user)[0]
+
+    if restricted_only and not user.restricted:
+        return signatures
+
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        return signatures.filter(crashentry__tool__in=defaultToolsFilter).distinct()
+    elif user.restricted:
+        return None
+
+    return signatures
 
 
 def renderError(request, err):
@@ -62,6 +117,7 @@ def stats(request):
     lastHourDelta = datetime.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta)
+    entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
 
     bucketFrequencyMap = {}
     for entry in entries:
@@ -89,18 +145,17 @@ def settings(request):
 @login_required(login_url='/login/')
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')).order_by('-id')
+    entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
     return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
 def allCrashes(request):
     entries = CrashEntry.objects.all().order_by('-id')
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
     return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
 
 @login_required(login_url='/login/')
 def signatures(request):
-    (user, created) = User.objects.get_or_create(user=request.user)
-    defaultToolsFilter = user.defaultToolsFilter.all()
-
     entries = Bucket.objects.all().order_by('-id')
 
     filters = {}
@@ -142,7 +197,7 @@ def signatures(request):
     # Apply default tools filter, only display buckets that contain at least one
     # crash from a tool that we are interested in. Since this query is probably
     # the slowest, it should run after other filters.
-    entries = entries.filter(crashentry__tool__in=defaultToolsFilter).distinct()
+    entries = filter_signatures_by_toolfilter(request, entries)
 
     # Annotate size and quality to each bucket that we're going to display.
     entries = entries.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
@@ -157,11 +212,7 @@ def crashes(request):
     isSearch = True
 
     entries = CrashEntry.objects.all().order_by('-id')
-
-    (user, created) = User.objects.get_or_create(user=request.user)
-    defaultToolsFilter = user.defaultToolsFilter.all()
-    if defaultToolsFilter:
-        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+    entries = filter_crash_entries_by_toolfilter(request, entries)
 
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -233,6 +284,7 @@ def queryCrashes(request):
 
     if query:
         entries = CrashEntry.objects.all().order_by('-id').filter(query)
+        entries = filter_crash_entries_by_toolfilter(request, entries)
 
     # Re-get the lines as we might have reformatted
     query_lines = rawQuery.splitlines()
@@ -274,6 +326,7 @@ def autoAssignCrashEntries(request):
 @login_required(login_url='/login/')
 def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
     entry.deserializeFields()
 
     if entry.testcase and not entry.testcase.isBinary:
@@ -284,6 +337,7 @@ def viewCrashEntry(request, crashid):
 @login_required(login_url='/login/')
 def editCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
     entry.deserializeFields()
 
     if entry.testcase:
@@ -338,6 +392,8 @@ def editCrashEntry(request, crashid):
 @login_required(login_url='/login/')
 def deleteCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
+
     if request.method == 'POST':
         entry.delete()
         return redirect('crashmanager:crashes')
@@ -473,6 +529,8 @@ def deleteSignature(request, sigid):
         raise Http404
     bucket = bucket[0]
 
+    check_authorized_for_signature(request, bucket)
+
     if request.method == 'POST':
         if not "delentries" in request.POST:
             # Make sure we remove this bucket from all crash entries referring to it,
@@ -488,8 +546,6 @@ def deleteSignature(request, sigid):
 
 @login_required(login_url='/login/')
 def viewSignature(request, sigid):
-    # bucket = get_object_or_404(Bucket, pk=sigid)
-    # count = len(CrashEntry.objects.filter(bucket=bucket))
     bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
     if not bucket:
@@ -497,7 +553,10 @@ def viewSignature(request, sigid):
 
     bucket = bucket[0]
 
+    check_authorized_for_signature(request, bucket)
+
     entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucket.bestEntry = None
     if entries:
@@ -509,6 +568,8 @@ def viewSignature(request, sigid):
 def editSignature(request, sigid):
     if request.method == 'POST':
         bucket = get_object_or_404(Bucket, pk=sigid)
+        check_authorized_for_signature(request, bucket)
+
         bucket.signature = request.POST['signature']
         bucket.shortDescription = request.POST['shortDescription']
         bucket.frequent = "frequent" in request.POST
@@ -518,6 +579,7 @@ def editSignature(request, sigid):
     elif request.method == 'GET':
         if sigid != None:
             bucket = get_object_or_404(Bucket, pk=sigid)
+            check_authorized_for_signature(request, bucket)
 
             if 'fit' in request.GET:
                 entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
@@ -532,6 +594,8 @@ def editSignature(request, sigid):
 @login_required(login_url='/login/')
 def linkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
+
     providers = BugProvider.objects.all()
 
     data = { 'bucket' : bucket, 'providers' : providers }
@@ -576,6 +640,7 @@ def linkSignature(request, sigid):
 @login_required(login_url='/login/')
 def unlinkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
 
     if request.method == 'POST':
         bucket.bug = None
@@ -589,7 +654,10 @@ def unlinkSignature(request, sigid):
 @login_required(login_url='/login/')
 def trySignature(request, sigid, crashid):
     bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
+
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
 
     signature = bucket.getSignature()
     entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
@@ -602,14 +670,13 @@ def trySignature(request, sigid, crashid):
 @login_required(login_url='/login/')
 def optimizeSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
+
     buckets = Bucket.objects.all()
 
     # Get all unbucketed entries for that user, respecting the tools filter though
     entries = CrashEntry.objects.filter(bucket=None).order_by('-id')
-    (user, created) = User.objects.get_or_create(user=request.user)
-    defaultToolsFilter = user.defaultToolsFilter.all()
-    if defaultToolsFilter:
-        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+    entries = filter_crash_entries_by_toolfilter(request, entries)
 
     signature = bucket.getSignature()
 
@@ -664,10 +731,12 @@ def optimizeSignature(request, sigid):
 @login_required(login_url='/login/')
 def findSignatures(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
 
     entry.crashinfo = entry.getCrashInfo(attachTestcase=True)
 
     buckets = Bucket.objects.all()
+    buckets = filter_signatures_by_toolfilter(request, buckets, restricted_only=True)
     similarBuckets = []
     matchingBucket = None
 
@@ -746,6 +815,7 @@ def findSignatures(request, crashid):
 @login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
 
     if not entry.bucket:
         return renderError(request, "Cannot create an external bug for an issue that is not associated to a bucket/signature")
@@ -768,7 +838,7 @@ def createExternalBug(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            (user, created) = User.objects.get_or_create(user=request.user)
+            user = User.get_or_create_restricted(user=request.user)[0]
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         return provider.getInstance().renderContextCreate(request, entry)
@@ -778,6 +848,7 @@ def createExternalBug(request, crashid):
 @login_required(login_url='/login/')
 def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
 
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
@@ -787,7 +858,7 @@ def createExternalBugComment(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            (user, created) = User.objects.get_or_create(user=request.user)
+            user = User.get_or_create_restricted(user=request.user)[0]
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         return provider.getInstance().renderContextComment(request, entry)
@@ -823,6 +894,8 @@ def viewBugProviders(request):
 
 @login_required(login_url='/login/')
 def deleteBugProvider(request, providerId):
+    deny_restricted_users(request)
+
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
         # Deassociate all bugs
@@ -852,6 +925,8 @@ def viewBugProvider(request, providerId):
 
 @login_required(login_url='/login/')
 def editBugProvider(request, providerId):
+    deny_restricted_users(request)
+
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
         provider.classname = request.POST['classname']
@@ -872,6 +947,8 @@ def editBugProvider(request, providerId):
 
 @login_required(login_url='/login/')
 def createBugProvider(request):
+    deny_restricted_users(request)
+
     if request.method == 'POST':
         provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'], urlTemplate=request.POST['urlTemplate'])
 
@@ -889,7 +966,7 @@ def createBugProvider(request):
 
 @login_required(login_url='/login/')
 def userSettings(request):
-    (user, created) = User.objects.get_or_create(user=request.user)
+    user = User.get_or_create_restricted(user=request.user)[0]
 
     def createUserSettingsData(user, msg=None):
         tools = Tool.objects.all()
@@ -917,6 +994,8 @@ def userSettings(request):
 
     if request.method == 'POST':
         if "changefilter" in request.POST:
+            if user.restricted:
+                raise PermissionDenied({ "message" : "You don't have permission to change your tools filter." })
             user.defaultToolsFilter.clear()
             user.defaultToolsFilter = [Tool.objects.get(name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
             data = createUserSettingsData(user, msg="Tools filter updated successfully.")

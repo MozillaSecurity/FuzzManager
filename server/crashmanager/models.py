@@ -236,12 +236,19 @@ class BugzillaTemplate(models.Model):
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
 
-
 class User(models.Model):
     user = models.OneToOneField(DjangoUser)
-    # Explicitely do not store this as a ForeignKey to e.g. BugzillaTemplate
+    # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
     defaultTemplateId = models.IntegerField(default=0)
     defaultProviderId = models.IntegerField(default=1)
     defaultToolsFilter = models.ManyToManyField(Tool)
+    restricted = models.BooleanField(blank=False, default=False)
 
+    @staticmethod
+    def get_or_create_restricted(request_user):
+        (user, created) = User.objects.get_or_create(user=request_user)
+        if created and getattr(settings, 'USERS_RESTRICTED_BY_DEFAULT', False):
+            user.restricted = True
+            user.save()
+        return (user, created)
