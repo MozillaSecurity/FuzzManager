@@ -69,7 +69,12 @@
         {% if entry.rawStderr %}
         <div class="field">
             <strong>stderr</strong>
-            <pre><code>{{ entry.rawStderr }}</code></pre>
+	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#stderr">
+	    <span class="glyphicon glyphicon-eye-open"></span>
+            </button>
+	    <div id="stderr" class="accordian-body collapse">
+              <pre><code>{{ entry.rawStderr }}</code></pre>
+            </div>
         </div>
         <br />
         {% endif %}
