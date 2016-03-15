@@ -19,7 +19,7 @@ from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
 from crashmanager.serializers import CrashEntrySerializer
 
 def check_authorized_for_crash_entry(request, entry):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
         defaultToolsFilter = user.defaultToolsFilter.all()
         if not defaultToolsFilter or not entry.tool in defaultToolsFilter:
@@ -28,7 +28,7 @@ def check_authorized_for_crash_entry(request, entry):
     return
 
 def check_authorized_for_signature(request, signature):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
         defaultToolsFilter = user.defaultToolsFilter.all()
         if not defaultToolsFilter:
@@ -41,12 +41,12 @@ def check_authorized_for_signature(request, signature):
     return
 
 def deny_restricted_users(request):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
         raise PermissionDenied({ "message" : "Restricted users cannot use this feature." })
 
 def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
 
     if restricted_only and not user.restricted:
         return entries
@@ -60,7 +60,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
     return entries
 
 def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
 
     if restricted_only and not user.restricted:
         return signatures
@@ -838,7 +838,7 @@ def createExternalBug(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            user = User.get_or_create_restricted(user=request.user)[0]
+            user = User.get_or_create_restricted(request.user)[0]
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         return provider.getInstance().renderContextCreate(request, entry)
@@ -858,7 +858,7 @@ def createExternalBugComment(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            user = User.get_or_create_restricted(user=request.user)[0]
+            user = User.get_or_create_restricted(request.user)[0]
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         return provider.getInstance().renderContextComment(request, entry)
@@ -966,7 +966,7 @@ def createBugProvider(request):
 
 @login_required(login_url='/login/')
 def userSettings(request):
-    user = User.get_or_create_restricted(user=request.user)[0]
+    user = User.get_or_create_restricted(request.user)[0]
 
     def createUserSettingsData(user, msg=None):
         tools = Tool.objects.all()
