@@ -55,7 +55,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
     if defaultToolsFilter:
         return entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
     elif user.restricted:
-        return None
+        return CrashEntry.objects.none()
 
     return entries
 
@@ -69,7 +69,7 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
     if defaultToolsFilter:
         return signatures.filter(crashentry__tool__in=defaultToolsFilter).distinct()
     elif user.restricted:
-        return None
+        return Bucket.objects.none()
 
     return signatures
 
