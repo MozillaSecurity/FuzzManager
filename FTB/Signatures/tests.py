@@ -11,14 +11,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+from numpy import int64, uint64, int32, uint32
 import unittest
-from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo,\
+
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures import RegisterHelper
+from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
     NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
-from FTB.Signatures import RegisterHelper
 
-from numpy import int64, uint64, int32, uint32
-from FTB.ProgramConfiguration import ProgramConfiguration
 
 asanTraceCrash = """
 ASAN:SIGSEGV
@@ -117,7 +118,7 @@ ecx            0x1      1
 (gdb) x /i $pc 
 => 0x812bf19 <js::types::TypeObject::addProperty(JSContext*, jsid, js::types::Property**)+121>: mov    (%ecx),%ecx
 """
-   
+
 gdbCrashAddress2 = """
 Program terminated with signal 11, Segmentation fault. 
 #0  repoint (this=0x160fc30, cx=0x15a4940, masm=..., attacher=..., ion=0x160fa80, attachKind=0x2b08c0 \"generic\") at /srv/repos/mozilla-central/js/src/ion/IonCaches.cpp:44 
@@ -131,7 +132,7 @@ cpsr    0xd0030 852016
 => 0x1a03ae <js::ion::IonCache::linkAndAttachStub(JSContext*, js::ion::MacroAssembler&, js::ion::IonCache::StubAttacher&, js::ion::IonScript*, char const*)+122>:       ldr.w   r4, [r10] 
    0x1a03b2 <js::ion::IonCache::linkAndAttachStub(JSContext*, js::ion::MacroAssembler&, js::ion::IonCache::StubAttacher&, js::ion::IonScript*, char const*)+126>:       mov     r3, r0
 """
-   
+
 gdbCrashAddress3 = """       
 (gdb) bt 16 
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691 
@@ -171,7 +172,7 @@ eip    0x818bc33 <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)
 => 0x818bc33 <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)+419>:    movl   $0x7b,0x0
    0x818bc3d <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)+429>:    call   0x804af50 <abort@plt>
 """
-        
+
 gdbSampleTrace2 = """
 Program terminated with signal 11, Segmentation fault.
 #0  operator+ (this=0xf6c7e760, cx=0xa3024b8, iv=..., useLocale=false, buffer=..., sb=...) at ../gc/Barrier.h:462
@@ -345,14 +346,14 @@ SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "js::AbstractFramePtr::asRematerializedFrame")
         self.assertEqual(crashInfo.backtrace[2], "EvalInFrame")
         self.assertEqual(crashInfo.backtrace[3], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[6], "js::jit::DoCallFallback")
-        
+
         self.assertEqual(crashInfo.crashAddress, 0x00000014L)
         self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
         self.assertEqual(crashInfo.registers["sp"], 0xffc57860L)
@@ -361,17 +362,17 @@ class ASanParserTestCrash(unittest.TestCase):
 class ASanParserTestHeapCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = ASanCrashInfo([], asanTraceHeapCrash.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 1)
-        
+
         self.assertEqual(crashInfo.crashAddress, 0x00000019L)
         self.assertEqual(crashInfo.registers["pc"], 0xf718072eL)
         self.assertEqual(crashInfo.registers["sp"], 0xff87d130L)
         self.assertEqual(crashInfo.registers["bp"], 0x000006a1L)
-        
+
         self.assertEqual(crashInfo.createShortSignature(), "[@ ??]")
-        
+
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -380,16 +381,16 @@ class ASanParserTestUAF(unittest.TestCase):
         self.assertEqual(len(crashInfo.backtrace), 23)
         self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>")
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native")
-        
+
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
-        
+
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=asanTraceCrash.splitlines())
         crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines(), config)
-        
+
         self.assertIsInstance(crashInfo1, ASanCrashInfo)
         self.assertIsInstance(crashInfo2, ASanCrashInfo)
 
@@ -410,7 +411,7 @@ class GDBParserTestCrash(unittest.TestCase):
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        
+
         crashInfo1 = GDBCrashInfo([], gdbCrashAddress1.splitlines(), config)
         crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines(), config)
         crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
@@ -426,39 +427,39 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         registerMap64["rbx"] = -1L
         registerMap64["rsi"] = 0xde6e5L
         registerMap64["rdi"] = 0x7ffff6543238L
-        
+
         registerMap32 = {}
         registerMap32["eax"] = 0x0L
         registerMap32["ebx"] = -1L
         registerMap32["ecx"] = 0xf75fffb8L
-        
+
         # Simple tests
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,0x10(%rax)", registerMap64), 0x10L)
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,0x10(%eax)", registerMap32), 0x10L)
-        
-        
+
+
         # Overflow tests
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xFL)
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32), 0xFL)
-        
+
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), int64(uint64(0xfffffffffffffff0L)))
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), int32(uint32(0xfffffff0L)))
-        
+
         # Scalar test
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32), 0x0L)
-        
+
         # Real world examples
-        # Note: The crash address here can also be 0xf7600000 because the double quadword 
+        # Note: The crash address here can also be 0xf7600000 because the double quadword
         # move can fail on the second 8 bytes if the source address is not 16-byte aligned
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), int32(uint32(0xf75ffff8L)))
-        
+
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffeL)))
 
 class GDBParserTestRegression1(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo1 = GDBCrashInfo([], gdbRegressionTrace1.splitlines(), config)
 
         self.assertEqual(crashInfo1.backtrace[0], "js::ScriptedIndirectProxyHandler::defineProperty")
@@ -467,25 +468,25 @@ class GDBParserTestRegression1(unittest.TestCase):
 class GDBParserTestCrashAddressRegression2(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo2 = GDBCrashInfo([], gdbRegressionTrace2.splitlines(), config)
-        
+
         self.assertEqual(crashInfo2.crashAddress, 0xfffd579cL)
 
 class GDBParserTestCrashAddressRegression3(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        
+
         crashInfo3 = GDBCrashInfo([], gdbRegressionTrace3.splitlines(), config)
-        
+
         self.assertEqual(crashInfo3.crashAddress, 0x7fffffffffffL)
 
 class GDBParserTestCrashAddressRegression4(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        
+
         crashInfo4 = GDBCrashInfo([], gdbRegressionTrace4.splitlines(), config)
-        
+
         self.assertEqual(crashInfo4.crashAddress, 0x0L)
 
 class GDBParserTestCrashAddressRegression5(unittest.TestCase):
@@ -508,42 +509,42 @@ class GDBParserTestCrashAddressRegression6(unittest.TestCase):
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        
+
         crashSignature1 = '{ "symptoms" : [ { "type" : "output", "value" : "test" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : "test" } ] }'
         crashSignature2 = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : { "value" : "^fest$", "matchType" : "pcre" } } ] }'
-        
+
         outputSignature1 = CrashSignature(crashSignature1)
         outputSignature1Neg = CrashSignature(crashSignature1Neg)
         outputSignature2 = CrashSignature(crashSignature2)
-        
+
         gdbOutput = []
         stdout = []
         stderr = []
-        
+
         stdout.append("Foo")
         stdout.append("Bartester")
         stdout.append("Baz")
         stderr.append("hackfest")
-        
+
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
-        
+
         self.assertIsInstance(crashInfo, NoCrashInfo)
-        
+
         # Ensure we match on stdout/err if nothing is specified
         self.assert_(outputSignature1.matches(crashInfo))
-        
-        # Don't match stdout if stderr is specified 
+
+        # Don't match stdout if stderr is specified
         self.assertFalse(outputSignature1Neg.matches(crashInfo))
-        
+
         # Check that we're really using PCRE
         self.assertFalse(outputSignature2.matches(crashInfo))
-        
+
         # Add something the PCRE should match, then retry
         stderr.append("fest")
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
         self.assert_(outputSignature2.matches(crashInfo))
-        
+
 class CrashSignatureAddressTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -552,54 +553,54 @@ class CrashSignatureAddressTest(unittest.TestCase):
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "crashAddress", "address" : "0x1000" } ] }'
         addressSig1 = CrashSignature(crashSignature1)
         addressSig1Neg = CrashSignature(crashSignature1Neg)
-        
+
         crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
         crashInfo3 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace3.splitlines())
 
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
-        
+
         self.assert_(addressSig1.matches(crashInfo1))
         self.assertFalse(addressSig1Neg.matches(crashInfo1))
-        
+
         # For crashInfo3, we don't have a crash address. Ensure we don't match
         self.assertFalse(addressSig1.matches(crashInfo3))
         self.assertFalse(addressSig1Neg.matches(crashInfo3))
-        
+
 class CrashSignatureRegisterTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        
+
         crashSignature1 = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14"] } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14", "rax"] } ] }'
         crashSignature2 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov" } ] }'
         crashSignature2Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "cmp" } ] }'
         crashSignature3 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rbx"] } ] }'
         crashSignature3Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rax"] } ] }'
-        
+
         instructionSig1 = CrashSignature(crashSignature1)
         instructionSig1Neg = CrashSignature(crashSignature1Neg)
-        
+
         instructionSig2 = CrashSignature(crashSignature2)
         instructionSig2Neg = CrashSignature(crashSignature2Neg)
-        
+
         instructionSig3 = CrashSignature(crashSignature3)
         instructionSig3Neg = CrashSignature(crashSignature3Neg)
-        
+
         crashInfo2 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace2.splitlines())
         crashInfo3 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace3.splitlines())
-        
+
         self.assertIsInstance(crashInfo2, GDBCrashInfo)
         self.assertIsInstance(crashInfo3, GDBCrashInfo)
-        
+
         self.assert_(instructionSig1.matches(crashInfo2))
         self.assertFalse(instructionSig1Neg.matches(crashInfo2))
-        
+
         self.assert_(instructionSig2.matches(crashInfo2))
         self.assertFalse(instructionSig2Neg.matches(crashInfo2))
-        
+
         self.assert_(instructionSig3.matches(crashInfo2))
         self.assertFalse(instructionSig3Neg.matches(crashInfo2))
-        
+
         # Crash info3 doesn't have register information, ensure we don't match any
         self.assertFalse(instructionSig1.matches(crashInfo3))
         self.assertFalse(instructionSig2.matches(crashInfo3))
@@ -611,62 +612,62 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
 
         crashSignature1 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "internalAppend" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "foobar" } ] }'
-        
+
         crashSignature2 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "<= 4" } ] }'
         crashSignature2Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "> 4" } ] }'
-        
+
         stackFrameSig1 = CrashSignature(crashSignature1)
         stackFrameSig1Neg = CrashSignature(crashSignature1Neg)
-        
+
         stackFrameSig2 = CrashSignature(crashSignature2)
         stackFrameSig2Neg = CrashSignature(crashSignature2Neg)
-        
+
         crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
-        
+
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
-        
+
         self.assert_(stackFrameSig1.matches(crashInfo1))
         self.assertFalse(stackFrameSig1Neg.matches(crashInfo1))
-        
+
         self.assert_(stackFrameSig2.matches(crashInfo1))
         self.assertFalse(stackFrameSig2Neg.matches(crashInfo1))
-        
+
 class CrashSignatureStackSizeTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
 
         crashSignature1 = '{ "symptoms" : [ { "type" : "stackSize", "size" : 8 } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackSize", "size" : 9 } ] }'
-        
+
         crashSignature2 = '{ "symptoms" : [ { "type" : "stackSize", "size" : "< 10" } ] }'
         crashSignature2Neg = '{ "symptoms" : [ { "type" : "stackSize", "size" : "> 10" } ] }'
-        
+
         stackSizeSig1 = CrashSignature(crashSignature1)
         stackSizeSig1Neg = CrashSignature(crashSignature1Neg)
-        
+
         stackSizeSig2 = CrashSignature(crashSignature2)
         stackSizeSig2Neg = CrashSignature(crashSignature2Neg)
-        
+
         crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=gdbSampleTrace1.splitlines())
-        
+
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
-        
+
         self.assert_(stackSizeSig1.matches(crashInfo1))
         self.assertFalse(stackSizeSig1Neg.matches(crashInfo1))
-        
+
         self.assert_(stackSizeSig2.matches(crashInfo1))
         self.assertFalse(stackSizeSig2Neg.matches(crashInfo1))
 
 class RegisterHelperValueTest(unittest.TestCase):
     def runTest(self):
         registerMap = { "rax" : 0xfffffffffffffe00L, "rbx" : 0x7ffff79a7640L }
-        
+
         self.assertEqual(RegisterHelper.getRegisterValue("rax", registerMap), 0xfffffffffffffe00L)
         self.assertEqual(RegisterHelper.getRegisterValue("eax", registerMap), 0xfffffe00L)
         self.assertEqual(RegisterHelper.getRegisterValue("ax", registerMap), 0xfe00L)
         self.assertEqual(RegisterHelper.getRegisterValue("ah", registerMap), 0xfeL)
         self.assertEqual(RegisterHelper.getRegisterValue("al", registerMap), 0x0L)
-        
+
         self.assertEqual(RegisterHelper.getRegisterValue("rbx", registerMap), 0x7ffff79a7640L)
         self.assertEqual(RegisterHelper.getRegisterValue("ebx", registerMap), 0xf79a7640L)
         self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640L)
@@ -676,25 +677,25 @@ class RegisterHelperValueTest(unittest.TestCase):
 class MinidumpParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         with open('minidump-example.txt', 'r') as f:
             crashInfo = MinidumpCrashInfo([], f.read().splitlines(), config)
-            
+
         self.assertEqual(len(crashInfo.backtrace), 44)
         self.assertEqual(crashInfo.backtrace[0], "??")
         self.assertEqual(crashInfo.backtrace[5], "??")
         self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent")
         self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent")
-        
+
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
 class MinidumpSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         with open('minidump-example.txt', 'r') as f:
             crashData = f.read().splitlines()
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
 
@@ -731,13 +732,13 @@ class AppleSelectorTest(unittest.TestCase):
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        
+
         crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanSampleTrace1.splitlines())
         self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe")
         self.assertEqual(crashInfo.backtrace[9], "_start")
-        
+
         self.assertEqual(crashInfo.backtrace[11], "Lex< >")
-        
-        
+
+
 if __name__ == "__main__":
     unittest.main()
