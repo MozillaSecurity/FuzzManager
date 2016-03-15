@@ -56,7 +56,12 @@
         {% if entry.rawStdout %}
         <div class="field">
             <strong>stdout</strong>
-            <pre><code>{{ entry.rawStdout }}</code></pre>
+	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#stdout">
+	    <span class="glyphicon glyphicon-eye-open"></span>
+            </button>
+	    <div id="stdout" class="accordian-body collapse">
+              <pre><code>{{ entry.rawStdout }}</code></pre>
+            </div>
         </div>
         <br />
         {% endif %}
