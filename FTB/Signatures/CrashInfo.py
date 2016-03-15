@@ -248,40 +248,46 @@ class CrashInfo():
         else:
             numFrames = len(self.backtrace)
 
+        symptomArr = []
+
         # See if we have an abort message and if so, get a sanitized version of it
-        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
-        abortMsgInCrashdata = False
+        abortMsgs = AssertionHelper.getAssertion(self.rawStderr, True)
+        if abortMsgs != None and not isinstance(abortMsgs, list):
+            abortMsgs = [abortMsgs]
 
-        if abortMsg is None and minimumSupportedVersion >= 13:
-            # Look for abort messages also inside crashdata (e.g. UBSan)
-            # only on version 1.3 or higher, because the "crashdata" source
-            # type for output matching was added in that version.
-            abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
-            abortMsgInCrashdata = True
+        if abortMsgs != None:
+            for abortMsg in abortMsgs:
+                abortMsgInCrashdata = False
 
-        if abortMsg != None:
-            abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+                if abortMsg is None and minimumSupportedVersion >= 13:
+                    # Look for abort messages also inside crashdata (e.g. UBSan)
+                    # only on version 1.3 or higher, because the "crashdata" source
+                    # type for output matching was added in that version.
+                    abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
+                    abortMsgInCrashdata = True
+
+                if abortMsg != None:
+                    abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+
+                if abortMsg != None:
+                    abortMsgSrc = "stderr"
+                    if abortMsgInCrashdata:
+                        abortMsgSrc = "crashdata"
+
+                    # Compose StringMatch object with PCRE pattern.
+                    # Versions below 1.2 only support the full object PCRE style,
+                    # for anything newer, use the short form with forward slashes
+                    # to increase the readability of the signatures.
+                    if minimumSupportedVersion < 12:
+                        stringObj = { "value" : abortMsg, "matchType" : "pcre" }
+                        symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
+                    else:
+                        symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
+                    symptomArr.append(symptomObj)
 
         # Consider the first four frames as top stack
         topStackLimit = 4
 
-        symptomArr = []
-
-        if abortMsg != None:
-            abortMsgSrc = "stderr"
-            if abortMsgInCrashdata:
-                abortMsgSrc = "crashdata"
-
-            # Compose StringMatch object with PCRE pattern.
-            # Versions below 1.2 only support the full object PCRE style,
-            # for anything newer, use the short form with forward slashes
-            # to increase the readability of the signatures.
-            if minimumSupportedVersion < 12:
-                stringObj = { "value" : abortMsg, "matchType" : "pcre" }
-                symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
-            else:
-                symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
-            symptomArr.append(symptomObj)
         # If we have less than topStackLimit frames available anyway, count the difference
         # between topStackLimit and the available frames already as missing.
         # E.g. if the trace has only three entries anyway, one will be considered missing
@@ -334,7 +340,7 @@ class CrashInfo():
                 symptomArr.append({ "type" : "stackFrames", "functionNames" : framesArray })
 
         # Missing too much of the top stack frames, add additional crash information
-        stackIsInsufficient = topStackMissCount >= 2 and abortMsg == None
+        stackIsInsufficient = topStackMissCount >= 2 and abortMsgs == None
 
         includeCrashAddress = stackIsInsufficient or forceCrashAddress
         includeCrashInstruction = (stackIsInsufficient and self.crashInstruction != None) or forceCrashInstruction

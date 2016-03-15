@@ -24,6 +24,13 @@ jsshellMozCrash = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
 """
 
+v8Abort = """
+#
+# Fatal error in ../src/compiler.cc, line 219
+# Check failed: !feedback_vector_->metadata()->SpecDiffersFrom( literal()->feedback_vector_spec()).
+#
+"""
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
@@ -50,6 +57,22 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
         expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at /.+/ScopeObject\\.cpp:[0-9]+"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestV8Abort(unittest.TestCase):
+    def runTest(self):
+        err = v8Abort.splitlines()
+
+        sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
+        self.assertTrue(isinstance(sanitizedMsgs, list))
+        self.assertEqual(len(sanitizedMsgs), 2)
+
+        expectedMsgs = [
+                         "# Fatal error in \\.\\./src/compiler\\.cc, line [0-9]+",
+                         "# Check failed: !feedback_vector_\\->metadata\\(\\)\\->SpecDiffersFrom\\( literal\\(\\)\\->feedback_vector_spec\\(\\)\\)\\."
+        ]
+
+        self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
+        self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
 
 if __name__ == "__main__":
     unittest.main()

@@ -47,15 +47,17 @@ def getAssertion(output, onlyProgramAssertions=False):
         line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
 
         if addNext:
-            lastLine += " "
-            lastLine += line
+            lastLine.append(line)
+            addNext = False
         elif line.startswith("Assertion failure"):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
             # Support v8 non-standard multi-line assertion output
-            lastLine = line
+            # We need to return this as array so we can create two
+            # symptoms for it as the matchers work by line.
+            lastLine = [ line ]
             haveFatalAssertion = True
             addNext = True
         elif not onlyProgramAssertions and not haveFatalAssertion and "ERROR: AddressSanitizer" in line:
@@ -85,42 +87,56 @@ def getAssertion(output, onlyProgramAssertions=False):
     return lastLine
 
 
-def getSanitizedAssertionPattern(msg):
+def getSanitizedAssertionPattern(msgs):
     '''
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.
     for use in signature matching.
 
-    @type msg: string
-    @param msg: Assertion message to be sanitized
+    @type msgs: string or list
+    @param msgs: Assertion message(s) to be sanitized
 
     @rtype: string
     @return: Sanitized assertion message (regular expression)
     '''
-    assert msg != None
+    assert msgs != None
 
-    sanitizedMsg = escapePattern(msg)
 
-    replacementPatterns = []
+    returnList = True
+    if not isinstance(msgs, list):
+        msgs = [ msgs ]
+        returnList = False
 
-    # Replace everything that looks like a memory address
-    replacementPatterns.append("0x[0-9a-fA-F]+")
+    sanitizedMsgs = []
 
-    # Strip line numbers as they can easily change across versions
-    replacementPatterns.append(":[0-9]+")
-    replacementPatterns.append(", line [0-9]+")
+    for msg in msgs:
+        sanitizedMsg = escapePattern(msg)
 
-    # Strip full path
-    replacementPatterns.append(" /.+/")
+        replacementPatterns = []
 
-    # Replace larger numbers, assuming that 1-digit numbers are likely
-    # some constant that doesn't need sanitizing.
-    replacementPatterns.append("[0-9]{2,}")
+        # Replace everything that looks like a memory address
+        replacementPatterns.append("0x[0-9a-fA-F]+")
 
-    for replacementPattern in replacementPatterns:
-        sanitizedMsg = re.sub(replacementPattern, replacementPattern, sanitizedMsg)
+        # Strip line numbers as they can easily change across versions
+        replacementPatterns.append(":[0-9]+")
+        replacementPatterns.append(", line [0-9]+")
 
-    return sanitizedMsg
+        # Strip full path
+        replacementPatterns.append(" /.+/")
+
+        # Replace larger numbers, assuming that 1-digit numbers are likely
+        # some constant that doesn't need sanitizing.
+        replacementPatterns.append("[0-9]{2,}")
+
+        for replacementPattern in replacementPatterns:
+            sanitizedMsg = re.sub(replacementPattern, replacementPattern, sanitizedMsg)
+
+        sanitizedMsgs.append(sanitizedMsg)
+
+    if not returnList:
+        return sanitizedMsgs[0]
+
+    return sanitizedMsgs
 
 
 def escapePattern(msg):
