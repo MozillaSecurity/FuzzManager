@@ -1100,7 +1100,7 @@ class CDBCrashInfo(CrashInfo):
                 self.crashInstruction = cInstruction
 
             # Start of stack for crashing thread
-            if re.match(r'\sHash Usage : Stack Trace:', line):
+            if re.match(r'^\s*Hash Usage : Stack Trace:', line):
                 inCrashingThread = True
                 continue
 
