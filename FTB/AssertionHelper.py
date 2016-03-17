@@ -122,7 +122,7 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append(", line [0-9]+")
 
         # Strip full path
-        replacementPatterns.append(" /.+/")
+        replacementPatterns.append(" ([a-zA-Z]:)?/.+/")
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.

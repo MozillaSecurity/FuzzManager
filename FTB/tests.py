@@ -11,6 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+import re
 import unittest
 from FTB import AssertionHelper
 
@@ -29,6 +30,14 @@ v8Abort = """
 # Fatal error in ../src/compiler.cc, line 219
 # Check failed: !feedback_vector_->metadata()->SpecDiffersFrom( literal()->feedback_vector_spec()).
 #
+"""
+
+windowsPathAssertFwdSlashes = """
+Assertion failure: block->graph().osrBlock(), at c:/Users/fuzz1win/trees/mozilla-central/js/src/jit/Lowering.cpp:4691
+"""
+
+windowsPathAssertBwSlashes = r"""
+Assertion failure: block->graph().osrBlock(), at c:\Users\fuzz1win\trees\mozilla-central\js\src\jit\Lowering.cpp:4691
 """
 
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
@@ -54,7 +63,7 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
         err = jsshellMozCrash.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
-        expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at /.+/ScopeObject\\.cpp:[0-9]+"
+        expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at ([a-zA-Z]:)?/.+/ScopeObject\\.cpp:[0-9]+"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
@@ -73,6 +82,29 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
 
         self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
         self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
+
+class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
+    def runTest(self):
+        err1 = windowsPathAssertFwdSlashes.splitlines()
+        err2 = windowsPathAssertBwSlashes.splitlines()
+
+        assertionMsg1 = AssertionHelper.getAssertion(err1, False)
+        assertionMsg2 = AssertionHelper.getAssertion(err2, False)
+
+        sanitizedMsg1 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg1)
+        sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
+
+        expectedMsg = "Assertion failure: block\\->graph\\(\\)\\.osrBlock\\(\\), at ([a-zA-Z]:)?/.+/Lowering\\.cpp:[0-9]+"
+
+        self.assertEqual(sanitizedMsg1, expectedMsg)
+
+        # We currently don't support backward slashes, but if we add support, uncomment this test
+        # self.assertEqual(sanitizedMsg2, expectedMsg)
+
+        self.assertTrue(re.match(expectedMsg, assertionMsg1))
+
+        # We currently don't support backward slashes, but if we add support, uncomment this test
+        # self.assertTrue(re.match(expectedMsg, assertionMsg2))
 
 if __name__ == "__main__":
     unittest.main()
