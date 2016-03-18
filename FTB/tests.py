@@ -21,6 +21,11 @@ ASAN:SIGSEGV
 ==26289==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fac9b54873a sp 0x7fff085f2120 bp 0x7fff085f2130 T0)
 """
 
+asanOverflow = """
+==26403==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60300021e6c8 at pc 0x7f30b3d276ef bp 0x7f30a521c8c0 sp 0x7f30a521c8b8
+READ of size 8 at 0x60300021e6c8 thread T20 (MediaPlayback #1)
+"""
+
 jsshellMozCrash = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
 """
@@ -44,25 +49,14 @@ class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
 
-        self.assertIn("AddressSanitizer", AssertionHelper.getAssertion(err, False))
-
-        # Now check that ASan crash message is not used if only programmatic assertions are requested
-        self.assertEqual(AssertionHelper.getAssertion(err, True), None)
-
-class AssertionHelperTestSanitizing(unittest.TestCase):
-    def runTest(self):
-        err = asanFFAbort.splitlines()
-
-        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
-        expectedMsg = "==[0-9]{2,}==ERROR: AddressSanitizer: SEGV on unknown address 0x[0-9a-fA-F]+ \\(pc 0x[0-9a-fA-F]+ sp 0x[0-9a-fA-F]+ bp 0x[0-9a-fA-F]+ T0\\)"
-
-        self.assertEqual(sanitizedMsg, expectedMsg)
+        self.assertEqual(AssertionHelper.getAssertion(err), None)
+        self.assertEqual(AssertionHelper.getAuxiliaryAbortMessage(err), None)
 
 class AssertionHelperTestMozCrash(unittest.TestCase):
     def runTest(self):
         err = jsshellMozCrash.splitlines()
 
-        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at ([a-zA-Z]:)?/.+/ScopeObject\\.cpp:[0-9]+"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
@@ -71,7 +65,7 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
     def runTest(self):
         err = v8Abort.splitlines()
 
-        sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err, False))
+        sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         self.assertTrue(isinstance(sanitizedMsgs, list))
         self.assertEqual(len(sanitizedMsgs), 2)
 
@@ -88,8 +82,8 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
         err1 = windowsPathAssertFwdSlashes.splitlines()
         err2 = windowsPathAssertBwSlashes.splitlines()
 
-        assertionMsg1 = AssertionHelper.getAssertion(err1, False)
-        assertionMsg2 = AssertionHelper.getAssertion(err2, False)
+        assertionMsg1 = AssertionHelper.getAssertion(err1)
+        assertionMsg2 = AssertionHelper.getAssertion(err2)
 
         sanitizedMsg1 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg1)
         sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
@@ -105,6 +99,18 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
 
         # We currently don't support backward slashes, but if we add support, uncomment this test
         # self.assertTrue(re.match(expectedMsg, assertionMsg2))
+
+class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
+    def runTest(self):
+        err = asanOverflow.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
+        expectedMsg = [
+             "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
+             "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
+             ]
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
 
 if __name__ == "__main__":
     unittest.main()

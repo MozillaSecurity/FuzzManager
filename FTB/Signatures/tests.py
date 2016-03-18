@@ -289,8 +289,7 @@ r13    0x7fffffffd6f0    140737488344816
 r14    0x1    1
 r15    0x7ffff6914800    140737330104320
 rip    0x0    0
-=> 0x0:
-"""
+=> 0x0: """
 
 gdbRegressionTrace5 = """
 Program received signal SIGSEGV, Segmentation fault.
@@ -383,6 +382,8 @@ class ASanParserTestUAF(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native")
 
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
+
+        self.assertEqual("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] with READ of size 6143520", crashInfo.createShortSignature())
 
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):

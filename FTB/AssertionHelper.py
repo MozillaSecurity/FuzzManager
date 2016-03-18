@@ -17,24 +17,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 
-def getAssertion(output, onlyProgramAssertions=False):
+def getAssertion(output):
     '''
-    This helper class provides a way to extract and process the
+    This helper method provides a way to extract and process the
     different types of assertions from a given buffer.
     The problem here is that pretty much every software has its
     own type of assertions with different output formats.
 
-    The "onlyProgramAssertions" boolean is to indicate that we
-    are only interested in output from the program itself.
-    Some aborts, like ASan or glibc, are not desirable in some
-    cases, like signature generation and lead to incompatible
-    signatures.
-
     @type output: list
     @param output: List of strings to be searched
-
-    @type onlyProgramAssertions: bool
-    @param onlyProgramAssertions: Boolean, see above
     '''
     lastLine = None
     addNext = False
@@ -60,8 +51,6 @@ def getAssertion(output, onlyProgramAssertions=False):
             lastLine = [ line ]
             haveFatalAssertion = True
             addNext = True
-        elif not onlyProgramAssertions and not haveFatalAssertion and "ERROR: AddressSanitizer" in line:
-            lastLine = line
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
             lastLine = line
@@ -69,19 +58,52 @@ def getAssertion(output, onlyProgramAssertions=False):
             # Firefox Skia assertion (SkASSERT)
             lastLine = line
             haveFatalAssertion = True
-        elif not onlyProgramAssertions and "glibc detected" in line:
-            # Aborts caused by glibc runtime error detection
             lastLine = line
         elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
-        elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
-            # UBSan error. Even though this is not a program assertion, we should
-            # really include it in the signature because what UBSan reports here
-            # is not really a crash.
-            lastLine = line
         elif line.startswith("[Non-crash bug] "):
             # Magic string "added" to stderr by some fuzzers.
+            lastLine = line
+
+    return lastLine
+
+def getAuxiliaryAbortMessage(output):
+    '''
+    This helper method provides a way to extract and process additional
+    abort messages or other useful messages produced by helper tools like
+    sanitizers. These messages can be helpful in signatures if there is no
+    abort message from the program itself.
+
+    @type output: list
+    @param output: List of strings to be searched
+    '''
+    lastLine = None
+    needASanRW = False
+
+    for line in output:
+        # Remove any PID output at the beginning of the line
+        line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
+
+        if "ERROR: AddressSanitizer" in line:
+            if not "SEGV on unknown address" in line:
+                # Strip address, registers and PID prefix
+                line = re.sub("on address 0x[0-9a-f]+", "", line)
+                line = re.sub("at pc 0x[0-9a-f]+", "", line)
+                line = re.sub("bp 0x[0-9a-f]+", "", line)
+                line = re.sub("sp 0x[0-9a-f]+", "", line)
+                line = re.sub("^[0-9=]+", "", line)
+                lastLine = line.strip()
+                needASanRW = True
+        elif needASanRW and "READ of size" in line or "WRITE of size" in line:
+            lastLine = [ lastLine ]
+            lastLine.append(line)
+            needASanRW = False
+        elif "glibc detected" in line:
+            # Aborts caused by glibc runtime error detection
+            lastLine = line
+        elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
+            # UBSan error
             lastLine = line
 
     return lastLine

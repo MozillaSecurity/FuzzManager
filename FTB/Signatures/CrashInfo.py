@@ -214,11 +214,11 @@ class CrashInfo():
         @return: A string representing this crash (short signature)
         '''
         # See if we have an abort message and if so, use that as short signature
-        abortMsg = AssertionHelper.getAssertion(self.rawStderr, True)
+        abortMsg = AssertionHelper.getAssertion(self.rawStderr)
 
-        # See if we have an abort message in our crash data maybe, e.g. for UBSan
+        # See if we have an abort message in our crash data maybe
         if not abortMsg and self.rawCrashData:
-            abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
+            abortMsg = AssertionHelper.getAssertion(self.rawCrashData)
 
         if abortMsg != None:
             if isinstance(abortMsg, list):
@@ -255,40 +255,52 @@ class CrashInfo():
 
         symptomArr = []
 
+        # Memorize where we find our abort messages
+        abortMsgInCrashdata = False
+
         # See if we have an abort message and if so, get a sanitized version of it
-        abortMsgs = AssertionHelper.getAssertion(self.rawStderr, True)
-        if abortMsgs != None and not isinstance(abortMsgs, list):
-            abortMsgs = [abortMsgs]
+        abortMsgs = AssertionHelper.getAssertion(self.rawStderr)
+
+        if abortMsgs is None and minimumSupportedVersion >= 13:
+            # Look for abort messages also inside crashdata
+            # only on version 1.3 or higher, because the "crashdata" source
+            # type for output matching was added in that version.
+            abortMsgs = AssertionHelper.getAssertion(self.rawCrashData)
+            if abortMsgs != None:
+                abortMsgInCrashdata = True
+
+        # Still no abort message, fall back to auxiliary abort messages (ASan/UBSan)
+        if abortMsgs is None:
+            abortMsgs = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
+
+        if abortMsgs is None and minimumSupportedVersion >= 13:
+            # Look for auxiliary abort messages also inside crashdata
+            # only on version 1.3 or higher, because the "crashdata" source
+            # type for output matching was added in that version.
+            abortMsgs = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
+            if abortMsgs != None:
+                abortMsgInCrashdata = True
 
         if abortMsgs != None:
+            if not isinstance(abortMsgs, list):
+                abortMsgs = [abortMsgs]
+
             for abortMsg in abortMsgs:
-                abortMsgInCrashdata = False
+                abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+                abortMsgSrc = "stderr"
+                if abortMsgInCrashdata:
+                    abortMsgSrc = "crashdata"
 
-                if abortMsg is None and minimumSupportedVersion >= 13:
-                    # Look for abort messages also inside crashdata (e.g. UBSan)
-                    # only on version 1.3 or higher, because the "crashdata" source
-                    # type for output matching was added in that version.
-                    abortMsg = AssertionHelper.getAssertion(self.rawCrashData, True)
-                    abortMsgInCrashdata = True
-
-                if abortMsg != None:
-                    abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
-
-                if abortMsg != None:
-                    abortMsgSrc = "stderr"
-                    if abortMsgInCrashdata:
-                        abortMsgSrc = "crashdata"
-
-                    # Compose StringMatch object with PCRE pattern.
-                    # Versions below 1.2 only support the full object PCRE style,
-                    # for anything newer, use the short form with forward slashes
-                    # to increase the readability of the signatures.
-                    if minimumSupportedVersion < 12:
-                        stringObj = { "value" : abortMsg, "matchType" : "pcre" }
-                        symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
-                    else:
-                        symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
-                    symptomArr.append(symptomObj)
+                # Compose StringMatch object with PCRE pattern.
+                # Versions below 1.2 only support the full object PCRE style,
+                # for anything newer, use the short form with forward slashes
+                # to increase the readability of the signatures.
+                if minimumSupportedVersion < 12:
+                    stringObj = { "value" : abortMsg, "matchType" : "pcre" }
+                    symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
+                else:
+                    symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
+                symptomArr.append(symptomObj)
 
         # Consider the first four frames as top stack
         topStackLimit = 4
@@ -528,6 +540,56 @@ class ASanCrashInfo(CrashInfo):
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
 
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+        # Always prefer using regular program aborts
+        abortMsg = AssertionHelper.getAssertion(self.rawStderr)
+
+        # Also check the crash data for program abort data
+        # (sometimes happens e.g. with MOZ_CRASH)
+        if not abortMsg and self.rawCrashData:
+            abortMsg = AssertionHelper.getAssertion(self.rawCrashData)
+
+        if abortMsg != None:
+            if isinstance(abortMsg, list):
+                return " ".join(abortMsg)
+            else:
+                return abortMsg
+
+        # If we don't have a program abort message, see if we have an ASan
+        # specific abort message other than a crash message that we can use.
+        abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
+
+        # Also check the crash data again
+        if not abortMsg and self.rawCrashData:
+            abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
+
+        if abortMsg != None:
+            if isinstance(abortMsg, list):
+                asanMsg = abortMsg[0]
+                rwMsg = abortMsg[1]
+            else:
+                asanMsg = abortMsg
+
+            # Do some additional formatting work for short signature only
+            asanMsg = re.sub("^ERROR: ", "", asanMsg)
+            if len(self.backtrace):
+                asanMsg += " [@ %s]" % self.backtrace[0]
+            if rwMsg:
+                # Strip address and thread
+                rwMsg = re.sub(" at 0x[0-9a-f]+ thread .+", "", rwMsg)
+                asanMsg += " with %s" % rwMsg
+
+            return asanMsg
+
+        if not len(self.backtrace):
+            return "No crash detected"
+
+        return "[@ %s]" % self.backtrace[0]
+
 class UBSanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
@@ -590,6 +652,29 @@ class UBSanCrashInfo(CrashInfo):
             # a crash on the heap with no symbols available. Add one artificial
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
+
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+        # Try to find the UBSan message on stderr and use that as short signature
+        abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
+
+        # See if we have it in our crash data maybe instead
+        if not abortMsg and self.rawCrashData:
+            abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
+
+        if abortMsg != None:
+            if isinstance(abortMsg, list):
+                return "UndefinedBehaviorSanitizer: %s" % " ".join(abortMsg)
+            else:
+                return "UndefinedBehaviorSanitizer: %s" % abortMsg
+
+        if not len(self.backtrace):
+            return "No crash detected"
+
+        return "UndefinedBehaviorSanitizer: [@ %s]" % self.backtrace[0]
 
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):

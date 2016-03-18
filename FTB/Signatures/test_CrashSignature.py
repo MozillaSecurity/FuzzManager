@@ -142,6 +142,25 @@ rip    0x7f2b41e78087    139823766012039
    0x7f2b41e7808b:    ucomisd %xmm5,%xmm4
 """
 
+testTraceWithAuxMessage = """
+==19462==ERROR: AddressSanitizer: heap-use-after-free on address 0x7fd766c42800 at pc 0xe1f587 bp 0x7fffcb1b6ed0 sp 0x7fffcb1b6ec8
+READ of size 6143520 at 0x7fd766c42800 thread T0
+    #0 0xe1f586 in void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/opt64asan/js/src/../../dist/include/mozilla/PodOperations.h:110
+    #1 0x5904e2 in js::frontend::CompileScript(js::ExclusiveContext*, js::LifoAlloc*, JS::Handle<JSObject*>, JS::Handle<JSScript*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long, JSString*, unsigned int, js::SourceCompressionTask*) /srv/repos/mozilla-central/js/src/frontend/BytecodeCompiler.cpp:215
+    #2 0xc7eb8d in JS::Compile(JSContext*, JS::Handle<JSObject*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/jsapi.cpp:4478
+    #3 0x4f63a6 in Run(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:1193
+"""
+
+testTraceWithAuxAndAbortMessage = """
+Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
+==19462==ERROR: AddressSanitizer: heap-use-after-free on address 0x7fd766c42800 at pc 0xe1f587 bp 0x7fffcb1b6ed0 sp 0x7fffcb1b6ec8
+READ of size 6143520 at 0x7fd766c42800 thread T0
+    #0 0xe1f586 in void mozilla::PodCopy<char16_t>(char16_t*, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/opt64asan/js/src/../../dist/include/mozilla/PodOperations.h:110
+    #1 0x5904e2 in js::frontend::CompileScript(js::ExclusiveContext*, js::LifoAlloc*, JS::Handle<JSObject*>, JS::Handle<JSScript*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long, JSString*, unsigned int, js::SourceCompressionTask*) /srv/repos/mozilla-central/js/src/frontend/BytecodeCompiler.cpp:215
+    #2 0xc7eb8d in JS::Compile(JSContext*, JS::Handle<JSObject*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/jsapi.cpp:4478
+    #3 0x4f63a6 in Run(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:1193
+"""
+
 testSignature1 = '''{"symptoms": [
     {
     "functionName": "GetObjectAllocKindForCopy",
@@ -481,6 +500,30 @@ class SignatureStackFramesRegressionTest(unittest.TestCase):
 
         self.assertTrue(testSigEmptyCrashAddress.matches(crashInfoPos))
         self.assertFalse(testSigEmptyCrashAddress.matches(crashInfoNeg))
+
+class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxMessage.splitlines())
+        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxAndAbortMessage.splitlines())
+
+        crashSignaturePos = crashInfoPos.createCrashSignature()
+        crashSignatureNeg = crashInfoNeg.createCrashSignature()
+
+        # Check that the first crash signature has ASan symptoms but
+        # the second does not because it has a program abort message
+        self.assertIn("/ERROR: AddressSanitizer", str(crashSignaturePos))
+        self.assertIn("/READ of size", str(crashSignaturePos))
+        self.assertNotIn("/ERROR: AddressSanitizer", str(crashSignatureNeg))
+        self.assertNotIn("/READ of size", str(crashSignatureNeg))
+
+        # Check matches appropriately
+        self.assertTrue(crashSignaturePos.matches(crashInfoPos))
+        self.assertTrue(crashSignaturePos.matches(crashInfoNeg))
+        self.assertFalse(crashSignatureNeg.matches(crashInfoPos))
+        self.assertTrue(crashSignatureNeg.matches(crashInfoNeg))
+
+
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
