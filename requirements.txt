@@ -4,3 +4,4 @@ djangorestframework==2.4.4
 requests>=2.5.0
 lockfile>=0.8
 boto>=2.38.0
+django-chartjs>=1.0
