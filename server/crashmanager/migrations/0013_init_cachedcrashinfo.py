@@ -2,9 +2,9 @@
 from __future__ import unicode_literals, print_function
 
 from django.db import migrations
-from crashmanager.models import CrashEntry
 
 def create_migration_tool(apps, schema_editor):
+    CrashEntry = apps.get_model("crashmanager", "CrashEntry")
     for entry in CrashEntry.objects.filter(cachedCrashInfo=None):
         entry.save(update_fields=['cachedCrashInfo'])
 
