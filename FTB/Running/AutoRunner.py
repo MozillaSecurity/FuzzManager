@@ -71,9 +71,6 @@ class AutoRunner():
 
 
     def getCrashInfo(self, configuration):
-        if not self.auxCrashData:
-            return None
-
         return CrashInfo.fromRawCrashData(self.stdout, self.stderr, configuration, self.auxCrashData)
 
 
