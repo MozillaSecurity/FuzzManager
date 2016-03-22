@@ -22,6 +22,7 @@ from abc import ABCMeta
 from distutils import spawn
 import os
 import re
+import signal
 import subprocess
 
 from FTB.Signatures.CrashInfo import CrashInfo
@@ -237,7 +238,30 @@ class ASanRunner(AutoRunner):
                 self.stderr.append(line)
 
         if not self.auxCrashData:
-            return False
+            processCrashed = False
+
+            # It can happen that we don't get an AddressSanitizer trace because ASan's signal
+            # handler did not catch the signal for some reason. This can happen easily with
+            # SIGILL but also for some programs with SIGSEGV.
+            if process.returncode < 0:
+                crashSignals = [
+                    # POSIX.1-1990 signals
+                        signal.SIGILL,
+                        signal.SIGABRT,
+                        signal.SIGFPE,
+                        signal.SIGSEGV,
+                        # SUSv2 / POSIX.1-2001 signals
+                        signal.SIGBUS,
+                        signal.SIGSYS,
+                        signal.SIGTRAP,
+                ]
+
+                for crashSignal in crashSignals:
+                    if self.process.returncode == -crashSignal:
+                        processCrashed = True
+
+            if not processCrashed:
+                return False
 
         # Move the trace from stdout to auxCrashData
         self.auxCrashData = os.linesep.join(self.auxCrashData)
