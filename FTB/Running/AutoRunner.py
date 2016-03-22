@@ -257,7 +257,7 @@ class ASanRunner(AutoRunner):
                 ]
 
                 for crashSignal in crashSignals:
-                    if self.process.returncode == -crashSignal:
+                    if process.returncode == -crashSignal:
                         processCrashed = True
 
             if not processCrashed:
