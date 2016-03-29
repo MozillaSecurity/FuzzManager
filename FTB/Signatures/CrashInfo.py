@@ -568,6 +568,7 @@ class ASanCrashInfo(CrashInfo):
             abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
 
         if abortMsg != None:
+            rwMsg = None
             if isinstance(abortMsg, list):
                 asanMsg = abortMsg[0]
                 rwMsg = abortMsg[1]
