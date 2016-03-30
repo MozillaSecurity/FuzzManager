@@ -384,6 +384,11 @@ def editCrashEntry(request, crashid):
             if not sig.matches(crashInfo):
                 entry.bucket = None
 
+        # If this entry now isn't in a bucket, mark it to be auto-triaged
+        # again by the server.
+        if not entry.bucket:
+            entry.triagedOnce = False
+
         entry.save()
         return redirect('crashmanager:crashview', crashid=entry.pk)
     else:
@@ -440,6 +445,7 @@ def __handleSignaturePost(request, bucket):
                 outCount += 1
                 if 'submit_save' in request.POST:
                     entry.bucket = None
+                    entry.triagedOnce = False
                     entry.save()
 
     # Save bucket and redirect to viewing it
@@ -535,7 +541,7 @@ def deleteSignature(request, sigid):
         if not "delentries" in request.POST:
             # Make sure we remove this bucket from all crash entries referring to it,
             # otherwise these would be deleted as well through cascading.
-            CrashEntry.objects.filter(bucket=bucket).update(bucket=None)
+            CrashEntry.objects.filter(bucket=bucket).update(bucket=None, triagedOnce=False)
 
         bucket.delete()
         return redirect('crashmanager:signatures')
