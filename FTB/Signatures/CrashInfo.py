@@ -1199,18 +1199,21 @@ class CDBCrashInfo(CrashInfo):
                 #     Minor       : Unknown
                 components = line.split(None, 4)
                 stackEntry = components[2]
-                if components[0] in ["Excluded", "Instruction"]:
+                # See http://msecdbg.codeplex.com/SourceControl/latest#MSECDbgExts/Source/exploitable.cpp
+                # "Instruction Address: ..." will appear after:  LogStackInformation( objDebugger, objState );
+                if "Instruction" in components[0]:
                     inCrashingThread = False
                     continue
-                if stackEntry.endswith("Unknown"):
-                    self.backtrace.append("??")
-                else:
-                    stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
-                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
-                    self.backtrace.append(stackEntry)
+                stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
+                stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry):
         # Uses !exploitable output, sometimes only !exploitable is able to extract function names
         # Extract only the function name between "!" and "+", and also strip out "<" onwards, if any
-        return stackEntry.split("!")[1].split("+")[0].split("<")[0]
+        if "!" in stackEntry:
+            result = stackEntry.split("!")[1].split("+")[0].split("<")[0]
+        else:
+            result = "??"
+        return result

@@ -869,7 +869,7 @@ class CDBParserTestCrash3(unittest.TestCase):
         with open('cdb-crash-report-example-3.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 50)
+        self.assertEqual(len(crashInfo.backtrace), 52)
         self.assertEqual(crashInfo.backtrace[0], "JS::Value::isMagic")
         self.assertEqual(crashInfo.backtrace[1], "js::jit::InvokeFunction")
         self.assertEqual(crashInfo.backtrace[2], "??")
@@ -920,6 +920,8 @@ class CDBParserTestCrash3(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[47], "__tmainCRTStartup")
         self.assertEqual(crashInfo.backtrace[48], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[49], "BaseThreadInitThunk")
+        self.assertEqual(crashInfo.backtrace[50], "RtlInitializeExceptionChain")
+        self.assertEqual(crashInfo.backtrace[51], "RtlInitializeExceptionChain")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
@@ -1162,7 +1164,7 @@ class CDBParserTestCrash7(unittest.TestCase):
         with open('cdb-crash-report-example-7.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 62)
+        self.assertEqual(len(crashInfo.backtrace), 64)
         self.assertEqual(crashInfo.backtrace[0], "js::ExpandErrorArgumentsVA")
         self.assertEqual(crashInfo.backtrace[1], "js::ReportErrorNumberVA")
         self.assertEqual(crashInfo.backtrace[2], "JS_ReportErrorFlagsAndNumber")
@@ -1225,6 +1227,8 @@ class CDBParserTestCrash7(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[59], "__tmainCRTStartup")
         self.assertEqual(crashInfo.backtrace[60], "mainCRTStartup")
         self.assertEqual(crashInfo.backtrace[61], "BaseThreadInitThunk")
+        self.assertEqual(crashInfo.backtrace[62], "RtlInitializeExceptionChain")
+        self.assertEqual(crashInfo.backtrace[63], "RtlInitializeExceptionChain")
 
         self.assertEqual(crashInfo.crashInstruction, "mov al,byte ptr [ecx]")
         self.assertEqual(crashInfo.registers["eax"], long(0x00000001))
