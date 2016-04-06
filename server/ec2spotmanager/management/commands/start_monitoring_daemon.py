@@ -22,6 +22,12 @@ import boto.exception
 
 logger = logging.getLogger("ec2spotmanager")
 
+# A global variable to memorize our current instance starting threads per pool
+# We use this variable mainly to ensure that we have one start thread per
+# pool only, as the start_pool_instances_async method is not necessarily
+# thread-safe when used on the same pool twice.
+async_start_threads_by_poolid = {}
+
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("monitoring_daemon")
@@ -32,9 +38,13 @@ class Command(NoArgsCommand):
             time.sleep(10)
     
     def check_instance_pools(self, initialCheck=False):
-        instance_pools = InstancePool.objects.all()
+        # Check all start threads
+        finished_start_thread_poolids = [id for id in async_start_threads_by_poolid if not async_start_threads_by_poolid[id].isAlive()]
+        for id in finished_start_thread_poolids:
+            del async_start_threads_by_poolid[id]
 
         # Process all instance pools
+        instance_pools = InstancePool.objects.all()
         for instance_pool in instance_pools:
             criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool = instance_pool, isCritical = True)
             
@@ -128,8 +138,11 @@ class Command(NoArgsCommand):
             #    instances_missing += 1
             
             if instances_missing > 0:
-                logger.info("[Pool %d] Needs %s more instances, starting..." % (instance_pool.id, instances_missing))
-                self.start_pool_instances(instance_pool, config, count=instances_missing)
+                if instance_pool.id in async_start_threads_by_poolid:
+                    logger.debug("[Pool %d] Already has a start thread running, not starting further instances..." % instance_pool.id)
+                else:
+                    logger.info("[Pool %d] Needs %s more instances, starting..." % (instance_pool.id, instances_missing))
+                    self.start_pool_instances(instance_pool, config, count=instances_missing)
             elif instances_missing < 0:
                 # Select the oldest instances we have running and terminate
                 # them so we meet the size limitation again.
@@ -330,7 +343,8 @@ class Command(NoArgsCommand):
                 return
         
         # TODO: We don't get any information back from the async method call here, but should handle failures!
-        t = threading.Thread(target=start_instances_async, args = (pool, config, count, images, region, zone, instances))
+        t = threading.Thread(target=start_instances_async, args=(pool, config, count, images, region, zone, instances))
+        async_start_threads_by_poolid[pool.id] = t
         t.start()
         
     def terminate_pool_instances(self, pool, instances, config, terminateByPool=False):
