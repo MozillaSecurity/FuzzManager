@@ -503,7 +503,8 @@ class ASanCrashInfo(CrashInfo):
                         self.registers[match.group(2)] = long(match.group(3), 16)
                         self.registers[match.group(4)] = long(match.group(5), 16)
                     else:
-                        raise RuntimeError("Fatal error parsing ASan trace: Failed to isolate registers in line: %s" % traceLine)
+                        # We might be dealing with one of the few ASan traces that don't emit registers
+                        pass
 
             parts = traceLine.strip().split()
 
@@ -577,6 +578,11 @@ class ASanCrashInfo(CrashInfo):
 
             # Do some additional formatting work for short signature only
             asanMsg = re.sub("^ERROR: ", "", asanMsg)
+
+            # Strip various forms of special thread information and messages
+            asanMsg = re.sub(" in thread T.+", "", asanMsg)
+            asanMsg = re.sub(" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
+
             if len(self.backtrace):
                 asanMsg += " [@ %s]" % self.backtrace[0]
             if rwMsg:

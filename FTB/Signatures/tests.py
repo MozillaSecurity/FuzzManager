@@ -108,6 +108,11 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
 ==19462==ABORTING
 """
 
+asanTraceInvalidFree = """
+==30731==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x62a00006c200 in thread T24 (MediaPD~oder #1)
+    #0 0x4c8690 in __interceptor_free /srv/repos/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:38
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -384,6 +389,18 @@ class ASanParserTestUAF(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
 
         self.assertEqual("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] with READ of size 6143520", crashInfo.createShortSignature())
+
+class ASanParserTestInvalidFree(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanTraceInvalidFree.splitlines(), config)
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "__interceptor_free")
+
+        self.assertEqual(crashInfo.crashAddress, 0x62a00006c200L)
+
+        self.assertEqual("AddressSanitizer: attempting free on address which was not malloc()-ed [@ __interceptor_free]", crashInfo.createShortSignature())
 
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):
