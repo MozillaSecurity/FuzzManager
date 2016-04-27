@@ -175,6 +175,7 @@ class BugzillaProvider(Provider):
             return source
         template["description"] = substituteMetadata(template["description"], metadata)
         template["comment"] = substituteMetadata(template["comment"], metadata)
+        template["attrs"] = substituteMetadata(template["attrs"], metadata)
 
         # Handle ".attached" properties
         if '%crashdata.attached%' in template["description"] or '%crashdata.attached%' in template["comment"]:
