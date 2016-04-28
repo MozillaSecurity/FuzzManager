@@ -428,7 +428,7 @@ def __handleSignaturePost(request, bucket):
     # Again, we only actually save if we hit "save". For previewing, we just count
     # how many issues would be assigned and removed.
     if "reassign" in request.POST:
-        (inCount, outCount) = (0, 0)
+        (inList, outList) = ([], [])
 
         signature = bucket.getSignature()
         needTest = signature.matchRequiresTest()
@@ -437,12 +437,12 @@ def __handleSignaturePost(request, bucket):
         for entry in entries:
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
             if match and entry.bucket == None:
-                inCount += 1
+                inList.append(entry)
                 if 'submit_save' in request.POST:
                     entry.bucket = bucket
                     entry.save()
             elif not match and entry.bucket != None:
-                outCount += 1
+                outList.append(entry)
                 if 'submit_save' in request.POST:
                     entry.bucket = None
                     entry.triagedOnce = False
@@ -456,7 +456,7 @@ def __handleSignaturePost(request, bucket):
     data = {
             'bucket' : bucket,
             'error_message' : "This is a preview, don't forget to save!",
-            'inCount' : inCount, 'outCount' : outCount
+            'inList' : inList, 'outList' : outList
             }
     return render(request, 'signatures/edit.html', data)
 

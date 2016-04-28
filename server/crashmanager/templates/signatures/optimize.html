@@ -37,57 +37,8 @@
             <a href="{% url 'crashmanager:sigedit' bucket.pk %}?fit={{ matchingEntries.0.pk }}" class="btn btn-default">Edit With Changes</a>
         </div>
 
-	<table class="table table-condensed table-hover table-bordered table-db">
-		<thead>
-			<tr>
-				<th style="width: 25px;">ID</th>
-				<th style="width: 50px;">Date Added</th>
-				<th style="width: 100px;">Short Signature</th>
-				<th style="width: 40px;">Crash Address</th>
-				<th style="width: 50px;">Test Status</th>
-				<th style="width: 50px;">Product</th>
-				<th style="width: 50px;">Version</th>
-				<th style="width: 25px;">Platform</th>
-				<th style="width: 25px;">OS</th>
-				<th style="width: 40px;">Tool</th>
-			</tr>
-		</thead>
-		<tbody>
-	{% for entry in matchingEntries %}<tr class="{% cycle odd,even %}">
-	<td><a href="{% url 'crashmanager:crashview' entry.pk %}">{{ entry.pk }}</a></td>
-		  <td>{{ entry.created|date:"r" }}</td>
-	<td>{{ entry.shortSignature|escape }}</td>
-	<td>{{ entry.crashAddress|escape }}</td>
-	<td>
-		{% if entry.testcase %}
-			Q{{entry.testcase.quality}}
-			{{ entry.testcase.size }}
-			{% if entry.testcase.isBinary %}
-				(binary)
-			{% endif %}
-		{% else %}
-			No test
-		{% endif %}
-	</td>
-	<td>{{ entry.product.name|escape }}</td>
-	<td>{{ entry.product.version|escape }}</td>
-	<td>{{ entry.platform.name|escape }}</td>
-	<td>
-		{% if entry.os.name|escape == 'linux' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/linux.png"/>
-		{% elif entry.os.name|escape == 'macosx' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/macosx.png"/>
-		{% elif entry.os.name|escape == 'windows' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/windows.png"/>
-		{% else %}
-			{{ entry.os.name|escape }}
-		{% endif %}
-	</td>
-	<td>{{ entry.tool.name|escape }}</td>
-			</tr>
-	{% endfor %}
-		</tbody>
-	</table>
+	{% include "include/crashentry_list.html" with entries=matchingEntries %}
+
     </div>
 </div>
 {% endblock body_content %}

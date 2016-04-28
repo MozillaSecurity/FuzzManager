@@ -8,8 +8,8 @@
     <div class="panel-body">
         {% if error_message %}<div class="alert alert-warning" role="alert">{{ error_message }}</div>{% endif %}
 
-        {% if inCount != None %}<p>New issues that will be assigned to this bucket: <span class="badge">{{ inCount }}</span></p>{% endif %}
-        {% if outCount != None %}<p>Issues that will be removed from this bucket: <span class="badge">{{ outCount }}</span></p>{% endif %}
+        {% if inList %}<p>New issues that will be assigned to this bucket: <span class="badge">{{ inList|length }}</span></p>{% endif %}
+        {% if outList %}<p>Issues that will be removed from this bucket: <span class="badge">{{ outList|length }}</span></p>{% endif %}
 
         {% if bucket.pk != None %}
             <form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
@@ -36,6 +36,9 @@
             <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
             <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
         </form>
+
+	{% include "include/crashentry_list.html" with entries=inList %}
+	{% include "include/crashentry_list.html" with entries=outList %}
     </div>
 </div>
 {% endblock body_content %}
