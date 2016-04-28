@@ -37,7 +37,7 @@
             <a href="{% url 'crashmanager:sigedit' bucket.pk %}?fit={{ matchingEntries.0.pk }}" class="btn btn-default">Edit With Changes</a>
         </div>
 
-	{% include "include/crashentry_list.html" with entries=matchingEntries %}
+	{% include "signatures/include/crashentry_list.html" with entries=matchingEntries %}
 
     </div>
 </div>

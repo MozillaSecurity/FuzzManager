@@ -8,8 +8,8 @@
     <div class="panel-body">
         {% if error_message %}<div class="alert alert-warning" role="alert">{{ error_message }}</div>{% endif %}
 
-        {% if inList %}<p>New issues that will be assigned to this bucket: <span class="badge">{{ inList|length }}</span></p>{% endif %}
-        {% if outList %}<p>Issues that will be removed from this bucket: <span class="badge">{{ outList|length }}</span></p>{% endif %}
+        {% if inList %}<p>New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">{{ inList|length }}</span></p>{% endif %}
+        {% if outList %}<p>Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">{{ outList|length }}</span></p>{% endif %}
 
         {% if bucket.pk != None %}
             <form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
@@ -32,13 +32,23 @@
                 <input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
                 <label for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
             </div>
-
-            <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
-            <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
+            <div class="btn-group">
+                <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
+                <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
+            </div>
         </form>
 
-	{% include "include/crashentry_list.html" with entries=inList %}
-	{% include "include/crashentry_list.html" with entries=outList %}
+        <div class="field">
+            {% if inList %}
+                <label id="crashes_in">New issues that will be assigned to this bucket:</label>
+	        {% include "signatures/include/crashentry_list.html" with entries=inList %}
+            {% endif %}
+
+            {% if outList %}
+                <label id="crashes_out">Issues that will be removed from this bucket:</label>
+	        {% include "signatures/include/crashentry_list.html" with entries=outList %}
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock body_content %}
