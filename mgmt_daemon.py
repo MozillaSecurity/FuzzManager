@@ -265,12 +265,15 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
             else:
                 with open(crash_file, 'r') as crash_fd:
                     stdin = crash_fd.read()
+
+            print("Processing crash file %s" % crash_file, file=sys.stderr)
             
             runner = AutoRunner.fromBinaryArgs(cmdline[0], cmdline[1:], env=env, stdin=stdin)
             if runner.run():
                 crash_info = runner.getCrashInfo(configuration)
                 collector.submit(crash_info, crash_file)
                 open(crash_file + ".submitted", 'a').close()
+                print("Success: Submitted crash to server.", file=sys.stderr)
             else:
                 open(crash_file + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
