@@ -14,13 +14,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
-import json
-import difflib
-from FTB.Signatures import JSONHelper
-from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
-import FTB.Signatures
-
 from collections import OrderedDict
+import difflib
+import json
+
+from FTB.Signatures import JSONHelper
+import FTB.Signatures
+from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
+
 
 class CrashSignature():
     def __init__(self, rawSignature):
@@ -30,7 +31,7 @@ class CrashSignature():
         @type rawSignature: string
         @param rawSignature: A JSON-formatted string representing the crash signature
         '''
-        
+
         # For now, we store the original raw signature and hand it out for
         # conversion to String. This is fine as long as our Signature object
         # is immutable. Later, we should implement a method that actually
@@ -38,36 +39,36 @@ class CrashSignature():
         #
         self.rawSignature = rawSignature
         self.symptoms = []
-        
+
         try:
             obj = json.loads(rawSignature, object_pairs_hook=OrderedDict)
         except ValueError, e:
             raise RuntimeError("Invalid JSON: %s" % e)
-        
+
         # Get the symptoms objects (mandatory)
         if "symptoms" in obj:
             symptoms = JSONHelper.getArrayChecked(obj, "symptoms", True)
             if len(symptoms) == 0:
                 raise RuntimeError("Signature must have at least one symptom.")
-            
+
             for rawSymptomsObj in symptoms:
                 self.symptoms.append(Symptom.fromJSONObject(rawSymptomsObj))
         else:
             raise RuntimeError('Missing mandatory top-level key "symptoms".')
-        
+
         # Get some optional lists
         self.platforms = JSONHelper.getArrayChecked(obj, "platforms")
         self.operatingSystems = JSONHelper.getArrayChecked(obj, "operatingSystems")
         self.products = JSONHelper.getArrayChecked(obj, "products")
-    
+
     @staticmethod
     def fromFile(signatureFile):
         with open(signatureFile, 'r') as sigFd:
             return CrashSignature(sigFd.read())
-    
+
     def __str__(self):
         return self.rawSignature
-    
+
     def matches(self, crashInfo):
         '''
         Match this signature against the given crash information
@@ -80,19 +81,19 @@ class CrashSignature():
         '''
         if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
             return False
-        
+
         if self.operatingSystems != None and not crashInfo.configuration.os in self.operatingSystems:
             return False
-        
+
         if self.products != None and not crashInfo.configuration.product in self.products:
             return False
-        
+
         for symptom in self.symptoms:
             if not symptom.matches(crashInfo):
                 return False
-        
+
         return True
-    
+
     def matchRequiresTest(self):
         '''
         Check if the signature requires a testcase to match.
@@ -106,12 +107,12 @@ class CrashSignature():
         for symptom in self.symptoms:
             if isinstance(symptom, TestcaseSymptom):
                 return True
-        
+
         return False
-    
+
     def getDistance(self, crashInfo):
         distance = 0
-        
+
         for symptom in self.symptoms:
             if isinstance(symptom, StackFramesSymptom):
                 symptomDistance = symptom.diff(crashInfo)[0]
@@ -122,8 +123,8 @@ class CrashSignature():
                     distance += len(symptom.functionNames)
             else:
                 if not symptom.matches(crashInfo):
-                    distance +=1
-                
+                    distance += 1
+
         if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
             distance += 1
 
@@ -134,36 +135,36 @@ class CrashSignature():
             distance += 1
 
         return distance
-        
+
     def fit(self, crashInfo):
         sigObj = {}
         sigSymptoms = []
-        
+
         sigObj['symptoms'] = sigSymptoms
-        
+
         if self.platforms:
             sigObj['platforms'] = self.platforms
-        
+
         if self.operatingSystems:
             sigObj['operatingSystems'] = self.operatingSystems
-            
+
         if self.products:
             sigObj['products'] = self.products
-            
+
         symptomsDiff = self.getSymptomsDiff(crashInfo)
-        
+
         for symptomDiff in symptomsDiff:
             if symptomDiff['offending']:
                 if 'proposed' in symptomDiff:
-                    sigSymptoms.append(symptomDiff['proposed'].jsonobj) 
+                    sigSymptoms.append(symptomDiff['proposed'].jsonobj)
             else:
                 sigSymptoms.append(symptomDiff['symptom'].jsonobj)
-        
+
         if not sigSymptoms:
             return None
-            
+
         return CrashSignature(json.dumps(sigObj, indent=2))
-    
+
     def getSymptomsDiff(self, crashInfo):
         symptomsDiff = []
         for symptom in self.symptoms:
@@ -174,30 +175,30 @@ class CrashSignature():
                 # view on the offending parts *inside* that symptom. By calling matchWithDiff,
                 # we annotate internals of the symptom with distance information to display.
                 if isinstance(symptom, StackFramesSymptom):
-                    proposedSymptom  = symptom.diff(crashInfo)[1]
+                    proposedSymptom = symptom.diff(crashInfo)[1]
                     if proposedSymptom:
                         symptomsDiff.append({ 'offending' : True, 'symptom' : symptom, 'proposed' : proposedSymptom })
                         continue
-                
+
                 symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
         return symptomsDiff
-    
+
     def getSignatureUnifiedDiffTuples(self, crashInfo):
         diffTuples = []
-        
+
         newRawCrashSignature = self.fit(crashInfo)
         oldLines = self.rawSignature.splitlines()
         newLines = []
         if newRawCrashSignature:
             newLines = newRawCrashSignature.rawSignature.splitlines()
-        context = max(len(oldLines),len(newLines))
-        
+        context = max(len(oldLines), len(newLines))
+
         signatureDiff = difflib.unified_diff(oldLines, newLines, n=context)
-        
+
         for diffLine in signatureDiff:
             if diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or not diffLine.strip():
                 continue
-            
-            diffTuples.append((diffLine[0],diffLine[1:]))
-        
+
+            diffTuples.append((diffLine[0], diffLine[1:]))
+
         return diffTuples
