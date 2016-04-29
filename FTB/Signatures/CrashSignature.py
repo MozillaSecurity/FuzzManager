@@ -124,6 +124,15 @@ class CrashSignature():
                 if not symptom.matches(crashInfo):
                     distance +=1
                 
+        if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
+            distance += 1
+
+        if self.operatingSystems != None and not crashInfo.configuration.os in self.operatingSystems:
+            distance += 1
+
+        if self.products != None and not crashInfo.configuration.product in self.products:
+            distance += 1
+
         return distance
         
     def fit(self, crashInfo):
