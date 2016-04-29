@@ -5,6 +5,7 @@ from ec2spotmanager import views
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/report/$', views.MachineStatusViewSet.as_view()),
+    url(r'^rest/pool/(?P<poolid>\d+)/cycle/$', views.PoolCycleView.as_view()),
     url(r'^logout/$', views.logout_view, name='logout'),
     url(r'^$', views.index, name='index'),
     url(r'^pools/$', views.pools, name='pools'),

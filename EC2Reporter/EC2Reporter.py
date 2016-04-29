@@ -137,6 +137,21 @@ class EC2Reporter():
         if response.status_code != requests.codes["created"]:
             raise self.__serverError(response)
 
+    @remote_checks
+    def cycle(self, poolid):
+        '''
+        Cycle the pool with the given id.
+        
+        @type poolid: int
+        @param poolid: ID of the pool to cycle
+        '''
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+
+        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+
+        if response.status_code != requests.codes["ok"]:
+            raise self.__serverError(response)
+
     @staticmethod
     def __serverError(response):
         return RuntimeError("Server unexpectedly responded with status code %s: %s" %
