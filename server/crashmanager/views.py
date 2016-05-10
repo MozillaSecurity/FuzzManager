@@ -726,6 +726,11 @@ def optimizeSignature(request, sigid):
                 for otherEntry in entries:
                     if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
                         matchingEntries.append(otherEntry)
+
+                # Fallback for when the optimization algorithm failed for some reason
+                if not matchingEntries:
+                    optimizedSignature = None
+
                 break
 
     diff = None
