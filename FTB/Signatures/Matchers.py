@@ -32,7 +32,10 @@ class StringMatch():
             if self.value.startswith("/") and self.value.endswith("/"):
                 self.isPCRE = True
                 self.value = self.value[1:-1]
-                self.compiledValue = re.compile(self.value)
+                try:
+                    self.compiledValue = re.compile(self.value)
+                except re.error as e:
+                    raise RuntimeError("Error in regular expression: %s" % e)
         else:
             self.value = JSONHelper.getStringChecked(obj, "value", True)
 
@@ -42,7 +45,10 @@ class StringMatch():
                     pass
                 elif matchType.lower() == "pcre":
                     self.isPCRE = True
-                    self.compiledValue = re.compile(self.value)
+                    try:
+                        self.compiledValue = re.compile(self.value)
+                    except re.error as e:
+                        raise RuntimeError("Error in regular expression: %s" % e)
                 else:
                     raise RuntimeError("Unknown match operator specified: %s" % matchType)
 
