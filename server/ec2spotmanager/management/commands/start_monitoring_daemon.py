@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.management.base import NoArgsCommand
 from django.utils import timezone
 import logging
+import signal
 import ssl
 import threading
 import time
@@ -28,13 +29,26 @@ logger = logging.getLogger("ec2spotmanager")
 # thread-safe when used on the same pool twice.
 async_start_threads_by_poolid = {}
 
+# Global variable for indicating shutdown through InterruptHandler
+pending_shutdown = False
+def handle_interrupt(signal, frame):
+    logger.info("Shutdown initiated...")
+    pending_shutdown = True
+
 class Command(NoArgsCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("monitoring_daemon")
     def handle_noargs(self, **options):
+        signal.signal(signal.SIGINT, handle_interrupt)
+
         self.check_instance_pools(initialCheck=True)
         while True:
             self.check_instance_pools()
+
+            if pending_shutdown and not async_start_threads_by_poolid:
+                logger.info("Shutdown complete.")
+                return 0
+
             time.sleep(10)
 
     def check_instance_pools(self, initialCheck=False):
@@ -117,28 +131,20 @@ class Command(NoArgsCommand):
                 continue
 
             if (not instance_pool.last_cycled) or instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval):
-                logger.info("[Pool %d] Needs to be cycled, terminating all instances..." % instance_pool.id)
-                instance_pool.last_cycled = timezone.now()
-                self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
-                instance_pool.save()
+                if pending_shutdown:
+                    logger.info("[Pool %d] Shutdown pending, skipping pool cycle..." % instance_pool.id)
+                else:
+                    logger.info("[Pool %d] Needs to be cycled, terminating all instances..." % instance_pool.id)
+                    instance_pool.last_cycled = timezone.now()
+                    self.terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
+                    instance_pool.save()
 
-                # Try to update our terminated instances as soon as possible. If EC2 needs longer than
-                # the here specified sleep time, the instances will be updated with the next iteration
-                # of this pool, allowing other actions to be processed in-between.
-                # time.sleep(2)
-                # self.update_pool_instances(instance_pool, config)
-                logger.info("[Pool %d] Termination complete." % instance_pool.id)
-
-            # Determine which instances need to be cycled
-            # outdated_instances = instances.filter(created__lt = timezone.now() - timezone.timedelta(seconds=config.cycle_interval))
-
-            # Terminate all instances that need cycling
-            # for instance in outdated_instances:
-            #    self.terminate_instance(instance, config)
-            #    instances_missing += 1
+                    logger.info("[Pool %d] Termination complete." % instance_pool.id)
 
             if instances_missing > 0:
-                if instance_pool.id in async_start_threads_by_poolid:
+                if pending_shutdown:
+                    logger.info("[Pool %d] Shutdown pending, not starting further instances..." % instance_pool.id)
+                elif instance_pool.id in async_start_threads_by_poolid:
                     logger.debug("[Pool %d] Already has a start thread running, not starting further instances..." % instance_pool.id)
                 else:
                     logger.info("[Pool %d] Needs %s more instances, starting..." % (instance_pool.id, instances_missing))
