@@ -177,6 +177,7 @@ def main(argv=None):
     # Actions
     parser.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
     parser.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
+    parser.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
 
     # Options
     parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
@@ -196,7 +197,7 @@ def main(argv=None):
     opts = parser.parse_args(argv)
 
     # Check that one action is specified
-    actions = [ "report", "report_file" ]
+    actions = [ "report", "report_file", "cycle" ]
 
     haveAction = False
     for action in actions:
@@ -221,7 +222,10 @@ def main(argv=None):
     reporter = EC2Reporter(opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid)
     report = None
 
-    if opts.report_file:
+    if opts.cycle:
+        reporter.cycle(opts.cycle)
+        return 0
+    elif opts.report_file:
         if opts.keep_reporting:
             lock = FileLock(opts.report_file)
             while True:
