@@ -626,7 +626,7 @@ class PoolCycleView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def put(self, request, poolid, format=None):
+    def post(self, request, poolid, format=None):
         pool = get_object_or_404(InstancePool, pk=poolid)
 
         if not pool.isEnabled:
