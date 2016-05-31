@@ -210,7 +210,12 @@ class Command(NoArgsCommand):
         images = self.create_laniakea_images(config)
 
         # Figure out where to put our instances
-        (region, zone, rejected) = self.get_best_region_zone(config)
+        try:
+            (region, zone, rejected) = self.get_best_region_zone(config)
+        except (boto.exception.EC2ResponseError, ssl.SSLError) as msg:
+            # In case of temporary failures here, we will retry again in the next cycle
+            logger.warn("[Pool %d] Failed to aquire spot instance prices: %s." % (pool.id, msg))
+            return
 
         priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 
