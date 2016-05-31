@@ -32,6 +32,7 @@ async_start_threads_by_poolid = {}
 # Global variable for indicating shutdown through InterruptHandler
 pending_shutdown = False
 def handle_interrupt(signal, frame):
+    global pending_shutdown
     logger.info("Shutdown initiated...")
     pending_shutdown = True
 
