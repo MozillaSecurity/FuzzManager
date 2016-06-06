@@ -24,6 +24,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 
 from FTB.Signatures.CrashInfo import CrashInfo
 
@@ -152,7 +153,7 @@ class GDBRunner(AutoRunner):
 
             core = "core.%s" % process.pid
 
-            (self.stdout, self.stderr) = process.communicate(input=self.stdin)
+            (plainStdout, plainStderr) = process.communicate(input=self.stdin)
 
             if os.path.isfile(core):
                 self.cmdArgs.append(core)
@@ -191,6 +192,11 @@ class GDBRunner(AutoRunner):
         # Move the trace from stdout to auxCrashData
         self.auxCrashData = self.stdout[traceStart:traceStop]
         self.stdout = self.stdout[:traceStart] + self.stdout[traceStop:]
+
+        # If we used the core dump method, use stdout/err from the first run
+        if self.force_core:
+            self.stdout = plainStdout
+            self.stderr = plainStderr
 
         return True
 
