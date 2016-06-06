@@ -97,6 +97,12 @@ class GDBRunner(AutoRunner):
     def __init__(self, binary, args=None, env=None, cwd=None, core=None, stdin=None):
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
+        # This can be used to force GDBRunner to first generate a core and then
+        # also use it immediately for generating crash information. This is
+        # required in the rare case that a crash doesn't reproduce then the
+        # program runs directly under GDB.
+        self.force_core = bool(os.environ.get('FTB_FORCE_GDBCORE', False))
+
         classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
             "--batch",
@@ -104,7 +110,7 @@ class GDBRunner(AutoRunner):
             "source %s" % classPath,
         ]
 
-        if core is None:
+        if core is None and not self.force_core:
             self.gdbArgs.extend(["-ex", "run"])
 
         self.gdbArgs.extend([
@@ -116,20 +122,47 @@ class GDBRunner(AutoRunner):
             "-ex", "quit",
         ])
 
-        if core is None:
+        if core is None and not self.force_core:
             self.gdbArgs.append("--args")
 
         self.cmdArgs.append("gdb")
         self.cmdArgs.extend(self.gdbArgs)
         self.cmdArgs.append(self.binary)
 
-        if core is not None:
-            self.cmdArgs.append(core)
-        else:
-            self.cmdArgs.extend(self.args)
+        if not self.force_core:
+            if core is not None:
+                self.cmdArgs.append(core)
+            else:
+                self.cmdArgs.extend(self.args)
 
 
     def run(self):
+        if self.force_core:
+            plainCmdArgs = [ self.binary ]
+            plainCmdArgs.extend(self.args)
+
+            process = subprocess.Popen(
+                self.plainCmdArgs,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self.cwd,
+                env=self.env
+            )
+
+            core = "core.%s" % process.pid
+
+            (self.stdout, self.stderr) = process.communicate(input=self.stdin)
+
+            if os.path.isfile(core):
+                self.cmdArgs.append(core)
+            elif os.path.isfile("core"):
+                # Fallback in case core_uses_pid is disabled
+                self.cmdArgs.append("core")
+            else:
+                print("Unable to locate core dump, check system configuration", file=sys.stderr)
+                return False
+
         process = subprocess.Popen(
             self.cmdArgs,
             stdin=subprocess.PIPE,
