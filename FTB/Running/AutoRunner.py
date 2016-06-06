@@ -142,7 +142,7 @@ class GDBRunner(AutoRunner):
             plainCmdArgs.extend(self.args)
 
             process = subprocess.Popen(
-                self.plainCmdArgs,
+                plainCmdArgs,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
