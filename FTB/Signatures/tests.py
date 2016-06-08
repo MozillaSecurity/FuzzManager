@@ -113,6 +113,35 @@ asanTraceInvalidFree = """
     #0 0x4c8690 in __interceptor_free /srv/repos/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:38
 """
 
+asanTraceDebugAssertion = """
+### XPCOM_MEM_LEAK_LOG defined -- logging leaks to wtmp1/q1-final-leaks.txt
+Crash Annotation GraphicsCriticalError: |[0][GFX1]: Texture deallocated too late during shutdown (t=22.4895) [GFX1]: Texture deallocated too late during shutdown
+Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521
+#01: nsCycleCollector::CollectWhite() (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3347)
+#02: nsCycleCollector::Collect(ccType, js::SliceBudget&, nsICycleCollectorListener*, bool) (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3692)
+#03: nsCycleCollector::ShutdownCollect() (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3609)
+#04: nsCycleCollector_shutdown() (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:4219)
+#05: mozilla::ShutdownXPCOM(nsIServiceManager*) (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/build/XPCOMInit.cpp:969)
+#06: ScopedXPCOMStartup::~ScopedXPCOMStartup() (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/toolkit/xre/nsAppRunner.cpp:1474)
+#07: operator delete(void*) (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/mozalloc.h:217)
+#08: mozilla::UniquePtr<ScopedXPCOMStartup, mozilla::DefaultDelete<ScopedXPCOMStartup> >::operator=(decltype(nullptr)) (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/UniquePtr.h:314)
+ASAN:SIGSEGV
+=================================================================
+==17560==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7f04990c1f2c sp 0x7ffef0e38f60 bp 0x7ffef0e38f70 T0)
+    #0 0x7f0497771ea5 in nsCycleCollector::CollectWhite() /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3345
+    #1 0x7f0497774498 in nsCycleCollector::Collect(ccType, js::SliceBudget&, nsICycleCollectorListener*, bool) /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3691
+    #2 0x7f0497774064 in nsCycleCollector::ShutdownCollect() /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3609
+    #3 0x7f0497777c45 in nsCycleCollector_shutdown() /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:4219
+    #4 0x7f04978e0347 in mozilla::ShutdownXPCOM(nsIServiceManager*) /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/build/XPCOMInit.cpp:967
+    #5 0x7f049dfe3f7a in ScopedXPCOMStartup::~ScopedXPCOMStartup() /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/toolkit/xre/nsAppRunner.cpp:1473
+    #6 0x7f049dff0b55 in mozilla::DefaultDelete<ScopedXPCOMStartup>::operator()(ScopedXPCOMStartup*) const /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/UniquePtr.h:528
+    #7 0x7f049dfeffdf in mozilla::UniquePtr<ScopedXPCOMStartup, mozilla::DefaultDelete<ScopedXPCOMStartup> >::operator=(decltype(nullptr)) /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/UniquePtr.h:313
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/gfx/Logging.h:524 mozilla::gfx::Log<1, mozilla::gfx::CriticalLogger>::WriteLog(std::string const&)
+==17560==ABORTING
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -401,6 +430,19 @@ class ASanParserTestInvalidFree(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0x62a00006c200L)
 
         self.assertEqual("AddressSanitizer: attempting free on address which was not malloc()-ed [@ __interceptor_free]", crashInfo.createShortSignature())
+
+class ASanParserTestDebugAssertion(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanTraceDebugAssertion.splitlines(), config)
+        self.assertEqual(len(crashInfo.backtrace), 8)
+        self.assertEqual(crashInfo.backtrace[0], "nsCycleCollector::CollectWhite")
+        self.assertEqual(crashInfo.backtrace[6], "mozilla::DefaultDelete<ScopedXPCOMStartup>::operator()")
+
+        self.assertEqual(crashInfo.crashAddress, 0x0L)
+
+        self.assertEqual("Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521", crashInfo.createShortSignature())
 
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):
