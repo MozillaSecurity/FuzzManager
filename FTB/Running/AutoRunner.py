@@ -176,7 +176,7 @@ class GDBRunner(AutoRunner):
         (self.stdout, self.stderr) = process.communicate(input=self.stdin)
 
         # Detect where the GDB trace starts/ends
-        traceStart = self.stdout.rfind("Program received signal")
+        traceStart = self.stdout.rfind(" received signal SIG")
         traceStop = self.stdout.rfind("A debugging session is active")
 
         # Alternative GDB start version when using core dumps
