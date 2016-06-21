@@ -505,6 +505,7 @@ class ASanCrashInfo(CrashInfo):
                     else:
                         # We might be dealing with one of the few ASan traces that don't emit registers
                         pass
+                continue # Not in the ASan output yet. Some lines in eg. debug+asan builds might error if we continue.
 
             parts = traceLine.strip().split()
 
