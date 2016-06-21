@@ -165,7 +165,7 @@ class CrashInfo():
             return c
 
         asanString = "ERROR: AddressSanitizer:"
-        gdbString = "Program received signal "
+        gdbString = " received signal SIG"
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
         appleString = "OS Version:            Mac OS X"
