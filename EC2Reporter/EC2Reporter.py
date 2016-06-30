@@ -24,6 +24,7 @@ import argparse
 from lockfile import FileLock, LockTimeout
 import os
 import platform
+import random
 import requests
 import sys
 import time
@@ -181,6 +182,7 @@ def main(argv=None):
 
     # Options
     parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
+    parser.add_argument("--random-offset", dest="random_offset", default=0, type=int, help="Random offset for the reporting interval (+/-)", metavar="SECONDS")
 
     # Settings
     parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
@@ -227,6 +229,9 @@ def main(argv=None):
         return 0
     elif opts.report_file:
         if opts.keep_reporting:
+            if opts.random_offset > 0:
+                random.seed(reporter.clientId)
+
             lock = FileLock(opts.report_file)
             while True:
                 try:
@@ -240,7 +245,11 @@ def main(argv=None):
                             # Ignore errors if the server is temporarily unavailable
                             print("Failed to contact server: %s" % e, file=sys.stderr)
                         lock.release()
-                    time.sleep(opts.keep_reporting)
+
+                    random_offset = 0
+                    if opts.random_offset:
+                        random_offset = random.randint(-opts.random_offset, opts.random_offset)
+                    time.sleep(opts.keep_reporting + random_offset)
                 except LockTimeout:
                     continue
         else:
