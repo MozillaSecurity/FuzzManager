@@ -1,16 +1,17 @@
-from django.db import models
-from django.utils import timezone
-from django.core.files.storage import FileSystemStorage
-from django.core.files.base import ContentFile
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
+from django.db import models
 from django.dispatch.dispatcher import receiver
+from django.utils import timezone
 import json
 import os
+
 
 def get_storage_path(self, name):
     return os.path.join("poolconfig-%s-files" % self.pk, name)
 
-class FlatObject(dict): 
+class FlatObject(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
@@ -38,13 +39,13 @@ class PoolConfiguration(models.Model):
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_type = models.CharField(max_length=255, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_userdata_file =  models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
+    ec2_userdata_file = models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
     ec2_userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
     ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
     ec2_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_raw_config = models.CharField(max_length=4095, blank=True, null=True)
-    
+
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
         self.ec2_tags_dict = None
@@ -53,8 +54,8 @@ class PoolConfiguration(models.Model):
         self.ec2_userdata = None
         self.ec2_security_groups_list = None
         self.ec2_allowed_regions_list = None
-        
-        # This list is used to update the parent configuration with our own 
+
+        # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
         #
         # All fields of our model except for the parent and name
@@ -73,64 +74,64 @@ class PoolConfiguration(models.Model):
                         'ec2_max_price',
                         'ec2_userdata',
                         ]
-        
+
         self.list_config_fields = [
                         'ec2_security_groups',
                         'ec2_allowed_regions',
                         ]
-        
+
         self.dict_config_fields = [
                         'ec2_tags',
                         'ec2_raw_config',
                         'ec2_userdata_macros'
                         ]
-        
+
         # For performance reasons we do not deserialize these fields
-        # automatically here. You need to explicitly call the 
+        # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
-        
+
         super(PoolConfiguration, self).__init__(*args, **kwargs)
-    
+
     def flatten(self):
         if self.isCyclic():
             raise RuntimeError("Attempted to flatten a cyclic configuration")
-        
+
         self.deserializeFields()
-        
+
         # Start with an empty configuration
         flat_parent_config = FlatObject({})
-        
+
         # Dictionaries and lists should be explicitely initialized empty
         # so they can be updated/extended by the child configurations
         for field in self.dict_config_fields:
             flat_parent_config[field] = {}
-        
+
         for field in self.list_config_fields:
             flat_parent_config[field] = []
-        
+
         # If we are not the top-most confifugration, recursively call flatten
         # and proceed with the configuration provided by our parent.
         if self.parent != None:
             flat_parent_config = self.parent.flatten()
-        
+
         for config_field in self.config_fields:
             if getattr(self, config_field) != None:
                 flat_parent_config[config_field] = getattr(self, config_field)
-        
+
         for field in self.dict_config_fields:
             obj_field = "%s_dict" % field
             obj = getattr(self, obj_field)
             if obj:
                 flat_parent_config[field].update(obj)
-                
+
         for field in self.list_config_fields:
             obj_field = "%s_list" % field
             obj = getattr(self, obj_field)
             if obj:
                 flat_parent_config[field].extend(obj)
-            
+
         return flat_parent_config
-        
+
     def save(self, *args, **kwargs):
         # Reserialize data, then call regular save method
         for field in self.dict_config_fields:
@@ -138,33 +139,33 @@ class PoolConfiguration(models.Model):
             obj = getattr(self, obj_field)
             if obj:
                 setattr(self, field, json.dumps(obj))
-        
+
         for field in self.list_config_fields:
             obj_field = "%s_list" % field
             obj = getattr(self, obj_field)
             if obj:
                 setattr(self, field, json.dumps(obj))
-                
+
         super(PoolConfiguration, self).save(*args, **kwargs)
-    
+
     def deserializeFields(self):
         for field in self.dict_config_fields:
             obj_field = "%s_dict" % field
             sobj = getattr(self, field)
             if sobj:
                 setattr(self, obj_field, json.loads(sobj))
-        
+
         for field in self.list_config_fields:
             obj_field = "%s_list" % field
             sobj = getattr(self, field)
             if sobj:
                 setattr(self, obj_field, json.loads(sobj))
-            
+
         if self.ec2_userdata_file:
             self.ec2_userdata_file.open(mode='rb')
             self.ec2_userdata = self.ec2_userdata_file.read()
             self.ec2_userdata_file.close()
-        
+
     def storeTestAndSave(self):
         if self.ec2_userdata:
             # Save the file using save() to avoid problems when initially
@@ -172,7 +173,7 @@ class PoolConfiguration(models.Model):
             # original filename assigned when saving the file.
             self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1], ContentFile(self.ec2_userdata), save=False)
         self.save()
-        
+
     def isCyclic(self):
         if not self.parent:
             return False
@@ -182,22 +183,22 @@ class PoolConfiguration(models.Model):
             tortoise = tortoise.parent
             hare = hare.parent.parent
         return tortoise == hare
-            
+
     def getMissingParameters(self):
         flat_config = self.flatten()
         missing_fields = []
-        
+
         # Check regular fields, none of them is optional
         for field in self.config_fields:
             if not field in flat_config or not flat_config[field]:
                 missing_fields.append(field)
-        
+
         # Most dicts/lists are optional except for the ec2_allowed_regions
         # field. Without that, we obviously cannot spawn any instances, so
         # we should report this field if it's missing or empty.
         if not flat_config.ec2_allowed_regions:
             missing_fields.append("ec2_allowed_regions")
-        
+
         return missing_fields
 
 @receiver(models.signals.post_delete, sender=PoolConfiguration)
@@ -205,12 +206,12 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
     if instance.ec2_userdata:
         filename = instance.file.path
         filedir = os.path.dirname(filename)
-        
+
         os.remove(filename)
-        
+
         if not os.listdir(filedir):
             os.rmdir(filedir)
-    
+
 class InstancePool(models.Model):
     config = models.ForeignKey(PoolConfiguration)
     isEnabled = models.BooleanField(default=False)
@@ -225,13 +226,13 @@ class Instance(models.Model):
     ec2_instance_id = models.CharField(max_length=255, blank=True, null=True)
     ec2_region = models.CharField(max_length=255)
     ec2_zone = models.CharField(max_length=255)
-    
+
 class InstanceStatusEntry(models.Model):
     instance = models.ForeignKey(Instance)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
-    
+
 class PoolStatusEntry(models.Model):
     pool = models.ForeignKey(InstancePool)
     created = models.DateTimeField(default=timezone.now)
@@ -244,7 +245,7 @@ class PoolUptimeDetailedEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
     target = models.IntegerField()
     actual = models.IntegerField()
-    
+
 class PoolUptimeAccumulatedEntry(models.Model):
     pool = models.ForeignKey(InstancePool)
     created = models.DateTimeField(default=timezone.now)
