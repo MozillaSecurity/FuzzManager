@@ -217,6 +217,15 @@ class Command(NoArgsCommand):
             # In case of temporary failures here, we will retry again in the next cycle
             logger.warn("[Pool %d] Failed to aquire spot instance prices: %s." % (pool.id, msg))
             return
+        except (RuntimeError) as msg:
+            logger.error("[Pool %d] Failed to compile userdata." % pool.id)
+            entry = PoolStatusEntry()
+            entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
+            entry.pool = pool
+            entry.isCritical = True
+            entry.msg = "Configuration error: %s" % msg
+            entry.save()
+            return
 
         priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 

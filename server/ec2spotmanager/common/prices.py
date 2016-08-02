@@ -13,8 +13,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-import datetime
 import boto.ec2
+import datetime
+
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
@@ -22,21 +23,25 @@ def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_
     '''Gets spot prices of the specified region and instance type'''
     now = datetime.datetime.now()
     start = now - datetime.timedelta(hours=6)
-    r = boto.ec2.connect_to_region(region_name, 
+    region = boto.ec2.connect_to_region(region_name,
                                    aws_access_key_id=aws_key_id,
                                    aws_secret_access_key=aws_secret_key
-                                   ).get_spot_price_history(
-                                        start_time=start.isoformat(),
-                                        instance_type=instance_type,
-                                        product_description="Linux/UNIX"
-                                        ) #TODO: Make configurable
+                                   )
+
+    if not region:
+        raise RuntimeError("Invalid region: %s" % region_name)
+
+    r = region.get_spot_price_history(start_time=start.isoformat(),
+                                    instance_type=instance_type,
+                                    product_description="Linux/UNIX"
+                                    )  # TODO: Make configurable
     return r
 
-def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_multiprocess = False):
+def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_multiprocess=False):
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
-        
+
     results = []
     for region in regions:
         if use_multiprocess:
@@ -52,14 +57,14 @@ def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_mult
         for entry in result:
             if not entry.region.name in prices:
                 prices[entry.region.name] = {}
-                
+
             zone = entry.availability_zone
-            
+
             if not zone in prices[entry.region.name]:
                 prices[entry.region.name][zone] = []
-                
+
             prices[entry.region.name][zone].append(entry.price)
-    
+
     return prices
 
 def get_price_median(data):
