@@ -396,6 +396,16 @@ A debugging session is active.
         Inferior 1 [process 24244] will be killed.
 """
 
+gdbRegressionTrace8 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x0814977d in js::Mutex::lock (this=0xf7123988) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/threading/posix/Mutex.cpp:65
+#1  0x0848d094 in js::LockGuard<js::Mutex>::LockGuard (aLock=..., this=<synthetic pointer>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/threading/LockGuard.h:25
+#2  js::jit::AutoLockSimulatorCache::AutoLockSimulatorCache (sim=0xf7123000, this=<synthetic pointer>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:369
+#3 <signal handler called>
+#4 0xf7442cfc in ?? () from /lib32/libc.so.6
+#5 0x08488e62 in js::jit::CheckICacheLocked (instr=0xf49d1648, i_cache=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:1034
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -612,6 +622,17 @@ class GDBParserTestCrashAddressRegression7(unittest.TestCase):
 
         self.assertEqual(crashInfo7.backtrace[1], "js::ScopeIter::settle")
 
+class GDBParserTestCrashAddressRegression8(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        # This used to fail because CrashInfo.fromRawCrashData fails to detect a GDB trace
+        crashInfo8 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace8.splitlines())
+
+        self.assertEqual(crashInfo8.backtrace[2], "js::jit::AutoLockSimulatorCache::AutoLockSimulatorCache")
+        self.assertEqual(crashInfo8.backtrace[3], "<signal handler called>")
+        self.assertEqual(crashInfo8.backtrace[4], "??")
+        self.assertEqual(crashInfo8.backtrace[5], "js::jit::CheckICacheLocked")
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
