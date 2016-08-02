@@ -213,7 +213,7 @@ class Command(NoArgsCommand):
         # Figure out where to put our instances
         try:
             (region, zone, rejected) = self.get_best_region_zone(config)
-        except (boto.exception.EC2ResponseError, ssl.SSLError) as msg:
+        except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
             # In case of temporary failures here, we will retry again in the next cycle
             logger.warn("[Pool %d] Failed to aquire spot instance prices: %s." % (pool.id, msg))
             return
@@ -336,9 +336,12 @@ class Command(NoArgsCommand):
                 # the warning now because we obviously succeeded in starting some instances.
                 PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']).delete()
 
+                # The same holds for temporary failures of any sort
+                PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['temporary-failure']).delete()
+
                 # Do not delete unclassified errors here for now, so the user can see them.
 
-            except (boto.exception.EC2ResponseError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
                 if "MaxSpotInstanceCountExceeded" in str(msg):
                     logger.warning("[Pool %d] Maximum instance count exceeded for region %s" % (pool.id, region))
                     if not PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
@@ -347,6 +350,13 @@ class Command(NoArgsCommand):
                         entry.type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']
                         entry.msg = "Auto-selected region exceeded its maximum spot instance count."
                         entry.save()
+                elif "Service Unavailable" in str(msg):
+                    logger.warning("[Pool %d] Temporary failure in region %s: %s" % (pool.id, region, msg))
+                    entry = PoolStatusEntry()
+                    entry.pool = pool
+                    entry.type = POOL_STATUS_ENTRY_TYPE['temporary-failure']
+                    entry.msg = "Temporary failure occurred: %s" % msg
+                    entry.save()
                 else:
                     logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "start_instances_async", msg))
                     entry = PoolStatusEntry()
@@ -403,7 +413,7 @@ class Command(NoArgsCommand):
                 else:
                     logger.info("[Pool %d] Terminating %s instances in region %s" % (pool.id, len(instance_ids_by_region[region]), region))
                     cluster.terminate(cluster.find(instance_ids=instance_ids_by_region[region]))
-            except (boto.exception.EC2ResponseError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
                 logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return 1
 
@@ -503,7 +513,7 @@ class Command(NoArgsCommand):
                         instance.hostname = boto_instance.public_dns_name
                         instance.save()
 
-            except (boto.exception.EC2ResponseError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
                 logger.exception("%s: boto failure: %s" % ("update_pool_instances", msg))
                 return 1
 
