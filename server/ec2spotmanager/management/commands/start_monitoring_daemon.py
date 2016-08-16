@@ -406,10 +406,13 @@ class Command(NoArgsCommand):
 
                     # Data consistency checks
                     for boto_instance in boto_instances:
+                        # state_code is a 16-bit value where the high byte is
+                        # an opaque internal value and should be ignored.
+                        state_code = boto_instance.state_code & 255
                         if not ((boto_instance.id in instance_ids_by_region[region])
-                                or (boto_instance.state_code == INSTANCE_STATE['shutting-down']
-                                or boto_instance.state_code == INSTANCE_STATE['terminated'])):
-                            logger.error("[Pool %d] Instance with EC2 ID %s (status %d) is not in region list for region %s" % (pool.id, boto_instance.id, boto_instance.state_code, region))
+                                or (state_code == INSTANCE_STATE['shutting-down']
+                                or state_code == INSTANCE_STATE['terminated'])):
+                            logger.error("[Pool %d] Instance with EC2 ID %s (status %d) is not in region list for region %s" % (pool.id, boto_instance.id, state_code, region))
 
                     cluster.terminate(boto_instances)
                 else:
@@ -468,7 +471,7 @@ class Command(NoArgsCommand):
                 for boto_instance in boto_instances:
                     # state_code is a 16-bit value where the high byte is
                     # an opaque internal value and should be ignored.
-                    boto_instance.state_code = boto_instance.state_code & 255
+                    state_code = boto_instance.state_code & 255
 
                     if not ("SpotManager-Updatable" in boto_instance.tags and int(boto_instance.tags["SpotManager-Updatable"]) > 0):
                         # The instance is not marked as updatable. We must not touch it because
@@ -485,8 +488,8 @@ class Command(NoArgsCommand):
                     # make sure it's a terminated instance because we should never have a running
                     # instance that matches the search above but is not in our database.
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        if not ((boto_instance.state_code == INSTANCE_STATE['shutting-down']
-                            or boto_instance.state_code == INSTANCE_STATE['terminated'])):
+                        if not ((state_code == INSTANCE_STATE['shutting-down']
+                            or state_code == INSTANCE_STATE['terminated'])):
 
                             # As a last resort, try to find the instance in our database.
                             # If the instance was saved to our database between the entrance
@@ -509,8 +512,8 @@ class Command(NoArgsCommand):
                         instances_left.remove(instance)
 
                     # Check the status code and update if necessary
-                    if instance.status_code != boto_instance.state_code:
-                        instance.status_code = boto_instance.state_code
+                    if instance.status_code != state_code:
+                        instance.status_code = state_code
                         instance.save()
 
                     # If for some reason we don't have a hostname yet,
