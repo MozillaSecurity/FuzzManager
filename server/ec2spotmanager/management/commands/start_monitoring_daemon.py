@@ -315,7 +315,9 @@ class Command(NoArgsCommand):
                 for i in range(0, len(boto_instances)):
                     instances[i].hostname = boto_instances[i].public_dns_name
                     instances[i].ec2_instance_id = boto_instances[i].id
-                    instances[i].status_code = boto_instances[i].state_code
+                    # state_code is a 16-bit value where the high byte is
+                    # an opaque internal value and should be ignored.
+                    instances[i].status_code = boto_instances[i].state_code & 255
                     instances[i].save()
 
                     assert(instances[i].ec2_instance_id != None)
@@ -464,6 +466,10 @@ class Command(NoArgsCommand):
                 boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
 
                 for boto_instance in boto_instances:
+                    # state_code is a 16-bit value where the high byte is
+                    # an opaque internal value and should be ignored.
+                    boto_instance.state_code = boto_instance.state_code & 255
+
                     if not ("SpotManager-Updatable" in boto_instance.tags and int(boto_instance.tags["SpotManager-Updatable"]) > 0):
                         # The instance is not marked as updatable. We must not touch it because
                         # a spawning thread is still managing this instance. However, we must also
