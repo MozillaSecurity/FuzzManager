@@ -193,7 +193,7 @@ def signatures(request):
 
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
-    if not "all" in request.GET or not request.GET["all"]:
+    if (not "all" in request.GET or not request.GET["all"]) and not isSearch:
         filters["bug"] = None
 
     entries = entries.filter(**filters)
