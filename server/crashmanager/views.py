@@ -65,6 +65,10 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
     if restricted_only and not user.restricted:
         return signatures
 
+    # If the user is unrestricted and all=1 is set, do not apply any filters
+    if not user.restricted and "all" in request.GET and request.GET["all"]:
+        return signatures
+
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
         return signatures.filter(crashentry__tool__in=defaultToolsFilter).distinct()
