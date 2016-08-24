@@ -358,25 +358,25 @@ class Collector():
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
 
-        json = response.json()
+        respJson = response.json()
 
-        if not isinstance(json, dict):
-            raise RuntimeError("Server sent malformed JSON response: %s" % json)
+        if not isinstance(respJson, dict):
+            raise RuntimeError("Server sent malformed JSON response: %s" % respJson)
 
-        if not json["testcase"]:
+        if not respJson["testcase"]:
             return None
 
-        url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, json["testcase"])
+        url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, respJson["testcase"])
         response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
 
-        localFile = os.path.basename(json["testcase"])
+        localFile = os.path.basename(respJson["testcase"])
         with open(localFile, 'w') as f:
             f.write(response.content)
 
-        return (localFile, json)
+        return (localFile, respJson)
 
     def __store_signature_hashed(self, signature):
         '''
