@@ -111,7 +111,7 @@ class Collector():
                 self.serverHost = globalConfig["serverhost"]
 
             if self.serverPort is None and "serverport" in globalConfig:
-                self.serverPort = globalConfig["serverport"]
+                self.serverPort = int(globalConfig["serverport"])
 
             if self.serverProtocol is None and "serverproto" in globalConfig:
                 self.serverProtocol = globalConfig["serverproto"]
@@ -151,7 +151,7 @@ class Collector():
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        url = "%s://%s:%s/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%d/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # We need to use basic authentication here because these files are directly served by the HTTP server
         response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
@@ -210,7 +210,7 @@ class Collector():
                          will be stored on the server in JSON format. This metadata is combined
                          with possible metadata stored in the L{ProgramConfiguration} inside crashInfo.
         '''
-        url = "%s://%s:%s/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%d/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # Serialize our crash information, testcase and metadata into a dictionary to POST
         data = {}
@@ -228,7 +228,7 @@ class Collector():
             data["testcase"] = testCaseData
             data["testcase_isbinary"] = isBinary
             data["testcase_quality"] = testCaseQuality
-            data["testcase_ext"] = os.path.splitext(testCase)[1][1:]
+            data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
@@ -351,7 +351,7 @@ class Collector():
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost to use remote features.")
 
-        url = "%s://%s:%s/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
+        url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
 
         response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -366,7 +366,7 @@ class Collector():
         if not respJson["testcase"]:
             return None
 
-        url = "%s://%s:%s/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, respJson["testcase"])
+        url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, respJson["testcase"])
         response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
