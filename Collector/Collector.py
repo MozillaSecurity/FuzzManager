@@ -258,7 +258,7 @@ class Collector():
             data["args"] = json.dumps(crashInfo.configuration.args)
 
         current_timeout = 2
-        while (True):
+        while True:
             response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
             if response.status_code != requests.codes["created"]:
@@ -504,8 +504,8 @@ def main():
     # Either --autosubmit was specified, or someone specified --binary manually
     # Check that the binary actually exists
     if opts.binary and not os.path.exists(opts.binary):
-            print("Error: Specified binary does not exist: %s" % opts.binary)
-            return 2
+        print("Error: Specified binary does not exist: %s" % opts.binary)
+        return 2
 
     stdout = None
     stderr = None
