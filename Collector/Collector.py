@@ -104,44 +104,44 @@ class Collector():
             configInstance = ConfigurationFiles([ globalConfigFile ])
             globalConfig = configInstance.mainConfig
 
-            if self.sigCacheDir == None and "sigdir" in globalConfig:
+            if self.sigCacheDir is None and "sigdir" in globalConfig:
                 self.sigCacheDir = globalConfig["sigdir"]
 
-            if self.serverHost == None and "serverhost" in globalConfig:
+            if self.serverHost is None and "serverhost" in globalConfig:
                 self.serverHost = globalConfig["serverhost"]
 
-            if self.serverPort == None and "serverport" in globalConfig:
+            if self.serverPort is None and "serverport" in globalConfig:
                 self.serverPort = globalConfig["serverport"]
 
-            if self.serverProtocol == None and "serverproto" in globalConfig:
+            if self.serverProtocol is None and "serverproto" in globalConfig:
                 self.serverProtocol = globalConfig["serverproto"]
 
-            if self.serverAuthToken == None:
+            if self.serverAuthToken is None:
                 if "serverauthtoken" in globalConfig:
                     self.serverAuthToken = globalConfig["serverauthtoken"]
                 elif "serverauthtokenfile" in globalConfig:
                     with open(globalConfig["serverauthtokenfile"]) as f:
                         self.serverAuthToken = f.read().rstrip()
 
-            if self.clientId == None and "clientid" in globalConfig:
+            if self.clientId is None and "clientid" in globalConfig:
                 self.clientId = globalConfig["clientid"]
 
-            if self.tool == None and "tool" in globalConfig:
+            if self.tool is None and "tool" in globalConfig:
                 self.tool = globalConfig["tool"]
 
         # Set some defaults that we can't set through default arguments, otherwise
         # they would overwrite configuration file settings
-        if self.serverProtocol == None:
+        if self.serverProtocol is None:
             self.serverProtocol = "https"
 
         # Try to be somewhat intelligent about the default port, depending on protocol
-        if self.serverPort == None:
+        if self.serverPort is None:
             if self.serverProtocol == "https":
                 self.serverPort = 433
             else:
                 self.serverPort = 80
 
-        if self.serverHost != None and self.clientId == None:
+        if self.serverHost is not None and self.clientId is None:
             self.clientId = platform.node()
 
     @remote_checks
@@ -178,7 +178,7 @@ class Collector():
         you probably want to use refresh() instead.)
         '''
         with ZipFile(zipFileName, "r") as zipFile:
-            if zipFile.testzip() != None:
+            if zipFile.testzip():
                 raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
 
             # Now clean the signature directory, only deleting signatures and metadata
@@ -492,7 +492,7 @@ def main():
         # (the testcase), if it hasn't been explicitely specified.
         testcase = opts.testcase
         testcaseidx = None
-        if testcase == None:
+        if testcase is None:
             for idx, arg in enumerate(opts.rargs[1:]):
                 if os.path.exists(arg):
                     if testcase:
@@ -527,7 +527,7 @@ def main():
                 args = opts.rargs[1:-1]
             else:
                 args = opts.rargs[1:]
-                if testcaseidx != None:
+                if testcaseidx is not None:
                     args[testcaseidx] = "TESTFILE"
         else:
             if opts.args:
@@ -551,8 +551,8 @@ def main():
                     configuration.addMetadata(metadata)
 
         # If configuring through binary failed, try to manually create ProgramConfiguration from command line arguments
-        if configuration == None:
-            if opts.platform == None or opts.product == None or opts.os == None:
+        if configuration is None:
+            if opts.platform is None or opts.product is None or opts.os is None:
                 print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
                 return 2
 
@@ -560,7 +560,7 @@ def main():
 
 
         if not opts.autosubmit:
-            if opts.stderr == None and opts.crashdata == None:
+            if opts.stderr is None and opts.crashdata is None:
                 print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
                 return 2
 
@@ -600,7 +600,7 @@ def main():
 
     if opts.search:
         (sig, metadata) = collector.search(crashInfo)
-        if sig == None:
+        if sig is None:
             print("No match found")
             return 3
         print(sig)
