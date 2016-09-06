@@ -161,24 +161,17 @@ class EC2Reporter():
 def main(argv=None):
     '''Command line options.'''
 
-    program_name = os.path.basename(sys.argv[0])
-    program_version = "v%s" % __version__
-    program_build_date = "%s" % __updated__
-
-    program_version_string = '%%prog %s (%s)' % (program_version, program_build_date)
-
-    if argv is None:
-        argv = sys.argv[1:]
-
     # setup argparser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--version', action='version', version=program_version_string)
+    parser.add_argument('--version', action='version', version='%s v%s (%s)' % (os.path.basename(__file__), __version__, __updated__))
 
     # Actions
-    parser.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
-    parser.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
-    parser.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
+    action_group = parser.add_argument_group("Actions", "A single action must be selected.")
+    actions = action_group.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
+    actions.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
+    actions.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
 
     # Options
     parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
@@ -191,26 +184,8 @@ def main(argv=None):
     parser.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
     parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
 
-    if len(argv) == 0:
-        parser.print_help()
-        return 2
-
     # process options
     opts = parser.parse_args(argv)
-
-    # Check that one action is specified
-    actions = [ "report", "report_file", "cycle" ]
-
-    haveAction = False
-    for action in actions:
-        if getattr(opts, action):
-            if haveAction:
-                print("Error: Cannot specify multiple actions at the same time", file=sys.stderr)
-                return 2
-            haveAction = True
-    if not haveAction:
-        print("Error: Must specify an action", file=sys.stderr)
-        return 2
 
     if opts.keep_reporting and not opts.report_file:
         print("Error: --keep-reporting is only valid with --report-from-file", file=sys.stderr)
