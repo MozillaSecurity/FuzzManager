@@ -142,6 +142,12 @@ SUMMARY: AddressSanitizer: SEGV /builds/slave/m-cen-l64-asan-d-0000000000000/bui
 ==17560==ABORTING
 """
 
+asanTraceMemcpyOverlap = """
+==4782==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x7f47486b18f8,0x7f47486b3904) and [0x7f47486b1800, 0x7f47486b380c) overlap
+    #0 0x49b496 in __asan_memcpy /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:393:3
+    #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -501,6 +507,17 @@ class ASanDetectionTest(unittest.TestCase):
 
         self.assertIsInstance(crashInfo1, ASanCrashInfo)
         self.assertIsInstance(crashInfo2, ASanCrashInfo)
+
+class ASanParserTestMemcpyOverlap(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanTraceMemcpyOverlap.splitlines(), config)
+        self.assertEqual(crashInfo.crashAddress, 0x7f47486b18f8L)
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "__asan_memcpy")
+        self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
+        self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]", crashInfo.createShortSignature())
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
