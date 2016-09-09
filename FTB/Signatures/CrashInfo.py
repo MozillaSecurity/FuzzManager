@@ -474,19 +474,16 @@ class ASanCrashInfo(CrashInfo):
         else:
             asanOutput = stderr
 
-        # For better readability, list all the formats here, then join them into the regular expression
-        asanMessages = [
-            "on address",  # The most common format, used for all overflows
-            "on unknown address",  # Used in case of a SIGSEGV
-            "double-free on",  # Used in case of a double-free
-            "not malloc\\(\\)\\-ed:",  # Used in case of a wild free (on unallocated memory)
-            "not owned:"  # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
-        ]
-
-        # TODO: Support "memory ranges [%p,%p) and [%p, %p) overlap" ?
-
-        asanCrashAddressPattern = " AddressSanitizer:.+ (?:" + "|".join(asanMessages) + ")\\s+0x([0-9a-f]+)"
-        asanRegisterPattern = "(?:\\s+|\\()pc\\s+0x([0-9a-f]+)\\s+(sp|bp)\\s+0x([0-9a-f]+)\\s+(sp|bp)\\s+0x([0-9a-f]+)"
+        asanCrashAddressPattern = r"""(?x)
+                                   \sAddressSanitizer:.*\s
+                                     (?:on\saddress             # The most common format, used for all overflows
+                                       |on\sunknown\saddress    # Used in case of a SIGSEGV
+                                       |double-free\son         # Used in case of a double-free
+                                       |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
+                                       |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
+                                       |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
+                                   \s*0x([0-9a-f]+)"""
+        asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
         expectedIndex = 0
         for traceLine in asanOutput:
@@ -583,6 +580,7 @@ class ASanCrashInfo(CrashInfo):
             # Strip various forms of special thread information and messages
             asanMsg = re.sub(" in thread T.+", "", asanMsg)
             asanMsg = re.sub(" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
+            asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap", "overlap", asanMsg)
 
             if len(self.backtrace):
                 asanMsg += " [@ %s]" % self.backtrace[0]
