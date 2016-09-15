@@ -761,6 +761,7 @@ def main(argv=None):
             print("Error: Failed to download a cmdline file from queue directories.", file=sys.stderr)
             return 2
         
+        print("Downloading build")
         download_build(os.path.join(opts.s3_corpus_refresh, "build"), opts.s3_bucket, opts.project)
         
         cmdline = []
@@ -788,6 +789,7 @@ def main(argv=None):
         cmdline[0] = binary_search_result[0]
         
         # Download our current corpus into the queues directory as well
+        print("Downloading corpus from s3://%s/%s/corpus/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
         download_corpus(queues_dir, opts.s3_bucket, opts.project)
         
         # Ensure the directory for our new tests is empty
@@ -805,12 +807,15 @@ def main(argv=None):
         afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', 'none']
         afl_cmdline.extend(cmdline)
         
+        print("Running afl-cmin")
         with open(os.devnull, 'w') as devnull:
             env = os.environ.copy()
             env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
             subprocess.check_call(afl_cmdline, stdout=devnull, env=env)
         
-        upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project, True)
+        # replace existing corpus with reduced corpus
+        print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
+        upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project, corpus_delete=True)
         
         # Prune the queues directory once we successfully uploaded the new
         # test corpus, but leave everything that's part of our new corpus
