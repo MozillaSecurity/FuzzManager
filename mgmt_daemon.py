@@ -390,9 +390,7 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
         remote_key.get_contents_to_filename(tmp_file)
         
         with open(tmp_file, 'r') as tmp_fd:
-            h = hashlib.new('sha1')
-            h.update(str(tmp_fd.read()))
-            hash_name = h.hexdigest()
+            hash_name = hashlib.sha1(str(tmp_fd.read())).hexdigest()
         
         os.rename(tmp_file, os.path.join(download_dir, hash_name))
         
@@ -764,10 +762,8 @@ def main(argv=None):
         print("Downloading build")
         download_build(os.path.join(opts.s3_corpus_refresh, "build"), opts.s3_bucket, opts.project)
         
-        cmdline = []
         with open(os.path.join(opts.s3_corpus_refresh, "cmdline"), 'r') as cmdline_file:
-            for line in cmdline_file:
-                cmdline.append(line.rstrip('\n'))
+            cmdline = cmdline_file.read().splitlines()
                 
         # Assume cmdline[0] is the name of the binary
         binary_name = os.path.basename(cmdline[0])
