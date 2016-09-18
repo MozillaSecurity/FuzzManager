@@ -338,7 +338,7 @@ class BugzillaProvider(Provider):
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
         ret = bz.createComment(**args)
-        if not "id" in ret or not "count" in ret:
+        if not "id" in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
 
         # If we were told to attach the crash data, do so now
@@ -357,11 +357,17 @@ class BugzillaProvider(Provider):
             if submitted_testcase_filename:
                 filename = submitted_testcase_filename
 
+            # A bug in BMO is causing "count" to be missing.
+            # This workaround ensures we can still attach the missing file.
+            cref = "previous comment"
+            if "count" in ret:
+                cref = "comment %s" % ret["count"]
+
             if crashEntry.testcase.isBinary:
-                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["count"], is_binary=True)
+                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for %s" % cref, is_binary=True)
                 ret["attachmentResponse"] = aRet
             elif len(data) > 2048 or testcase_attach:
-                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for comment %s" % ret["count"], is_binary=False)
+                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for %s" % cref, is_binary=False)
                 ret["attachmentResponse"] = aRet
 
         return ret["id"]
