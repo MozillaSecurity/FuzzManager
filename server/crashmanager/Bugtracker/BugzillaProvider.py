@@ -338,12 +338,12 @@ class BugzillaProvider(Provider):
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
         ret = bz.createComment(**args)
-        if not "id" in ret:
+        if not "id" in ret or not "count" in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            cRet = bz.addAttachment(args["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
             ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
