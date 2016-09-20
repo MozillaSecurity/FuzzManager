@@ -784,12 +784,11 @@ def findSignatures(request, crashid):
                         continue
 
                     if not otherBucket.pk in firstEntryPerBucketCache:
-                        bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
-                        firstEntryPerBucketCache[otherBucket.pk] = None
-                        entryList = list(bucketEntries[:1])
-                        if entryList:
+                        c = CrashEntry.objects.filter(bucket=otherBucket).first()
+                        firstEntryPerBucketCache[otherBucket.pk] = c
+                        if c:
                             # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = entryList[0].getCrashInfo(attachTestcase=False)
+                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
 
                     firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
                     if firstEntryCrashInfo:
