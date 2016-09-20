@@ -755,6 +755,10 @@ def findSignatures(request, crashid):
     similarBuckets = []
     matchingBucket = None
 
+    # Avoid hitting the database multiple times when looking for the first
+    # entry of a bucket. Keeping these in memory is less expensive.
+    firstEntryPerBucketCache = {}
+
     for bucket in buckets:
         signature = bucket.getSignature()
         distance = signature.getDistance(entry.crashinfo)
@@ -779,8 +783,11 @@ def findSignatures(request, crashid):
                     if otherBucket.pk == bucket.pk:
                         continue
 
-                    bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
-                    firstEntry = list(bucketEntries[:1])
+                    if not otherBucket.pk in firstEntryPerBucketCache:
+                        bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
+                        firstEntryPerBucketCache[otherBucket.pk] = list(bucketEntries[:1])
+
+                    firstEntry = firstEntryPerBucketCache[otherBucket.pk]
                     if firstEntry:
                         firstEntry = firstEntry[0]
                         # Omit testcase for performance reasons for now
