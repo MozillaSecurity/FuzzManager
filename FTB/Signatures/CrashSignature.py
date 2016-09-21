@@ -19,8 +19,8 @@ import difflib
 import json
 
 from FTB.Signatures import JSONHelper
-import FTB.Signatures
-from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom
+from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom, \
+    OutputSymptom
 
 
 class CrashSignature():
@@ -88,7 +88,19 @@ class CrashSignature():
         if self.products != None and not crashInfo.configuration.product in self.products:
             return False
 
+        deferredSymptoms = []
+
         for symptom in self.symptoms:
+            # We want to defer matching Testcase and Output symptoms as they can be slow
+            # and pretty much all other symptoms are instant in matching.
+            if isinstance(symptom, TestcaseSymptom) or isinstance(symptom, OutputSymptom):
+                deferredSymptoms.append(symptom)
+                continue
+
+            if not symptom.matches(crashInfo):
+                return False
+
+        for symptom in deferredSymptoms:
             if not symptom.matches(crashInfo):
                 return False
 
