@@ -7,6 +7,7 @@
 <div class="panel panel-default">
     <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Optimize Signature</div>
     <div class="panel-body">
+        {% if diff %}
         <table class="table table-condensed table-hover table-db">
             <thead>
             <tr>
@@ -38,7 +39,9 @@
         </div>
 
 	{% include "signatures/include/crashentry_list.html" with entries=matchingEntries %}
-
+        {% else %}
+        No optimizations found.
+        {% endif %}
     </div>
 </div>
 {% endblock body_content %}
