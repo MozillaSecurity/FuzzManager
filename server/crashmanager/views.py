@@ -693,6 +693,10 @@ def optimizeSignature(request, sigid):
     optimizedSignature = None
     matchingEntries = []
 
+    # Avoid hitting the database multiple times when looking for the first
+    # entry of a bucket. Keeping these in memory is less expensive.
+    firstEntryPerBucketCache = {}
+
     for entry in entries:
         entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
 
@@ -713,12 +717,17 @@ def optimizeSignature(request, sigid):
                 if otherBucket.pk == bucket.pk:
                     continue
 
-                bucketEntries = CrashEntry.objects.filter(bucket=otherBucket)
-                firstEntry = list(bucketEntries[:1])
-                if firstEntry:
-                    firstEntry = firstEntry[0]
+                if not otherBucket.pk in firstEntryPerBucketCache:
+                        c = CrashEntry.objects.filter(bucket=otherBucket).first()
+                        firstEntryPerBucketCache[otherBucket.pk] = c
+                        if c:
+                            # Omit testcase for performance reasons for now
+                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
+
+                firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
+                if firstEntryCrashInfo:
                     # Omit testcase for performance reasons for now
-                    if optimizedSignature.matches(firstEntry.getCrashInfo(attachTestcase=False)):
+                    if optimizedSignature.matches(firstEntryCrashInfo):
                         matchesInOtherBuckets = True
                         break
 
