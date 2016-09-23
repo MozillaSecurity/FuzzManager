@@ -685,7 +685,7 @@ def optimizeSignature(request, sigid):
     buckets = Bucket.objects.all()
 
     # Get all unbucketed entries for that user, respecting the tools filter though
-    entries = CrashEntry.objects.filter(bucket=None).order_by('-id')
+    entries = CrashEntry.objects.filter(bucket=None).order_by('-id').prefetch_related("platform", "product", "os")
     entries = filter_crash_entries_by_toolfilter(request, entries)
 
     signature = bucket.getSignature()
@@ -718,11 +718,11 @@ def optimizeSignature(request, sigid):
                     continue
 
                 if not otherBucket.pk in firstEntryPerBucketCache:
-                        c = CrashEntry.objects.filter(bucket=otherBucket).first()
-                        firstEntryPerBucketCache[otherBucket.pk] = c
-                        if c:
-                            # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
+                    c = CrashEntry.objects.filter(bucket=otherBucket).first()
+                    firstEntryPerBucketCache[otherBucket.pk] = c
+                    if c:
+                        # Omit testcase for performance reasons for now
+                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
 
                 firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
                 if firstEntryCrashInfo:
