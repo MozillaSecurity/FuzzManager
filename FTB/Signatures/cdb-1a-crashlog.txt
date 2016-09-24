@@ -1,0 +1,245 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\mozillaadmin\AppData\Local\CrashDumps\js-dbg-32-dm-windows-62f79d676e0e.exe.2372.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 7601 (Service Pack 1) MP (8 procs) Free x86 compatible
+Product: WinNt, suite: SingleUserTS
+Machine Name:
+Debug session time: Fri Sep 23 15:23:36.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:02.000
+..........................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=0034e7ac ecx=6a24705d edx=0034d9d4 esi=00000002 edi=00000000
+eip=77e9016d esp=0034e75c ebp=0034e7f8 iopl=0         nv up ei pl zr na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000246
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+ntdll!NtWaitForMultipleObjects+0x15:
+77e9016d 83c404          add     esp,4
+0:000> cdb: Reading initial command '$<c:\Users\mozillaadmin\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=00000000 ebx=00000001 ecx=6a24705d edx=0034d9d4 esi=0925b3ec edi=0925b3d1
+eip=01814577 esp=0034ef5c ebp=0034ef5c iopl=0         nv up ei pl nz na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000206
+*** WARNING: Unable to verify checksum for js-dbg-32-dm-windows-62f79d676e0e.exe
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47:
+01814577 cc              int     3
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for kernel32.dll -
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll!NtWaitForMultipleObjects+0x15:
+77e9016d 83c404          add     esp,4
+77e90170 c21400          ret     14h
+77e90173 90              nop
+ntdll!NtSetInformationObject:
+77e90174 b859000000      mov     eax,59h
+77e90179 33c9            xor     ecx,ecx
+77e9017b 8d542404        lea     edx,[esp+4]
+77e9017f 64ff15c0000000  call    dword ptr fs:[0C0h]
+77e90186 83c404          add     esp,4
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+01814577  cc 6a 03 c7                                      .j..
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+***** OS (WOW64 kernel32) symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: nt!IMAGE_NT_HEADERS32                         ***
+***                                                                   ***
+*************************************************************************
+
+FAULTING_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+01814577 cc              int     3
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 01814577 (js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x00000047)
+   ExceptionCode: 80000003 (Break instruction exception)
+  ExceptionFlags: 00000000
+NumberParameters: 1
+   Parameter[0]: 00000000
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS
+
+PROCESS_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 76620000 kernel32
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e2feea
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  00000000
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  00000d9c
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS
+
+LAST_CONTROL_TRANSFER:  from 0186f798 to 01814577
+
+STACK_TEXT:
+0034ef5c 0186f798 0925b3ec 08d12000 09061100 js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+0034efdc 01823483 09061100 09061100 08d12000 js_dbg_32_dm_windows_62f79d676e0e!js::coverage::LCovSource::writeScript+0x788 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 346]
+0034eff4 01886782 08d38000 090600a0 09061100 js_dbg_32_dm_windows_62f79d676e0e!js::coverage::LCovCompartment::collectCodeCoverageInfo+0x43 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 420]
+0034f1b8 018875f3 08d12000 08d38000 0034f1d8 js_dbg_32_dm_windows_62f79d676e0e!GenerateLcovInfo+0x5c2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2084]
+0034f1f4 014760ac 08d12000 0034f244 0034f344 js_dbg_32_dm_windows_62f79d676e0e!js::GetCodeCoverageSummary+0x33 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2123]
+0034f234 0190b2b6 08d12000 00000000 00000000 js_dbg_32_dm_windows_62f79d676e0e!GetLcovInfo+0x14c [c:\users\mozillaadmin\trees\mozilla-central\js\src\builtin\testingfunctions.cpp @ 3420]
+0034f25c 01916811 08d38000 01475f60 0034f344 js_dbg_32_dm_windows_62f79d676e0e!js::CallJSNative+0x86 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+0034f2c0 01916429 08d12000 00006000 00000000 js_dbg_32_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x391 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+0034f2e4 01ddcce4 08d12000 0034f344 092720e8 js_dbg_32_dm_windows_62f79d676e0e!InternalCall+0x119 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0034f37c 1f6a167c 0034f330 0034f3f8 0925a815 js_dbg_32_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0x364 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+0034f440 01ab4acf 1f6aa000 00000000 00000000 0x1f6a167c
+0034f3a0 ffffff82 02186128 0904e4e8 1f6a9163 js_dbg_32_dm_windows_62f79d676e0e!EnterIon+0x2cf [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 2837]
+00000000 00000000 00000000 00000000 00000000 0xffffff82
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FOLLOWUP_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+01814577 cc              int     3
+
+FAULTING_SOURCE_CODE:
+   600: static inline unsigned
+   601: GetBytecodeLength(jsbytecode* pc)
+   602: {
+   603:     JSOp op = (JSOp)*pc;
+>  604:     MOZ_ASSERT(op < JSOP_LIMIT);
+   605:
+   606:     if (CodeSpec[op].length != -1)
+   607:         return CodeSpec[op].length;
+   608:     return GetVariableBytecodeLength(pc);
+   609: }
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_32_dm_windows!js::GetBytecodeLength+47
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_32_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_80000003_js-dbg-32-dm-windows-62f79d676e0e.exe!js::GetBytecodeLength
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 0034e7f8 766319fc ntdll!NtWaitForMultipleObjects+0x15
+01 0034e840 766341d8 kernel32!WaitForMultipleObjectsEx+0x8e
+02 0034e85c 766580bc kernel32!WaitForMultipleObjects+0x18
+03 0034e8c8 76657f7b kernel32!GetApplicationRecoveryCallback+0x2a7
+04 0034e8dc 76657870 kernel32!GetApplicationRecoveryCallback+0x166
+05 0034e8ec 766577ef kernel32!UnhandledExceptionFilter+0x161
+06 0034e978 77ee5b67 kernel32!UnhandledExceptionFilter+0xe0
+07 0034fc50 77ea98d5 ntdll!RtlKnownExceptionFilter+0xb7
+08 0034fc68 00000000 ntdll!RtlInitializeExceptionChain+0x36
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+0034e7f8 766319fc 0034e7ac 0034e820 00000000 ntdll!NtWaitForMultipleObjects+0x15
+0034e840 766341d8 00000002 fffde000 00000000 kernel32!WaitForMultipleObjectsEx+0x8e
+0034e85c 766580bc 00000002 0034e890 00000000 kernel32!WaitForMultipleObjects+0x18
+0034e8c8 76657f7b 0034e9a8 00000001 00000001 kernel32!GetApplicationRecoveryCallback+0x2a7
+0034e8dc 76657870 0034e9a8 00000001 0034e978 kernel32!GetApplicationRecoveryCallback+0x166
+0034e8ec 766577ef 0034e9a8 00000001 95527c76 kernel32!UnhandledExceptionFilter+0x161
+0034e978 77ee5b67 00000000 77ee5a44 00000000 kernel32!UnhandledExceptionFilter+0xe0
+0034fc50 77ea98d5 012f1f73 fffde000 00000000 ntdll!RtlKnownExceptionFilter+0xb7
+0034fc68 00000000 012f1f73 fffde000 00000000 ntdll!RtlInitializeExceptionChain+0x36
+0:000> q
+quit:

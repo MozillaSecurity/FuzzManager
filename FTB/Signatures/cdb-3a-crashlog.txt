@@ -1,0 +1,284 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\mozillaadmin\AppData\Local\CrashDumps\js-dbg-32-dm-windows-62f79d676e0e.exe.3684.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 7601 (Service Pack 1) MP (8 procs) Free x86 compatible
+Product: WinNt, suite: SingleUserTS
+Machine Name:
+Debug session time: Fri Sep 23 15:55:20.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:02.000
+..........................................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr.
+(e64.c84): Access violation - code c0000005 (first/second chance not available)
+eax=00000000 ebx=0041d454 ecx=2b2b2b2b edx=0a200310 esi=00000002 edi=00000000
+eip=77e9016d esp=0041d404 ebp=0041d4a0 iopl=0         nv up ei pl zr na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000246
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+ntdll!NtWaitForMultipleObjects+0x15:
+77e9016d 83c404          add     esp,4
+0:000> cdb: Reading initial command '$<c:\Users\mozillaadmin\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=2b2ffff0 ebx=0041de08 ecx=2b2b2b2b edx=0a200310 esi=0041dc68 edi=0a200310
+eip=00f36a63 esp=0041dc04 ebp=0041dc2c iopl=0         nv up ei pl nz na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010206
+*** WARNING: Unable to verify checksum for js-dbg-32-dm-windows-62f79d676e0e.exe
+js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0x13:
+00f36a63 8b00            mov     eax,dword ptr [eax]  ds:002b:2b2ffff0=????????
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for kernel32.dll -
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll!NtWaitForMultipleObjects+0x15:
+77e9016d 83c404          add     esp,4
+77e90170 c21400          ret     14h
+77e90173 90              nop
+ntdll!NtSetInformationObject:
+77e90174 b859000000      mov     eax,59h
+77e90179 33c9            xor     ecx,ecx
+77e9017b 8d542404        lea     edx,[esp+4]
+77e9017f 64ff15c0000000  call    dword ptr fs:[0C0h]
+77e90186 83c404          add     esp,4
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+00f36a63  8b 00 83 f8                                      ....
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+***** OS (WOW64 kernel32) symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: nt!IMAGE_NT_HEADERS32                         ***
+***                                                                   ***
+*************************************************************************
+Value unavailable error for addr
+Value unavailable error for addr
+Value unavailable error for addr
+Value unavailable error for addr
+Value unavailable error for addr
+Value unavailable error for addr
+Unable to load image C:\Windows\System32\ucrtbase.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ucrtbase.dll
+*** ERROR: Module load completed but symbols could not be loaded for ucrtbase.dll
+
+FAULTING_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+13 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+00f36a63 8b00            mov     eax,dword ptr [eax]
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 00f36a63 (js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0x00000013)
+   ExceptionCode: c0000005 (Access violation)
+  ExceptionFlags: 00000000
+NumberParameters: 2
+   Parameter[0]: 00000000
+   Parameter[1]: 2b2ffff0
+Attempt to read from address 2b2ffff0
+
+PROCESS_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 76620000 kernel32
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e2feea
+
+ERROR_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%08lx referenced memory at 0x%08lx. The memory could not be %s.
+
+EXCEPTION_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%08lx referenced memory at 0x%08lx. The memory could not be %s.
+
+EXCEPTION_PARAMETER1:  00000000
+
+EXCEPTION_PARAMETER2:  2b2ffff0
+
+READ_ADDRESS:  2b2ffff0
+
+FOLLOWUP_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+13 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+00f36a63 8b00            mov     eax,dword ptr [eax]
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  00000c84
+
+BUGCHECK_STR:  APPLICATION_FAULT_INVALID_POINTER_READ_WRONG_SYMBOLS_FILL_PATTERN_2b2b2b2b
+
+PRIMARY_PROBLEM_CLASS:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+DEFAULT_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+LAST_CONTROL_TRANSFER:  from 015abad0 to 00f36a63
+
+STACK_TEXT:
+0041dc04 015abad0 0041de08 0041dc68 0041e650 js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0x13 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+0041dc2c 0159ab06 0a200310 0041e650 0041de08 js_dbg_32_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x90 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+0041dc40 0157f054 0041dc68 0041e650 00000003 js_dbg_32_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0xa6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+0041dc5c 0157d196 0041de08 0a200310 0041dc88 js_dbg_32_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * const>+0x44 [c:\users\mozillaadmin\shell-cache\js-dbg-32-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+0041dc80 01593309 0041de08 0041e650 01c511d8 js_dbg_32_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x36 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+0041dcb4 0199e4f9 0041de08 00000006 0041e638 js_dbg_32_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0x59 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 533]
+0041dce0 014edb80 0041de08 0041dcfc 08c12508 js_dbg_32_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x219 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 73]
+0041dd14 014edcff 0041de08 0041dd28 08c128a8 js_dbg_32_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x80 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+0041dd30 015b33af 08c12108 0041de08 08c12108 js_dbg_32_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x3f [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1456]
+0041dda4 015a3ef2 0041de08 00000000 0041ddc4 js_dbg_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0x8f [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+0041de6c 015a2d65 08c12108 00000007 0041deac js_dbg_32_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x362 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+0041df34 0110dd3d 08c12108 00000007 08c12000 js_dbg_32_dm_windows_62f79d676e0e!js::Nursery::collect+0x1a5 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 587]
+0041dfa0 011194bc 00000007 00000030 08c12508 js_dbg_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0xed [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+0041dfd8 0133679b 08c12000 00000000 0041e148 js_dbg_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::runDebugGC+0x2c [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsgc.cpp @ 6766]
+0041dff0 0132bc90 08c12000 00000010 00000003 js_dbg_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x3b [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+0041e004 01328849 08c12000 00000003 01b826ec js_dbg_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x10 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+0041e024 010541b3 08c12000 08c12000 00000003 js_dbg_32_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x169 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+0041e04c 014207ee 08c12000 00000003 00000000 js_dbg_32_dm_windows_62f79d676e0e!JSObject::create+0x4b3 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+0041e08c 01420e13 08c12000 0041e0bc 00000003 js_dbg_32_dm_windows_62f79d676e0e!NewObject+0x18e [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+0041e0d8 01478b98 00c12000 01b826ec 0041e130 js_dbg_32_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x133 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+0041e1a0 0106888d 08c12000 01d09098 0041e1e8 js_dbg_32_dm_windows_62f79d676e0e!js::ProxyObject::New+0x368 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+0041e1bc 0104eb29 08c12000 01d09098 0041e1e8 js_dbg_32_dm_windows_62f79d676e0e!js::NewProxyObject+0x7d [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 774]
+0041e1f0 0104f507 08c12000 0a200360 01d09098 js_dbg_32_dm_windows_62f79d676e0e!js::Wrapper::New+0x69 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+0041e230 00fb9e99 08c12000 0041e2b0 0041e398 js_dbg_32_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xb7 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+0041e31c 00f13fa5 08c12000 0041e398 01b4da20 js_dbg_32_dm_windows_62f79d676e0e!JSCompartment::wrap+0x7b9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+0041e3b8 0106be4a 08c12000 0041e610 0041e460 js_dbg_32_dm_windows_62f79d676e0e!JSCompartment::wrap+0x245 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+0041e3e4 0106c0c2 08c3b000 0041e478 0041e620 js_dbg_32_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0xfa [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+0041e444 01071ca2 08c12000 0041e478 0041e460 js_dbg_32_dm_windows_62f79d676e0e!js::Proxy::call+0xb2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+0041e47c 0149b2b6 08c12000 00000001 0041e610 js_dbg_32_dm_windows_62f79d676e0e!js::proxy_Call+0xd2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+0041e4a4 014a673c 08c3b000 00eb67a0 0041e58c js_dbg_32_dm_windows_62f79d676e0e!js::CallJSNative+0x86 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+0041e508 014a6429 08c12000 00000002 00000000 js_dbg_32_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x2bc [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 446]
+0041e52c 0196cce4 08c12000 0041e610 0a575278 js_dbg_32_dm_windows_62f79d676e0e!InternalCall+0x119 [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0041e5c4 002f167c 0041e578 0041e668 0a55d189 js_dbg_32_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0x364 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+0041e6d0 01644acf 0eb114b0 00000004 0a55c4e0 0x2f167c
+0041e5e8 ffffff82 01d16128 0a34e4e8 002f79f3 js_dbg_32_dm_windows_62f79d676e0e!EnterIon+0x2cf [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\ion.cpp @ 2837]
+00000000 00000000 00000000 00000000 00000000 0xffffff82
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FAULTING_SOURCE_CODE:
+  1238:
+  1239: inline Arena*
+  1240: TenuredCell::arena() const
+  1241: {
+> 1242:     MOZ_ASSERT(isTenured());
+  1243:     uintptr_t addr = address();
+  1244:     addr &= ~ArenaMask;
+  1245:     return reinterpret_cast<Arena*>(addr);
+  1246: }
+  1247:
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_32_dm_windows!js::gc::TenuredCell::arena+13
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_32_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_c0000005_js-dbg-32-dm-windows-62f79d676e0e.exe!js::gc::TenuredCell::arena
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 0041d4a0 766319fc ntdll!NtWaitForMultipleObjects+0x15
+01 0041d4e8 766341d8 kernel32!WaitForMultipleObjectsEx+0x8e
+02 0041d504 766580bc kernel32!WaitForMultipleObjects+0x18
+03 0041d570 76657f7b kernel32!GetApplicationRecoveryCallback+0x2a7
+04 0041d584 76657870 kernel32!GetApplicationRecoveryCallback+0x166
+05 0041d594 766577ef kernel32!UnhandledExceptionFilter+0x161
+06 0041d620 77ee5b67 kernel32!UnhandledExceptionFilter+0xe0
+07 0041f9c0 77ea98d5 ntdll!RtlKnownExceptionFilter+0xb7
+08 0041f9d8 00000000 ntdll!RtlInitializeExceptionChain+0x36
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+0041d4a0 766319fc 0041d454 0041d4c8 00000000 ntdll!NtWaitForMultipleObjects+0x15
+0041d4e8 766341d8 00000002 fffde000 00000000 kernel32!WaitForMultipleObjectsEx+0x8e
+0041d504 766580bc 00000002 0041d538 00000000 kernel32!WaitForMultipleObjects+0x18
+0041d570 76657f7b 0041d650 00000001 00000001 kernel32!GetApplicationRecoveryCallback+0x2a7
+0041d584 76657870 0041d650 00000001 0041d620 kernel32!GetApplicationRecoveryCallback+0x166
+0041d594 766577ef 0041d650 00000001 259f5595 kernel32!UnhandledExceptionFilter+0x161
+0041d620 77ee5b67 00000000 77ee5a44 00000000 kernel32!UnhandledExceptionFilter+0xe0
+0041f9c0 77ea98d5 00e81f73 fffde000 00000000 ntdll!RtlKnownExceptionFilter+0xb7
+0041f9d8 00000000 00e81f73 fffde000 00000000 ntdll!RtlInitializeExceptionChain+0x36
+0:000> q
+quit:
