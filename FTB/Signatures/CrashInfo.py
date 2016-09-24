@@ -1124,19 +1124,20 @@ class CDBCrashInfo(CrashInfo):
         '''
         CrashInfo.__init__(self)
 
-        if stdout != None:
+        if stdout is not None:
             self.rawStdout.extend(stdout)
 
-        if stderr != None:
+        if stderr is not None:
             self.rawStderr.extend(stderr)
 
-        if crashData != None:
+        if crashData is not None:
             self.rawCrashData.extend(crashData)
 
         self.configuration = configuration
 
         cdbRegisterPattern = RegisterHelper.getRegisterPattern() + "=([0-9a-f]+)"
 
+        address = ""
         inCrashingThread = False
         inEcxrData = False
         ecxrData = []
@@ -1148,75 +1149,88 @@ class CDBCrashInfo(CrashInfo):
                 continue
 
             if inEcxrData:
-                # Example:
+                # 32-bit example:
                 #     0:000> .ecxr
-                #     rax=0000000000000000 rbx=0000000000008000 rcx=00000000000005af
-                #     rdx=0000000000000000 rsi=0000000008c52000 rdi=0000000000008000
-                #     rip=000007fef86c13e4 rsp=000000000033bb10 rbp=0000000000000008
-                #      r8=0000000077440000  r9=00000000000003a6 r10=00000000c000012d
-                #     r11=0000000000000246 r12=0000000000000008 r13=0000000000500040
-                #     r14=0000000008c007e0 r15=0000000000000000
+                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                #     eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+                #     cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
+                # 64-bit example:
+                #     0:000> .ecxr
+                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                #     rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
+                #     rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
+                #      r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
+                #     r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
+                #     r14=000000e87fbfd0e0 r15=0000000000000003
                 #     iopl=0         nv up ei pl nz na pe nc
-                #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000200
+                #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
                 if line.startswith("cs="):
                     inEcxrData = False
                     continue
 
-                # First extract the line, example:
-                #     rax=0000000000000000 rbx=0000000000008000 rcx=00000000000005af
+                # First extract the line
+                # 32-bit example:
+                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                # 64-bit example:
+                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
                 matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
-                if matchLine != None:
+                if matchLine is not None:
                     ecxrData.extend(line.split())
 
-                # Next, put the rax, rbx, rcx, etc. entries into a list of their own, then iterate
+                # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own, then iterate
                 match = re.search(cdbRegisterPattern, line)
                 for instr in ecxrData:
                     match = re.search(cdbRegisterPattern, instr)
-                    if match != None:
+                    if match is not None:
                         register = match.group(1)
                         value = long(match.group(2), 16)
                         self.registers[register] = value
 
             # Crash address
-            if line.startswith("Exception Faulting Address:"):
-                # Example:
-                #     Exception Faulting Address: 0x7fef86c13e4
-                address = line.split(": ")[1]
+            if line.startswith("ExceptionAddress:"):
+                # 32-bit example:
+                #     ExceptionAddress: 00404c59 (js_32_dm_windows_62f79d676e0e!JSObject::is+0x00000002)
+                # 64-bit example:
+                #     ExceptionAddress: 00007ff74d469ff3 (js_64_dm_windows_62f79d676e0e!JSObject::is+0x000000000000000a)
+                address = line.split()[1]
                 self.crashAddress = long(address, 16)
 
             # Crash instruction
-            if line.startswith("Faulting Instruction:"):
-                # Example:
-                #     Faulting Instruction:01206fbd int 3
-                cInstruction = line.split(":")[1].split(None, 1)[1]
+            # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
+            lineWithoutBacktick = line.replace("`", "", 1)
+            if address and lineWithoutBacktick.startswith(address):
+                # 32-bit example:
+                #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                # 64-bit example:
+                #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
+                cInstruction = line.split(None, 2)[-1]
+                # There may be multiple spaces inside the faulting instruction
+                cInstruction = " ".join(cInstruction.split())
                 self.crashInstruction = cInstruction
 
             # Start of stack for crashing thread
-            if re.match(r'^\s*Hash Usage : Stack Trace:', line):
+            if line.startswith("STACK_TEXT:"):
                 inCrashingThread = True
                 continue
 
             if inCrashingThread:
-                # Example:
-                #     Major+Minor : mozglue!moz_abort+0x4
-                #     Minor       : mozglue!je_realloc+0x3d
-                #     Minor       : js_64_prof_windows_a523d4c7efe2!mozilla::VectorBase<unsigned char,256,js::SystemAllocPolicy,mozilla::Vector<unsigned char,256,j+0x53
-                #     Minor       : js_64_prof_windows_a523d4c7efe2!js::jit::X86Encoding::BaseAssembler::X86InstructionFormatter::oneByteOp64+0x35
-                #     Minor       : Unknown
-                components = line.split(None, 4)
-                stackEntry = components[2]
-                # See http://msecdbg.codeplex.com/SourceControl/latest#MSECDbgExts/Source/exploitable.cpp
-                # "Instruction Address: ..." will appear after:  LogStackInformation( objDebugger, objState );
-                if "Instruction" in components[0]:
+                # 32-bit example:
+                #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9
+                # 64-bit example:
+                #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13
+                if "!" not in line:
                     inCrashingThread = False
                     continue
+                components = line.split("!")
+                # removeFilenameAndOffset assumes the presence of "!"
+                stackEntry = "!" + components[-1]
+
                 stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
                 stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
                 self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry):
-        # Uses !exploitable output, sometimes only !exploitable is able to extract function names
         # Extract only the function name between "!" and "+", and also strip out "<" onwards, if any
         if "!" in stackEntry:
             result = stackEntry.split("!")[1].split("+")[0].split("<")[0]
