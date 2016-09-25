@@ -5,6 +5,7 @@ from django.core.management.base import NoArgsCommand
 from django.utils import timezone
 import logging
 import signal
+import socket
 import ssl
 import threading
 import time
@@ -213,7 +214,7 @@ class Command(NoArgsCommand):
         # Figure out where to put our instances
         try:
             (region, zone, rejected) = self.get_best_region_zone(config)
-        except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
+        except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
             # In case of temporary failures here, we will retry again in the next cycle
             logger.warn("[Pool %d] Failed to aquire spot instance prices: %s." % (pool.id, msg))
             return
@@ -343,7 +344,7 @@ class Command(NoArgsCommand):
 
                 # Do not delete unclassified errors here for now, so the user can see them.
 
-            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
                 if "MaxSpotInstanceCountExceeded" in str(msg):
                     logger.warning("[Pool %d] Maximum instance count exceeded for region %s" % (pool.id, region))
                     if not PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
@@ -418,7 +419,7 @@ class Command(NoArgsCommand):
                 else:
                     logger.info("[Pool %d] Terminating %s instances in region %s" % (pool.id, len(instance_ids_by_region[region]), region))
                     cluster.terminate(cluster.find(instance_ids=instance_ids_by_region[region]))
-            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
                 logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
                 return 1
 
@@ -522,7 +523,7 @@ class Command(NoArgsCommand):
                         instance.hostname = boto_instance.public_dns_name
                         instance.save()
 
-            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError) as msg:
+            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
                 logger.exception("%s: boto failure: %s" % ("update_pool_instances", msg))
                 return 1
 
