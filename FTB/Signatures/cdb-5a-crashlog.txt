@@ -1,0 +1,335 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\mozillaadmin\AppData\Local\CrashDumps\js-dbg-64-dm-windows-62f79d676e0e.exe.772.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 7601 (Service Pack 1) MP (8 procs) Free x64
+Product: WinNt, suite: SingleUserTS
+Machine Name:
+Debug session time: Fri Sep 23 17:46:06.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:02.000
+.........................................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr.
+(304.cb0): Access violation - code c0000005 (first/second chance not available)
+*** WARNING: Unable to verify checksum for js-dbg-64-dm-windows-62f79d676e0e.exe
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b:
+00000001`3f4975db 8b11            mov     edx,dword ptr [rcx] ds:fffe2b2b`2b2fffe8=????????
+0:000> cdb: Reading initial command '$<c:\Users\mozillaadmin\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+The current thread doesn't have an x86 context.
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+rax=0000000000000001 rbx=fffe2b2b2b2b2b2b rcx=fffe2b2b2b2fffe8
+rdx=0000000000000001 rsi=000000000040c078 rdi=0000000006a00420
+rip=000000013f4975db rsp=000000000040bc40 rbp=0000000000000006
+ r8=0000000006633200  r9=000000014079b1a0 r10=0000000000000031
+r11=0000000000000033 r12=fffa7fffffffffff r13=fffc000000000000
+r14=000000000040c078 r15=000000014079b1a0
+iopl=0         nv up ei ng nz na po nc
+cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010284
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b:
+00000001`3f4975db 8b11            mov     edx,dword ptr [rcx] ds:fffe2b2b`2b2fffe8=????????
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]:
+00000001`3f4975db 8b11            mov     edx,dword ptr [rcx]
+00000001`3f4975dd 8d42ff          lea     eax,[rdx-1]
+00000001`3f4975e0 83f801          cmp     eax,1
+00000001`3f4975e3 7665            jbe     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x8a (00000001`3f49764a)
+00000001`3f4975e5 b902000000      mov     ecx,2
+00000001`3f4975ea ff1528e55d01    call    qword ptr [js_dbg_64_dm_windows_62f79d676e0e!_imp___acrt_iob_func (00000001`40a75b18)]
+00000001`3f4975f0 4c8d0da9951e01  lea     r9,[js_dbg_64_dm_windows_62f79d676e0e!`string' (00000001`40680ba0)]
+00000001`3f4975f7 c744242053010000 mov     dword ptr [rsp+20h],153h
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+00000000`3f4975db  ?? ?? ?? ??                                      ????
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+00000001`3f4975db  8b 11 8d 42 ff 83 f8 01                          ...B....
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: nt!IMAGE_NT_HEADERS32                         ***
+***                                                                   ***
+*************************************************************************
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for kernel32.dll -
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ucrtbase.dll -
+
+FAULTING_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00000001`3f4975db 8b11            mov     edx,dword ptr [rcx]
+
+EXCEPTION_RECORD:  ffffffffffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 000000013f4975db (js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x000000000000001b)
+   ExceptionCode: c0000005 (Access violation)
+  ExceptionFlags: 00000000
+NumberParameters: 2
+   Parameter[0]: 0000000000000000
+   Parameter[1]: ffffffffffffffff
+Attempt to read from address ffffffffffffffff
+
+PROCESS_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 0000000077c90000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e303d8
+
+ERROR_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%08lx referenced memory at 0x%08lx. The memory could not be %s.
+
+EXCEPTION_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%08lx referenced memory at 0x%08lx. The memory could not be %s.
+
+EXCEPTION_PARAMETER1:  0000000000000000
+
+EXCEPTION_PARAMETER2:  ffffffffffffffff
+
+READ_ADDRESS:  ffffffffffffffff
+
+FOLLOWUP_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00000001`3f4975db 8b11            mov     edx,dword ptr [rcx]
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  0000000000000cb0
+
+BUGCHECK_STR:  APPLICATION_FAULT_INVALID_POINTER_READ_WRONG_SYMBOLS_FILL_PATTERN_2b2b2b2b
+
+PRIMARY_PROBLEM_CLASS:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+DEFAULT_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+LAST_CONTROL_TRANSFER:  from 000000013f4fc95e to 000000013f4975db
+
+STACK_TEXT:
+00000000`0040bc40 00000001`3f4fc95e : 00000000`0707b2a0 00000000`0040dbfa 00000000`0040bfa8 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00000000`0040bc80 00000001`3fed123e : 00000001`4073c8e8 00000000`00000000 00000000`0667b040 00000000`0040bd90 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+00000000`0040bcc0 00000001`3febae69 : 00000000`0040bd98 00000001`3f4fa268 00000000`0040bfa8 00000000`0040bdc0 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+00000000`0040bd10 00000001`3fe90a4b : 00000000`0040c078 00000001`3f4fc9cf 00000000`0040c050 00000000`0040bde8 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+00000000`0040bd50 00000001`3fe8e54d : 00000000`070a7178 00000000`06a00420 00000000`0040d170 00000000`0040d170 : js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+00000000`0040bd90 00000001`3feb0592 : 00000000`0040c078 00000000`00000000 00000000`0040be28 00000001`3fe8e54d : js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+00000000`0040bde0 00000001`402276a8 : 00000000`0040c210 00000000`00fffa00 00000000`00000006 00000000`07097380 : js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 534]
+00000000`0040be50 00000001`3fdbc517 : 00000000`0908690d 00000000`0040c210 00000000`0040c078 00000001`3f8150aa : js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 86]
+00000000`0040beb0 00000001`3fdbc70d : 00000000`0040c078 00000000`0040bfd9 00000000`0040c078 00000001`3f4bb1a0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+00000000`0040bf20 00000001`3fedbbcc : 00000000`06607a68 00000000`0040c078 00000000`00000000 00000001`3fec3ee0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1455]
+00000000`0040bf60 00000001`3fec75f9 : 00000000`06607a68 00000000`06607208 00000000`06607208 00000000`06607208 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+00000000`0040c040 00000001`3fec6266 : 01d215fd`08206b33 00000006`962215d5 00000000`06607a68 00000001`00000c01 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+00000000`0040c1d0 00000001`3f5f89b5 : 00000000`06685040 00000000`00000012 00000000`06607990 00000000`06685040 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 581]
+00000000`0040c370 00000001`3fb17a12 : 00000000`00000003 00000000`06607990 00000000`00000003 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+00000000`0040c440 00000001`3fb0848d : 00000000`0900b048 00000000`06607000 00000000`00000000 00000001`3fb0c729 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+00000000`0040c490 00000001`3fb03c86 : 00000000`06607000 00000000`06607000 00000001`406c4320 00000000`00000001 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+00000000`0040c4d0 00000001`3f5d5cd8 : 00000000`0040c5d8 00000000`00000000 00000000`00000000 00000001`3f77d24c : js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+00000000`0040c530 00000001`3fc8d13c : 00000001`409a0918 00000000`0040c8f0 00000001`406c4320 00000000`0040c5d8 : js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+00000000`0040c590 00000001`3fc8df54 : 00000000`06607000 00000000`0040c688 00000000`00000003 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+00000000`0040c620 00000001`3fd1475e : fff90000`00000000 00000001`409a0918 00000000`0040c738 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+00000000`0040c6d0 00000001`3f8549e9 : 00000000`0040cbb8 00000000`0040c840 00000000`0040c8a0 00000001`3f4bc62c : js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+00000000`0040c820 00000001`3f73b4e1 : 00000000`0900b030 00000001`3f483881 00000000`070aa1c0 00000000`0900b068 : js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 775]
+00000000`0040c860 00000001`3f73c740 : 00000000`0040c8a0 00000000`06607000 00000001`4070b2d8 00000000`0040d120 : js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+00000000`0040c8c0 00000001`3fa9100c : 00000000`00000002 00000000`0040ca40 00000000`0040cb48 00000000`0040c990 : js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+00000000`0040c940 00000001`3f4bcefa : 00000000`00000002 00000000`0040cbc9 00000000`0040cb48 00000001`406767a8 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+00000000`0040cb00 00000001`3f859fa0 : 00000000`00000001 00000000`070757f0 00000000`0040d120 00000000`0667b068 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+00000000`0040cc30 00000001`3f85a460 : 00000000`06607000 00000000`0040d130 00000000`0040cdb0 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+00000000`0040cca0 00000001`3f86312d : 00000000`070fe5d0 00000000`0040cdb0 00400000`00000000 000007fe`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+00000000`0040cd70 00000001`3fd423c5 : 00000000`0040cfa8 00000001`3f42b086 00000000`0040d120 00000000`0040cdb0 : js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+00000000`0040cde0 00000001`3fd5677a : 00000000`09039000 00000000`00000000 00000000`00000002 00000000`0664a000 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+00000000`0040ce40 00000001`401d6744 : 00000000`0000003a 00000000`00000001 00000000`00000000 00000000`0908690d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+00000000`0040ced0 000002d6`90ee777e : 00000000`06607900 00000000`00000000 0000f0cd`91d70458 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+00000000`0040d090 00000000`06607900 : 00000000`00000000 0000f0cd`91d70458 00000000`00000008 00000000`0040d120 : 0x2d6`90ee777e
+00000000`0040d098 00000000`00000000 : 0000f0cd`91d70458 00000000`00000008 00000000`0040d120 00000000`0040d0d8 : 0x6607900
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FAULTING_SOURCE_CODE:
+   334:         return false;
+   335:     uintptr_t addr = uintptr_t(cell);
+   336:     addr &= ~js::gc::ChunkMask;
+   337:     addr |= js::gc::ChunkLocationOffset;
+>  338:     auto location = *reinterpret_cast<ChunkLocation*>(addr);
+   339:     MOZ_ASSERT(location == ChunkLocation::Nursery || location == ChunkLocation::TenuredHeap);
+   340:     return location == ChunkLocation::Nursery;
+   341: }
+   342:
+   343: } /* namespace gc */
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_64_dm_windows!js::gc::IsInsideNursery+1b
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_64_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_c0000005_js-dbg-64-dm-windows-62f79d676e0e.exe!js::gc::IsInsideNursery
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # Child-SP          RetAddr           Call Site
+00 00000000`0040bc40 00000001`3f4fc95e js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+01 00000000`0040bc80 00000001`3fed123e js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+02 00000000`0040bcc0 00000001`3febae69 js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+03 00000000`0040bd10 00000001`3fe90a4b js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+04 00000000`0040bd50 00000001`3fe8e54d js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+05 00000000`0040bd90 00000001`3feb0592 js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+06 00000000`0040bde0 00000001`402276a8 js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 534]
+07 00000000`0040be50 00000001`3fdbc517 js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 86]
+08 00000000`0040beb0 00000001`3fdbc70d js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+09 00000000`0040bf20 00000001`3fedbbcc js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1455]
+0a 00000000`0040bf60 00000001`3fec75f9 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+0b 00000000`0040c040 00000001`3fec6266 js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+0c 00000000`0040c1d0 00000001`3f5f89b5 js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 581]
+0d 00000000`0040c370 00000001`3fb17a12 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+0e 00000000`0040c440 00000001`3fb0848d js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+0f 00000000`0040c490 00000001`3fb03c86 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+10 00000000`0040c4d0 00000001`3f5d5cd8 js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+11 00000000`0040c530 00000001`3fc8d13c js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+12 00000000`0040c590 00000001`3fc8df54 js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+13 00000000`0040c620 00000001`3fd1475e js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+14 00000000`0040c6d0 00000001`3f8549e9 js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+15 00000000`0040c820 00000001`3f73b4e1 js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 775]
+16 00000000`0040c860 00000001`3f73c740 js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+17 00000000`0040c8c0 00000001`3fa9100c js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+18 00000000`0040c940 00000001`3f4bcefa js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+19 00000000`0040cb00 00000001`3f859fa0 js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+1a 00000000`0040cc30 00000001`3f85a460 js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+1b 00000000`0040cca0 00000001`3f86312d js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+1c 00000000`0040cd70 00000001`3fd423c5 js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+1d 00000000`0040cde0 00000001`3fd5677a js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+1e 00000000`0040ce40 00000001`401d6744 js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+1f 00000000`0040ced0 000002d6`90ee777e js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+20 00000000`0040d090 00000000`06607900 0x2d6`90ee777e
+21 00000000`0040d098 00000000`00000000 0x6607900
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+RetAddr           : Args to Child                                                           : Call Site
+00000001`3f4fc95e : 00000000`0707b2a0 00000000`0040dbfa 00000000`0040bfa8 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00000001`3fed123e : 00000001`4073c8e8 00000000`00000000 00000000`0667b040 00000000`0040bd90 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+00000001`3febae69 : 00000000`0040bd98 00000001`3f4fa268 00000000`0040bfa8 00000000`0040bdc0 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+00000001`3fe90a4b : 00000000`0040c078 00000001`3f4fc9cf 00000000`0040c050 00000000`0040bde8 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+00000001`3fe8e54d : 00000000`070a7178 00000000`06a00420 00000000`0040d170 00000000`0040d170 : js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b [c:\users\mozillaadmin\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+00000001`3feb0592 : 00000000`0040c078 00000000`00000000 00000000`0040be28 00000001`3fe8e54d : js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+00000001`402276a8 : 00000000`0040c210 00000000`00fffa00 00000000`00000006 00000000`07097380 : js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\marking.cpp @ 534]
+00000001`3fdbc517 : 00000000`0908690d 00000000`0040c210 00000000`0040c078 00000001`3f8150aa : js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 86]
+00000001`3fdbc70d : 00000000`0040c078 00000000`0040bfd9 00000000`0040c078 00000001`3f4bb1a0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+00000001`3fedbbcc : 00000000`06607a68 00000000`0040c078 00000000`00000000 00000001`3fec3ee0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1455]
+00000001`3fec75f9 : 00000000`06607a68 00000000`06607208 00000000`06607208 00000000`06607208 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+00000001`3fec6266 : 01d215fd`08206b33 00000006`962215d5 00000000`06607a68 00000001`00000c01 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+00000001`3f5f89b5 : 00000000`06685040 00000000`00000012 00000000`06607990 00000000`06685040 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\nursery.cpp @ 581]
+00000001`3fb17a12 : 00000000`00000003 00000000`06607990 00000000`00000003 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+00000001`3fb0848d : 00000000`0900b048 00000000`06607000 00000000`00000000 00000001`3fb0c729 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+00000001`3fb03c86 : 00000000`06607000 00000000`06607000 00000001`406c4320 00000000`00000001 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+00000001`3f5d5cd8 : 00000000`0040c5d8 00000000`00000000 00000000`00000000 00000001`3f77d24c : js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6 [c:\users\mozillaadmin\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+00000001`3fc8d13c : 00000001`409a0918 00000000`0040c8f0 00000001`406c4320 00000000`0040c5d8 : js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+00000001`3fc8df54 : 00000000`06607000 00000000`0040c688 00000000`00000003 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+00000001`3fd1475e : fff90000`00000000 00000001`409a0918 00000000`0040c738 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+00000001`3f8549e9 : 00000000`0040cbb8 00000000`0040c840 00000000`0040c8a0 00000001`3f4bc62c : js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+00000001`3f73b4e1 : 00000000`0900b030 00000001`3f483881 00000000`070aa1c0 00000000`0900b068 : js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 775]
+00000001`3f73c740 : 00000000`0040c8a0 00000000`06607000 00000001`4070b2d8 00000000`0040d120 : js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+00000001`3fa9100c : 00000000`00000002 00000000`0040ca40 00000000`0040cb48 00000000`0040c990 : js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+00000001`3f4bcefa : 00000000`00000002 00000000`0040cbc9 00000000`0040cb48 00000001`406767a8 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+00000001`3f859fa0 : 00000000`00000001 00000000`070757f0 00000000`0040d120 00000000`0667b068 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+00000001`3f85a460 : 00000000`06607000 00000000`0040d130 00000000`0040cdb0 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+00000001`3f86312d : 00000000`070fe5d0 00000000`0040cdb0 00400000`00000000 000007fe`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150 [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+00000001`3fd423c5 : 00000000`0040cfa8 00000001`3f42b086 00000000`0040d120 00000000`0040cdb0 : js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d [c:\users\mozillaadmin\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+00000001`3fd5677a : 00000000`09039000 00000000`00000000 00000000`00000002 00000000`0664a000 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+00000001`401d6744 : 00000000`0000003a 00000000`00000001 00000000`00000000 00000000`0908690d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+000002d6`90ee777e : 00000000`06607900 00000000`00000000 0000f0cd`91d70458 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+00000000`06607900 : 00000000`00000000 0000f0cd`91d70458 00000000`00000008 00000000`0040d120 : 0x2d6`90ee777e
+00000000`00000000 : 0000f0cd`91d70458 00000000`00000008 00000000`0040d120 00000000`0040d0d8 : 0x6607900
+0:000> q
+quit:
