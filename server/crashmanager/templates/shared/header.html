@@ -47,7 +47,6 @@
                     </a>
                     <ul class="dropdown-menu" role="menu">
                         <li>
-                            {% load url from future %}
                             {% if user.is_authenticated %}
                                 <a href="{% url 'crashmanager:crashmanager.views.logout_view' %}?next={{request.path}}?{{request.GET.urlencode}}"><i class="glyphicon glyphicon-lock"></i> Logout</a>
                             {% else %}
