@@ -1,4 +1,5 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
+from django.views.static import serve
 import os
 from rest_framework import routers
 
@@ -9,7 +10,7 @@ from server import settings
 router = routers.DefaultRouter()
 router.register(r'crashes', views.CrashEntryViewSet)
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^logout/$', views.logout_view, name='logout'),
     url(r'^$', views.index, name='index'),
@@ -47,9 +48,9 @@ urlpatterns = patterns('',
     url(r'^usersettings/$', views.userSettings, name='usersettings'),
 
     url(r'^rest/', include(router.urls)),
-)
+]
 
 # This makes Django serve our testcases from the tests/ URL. When hosting this
 # project in production, one should consider serving tests directly through
 # the webserver rather than through Django for performance reasons.
-urlpatterns += patterns('', url(r'^tests/(.*)$', 'django.views.static.serve', name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')}),)
+urlpatterns += [ url(r'^tests/(.*)$', serve, name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')}) ]
