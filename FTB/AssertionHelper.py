@@ -58,7 +58,10 @@ def getAssertion(output):
             # Firefox Skia assertion (SkASSERT)
             lastLine = line
             haveFatalAssertion = True
+        elif ": fatal error: \"assert" in line:
+            # Skia assertion
             lastLine = line
+            haveFatalAssertion = True
         elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
