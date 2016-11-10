@@ -1,0 +1,220 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\Administrator\AppData\Local\CrashDumps\js-32-prof-dm-windows-42c95d88aaaa.exe.1348.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 9600 MP (16 procs) Free x86 compatible
+Product: Server, suite: TerminalServer SingleUserTS
+Machine Name:
+Debug session time: Wed Oct  5 01:53:46.000 2016 (UTC + 0:00)
+System Uptime: not available
+Process Uptime: not available
+......................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=00000000 ecx=00000000 edx=73bf4f80 esi=00000003 edi=00000003
+eip=7726c7ec esp=0044dda4 ebp=0044df2c iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+Unable to load image C:\Windows\System32\ntdll.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+ntdll+0x3c7ec:
+7726c7ec c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\Administrator\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=00000020 ebx=0044ea78 ecx=00000000 edx=73bf4f80 esi=ffffff8c edi=0044ea50
+eip=1fa0b7f8 esp=0044ea50 ebp=0044eb00 iopl=0         nv up ei pl zr na pe cy
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000247
+1fa0b7f8 cc              int     3
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+*** WARNING: Unable to verify timestamp for kernel32.dll
+*** ERROR: Module load completed but symbols could not be loaded for kernel32.dll
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll+0x3c7ec:
+7726c7ec c21400          ret     14h
+7726c7ef 90              nop
+7726c7f0 b85b000000      mov     eax,5Bh
+7726c7f5 64ff15c0000000  call    dword ptr fs:[0C0h]
+7726c7fc c21000          ret     10h
+7726c7ff 90              nop
+7726c800 b85c000000      mov     eax,5Ch
+7726c805 64ff15c0000000  call    dword ptr fs:[0C0h]
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+1fa0b7f8  cc f2 0f 10                                      ....
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Unable to verify checksum for js-32-prof-dm-windows-42c95d88aaaa.exe
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*** WARNING: Unable to verify timestamp for KERNELBASE.dll
+*** ERROR: Module load completed but symbols could not be loaded for KERNELBASE.dll
+
+FAULTING_IP:
++1d8
+1fa0b7f8 cc              int     3
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 1fa0b7f8
+ExceptionCode: 80000003 (Break instruction exception)
+ExceptionFlags: 00000000
+NumberParameters: 1
+Parameter[0]: 00000000
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS
+
+PROCESS_NAME:  js-32-prof-dm-windows-42c95d88aaaa.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 77230000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57f3fe61
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  00000000
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  000004fc
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS
+
+IP_ON_HEAP:  086ea550
+The fault address in not in any loaded module, please check your build's rebase
+log at <releasedir>\bin\build_logs\timebuild\ntrebase.log for module which may
+contain the address if it were loaded.
+
+FRAME_ONE_INVALID: 1
+
+LAST_CONTROL_TRANSFER:  from 086ea550 to 1fa0b7f8
+
+STACK_TEXT:
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+0044eb00 086ea550 1fa087ec 0000a021 00200000 0x1fa0b7f8
+0044ec88 0130a818 01441c16 08310000 0044ed98 0x86ea550
+0044ecf8 01517762 08336838 0044edd8 01462820 js_32_prof_dm_windows_42c95d88aaaa!js::AddTypePropertyId+0x1d8 [c:\users\administrator\trees\mozilla-central\js\src\vm\typeinference.cpp @ 2811]
+00000000 00000000 00000000 00000000 00000000 js_32_prof_dm_windows_42c95d88aaaa!JSObject::makeLazyGroup+0x212 [c:\users\administrator\trees\mozilla-central\js\src\vm\objectgroup.cpp @ 344]
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FOLLOWUP_IP:
+js_32_prof_dm_windows_42c95d88aaaa!js::AddTypePropertyId+1d8 [c:\users\administrator\trees\mozilla-central\js\src\vm\typeinference.cpp @ 2811]
+0130a818 8b4dfc          mov     ecx,dword ptr [ebp-4]
+
+SYMBOL_STACK_INDEX:  2
+
+SYMBOL_NAME:  js_32_prof_dm_windows!js::AddTypePropertyId+1d8
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_32_prof_dm_windows_42c95d88aaaa
+
+IMAGE_NAME:  js-32-prof-dm-windows-42c95d88aaaa.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_80000003_js-32-prof-dm-windows-42c95d88aaaa.exe!js::AddTypePropertyId
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+# ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 0044df2c 76c57b89 ntdll+0x3c7ec
+01 0044df48 76cb07bf kernel32+0x17b89
+02 0044e388 76cb0295 kernel32+0x707bf
+03 0044e3a0 74d4f605 kernel32+0x70295
+04 0044e42c 772df154 KERNELBASE+0xbf605
+05 0044ff9c 7728ab5a ntdll+0xaf154
+06 0044ffac 00000000 ntdll+0x5ab5a
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+0044df2c 76c57b89 00000003 0044df70 00000000 ntdll+0x3c7ec
+0044df48 76cb07bf 00000003 0044df70 00000000 kernel32+0x17b89
+0044e388 76cb0295 00000000 00000001 00000000 kernel32+0x707bf
+0044e3a0 74d4f605 0044e45c 00000001 37adf25c kernel32+0x70295
+0044e42c 772df154 0044e45c 77270830 0044ff9c KERNELBASE+0xbf605
+0044ff9c 7728ab5a ffffffff 77270004 00000000 ntdll+0xaf154
+0044ffac 00000000 018182a4 ff7ab000 00000000 ntdll+0x5ab5a
+0:000> q
+quit:
