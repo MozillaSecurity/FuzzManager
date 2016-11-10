@@ -1651,6 +1651,317 @@ class CDBSelectorTest6b(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007ff74d469ff3))
 
+# Test 7 is for Windows Server 2012 R2 with 32-bit js debug deterministic shell:
+#     +205
+#     25d80b01 cc              int     3
+class CDBParserTestCrash7(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-7c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 46)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "arena_run_dalloc")
+        self.assertEqual(crashInfo.backtrace[2], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[4], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[5], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[6], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "je_free")
+        self.assertEqual(crashInfo.backtrace[10], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[11], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[12], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[13], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[14], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[15], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[16], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[17], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[18], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[19], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[20], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[21], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[22], "??")
+        self.assertEqual(crashInfo.backtrace[23], "??")
+        self.assertEqual(crashInfo.backtrace[24], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[25], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[26], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[27], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[28], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[29], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[30], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[31], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[32], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[33], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[34], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[35], "ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[36], "JS_ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[37], "RunFile")
+        self.assertEqual(crashInfo.backtrace[38], "Process")
+        self.assertEqual(crashInfo.backtrace[39], "ProcessArgs")
+        self.assertEqual(crashInfo.backtrace[40], "Shell")
+        self.assertEqual(crashInfo.backtrace[41], "main")
+        self.assertEqual(crashInfo.backtrace[42], "__scrt_common_main_seh")
+        self.assertEqual(crashInfo.backtrace[43], "kernel32")
+        self.assertEqual(crashInfo.backtrace[44], "ntdll")
+        self.assertEqual(crashInfo.backtrace[45], "ntdll")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00c8a948))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x0053e32c))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x6802052b))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["esi"], long(0x25d8094b))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0053e370))
+        self.assertEqual(crashInfo.registers["eip"], long(0x25d80b01))
+        self.assertEqual(crashInfo.registers["esp"], long(0x0053e370))
+        self.assertEqual(crashInfo.registers["ebp"], long(0xffe00000))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+
+class CDBSelectorTest7(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-7c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+
+# Test 8 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     0142865d cc              int     3
+class CDBParserTestCrash8(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-8c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x73f1705d))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00ea9210))
+        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0a03d110))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0142865d))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00eaa780))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00eaa7ec))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+
+class CDBSelectorTest8(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-8c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+
+# Test 9 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
+#     +1d8
+#     0f2bb4f3 cc              int     3
+class CDBParserTestCrash9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-9c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 44)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "??")
+        self.assertEqual(crashInfo.backtrace[2], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[4], "??")
+        self.assertEqual(crashInfo.backtrace[5], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[6], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "js::Activation::Activation")
+        self.assertEqual(crashInfo.backtrace[10], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[13], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[14], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[15], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[16], "??")
+        self.assertEqual(crashInfo.backtrace[17], "??")
+        self.assertEqual(crashInfo.backtrace[18], "js::Activation::Activation")
+        self.assertEqual(crashInfo.backtrace[19], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[20], "??")
+        self.assertEqual(crashInfo.backtrace[21], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[22], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[23], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[24], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[25], "??")
+        self.assertEqual(crashInfo.backtrace[26], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[27], "??")
+        self.assertEqual(crashInfo.backtrace[28], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[29], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[30], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[31], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[32], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[33], "ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[34], "JS_ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[35], "RunFile")
+        self.assertEqual(crashInfo.backtrace[36], "Process")
+        self.assertEqual(crashInfo.backtrace[37], "ProcessArgs")
+        self.assertEqual(crashInfo.backtrace[38], "Shell")
+        self.assertEqual(crashInfo.backtrace[39], "main")
+        self.assertEqual(crashInfo.backtrace[40], "__scrt_common_main_seh")
+        self.assertEqual(crashInfo.backtrace[41], "kernel32")
+        self.assertEqual(crashInfo.backtrace[42], "ntdll")
+        self.assertEqual(crashInfo.backtrace[43], "ntdll")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00b0ea18))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x00000400))
+        self.assertEqual(crashInfo.registers["edx"], long(0x73e74f80))
+        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
+        self.assertEqual(crashInfo.registers["edi"], long(0x00b0ea00))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0f2bb4f3))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00b0ea00))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00b0eab0))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+
+class CDBSelectorTest9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-9c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+
+# Test 10 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
+#     +82
+#     1c2fbbb0 cc              int     3
+class CDBParserTestCrash10(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-10c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 5)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::PrepareOsrTempData")
+        self.assertEqual(crashInfo.backtrace[2], "??")
+        self.assertEqual(crashInfo.backtrace[3], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[4], "JSObject::makeLazyGroup")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x06fda948))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x020de8dc))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x5f7b6461))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["esi"], long(0x1c2fbaab))
+        self.assertEqual(crashInfo.registers["edi"], long(0x020de910))
+        self.assertEqual(crashInfo.registers["eip"], long(0x1c2fbbb0))
+        self.assertEqual(crashInfo.registers["esp"], long(0x020de910))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00000018))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+
+class CDBSelectorTest10(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-10c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+
+# Test 11 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     0156865d cc              int     3
+class CDBParserTestCrash11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-11c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x738f705d))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00e7b0e0))
+        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0ba37110))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0156865d))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00e7c650))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00e7c6bc))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+
+class CDBSelectorTest11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-11c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+
+# Test 12 is for Windows Server 2012 R2 with 32-bit js opt profiling deterministic shell:
+#     +1d8
+#     1fa0b7f8 cc              int     3
+class CDBParserTestCrash12(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-12c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "??")
+        self.assertEqual(crashInfo.backtrace[2], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[3], "JSObject::makeLazyGroup")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x0044ea78))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["edx"], long(0x73bf4f80))
+        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0044ea50))
+        self.assertEqual(crashInfo.registers["eip"], long(0x1fa0b7f8))
+        self.assertEqual(crashInfo.registers["esp"], long(0x0044ea50))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x0044eb00))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+
+class CDBSelectorTest12(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-12c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
