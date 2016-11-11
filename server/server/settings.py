@@ -208,3 +208,9 @@ LOGGING = {
 # be created for storing submitted test files.
 TEST_STORAGE = os.path.join(BASE_DIR)
 USERDATA_STORAGE = os.path.join(BASE_DIR)
+
+# Celery configuration
+#USE_CELERY = True
+#CELERY_ACCEPT_CONTENT = ['json']
+#CELERY_TASK_SERIALIZER = 'json'
+#CELERY_RESULT_SERIALIZER = 'json'
