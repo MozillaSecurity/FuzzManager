@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import json
@@ -12,6 +12,8 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
+if getattr(settings, 'USE_CELERY', None):
+    from tasks import triage_new_crash
 
 class Tool(models.Model):
     name = models.CharField(max_length=63)
@@ -211,6 +213,13 @@ def CrashEntry_delete(sender, instance, **kwargs):
         if instance.testcase.test:
             instance.testcase.test.delete(False)
         instance.testcase.delete(False)
+
+# post_save handler for celery integration
+if getattr(settings, 'USE_CELERY', None):
+    @receiver(post_save, sender=CrashEntry)
+    def CrashEntry_save(sender, instance, **kwargs):
+        if kwargs.get('created', False) and not instance.triagedOnce:
+            triage_new_crash.delay(instance.pk)
 
 class BugzillaTemplate(models.Model):
     name = models.TextField()
