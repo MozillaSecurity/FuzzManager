@@ -1168,6 +1168,15 @@ class CDBCrashInfo(CrashInfo):
                     inEcxrData = False
                     continue
 
+                # Crash address
+                # Extract the eip/rip specifically for use later
+                if "eip=" in line:
+                    address = line.split("eip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+                elif "rip=" in line:
+                    address = line.split("rip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+
                 # First extract the line
                 # 32-bit example:
                 #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
@@ -1185,15 +1194,6 @@ class CDBCrashInfo(CrashInfo):
                         register = match.group(1)
                         value = long(match.group(2), 16)
                         self.registers[register] = value
-
-            # Crash address
-            if line.startswith("ExceptionAddress:"):
-                # 32-bit example:
-                #     ExceptionAddress: 00404c59 (js_32_dm_windows_62f79d676e0e!JSObject::is+0x00000002)
-                # 64-bit example:
-                #     ExceptionAddress: 00007ff74d469ff3 (js_64_dm_windows_62f79d676e0e!JSObject::is+0x000000000000000a)
-                address = line.split()[1]
-                self.crashAddress = long(address, 16)
 
             # Crash instruction
             # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
