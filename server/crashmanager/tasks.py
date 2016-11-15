@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from django.conf import settings
 import os
 import sys
 
@@ -56,7 +57,7 @@ def triage_new_crash(pk):
                 triage_cache[entry.shortSignature] = cacheList
 
                 # TODO: Make this length configurable
-                if len(triage_cache) > 100:
+                if len(triage_cache) > getattr(settings, 'CELERY_TRIAGE_MEMCACHE_ENTRIES', 100):
                     triage_cache.popitem(last=False)
 
                 break
