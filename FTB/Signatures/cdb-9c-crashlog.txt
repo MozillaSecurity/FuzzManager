@@ -1,0 +1,260 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\Administrator\AppData\Local\CrashDumps\js-32-prof-windows-42c95d88aaaa.exe.5948.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 9600 MP (16 procs) Free x86 compatible
+Product: Server, suite: TerminalServer SingleUserTS
+Machine Name:
+Debug session time: Tue Oct  4 12:45:24.000 2016 (UTC + 0:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:01.000
+......................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=00000000 ecx=00000400 edx=73e74f80 esi=00000003 edi=00000003
+eip=774ec7ec esp=00b0dd54 ebp=00b0dedc iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+Unable to load image C:\Windows\System32\ntdll.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+ntdll+0x3c7ec:
+774ec7ec c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\Administrator\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=00000020 ebx=00b0ea18 ecx=00000400 edx=73e74f80 esi=ffffff8c edi=00b0ea00
+eip=0f2bb4f3 esp=00b0ea00 ebp=00b0eab0 iopl=0         nv up ei pl zr na pe cy
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000247
+0f2bb4f3 cc              int     3
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+*** WARNING: Unable to verify timestamp for kernel32.dll
+*** ERROR: Module load completed but symbols could not be loaded for kernel32.dll
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll+0x3c7ec:
+774ec7ec c21400          ret     14h
+774ec7ef 90              nop
+774ec7f0 b85b000000      mov     eax,5Bh
+774ec7f5 64ff15c0000000  call    dword ptr fs:[0C0h]
+774ec7fc c21000          ret     10h
+774ec7ff 90              nop
+774ec800 b85c000000      mov     eax,5Ch
+774ec805 64ff15c0000000  call    dword ptr fs:[0C0h]
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+0f2bb4f3  cc f2 0f 10                                      ....
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Unable to verify checksum for js-32-prof-windows-42c95d88aaaa.exe
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*** WARNING: Unable to verify timestamp for KERNELBASE.dll
+*** ERROR: Module load completed but symbols could not be loaded for KERNELBASE.dll
+
+FAULTING_IP:
++1d8
+0f2bb4f3 cc              int     3
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 0f2bb4f3
+ExceptionCode: 80000003 (Break instruction exception)
+ExceptionFlags: 00000000
+NumberParameters: 1
+Parameter[0]: 00000000
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS
+
+PROCESS_NAME:  js-32-prof-windows-42c95d88aaaa.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 774b0000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57f38c83
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  00000000
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  00001640
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS
+
+IP_ON_HEAP:  08dbf970
+The fault address in not in any loaded module, please check your build's rebase
+log at <releasedir>\bin\build_logs\timebuild\ntrebase.log for module which may
+contain the address if it were loaded.
+
+FRAME_ONE_INVALID: 1
+
+LAST_CONTROL_TRANSFER:  from 08dbf970 to 0f2bb4f3
+
+STACK_TEXT:
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+00b0eab0 08dbf970 0f2baaf4 00006021 00000001 0xf2bb4f3
+00b0ebf8 00e9a9a8 00fd1326 08a10000 00b0ed08 0x8dbf970
+00b0ece8 0125dd0c 00b0ed98 0125dd0c 08a10000 js_32_prof_windows_42c95d88aaaa!js::AddTypePropertyId+0x1d8 [c:\users\administrator\trees\mozilla-central\js\src\vm\typeinference.cpp @ 2811]
+00b0ea18 ffffff81 08c59110 ffffff8c 00000000 js_32_prof_windows_42c95d88aaaa!js::jit::EnterBaselineMethod+0x11c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 193]
+00b0ee30 00fd9793 08a10000 00b0ee4c 08db2740 0xffffff81
+00b0ee74 00fd953f 08a10000 00b0ef04 00000000 js_32_prof_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x243 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+00b0ee8c 0125a0d6 08a10000 00b0ef04 08db2740 js_32_prof_windows_42c95d88aaaa!InternalCall+0x5f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+00b0ef1c 1e71129f 08a10000 00b0efb8 0100003a js_32_prof_windows_42c95d88aaaa!js::jit::DoCallFallback+0x266 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+00b0eff4 00fd1326 08a10000 00b0f100 00b0f0e8 0x1e71129f
+00b0f008 0125d6bc 0f2b9970 00000001 00b0f368 js_32_prof_windows_42c95d88aaaa!js::Activation::Activation+0x36 [c:\users\administrator\trees\mozilla-central\js\src\vm\stack-inl.h @ 854]
+00b0ef40 ffffff82 014a7730 08c494e8 1e7176c3 js_32_prof_windows_42c95d88aaaa!EnterBaseline+0x15c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 157]
+00b0f188 00fe6375 00000000 00fe6375 08a10000 0xffffff82
+00b0f228 00fd9793 08a10000 00b0f244 08dd90b0 js_32_prof_windows_42c95d88aaaa!js::RunScript+0x1d5 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 394]
+00b0f26c 00fd953f 08a10000 00b0f2fc 00000000 js_32_prof_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x243 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+00b0f284 0125a0d6 08a10000 00b0f2fc 08dd90b0 js_32_prof_windows_42c95d88aaaa!InternalCall+0x5f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+00b0f314 1e71129f 08a10000 00b0f3a8 0100003a js_32_prof_windows_42c95d88aaaa!js::jit::DoCallFallback+0x266 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+00b0f370 08dd90b0 0f2b3fa5 00005021 00000000 0x1e71129f
+00b0f48c 00fd1326 08a10000 00b0f598 00b0f580 0x8dd90b0
+00b0f4a0 0125d6bc 1d97e790 00000002 00b0f800 js_32_prof_windows_42c95d88aaaa!js::Activation::Activation+0x36 [c:\users\administrator\trees\mozilla-central\js\src\vm\stack-inl.h @ 854]
+00b0f338 ffffff82 014a7730 08c494e8 1e7176c3 js_32_prof_windows_42c95d88aaaa!EnterBaseline+0x15c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 157]
+00b0f620 00fe6375 00000000 00fe6375 08a10000 0xffffff82
+00b0f6c0 00fd9793 08a10000 00b0f6dc 08fd2010 js_32_prof_windows_42c95d88aaaa!js::RunScript+0x1d5 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 394]
+00b0f704 00fd953f 08a10000 00b0f794 00000000 js_32_prof_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x243 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+00b0f71c 0125a0d6 08a10000 00b0f794 08fd2010 js_32_prof_windows_42c95d88aaaa!InternalCall+0x5f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+00b0f7ac 1e71129f 08a10000 00b0f838 0100003a js_32_prof_windows_42c95d88aaaa!js::jit::DoCallFallback+0x266 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+00b0f880 0125d6bc 35630010 00000000 00000000 0x1e71129f
+00b0f7d0 ffffff82 014a7730 08c494e8 1e7176c3 js_32_prof_windows_42c95d88aaaa!EnterBaseline+0x15c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 157]
+00b0f880 0125d6bc 35630010 00000000 00000000 0xffffff82
+00b0f958 0125dd0c 00b0fa08 0125dd0c 08a10000 js_32_prof_windows_42c95d88aaaa!EnterBaseline+0x15c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 157]
+00b0fa00 00fe6375 08a10000 00fe6375 08a10000 js_32_prof_windows_42c95d88aaaa!js::jit::EnterBaselineMethod+0x11c [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 193]
+00b0faa0 00fd68f4 08a10000 00b0fab0 013dc8d4 js_32_prof_windows_42c95d88aaaa!js::RunScript+0x1d5 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 394]
+00b0faf0 00fd67ab 08a10000 00b0fc04 08c57020 js_32_prof_windows_42c95d88aaaa!js::ExecuteKernel+0xa4 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 688]
+00b0fb30 00f69dc6 08a10000 00b0fc04 08c57020 js_32_prof_windows_42c95d88aaaa!js::Execute+0xeb [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 717]
+00b0fb54 00f6e54d 08a10000 00b0fb78 00b0fc04 js_32_prof_windows_42c95d88aaaa!ExecuteScript+0x26 [c:\users\administrator\trees\mozilla-central\js\src\jsapi.cpp @ 4307]
+00b0fb7c 00e8c434 08a10000 00b0fc04 00d29fb7 js_32_prof_windows_42c95d88aaaa!JS_ExecuteScript+0x4d [c:\users\administrator\trees\mozilla-central\js\src\jsapi.cpp @ 4340]
+00b0fc0c 00e8b4cf 08a10000 00d29fb7 071befc8 js_32_prof_windows_42c95d88aaaa!RunFile+0xf4 [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 644]
+00b0fc30 00e8b74e 08a10000 00d29fb7 00000000 js_32_prof_windows_42c95d88aaaa!Process+0xaf [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 1062]
+00b0fce0 00e8dd0e 08a10000 00b0fdc4 08a10000 js_32_prof_windows_42c95d88aaaa!ProcessArgs+0x20e [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7082]
+00b0fd64 00e9332f 08a10000 00b0fdc4 06ccee70 js_32_prof_windows_42c95d88aaaa!Shell+0x18e [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7467]
+00b0fe50 013a7bbe 00000010 00d29e30 06ccee70 js_32_prof_windows_42c95d88aaaa!main+0xcdf [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7852]
+00b0fe98 75027c04 fe77d000 75027be0 843a73d1 js_32_prof_windows_42c95d88aaaa!__scrt_common_main_seh+0xf9 [f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl @ 253]
+00b0feac 7750ab8f fe77d000 86701c6a 00000000 kernel32+0x17c04
+00b0fef4 7750ab5a ffffffff 774f000d 00000000 ntdll+0x5ab8f
+00b0ff04 00000000 013a7c34 fe77d000 00000000 ntdll+0x5ab5a
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FOLLOWUP_IP:
+js_32_prof_windows_42c95d88aaaa!js::AddTypePropertyId+1d8 [c:\users\administrator\trees\mozilla-central\js\src\vm\typeinference.cpp @ 2811]
+00e9a9a8 8b4dfc          mov     ecx,dword ptr [ebp-4]
+
+SYMBOL_STACK_INDEX:  2
+
+SYMBOL_NAME:  js_32_prof_windows!js::AddTypePropertyId+1d8
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_32_prof_windows_42c95d88aaaa
+
+IMAGE_NAME:  js-32-prof-windows-42c95d88aaaa.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_80000003_js-32-prof-windows-42c95d88aaaa.exe!js::AddTypePropertyId
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+# ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 00b0dedc 75027b89 ntdll+0x3c7ec
+01 00b0def8 750807bf kernel32+0x17b89
+02 00b0e338 75080295 kernel32+0x707bf
+03 00b0e350 74eef605 kernel32+0x70295
+04 00b0e3dc 7755f154 KERNELBASE+0xbf605
+05 00b0fef4 7750ab5a ntdll+0xaf154
+06 00b0ff04 00000000 ntdll+0x5ab5a
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00b0dedc 75027b89 00000003 00b0df20 00000000 ntdll+0x3c7ec
+00b0def8 750807bf 00000003 00b0df20 00000000 kernel32+0x17b89
+00b0e338 75080295 00000000 00000001 00000000 kernel32+0x707bf
+00b0e350 74eef605 00b0e40c 00000001 85c44d68 kernel32+0x70295
+00b0e3dc 7755f154 00b0e40c 774f0830 00b0fef4 KERNELBASE+0xbf605
+00b0fef4 7750ab5a ffffffff 774f000d 00000000 ntdll+0xaf154
+00b0ff04 00000000 013a7c34 fe77d000 00000000 ntdll+0x5ab5a
+0:000> q
+quit:

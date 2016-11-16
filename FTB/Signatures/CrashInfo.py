@@ -1139,8 +1139,10 @@ class CDBCrashInfo(CrashInfo):
 
         address = ""
         inCrashingThread = False
+        inCrashInstruction = False
         inEcxrData = False
         ecxrData = []
+        cInstruction = ""
 
         for line in crashData:
             # Start of .ecxr data
@@ -1168,6 +1170,15 @@ class CDBCrashInfo(CrashInfo):
                     inEcxrData = False
                     continue
 
+                # Crash address
+                # Extract the eip/rip specifically for use later
+                if "eip=" in line:
+                    address = line.split("eip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+                elif "rip=" in line:
+                    address = line.split("rip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+
                 # First extract the line
                 # 32-bit example:
                 #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
@@ -1186,27 +1197,29 @@ class CDBCrashInfo(CrashInfo):
                         value = long(match.group(2), 16)
                         self.registers[register] = value
 
-            # Crash address
-            if line.startswith("ExceptionAddress:"):
-                # 32-bit example:
-                #     ExceptionAddress: 00404c59 (js_32_dm_windows_62f79d676e0e!JSObject::is+0x00000002)
-                # 64-bit example:
-                #     ExceptionAddress: 00007ff74d469ff3 (js_64_dm_windows_62f79d676e0e!JSObject::is+0x000000000000000a)
-                address = line.split()[1]
-                self.crashAddress = long(address, 16)
-
             # Crash instruction
-            # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
-            lineWithoutBacktick = line.replace("`", "", 1)
-            if address and lineWithoutBacktick.startswith(address):
-                # 32-bit example:
-                #     00404c59 8b39            mov     edi,dword ptr [ecx]
-                # 64-bit example:
-                #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-                cInstruction = line.split(None, 2)[-1]
-                # There may be multiple spaces inside the faulting instruction
-                cInstruction = " ".join(cInstruction.split())
-                self.crashInstruction = cInstruction
+            # Start of crash instruction details
+            if line.startswith("FAULTING_IP"):
+                inCrashInstruction = True
+                continue
+
+            if inCrashInstruction and not cInstruction:
+                if "PROCESS_NAME" in line:
+                    inCrashInstruction = False
+                    continue
+
+                # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
+                lineWithoutBacktick = line.replace("`", "", 1)
+                if address and lineWithoutBacktick.startswith(address):
+                    # 32-bit examples:
+                    #     25d80b01 cc              int     3
+                    #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                    # 64-bit example:
+                    #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
+                    cInstruction = line.split(None, 2)[-1]
+                    # There may be multiple spaces inside the faulting instruction
+                    cInstruction = " ".join(cInstruction.split())
+                    self.crashInstruction = cInstruction
 
             # Start of stack for crashing thread
             if line.startswith("STACK_TEXT:"):
@@ -1218,22 +1231,30 @@ class CDBCrashInfo(CrashInfo):
                 #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9
                 # 64-bit example:
                 #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13
-                if "!" not in line:
+                if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
+                        or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
                     inCrashingThread = False
                     continue
-                components = line.split("!")
-                # removeFilenameAndOffset assumes the presence of "!"
-                stackEntry = "!" + components[-1]
 
-                stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
+                # Ignore cdb error and empty lines
+                if "Following frames may be wrong." in line or line.strip() == '':
+                    continue
+
+                stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
                 stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
                 self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry):
-        # Extract only the function name between "!" and "+", and also strip out "<" onwards, if any
-        if "!" in stackEntry:
-            result = stackEntry.split("!")[1].split("+")[0].split("<")[0]
+        # Extract only the function name
+        if "0x" in stackEntry:
+            result = stackEntry.split("!")[-1].split("+")[0].split("<")[0].split(" ")[-1]
+            if "0x" in result:
+                result = "??"  # Sometimes there is only a memory address in the stack
+            elif ".exe" in result:
+                # Sometimes the binary name is present:
+                #     e.g.: "00000000 00000000 unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe+0x0"
+                result = "??"
         else:
             result = "??"
         return result
