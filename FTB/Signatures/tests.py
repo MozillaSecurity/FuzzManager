@@ -412,6 +412,22 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #5 0x08488e62 in js::jit::CheckICacheLocked (instr=0xf49d1648, i_cache=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:1034
 """
 
+gdbRegressionTrace9 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x083c4a4b in js::ToPrimitiveSlow (cx=0xf7152000, preferredType=JSTYPE_NUMBER, vp=...) at js/src/jsobj.cpp:3084
+#1  0x083d2f59 in js::ToPrimitive (vp=..., preferredType=JSTYPE_NUMBER, cx=<optimized out>) at js/src/jsobj.h:1062
+eax            0xffe0104c       -2092980
+ecx            0xffe01058       -2092968
+edx            0xffe01050       -2092976
+ebx            0x8950ff4        143986676
+esp            0xffe01000       0xffe01000
+ebp            0xffe010c8       0xffe010c8
+esi            0xf7152000       -149610496
+edi            0xffe01040       -2092992
+eip            0x83c4a4b        0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>
+=> 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       call   0x8120ca0 <js::GetProperty(JSContext*, JS::Handle<JSObject*>, JS::Handle<JSObject*>, JS::Handle<jsid>, JS::MutableHandle<JS::Value>)>
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -650,6 +666,13 @@ class GDBParserTestCrashAddressRegression8(unittest.TestCase):
         self.assertEqual(crashInfo8.backtrace[3], "<signal handler called>")
         self.assertEqual(crashInfo8.backtrace[4], "??")
         self.assertEqual(crashInfo8.backtrace[5], "js::jit::CheckICacheLocked")
+
+class GDBParserTestCrashAddressRegression9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo9 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace9.splitlines())
+        self.assertEqual(crashInfo9.crashInstruction, "call   0x8120ca0")
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):

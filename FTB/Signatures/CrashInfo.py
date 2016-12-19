@@ -746,6 +746,12 @@ class GDBCrashInfo(CrashInfo):
                         if match != None:
                             self.crashInstruction = match.group(1)
 
+                            # In certain cases, the crash instruction can have
+                            # trailing function information, strip it here.
+                            match = re.search("(\\s+<.+>\\s*)$", self.crashInstruction)
+                            if match != None:
+                                self.crashInstruction = self.crashInstruction.replace(match.group(1), "")
+
             if not pastFrames:
                 if not len(lastLineBuf) and re.match("\\s*#\\d+.+", traceLine) == None:
                     # Skip additional lines
