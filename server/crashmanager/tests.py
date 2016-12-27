@@ -36,6 +36,26 @@ class CrashManagerTests(TestCase):
         self.client.login(username='test', password='test')
         self.assertRedirects(self.client.get('/'), reverse('crashmanager:crashes'))
 
+    def test_2(self):
+        'test that crash list works'
+        self.client.login(username='test', password='test')
+        response = self.client.get(reverse('crashmanager:crashes'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "There are 0 unbucketed entries in the database.")
+        for k in response.context:
+            print(k)
+            print("="*80)
+            print(response.context[k])
+            print("="*132)
+        self.assertQuerysetEqual(response.context['latest_question_list'], [])
+
+    #def test_3(self):
+    #    'test that tool filter works on crash list'
+    #    self.assertQuerysetEqual(
+    #        response.context['latest_question_list'],
+    #        ['<Question: Past question.>']
+    #    )
+
 
 class RestCrashesTests(APITestCase):
 
