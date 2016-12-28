@@ -187,7 +187,11 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
                          one found inside the base directory.
                          
     @type env_path: String
-    @param env_path: Optional file containing environment variables.   
+    @param env_path: Optional file containing environment variables.
+
+    @type test_path: String
+    @param test_path: Optional filename where to copy the test before
+                      attempting to reproduce a crash.
     
     @rtype: int
     @return: Non-zero return code on failure
@@ -262,6 +266,8 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
             elif test_in_env != None:
                 env[test_in_env] = env[test_in_env].replace('@@', crash_file)
+            elif test_path != None:
+                shutil.copy(crash_file, test_path)
             else:
                 with open(crash_file, 'r') as crash_fd:
                     stdin = crash_fd.read()
@@ -652,6 +658,7 @@ def main(argv=None):
     parser.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
     parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
+    parser.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
     parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
