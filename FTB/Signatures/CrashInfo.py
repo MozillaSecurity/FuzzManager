@@ -880,7 +880,7 @@ class GDBCrashInfo(CrashInfo):
 
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
-                if instruction == "callq" or instruction == "call" or instruction == "push" or instruction == "pop":
+                if re.match("callq?$", instruction) or re.match("(push|pop)(l|w|q)?$", instruction):
                     return RegisterHelper.getStackPointer(registerMap)
                 else:
                     failureReason = "Unsupported single-operand instruction."
