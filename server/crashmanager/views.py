@@ -348,9 +348,6 @@ def editCrashEntry(request, crashid):
         entry.testcase.loadTest()
 
     if request.method == 'POST':
-        # Force the cached crash information to be repopulated
-        entry.cachedCrashInfo = None
-
         entry.rawStdout = request.POST['rawStdout']
         entry.rawStderr = request.POST['rawStderr']
         entry.rawStderr = request.POST['rawStderr']
@@ -361,10 +358,8 @@ def editCrashEntry(request, crashid):
         entry.metadataList = request.POST['metadata'].splitlines()
 
         # Regenerate crash information and fields depending on it
+        entry.reparseCrashInfo(save=False)
         crashInfo = entry.getCrashInfo()
-        if crashInfo.crashAddress != None:
-            entry.crashAddress = hex(crashInfo.crashAddress)
-        entry.shortSignature = crashInfo.createShortSignature()
 
         if entry.testcase:
             if entry.testcase.isBinary:

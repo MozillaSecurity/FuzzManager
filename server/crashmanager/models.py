@@ -204,6 +204,22 @@ class CrashEntry(models.Model):
 
         return crashInfo
 
+    def reparseCrashInfo(self, save=True):
+        # Purges cached crash information and then forces a reparsing
+        # of the raw crash information. Based on the new crash information,
+        # the depending fields are also repopulated.
+        #
+        # This method should only be called if either the raw crash information
+        # has changed or the implementation parsing it was updated.
+        self.cachedCrashInfo = None
+        crashInfo = self.getCrashInfo()
+        if crashInfo.crashAddress != None:
+            self.crashAddress = hex(crashInfo.crashAddress)
+        self.shortSignature = crashInfo.createShortSignature()
+
+        if save:
+            return self.save()
+
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely
 # deletes the file on the filesystem which would otherwise remain.
