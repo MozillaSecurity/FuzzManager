@@ -878,19 +878,55 @@ class GDBCrashInfo(CrashInfo):
         # When we fail, try storing a reason here
         failureReason = "Unknown failure."
 
+        def isDerefOp(op):
+            return "(" in op and ")" in op
+
+        def calculateDerefOpAddress(derefOp):
+            match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
+            if match != None:
+                offset = 0L
+                if len(match.group(1)):
+                    offset = long(match.group(1), 16)
+
+                val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
+
+                # If we don't have the value, return None
+                if val == None:
+                    return (None, "Missing value for register %s " % match.group(2))
+                else:
+                    if RegisterHelper.getBitWidth(registerMap) == 32:
+                        return (long(int32(uint32(offset)) + int32(uint32(val))), None)
+                    else:
+                        # Assume 64 bit width
+                        return (long(int64(uint64(offset)) + int64(uint64(val))), None)
+            else:
+                return (None, "Failed to match dereference operation.")
+
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
                 if re.match("callq?$", instruction) or re.match("(push|pop)(l|w|q)?$", instruction):
                     return RegisterHelper.getStackPointer(registerMap)
                 else:
+                    if isDerefOp(parts[0]):
+                        # Single operand instruction with a memory dereference
+                        # We list supported ones explicitly to make sure that
+                        # we don't mix them with instructions that also
+                        # interacts with the stack pointer.
+                        if instruction.startswith("set"):
+                            (val, failed) = calculateDerefOpAddress(parts[0])
+                            if failed:
+                                failureReason = failed
+                            else:
+                                return val
+
                     failureReason = "Unsupported single-operand instruction."
             elif len(parts) == 2:
                 failureReason = "Unknown failure with two-operand instruction."
                 derefOp = None
-                if "(" in parts[0] and ")" in parts[0]:
+                if isDerefOp(parts[0]):
                     derefOp = parts[0]
 
-                if "(" in parts[1] and ")" in parts[1]:
+                if isDerefOp(parts[1]):
                     if derefOp != None:
                         if ":(" in parts[1]:
                             # This can be an instruction using multiple segments, like:
@@ -920,23 +956,11 @@ class GDBCrashInfo(CrashInfo):
                     derefOp = parts[1]
 
                 if derefOp != None:
-                    match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
-                    if match != None:
-                        offset = 0L
-                        if len(match.group(1)):
-                            offset = long(match.group(1), 16)
-
-                        val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
-
-                        # If we don't have the value, return None
-                        if val == None:
-                            failureReason = "Missing value for register %s " % match.group(2)
+                        (val, failed) = calculateDerefOpAddress(derefOp)
+                        if failed:
+                            failureReason = failed
                         else:
-                            if RegisterHelper.getBitWidth(registerMap) == 32:
-                                return long(int32(uint32(offset)) + int32(uint32(val)))
-                            else:
-                                # Assume 64 bit width
-                                return long(int64(uint64(offset)) + int64(uint64(val)))
+                            return val
                 else:
                     failureReason = "Failed to decode two-operand instruction: No dereference operation or hardcoded address detected."
                     # We might still be reading from/writing to a hardcoded address.
