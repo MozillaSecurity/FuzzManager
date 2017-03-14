@@ -168,7 +168,7 @@ class CrashInfo():
         gdbString = " received signal SIG"
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
-        appleString = "OS Version:            Mac OS X"
+        appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
 
         # Use two strings for detecting Minidumps to avoid false positives
