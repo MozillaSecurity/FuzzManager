@@ -34,6 +34,11 @@ import subprocess
 import sys
 import time
 
+haveFFPuppet = True
+try:
+    from ffpuppet import FFPuppet
+except ImportError:
+    haveFFPuppet = False
 
 def get_machine_id(base_dir):
     '''
@@ -175,7 +180,8 @@ def write_aggregated_stats(base_dirs, outfile):
     
     return
 
-def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
+def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None,
+                 firefox=None, firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
     
@@ -245,8 +251,6 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
             
         if test_idx != None:
             orig_test_arg = cmdline[test_idx]
-
-        print(cmdline)
         
         configuration = ProgramConfiguration.fromBinary(cmdline[0])
         if not configuration:
@@ -254,6 +258,11 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
             return 2
         
         collector = Collector(tool=tool_name)
+        
+        if firefox:
+            (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], firefox_prefs, firefox_extensions, firefox_testpath)
+            cmdline = ffCmd
+            base_env.update(ffEnv)
         
         for crash_file in crash_files:
             stdin = None
@@ -283,6 +292,8 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None):
             else:
                 open(crash_file + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
+        
+        ffpInst.clean_up()
 
 def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
     '''
@@ -632,6 +643,28 @@ def upload_build(build_file, bucket_name, project_name):
     remote_key.name = remote_file
     print("Uploading file %s -> %s" % (build_file, remote_key.name))
     remote_key.set_contents_from_filename(build_file)
+    
+def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
+    PREFS_PATH = "%s/prefs.js" % BASE_DIR
+    EXT_PATH = "%s/{4D498D0A-05AD-4fdb-97B5-8A0AABC1FC5B}" % BASE_DIR
+    BIN_PATH = "%s/objdir/dist/bin/firefox" % BASE_DIR
+    TEST_PATH = "%s/test.html" % BASE_DIR
+    
+    ffp = FFPuppet(use_xvfb=True)
+    
+    # For now we support only one extension, but FFPuppet will handle
+    # multiple extensions soon.
+    if ext_paths:
+        ext_path = ext_paths[0]
+    
+    ffp.create_profile(extension=ext_path, prefs_js=prefs_path)
+    
+    env = ffp.get_environ(bin_path)
+    cmd = ffp.build_launch_cmd(bin_path, additional_args=[test_path])
+    
+    return (ffp, cmd, env)
+
+    
 
 def main(argv=None):
     '''Command line options.'''
@@ -659,6 +692,12 @@ def main(argv=None):
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
     parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
     parser.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
+    
+    parser.add_argument("--firefox", dest="firefox", action='store_true', help="Test Program is Firefox (requires FFPuppet installed)")
+    parser.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
+    parser.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions", help="Path extension file for Firefox", metavar="FILE")
+    parser.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox", metavar="FILE")
+    
     parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
     parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
@@ -675,6 +714,19 @@ def main(argv=None):
 
     # process options
     opts = parser.parse_args(argv)
+    
+    if opts.firefox:
+        if not haveFFPuppet:
+            print("Error: --firefox requires FFPuppet to be installed", file=sys.stderr)
+            return 2
+        
+        if opts.custom_cmdline_file:
+            print("Error: --custom-cmdline-file is incompatible with --firefox", file=sys.stderr)
+            return 2
+        
+        if not opts.firefox_prefs or not opts.firefox_testpath:
+            print("Error: --firefox requires --firefox-prefs and --firefox-testpath to be specified.", file=sys.stderr)
+            return 2
     
     afl_out_dirs = []
     if opts.afloutdir:
@@ -807,6 +859,10 @@ def main(argv=None):
             print("Error: Unable to locate afl-cmin binary.", file=sys.stderr)
             return 2
         
+        if opts.firefox:
+            (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+            cmdline = ffCmd
+        
         afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', 'none']
         afl_cmdline.extend(cmdline)
         
@@ -814,7 +870,14 @@ def main(argv=None):
         with open(os.devnull, 'w') as devnull:
             env = os.environ.copy()
             env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
+            
+            if opts.firefox:
+                env.update(ffEnv)
+            
             subprocess.check_call(afl_cmdline, stdout=devnull, env=env)
+        
+        if opts.firefox:
+            ffpInst.clean_up()
         
         # replace existing corpus with reduced corpus
         print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
