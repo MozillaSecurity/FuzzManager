@@ -645,11 +645,6 @@ def upload_build(build_file, bucket_name, project_name):
     remote_key.set_contents_from_filename(build_file)
     
 def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
-    PREFS_PATH = "%s/prefs.js" % BASE_DIR
-    EXT_PATH = "%s/{4D498D0A-05AD-4fdb-97B5-8A0AABC1FC5B}" % BASE_DIR
-    BIN_PATH = "%s/objdir/dist/bin/firefox" % BASE_DIR
-    TEST_PATH = "%s/test.html" % BASE_DIR
-    
     ffp = FFPuppet(use_xvfb=True)
     
     # For now we support only one extension, but FFPuppet will handle
@@ -664,7 +659,6 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     
     return (ffp, cmd, env)
 
-    
 
 def main(argv=None):
     '''Command line options.'''
