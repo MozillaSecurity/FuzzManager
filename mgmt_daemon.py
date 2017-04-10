@@ -293,7 +293,8 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None,
                 open(crash_file + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
         
-        ffpInst.clean_up()
+        if firefox:
+            ffpInst.clean_up()
 
 def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
     '''
