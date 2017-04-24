@@ -650,6 +650,7 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     
     # For now we support only one extension, but FFPuppet will handle
     # multiple extensions soon.
+    ext_path=None
     if ext_paths:
         ext_path = ext_paths[0]
     
