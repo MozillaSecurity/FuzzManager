@@ -33,6 +33,7 @@ import stat
 import subprocess
 import sys
 import time
+import traceback
 
 haveFFPuppet = True
 try:
@@ -693,6 +694,7 @@ def main(argv=None):
     parser.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
     parser.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions", help="Path extension file for Firefox", metavar="FILE")
     parser.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox", metavar="FILE")
+    parser.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE", help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
     
     parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
@@ -711,18 +713,40 @@ def main(argv=None):
     # process options
     opts = parser.parse_args(argv)
     
-    if opts.firefox:
+    if opts.firefox or opts.firefox_start_afl:
         if not haveFFPuppet:
-            print("Error: --firefox requires FFPuppet to be installed", file=sys.stderr)
+            print("Error: --firefox and --firefox-start-afl require FFPuppet to be installed", file=sys.stderr)
             return 2
         
         if opts.custom_cmdline_file:
-            print("Error: --custom-cmdline-file is incompatible with --firefox", file=sys.stderr)
+            print("Error: --custom-cmdline-file is incompatible with firefox options", file=sys.stderr)
             return 2
         
         if not opts.firefox_prefs or not opts.firefox_testpath:
-            print("Error: --firefox requires --firefox-prefs and --firefox-testpath to be specified.", file=sys.stderr)
+            print("Error: --firefox and --firefox-start-afl require --firefox-prefs and --firefox-testpath to be specified", file=sys.stderr)
             return 2
+        
+    if opts.firefox_start_afl:
+        if not opts.aflbindir:
+            print("Error: Must specify --afl-binary-dir for starting AFL with firefox", file=sys.stderr)
+            return 2
+        
+        (ffp, cmd, env) = setup_firefox(opts.firefox_start_afl, opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+        
+        afl_cmd = [ os.path.join(opts.aflbindir, "afl-fuzz") ]
+        
+        opts.rargs.remove("--")
+        
+        afl_cmd.extend(opts.rargs)
+        afl_cmd.extend(cmd)
+        
+        try:
+            subprocess.call(afl_cmd, env=env)
+        except:
+            traceback.print_exc()
+        
+        ffp.clean_up()
+        return 0
     
     afl_out_dirs = []
     if opts.afloutdir:
