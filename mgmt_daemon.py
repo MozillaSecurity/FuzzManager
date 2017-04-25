@@ -892,7 +892,7 @@ def main(argv=None):
             (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
             cmdline = ffCmd
         
-        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', opts.afl_timeout, '-m', 'none']
+        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', str(opts.afl_timeout), '-m', 'none']
         
         if opts.test_file:
             afl_cmdline.extend(['-f', opts.test_file])
