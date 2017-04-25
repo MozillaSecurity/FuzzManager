@@ -895,7 +895,7 @@ def main(argv=None):
         afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', opts.afl_timeout, '-m', 'none']
         
         if opts.test_file:
-            alf_cmdline.extend(['-f', opts.test_file])
+            afl_cmdline.extend(['-f', opts.test_file])
         
         afl_cmdline.extend(cmdline)
         
