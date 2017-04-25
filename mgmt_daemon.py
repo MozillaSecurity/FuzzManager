@@ -697,6 +697,7 @@ def main(argv=None):
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
     parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
     parser.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
+    parser.add_argument("--afl-timeout", dest="afl_timeout", type=int, default=1000, help="Timeout per test to pass to AFL for corpus refreshing", metavar="MSECS")
     
     parser.add_argument("--firefox", dest="firefox", action='store_true', help="Test Program is Firefox (requires FFPuppet installed)")
     parser.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
@@ -891,7 +892,7 @@ def main(argv=None):
             (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
             cmdline = ffCmd
         
-        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', '1000', '-m', 'none']
+        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', opts.afl_timeout, '-m', 'none']
         afl_cmdline.extend(cmdline)
         
         print("Running afl-cmin")
