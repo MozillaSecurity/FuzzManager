@@ -527,7 +527,7 @@ def get_corpus_status(bucket_name, project_name):
         
         dt = boto_parse_ts(remote_key.last_modified)
         
-        date_str = "%s-%s-%s" % (dt.year, dt.month, dt.day)
+        date_str = "%s-%02d-%02d" % (dt.year, dt.month, dt.day)
         
         if not date_str in status_data:
             status_data[date_str] = 0
