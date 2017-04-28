@@ -23,6 +23,7 @@ from FTB.Running.AutoRunner import AutoRunner
 import argparse
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
+from boto.utils import parse_ts as boto_parse_ts
 import hashlib
 from lockfile import FileLock
 import os
@@ -497,6 +498,43 @@ def get_queue_status(bucket_name, project_name):
     
     return status_data
 
+def get_corpus_status(bucket_name, project_name):
+    '''
+    Return status data for the corpus of the specified S3 bucket/project
+    
+    @type bucket_name: String
+    @param bucket_name: Name of the S3 bucket to use
+    
+    @type project_name: String
+    @param project_name: Name of the project folder inside the S3 bucket
+    
+    @rtype: dict
+    @return: Dictionary containing corpus size per date modified
+    '''
+    
+    conn = S3Connection()
+    bucket = conn.get_bucket(bucket_name)
+    
+    remote_path = "%s/corpus/" % project_name
+    remote_keys = list(bucket.list(remote_path))
+    
+    status_data = {}
+    
+    for remote_key in remote_keys:
+        # Ignore any folders
+        if remote_key.name.endswith("/"):
+            continue
+        
+        dt = boto_parse_ts(remote_key.last_modified)
+        
+        date_str = "%s-%s-%s" % (dt.datetime.year, dt.datetime.month, dt.datetime.day)
+        
+        if not date_str in status_data:
+            status_data[date_str] = 0
+        status_data[date_str] += 1
+    
+    return status_data
+
 def download_build(build_dir, bucket_name, project_name):
     '''
     Downloads build.zip from the specified S3 bucket and unpacks it
@@ -692,6 +730,7 @@ def main(argv=None):
     parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
     parser.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
     parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
+    parser.add_argument("--s3-corpus-status", dest="s3_corpus_status", action='store_true', help="Display S3 corpus status")
     parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
     parser.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
     parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
@@ -801,7 +840,18 @@ def main(argv=None):
             total_queue_files += status_data[queue_name]
         print("Total queue files: %s" % total_queue_files)
         
-        return 0        
+        return 0
+
+    if opts.s3_corpus_status:
+        status_data = get_corpus_status(opts.s3_bucket, opts.project)
+        total_corpus_files = 0
+        
+        for (status_dt, status_cnt) in sorted(status_data.items()):
+            print("Added %s: %s" % (status_dt, status_cnt))
+            total_corpus_files += status_cnt
+        print("Total corpus files: %s" % total_corpus_files)
+        
+        return 0
     
     if opts.s3_queue_cleanup:
         clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
