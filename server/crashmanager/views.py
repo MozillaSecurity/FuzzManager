@@ -10,13 +10,14 @@ from django.http.response import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import operator
-from rest_framework import viewsets
+from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.response import Response
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
-from crashmanager.serializers import CrashEntrySerializer
+from crashmanager.serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
 
 def check_authorized_for_crash_entry(request, entry):
     user = User.get_or_create_restricted(request.user)[0]
@@ -1041,13 +1042,83 @@ def userSettings(request):
     else:
         raise SuspiciousOperation
 
-class CrashEntryViewSet(viewsets.ModelViewSet):
+class JsonQueryFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        querystr = request.QUERY_PARAMS.get('query', None)
+        if querystr is not None:
+            try:
+                _, queryobj = json_to_query(querystr)
+            except RuntimeError as e:
+                raise InvalidArgumentException("error in query: %s" % e)
+            queryset = queryset.filter(queryobj)
+        return queryset
+
+class BucketAnnotateFilterBackend(filters.BaseFilterBackend):
+    """
+    Annotates bucket queryset with size and best_quality
+    """
+    def filter_queryset(self, request, queryset, view):
+        # we should use a subquery to get best_quality which would allow us to also get the corresponding crash
+        # Subquery was added in Django 1.11
+        return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+
+class CrashEntryViewSet(mixins.CreateModelMixin,
+                        mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
     """
     API endpoint that allows adding/viewing CrashEntries
     """
     authentication_classes = (TokenAuthentication,)
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
+    filter_backends = [JsonQueryFilterBackend]
+
+    def partial_update(self, request, pk=None):
+        """
+        Update individual crash fields.
+        """
+        allowed_fields = {"testcase_quality"}
+        try:
+            obj = CrashEntry.objects.get(pk=pk)
+        except CrashEntry.DoesNotExist:
+            raise Http404
+        given_fields = set(request.DATA.keys())
+        disallowed_fields = given_fields - allowed_fields
+        if disallowed_fields:
+            if len(disallowed_fields) == 1:
+                error_str = "field %r" % disallowed_fields.pop()
+            else:
+                error_str = "fields %r" % list(disallowed_fields)
+            raise InvalidArgumentException("%s cannot be updated" % error_str)
+        if "testcase_quality" in request.DATA:
+            if obj.testcase is None:
+                raise InvalidArgumentException("crash has no testcase")
+            try:
+                testcase_quality = int(request.DATA["testcase_quality"])
+            except ValueError:
+                raise InvalidArgumentException("invalid testcase_quality")
+            # NB: if other fields are added, all validation should occur before any DB writes.
+            obj.testcase.quality = testcase_quality
+            obj.testcase.save()
+        return Response(CrashEntrySerializer(obj).data)
+
+class BucketViewSet(mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
+                    viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing Buckets
+    """
+    authentication_classes = (TokenAuthentication,)
+    queryset = Bucket.objects.all()
+    serializer_class = BucketSerializer
+    filter_backends = [JsonQueryFilterBackend, BucketAnnotateFilterBackend]
 
 def json_to_query(json_str):
     """
@@ -1080,12 +1151,12 @@ def json_to_query(json_str):
 
     def get_query_obj(obj, key=None):
 
-        if isinstance(obj, basestring) or isinstance(obj, list):
+        if obj is None or isinstance(obj, (basestring, list, int)):
             kwargs = { key : obj }
             qobj = Q(**kwargs)
             return qobj
         elif not isinstance(obj, dict):
-            raise RuntimeError("Invalid object type in query object")
+            raise RuntimeError("Invalid object type '%s' in query object" % type(obj).__name__)
 
         qobj = Q()
 
@@ -1105,7 +1176,7 @@ def json_to_query(json_str):
             elif op == 'OR':
                 qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
             elif op == 'NOT':
-                qobj = get_query_obj(obj[objkeys[0]], objkeys[0])
+                qobj = get_query_obj(obj[objkey], objkey)
                 qobj.negate()
             else:
                 raise RuntimeError("Invalid operator '%s' specified in query object" % op)

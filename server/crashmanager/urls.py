@@ -7,7 +7,8 @@ from server import settings
 
 
 router = routers.DefaultRouter()
-router.register(r'crashes', views.CrashEntryViewSet)
+router.register(r'crashes', views.CrashEntryViewSet, base_name='crashes')
+router.register(r'buckets', views.BucketViewSet, base_name='buckets')
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
