@@ -27,6 +27,7 @@ import json
 import os
 import platform
 import requests
+import shutil
 import sys
 from tempfile import mkstemp
 import time
@@ -161,11 +162,8 @@ class Collector():
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
-        with os.fdopen(zipFileFd, 'w') as zipFile:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    zipFile.write(chunk)
-                    zipFile.flush()
+        with os.fdopen(zipFileFd, 'wb') as zipFile:
+            shutil.copyfileobj(response.raw, zipFile)
 
         self.refreshFromZip(zipFileName)
         os.remove(zipFileName)
@@ -272,7 +270,7 @@ class Collector():
 
                 raise self.__serverError(response)
             else:
-                break
+                return response.json()
 
     @signature_checks
     def search(self, crashInfo):
@@ -373,7 +371,7 @@ class Collector():
             raise self.__serverError(response)
 
         localFile = os.path.basename(respJson["testcase"])
-        with open(localFile, 'w') as f:
+        with open(localFile, 'wb') as f:
             f.write(response.content)
 
         return (localFile, respJson)
