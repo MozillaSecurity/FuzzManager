@@ -270,7 +270,7 @@ class Collector():
 
                 raise self.__serverError(response)
             else:
-                break
+                return response.json()
 
     @signature_checks
     def search(self, crashInfo):
