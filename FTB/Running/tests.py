@@ -96,24 +96,24 @@ class PersistentApplicationTestOtherModes(unittest.TestCase):
 
         # Check with spfp and stdin as source
         _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "spfp"],
-                                           persistentMode=PersistentMode.SPFP, processingTimeout=3))
+                                           persistentMode=PersistentMode.SPFP, processingTimeout=2))
 
         # Check with sigstop and temporary file as source
         (_, inputFile) = tempfile.mkstemp()
         _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "sigstop", inputFile],
-                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=3, inputFile=inputFile))
+                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=2, inputFile=inputFile))
         os.remove(inputFile)
 
 class PersistentApplicationTestPerf(unittest.TestCase):
     def runTest(self):
         def _check(spa):
-            ret = spa.start()
+            spa.start()
 
             oldPid = spa.process.pid
             startTime = time.time()
 
             for i in range(1, 10000):
-                ret = spa.runTest("aaa\naaaa")
+                spa.runTest("aaa\naaaa")
 
             stopTime = time.time()
             print("%s execs per second" % (float(10000) / float(stopTime - startTime)))
@@ -133,6 +133,17 @@ class PersistentApplicationTestPerf(unittest.TestCase):
                                            persistentMode=PersistentMode.SIGSTOP, processingTimeout=3, inputFile=inputFile))
         os.remove(inputFile)
 
+
+class PersistentApplicationTestFaultySigstop(unittest.TestCase):
+    def runTest(self):
+        (_, inputFile) = tempfile.mkstemp()
+        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
+                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
+
+        with self.assertRaises(RuntimeError):
+            spa.start()
+
+        os.remove(inputFile)
 
 if __name__ == "__main__":
     unittest.main()

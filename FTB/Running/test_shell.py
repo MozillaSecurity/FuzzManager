@@ -78,13 +78,16 @@ def processInput(mode, inputFd):
                     print(line)
                     print(line, file=sys.stderr)
 
-
                 if received_aa and "aaaa" in lines:
                     crash()
                 elif "aa" in lines:
                     received_aa = True
                 elif "aaaaa" in lines:
                     hang()
+
+    elif mode == "faulty_sigstop":
+        # And we're gone, how rude
+        sys.exit(0)
 
 
 def main():
