@@ -173,12 +173,6 @@ class SimplePersistentApplication(PersistentApplication):
             self.process.stdin.close()
 
     def _wait_child_stopped(self):
-        # (maxSleepTime, pollInterval, childPid) = (self.processingTimeout, 0.005, 0)
-        # while childPid == 0 and maxSleepTime > 0:
-        #    (childPid, self.childExit) = os.waitpid(self.process.pid, os.WUNTRACED | os.WNOHANG)
-        #    maxSleepTime -= pollInterval
-        #    time.sleep(pollInterval)
-
         monitor = WaitpidMonitor(self.process.pid, os.WUNTRACED)
         monitor.start()
         monitor.join(self.processingTimeout)
@@ -252,6 +246,9 @@ class SimplePersistentApplication(PersistentApplication):
         elif self.persistentMode == PersistentMode.SIGSTOP:
             if not self._wait_child_stopped():
                 raise RuntimeError("SIGSTOP Error: Failed to wait for application to stop itself after startup")
+
+            if self.process.poll() is not None:
+                raise RuntimeError("SIGSTOP Error: Application terminated instead of stopping itself")
         else:
             if not self.inputFile:
                 self._write_log_test(test)
