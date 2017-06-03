@@ -145,5 +145,15 @@ class PersistentApplicationTestFaultySigstop(unittest.TestCase):
 
         os.remove(inputFile)
 
+class PersistentApplicationTestStopWithoutStart(unittest.TestCase):
+    def runTest(self):
+        (_, inputFile) = tempfile.mkstemp()
+        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
+                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
+
+        # Should not throw, instead it should be a no-op
+        spa.stop()
+        os.remove(inputFile)
+
 if __name__ == "__main__":
     unittest.main()

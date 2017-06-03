@@ -152,6 +152,10 @@ class SimplePersistentApplication(PersistentApplication):
         # Used to store the second return value if waitpid, which has the real exit code
         self.childExit = None
 
+        # These will hold our StreamCollectors for stdout/err
+        self.outCollector = None
+        self.errCollector = None
+
     def _write_log_test(self, test):
         self.testLog.append(test)
 
@@ -280,12 +284,14 @@ class SimplePersistentApplication(PersistentApplication):
         self._terminateProcess()
 
         # Ensure we leave no dangling threads when stopping
-        self.outCollector.join()
-        self.errCollector.join()
+        if self.outCollector is not None:
+            # errCollector is expected to be set when outCollector is
+            self.outCollector.join()
+            self.errCollector.join()
 
-        # Make the output available
-        self.stdout = self.outCollector.output
-        self.stderr = self.errCollector.output
+            # Make the output available
+            self.stdout = self.outCollector.output
+            self.stderr = self.errCollector.output
 
     def runTest(self, test):
         if self.process == None or self.process.poll() != None:
@@ -357,7 +363,6 @@ class SimplePersistentApplication(PersistentApplication):
                 if self._crashed():
                     return ApplicationStatus.CRASHED
                 else:
-                    print("Return code is %s" % self.process.returncode)
                     return ApplicationStatus.ERROR
 
             return ApplicationStatus.OK
