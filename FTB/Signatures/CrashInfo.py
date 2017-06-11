@@ -793,6 +793,10 @@ class GDBCrashInfo(CrashInfo):
 
                 self.backtrace.append(functionName)
 
+        if self.crashInstruction != None:
+            # Remove any leading/trailing whitespaces
+            self.crashInstruction = self.crashInstruction.strip()
+
         # If we have no crash address but the instruction, try to calculate the crash address
         if self.crashAddress == None and self.crashInstruction != None:
             crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
@@ -845,9 +849,12 @@ class GDBCrashInfo(CrashInfo):
                 # pointing somewhere where it shouldn't point, so use that as
                 # the crash address.
                 return RegisterHelper.getStackPointer(registerMap)
-            elif instruction == "ud2":
+            elif instruction == "ud2" or instruction == "(bad)":
                 # ud2 - Raise invalid opcode exception
                 # We treat this like invalid instruction
+                #
+                # (bad) - Assembly at the instruction pointer is not valid
+                # We also consider this an invalid instruction
                 return RegisterHelper.getInstructionPointer(registerMap)
             else:
                 raise RuntimeError("Unsupported non-operand instruction: %s" % instruction)
