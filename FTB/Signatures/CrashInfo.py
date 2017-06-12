@@ -889,7 +889,7 @@ class GDBCrashInfo(CrashInfo):
             return "(" in op and ")" in op
 
         def calculateDerefOpAddress(derefOp):
-            match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
+            match = re.match("\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match != None:
                 offset = 0L
                 if len(match.group(1)):
@@ -911,8 +911,23 @@ class GDBCrashInfo(CrashInfo):
 
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
-                if re.match("callq?$", instruction) or re.match("(push|pop)(l|w|q)?$", instruction):
+                if re.match("(push|pop)(l|w|q)?$", instruction):
                     return RegisterHelper.getStackPointer(registerMap)
+                elif re.match("callq?$", instruction):
+                    # call is quite special because it performs a push first but then can
+                    # also perform a memory dereference. We don't know for sure which of
+                    # the two operations fail if we detect a deref in the instruction,
+                    # but for now we assume that the deref fails and the stack pointer
+                    # is ok.
+                    if isDerefOp(parts[0]):
+                        (val, failed) = calculateDerefOpAddress(parts[0])
+                        if failed:
+                            failureReason = failed
+                        else:
+                            return val
+                    else:
+                        # No deref, so the push must be failing
+                        return RegisterHelper.getStackPointer(registerMap)
                 else:
                     if isDerefOp(parts[0]):
                         # Single operand instruction with a memory dereference
@@ -925,8 +940,8 @@ class GDBCrashInfo(CrashInfo):
                                 failureReason = failed
                             else:
                                 return val
-
-                    failureReason = "Unsupported single-operand instruction."
+                    else:
+                        failureReason = "Unsupported single-operand instruction."
             elif len(parts) == 2:
                 failureReason = "Unknown failure with two-operand instruction."
                 derefOp = None

@@ -451,6 +451,29 @@ r15            0x0      0
 rip            0x7ff7f20c1f81   0x7ff7f20c1f81
 """
 
+gdbRegressionTrace11 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+0x00007ff7f20c1f81 in ?? ()
+rax            0x7ff7f2090f8a   93824996665789
+rbx            0x2fa    762
+rcx            0x1      1
+rdx            0x4000000000000  1125899906842624
+rsi            0x2fa    762
+rdi            0x7fffffffbfb0   140737488338864
+rbp            0x7fffffffb620   0x7fffffffb620
+rsp            0x7fffffffb5c0   0x7fffffffb5c0
+r8             0x7fffffffb680   140737488336512
+r9             0x5555564fc220   93825008648736
+r10            0x0      0
+r11            0x555555b9ca90   93824998820496
+r12            0x7ffff7e124c0   140737352115392
+r13            0x7fffffffb680   140737488336512
+r14            0x7fffffffbfb0   140737488338864
+r15            0x0      0
+rip            0x7ff7f20c1f81   0x7ff7f20c1f81
+=> 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       callq  *0xa8(%rax)
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -697,7 +720,6 @@ class GDBParserTestCrashAddressRegression9(unittest.TestCase):
         crashInfo9 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace9.splitlines())
         self.assertEqual(crashInfo9.crashInstruction, "call   0x8120ca0")
 
-
 class GDBParserTestCrashAddressRegression10(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -705,6 +727,14 @@ class GDBParserTestCrashAddressRegression10(unittest.TestCase):
         crashInfo10 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace10.splitlines())
         self.assertEqual(crashInfo10.crashInstruction, "(bad)")
         self.assertEqual(crashInfo10.crashAddress, 0x7ff7f20c1f81L)
+
+class GDBParserTestCrashAddressRegression11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo11 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace11.splitlines())
+        self.assertEqual(crashInfo11.crashInstruction, "callq  *0xa8(%rax)")
+        self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032L)
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
