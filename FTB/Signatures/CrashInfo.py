@@ -844,7 +844,7 @@ class GDBCrashInfo(CrashInfo):
 
             instruction = parts[0]
 
-            if instruction == "ret":
+            if instruction == "ret" or instruction == "retq":
                 # If ret is crashing, it's most likely due to the stack pointer
                 # pointing somewhere where it shouldn't point, so use that as
                 # the crash address.
