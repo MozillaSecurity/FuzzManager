@@ -194,6 +194,8 @@ class CrashInfo():
                 return CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif AssertionHelper.RUST_ASSERTION.match(line) is not None:
+                return RustCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
                 # Only match Minidump output if the *next* line also contains
                 # the second search string defined above.
@@ -1310,3 +1312,45 @@ class CDBCrashInfo(CrashInfo):
         else:
             result = "??"
         return result
+
+
+class RustCrashInfo(CrashInfo):
+
+    RE_FRAME = re.compile(r"^( +\d+: (?P<symbol>.+)| +at .*:\d+|stack backtrace:)$")
+
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the rust backtrace, otherwise use stderr
+        rustOutput = crashData or stderr
+
+        self.crashAddress = 0 # this is always an assertion, set to 0 to make matching more efficient
+
+        inBacktrace = False
+        for line in rustOutput:
+            # Start of stack
+            if not inBacktrace:
+                if AssertionHelper.RUST_ASSERTION.match(line) is not None:
+                    inBacktrace = True
+                continue
+
+            frame = self.RE_FRAME.match(line)
+            if frame is None:
+                break
+
+            if frame.group("symbol"):
+                self.backtrace.append(frame.group("symbol"))

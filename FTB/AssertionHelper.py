@@ -17,6 +17,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 
+RUST_ASSERTION = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
+
+
 def getAssertion(output):
     '''
     This helper method provides a way to extract and process the
@@ -35,13 +38,16 @@ def getAssertion(output):
 
     for line in output:
         # Remove any PID output at the beginning of the line
-        line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
+        line = re.sub(r"^\[\d+\]\s+", "", line, count=1)
 
         if addNext:
             lastLine.append(line)
             addNext = False
         elif line.startswith("Assertion failure"):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
+            lastLine = line
+            haveFatalAssertion = True
+        elif RUST_ASSERTION.match(line) is not None:
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
