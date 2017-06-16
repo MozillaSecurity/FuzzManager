@@ -171,6 +171,11 @@ class CrashInfo():
         appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
 
+        # Use two strings for detecting rust backtraces to avoid false positives
+        rustFirstString = "panicked at"
+        rustSecondString = "stack backtrace:"
+        rustFirstDetected = False
+
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
         minidumpSecondString = "CPU|"
@@ -194,15 +199,20 @@ class CrashInfo():
                 return CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
-            elif AssertionHelper.RUST_ASSERTION.match(line) is not None:
+            elif not rustFirstDetected and rustFirstString in line:
+                rustFirstDetected = True
+                minidumpFirstDetected = False
+            elif rustFirstDetected and rustSecondString in line:
                 return RustCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
                 # Only match Minidump output if the *next* line also contains
                 # the second search string defined above.
+                rustFirstDetected = False
                 minidumpFirstDetected = True
             elif minidumpFirstDetected and minidumpSecondString in line:
                 return MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
-            elif minidumpFirstDetected:
+            else:
+                rustFirstDetected = False
                 minidumpFirstDetected = False
 
         # Default fallback to be used if there is neither ASan nor GDB output.
