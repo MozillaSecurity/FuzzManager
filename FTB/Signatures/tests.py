@@ -959,6 +959,40 @@ class AppleSelectorTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
 
+class AppleLionParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx64")
+
+        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+            crashInfo = AppleCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 13)
+        self.assertEqual(crashInfo.backtrace[0], "js::jit::LIRGenerator::visitNearbyInt")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::LIRGenerator::visitInstruction")
+        self.assertEqual(crashInfo.backtrace[2], "js::jit::LIRGenerator::visitBlock")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::LIRGenerator::generate")
+        self.assertEqual(crashInfo.backtrace[4], "js::jit::GenerateLIR")
+        self.assertEqual(crashInfo.backtrace[5], "js::jit::CompileBackEnd")
+        self.assertEqual(crashInfo.backtrace[6], "_ZN2js3jitL7CompileEP9JSContextN2JS6HandleIP8JSScriptEEPNS0_13BaselineFrameEPhb")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::IonCompileScriptForBaseline")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "_ZL13EnterBaselineP9JSContextRN2js3jit12EnterJitDataE")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+
+class AppleLionSelectorTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx64")
+
+        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+
 # Test 1a is for Win7 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength
 #     01814577 cc              int     3
