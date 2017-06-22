@@ -269,6 +269,7 @@ class User(models.Model):
     defaultProviderId = models.IntegerField(default=1)
     defaultToolsFilter = models.ManyToManyField(Tool)
     restricted = models.BooleanField(blank=False, default=False)
+    bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
 
     @staticmethod
     def get_or_create_restricted(request_user):
@@ -277,3 +278,11 @@ class User(models.Model):
             user.restricted = True
             user.save()
         return (user, created)
+
+class BucketWatch(models.Model):
+    user = models.ForeignKey(User)
+    bucket = models.ForeignKey(Bucket)
+    # This is the primary key of last crash marked viewed by the user
+    # Store as an integer to prevent problems if the particular crash
+    # is deleted later. We only care about its place in the ordering.
+    lastCrash = models.IntegerField(default=0)
