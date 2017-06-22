@@ -182,7 +182,7 @@ def write_aggregated_stats(base_dirs, outfile):
     
     return
 
-def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None,
+def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, test_path=None,
                  firefox=None, firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
@@ -980,7 +980,7 @@ def main(argv=None):
         while True:
             if opts.fuzzmanager:
                 for afl_out_dir in afl_out_dirs:
-                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname)
+                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname, opts.test_file)
             
             # Only upload queue files every 20 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
