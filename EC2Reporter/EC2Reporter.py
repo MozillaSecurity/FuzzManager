@@ -21,7 +21,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 import argparse
-from lockfile import FileLock, LockTimeout
+from fasteners import InterProcessLock
 import os
 import platform
 import random
@@ -207,11 +207,12 @@ def main(argv=None):
             if opts.random_offset > 0:
                 random.seed(reporter.clientId)
 
-            lock = FileLock(opts.report_file)
+            lock = InterProcessLock(opts.report_file + ".lock")
             while True:
-                try:
-                    if os.path.exists(opts.report_file):
-                        lock.acquire(opts.keep_reporting)
+                if os.path.exists(opts.report_file):
+                    if not lock.acquire(timeout=opts.keep_reporting):
+                        continue
+                    try:
                         with open(opts.report_file) as f:
                             report = f.read()
                         try:
@@ -219,14 +220,13 @@ def main(argv=None):
                         except RuntimeError as e:
                             # Ignore errors if the server is temporarily unavailable
                             print("Failed to contact server: %s" % e, file=sys.stderr)
+                    finally:
                         lock.release()
 
-                    random_offset = 0
-                    if opts.random_offset:
-                        random_offset = random.randint(-opts.random_offset, opts.random_offset)
-                    time.sleep(opts.keep_reporting + random_offset)
-                except LockTimeout:
-                    continue
+                random_offset = 0
+                if opts.random_offset:
+                    random_offset = random.randint(-opts.random_offset, opts.random_offset)
+                time.sleep(opts.keep_reporting + random_offset)
         else:
             with open(opts.report_file) as f:
                 report = f.read()
