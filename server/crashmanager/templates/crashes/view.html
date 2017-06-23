@@ -43,6 +43,9 @@
             <tr><td>Version</td><td>{{ entry.product.version }}</td></tr>
             <tr><td>Platform</td><td>{{ entry.platform.name }}</td></tr>
             <tr><td>OS</td><td>{{ entry.os.name }}</td></tr>
+            {% if entry.testcase %}
+            <tr><td>Testcase Quality</td><td>{{ entry.testcase.quality }}</td></tr>
+            {% endif %}
             <tr><td>Reported by Tool</td><td>{{ entry.tool.name }}</td></tr>
         </table>
 
