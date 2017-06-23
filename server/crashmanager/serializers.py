@@ -4,26 +4,31 @@ from django.core.files.base import ContentFile
 from django.forms import widgets
 import hashlib
 from rest_framework import serializers
+from rest_framework.exceptions import APIException
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from crashmanager.models import CrashEntry, Bucket, Platform, Product, OS, TestCase, Client, Tool
 
+class InvalidArgumentException(APIException):
+    status_code = 400
 
 class CrashEntrySerializer(serializers.ModelSerializer):
     # We need to redefine several fields explicitly because we flatten our
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
     # create these instances first and issue multiple requests in total.
-    platform = serializers.CharField(max_length=63)
-    product = serializers.CharField(max_length=63)
+    #
+    # write_only here means don't try to read it automatically in super().to_native()
+    platform = serializers.CharField(max_length=63, write_only=True)
+    product = serializers.CharField(max_length=63, write_only=True)
     product_version = serializers.CharField(max_length=63, required=False, write_only=True)
-    os = serializers.CharField(max_length=63)
-    client = serializers.CharField(max_length=255)
-    tool = serializers.CharField(max_length=63)
+    os = serializers.CharField(max_length=63, write_only=True)
+    client = serializers.CharField(max_length=255, write_only=True)
+    tool = serializers.CharField(max_length=63, write_only=True)
     testcase = serializers.CharField(required=False)
     testcase_ext = serializers.CharField(required=False, write_only=True)
-    testcase_quality = serializers.CharField(required=False, default=0, write_only=True)
+    testcase_quality = serializers.IntegerField(required=False, default=0, write_only=True)
     testcase_isbinary = serializers.BooleanField(required=False, default=False, write_only=True)
 
     class Meta:
@@ -32,8 +37,9 @@ class CrashEntrySerializer(serializers.ModelSerializer):
                   'rawStdout', 'rawStderr', 'rawCrashData', 'metadata',
                   'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
                   'platform', 'product', 'product_version', 'os', 'client', 'tool',
-                  'env', 'args'
+                  'env', 'args', 'bucket', 'id'
                   )
+        read_only_fields = ('bucket', 'id')
 
     def to_native(self, obj):
         '''
@@ -70,6 +76,10 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         if instance:
             # Not allowed to update existing instances
             return instance
+
+        missing_keys = {'rawStdout', 'rawStderr', 'rawCrashData'} - set(attrs.keys())
+        if missing_keys:
+            raise InvalidArgumentException({key: ["This field is required."] for key in missing_keys})
 
         product = attrs.pop('product', None)
         product_version = attrs.pop('product_version', None)
@@ -152,6 +162,22 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 class BucketSerializer(serializers.ModelSerializer):
     bug = serializers.SlugRelatedField(slug_field="externalId", read_only=True)
+    # write_only here means don't try to read it automatically in super().to_native()
+    # size and best_quality are annotations, so must be set manually
+    size = serializers.IntegerField(write_only=True)
+    best_quality = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = Bucket
-        fields = ('bug', 'signature')
+        fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
+        read_only_fields = ('id', 'frequent', 'permanent', 'shortDescription', 'signature')
+
+    def to_native(self, obj):
+        serialized = super(BucketSerializer, self).to_native(obj)
+        if obj is not None:
+            serialized["size"] = obj.size
+            serialized["best_quality"] = obj.quality
+            # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
+            # see note in BucketAnnotateFilterBackend
+
+        return serialized

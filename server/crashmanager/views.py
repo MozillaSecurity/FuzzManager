@@ -4,19 +4,20 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q
-from django.db.models.aggregates import Count, Min
-from django.http.response import Http404
+from django.db.models import F, Q
+from django.db.models.aggregates import Count, Min, Max
+from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import operator
-from rest_framework import viewsets
+from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.response import Response
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
-from crashmanager.serializers import CrashEntrySerializer
+from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
+from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
 
 def check_authorized_for_crash_entry(request, entry):
     user = User.get_or_create_restricted(request.user)[0]
@@ -157,6 +158,85 @@ def allCrashes(request):
     entries = CrashEntry.objects.all().order_by('-id')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
     return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
+
+@login_required(login_url='/login/')
+def watchedSignatures(request):
+    # for this user, list watches
+    # buckets   sig       new crashes   remove
+    # ========================================
+    # 1         crash       10          tr
+    # 2         assert      0           tr
+    # 3         blah        0           tr
+    user = User.get_or_create_restricted(request.user)[0]
+
+    # the join of Bucket+CrashEntry is a big one, and each filter() call on a related field adds a join
+    # therefore this needs to be a single filter() call, otherwise we get duplicate crashentries in the result
+    # this is why tool filtering is done manually here and not using filter_signatures_by_toolfilter()
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    buckets = Bucket.objects.filter(user=user, crashentry__gt=F('bucketwatch__lastCrash'), crashentry__tool__in=defaultToolsFilter)
+    buckets = buckets.annotate(newCrashes=Count('crashentry'))
+    buckets = buckets.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
+    # what's left is only watched buckets with new crashes
+    # need to include other watched buckets too .. which means evaluating the buckets query now
+    newBuckets = list(buckets)
+    # get all buckets watched by this user
+    # this is the result, but we will replace any buckets also found in newBuckets
+    bucketsAll = Bucket.objects.filter(user=user).order_by('-id')
+    bucketsAll = bucketsAll.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
+    buckets = list(bucketsAll)
+    for idx, bucket in enumerate(buckets):
+        for newIdx, newBucket in enumerate(newBuckets):
+            if newBucket == bucket:
+                # replace with this one
+                buckets[idx] = newBucket
+                newBuckets.pop(newIdx)
+                break
+        else:
+            bucket.newCrashes = 0
+    return render(request, 'signatures/watch.html', { 'siglist': buckets })
+
+@login_required(login_url='/login/')
+def deleteBucketWatch(request, sigid):
+    user = User.get_or_create_restricted(request.user)[0]
+
+    if request.method == 'POST':
+        entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
+        entry.delete()
+        return redirect('crashmanager:sigwatch')
+    elif request.method == 'GET':
+        entry = get_object_or_404(Bucket, user=user, pk=sigid)
+        return render(request, 'signatures/watch_remove.html', { 'entry' : entry })
+    else:
+        raise SuspiciousOperation()
+
+@login_required(login_url='/login/')
+def newBucketWatch(request):
+    if request.method == 'POST':
+        user = User.get_or_create_restricted(request.user)[0]
+        bucket = get_object_or_404(Bucket, pk=int(request.POST['bucket']))
+        for watch in BucketWatch.objects.filter(user=user, bucket=bucket):
+            watch.lastCrash = int(request.POST['crash'])
+            watch.save()
+            break
+        else:
+            BucketWatch.objects.create(user=user,
+                                       bucket=bucket,
+                                       lastCrash=int(request.POST['crash']))
+        return redirect('crashmanager:sigwatch')
+    raise SuspiciousOperation()
+
+@login_required(login_url='/login/')
+def bucketWatchCrashes(request, sigid):
+    user = User.get_or_create_restricted(request.user)[0]
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
+    entries = CrashEntry.objects.all().order_by('-id').filter(bucket=bucket, id__gt=watch.lastCrash)
+    entries = filter_crash_entries_by_toolfilter(request, entries)
+    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
+
+    data = { 'crashlist': paginate_requested_list(request, entries), 'isWatch': True, 'bucket': bucket, 'latestCrash': latestCrash }
+
+    return render(request, 'crashes/index.html', data)
 
 @login_required(login_url='/login/')
 def signatures(request):
@@ -348,9 +428,6 @@ def editCrashEntry(request, crashid):
         entry.testcase.loadTest()
 
     if request.method == 'POST':
-        # Force the cached crash information to be repopulated
-        entry.cachedCrashInfo = None
-
         entry.rawStdout = request.POST['rawStdout']
         entry.rawStderr = request.POST['rawStderr']
         entry.rawStderr = request.POST['rawStderr']
@@ -361,10 +438,8 @@ def editCrashEntry(request, crashid):
         entry.metadataList = request.POST['metadata'].splitlines()
 
         # Regenerate crash information and fields depending on it
+        entry.reparseCrashInfo(save=False)
         crashInfo = entry.getCrashInfo()
-        if crashInfo.crashAddress != None:
-            entry.crashAddress = hex(crashInfo.crashAddress)
-        entry.shortSignature = crashInfo.createShortSignature()
 
         if entry.testcase:
             if entry.testcase.isBinary:
@@ -572,7 +647,9 @@ def viewSignature(request, sigid):
     if entries:
         bucket.bestEntry = entries[0]
 
-    return render(request, 'signatures/view.html', { 'bucket' : bucket })
+    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
+
+    return render(request, 'signatures/view.html', { 'bucket' : bucket, 'latestCrash' : latestCrash })
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):
@@ -1046,13 +1123,83 @@ def userSettings(request):
     else:
         raise SuspiciousOperation
 
-class CrashEntryViewSet(viewsets.ModelViewSet):
+class JsonQueryFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        querystr = request.QUERY_PARAMS.get('query', None)
+        if querystr is not None:
+            try:
+                _, queryobj = json_to_query(querystr)
+            except RuntimeError as e:
+                raise InvalidArgumentException("error in query: %s" % e)
+            queryset = queryset.filter(queryobj)
+        return queryset
+
+class BucketAnnotateFilterBackend(filters.BaseFilterBackend):
+    """
+    Annotates bucket queryset with size and best_quality
+    """
+    def filter_queryset(self, request, queryset, view):
+        # we should use a subquery to get best_quality which would allow us to also get the corresponding crash
+        # Subquery was added in Django 1.11
+        return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+
+class CrashEntryViewSet(mixins.CreateModelMixin,
+                        mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
     """
     API endpoint that allows adding/viewing CrashEntries
     """
     authentication_classes = (TokenAuthentication,)
     queryset = CrashEntry.objects.all()
     serializer_class = CrashEntrySerializer
+    filter_backends = [JsonQueryFilterBackend]
+
+    def partial_update(self, request, pk=None):
+        """
+        Update individual crash fields.
+        """
+        allowed_fields = {"testcase_quality"}
+        try:
+            obj = CrashEntry.objects.get(pk=pk)
+        except CrashEntry.DoesNotExist:
+            raise Http404
+        given_fields = set(request.DATA.keys())
+        disallowed_fields = given_fields - allowed_fields
+        if disallowed_fields:
+            if len(disallowed_fields) == 1:
+                error_str = "field %r" % disallowed_fields.pop()
+            else:
+                error_str = "fields %r" % list(disallowed_fields)
+            raise InvalidArgumentException("%s cannot be updated" % error_str)
+        if "testcase_quality" in request.DATA:
+            if obj.testcase is None:
+                raise InvalidArgumentException("crash has no testcase")
+            try:
+                testcase_quality = int(request.DATA["testcase_quality"])
+            except ValueError:
+                raise InvalidArgumentException("invalid testcase_quality")
+            # NB: if other fields are added, all validation should occur before any DB writes.
+            obj.testcase.quality = testcase_quality
+            obj.testcase.save()
+        return Response(CrashEntrySerializer(obj).data)
+
+class BucketViewSet(mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
+                    viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing Buckets
+    """
+    authentication_classes = (TokenAuthentication,)
+    queryset = Bucket.objects.all()
+    serializer_class = BucketSerializer
+    filter_backends = [JsonQueryFilterBackend, BucketAnnotateFilterBackend]
 
 def json_to_query(json_str):
     """
@@ -1085,12 +1232,12 @@ def json_to_query(json_str):
 
     def get_query_obj(obj, key=None):
 
-        if isinstance(obj, basestring) or isinstance(obj, list):
+        if obj is None or isinstance(obj, (basestring, list, int)):
             kwargs = { key : obj }
             qobj = Q(**kwargs)
             return qobj
         elif not isinstance(obj, dict):
-            raise RuntimeError("Invalid object type in query object")
+            raise RuntimeError("Invalid object type '%s' in query object" % type(obj).__name__)
 
         qobj = Q()
 
@@ -1110,7 +1257,7 @@ def json_to_query(json_str):
             elif op == 'OR':
                 qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
             elif op == 'NOT':
-                qobj = get_query_obj(obj[objkeys[0]], objkeys[0])
+                qobj = get_query_obj(obj[objkey], objkey)
                 qobj.negate()
             else:
                 raise RuntimeError("Invalid operator '%s' specified in query object" % op)

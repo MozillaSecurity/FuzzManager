@@ -8,7 +8,8 @@ from server import settings
 
 
 router = routers.DefaultRouter()
-router.register(r'crashes', views.CrashEntryViewSet)
+router.register(r'crashes', views.CrashEntryViewSet, base_name='crashes')
+router.register(r'buckets', views.BucketViewSet, base_name='buckets')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
@@ -24,9 +25,13 @@ urlpatterns = [
     url(r'^signatures/(?P<sigid>\d+)/optimize/$', views.optimizeSignature, name='sigopt'),
     url(r'^signatures/(?P<sigid>\d+)/$', views.viewSignature, name='sigview'),
     url(r'^signatures/(?P<sigid>\d+)/delete/$', views.deleteSignature, name='sigdel'),
+    url(r'^signatures/watch/$', views.watchedSignatures, name='sigwatch'),
+    url(r'^signatures/watch/(?P<sigid>\d+)/delete/$', views.deleteBucketWatch, name='sigwatchdel'),
+    url(r'^signatures/watch/new/$', views.newBucketWatch, name='sigwatchnew'),
     url(r'^crashes/$', views.crashes, name='crashes'),
     url(r'^crashes/all/$', views.allCrashes, name='allcrashes'),
     url(r'^crashes/query/$', views.queryCrashes, name='querycrashes'),
+    url(r'^crashes/watch/(?P<sigid>\d+)/$', views.bucketWatchCrashes, name='sigwatchcrashes'),
     url(r'^crashes/autoassign/$', views.autoAssignCrashEntries, name='autoassign'),
     url(r'^crashes/(?P<crashid>\d+)/$', views.viewCrashEntry, name='crashview'),
     url(r'^crashes/(?P<crashid>\d+)/edit/$', views.editCrashEntry, name='crashedit'),

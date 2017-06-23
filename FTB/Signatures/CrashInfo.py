@@ -168,8 +168,13 @@ class CrashInfo():
         gdbString = " received signal SIG"
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
-        appleString = "OS Version:            Mac OS X"
+        appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
+
+        # Use two strings for detecting rust backtraces to avoid false positives
+        rustFirstString = "panicked at"
+        rustSecondString = "stack backtrace:"
+        rustFirstDetected = False
 
         # Use two strings for detecting Minidumps to avoid false positives
         minidumpFirstString = "OS|"
@@ -194,13 +199,20 @@ class CrashInfo():
                 return CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif gdbString in line or gdbCoreString in line:
                 return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif not rustFirstDetected and rustFirstString in line:
+                rustFirstDetected = True
+                minidumpFirstDetected = False
+            elif rustFirstDetected and rustSecondString in line:
+                return RustCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif not minidumpFirstDetected and minidumpFirstString in line:
                 # Only match Minidump output if the *next* line also contains
                 # the second search string defined above.
+                rustFirstDetected = False
                 minidumpFirstDetected = True
             elif minidumpFirstDetected and minidumpSecondString in line:
                 return MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
-            elif minidumpFirstDetected:
+            else:
+                rustFirstDetected = False
                 minidumpFirstDetected = False
 
         # Default fallback to be used if there is neither ASan nor GDB output.
@@ -746,6 +758,12 @@ class GDBCrashInfo(CrashInfo):
                         if match != None:
                             self.crashInstruction = match.group(1)
 
+                            # In certain cases, the crash instruction can have
+                            # trailing function information, strip it here.
+                            match = re.search("(\\s+<.+>\\s*)$", self.crashInstruction)
+                            if match != None:
+                                self.crashInstruction = self.crashInstruction.replace(match.group(1), "")
+
             if not pastFrames:
                 if not len(lastLineBuf) and re.match("\\s*#\\d+.+", traceLine) == None:
                     # Skip additional lines
@@ -786,6 +804,10 @@ class GDBCrashInfo(CrashInfo):
                     functionName = functionName[:gdbErrorIdx]
 
                 self.backtrace.append(functionName)
+
+        if self.crashInstruction != None:
+            # Remove any leading/trailing whitespaces
+            self.crashInstruction = self.crashInstruction.strip()
 
         # If we have no crash address but the instruction, try to calculate the crash address
         if self.crashAddress == None and self.crashInstruction != None:
@@ -834,14 +856,17 @@ class GDBCrashInfo(CrashInfo):
 
             instruction = parts[0]
 
-            if instruction == "ret":
+            if instruction == "ret" or instruction == "retq":
                 # If ret is crashing, it's most likely due to the stack pointer
                 # pointing somewhere where it shouldn't point, so use that as
                 # the crash address.
                 return RegisterHelper.getStackPointer(registerMap)
-            elif instruction == "ud2":
+            elif instruction == "ud2" or instruction == "(bad)":
                 # ud2 - Raise invalid opcode exception
                 # We treat this like invalid instruction
+                #
+                # (bad) - Assembly at the instruction pointer is not valid
+                # We also consider this an invalid instruction
                 return RegisterHelper.getInstructionPointer(registerMap)
             else:
                 raise RuntimeError("Unsupported non-operand instruction: %s" % instruction)
@@ -872,19 +897,70 @@ class GDBCrashInfo(CrashInfo):
         # When we fail, try storing a reason here
         failureReason = "Unknown failure."
 
+        def isDerefOp(op):
+            return "(" in op and ")" in op
+
+        def calculateDerefOpAddress(derefOp):
+            match = re.match("\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
+            if match != None:
+                offset = 0L
+                if len(match.group(1)):
+                    offset = long(match.group(1), 16)
+
+                val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
+
+                # If we don't have the value, return None
+                if val == None:
+                    return (None, "Missing value for register %s " % match.group(2))
+                else:
+                    if RegisterHelper.getBitWidth(registerMap) == 32:
+                        return (long(int32(uint32(offset)) + int32(uint32(val))), None)
+                    else:
+                        # Assume 64 bit width
+                        return (long(int64(uint64(offset)) + int64(uint64(val))), None)
+            else:
+                return (None, "Failed to match dereference operation.")
+
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
-                if instruction == "callq" or instruction == "call" or instruction == "push" or instruction == "pop":
+                if re.match("(push|pop)(l|w|q)?$", instruction):
                     return RegisterHelper.getStackPointer(registerMap)
+                elif re.match("callq?$", instruction):
+                    # call is quite special because it performs a push first but then can
+                    # also perform a memory dereference. We don't know for sure which of
+                    # the two operations fail if we detect a deref in the instruction,
+                    # but for now we assume that the deref fails and the stack pointer
+                    # is ok.
+                    if isDerefOp(parts[0]):
+                        (val, failed) = calculateDerefOpAddress(parts[0])
+                        if failed:
+                            failureReason = failed
+                        else:
+                            return val
+                    else:
+                        # No deref, so the push must be failing
+                        return RegisterHelper.getStackPointer(registerMap)
                 else:
-                    failureReason = "Unsupported single-operand instruction."
+                    if isDerefOp(parts[0]):
+                        # Single operand instruction with a memory dereference
+                        # We list supported ones explicitly to make sure that
+                        # we don't mix them with instructions that also
+                        # interacts with the stack pointer.
+                        if instruction.startswith("set"):
+                            (val, failed) = calculateDerefOpAddress(parts[0])
+                            if failed:
+                                failureReason = failed
+                            else:
+                                return val
+                    else:
+                        failureReason = "Unsupported single-operand instruction."
             elif len(parts) == 2:
                 failureReason = "Unknown failure with two-operand instruction."
                 derefOp = None
-                if "(" in parts[0] and ")" in parts[0]:
+                if isDerefOp(parts[0]):
                     derefOp = parts[0]
 
-                if "(" in parts[1] and ")" in parts[1]:
+                if isDerefOp(parts[1]):
                     if derefOp != None:
                         if ":(" in parts[1]:
                             # This can be an instruction using multiple segments, like:
@@ -914,23 +990,11 @@ class GDBCrashInfo(CrashInfo):
                     derefOp = parts[1]
 
                 if derefOp != None:
-                    match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
-                    if match != None:
-                        offset = 0L
-                        if len(match.group(1)):
-                            offset = long(match.group(1), 16)
-
-                        val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
-
-                        # If we don't have the value, return None
-                        if val == None:
-                            failureReason = "Missing value for register %s " % match.group(2)
+                        (val, failed) = calculateDerefOpAddress(derefOp)
+                        if failed:
+                            failureReason = failed
                         else:
-                            if RegisterHelper.getBitWidth(registerMap) == 32:
-                                return long(int32(uint32(offset)) + int32(uint32(val)))
-                            else:
-                                # Assume 64 bit width
-                                return long(int64(uint64(offset)) + int64(uint64(val)))
+                            return val
                 else:
                     failureReason = "Failed to decode two-operand instruction: No dereference operation or hardcoded address detected."
                     # We might still be reading from/writing to a hardcoded address.
@@ -1139,8 +1203,10 @@ class CDBCrashInfo(CrashInfo):
 
         address = ""
         inCrashingThread = False
+        inCrashInstruction = False
         inEcxrData = False
         ecxrData = []
+        cInstruction = ""
 
         for line in crashData:
             # Start of .ecxr data
@@ -1168,6 +1234,15 @@ class CDBCrashInfo(CrashInfo):
                     inEcxrData = False
                     continue
 
+                # Crash address
+                # Extract the eip/rip specifically for use later
+                if "eip=" in line:
+                    address = line.split("eip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+                elif "rip=" in line:
+                    address = line.split("rip=")[1].split()[0]
+                    self.crashAddress = long(address, 16)
+
                 # First extract the line
                 # 32-bit example:
                 #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
@@ -1186,27 +1261,29 @@ class CDBCrashInfo(CrashInfo):
                         value = long(match.group(2), 16)
                         self.registers[register] = value
 
-            # Crash address
-            if line.startswith("ExceptionAddress:"):
-                # 32-bit example:
-                #     ExceptionAddress: 00404c59 (js_32_dm_windows_62f79d676e0e!JSObject::is+0x00000002)
-                # 64-bit example:
-                #     ExceptionAddress: 00007ff74d469ff3 (js_64_dm_windows_62f79d676e0e!JSObject::is+0x000000000000000a)
-                address = line.split()[1]
-                self.crashAddress = long(address, 16)
-
             # Crash instruction
-            # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
-            lineWithoutBacktick = line.replace("`", "", 1)
-            if address and lineWithoutBacktick.startswith(address):
-                # 32-bit example:
-                #     00404c59 8b39            mov     edi,dword ptr [ecx]
-                # 64-bit example:
-                #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-                cInstruction = line.split(None, 2)[-1]
-                # There may be multiple spaces inside the faulting instruction
-                cInstruction = " ".join(cInstruction.split())
-                self.crashInstruction = cInstruction
+            # Start of crash instruction details
+            if line.startswith("FAULTING_IP"):
+                inCrashInstruction = True
+                continue
+
+            if inCrashInstruction and not cInstruction:
+                if "PROCESS_NAME" in line:
+                    inCrashInstruction = False
+                    continue
+
+                # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
+                lineWithoutBacktick = line.replace("`", "", 1)
+                if address and lineWithoutBacktick.startswith(address):
+                    # 32-bit examples:
+                    #     25d80b01 cc              int     3
+                    #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                    # 64-bit example:
+                    #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
+                    cInstruction = line.split(None, 2)[-1]
+                    # There may be multiple spaces inside the faulting instruction
+                    cInstruction = " ".join(cInstruction.split())
+                    self.crashInstruction = cInstruction
 
             # Start of stack for crashing thread
             if line.startswith("STACK_TEXT:"):
@@ -1218,22 +1295,72 @@ class CDBCrashInfo(CrashInfo):
                 #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9
                 # 64-bit example:
                 #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13
-                if "!" not in line:
+                if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
+                        or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
                     inCrashingThread = False
                     continue
-                components = line.split("!")
-                # removeFilenameAndOffset assumes the presence of "!"
-                stackEntry = "!" + components[-1]
 
-                stackEntry = CDBCrashInfo.removeFilenameAndOffset(stackEntry)
+                # Ignore cdb error and empty lines
+                if "Following frames may be wrong." in line or line.strip() == '':
+                    continue
+
+                stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
                 stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
                 self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry):
-        # Extract only the function name between "!" and "+", and also strip out "<" onwards, if any
-        if "!" in stackEntry:
-            result = stackEntry.split("!")[1].split("+")[0].split("<")[0]
+        # Extract only the function name
+        if "0x" in stackEntry:
+            result = stackEntry.split("!")[-1].split("+")[0].split("<")[0].split(" ")[-1]
+            if "0x" in result:
+                result = "??"  # Sometimes there is only a memory address in the stack
+            elif ".exe" in result:
+                # Sometimes the binary name is present:
+                #     e.g.: "00000000 00000000 unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe+0x0"
+                result = "??"
         else:
             result = "??"
         return result
+
+
+class RustCrashInfo(CrashInfo):
+
+    RE_FRAME = re.compile(r"^( +\d+: (?P<symbol>.+)| +at .*:\d+|stack backtrace:)$")
+
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout != None:
+            self.rawStdout.extend(stdout)
+
+        if stderr != None:
+            self.rawStderr.extend(stderr)
+
+        if crashData != None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the rust backtrace, otherwise use stderr
+        rustOutput = crashData or stderr
+
+        self.crashAddress = 0 # this is always an assertion, set to 0 to make matching more efficient
+
+        inBacktrace = False
+        for line in rustOutput:
+            # Start of stack
+            if not inBacktrace:
+                if AssertionHelper.RUST_ASSERTION.match(line) is not None:
+                    inBacktrace = True
+                continue
+
+            frame = self.RE_FRAME.match(line)
+            if frame is None:
+                break
+
+            if frame.group("symbol"):
+                self.backtrace.append(frame.group("symbol"))

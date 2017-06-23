@@ -16,6 +16,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import boto.ec2
 import datetime
 
+# Blacklist zones that currently don't allow subnets to be set on them
+# until we found a better way to deal with this situation.
+zone_blacklist = ["us-east-1a"]
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
@@ -59,6 +62,9 @@ def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_mult
                 prices[entry.region.name] = {}
 
             zone = entry.availability_zone
+
+            if zone in zone_blacklist:
+                continue
 
             if not zone in prices[entry.region.name]:
                 prices[entry.region.name][zone] = []

@@ -239,7 +239,9 @@ class ASanRunner(AutoRunner):
                 # Default to allowing the allocator to return null to reproduce crashes mostly caused
                 # by OOM conditions rather than aborting with the ASan OOM failure. If ASAN_OPTIONS
                 # is already set, then the caller should ensure that this option is present.
-                self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1"
+                # handle_abort is set to true to use the ASan to print the stack trace for bucketing.
+                # This is helpful when assertions are hit in debug builds.
+                self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1:handle_abort=1"
 
     def run(self):
         process = subprocess.Popen(

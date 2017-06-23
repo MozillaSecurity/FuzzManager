@@ -446,6 +446,11 @@ class Command(NoArgsCommand):
         instances_by_ids = self.get_instances_by_ids(instances)
         instances_left = []
 
+        debug_boto_instance_ids_seen = set()
+        debug_not_updatable_continue = set()
+        debug_not_in_region = {}
+
+
         for instance_id in instances_by_ids:
             if instance_id:
                 instances_left.append(instances_by_ids[instance_id])
@@ -470,17 +475,22 @@ class Command(NoArgsCommand):
                 boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
 
                 for boto_instance in boto_instances:
+                    # Store ID seen for debugging purposes
+                    debug_boto_instance_ids_seen.add(boto_instance.id)
+
                     # state_code is a 16-bit value where the high byte is
                     # an opaque internal value and should be ignored.
                     state_code = boto_instance.state_code & 255
 
-                    if not ("SpotManager-Updatable" in boto_instance.tags and int(boto_instance.tags["SpotManager-Updatable"]) > 0):
+                    if "SpotManager-Updatable" not in boto_instance.tags or int(boto_instance.tags["SpotManager-Updatable"]) <= 0:
                         # The instance is not marked as updatable. We must not touch it because
                         # a spawning thread is still managing this instance. However, we must also
                         # remove this instance from the instances_left list if it's already in our
                         # database, because otherwise our code here would delete it from the database.
                         if boto_instance.id in instance_ids_by_region[region]:
                             instances_left.remove(instances_by_ids[boto_instance.id])
+                        else:
+                            debug_not_updatable_continue.add(boto_instance.id)
                         continue
 
                     instance = None
@@ -500,17 +510,17 @@ class Command(NoArgsCommand):
                             q = Instance.objects.filter(ec2_instance_id=boto_instance.id)
                             if q:
                                 instance = q[0]
+                                logger.error("[Pool %d] Instance with EC2 ID %s was reloaded from database." % (pool.id, boto_instance.id))
                             else:
                                 logger.error("[Pool %d] Instance with EC2 ID %s is not in our database." % (pool.id, boto_instance.id))
 
                                 # Terminate at this point, we run in an inconsistent state
                                 assert(False)
-
+                        debug_not_in_region[boto_instance.id] = state_code
                         continue
 
-                    if not instance:
-                        instance = instances_by_ids[boto_instance.id]
-                        instances_left.remove(instance)
+                    instance = instances_by_ids[boto_instance.id]
+                    instances_left.remove(instance)
 
                     # Check the status code and update if necessary
                     if instance.status_code != state_code:
@@ -529,6 +539,15 @@ class Command(NoArgsCommand):
 
         if instances_left:
             for instance in instances_left:
-                logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
+                if not instance.ec2_instance_id in debug_boto_instance_ids_seen:
+                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
+
+                if instance.ec2_instance_id in debug_not_updatable_continue:
+                    logger.error("[Pool %d] Deleting instance with EC2 ID %s from our database because it is not updatable but not in our region." % (pool.id, instance.ec2_instance_id))
+
+                if instance.ec2_instance_id in debug_not_in_region:
+                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has state code %s on EC2" % (pool.id, instance.ec2_instance_id, debug_not_in_region[instance.ec2_instance_id]))
+
+                logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database." % (pool.id, instance.ec2_instance_id))
                 instance.delete()
 

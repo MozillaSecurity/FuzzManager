@@ -28,6 +28,14 @@
 			Your search matched {{ crashlist.count }} entries in database.
 		{% elif isAll %}
 			Displaying all {{ crashlist.count }} entries in database.
+		{% elif isWatch %}
+			Displaying {{ crashlist.count }} new entries in bucket {{ bucket.pk }}.
+			<form action="{% url 'crashmanager:sigwatchnew' %}" method="post">
+			{% csrf_token %}
+			<input type="hidden" name="bucket" value="{{ bucket.pk }}"/>
+			<input type="hidden" name="crash" value="{{ latestCrash }}"/>
+			<input type="submit" name="submit" value="Mark All Viewed" title="Continue watching for new crashes" class="btn btn-default"/>
+			</form>
 		{% else %}
 			There are {{ crashlist.count }} unbucketed entries in the database.
 			<div class="btn-group" role="group">

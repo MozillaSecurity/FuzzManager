@@ -158,7 +158,8 @@ STATIC_URL = '/static/'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'PAGINATE_BY': 100
 }
 
 # Logging
@@ -226,3 +227,10 @@ LOGGING = {
 # be created for storing submitted test files.
 TEST_STORAGE = os.path.join(BASE_DIR)
 USERDATA_STORAGE = os.path.join(BASE_DIR)
+
+# Celery configuration
+# USE_CELERY = True
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TRIAGE_MEMCACHE_ENTRIES = 100

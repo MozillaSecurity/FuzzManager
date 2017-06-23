@@ -16,27 +16,26 @@ class Command(LabelCommand):
         tmpDir = mkdtemp(prefix="fuzzmanager-sigexport")
         
         try:
-            buckets = Bucket.objects.annotate(size=Count('crashentry'),quality=Min('crashentry__testcase__quality'))
             with ZipFile(label, 'w') as zipFile:
-                for bucket in buckets:
-                    entries = CrashEntry.objects.filter(bucket=bucket.pk).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')
-                    bucket.bestEntry = None
-                    if entries:
-                        bucket.bestEntry = entries[0]
+                for bucket in Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')):
+                    try:
+                        bucket.bestEntry = CrashEntry.objects.filter(bucket=bucket.pk).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')[0]
+                    except IndexError:
+                        bucket.bestEntry = None
                         
                     metadata = {}
                     metadata['size'] = bucket.size
                     metadata['shortDescription'] = bucket.shortDescription
                     metadata['frequent'] = bucket.frequent
-                    if bucket.bug != None:
+                    if bucket.bug is not None:
                         metadata['bug__id'] = bucket.bug.externalId 
                         
-                    if bucket.bestEntry != None and bucket.bestEntry.testcase != None:
+                    if bucket.bestEntry is not None and bucket.bestEntry.testcase is not None:
                         metadata['testcase__quality'] = bucket.bestEntry.testcase.quality
                         metadata['testcase__size'] = bucket.bestEntry.testcase.size
                     
-                    sigFileName = str(bucket.pk) + ".signature"
-                    metaFileName = str(bucket.pk) + ".metadata"
+                    sigFileName = "%d.signature" % bucket.pk
+                    metaFileName = "%d.metadata" % bucket.pk
                     sigFile = os.path.join(tmpDir, sigFileName)
                     metaFile = os.path.join(tmpDir, metaFileName)
                     
