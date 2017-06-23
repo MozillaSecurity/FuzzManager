@@ -4,9 +4,9 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q
-from django.db.models.aggregates import Count, Min
-from django.http.response import Http404
+from django.db.models import F, Q
+from django.db.models.aggregates import Count, Min, Max
+from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 import json
 import operator
@@ -16,8 +16,8 @@ from rest_framework.response import Response
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from crashmanager.models import CrashEntry, Bucket, BugProvider, Bug, Tool, User
-from crashmanager.serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
+from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
+from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
 
 def check_authorized_for_crash_entry(request, entry):
     user = User.get_or_create_restricted(request.user)[0]
@@ -568,7 +568,9 @@ def viewSignature(request, sigid):
     if entries:
         bucket.bestEntry = entries[0]
 
-    return render(request, 'signatures/view.html', { 'bucket' : bucket })
+    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
+
+    return render(request, 'signatures/view.html', { 'bucket' : bucket, 'latestCrash' : latestCrash })
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):
