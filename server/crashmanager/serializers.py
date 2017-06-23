@@ -66,17 +66,13 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         return serialized
 
-    def restore_object(self, attrs, instance=None):
+    def create(self, attrs):
         '''
         Create a CrashEntry instance based on the given dictionary of values
         received. We need to unflatten foreign relationships like product,
         platform, os and client and create the foreign objects on the fly
         if they don't exist in our database yet.
         '''
-        if instance:
-            # Not allowed to update existing instances
-            return instance
-
         missing_keys = {'rawStdout', 'rawStderr', 'rawCrashData'} - set(attrs.keys())
         if missing_keys:
             raise InvalidArgumentException({key: ["This field is required."] for key in missing_keys})
@@ -157,7 +153,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             attrs['testcase'] = None
 
         # Create our CrashEntry instance
-        return super(CrashEntrySerializer, self).restore_object(attrs, instance)
+        return super(CrashEntrySerializer, self).create(attrs)
 
 
 class BucketSerializer(serializers.ModelSerializer):
