@@ -12,8 +12,9 @@
             Displaying all {{ siglist|length }} signature entries in the database.
             {% else %}
             Displaying {{ siglist|length }} unreported signature entries from the database.
-            <div>
+            <div class="btn-group" role="group">
                 <a href="{% url 'crashmanager:allsignatures' %}" class="btn btn-default">View All</a>
+                <a href="{% url 'crashmanager:sigwatch' %}" class="btn btn-default">View Watched</a>
             </div>
             {% endif %}
         </p>
