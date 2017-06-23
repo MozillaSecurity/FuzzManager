@@ -15,7 +15,7 @@
         </thead>
         <tbody>
             {% for zone, price in prices %}
-            <tr class="{% cycle odd,even %}">
+            <tr class="{% cycle 'odd' 'even' %}">
                 <td>{{ zone }}</td>
                 <td>{{ price }}</td>
             </tr>{% endfor %}

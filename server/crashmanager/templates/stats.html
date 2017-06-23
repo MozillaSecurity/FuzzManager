@@ -21,7 +21,7 @@
         </thead>
         <tbody>
         {% for entry in frequentBuckets %}
-        <tr class="{% cycle odd,even %}">
+        <tr class="{% cycle 'odd' 'even' %}">
             <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
             <td>{{ entry.shortDescription|escape }}</td>
             <td>{{ entry.rph }}</td>

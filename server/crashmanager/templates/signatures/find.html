@@ -33,7 +33,7 @@
 		</thead>
 		<tbody>
 			{% for entry in buckets %}
-			<tr class="{% cycle odd,even %}">
+			<tr class="{% cycle 'odd' 'even' %}">
 				<td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
 				<td>{{ entry.shortDescription|escape }}</td>
 				<td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>

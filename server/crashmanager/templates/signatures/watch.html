@@ -22,7 +22,7 @@
         </thead>
         <tbody>
         {% for entry in siglist %}
-        <tr class="{% cycle odd,even %}">
+        <tr class="{% cycle 'odd' 'even' %}">
             <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
             <td>{{ entry.shortDescription|escape }}</td>
             <td><a title="View new crashes" href="{% url 'crashmanager:sigwatchcrashes' entry.pk %}">{{ entry.newCrashes }}</a></td>

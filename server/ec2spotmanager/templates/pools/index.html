@@ -44,7 +44,7 @@
         </thead>
         <tbody>
             {% for pool in poollist %}
-            <tr class="{% cycle odd,even %}">
+            <tr class="{% cycle 'odd' 'even' %}">
                 <td><a href="{% url 'ec2spotmanager:poolview' pool.pk %}">{{ pool.pk }} </a></td>
                 <td>{{ pool.config.name }}</td>
 		<td><span class="label label-{{ pool.size_label }}">{{ pool.size }}</span> ({{ pool.instance_running_count }} / {{ pool.instance_requested_count }})</td>
