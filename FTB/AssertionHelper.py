@@ -36,6 +36,10 @@ def getAssertion(output):
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
 
+    # The self-hosted JS asserts are followed by an additional regular
+    # JS assertion which we need to ignore in that case
+    haveSelfHostedJSAssert = False
+
     for line in output:
         # Remove any PID output at the beginning of the line
         line = re.sub(r"^\[\d+\]\s+", "", line, count=1)
@@ -45,6 +49,13 @@ def getAssertion(output):
             addNext = False
         elif line.startswith("Assertion failure"):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
+
+            # If we've seen a self-hosted JS assertion, then we ignore
+            # the regular assertion that follows it which will always
+            # be "Assertion failure: false" to abort the program.
+            if haveSelfHostedJSAssert and "false" in line:
+                continue
+
             lastLine = line
             haveFatalAssertion = True
         elif RUST_ASSERTION.match(line) is not None:
@@ -68,9 +79,16 @@ def getAssertion(output):
             # Skia assertion
             lastLine = line
             haveFatalAssertion = True
+        elif re.search("^ASSERTION \d+: \(.+\)", line):
+            lastLine = line
+            haveFatalAssertion = True
         elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
+        elif "Self-hosted JavaScript assertion info" in line:
+            lastLine = line
+            haveSelfHostedJSAssert = True
+            haveFatalAssertion = True
         elif line.startswith("[Non-crash bug] "):
             # Magic string "added" to stderr by some fuzzers.
             lastLine = line
@@ -152,8 +170,18 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append(":[0-9]+")
         replacementPatterns.append(", line [0-9]+")
 
-        # Strip full path
-        replacementPatterns.append(" ([a-zA-Z]:)?/.+/")
+        # Strip full paths
+        pathPattern = "([a-zA-Z]:)?/.+/"
+
+        # In order to reliably identify paths, we require them to be prefixed
+        # by some character that doesn't belong to the path. It turns out that
+        # spaces, quotes and comma are the only things used in the assertions
+        # we support so far. However, we don't want to group these characters
+        # into a regex so avoid cluttering the signature too much.
+        replacementPatterns.append(" " + pathPattern)
+        replacementPatterns.append("'" + pathPattern)
+        replacementPatterns.append('"' + pathPattern)
+        replacementPatterns.append(',' + pathPattern)
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.

@@ -30,6 +30,11 @@ jsshellMozCrash = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
 """
 
+jsSelfHostedAssert = """
+Self-hosted JavaScript assertion info: "/srv/repos/mozilla-central/js/src/builtin/Intl.js:847: non-canonical BestAvailableLocale locale"
+Assertion failure: false, at /srv/repos/mozilla-central/js/src/vm/SelfHosting.cpp:362
+"""
+
 v8Abort = """
 #
 # Fatal error in ../src/compiler.cc, line 219
@@ -58,6 +63,15 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at ([a-zA-Z]:)?/.+/ScopeObject\\.cpp:[0-9]+"
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestJSSelfHosted(unittest.TestCase):
+    def runTest(self):
+        err = jsSelfHostedAssert.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = 'Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js:[0-9]+: non\\-canonical BestAvailableLocale locale"'
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
