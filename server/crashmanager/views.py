@@ -160,6 +160,85 @@ def allCrashes(request):
     return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
 
 @login_required(login_url='/login/')
+def watchedSignatures(request):
+    # for this user, list watches
+    # buckets   sig       new crashes   remove
+    # ========================================
+    # 1         crash       10          tr
+    # 2         assert      0           tr
+    # 3         blah        0           tr
+    user = User.get_or_create_restricted(request.user)[0]
+
+    # the join of Bucket+CrashEntry is a big one, and each filter() call on a related field adds a join
+    # therefore this needs to be a single filter() call, otherwise we get duplicate crashentries in the result
+    # this is why tool filtering is done manually here and not using filter_signatures_by_toolfilter()
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    buckets = Bucket.objects.filter(user=user, crashentry__gt=F('bucketwatch__lastCrash'), crashentry__tool__in=defaultToolsFilter)
+    buckets = buckets.annotate(newCrashes=Count('crashentry'))
+    buckets = buckets.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
+    # what's left is only watched buckets with new crashes
+    # need to include other watched buckets too .. which means evaluating the buckets query now
+    newBuckets = list(buckets)
+    # get all buckets watched by this user
+    # this is the result, but we will replace any buckets also found in newBuckets
+    bucketsAll = Bucket.objects.filter(user=user).order_by('-id')
+    bucketsAll = bucketsAll.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
+    buckets = list(bucketsAll)
+    for idx, bucket in enumerate(buckets):
+        for newIdx, newBucket in enumerate(newBuckets):
+            if newBucket == bucket:
+                # replace with this one
+                buckets[idx] = newBucket
+                newBuckets.pop(newIdx)
+                break
+        else:
+            bucket.newCrashes = 0
+    return render(request, 'signatures/watch.html', { 'siglist': buckets })
+
+@login_required(login_url='/login/')
+def deleteBucketWatch(request, sigid):
+    user = User.get_or_create_restricted(request.user)[0]
+
+    if request.method == 'POST':
+        entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
+        entry.delete()
+        return redirect('crashmanager:sigwatch')
+    elif request.method == 'GET':
+        entry = get_object_or_404(Bucket, user=user, pk=sigid)
+        return render(request, 'signatures/watch_remove.html', { 'entry' : entry })
+    else:
+        raise SuspiciousOperation()
+
+@login_required(login_url='/login/')
+def newBucketWatch(request):
+    if request.method == 'POST':
+        user = User.get_or_create_restricted(request.user)[0]
+        bucket = get_object_or_404(Bucket, pk=int(request.POST['bucket']))
+        for watch in BucketWatch.objects.filter(user=user, bucket=bucket):
+            watch.lastCrash = int(request.POST['crash'])
+            watch.save()
+            break
+        else:
+            BucketWatch.objects.create(user=user,
+                                       bucket=bucket,
+                                       lastCrash=int(request.POST['crash']))
+        return redirect('crashmanager:sigwatch')
+    raise SuspiciousOperation()
+
+@login_required(login_url='/login/')
+def bucketWatchCrashes(request, sigid):
+    user = User.get_or_create_restricted(request.user)[0]
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
+    entries = CrashEntry.objects.all().order_by('-id').filter(bucket=bucket, id__gt=watch.lastCrash)
+    entries = filter_crash_entries_by_toolfilter(request, entries)
+    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
+
+    data = { 'crashlist': paginate_requested_list(request, entries), 'isWatch': True, 'bucket': bucket, 'latestCrash': latestCrash }
+
+    return render(request, 'crashes/index.html', data)
+
+@login_required(login_url='/login/')
 def signatures(request):
     entries = Bucket.objects.all().order_by('-id')
 
