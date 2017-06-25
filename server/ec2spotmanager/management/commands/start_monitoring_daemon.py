@@ -1,7 +1,7 @@
 import boto.ec2
 import boto.exception
 from django.conf import settings
-from django.core.management.base import NoArgsCommand
+from django.core.management import BaseCommand, CommandError
 from django.utils import timezone
 import logging
 import signal
@@ -37,10 +37,13 @@ def handle_interrupt(signal, frame):
     logger.info("Shutdown initiated...")
     pending_shutdown = True
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("monitoring_daemon")
-    def handle_noargs(self, **options):
+    def handle(self, *args, **options):
+        if args:
+            raise CommandError("Command doesn't accept any arguments")
+
         signal.signal(signal.SIGINT, handle_interrupt)
 
         self.check_instance_pools(initialCheck=True)

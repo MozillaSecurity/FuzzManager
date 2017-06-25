@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.management.base import NoArgsCommand
+from django.core.management import BaseCommand, CommandError
 from django.db.models.query_utils import Q
 from django.utils import timezone
 import logging
@@ -13,10 +13,13 @@ stats_delta_secs = 60 * 15  # 30 minutes
 stats_total_detailed = 24  # How many hours the detailed statistics should include
 stats_total_accumulated = 30  # How many days should we keep accumulated statistics
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Check the status of all bugs we have"
     @pid_lock_file("stats_daemon")
-    def handle_noargs(self, **options):
+    def handle(self, *args, **options):
+        if args:
+            raise CommandError("Command doesn't accept any arguments")
+
         print(options)
         while True:
             self.check_instance_pools()
