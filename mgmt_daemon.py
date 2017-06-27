@@ -25,7 +25,7 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.utils import parse_ts as boto_parse_ts
 import hashlib
-from lockfile import FileLock
+from fasteners import InterProcessLock
 import os
 import platform
 import random
@@ -165,9 +165,7 @@ def write_aggregated_stats(base_dirs, outfile):
     
     max_keylen = max([len(x) for x in fields])
     
-    lock = FileLock(outfile)
-    lock.acquire()
-    with open(outfile, 'w') as f:
+    with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
         for field in fields:
             if not field in aggregated_stats:
                 continue
@@ -178,7 +176,6 @@ def write_aggregated_stats(base_dirs, outfile):
                 val = " ".join(val)
             
             f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
-    lock.release() 
     
     return
 
