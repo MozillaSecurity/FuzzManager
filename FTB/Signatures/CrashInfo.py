@@ -522,7 +522,10 @@ class ASanCrashInfo(CrashInfo):
             if not parts or not parts[0].startswith("#"):
                 continue
 
-            index = int(parts[0][1:])
+            try:
+                index = int(parts[0][1:])
+            except ValueError:
+                continue
 
             # We may see multiple traces in ASAN
             if index == 0:
