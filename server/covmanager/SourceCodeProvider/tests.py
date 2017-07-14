@@ -19,9 +19,15 @@ import unittest
 from GITSourceCodeProvider import GITSourceCodeProvider
 
 class TestGITSourceCodeProvider(unittest.TestCase):
+    def setUp(self):
+        self.location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git")
+        os.rename(os.path.join(self.location, "git"), os.path.join(self.location, ".git"))
+
+    def tearDown(self):
+        os.rename(os.path.join(self.location, ".git"), os.path.join(self.location, "git"))
+
     def runTest(self):
-        location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git")
-        provider = GITSourceCodeProvider(location)
+        provider = GITSourceCodeProvider(self.location)
 
         tests = {
             "a.txt" : {
