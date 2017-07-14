@@ -11,4 +11,5 @@ router.register(r'collections', views.CollectionViewSet, base_name='collections'
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^collections/(?P<collectionid>\d+)/src/(?P<path>.*)', views.getRawCoverageSourceData),
     url(r'^rest/', include(router.urls)),

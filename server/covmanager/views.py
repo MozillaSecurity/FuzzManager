@@ -21,6 +21,26 @@ from .models import Collection, Repository
 from .models import Collection, Repository
 from .serializers import InvalidArgumentException, CollectionSerializer
 
+@login_required(login_url='/login/')
+def getRawCoverageSourceData(request, collectionid, path):
+    collection = get_object_or_404(Collection, pk=collectionid)
+
+    coverage = collection.subset(path)
+
+    if not coverage:
+        raise Http404("Path not found.")
+
+    if "children" in coverage:
+        # Viewing a directory, so we should remove detailed coverage
+        # information before returning this data.
+        Collection.strip(coverage)
+    else:
+        # This is a leaf, we need to add source code
+        collection.annotateSource(path, coverage)
+
+    data = { "path" : path, "coverage" : coverage }
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
