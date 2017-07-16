@@ -31,3 +31,10 @@ def dictcsv(value):
         return ", ".join(["%s=%s" % x for x in value.items()])
     else:
         return ""
+
+@register.filter
+def toolcsv(value):
+    if value:
+        return ", ".join([x.name for x in value.all()])
+    else:
+        return ""

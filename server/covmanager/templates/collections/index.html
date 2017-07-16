@@ -1,0 +1,53 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load url from future %}
+{% load extratags %}
+
+{% block body_content %}
+<div class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Coverage Collections</div>
+	<div class="panel-body">
+	    {% if collections.paginator %}
+	    <div class="pagination">
+	        <span class="step-links">
+		    {% if collections.has_previous %}
+		        <a href="?{{collections.paginator_query.urlencode}}&page={{ collections.previous_page_number }}" class="glyphicon glyphicon-chevron-left"></a>
+		    {% endif %}
+
+		    <span class="current">
+		        Page {{ collections.number }} of {{ collections.paginator.num_pages }}.
+		    </span>
+
+		    {% if collections.has_next %}
+		        <a href="?{{collections.paginator_query.urlencode}}&page={{ collections.next_page_number }}" data-toggle="tooltip" data-placement="top" title="Next" class="glyphicon glyphicon-chevron-right" style="color:dimgray"></a>
+		    {% endif %}
+	        </span>
+	    </div>
+	    {% endif %}
+	    <table class="table table-condensed table-hover table-bordered table-db">
+		<thead>
+		    <tr>
+			<th style="width: 25px;">ID</th>
+			<th style="width: 75px;">Repository</th>
+			<th style="width: 100px;">Revision</th>
+			<th style="width: 50px;">Branch</th>
+			<th style="width: 100px;">Tools</th>
+			<th style="width: 150px;">Description</th>
+		    </tr>
+		</thead>
+		<tbody>
+		    {% for collection in collections %}
+		    <tr class="{% cycle odd,even %}">
+			<td>{{ collection.pk }}</a></td>
+			<td>{{ collection.repository.name }}</td>
+			<td>{{ collection.revision }}</td>
+			<td>{{ collection.branch }}</td>
+			<td>{{ collection.tools|toolcsv }}</td>
+			<td>{{ collection.description }}</td>
+		    </tr>{% endfor %}
+		</tbody>
+	    </table>
+	</div>
+
+</div>
+{% endblock body_content %}

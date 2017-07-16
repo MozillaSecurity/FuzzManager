@@ -15,11 +15,13 @@ from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 
+from common.views import JsonQueryFilterBackend, paginate_requested_list, renderError
 from crashmanager.models import Tool, Client
-from .models import Collection, Repository
 
 from .models import Collection, Repository
+from .models import Collection, Repository
 from .serializers import InvalidArgumentException, CollectionSerializer
+
 
 @login_required(login_url='/login/')
 def getRawCoverageSourceData(request, collectionid, path):
@@ -40,6 +42,20 @@ def getRawCoverageSourceData(request, collectionid, path):
 
     data = { "path" : path, "coverage" : coverage }
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+@login_required(login_url='/login/')
+def index(request):
+    return redirect('covmanager:collections')
+
+@login_required(login_url='/login/')
+def repositories(request):
+    repositories = Repository.objects.all()
+    return render(request, 'repositories/index.html', { 'repositories' : repositories })
+
+@login_required(login_url='/login/')
+def collections(request):
+    entries = Collection.objects.all().order_by('-id')
+    return render(request, 'collections/index.html', { 'collections' : paginate_requested_list(request, entries) })
 
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
