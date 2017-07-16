@@ -27,7 +27,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         model = Collection
         fields = (
                   'repository', 'revision', 'branch', 'tools',
-                  'client', 'coverage', 'id'
+                  'client', 'coverage', 'description', 'id'
                   )
         read_only_fields = ('id',)
 

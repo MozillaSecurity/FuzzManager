@@ -229,6 +229,8 @@ def main(argv=None):
 
     # Coverage specific settings
     parser.add_argument("--repository", help="Name of the repository this coverage was measured on", metavar="NAME")
+    parser.add_argument("--description", default="", help="Description for this coverage collection", metavar="NAME")
+
 
     # process options
     opts = parser.parse_args(argv)
@@ -248,7 +250,7 @@ def main(argv=None):
         with open(opts.submit) as f:
             coverage = json.load(f)
 
-        reporter.submit(coverage)
+        reporter.submit(coverage, opts.description)
     return 0
 
 if __name__ == "__main__":
