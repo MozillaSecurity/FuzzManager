@@ -9,7 +9,6 @@ import json
 import re
 
 from crashmanager.models import Client, Tool
-from dns.rdatatype import PTR
 
 class Repository(models.Model):
     classname = models.CharField(max_length=255, blank=False)
