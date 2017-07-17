@@ -67,6 +67,7 @@ class CollectionViewSet(mixins.CreateModelMixin,
     authentication_classes = (TokenAuthentication,)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
+    filter_backends = [JsonQueryFilterBackend]
 
 class RepositoryViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
