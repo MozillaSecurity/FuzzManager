@@ -20,7 +20,7 @@ from crashmanager.models import Tool, Client
 
 from .models import Collection, Repository
 from .models import Collection, Repository
-from .serializers import InvalidArgumentException, CollectionSerializer
+from .serializers import InvalidArgumentException, CollectionSerializer, RepositorySerializer
 
 
 @login_required(login_url='/login/')
@@ -67,3 +67,15 @@ class CollectionViewSet(mixins.CreateModelMixin,
     authentication_classes = (TokenAuthentication,)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
+
+class RepositoryViewSet(mixins.CreateModelMixin,
+                        mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing Repositories
+    """
+    authentication_classes = (TokenAuthentication,)
+    queryset = Repository.objects.all()
+    serializer_class = RepositorySerializer
+    filter_backends = [JsonQueryFilterBackend]

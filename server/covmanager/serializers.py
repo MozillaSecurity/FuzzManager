@@ -129,3 +129,9 @@ class CollectionSerializer(serializers.ModelSerializer):
 
         # Create our Collection instance
         return super(CollectionSerializer, self).restore_object(attrs, instance)
+
+class RepositorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Repository
+        fields = ('name',)
+        read_only_fields = ('name',)

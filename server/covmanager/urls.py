@@ -5,9 +5,9 @@ from rest_framework import routers
 from covmanager import views
 from server import settings
 
-
 router = routers.DefaultRouter()
 router.register(r'collections', views.CollectionViewSet, base_name='collections')
+router.register(r'repositories', views.RepositoryViewSet, base_name='repositories')
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
