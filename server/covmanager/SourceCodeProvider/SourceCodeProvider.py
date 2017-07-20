@@ -34,6 +34,19 @@ class SourceCodeProvider():
 
     @abstractmethod
     def getSource(self, filename, revision):
+        """
+        Return the source code for the given filename on the given revision.
+
+        @ptype filename: string
+        @param filename: The path to the requested file, relative to the
+                         root of the repository.
+
+        @ptype revision: string
+        @param revision: The revision to use when retrieving the source code.
+
+        @rtype string
+        @return The requested source code as a single string.
+        """
         return
 
     @abstractmethod
