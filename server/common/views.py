@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q
 import json
 import operator
 from rest_framework import filters
@@ -118,4 +119,29 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
             except RuntimeError as e:
                 raise InvalidArgumentException("error in query: %s" % e)
             queryset = queryset.filter(queryobj)
+        return queryset
+
+class SimpleQueryFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts filtering with a query parameter which builds a Django query using simple "contains" searches
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        # Return early on empty queryset
+        if not queryset:
+            return queryset
+
+        querystr = request.QUERY_PARAMS.get('squery', None)
+        if querystr is not None:
+            queryobj = None
+            for field in queryset[0].simple_query_fields:
+                kwargs = { "%s__contains" % field : querystr }
+                if queryobj is None:
+                    queryobj = Q(**kwargs)
+                else:
+                    queryobj.add(Q(**kwargs), Q.OR)
+
+            queryset = queryset.filter(queryobj).distinct()
         return queryset

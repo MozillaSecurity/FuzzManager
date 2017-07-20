@@ -38,6 +38,17 @@ class Collection(models.Model):
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
         self.content = None
+        
+        # A list of fields that can be checked by a simple search query
+        self.simple_query_fields = [
+            "created",
+            "description",
+            "repository__name",
+            "revision",
+            "branch",
+            "client__name",
+            "tools__name"
+        ]
 
         # For performance reasons we do not deserialize this field
         # automatically here. You need to explicitly call the

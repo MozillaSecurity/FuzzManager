@@ -57,10 +57,10 @@ class CollectionViewSet(mixins.CreateModelMixin,
     """
     API endpoint that allows adding/viewing Collections
     """
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
-    filter_backends = [JsonQueryFilterBackend]
+    filter_backends = [JsonQueryFilterBackend, SimpleQueryFilterBackend]
 
 class RepositoryViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
