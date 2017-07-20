@@ -12,9 +12,26 @@ from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, pagin
 from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer
 
+@login_required(login_url='/login/')
+def index(request):
+    return redirect('covmanager:collections')
 
 @login_required(login_url='/login/')
-def getRawCoverageSourceData(request, collectionid, path):
+def repositories(request):
+    repositories = Repository.objects.all()
+    return render(request, 'repositories/index.html', { 'repositories' : repositories })
+
+@login_required(login_url='/login/')
+def collections(request):
+    return render(request, 'collections/index.html', {})
+
+@login_required(login_url='/login/')
+def collections_browse(request, collectionid):
+    entries = Collection.objects.all().order_by('-id')
+    return render(request, 'collections/browse.html', { 'collectionid' : collectionid })
+
+@login_required(login_url='/login/')
+def collections_browse_api(request, collectionid, path):
     collection = get_object_or_404(Collection, pk=collectionid)
 
     coverage = collection.subset(path)
@@ -32,20 +49,6 @@ def getRawCoverageSourceData(request, collectionid, path):
 
     data = { "path" : path, "coverage" : coverage }
     return HttpResponse(json.dumps(data), content_type='application/json')
-
-@login_required(login_url='/login/')
-def index(request):
-    return redirect('covmanager:collections')
-
-@login_required(login_url='/login/')
-def repositories(request):
-    repositories = Repository.objects.all()
-    return render(request, 'repositories/index.html', { 'repositories' : repositories })
-
-@login_required(login_url='/login/')
-def collections(request):
-    entries = Collection.objects.all().order_by('-id')
-    return render(request, 'collections/index.html', { 'collections' : paginate_requested_list(request, entries) })
 
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
