@@ -11,3 +11,9 @@
 /signatures/
 /demo/signatures/
 /FTB/Running/shells/
+
+FuzzManager.egg-info/
+build/
+dist/
+server/logs/
+
