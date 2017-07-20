@@ -1,6 +1,5 @@
 Django==1.7.1
 djangorestframework==2.4.4
-fasteners>=0.14.1
 boto>=2.38.0
 django-chartjs>=1.0
 
