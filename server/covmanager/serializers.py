@@ -27,9 +27,9 @@ class CollectionSerializer(serializers.ModelSerializer):
         model = Collection
         fields = (
                   'repository', 'revision', 'branch', 'tools',
-                  'client', 'coverage', 'description', 'id'
+                  'client', 'coverage', 'description', 'id', 'created'
                   )
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'created')
 
     def to_native(self, obj):
         '''
