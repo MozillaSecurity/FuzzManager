@@ -690,7 +690,7 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     if ext_paths:
         ext_path = ext_paths[0]
     
-    ffp.create_profile(extension=ext_path, prefs_js=prefs_path)
+    ffp.profile = ffp.create_profile(extension=ext_path, prefs_js=prefs_path)
     
     env = ffp.get_environ(bin_path)
     cmd = ffp.build_launch_cmd(bin_path, additional_args=[test_path])
