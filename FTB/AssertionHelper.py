@@ -170,6 +170,9 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append(":[0-9]+")
         replacementPatterns.append(", line [0-9]+")
 
+        # Replace rust thread #s
+        replacementPatterns.append("Thread#[0-9]+' panicked")
+
         # Strip full paths
         pathPattern = "([a-zA-Z]:)?/.+/"
 
