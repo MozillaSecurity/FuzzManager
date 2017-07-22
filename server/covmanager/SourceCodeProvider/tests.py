@@ -42,6 +42,7 @@ class TestGITSourceCodeProvider(unittest.TestCase):
 
         for filename in tests:
             for revision in tests[filename]:
+                self.assertTrue(provider.testRevision(revision), "Revision %s is unknown" % revision)
                 self.assertEqual(provider.getSource(filename, revision), tests[filename][revision])
 
 if __name__ == "__main__":

@@ -50,5 +50,17 @@ class SourceCodeProvider():
         return
 
     @abstractmethod
+    def testRevision(self, revision):
+        """
+        Check if the given revision exists in the resource associated with this provider.
+
+        @ptype revision: string
+        @param revision: The revision to check for.
+
+        @rtype bool
+        @return True, if the revision exists, False otherwise.
+        """
+        return
+
     def update(self):
         return

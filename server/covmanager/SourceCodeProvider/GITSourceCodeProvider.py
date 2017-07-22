@@ -41,6 +41,13 @@ class GITSourceCodeProvider(SourceCodeProvider):
             # Otherwise assume the file doesn't exist
             raise UnknownFilenameException
 
+    def testRevision(self, revision):
+        try:
+            subprocess.check_output(["git", "show", revision], cwd=self.location, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            return False
+        return True
+
     def update(self):
         # TODO: This will fail without remotes
         subprocess.check_call(["git", "fetch"], cwd=self.location)
