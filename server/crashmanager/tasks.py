@@ -8,7 +8,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path += [os.path.abspath(os.path.join(BASE_DIR, ".."))]
 
-from crashmanager.celeryconf import app
+from celeryconf import app
 
 # This is a per-worker global cache mapping short descriptions of
 # crashes to a list of bucket candidates to try first.
