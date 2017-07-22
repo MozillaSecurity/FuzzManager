@@ -10,6 +10,9 @@ import re
 
 from crashmanager.models import Client, Tool
 
+if getattr(settings, 'USE_CELERY', None):
+    from .tasks import check_revision_update
+
 class Repository(models.Model):
     classname = models.CharField(max_length=255, blank=False)
     name = models.CharField(max_length=255, blank=False)
@@ -145,3 +148,9 @@ def Collection_delete(sender, instance, **kwargs):
     if instance.coverage:
         instance.coverage.file.delete(False)
         instance.coverage.delete(False)
+
+# post_save handler for celery integration
+if getattr(settings, 'USE_CELERY', None):
+    @receiver(post_save, sender=Collection)
+    def Collection_save(sender, instance, **kwargs):
+        check_revision_update.delay(instance.pk)
