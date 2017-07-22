@@ -308,7 +308,7 @@ class Command(NoArgsCommand):
 
             try:
                 logger.info("[Pool %d] Creating %s instances..." % (pool.id, count))
-                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20 * 60)
+                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, root_device_type=config.ec2_root_device_type, delete_on_termination=True, timeout=20 * 60)
                 canceled_requests = count - len(boto_instances)
 
                 logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), canceled_requests))

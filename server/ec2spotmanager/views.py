@@ -333,6 +333,12 @@ def __handleConfigPOST(request, config):
     else:
         config.ec2_image_name = None
 
+    # These will need to be changed if the form becomes a checkbox
+    if request.POST['ec2_root_device_type']:
+        config.ec2_root_device_type = request.POST['ec2_root_device_type']
+    else:
+        config.ec2_root_device_type = 'ebs'
+
     if request.POST['ec2_max_price']:
         config.ec2_max_price = float(request.POST['ec2_max_price'])
     else:

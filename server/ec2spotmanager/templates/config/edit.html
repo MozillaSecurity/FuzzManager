@@ -69,6 +69,11 @@
             <input id="id_ec2_image_name" class="form-control" name="ec2_image_name" type="text" value="{{ config.ec2_image_name|default:"" }}">
             <br/>
 
+            <label for="id_ec2_root_device_type">EC2 Root Device Type</label><br/>
+            <!-- Not sure how to change this to a checkbox: -->
+            <input id="id_ec2_root_device_type" class="form-control" name="ec2_root_device_type" type="text" value="{{ config.ec2_root_device_type|default:"ebs" }}">
+            <br/>
+
             <label for="id_ec2_userdata">EC2 Userdata Script</label><br/>
 	    <textarea id="id_ec2_userdata" class="form-control" name="ec2_userdata" spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
             <br/>
