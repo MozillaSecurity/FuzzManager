@@ -62,5 +62,16 @@ class SourceCodeProvider():
         """
         return
 
+    @abstractmethod
     def update(self):
+        """
+        Update the resource associated with this provider.
+        
+        If the resource is e.g. a local repository, this would mean pulling
+        new revisions from an associated repository (git fetch, hg pull, ..).
+        
+        Since calling this method is potentially expensive, it should only be
+        called, when a revision has been determined to be not locally available
+        (e.g. through the L{SourceCodeProvider.testRevision} method).
+        """
         return
