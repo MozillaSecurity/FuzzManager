@@ -1,92 +1,78 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% load url from future %}
-{% load extratags %}
-
 {% block body_content %}
-
 <div id="main" class="panel panel-default">
 	<div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Coverage Collections</div>
 	<div class="panel-body">
-            <input type="text" v-model="collection_search" />
-	    <table class="table table-condensed table-hover table-bordered table-db">
-		<thead>
-		    <tr>
-			<th style="width: 25px;">ID</th>
-			<th style="width: 50px;">Created</th>
-			<th style="width: 75px;">Repository</th>
-			<th style="width: 100px;">Revision</th>
-			<th style="width: 50px;">Branch</th>
-			<th style="width: 100px;">Tools</th>
-			<th style="width: 150px;">Description</th>
-		    </tr>
-                    <tr v-for="collection in collections">
-                        <td>!{ collection.id }!</td>
-                        <td>!{ collection.created | formatDate }!</td>
-                        <td>!{ collection.repository }!</td>
-                        <td>!{ collection.revision }!</td>
-                        <td>!{ collection.branch }!</td>
-                        <td>!{ collection.tools }!</td>
-                        <td>!{ collection.description }!</td>
-                    </tr>
-		</thead>
-		<tbody>
-		</tbody>
-	    </table>
-	</div>
-
+    <div class="btn-group">
+      <input type="text" class="form-control" name="q" placeholder='{{ q|default:"Search" }}' v-model="collection_search"/>
+    </div>
+  </div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th style="width: 25px;">ID</th>
+        <th style="width: 80px;">Created</th>
+        <th style="width: 50px;">Repository</th>
+        <th style="width: 100px;">Revision</th>
+        <th style="width: 50px;">Branch</th>
+        <th style="width: 50px;">Tools</th>
+      <th style="width: 150px;">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="collection in collections">
+        <td><a :href="`${collection.id}/browse`">!{ collection.id }!</a></td>
+        <td>!{ collection.created | formatDate }!</td>
+        <td><a :href="`../repositories/`">!{ collection.repository }!</a></td>
+        <td>!{ collection.revision }!</td>
+        <td>!{ collection.branch }!</td>
+        <td>!{ collection.tools }!</td>
+        <td>!{ collection.description }!</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 
 <script>
-var apiURL = '{% url 'covmanager:collections_api' %}'
+let APIURL = '{% url 'covmanager:collections_api' %}'
 
-var app = new Vue({
-  delimiters: ['!{', '}!'],
-
+let app = new Vue({
   el: '#main',
-
   data: {
     collection_search: '',
-    collections: null
+    collections: null,
   },
-
   created: function () {
-    this.fetchData()
+    this.fetch()
   },
-
   watch: {
-    collection_search: 'fetchData'
+    collection_search: 'fetch'
   },
-
   filters: {
-    truncate: function (v) {
-      var newline = v.indexOf('\n')
-      return newline > 0 ? v.slice(0, newline) : v
-    },
-    formatDate: function (v) {
-      return v.replace(/T|Z/g, ' ')
+    formatDate: function (datetime) {
+      return formatClientTimestamp(datetime)
     }
   },
-
   methods: {
-    fetchData: _.throttle(function () {
-      var xhr = new XMLHttpRequest()
-      var self = this
-      var q = ""
-      if (self.collection_search) {
-        q = "?squery=" + self.collection_search
+    fetch: _.throttle(function() {
+      let q = ""
+      if (this.collection_search) {
+        q = "?squery=" + this.collection_search
       }
-      xhr.open('GET', apiURL + q)
-      xhr.onload = function () {
-        result = JSON.parse(xhr.responseText)
-        self.collections = result["results"]
-      }
-      xhr.send()
-    }, 500)
+      fetch(APIURL + q, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.collections = json["results"]
+      })
+    }, 500),
   }
 })
-
 </script>
-
-
 {% endblock body_content %}

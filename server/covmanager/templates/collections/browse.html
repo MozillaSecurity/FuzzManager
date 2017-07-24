@@ -1,93 +1,179 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% load url from future %}
-{% load extratags %}
+{% block css.custom %}
+  <link rel='stylesheet' href='/static/css/covmanager.css'>
+{% endblock css.custom %}
 
 {% block body_content %}
-
 <div id="main" class="panel panel-default">
-	<div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Coverage Collection Browser</div>
-	<div class="panel-body">
-        <div v-if="source">
-          <div v-for="(line, index) in source">
-          <code><span>!{ index }! !{ line }!<span></code>
-          </div>
-        </div>
-        <div v-else>
-		<ul v-for="(value, key) in coverage.children">
-		<li v-on:click="navigate(key)">!{ key }! - !{ value.linesCovered }! / !{ value.linesTotal }!</li>
-		</ul>
-        </div>
-	</div>
-
+	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+  <template v-if="source">
+    <table class="table table-coverage">
+      <tbody>
+        <tr v-for="(line, line_nr) in source">
+          <td :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
+            !{ line_nr }!
+          </td>
+          <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
+            <span class="label label-success" v-if="cov_hits(line_nr)"> <!-- FIXME -->
+              !{ cov_hits(line_nr) | formatNumber }!
+            </span>
+          </td>
+          <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
+            <div v-html="highlight_code(line)">
+              !{ highlight_code(line) }!
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </template>
+  <template v-else>
+    <table class="table table-condensed table-hover table-db">
+      <thead>
+        <tr>
+          <th style="width: 50%">Files</th>
+          <th class="text-center">
+            <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
+              <i class="glyphicon glyphicon-menu-hamburger"></i>
+            </span>
+          </th>
+          <th class="text-center">
+            <span class="green-text" data-toggle="tooltip" data-placement="top" title="Lines Hit">•</span>
+          </th>
+          <th class="text-center">
+            <span class="red-text" data-toggle="tooltip" data-placement="top" title="Lines Missed">•</span>
+          </th>
+          <th><strong>Coverage</strong></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(value, path) in coverage.children">
+          <td><i :class="['glyphicon', add_path_class(path)]"></i> <a @click="navigate(path)">!{ path }!</a></td>
+          <td>!{ value.linesTotal | formatNumber }!</td>
+          <td>!{ value.linesCovered | formatNumber }!</td>
+          <td>!{ value.linesTotal - value.linesCovered | formatNumber }!</td>
+          <td class="text-right" :style="cov_pct_style(cov_pct(value.linesTotal, value.linesCovered))">
+            !{ cov_pct(value.linesTotal, value.linesCovered) }! %
+          </td>
+        </tr>
+      </tbody>
+      <tfoot class="table-coverage-foot">
+        <tr>
+          <td><strong>Summary</strong></td>
+          <td>!{ coverage.linesTotal | formatNumber }!</td>
+          <td>!{ coverage.linesCovered | formatNumber }!</td>
+          <td>!{ coverage.linesTotal - coverage.linesCovered | formatNumber }!</td>
+          <td class="text-right" :style="cov_pct_style(cov_pct(coverage.linesTotal, coverage.linesCovered))">
+            !{ cov_pct(coverage.linesTotal, coverage.linesCovered) }! %
+          </td>
+        </tr>
+    </tfoot>
+    </table>
+  </template>
 </div>
 
 <script>
-var apiURL = '{% url 'covmanager:collections_browse_api' collectionid "" %}'
+let APIURL = '{% url 'covmanager:collections_browse_api' collectionid "" %}'
 
-var app = new Vue({
-  delimiters: ['!{', '}!'],
-
+let covmanager = new Vue({
   el: '#main',
-
   data: {
     path: window.location.hash.substr(1),
     coverage: [],
-    source: null,
+    source: null
   },
-
   created: function () {
-    this.fetchData()
+    this.fetch()
   },
-
   watch: {
-    path: 'fetchData'
+    path: 'fetch'
   },
-
   filters: {
-    truncate: function (v) {
-      var newline = v.indexOf('\n')
-      return newline > 0 ? v.slice(0, newline) : v
-    },
-    formatDate: function (v) {
-      return v.replace(/T|Z/g, ' ')
+    formatNumber: function (v) {
+      if (Number.isInteger(v)) {
+        return parseInt(v).toLocaleString()
+      }
     }
   },
-
+  computed: {
+    current_path: function() {
+      return this.path.split("/")
+    }
+  },
   methods: {
-    fetchData: _.throttle(function () {
-      var xhr = new XMLHttpRequest()
-      var self = this
-      xhr.open('GET', apiURL + self.path)
-      xhr.onload = function () {
-        result = JSON.parse(xhr.responseText)
-        self.coverage = result["coverage"]
-
-        if ("source" in self.coverage) {
-          self.source = self.coverage["source"].split("\n");
-        } else {
-          self.source = null;
+    fetch: _.throttle (function() {
+      fetch(APIURL + this.path, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
         }
-      }
-      xhr.send()
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        window.history.back()
+      }).then(json => {
+        this.coverage = json["coverage"]
+        if ("source" in this.coverage) {
+          this.source = this.coverage["source"].split('\n')
+        } else {
+          this.source = null
+        }
+      })
     }, 500),
-
-    navigate: function(loc) {
-      var self = this;
-      if (self.coverage.children[loc]["children"]) {
-        // Figure out if this location is a directory or file
-        loc += "/";
+    navigate: function (location) {
+      window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
+    },
+    get_extension: function (path) {
+      return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
+    },
+    cov_pct: function(total, covered) {
+      return ((covered * 100) / total).toFixed(2)
+    },
+    cov_pct_style: function(pct) { // Todo: Add to a CSS class.
+      let status_color
+      if (pct == 100.00) {
+        status_color = '#edfde7'
+      } else if (pct >= 80.00) {
+        status_color = '#fafde8'
+      } else {
+        status_color = '#fbece9'
       }
-      window.location.hash += loc;
+      return 'background: linear-gradient(90deg, ' + status_color + ' ' + pct + '%, white ' + pct + '%)'
+    },
+    cov_hits: function(i) {
+      return this.coverage.coverage[i] > 0 ? this.coverage.coverage[i] : ''
+    },
+    add_coverage_status_class: function (i) {
+      let classArray = this.class ? this.class.split(' ') : []
+      if (this.coverage.coverage[i] > 0) {           // Line is covered.
+        classArray.push("cov-status-covered")
+      }
+      else if (this.coverage.coverage[i] === 0) {    // Line is coverable but was not covered.
+        classArray.push("cov-status-non-coverable")
+      } else {                                       // Line is not coverable.
+      }
+      return classArray
+    },
+    add_path_class: function(path) {
+      let classArray = this.class ? this.class.split(' ') : []
+      if (this.get_extension(path)) {
+        classArray.push("glyphicon-file")
+      } else {
+        classArray.push("glyphicon-folder-close")
+      }
+      return classArray
+    },
+    highlight_code: function(code) {
+      return Prism.highlight(code, Prism.languages.cpp)
     }
   }
 })
 
-// This updates our path variable in the Vue whenever the hash changes,
-// which again triggers a reload of the data.
-window.onhashchange = function() { app.path = window.location.hash.substr(1); }
-
+// This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
+window.onhashchange = function() {
+  covmanager.path = window.location.hash.substr(1)
+}
 </script>
-
 
 {% endblock body_content %}

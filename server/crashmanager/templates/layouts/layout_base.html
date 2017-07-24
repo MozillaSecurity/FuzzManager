@@ -4,30 +4,33 @@
 {% block head %}
 <head>
 	{% block meta %}
-    <meta http-equiv="content-type" content="{% block meta.content-type %}text/html;charset=UTF-8{% endblock meta.content-type %}" />
-	<meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
-	<meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="content-type" content="{% block meta.content-type %}text/html;charset=UTF-8{% endblock meta.content-type %}" />
+  <meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
+  <meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 	{% endblock meta %}
-    <title>{% block title %}{% endblock title %}</title>
-    <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/logo.png"/>
+  <title>{% block title %}{% endblock title %}</title>
+  <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/logo.png"/>
 	{% block css %}
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.css">
-    <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans'>
-    <link rel="stylesheet" type="text/css" href="/static/css/default.css">
-	{% block css.shared %}
-	{% endblock css.shared %}
+  <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans:400,600,700'>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel='stylesheet' href='//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css'>
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism.css">
+  <link rel="stylesheet" href="/static/css/default.css">
+	{% block css.shared %}{% endblock css.shared %}
 	{% block css.custom %}{% endblock css.custom %}
 	{% endblock css%}
 	{% block js %}
-    <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/prism/0.0.1/prism.js"></script>
-
-    <script src="//unpkg.com/vue"></script>
-    <script src="//cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
-
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-clike.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-c.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-cpp.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-bash.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
 	{% block js.shared %}{% endblock js.shared %}
 	{% block js.custom %}{% endblock js.custom %}
 	{% endblock js%}
@@ -38,6 +41,34 @@
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
+
+        Vue.options.delimiters = ['!{', '}!']
+        Vue.options.debug = false
+        Vue.options.productionTip = false
+
+
+        let E_SERVER_ERROR = 'Error while communicating with the server.'
+
+        function formatClientTimestamp(datetime) {
+          return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric', month: 'numeric', day: 'numeric',
+            hour: 'numeric', minute: 'numeric',
+            hour12: false,
+            timeZoneName: 'short'
+          }).format(new Date(datetime))
+        }
+
+        String.prototype.escape_code = function() {
+          let tagsToReplace = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            ' ': '&nbsp;'
+          }
+          return this.replace(/[&<>]/g, function(tag) {
+            return tagsToReplace[tag] || tag
+          })
+        }
     </script>
 </head>
 {% endblock head %}
@@ -91,5 +122,7 @@
 		{% endblock sql_debug %}
     </div>
 </body>
+
+<script src="/static/js/prism.js"></script>
 </html>
 {% endblock layout.base %}
