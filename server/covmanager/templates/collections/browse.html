@@ -47,6 +47,12 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-if="show_top_nav">
+          <td @click="navigate_top">
+            <i class="glyphicon glyphicon-arrow-up"></i>
+            <span class="path">..</span>
+            </td><td/><td/><td/><td/>
+        </tr>
         <tr v-for="(value, path) in filtered_children">
           <td @click="navigate(path)">
             <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ path }!</span>
@@ -84,6 +90,7 @@ let covmanager = new Vue({
     coverage: [],
     source: null,
     search: "",
+    show_top_nav: false,
   },
   created: function () {
     window.addEventListener('keydown', this.keydown)
@@ -140,12 +147,23 @@ let covmanager = new Vue({
           this.source = null
         }
 
+        // If we have a path, then we need to show the top navigation link
+        this.show_top_nav = !!this.path
+
         // Start with an empty search after fetching new data
         this.search = ""
       })
     }, 500),
     navigate: function (location) {
       window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
+    },
+    navigate_top: function () {
+      path_components = window.location.hash.split("/")
+
+      // Pop one non-empty component or stop when list is empty
+      while(path_components && !path_components.pop()) {}
+
+      window.location.hash = path_components.join("/")
     },
     get_extension: function (path) {
       return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
@@ -212,7 +230,7 @@ let covmanager = new Vue({
             this.navigate(target)
           }
         }
-	    }
+      }
     },
     keyup: function (e) {
       // We use the |keyup| event instead of |keydown| here in order to not collide with Vue's internal updating of
