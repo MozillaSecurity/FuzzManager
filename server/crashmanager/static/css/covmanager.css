@@ -1,10 +1,12 @@
 .green-text {
   color: #4caf50;
-  font-size: 15px;
 }
 .red-text {
   color: #f44336;
-  font-size: 15px;
+}
+
+.path {
+  color: #337ab7;
 }
 
 .table-coverage table {

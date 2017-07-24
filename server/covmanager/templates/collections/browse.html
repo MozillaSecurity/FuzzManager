@@ -34,23 +34,25 @@
       <thead>
         <tr>
           <th style="width: 50%">Files</th>
-          <th class="text-center">
+          <th>
             <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
               <i class="glyphicon glyphicon-menu-hamburger"></i>
             </span>
           </th>
-          <th class="text-center">
-            <span class="green-text" data-toggle="tooltip" data-placement="top" title="Lines Hit">•</span>
+          <th>
+            Lines Covered
           </th>
-          <th class="text-center">
-            <span class="red-text" data-toggle="tooltip" data-placement="top" title="Lines Missed">•</span>
+          <th >
+            Lines Missed
           </th>
           <th><strong>Coverage</strong></th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(value, path) in filtered_children">
-          <td><i :class="['glyphicon', add_path_class(path)]"></i> <a @click="navigate(path)">!{ path }!</a></td>
+          <td @click="navigate(path)">
+            <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ path }!</span>
+          </td>
           <td>!{ value.linesTotal | formatNumber }!</td>
           <td>!{ value.linesCovered | formatNumber }!</td>
           <td>!{ value.linesTotal - value.linesCovered | formatNumber }!</td>
