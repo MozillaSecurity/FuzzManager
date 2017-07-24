@@ -9,6 +9,7 @@ router.register(r'repositories', views.RepositoryViewSet, base_name='repositorie
 
 urlpatterns = patterns('',
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^$', views.index, name='index'),
     url(r'^repositories/', views.repositories, name="repositories"),
     url(r'^collections/$', views.collections, name="collections"),
     url(r'^collections/api/$', views.CollectionViewSet.as_view({'get': 'list'}), name="collections_api"),
