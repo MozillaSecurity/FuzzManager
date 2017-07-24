@@ -30,7 +30,7 @@
   </template>
   <template v-else>
     <div v-show="search">
-      <input type="text" ref="search" class="form-control" v-model="search" v-show="search"/>
+      <input type="text" ref="search" class="form-control" v-model="search"/>
     </div>
     <table class="table table-condensed table-hover table-db">
       <thead>
@@ -59,7 +59,7 @@
           </td>
         </tr>
       </tbody>
-      <tfoot class="table-coverage-foot">
+      <tfoot class="table-coverage-foot" v-show="!search">
         <tr>
           <td><strong>Summary</strong></td>
           <td>!{ coverage.linesTotal | formatNumber }!</td>
