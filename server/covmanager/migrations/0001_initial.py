@@ -9,6 +9,7 @@ import django.core.files.storage
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('crashmanager', '0018_auto_20170620_1503')
     ]
 
     operations = [
