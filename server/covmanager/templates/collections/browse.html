@@ -29,7 +29,9 @@
     </table>
   </template>
   <template v-else>
-    <input type="text" ref="search" v-model="search" v-show="search"/>
+    <div v-show="search">
+      <input type="text" ref="search" class="form-control" v-model="search" v-show="search"/>
+    </div>
     <table class="table table-condensed table-hover table-db">
       <thead>
         <tr>
@@ -84,8 +86,8 @@ let covmanager = new Vue({
     search: "",
   },
   created: function () {
-    window.addEventListener('keydown',this.keydown);
-    window.addEventListener('keyup',this.keyup);
+    window.addEventListener('keydown', this.keydown)
+    window.addEventListener('keyup',   this.keyup)
     this.fetch()
   },
   watch: {
@@ -99,27 +101,28 @@ let covmanager = new Vue({
     }
   },
   computed: {
-    current_path: function() {
+    current_path: function () {
       return this.path.split("/")
     },
-    filtered_children: function() {
-      var self = this;
-      var result = {};
-      var path;
-      var children = self.coverage.children;
+    filtered_children: function () {
+      let result = {},
+          path,
+          children = this.coverage.children
 
-      if (!self.search) return children;
+      if (!this.search) {
+        return children
+      }
 
       for (path in children) {
-        if (children.hasOwnProperty(path) && path.indexOf(self.search) !== -1) {
-            result[path] = children[path];
+        if (children.hasOwnProperty(path) && path.indexOf(this.search) !== -1) {
+            result[path] = children[path]
         }
       }
-      return result;
+      return result
     }
   },
   methods: {
-    fetch: _.throttle (function() {
+    fetch: _.throttle (function () {
       fetch(APIURL + this.path, {
         method: 'GET',
         credentials: 'same-origin'
@@ -138,7 +141,7 @@ let covmanager = new Vue({
         }
 
         // Start with an empty search after fetching new data
-        this.search = "";
+        this.search = ""
       })
     }, 500),
     navigate: function (location) {
@@ -147,10 +150,10 @@ let covmanager = new Vue({
     get_extension: function (path) {
       return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
     },
-    cov_pct: function(total, covered) {
+    cov_pct: function (total, covered) {
       return ((covered * 100) / total).toFixed(2)
     },
-    cov_pct_style: function(pct) { // Todo: Add to a CSS class.
+    cov_pct_style: function (pct) { // Todo: Add to a CSS class.
       let status_color
       if (pct == 100.00) {
         status_color = '#edfde7'
@@ -161,7 +164,7 @@ let covmanager = new Vue({
       }
       return 'background: linear-gradient(90deg, ' + status_color + ' ' + pct + '%, white ' + pct + '%)'
     },
-    cov_hits: function(i) {
+    cov_hits: function (i) {
       return this.coverage.coverage[i] > 0 ? this.coverage.coverage[i] : ''
     },
     add_coverage_status_class: function (i) {
@@ -175,7 +178,7 @@ let covmanager = new Vue({
       }
       return classArray
     },
-    add_path_class: function(path) {
+    add_path_class: function (path) {
       let classArray = this.class ? this.class.split(' ') : []
       if (this.get_extension(path)) {
         classArray.push("glyphicon-file")
@@ -184,41 +187,46 @@ let covmanager = new Vue({
       }
       return classArray
     },
-    highlight_code: function(code) {
+    highlight_code: function (code) {
       return Prism.highlight(code, Prism.languages.cpp)
     },
-    keydown: function(e) {
-          var self = this;
-	  if (!e) e = window.event;
-	  if (!e.metaKey) {
-	    if(e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
-	      if (!self.search) {
-		var str = String.fromCharCode(e.keyCode);
-		if (!e.shiftKey) str = str.toLowerCase();
-		self.search = str;
-	      } else {
-		self.$refs.search.focus()
-	      }
-	    } else if (e.keyCode == 13) {
-              // ENTER was pressed, navigate
-	      target = Object.keys(self.filtered_children)[0]
-              if (target) self.navigate(target);
+    keydown: function (e) {
+      if (!e) {
+        e = window.event
+      }
+      if (!e.metaKey) {
+        if(e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
+          if (!this.search) {
+            let str = String.fromCharCode(e.keyCode)
+            if (!e.shiftKey) {
+              str = str.toLowerCase()
+            }
+            this.search = str
+          } else {
+            this.$refs.search.focus()
+          }
+        } else if (e.keyCode == 13) {
+          // ENTER was pressed, navigate
+          let target = Object.keys(this.filtered_children)[0]
+          if (target) {
+            this.navigate(target)
+          }
+        }
 	    }
-	  }
     },
-    keyup: function(e) {
-          // We use the keyup event instead of keydown here in order to
-          // not collide with vue's internal updating of the search model
-          // on input events.
-          var self = this;
-	  if (!e) e = window.event;
-	  if (!e.metaKey) {
-	    if (self.search && e.keyCode == 27) {
-              // ESC was pressed, clear search
-	      self.search = "";
-	    }
-	  }
-    },
+    keyup: function (e) {
+      // We use the |keyup| event instead of |keydown| here in order to not collide with Vue's internal updating of
+      // the search model on input events.
+      if (!e) {
+        e = window.event
+      }
+      if (!e.metaKey) {
+        if (this.search && e.keyCode == 27) {
+          // ESC was pressed, clear search.
+          this.search = ""
+        }
+      }
+    }
   }
 })
 
