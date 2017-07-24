@@ -29,6 +29,7 @@
     </table>
   </template>
   <template v-else>
+    <input type="text" ref="search" v-model="search" v-show="search"/>
     <table class="table table-condensed table-hover table-db">
       <thead>
         <tr>
@@ -48,7 +49,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(value, path) in coverage.children">
+        <tr v-for="(value, path) in filtered_children">
           <td><i :class="['glyphicon', add_path_class(path)]"></i> <a @click="navigate(path)">!{ path }!</a></td>
           <td>!{ value.linesTotal | formatNumber }!</td>
           <td>!{ value.linesCovered | formatNumber }!</td>
@@ -81,9 +82,12 @@ let covmanager = new Vue({
   data: {
     path: window.location.hash.substr(1),
     coverage: [],
-    source: null
+    source: null,
+    search: "",
   },
   created: function () {
+    window.addEventListener('keydown',this.keydown);
+    window.addEventListener('keyup',this.keyup);
     this.fetch()
   },
   watch: {
@@ -99,6 +103,21 @@ let covmanager = new Vue({
   computed: {
     current_path: function() {
       return this.path.split("/")
+    },
+    filtered_children: function() {
+      var self = this;
+      var result = {};
+      var path;
+      var children = self.coverage.children;
+
+      if (!self.search) return children;
+
+      for (path in children) {
+        if (children.hasOwnProperty(path) && path.indexOf(self.search) !== -1) {
+            result[path] = children[path];
+        }
+      }
+      return result;
     }
   },
   methods: {
@@ -119,6 +138,9 @@ let covmanager = new Vue({
         } else {
           this.source = null
         }
+
+        // Start with an empty search after fetching new data
+        this.search = "";
       })
     }, 500),
     navigate: function (location) {
@@ -166,7 +188,39 @@ let covmanager = new Vue({
     },
     highlight_code: function(code) {
       return Prism.highlight(code, Prism.languages.cpp)
-    }
+    },
+    keydown: function(e) {
+          var self = this;
+	  if (!e) e = window.event;
+	  if (!e.metaKey) {
+	    if(e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
+	      if (!self.search) {
+		var str = String.fromCharCode(e.keyCode);
+		if (!e.shiftKey) str = str.toLowerCase();
+		self.search = str;
+	      } else {
+		self.$refs.search.focus()
+	      }
+	    } else if (e.keyCode == 13) {
+              // ENTER was pressed, navigate
+	      target = Object.keys(self.filtered_children)[0]
+              if (target) self.navigate(target);
+	    }
+	  }
+    },
+    keyup: function(e) {
+          // We use the keyup event instead of keydown here in order to
+          // not collide with vue's internal updating of the search model
+          // on input events.
+          var self = this;
+	  if (!e) e = window.event;
+	  if (!e.metaKey) {
+	    if (self.search && e.keyCode == 27) {
+              // ESC was pressed, clear search
+	      self.search = "";
+	    }
+	  }
+    },
   }
 })
 
@@ -174,6 +228,7 @@ let covmanager = new Vue({
 window.onhashchange = function() {
   covmanager.path = window.location.hash.substr(1)
 }
+
 </script>
 
 {% endblock body_content %}
