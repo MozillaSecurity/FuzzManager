@@ -7,77 +7,79 @@
 {% block body_content %}
 <div id="main" class="panel panel-default">
 	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
-  <template v-if="source">
-    <table class="table table-coverage">
-      <tbody>
-        <tr v-for="(line, line_nr) in source">
-          <td :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
-            !{ line_nr }!
-          </td>
-          <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
-            <span class="label label-success" v-if="cov_hits(line_nr)"> <!-- FIXME -->
-              !{ cov_hits(line_nr) | formatNumber }!
-            </span>
-          </td>
-          <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
-            <div v-html="highlight_code(line)">
-              !{ highlight_code(line) }!
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </template>
-  <template v-else>
-    <div v-show="search">
-      <input type="text" ref="search" class="form-control" v-model="search"/>
-    </div>
-    <table class="table table-condensed table-hover table-db">
-      <thead>
-        <tr>
-          <th style="width: 50%">Files</th>
-          <th>
-            <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
-              <i class="glyphicon glyphicon-menu-hamburger"></i>
-            </span>
-          </th>
-          <th>Lines Covered</th>
-          <th>Lines Missed</th>
-          <th>Coverage</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="show_top_nav">
-          <td @click="navigate_top">
-            <i class="glyphicon glyphicon-arrow-up"></i>
-            <span class="path">..</span>
-            </td><td/><td/><td/><td/>
-        </tr>
-        <tr v-for="(value, path) in filtered_children">
-          <td @click="navigate(path)">
-            <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ path }!</span>
-          </td>
-          <td>!{ value.linesTotal | formatNumber }!</td>
-          <td>!{ value.linesCovered | formatNumber }!</td>
-          <td>!{ value.linesTotal - value.linesCovered | formatNumber }!</td>
-          <td class="text-right" :style="cov_pct_style(cov_pct(value.linesTotal, value.linesCovered))">
-            !{ cov_pct(value.linesTotal, value.linesCovered) }! %
-          </td>
-        </tr>
-      </tbody>
-      <tfoot class="table-coverage-foot" v-show="!search">
-        <tr>
-          <td><strong>Summary</strong></td>
-          <td>!{ coverage.linesTotal | formatNumber }!</td>
-          <td>!{ coverage.linesCovered | formatNumber }!</td>
-          <td>!{ coverage.linesTotal - coverage.linesCovered | formatNumber }!</td>
-          <td class="text-right" :style="cov_pct_style(cov_pct(coverage.linesTotal, coverage.linesCovered))">
-            !{ cov_pct(coverage.linesTotal, coverage.linesCovered) }! %
-          </td>
-        </tr>
-    </tfoot>
-    </table>
-  </template>
+    <template v-if="loading">
+      <div class="loader">Loading...</div>
+    </template>
+    <template v-else-if="source">
+      <table class="table table-coverage">
+        <tbody>
+          <tr v-for="(line, line_nr) in source">
+            <td :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
+              !{ line_nr }!
+            </td>
+            <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
+              <span class="label label-success" v-if="cov_hits(line_nr)"> <!-- FIXME -->
+                !{ cov_hits(line_nr) | formatNumber }!
+              </span>
+            </td>
+            <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
+              <div v-html="highlight_code(line)">
+                !{ highlight_code(line) }!
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
+    <template v-else>
+      <div v-show="search">
+        <input type="text" ref="search" class="form-control" v-model="search"/>
+      </div>
+      <table class="table table-condensed table-hover table-db">
+        <thead>
+          <tr>
+            <th style="width: 50%">Files</th>
+            <th>
+              <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
+                <i class="glyphicon glyphicon-menu-hamburger"></i>
+              </span>
+            </th>
+            <th>Lines Covered</th>
+            <th>Lines Missed</th>
+            <th>Coverage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="show_top_nav">
+            <td @click="navigate_top">
+              <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
+            </td>
+          </tr>
+          <tr v-for="(value, path) in filtered_children">
+            <td @click="navigate(path)">
+              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ path }!</span>
+            </td>
+            <td>!{ value.linesTotal | formatNumber }!</td>
+            <td>!{ value.linesCovered | formatNumber }!</td>
+            <td>!{ value.linesTotal - value.linesCovered | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(cov_pct(value.linesTotal, value.linesCovered))">
+              !{ cov_pct(value.linesTotal, value.linesCovered) }! %
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-coverage-foot" v-show="!search">
+          <tr>
+            <td><strong>Summary</strong></td>
+            <td>!{ coverage.linesTotal | formatNumber }!</td>
+            <td>!{ coverage.linesCovered | formatNumber }!</td>
+            <td>!{ coverage.linesTotal - coverage.linesCovered | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(cov_pct(coverage.linesTotal, coverage.linesCovered))">
+              !{ cov_pct(coverage.linesTotal, coverage.linesCovered) }! %
+            </td>
+          </tr>
+      </tfoot>
+      </table>
+    </template>
 </div>
 
 <script>
@@ -91,6 +93,7 @@ let covmanager = new Vue({
     source: null,
     search: "",
     show_top_nav: false,
+    loading: false
   },
   created: function () {
     window.addEventListener('keydown', this.keydown)
@@ -130,6 +133,7 @@ let covmanager = new Vue({
   },
   methods: {
     fetch: _.throttle (function () {
+      this.loading = true
       fetch(APIURL + this.path, {
         method: 'GET',
         credentials: 'same-origin'
@@ -138,6 +142,7 @@ let covmanager = new Vue({
           return response.json()
         }
         sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
         window.history.back()
       }).then(json => {
         this.coverage = json["coverage"]
@@ -146,6 +151,8 @@ let covmanager = new Vue({
         } else {
           this.source = null
         }
+
+        this.loading = false
 
         // If we have a path, then we need to show the top navigation link
         this.show_top_nav = !!this.path
@@ -158,10 +165,10 @@ let covmanager = new Vue({
       window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
     },
     navigate_top: function () {
-      path_components = window.location.hash.split("/")
+      let path_components = window.location.hash.split("/")
 
-      // Pop one non-empty component or stop when list is empty
-      while(path_components && !path_components.pop()) {}
+      // Pop one non-empty component or stop when list is empty.
+      while (path_components && !path_components.pop()) {}
 
       window.location.hash = path_components.join("/")
     },
