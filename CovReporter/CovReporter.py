@@ -140,8 +140,9 @@ class CovReporter(Reporter):
 
                     ptr = ptr[path_part]["children"]
 
-                ptr[file_part] = { "coverage" :  source_file["coverage"] }
-                ptr[file_part] = { "coverage" :  [-1 if x is None else x for x in source_file["coverage"]] }
+                ptr[file_part] = {
+                    "coverage" :  [-1 if x is None else x for x in source_file["coverage"]]
+                }
 
 
         else:
@@ -151,14 +152,16 @@ class CovReporter(Reporter):
         # for each subtree in the tree. We can do this easily by using a recursive
         # definition.
 
-        def calculate_summary_fields(node):
+        def calculate_summary_fields(node, name=None):
+            node["name"] = name
             node["linesTotal"] = 0
             node["linesCovered"] = 0
 
             if "children" in node:
                 # This node has subtrees, recurse on them
-                for child in node["children"].values():
-                    calculate_summary_fields(child)
+                for child_name in node["children"]:
+                    child = node["children"][child_name]
+                    calculate_summary_fields(child, child_name)
                     node["linesTotal"] += child["linesTotal"]
                     node["linesCovered"] += child["linesCovered"]
             else:
@@ -171,6 +174,11 @@ class CovReporter(Reporter):
                         node["linesTotal"] += 1
                         if l > 0:
                             node["linesCovered"] += 1
+
+            # Calculate two more values based on total/covered because we need
+            # them in the UI later anyway and can save some time by doing it here.
+            node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
+            node["coveragePercent"] = "%.2f" % ((float(node["linesCovered"]) / node["linesTotal"]) * 100)
 
         calculate_summary_fields(ret)
 

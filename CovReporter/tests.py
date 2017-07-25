@@ -44,41 +44,60 @@ class TestCovReporterPreprocessData(unittest.TestCase):
     def runTest(self):
         result = CovReporter.preprocess_coverage_data(coverallsData)
 
+        children = "children"
+        coverage = "coverage"
+        name = "name"
+        linesTotal = "linesTotal"
+        linesMissed = "linesMissed"
+        linesCovered = "linesCovered"
+        coveragePercent = "coveragePercent"
+
         # Check that we have all the topdirs
-        self.assertTrue("topdir1" in result["children"], "topdir1 missing in result")
-        self.assertTrue("topdir2" in result["children"], "topdir1 missing in result")
+        self.assertTrue("topdir1" in result[children], "topdir1 missing in result")
+        self.assertTrue("topdir2" in result[children], "topdir1 missing in result")
 
         # Check that we have all the subdirs
-        self.assertTrue("subdir1" in result["children"]["topdir1"]["children"], "subdir1 missing in result")
-        self.assertTrue("subdir2" in result["children"]["topdir1"]["children"], "subdir1 missing in result")
-        self.assertTrue("subdir1" in result["children"]["topdir2"]["children"], "subdir1 missing in result")
+        self.assertTrue("subdir1" in result[children]["topdir1"][children], "subdir1 missing in result")
+        self.assertTrue("subdir2" in result[children]["topdir1"][children], "subdir1 missing in result")
+        self.assertTrue("subdir1" in result[children]["topdir2"][children], "subdir1 missing in result")
 
         # Check that we haven't got more subdirs than expected for topdir2
-        self.assertEqual(len(result["children"]["topdir2"]["children"]), 1)
+        self.assertEqual(len(result[children]["topdir2"][children]), 1)
 
-        # Check length of coverage list and linesTotal for file1.c
-        self.assertEqual(len(result["children"]["topdir1"]["children"]["subdir1"]["children"]["file1.c"]["coverage"]), 9)
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir1"]["children"]["file1.c"]["linesTotal"], 6)
+        # Check length of coverage list, name and summary values for file1.c
+        self.assertEqual(len(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage]), 9)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name], "file1.c")
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesTotal], 6)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesMissed], 2)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesCovered], 4)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent], "66.67")
 
-        # Check linesTotal and linesCovered for topdir1/subdir1/
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir1"]["linesTotal"], 13)
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir1"]["linesCovered"], 10)
 
+        # Check name and summary values for topdir1/subdir1/
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][name], "subdir1")
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesTotal], 13)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesCovered], 10)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesMissed], 3)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][coveragePercent], "76.92")
 
-        # Check linesTotal and linesCovered for topdir1/subdir2/
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir2"]["linesTotal"], 6)
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir2"]["linesCovered"], 4)
+        # Check summary values for topdir1/subdir2/
+        self.assertEqual(result[children]["topdir1"][children]["subdir2"][linesTotal], 6)
+        self.assertEqual(result[children]["topdir1"][children]["subdir2"][linesCovered], 4)
+        self.assertEqual(result[children]["topdir1"][children]["subdir2"][linesMissed], 2)
 
-        # Check linesTotal and linesCovered for topdir1/
-        self.assertEqual(result["children"]["topdir1"]["linesTotal"], 19)
-        self.assertEqual(result["children"]["topdir1"]["linesCovered"], 14)
+        # Check summary values for topdir1/
+        self.assertEqual(result[children]["topdir1"][linesTotal], 19)
+        self.assertEqual(result[children]["topdir1"][linesCovered], 14)
+        self.assertEqual(result[children]["topdir1"][linesMissed], 5)
 
-        # Check linesTotal and linesCovered for topdir2/
-        self.assertEqual(result["children"]["topdir2"]["linesTotal"], 6)
-        self.assertEqual(result["children"]["topdir2"]["linesCovered"], 0)
+        # Check summary values for topdir2/
+        self.assertEqual(result[children]["topdir2"][linesTotal], 6)
+        self.assertEqual(result[children]["topdir2"][linesCovered], 0)
+        self.assertEqual(result[children]["topdir2"][linesMissed], 6)
+        self.assertEqual(result[children]["topdir2"][coveragePercent], "0.00")
 
         # Check that our converter replaces null with -1 to save some space
-        self.assertEqual(result["children"]["topdir1"]["children"]["subdir1"]["children"]["file1.c"]["coverage"][0], -1)
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0], -1)
 
 if __name__ == "__main__":
     unittest.main()
