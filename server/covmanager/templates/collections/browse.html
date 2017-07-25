@@ -126,10 +126,11 @@ let covmanager = new Vue({
             result[path] = children[path]
         }
       }
+
       return result
     },
     ordered_collection: function () {
-      return _.orderBy(this.coverage.children, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+      return _.orderBy(this.filtered_children, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
     }
   },
   methods: {
