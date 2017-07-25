@@ -14,5 +14,8 @@
 /server/logs
 /test/
 /signatures/
-/demo/signatures/
+/demo/
 /FTB/Running/shells/
+
+/misc/ec2prices/*.log
+/misc/ec2prices/*/*.pricecache
