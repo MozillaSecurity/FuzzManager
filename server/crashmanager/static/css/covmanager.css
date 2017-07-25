@@ -1,9 +1,6 @@
-.green-text {
-  color: #4caf50;
-}
-.red-text {
-  color: #f44336;
-}
+/*
+ * Coverage Browser
+ */
 
 .path {
   color: #337ab7;
@@ -45,6 +42,10 @@
   background: #f9fafb;
 }
 
+/*
+ * Coverage Source Code Viewer
+ */
+
 .cov {
   font-size: 13px;
 }
@@ -76,8 +77,8 @@
 
 
 /*
-Spinner
-*/
+ * Spinner
+ */
 
 .loader,
 .loader:after {
