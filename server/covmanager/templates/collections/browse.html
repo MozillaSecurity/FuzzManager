@@ -39,24 +39,24 @@
         <thead>
           <tr>
             <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
-            <th>
+            <th @click="sortBy('linesTotal')" :class="{ active: sortKey == 'linesTotal' }">
               <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
                 <i class="glyphicon glyphicon-menu-hamburger"></i>
               </span>
             </th>
-            <th>Lines Covered</th>
-            <th>Lines Missed</th>
-            <th>Coverage</th>
+            <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
+            <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
+            <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
           </tr>
-        </thead>
-        <tbody>
           <tr v-if="show_top_nav">
             <td @click="navigate_top">
               <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
             </td>
-          </tr>
-          <tr v-for="(value, path) in orderedCollection">
-            <td @click="navigate(path)">
+        </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(value, path) in ordered_collection">
+            <td @click="navigate(value.name)">
               <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ value.name }!</span>
             </td>
             <td>!{ value.linesTotal | formatNumber }!</td>
@@ -128,7 +128,7 @@ let covmanager = new Vue({
       }
       return result
     },
-    orderedCollection: function () {
+    ordered_collection: function () {
       return _.orderBy(this.coverage.children, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
     }
   },
@@ -163,10 +163,11 @@ let covmanager = new Vue({
       })
     }, 500),
     navigate: function (location) {
+      console.log(this.coverage)
       window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
     },
     sortBy: function (sortKey) {
-      this.reverse = (this.sortKey == sortKey) ? !this.reverse : false
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
       this.sortKey = sortKey
     },
     navigate_top: function () {
