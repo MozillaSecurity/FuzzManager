@@ -70,7 +70,7 @@ class TestCovReporterPreprocessData(unittest.TestCase):
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesTotal], 6)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesMissed], 2)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesCovered], 4)
-        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent], "66.67")
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent], 66.67)
 
 
         # Check name and summary values for topdir1/subdir1/
@@ -78,7 +78,7 @@ class TestCovReporterPreprocessData(unittest.TestCase):
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesTotal], 13)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesCovered], 10)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesMissed], 3)
-        self.assertEqual(result[children]["topdir1"][children]["subdir1"][coveragePercent], "76.92")
+        self.assertEqual(result[children]["topdir1"][children]["subdir1"][coveragePercent], 76.92)
 
         # Check summary values for topdir1/subdir2/
         self.assertEqual(result[children]["topdir1"][children]["subdir2"][linesTotal], 6)
@@ -94,7 +94,7 @@ class TestCovReporterPreprocessData(unittest.TestCase):
         self.assertEqual(result[children]["topdir2"][linesTotal], 6)
         self.assertEqual(result[children]["topdir2"][linesCovered], 0)
         self.assertEqual(result[children]["topdir2"][linesMissed], 6)
-        self.assertEqual(result[children]["topdir2"][coveragePercent], "0.00")
+        self.assertEqual(result[children]["topdir2"][coveragePercent], 0.0)
 
         # Check that our converter replaces null with -1 to save some space
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0], -1)
