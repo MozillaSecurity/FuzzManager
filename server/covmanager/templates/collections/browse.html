@@ -49,9 +49,8 @@
       <tbody>
         <tr v-if="show_top_nav">
           <td @click="navigate_top">
-            <i class="glyphicon glyphicon-arrow-up"></i>
-            <span class="path">..</span>
-            </td><td/><td/><td/><td/>
+            <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
+          </td>
         </tr>
         <tr v-for="(value, path) in filtered_children">
           <td @click="navigate(path)">
@@ -158,10 +157,10 @@ let covmanager = new Vue({
       window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
     },
     navigate_top: function () {
-      path_components = window.location.hash.split("/")
+      let path_components = window.location.hash.split("/")
 
-      // Pop one non-empty component or stop when list is empty
-      while(path_components && !path_components.pop()) {}
+      // Pop one non-empty component or stop when list is empty.
+      while (path_components && !path_components.pop()) {}
 
       window.location.hash = path_components.join("/")
     },
