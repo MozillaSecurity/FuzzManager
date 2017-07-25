@@ -38,7 +38,7 @@
       <table class="table table-condensed table-hover table-db">
         <thead>
           <tr>
-            <th style="width: 50%">Files</th>
+            <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
             <th>
               <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
                 <i class="glyphicon glyphicon-menu-hamburger"></i>
@@ -55,16 +55,14 @@
               <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
             </td>
           </tr>
-          <tr v-for="(value, path) in filtered_children">
+          <tr v-for="(value, path) in orderedCollection">
             <td @click="navigate(path)">
-              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ path }!</span>
+              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ value.name }!</span>
             </td>
             <td>!{ value.linesTotal | formatNumber }!</td>
             <td>!{ value.linesCovered | formatNumber }!</td>
-            <td>!{ value.linesTotal - value.linesCovered | formatNumber }!</td>
-            <td class="text-right" :style="cov_pct_style(cov_pct(value.linesTotal, value.linesCovered))">
-              !{ cov_pct(value.linesTotal, value.linesCovered) }! %
-            </td>
+            <td>!{ value.linesMissed | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
           </tr>
         </tbody>
         <tfoot class="table-coverage-foot" v-show="!search">
@@ -72,10 +70,8 @@
             <td><strong>Summary</strong></td>
             <td>!{ coverage.linesTotal | formatNumber }!</td>
             <td>!{ coverage.linesCovered | formatNumber }!</td>
-            <td>!{ coverage.linesTotal - coverage.linesCovered | formatNumber }!</td>
-            <td class="text-right" :style="cov_pct_style(cov_pct(coverage.linesTotal, coverage.linesCovered))">
-              !{ cov_pct(coverage.linesTotal, coverage.linesCovered) }! %
-            </td>
+            <td>!{ coverage.linesMissed | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
           </tr>
       </tfoot>
       </table>
@@ -92,6 +88,8 @@ let covmanager = new Vue({
     coverage: [],
     source: null,
     search: "",
+    sortKey: "",
+    reverse: false,
     show_top_nav: false,
     loading: false
   },
@@ -129,6 +127,9 @@ let covmanager = new Vue({
         }
       }
       return result
+    },
+    orderedCollection: function () {
+      return _.orderBy(this.coverage.children, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
     }
   },
   methods: {
@@ -164,6 +165,10 @@ let covmanager = new Vue({
     navigate: function (location) {
       window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
     },
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey == sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
     navigate_top: function () {
       let path_components = window.location.hash.split("/")
 
@@ -174,9 +179,6 @@ let covmanager = new Vue({
     },
     get_extension: function (path) {
       return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
-    },
-    cov_pct: function (total, covered) {
-      return ((covered * 100) / total).toFixed(2)
     },
     cov_pct_style: function (pct) { // Todo: Add to a CSS class.
       let status_color
