@@ -177,7 +177,7 @@ let covmanager = new Vue({
       // Pop one non-empty component or stop when list is empty.
       while (path_components && !path_components.pop()) {}
 
-      window.location.hash = path_components.join("/")
+      window.location.hash = path_components.join("/") + "/"
     },
     get_extension: function (path) {
       return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
