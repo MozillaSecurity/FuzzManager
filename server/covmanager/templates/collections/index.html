@@ -1,0 +1,78 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Coverage Collections</div>
+	<div class="panel-body">
+    <div class="btn-group">
+      <input type="text" class="form-control" name="q" placeholder='{{ q|default:"Search" }}' v-model="collection_search"/>
+    </div>
+  </div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th style="width: 25px;">ID</th>
+        <th style="width: 80px;">Created</th>
+        <th style="width: 50px;">Repository</th>
+        <th style="width: 100px;">Revision</th>
+        <th style="width: 50px;">Branch</th>
+        <th style="width: 50px;">Tools</th>
+      <th style="width: 150px;">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="collection in collections">
+        <td><a :href="`${collection.id}/browse`">!{ collection.id }!</a></td>
+        <td>!{ collection.created | formatDate }!</td>
+        <td><a :href="`../repositories/`">!{ collection.repository }!</a></td>
+        <td>!{ collection.revision }!</td>
+        <td>!{ collection.branch }!</td>
+        <td>!{ collection.tools }!</td>
+        <td>!{ collection.description }!</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+let APIURL = '{% url 'covmanager:collections_api' %}'
+
+let app = new Vue({
+  el: '#main',
+  data: {
+    collection_search: '',
+    collections: null,
+  },
+  created: function () {
+    this.fetch()
+  },
+  watch: {
+    collection_search: 'fetch'
+  },
+  filters: {
+    formatDate: function (datetime) {
+      return formatClientTimestamp(datetime)
+    }
+  },
+  methods: {
+    fetch: _.throttle(function() {
+      let q = ""
+      if (this.collection_search) {
+        q = "?squery=" + this.collection_search
+      }
+      fetch(APIURL + q, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.collections = json["results"]
+      })
+    }, 500),
+  }
+})
+</script>
+{% endblock body_content %}

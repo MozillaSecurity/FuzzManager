@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'ec2spotmanager',
     'crashmanager',
+    'covmanager',
     'rest_framework',
     'rest_framework.authtoken',
     'chartjs',

@@ -13,7 +13,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
 if getattr(settings, 'USE_CELERY', None):
-    from tasks import triage_new_crash
+    from .tasks import triage_new_crash
 
 class Tool(models.Model):
     name = models.CharField(max_length=63)
