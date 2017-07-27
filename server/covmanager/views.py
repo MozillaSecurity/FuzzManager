@@ -27,7 +27,6 @@ def collections(request):
 
 @login_required(login_url='/login/')
 def collections_browse(request, collectionid):
-    entries = Collection.objects.all().order_by('-id')
     return render(request, 'collections/browse.html', { 'collectionid' : collectionid })
 
 @login_required(login_url='/login/')
