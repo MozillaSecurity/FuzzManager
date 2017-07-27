@@ -1199,7 +1199,7 @@ class BucketViewSet(mixins.ListModelMixin,
     authentication_classes = (TokenAuthentication,)
     queryset = Bucket.objects.all()
     serializer_class = BucketSerializer
-    filter_backends = [JsonQueryFilterBackend, BucketAnnotateFilterBackend]
+    filter_backends = [BucketAnnotateFilterBackend, JsonQueryFilterBackend]
 
 def json_to_query(json_str):
     """
