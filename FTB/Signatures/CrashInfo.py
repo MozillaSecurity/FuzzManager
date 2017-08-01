@@ -491,19 +491,22 @@ class ASanCrashInfo(CrashInfo):
                                      (?:on\saddress             # The most common format, used for all overflows
                                        |on\sunknown\saddress    # Used in case of a SIGSEGV
                                        |double-free\son         # Used in case of a double-free
+                                       |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
                                        |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
-                                   \s*0x([0-9a-f]+)"""
+                                   (\s*0x([0-9a-f]+))*"""
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
         expectedIndex = 0
         for traceLine in asanOutput:
             if self.crashAddress == None:
                 match = re.search(asanCrashAddressPattern, traceLine)
-
                 if match != None:
-                    self.crashAddress = long(match.group(1), 16)
+                    try:
+                        self.crashAddress = long(match.group(1), 16)
+                    except TypeError:
+                        self.crashAddress = 0
 
                     # Crash Address and Registers are in the same line for ASan
                     match = re.search(asanRegisterPattern, traceLine)
