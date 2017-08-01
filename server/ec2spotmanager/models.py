@@ -139,12 +139,16 @@ class PoolConfiguration(models.Model):
             obj = getattr(self, obj_field)
             if obj:
                 setattr(self, field, json.dumps(obj))
+            else:
+                setattr(self, field, None)
 
         for field in self.list_config_fields:
             obj_field = "%s_list" % field
             obj = getattr(self, obj_field)
             if obj:
                 setattr(self, field, json.dumps(obj))
+            else:
+                setattr(self, field, None)
 
         super(PoolConfiguration, self).save(*args, **kwargs)
 
@@ -172,6 +176,10 @@ class PoolConfiguration(models.Model):
             # creating the directory. We use os.path.split to keep the
             # original filename assigned when saving the file.
             self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1], ContentFile(self.ec2_userdata), save=False)
+        elif self.ec2_userdata_file:
+            self.ec2_userdata_file.delete()
+            self.ec2_userdata_file = None
+
         self.save()
 
     def isCyclic(self):
