@@ -469,23 +469,19 @@ class ASanCrashInfo(CrashInfo):
         '''
         CrashInfo.__init__(self)
 
-        if stdout != None:
+        if stdout is not None:
             self.rawStdout.extend(stdout)
 
-        if stderr != None:
+        if stderr is not None:
             self.rawStderr.extend(stderr)
 
-        if crashData != None:
+        if crashData is not None:
             self.rawCrashData.extend(crashData)
 
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        if crashData:
-            asanOutput = crashData
-        else:
-            asanOutput = stderr
-
+        asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
                                    \sAddressSanitizer:.*\s
@@ -554,7 +550,7 @@ class ASanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
-        if not self.backtrace and self.crashAddress != None:
+        if not self.backtrace and self.crashAddress is not None:
             # We've seen the crash address but no frames, so this is likely
             # a crash on the heap with no symbols available. Add one artificial
             # frame so it doesn't show up as "No crash detected"
