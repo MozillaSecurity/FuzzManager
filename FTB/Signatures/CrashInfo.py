@@ -486,6 +486,7 @@ class ASanCrashInfo(CrashInfo):
         else:
             asanOutput = stderr
 
+
         asanCrashAddressPattern = r"""(?x)
                                    \sAddressSanitizer:.*\s
                                      (?:on\saddress             # The most common format, used for all overflows
@@ -495,29 +496,31 @@ class ASanCrashInfo(CrashInfo):
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
                                        |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
-                                   (\s*0x([0-9a-f]+))*"""
+                                   (\s*0x([0-9a-f]+))?"""
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
         expectedIndex = 0
+        reportFound = False
         for traceLine in asanOutput:
-            if self.crashAddress == None:
+            if not reportFound:
                 match = re.search(asanCrashAddressPattern, traceLine)
-                if match != None:
-                    try:
-                        self.crashAddress = long(match.group(1), 16)
-                    except TypeError:
-                        self.crashAddress = 0
+                if match is None:
+                    # Not in the ASan output yet.
+                    # Some lines in eg. debug+asan builds might error if we continue.
+                    continue
+                reportFound = True
+                try:
+                    self.crashAddress = long(match.group(1), 16)
+                except TypeError:
+                    pass # No crash address available
 
-                    # Crash Address and Registers are in the same line for ASan
-                    match = re.search(asanRegisterPattern, traceLine)
-                    if match != None:
-                        self.registers["pc"] = long(match.group(1), 16)
-                        self.registers[match.group(2)] = long(match.group(3), 16)
-                        self.registers[match.group(4)] = long(match.group(5), 16)
-                    else:
-                        # We might be dealing with one of the few ASan traces that don't emit registers
-                        pass
-                continue  # Not in the ASan output yet. Some lines in eg. debug+asan builds might error if we continue.
+                # Crash Address and Registers are in the same line for ASan
+                match = re.search(asanRegisterPattern, traceLine)
+                # Collect register values if they are available in the ASan trace
+                if match is not None:
+                    self.registers["pc"] = long(match.group(1), 16)
+                    self.registers[match.group(2)] = long(match.group(3), 16)
+                    self.registers[match.group(4)] = long(match.group(5), 16)
 
             parts = traceLine.strip().split()
 
