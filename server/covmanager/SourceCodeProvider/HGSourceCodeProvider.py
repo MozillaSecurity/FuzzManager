@@ -1,5 +1,5 @@
 '''
-GIT Source Code Provider
+HG Source Code Provider
 
 @author:     Christian Holler (:decoder)
 
@@ -19,13 +19,13 @@ import subprocess
 
 from SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
 
-class GITSourceCodeProvider(SourceCodeProvider):
+class HGSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location):
-        super(GITSourceCodeProvider, self).__init__(location)
+        super(HGSourceCodeProvider, self).__init__(location)
 
     def getSource(self, filename, revision):
         try:
-            return subprocess.check_output(["git", "show", "%s:%s" % (revision, filename)], cwd=self.location)
+            return subprocess.check_output(["hg", "cat", "-r", revision, filename], cwd=self.location)
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
@@ -36,12 +36,12 @@ class GITSourceCodeProvider(SourceCodeProvider):
 
     def testRevision(self, revision):
         try:
-            subprocess.check_output(["git", "show", revision], cwd=self.location, stderr=subprocess.STDOUT)
+            subprocess.check_output(["hg", "log", "-r", revision], cwd=self.location, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return False
         return True
 
     def update(self):
         # TODO: This will fail without remotes
-        subprocess.check_call(["git", "fetch"], cwd=self.location)
+        subprocess.check_call(["hg", "pull"], cwd=self.location)
 
