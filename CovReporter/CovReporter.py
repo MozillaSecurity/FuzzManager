@@ -178,7 +178,11 @@ class CovReporter(Reporter):
             # Calculate two more values based on total/covered because we need
             # them in the UI later anyway and can save some time by doing it here.
             node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
-            node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
+
+            if node["linesTotal"] > 0:
+                node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
+            else:
+                node["coveragePercent"] = 0.0
 
         calculate_summary_fields(ret)
 
