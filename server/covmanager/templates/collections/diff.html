@@ -1,0 +1,335 @@
+{% extends 'layouts/layout_base.html' %}
+
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+<script src="https://unpkg.com/vue-chartjs@2.6.0/dist/vue-chartjs.js"></script>-->
+
+{% block css.custom %}
+  <link rel='stylesheet' href='/static/css/covmanager.css'>
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+    <template v-if="loading">
+      <div class="loader">Loading...</div>
+    </template>
+      <template v-else-if="source">
+      <table class="table table-coverage">
+        <tbody>
+          <tr v-for="(line, line_nr) in source">
+            <td :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
+              !{ line_nr }!
+            </td>
+            <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
+              <span class="label label-success" v-if="cov_hits(line_nr)"> <!-- FIXME -->
+                !{ cov_hits(line_nr) | formatNumber }!
+              </span>
+            </td>
+            <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
+              <div v-html="highlight_code(line)">
+                !{ highlight_code(line) }!
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
+    <template v-else>
+      <div v-show="search">
+        <input type="text" ref="search" class="form-control" v-model="search"/>
+      </div>
+      <line-chart></line-chart>
+      <table class="table table-condensed table-hover table-db">
+        <thead>
+          <tr>
+            <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
+            <th @click="sortBy('linesTotal')" :class="{ active: sortKey == 'linesTotal' }">
+              <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
+                <i class="glyphicon glyphicon-menu-hamburger"></i>
+              </span>
+            </th>
+            <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
+            <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
+            <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
+          </tr>
+          <tr v-if="show_top_nav">
+            <td @click="navigate_top">
+              <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
+            </td>
+        </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(value, path) in ordered_collection">
+            <td @click="navigate(value.name)">
+              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ value.name }!</span>
+            </td>
+            <td>!{ value.linesTotal | formatNumber }!</td>
+            <td>!{ value.linesCovered | formatNumber }!</td>
+            <td>!{ value.linesMissed | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-coverage-foot" v-show="!search">
+          <tr>
+            <td><strong>Summary</strong></td>
+            <td>!{ coverage.linesTotal | formatNumber }!</td>
+            <td>!{ coverage.linesCovered | formatNumber }!</td>
+            <td>!{ coverage.linesMissed | formatNumber }!</td>
+            <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
+          </tr>
+      </tfoot>
+      </table>
+    </template>
+</div>
+
+<script>
+let APIURL = '{% url 'covmanager:collections_diff_api' "" %}'
+
+function getParameterByName(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+Vue.component('line-chart', {
+  extends: VueChartJs.Line,
+  mounted () {
+    this.renderChart({
+      labels: covmanager.chartdata.labels,
+      datasets: covmanager.chartdata.datasets
+    },
+    {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          gridLines: {
+            display: true
+          }
+        }],
+        xAxes: [ {
+          gridLines: {
+            display: false
+          }
+        }]
+      },
+      tooltips: {
+        callbacks: {
+          afterLabel: function(item, chart) {
+            if (item.index > 0)
+              return "\u0394 to last: " + covmanager.chartdata.datasets[item.datasetIndex].deltas[item.index - 1] + " %";
+          }
+        }
+      }
+    })
+  }
+})
+
+let covmanager = new Vue({
+  el: '#main',
+  data: {
+    path: window.location.hash.substr(1),
+    coverage: [],
+    source: null,
+    chartdata: {},
+    search: "",
+    sortKey: "",
+    reverse: false,
+    show_top_nav: false,
+    loading: false
+  },
+  created: function () {
+    window.addEventListener('keydown', this.keydown)
+    window.addEventListener('keyup',   this.keyup)
+    this.fetch()
+  },
+  watch: {
+    path: 'fetch'
+  },
+  filters: {
+    formatNumber: function (v) {
+      if (Number.isInteger(v)) {
+        return parseInt(v).toLocaleString()
+      }
+    }
+  },
+  computed: {
+    current_path: function () {
+      return this.path.split("/")
+    },
+    filtered_children: function () {
+      let result = {},
+          path,
+          children = this.coverage.children
+
+      if (!this.search) {
+        return children
+      }
+
+      for (path in children) {
+        if (children.hasOwnProperty(path) && path.indexOf(this.search) !== -1) {
+            result[path] = children[path]
+        }
+      }
+
+      return result
+    },
+    ordered_collection: function () {
+      return _.orderBy(this.filtered_children, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    }
+  },
+  methods: {
+    fetch: _.throttle (function () {
+      this.loading = true
+      fetch(APIURL + this.path + "?ids=" + getParameterByName("ids") , {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
+        window.history.back()
+      }).then(json => {
+        this.coverage = json["coverage"]
+        if ("source" in this.coverage) {
+          this.source = this.coverage["source"].split('\n')
+        } else {
+          this.source = null
+        }
+
+        if ("ttdata" in json) {
+          this.chartdata["labels"] = []
+          this.chartdata["datasets"] = [
+            { 
+              label: 'Total Coverage (%)',
+              backgroundColor: '#f87979',
+              data: [],
+              deltas: [],
+            }
+          ];
+
+          for (let i = 0; i < json["ttdata"].length; ++i) {
+            this.chartdata["labels"].push(json["ttdata"][i]["name"]);
+            this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
+            if (i > 0)
+              this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
+          }
+        }
+
+        this.loading = false
+
+        // If we have a path, then we need to show the top navigation link
+        this.show_top_nav = !!this.path
+
+        // Start with an empty search after fetching new data
+        this.search = ""
+      })
+    }, 500),
+    navigate: function (location) {
+      console.log(this.coverage)
+      window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
+    },
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
+    navigate_top: function () {
+      let path_components = window.location.hash.split("/")
+
+      // Pop one non-empty component or stop when list is empty.
+      while (path_components && !path_components.pop()) {}
+
+      window.location.hash = path_components.join("/") + "/"
+    },
+    get_extension: function (path) {
+      return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
+    },
+    cov_pct_style: function (pct) { // Todo: Add to a CSS class.
+      let status_color
+      if (pct == 100.00) {
+        status_color = '#edfde7'
+      } else if (pct >= 80.00) {
+        status_color = '#fafde8'
+      } else {
+        status_color = '#fbece9'
+      }
+      return 'background: linear-gradient(90deg, ' + status_color + ' ' + pct + '%, white ' + pct + '%)'
+    },
+    cov_hits: function (i) {
+      return this.coverage.coverage[i] > 0 ? this.coverage.coverage[i] : ''
+    },
+    add_coverage_status_class: function (i) {
+      let classArray = this.class ? this.class.split(' ') : []
+      if (this.coverage.coverage[i] > 0) {           // Line is covered.
+        classArray.push("cov-status-covered")
+      }
+      else if (this.coverage.coverage[i] === 0) {    // Line is coverable but was not covered.
+        classArray.push("cov-status-non-coverable")
+      } else {                                       // Line is not coverable.
+      }
+      return classArray
+    },
+    add_path_class: function (path) {
+      let classArray = this.class ? this.class.split(' ') : []
+      if (this.get_extension(path)) {
+        classArray.push("glyphicon-file")
+      } else {
+        classArray.push("glyphicon-folder-close")
+      }
+      return classArray
+    },
+    highlight_code: function (code) {
+      return Prism.highlight(code, Prism.languages.cpp)
+    },
+    keydown: function (e) {
+      if (!e) {
+        e = window.event
+      }
+      if (!e.metaKey) {
+        if(e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
+          if (!this.search) {
+            let str = String.fromCharCode(e.keyCode)
+            if (!e.shiftKey) {
+              str = str.toLowerCase()
+            }
+            this.search = str
+          } else {
+            this.$refs.search.focus()
+          }
+        } else if (e.keyCode == 13) {
+          // ENTER was pressed, navigate
+          let target = Object.keys(this.filtered_children)[0]
+          if (target) {
+            this.navigate(target)
+          }
+        }
+      }
+    },
+    keyup: function (e) {
+      // We use the |keyup| event instead of |keydown| here in order to not collide with Vue's internal updating of
+      // the search model on input events.
+      if (!e) {
+        e = window.event
+      }
+      if (!e.metaKey) {
+        if (this.search && e.keyCode == 27) {
+          // ESC was pressed, clear search.
+          this.search = ""
+        }
+      }
+    }
+  }
+})
+
+// This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
+window.onhashchange = function() {
+  covmanager.path = window.location.hash.substr(1)
+}
+
+</script>
+
+{% endblock body_content %}
