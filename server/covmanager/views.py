@@ -102,10 +102,13 @@ def collections_diff_api(request, path):
             if k != "children":
                 ctooltipdata[k] = coverage[k]
 
+        ctooltipdata["label"] = "No description"
+        ctooltipdata["created"] = collection.created.strftime("%b. %-d %Y %-I:%M %p")
+        if collection.description:
+            ctooltipdata["label"] = collection.description
+
         if tooltipdata:
             # Store delta to previous data point
-            print(type(ctooltipdata["coveragePercent"]))
-            print(type(tooltipdata[-1]["coveragePercent"]))
             ctooltipdata["delta_coveragePercent"] = round(ctooltipdata["coveragePercent"] - tooltipdata[-1]["coveragePercent"], 4)
 
             # TODO: More deltas?

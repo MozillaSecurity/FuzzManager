@@ -120,6 +120,7 @@ Vue.component('line-chart', {
       },
       tooltips: {
         callbacks: {
+          beforeLabel: function(item, chart) { return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]; },
           afterLabel: function(item, chart) {
             if (item.index > 0)
               return "\u0394 to last: " + covmanager.chartdata.datasets[item.datasetIndex].deltas[item.index - 1] + " %";
@@ -212,12 +213,14 @@ let covmanager = new Vue({
               backgroundColor: '#f87979',
               data: [],
               deltas: [],
+              created: [],
             }
           ];
 
           for (let i = 0; i < json["ttdata"].length; ++i) {
-            this.chartdata["labels"].push(json["ttdata"][i]["name"]);
+            this.chartdata["labels"].push(json["ttdata"][i]["label"]);
             this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
+            this.chartdata["datasets"][0]["created"].push(json["ttdata"][i]["created"]);
             if (i > 0)
               this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
           }
