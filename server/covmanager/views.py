@@ -110,6 +110,9 @@ def collections_diff_api(request, path):
         if tooltipdata:
             # Store deltas to previous data points
             for k in tooltipdata[-1]:
+                if k not in ctooltipdata:
+                    continue
+
                 x = tooltipdata[-1][k]
                 if type(x) == int:
                     ctooltipdata["delta_" + k] = ctooltipdata[k] - x
