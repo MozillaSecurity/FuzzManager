@@ -105,14 +105,17 @@ Vue.component('line-chart', {
       maintainAspectRatio: false,
       scales: {
         yAxes: [{
-          ticks: {
-            beginAtZero: true
+            position: "left", "id": "y-axis-0",
+            ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
+            gridLines: { display: true },
           },
-          gridLines: {
-            display: true
-          }
-        }],
-        xAxes: [ {
+          {
+            position: "right", "id": "y-axis-1",
+            ticks: { beginAtZero: true },
+            gridLines: { display: true },
+          },
+        ],
+        xAxes: [{
           gridLines: {
             display: false
           }
@@ -122,8 +125,10 @@ Vue.component('line-chart', {
         callbacks: {
           beforeLabel: function(item, chart) { return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]; },
           afterLabel: function(item, chart) {
-            if (item.index > 0)
-              return "\u0394 to last: " + covmanager.chartdata.datasets[item.datasetIndex].deltas[item.index - 1] + " %";
+            if (item.index > 0) {
+              let dataset = covmanager.chartdata.datasets[item.datasetIndex];
+              return "\u0394 to last: " + dataset.deltas[item.index - 1] + " " + dataset.unit;
+            }
           }
         }
       }
@@ -210,19 +215,41 @@ let covmanager = new Vue({
           this.chartdata["datasets"] = [
             { 
               label: 'Total Coverage (%)',
-              backgroundColor: '#f87979',
+              borderColor: '#f87979',
+              fill: 'false',
+              pointRadius: 5,
+              pointBackgroundColor: '#f87979',
+              yAxisID: 'y-axis-0',
               data: [],
               deltas: [],
               created: [],
-            }
+              unit: '%',
+            },
+            { 
+              label: 'Lines not covered',
+              borderColor: '#6699ff',
+              fill: 'false',
+              pointRadius: 5,
+              pointBackgroundColor: '#6699ff',
+              yAxisID: 'y-axis-1',
+              data: [],
+              deltas: [],
+              created: [],
+              unit: 'lines',
+            },
           ];
 
           for (let i = 0; i < json["ttdata"].length; ++i) {
             this.chartdata["labels"].push(json["ttdata"][i]["label"]);
+
             this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
+            this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
+
             this.chartdata["datasets"][0]["created"].push(json["ttdata"][i]["created"]);
-            if (i > 0)
+            if (i > 0) {
               this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
+              this.chartdata["datasets"][1]["deltas"].push(json["ttdata"][i]["delta_linesMissed"]);
+            }
           }
         }
 

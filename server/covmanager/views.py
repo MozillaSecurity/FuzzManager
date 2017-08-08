@@ -108,10 +108,13 @@ def collections_diff_api(request, path):
             ctooltipdata["label"] = collection.description
 
         if tooltipdata:
-            # Store delta to previous data point
-            ctooltipdata["delta_coveragePercent"] = round(ctooltipdata["coveragePercent"] - tooltipdata[-1]["coveragePercent"], 4)
-
-            # TODO: More deltas?
+            # Store deltas to previous data points
+            for k in tooltipdata[-1]:
+                x = tooltipdata[-1][k]
+                if type(x) == int:
+                    ctooltipdata["delta_" + k] = ctooltipdata[k] - x
+                elif type(x) == float:
+                    ctooltipdata["delta_" + k] = round(ctooltipdata[k] - x, 4)
 
         tooltipdata.append(ctooltipdata)
 
