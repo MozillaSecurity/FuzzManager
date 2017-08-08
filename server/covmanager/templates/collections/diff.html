@@ -93,6 +93,25 @@ function getParameterByName(name) {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
+function wrapText(text) {
+    textParts = text.split(' ');
+    maxLength = 10;
+    result = [];
+
+    lastIdx = -1;
+
+    for (let i = 0; i < textParts.length; ++i) {
+      if (lastIdx >= 0 && result[lastIdx].length + textParts[i].length <= maxLength) {
+        result[lastIdx] += textParts[i];
+      } else {
+        result.push(textParts[i]);
+        lastIdx++;
+      }
+    }
+
+    return result;
+}
+
 Vue.component('line-chart', {
   extends: VueChartJs.Line,
   mounted () {
@@ -112,7 +131,7 @@ Vue.component('line-chart', {
           {
             position: "right", "id": "y-axis-1",
             ticks: { beginAtZero: true },
-            gridLines: { display: true },
+            gridLines: { display: false },
           },
         ],
         xAxes: [{
@@ -240,7 +259,7 @@ let covmanager = new Vue({
           ];
 
           for (let i = 0; i < json["ttdata"].length; ++i) {
-            this.chartdata["labels"].push(json["ttdata"][i]["label"]);
+            this.chartdata["labels"].push(wrapText(json["ttdata"][i]["label"]));
 
             this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
             this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
