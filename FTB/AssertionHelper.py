@@ -17,7 +17,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 
-RUST_ASSERTION = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
+RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
+RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
+RE_PID = re.compile(r"^\[\d+\]\s+")
+RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
 
 
 def getAssertion(output):
@@ -40,12 +43,9 @@ def getAssertion(output):
     # JS assertion which we need to ignore in that case
     haveSelfHostedJSAssert = False
 
-    re_assertion = re.compile(r"^ASSERTION \d+: \(.+\)")
-    re_moz_crash = re.compile(r"Hit MOZ_CRASH\(.+\)")
-    re_pid = re.compile(r"^\[\d+\]\s+")
     for line in output:
         # Remove any PID output at the beginning of the line
-        line = re.sub(re_pid, "", line, count=1)
+        line = re.sub(RE_PID, "", line, count=1)
 
         if addNext:
             lastLine.append(line)
@@ -61,7 +61,7 @@ def getAssertion(output):
 
             lastLine = line
             haveFatalAssertion = True
-        elif RUST_ASSERTION.match(line) is not None:
+        elif "panicked at" in line and RE_RUST_ASSERT.match(line) is not None:
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
@@ -82,10 +82,10 @@ def getAssertion(output):
             # Skia assertion
             lastLine = line
             haveFatalAssertion = True
-        elif re.search(re_assertion, line):
+        elif line.startswith("ASSERTION") and RE_ASSERTION.search(line):
             lastLine = line
             haveFatalAssertion = True
-        elif not haveFatalAssertion and re.search(re_moz_crash, line):
+        elif not haveFatalAssertion and "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
         elif "Self-hosted JavaScript assertion info" in line:
