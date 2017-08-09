@@ -31,6 +31,17 @@ WSGIApplicationGroup %{GLOBAL}
 		Satisfy Any
 		Allow from all
 	</Location>
+
+   	<Location /crashmanager/files/>
+		AuthType Basic
+		AuthName "LDAP Login"
+		AuthBasicProvider file ldap
+		AuthUserFile /path/to/.htpasswd
+		# Your LDAP configuration here, including Require directives
+
+		# This user is used by clients to download test cases and signatures
+		Require user fuzzmanager
+	</Location>
 	
 	<Directory /path/to/repo/FuzzManager/server>
 		<Files wsgi.py>
