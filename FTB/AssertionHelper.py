@@ -40,9 +40,12 @@ def getAssertion(output):
     # JS assertion which we need to ignore in that case
     haveSelfHostedJSAssert = False
 
+    re_assertion = re.compile(r"^ASSERTION \d+: \(.+\)")
+    re_moz_crash = re.compile(r"Hit MOZ_CRASH\(.+\)")
+    re_pid = re.compile(r"^\[\d+\]\s+")
     for line in output:
         # Remove any PID output at the beginning of the line
-        line = re.sub(r"^\[\d+\]\s+", "", line, count=1)
+        line = re.sub(re_pid, "", line, count=1)
 
         if addNext:
             lastLine.append(line)
@@ -79,10 +82,10 @@ def getAssertion(output):
             # Skia assertion
             lastLine = line
             haveFatalAssertion = True
-        elif re.search("^ASSERTION \d+: \(.+\)", line):
+        elif re.search(re_assertion, line):
             lastLine = line
             haveFatalAssertion = True
-        elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
+        elif re.search(re_moz_crash, line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
         elif "Self-hosted JavaScript assertion info" in line:
