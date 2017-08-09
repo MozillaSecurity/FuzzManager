@@ -126,8 +126,10 @@ def collections_diff_api(request, path):
 
     add = {}
     for k in start_coverage:
-        if type(start_coverage[k]) == int or type(start_coverage[k]) == float:
+        if type(start_coverage[k]) == int:
             add["delta_" + k] = end_coverage[k] - start_coverage[k]
+        elif type(start_coverage[k]) == float:
+            add["delta_" + k] = round(end_coverage[k] - start_coverage[k], 4)
     start_coverage.update(add)
 
     for child in start_coverage["children"]:
