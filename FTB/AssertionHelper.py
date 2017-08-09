@@ -85,7 +85,7 @@ def getAssertion(output):
         elif re.search(re_assertion, line):
             lastLine = line
             haveFatalAssertion = True
-        elif re.search(re_moz_crash, line):
+        elif not haveFatalAssertion and re.search(re_moz_crash, line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
         elif "Self-hosted JavaScript assertion info" in line:
