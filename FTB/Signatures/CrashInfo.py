@@ -1331,7 +1331,7 @@ class CDBCrashInfo(CrashInfo):
 
 class RustCrashInfo(CrashInfo):
 
-    RE_FRAME = re.compile(r"^( +\d+: (?P<symbol>.+)| +at .*:\d+|stack backtrace:)$")
+    RE_FRAME = re.compile(r"^ +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)(::h[0-9a-f]{16})?$")
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
@@ -1355,17 +1355,19 @@ class RustCrashInfo(CrashInfo):
 
         self.crashAddress = 0 # this is always an assertion, set to 0 to make matching more efficient
 
+        inAssertion = False
         inBacktrace = False
         for line in rustOutput:
             # Start of stack
-            if not inBacktrace:
-                if AssertionHelper.RUST_ASSERTION.match(line) is not None:
-                    inBacktrace = True
+            if not inAssertion:
+                if AssertionHelper.RE_RUST_ASSERT.match(line) is not None:
+                    inAssertion = True
                 continue
 
             frame = self.RE_FRAME.match(line)
-            if frame is None:
+            if frame is None and inBacktrace:
                 break
-
-            if frame.group("symbol"):
-                self.backtrace.append(frame.group("symbol"))
+            elif frame is not None:
+                inBacktrace = True
+                if frame.group("symbol"):
+                    self.backtrace.append(frame.group("symbol"))
