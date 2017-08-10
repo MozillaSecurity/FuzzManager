@@ -8,7 +8,7 @@
 <div id="main" class="panel panel-default">
 	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
     <template v-if="loading">
-      <div class="loader">Loading...</div>
+      <div class="loader"></div>
     </template>
     <template v-else-if="source">
       <table class="table table-coverage">
@@ -35,6 +35,7 @@
       <div v-show="search">
         <input type="text" ref="search" class="form-control" v-model="search"/>
       </div>
+      <line-chart v-if="chartdata"></line-chart>
       <table class="table table-condensed table-hover table-db">
         <thead>
           <tr>
@@ -47,6 +48,7 @@
             <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
             <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
             <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
+            <th v-if="chartdata" @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">Coverage Difference</th>
           </tr>
           <tr v-if="show_top_nav">
             <td @click="navigate_top">
@@ -63,6 +65,7 @@
             <td>!{ value.linesCovered | formatNumber }!</td>
             <td>!{ value.linesMissed | formatNumber }!</td>
             <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
+            <td v-if="chartdata" class="text-right" :style="cov_pct_style(value.delta_coveragePercent)">!{ value.delta_coveragePercent }! %</td>
           </tr>
         </tbody>
         <tfoot class="table-coverage-foot" v-show="!search">
@@ -72,6 +75,7 @@
             <td>!{ coverage.linesCovered | formatNumber }!</td>
             <td>!{ coverage.linesMissed | formatNumber }!</td>
             <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
+            <td v-if="chartdata" class="text-right" :style="cov_pct_style(coverage.delta_coveragePercent)">!{ coverage.delta_coveragePercent }! %</td>
           </tr>
       </tfoot>
       </table>
@@ -79,7 +83,58 @@
 </div>
 
 <script>
+{% if diff_api %}
+let APIURL = '{% url 'covmanager:collections_diff_api' "" %}'
+let GETPARAMS = 'ids={{ ids|join:"," }}';
+{% else %}
 let APIURL = '{% url 'covmanager:collections_browse_api' collectionid "" %}'
+let GETPARAMS = null;
+{% endif %}
+
+Vue.component('line-chart', {
+  extends: VueChartJs.Line,
+  mounted () {
+    this.renderChart({
+      labels: covmanager.chartdata.labels,
+      datasets: covmanager.chartdata.datasets
+    },
+    {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        yAxes: [{
+            position: "left", "id": "y-axis-0",
+            ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
+            gridLines: { display: true },
+          },
+          {
+            position: "right", "id": "y-axis-1",
+            ticks: { beginAtZero: true },
+            gridLines: { display: false },
+          },
+        ],
+        xAxes: [{
+          gridLines: {
+            display: false
+          }
+        }]
+      },
+      tooltips: {
+        callbacks: {
+          beforeLabel: function(item, chart) {
+            return covmanager.chartdata.datasets[item.datasetIndex].created[item.index];
+          },
+          afterLabel: function(item, chart) {
+            if (item.index > 0) {
+              let dataset = covmanager.chartdata.datasets[item.datasetIndex];
+              return "\u0394 to last: " + dataset.deltas[item.index - 1] + " " + dataset.unit;
+            }
+          }
+        }
+      }
+    })
+  }
+})
 
 let covmanager = new Vue({
   el: '#main',
@@ -87,6 +142,7 @@ let covmanager = new Vue({
     path: window.location.hash.substr(1),
     coverage: [],
     source: null,
+    chartdata: null,
     search: "",
     sortKey: "",
     reverse: false,
@@ -134,9 +190,16 @@ let covmanager = new Vue({
     }
   },
   methods: {
+    apiurl: function() {
+      let url = APIURL + this.path;
+      if (GETPARAMS) {
+        url += "?" + GETPARAMS;
+      }
+      return url;
+    },
     fetch: _.throttle (function () {
       this.loading = true
-      fetch(APIURL + this.path, {
+      fetch(this.apiurl(), {
         method: 'GET',
         credentials: 'same-origin'
       }).then(response => {
@@ -152,6 +215,50 @@ let covmanager = new Vue({
           this.source = this.coverage["source"].split('\n')
         } else {
           this.source = null
+        }
+
+        if ("ttdata" in json) {
+          this.chartdata = {}
+          this.chartdata["labels"] = []
+          this.chartdata["datasets"] = [
+            {
+              label: 'Total Coverage (%)',
+              borderColor: '#f87979',
+              fill: 'false',
+              pointRadius: 5,
+              pointBackgroundColor: '#f87979',
+              yAxisID: 'y-axis-0',
+              data: [],
+              deltas: [],
+              created: [],
+              unit: '%',
+            },
+            {
+              label: 'Lines not covered',
+              borderColor: '#6699ff',
+              fill: 'false',
+              pointRadius: 5,
+              pointBackgroundColor: '#6699ff',
+              yAxisID: 'y-axis-1',
+              data: [],
+              deltas: [],
+              created: [],
+              unit: 'lines',
+            },
+          ];
+
+          for (let i = 0; i < json["ttdata"].length; ++i) {
+            this.chartdata["labels"].push(this.wrap_text(json["ttdata"][i]["label"]));
+
+            this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
+            this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
+
+            this.chartdata["datasets"][0]["created"].push(json["ttdata"][i]["created"]);
+            if (i > 0) {
+              this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
+              this.chartdata["datasets"][1]["deltas"].push(json["ttdata"][i]["delta_linesMissed"]);
+            }
+          }
         }
 
         this.loading = false
@@ -218,6 +325,20 @@ let covmanager = new Vue({
     },
     highlight_code: function (code) {
       return Prism.highlight(code, Prism.languages.cpp)
+    },
+    wrap_text: function(text, maxlen) {
+      textParts = text.split(' ');
+      result = [];
+      lastIdx = -1;
+      for (let i = 0; i < textParts.length; ++i) {
+        if (lastIdx >= 0 && result[lastIdx].length + textParts[i].length <= maxlen) {
+          result[lastIdx] += textParts[i];
+        } else {
+          result.push(textParts[i]);
+          lastIdx++;
+        }
+      }
+      return result;
     },
     keydown: function (e) {
       if (!e) {
