@@ -37,11 +37,11 @@ class Collection(models.Model):
     tools = models.ManyToManyField(Tool)
     client = models.ForeignKey(Client)
     coverage = models.ForeignKey(CollectionFile)
-    
+
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
         self.content = None
-        
+
         # A list of fields that can be checked by a simple search query
         self.simple_query_fields = [
             "created",
@@ -63,7 +63,7 @@ class Collection(models.Model):
         self.coverage.file.open(mode='rb')
         self.content = json.load(self.coverage.file)
         self.coverage.file.close()
-        
+
     def annotateSource(self, path, coverage):
         """
         Annotate the source code to the given (leaf) coverage object by querying
@@ -81,7 +81,7 @@ class Collection(models.Model):
         """
         provider = self.repository.getInstance()
         coverage["source"] = provider.getSource(path, self.revision)
-        
+
     def subset(self, path):
         """
         Calculate a subset of the coverage stored in this collection
@@ -101,24 +101,46 @@ class Collection(models.Model):
         # Load coverage from disk if we haven't done that yet
         if not self.content:
             self.loadCoverage()
-        
+
         ret = self.content["children"]
-       
+
         names = [x for x in path.split("/") if x != ""]
-        
+
         if not names:
             # Querying an empty path means requesting the whole collection
             return self.content
-        
+
         try:
             for name in names[:-1]:
                 ret = ret[name]["children"]
             ret = ret[names[-1]]
         except KeyError:
             return None
-        
+
         return ret
-    
+
+    @staticmethod
+    def remove_childrens_children(coverage):
+        """
+        This method strips the children of any child nodes in the given coverage.
+        Doing so saves data and processing time for other algorithms as for many
+        views, the children of children are not relevant (only one depth of view
+        at a time).
+        
+        @type coverage: dict
+        @param coverage: A coverage data object in server-side storage format.
+                         This object is directly modified by this method for
+                         for performance. If you need the original object, you
+                         must create a copy and pass it to this method instead.
+        """
+        if "children" in coverage:
+            for child in coverage["children"]:
+                if "children" in coverage["children"][child]:
+                    # We don't remove the "children" key here because it is
+                    # still required (e.g. by the UI) to determine if a child
+                    # is a folder itself or not.
+                    coverage["children"][child]["children"] = True
+
     @staticmethod
     def strip(coverage):
         """
@@ -131,7 +153,7 @@ class Collection(models.Model):
                          for performance. If you need the original object, you
                          must create a copy and pass it to this method instead.
         """
-        if "children" in coverage:
+        if "children" in coverage and type(coverage["children"]) != bool:
             for child in coverage["children"]:
                 Collection.strip(coverage["children"][child])
         else:
