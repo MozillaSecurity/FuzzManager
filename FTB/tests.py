@@ -42,6 +42,11 @@ v8Abort = """
 #
 """
 
+chakraAssert = """
+ASSERTION 15887: (/srv/repos/ChakraCore/lib/Runtime/ByteCode/ByteCodeEmitter.cpp, line 4827) scope->HasInnerScopeIndex()
+ Failure: (scope->HasInnerScopeIndex())
+"""
+
 windowsPathAssertFwdSlashes = """
 Assertion failure: block->graph().osrBlock(), at c:/Users/fuzz1win/trees/mozilla-central/js/src/jit/Lowering.cpp:4691
 """
@@ -90,6 +95,15 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
 
         self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
         self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
+
+class AssertionHelperTestChakraAssert(unittest.TestCase):
+    def runTest(self):
+        err = chakraAssert.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = 'ASSERTION [0-9]{2,}: \\\\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) scope\\->HasInnerScopeIndex\\(\\)'
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
 
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
     def runTest(self):
