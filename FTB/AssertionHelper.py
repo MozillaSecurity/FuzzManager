@@ -189,6 +189,9 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append('"' + pathPattern)
         replacementPatterns.append(',' + pathPattern)
 
+        # Some implementations wrap the path into parentheses
+        replacementPatterns.append('\\(' + pathPattern)
+
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.
         replacementPatterns.append("[0-9]{2,}")
