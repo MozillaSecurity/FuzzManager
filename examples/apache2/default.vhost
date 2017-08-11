@@ -33,11 +33,6 @@ WSGIApplicationGroup %{GLOBAL}
 		Satisfy Any
 		Allow from all
 	</Location>
-
-	<Location /crashmanager/files/>
-		Satisfy Any
-		Allow from all
-	</Location>
 	
 	<Directory /path/to/repo/FuzzManager/server>
 		<Files wsgi.py>
