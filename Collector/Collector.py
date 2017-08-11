@@ -154,8 +154,8 @@ class Collector():
         '''
         url = "%s://%s:%d/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
 
-        response = requests.get(url, stream=True, headers={'Authorization': 'Token {}'.format(self.serverAuthToken)})
-
+        # We need to use basic authentication here because these files are directly served by the HTTP server
+        response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
