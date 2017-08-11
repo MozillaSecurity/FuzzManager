@@ -98,7 +98,7 @@ def main(arguments):
             else:
                 User.objects.create_user(username, email, password)
 
-        output = subprocess.check_output(['htpasswd', '-cb', '.htpasswd', username, password])
+        output = subprocess.check_output(['htpasswd', '-b', '.htpasswd', username, password])
         print output
         
  
