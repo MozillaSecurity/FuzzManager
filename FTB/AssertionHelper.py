@@ -17,7 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 
-RE_ASSERTION = re.compile(r"^ASSERTION \d+:.+")
+RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
 RE_PID = re.compile(r"^\[\d+\]\s+")
 RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
