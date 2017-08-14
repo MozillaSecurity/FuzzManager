@@ -1,0 +1,224 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block css.custom %}
+  <link rel='stylesheet' href='/static/css/covmanager.css'>
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+    <div v-if="repository">
+      <span>Repository <strong>!{ repository }!</strong> selected.</span>
+
+      <div>
+        <span>Enter the revision of the patch to analyze: </span>
+        <input type="text" class="form-control" v-model="revision"/>
+      </div>
+
+      <div v-show="revision">
+        <div v-if="tool">
+          <span>Tool <strong>!{ tool }!</strong> selected.</span>
+        </div>
+        <div v-else>
+          <span>Enter a tool name: </span>
+          <input type="text" class="form-control" v-model="tool_search" v-on:keyup.enter="set_tool_from_search"/>
+          <div v-show="tool_search_results">
+            <div v-for="name in tool_search_results" v-on:click="set_tool(name)">!{ name }!</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div v-else>
+      <span>Enter a repository name: </span>
+      <input type="text" class="form-control" v-model="repository_search" v-on:keyup.enter="set_repository_from_search"/>
+      <div v-show="repository_search_results">
+        <div v-for="name in repository_search_results" v-on:click="set_repository(name)">!{ name }!</div>
+      </div>
+    </div>
+
+    <template v-if="loading">
+      <div class="loader"></div>
+    </template>
+    <template v-else-if="analysis_results">
+      <table class="table table-condensed table-hover table-db">
+        <thead>
+          <tr>
+            <th style="width: 50%">Collection ID</th>
+            <th>Tools</th>
+            <th>Analysis Status</th>
+            <th>Details</th>
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="analysis_result in analysis_results">
+            <td>!{ analysis_result.collection.id }!</td>
+            <td>!{ analysis_result.collection.tools }!</td>
+            <td>
+              <div v-if="analysis_result.status">Success</div>
+              <div v-else>Failed</div>
+            </td>
+            <td><div v-for="detail in analysis_result.details">!{ detail }!</div></td>
+            <td><div v-for="(link, filename) in analysis_result.links"><a :href="link" target="_blank">!{ filename }!</a></div></td>
+          </tr>
+        </tbody>
+    </template>
+</div>
+
+<script>
+let APIURLS = {
+   repository_search : '{% url 'covmanager:repositories_search_api' %}',
+   tool_search : '{% url 'covmanager:tools_search_api' %}',
+   collections : '{% url 'covmanager:collections_api' %}',
+   collections_patch_api : '{% url 'covmanager:collections_patch' %}' + "api/",
+   browse: '{% url 'covmanager:collections_browse' 0 %}', // TODO: It would be nice to solve this more cleanly
+}
+
+let covmanager = new Vue({
+  el: '#main',
+  data: {
+    repository: null,
+    repository_search: "",
+    repository_search_results: [],
+
+    revision: null,
+
+    tool: null,
+    tool_search: "",
+    tool_search_results: [],
+
+    collections: [],
+    analysis_results: null,
+
+    loading: false
+  },
+  watch: {
+    repository_search: 'update_repository_search',
+    tool_search: 'update_tool_search',
+    tool: 'fetch_collections',
+  },
+  methods: {
+    update_repository_search: _.throttle (function () {
+      fetch(APIURLS.repository_search + "?name=" + this.repository_search, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.repository_search_results = json["results"]
+      })
+    }, 500),
+    set_repository: function(name) {
+       this.repository_search_results = []
+       this.repository_search = ""
+       this.repository = name
+    },
+    set_repository_from_search: function() {
+      if (this.repository_search_results) {
+          this.set_repository(this.repository_search_results[0])
+      }
+    },
+    update_tool_search: _.throttle (function () {
+      fetch(APIURLS.tool_search + "?name=" + this.tool_search, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.tool_search_results = json["results"]
+      })
+    }, 500),
+    set_tool: function(name) {
+       this.tool_search_results = []
+       this.tool_search = ""
+       this.tool = name
+    },
+    set_tool_from_search: function() {
+      if (this.tool_search_results) {
+        this.set_tool(this.tool_search_results[0])
+      }
+    },
+    fetch_collections: _.throttle (function () {
+      this.loading = true
+
+      fetch(APIURLS.collections
+        + "?tools__name=" + this.tool
+        + "&repository__name=" + this.repository, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.collections = json["results"]
+        analysis_results = []
+
+        let revision = this.revision
+        var requests = this.collections.reverse().map(function(collection, i) {
+          return fetch(APIURLS.collections_patch_api + collection.id + "/" + revision, {
+              method: 'GET',
+              credentials: 'same-origin'
+          }).then(response => {
+            if (response.ok) {
+              return response.json()
+            }
+            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+          }).then(json => {
+            analysis_result = {
+              collection: collection,
+              status: true,
+              details: [],
+              links: {},
+            }
+
+            if ("results" in json) {
+              analysis_result.details.push(json["percentage_missed"] + " %")
+
+              for (let i = 0; i < json["results"].length; ++i) {
+                let result = json["results"][i]
+
+                if (result["missed"]) {
+                  let link = APIURLS.browse.replace("/0/", "/" + collection.id + "/")
+
+                  let highlight_lines = result["missed"]
+
+                  link += "#" + result["filename"]
+                  link += "&" + highlight_lines[0]
+                  link += "&" + highlight_lines.join(",")
+
+                  analysis_result.links[result["filename"]] = link
+                }
+              }
+            } else if ("error" in json) {
+              analysis_result.status = false
+              analysis_result.details.push(json["error"])
+              if ("filename" in json) {
+                analysis_result.details.push(json["filename"])
+              }
+            }
+
+            analysis_results.push(analysis_result)
+          })
+        });
+
+        let instance = this
+        Promise.all(requests).then(function() {
+          instance.analysis_results = analysis_results
+          instance.loading = false
+        })
+      })
+    }, 500),
+  }
+})
+</script>
+
+{% endblock body_content %}
