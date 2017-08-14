@@ -75,6 +75,11 @@
   background: #fcc;
 }
 
+.cov-line-highlighted {
+  background: #33ff;
+  font-weight: bold;
+  color: white;
+}
 
 /*
  * Spinner

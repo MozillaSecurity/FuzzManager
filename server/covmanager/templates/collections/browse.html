@@ -14,7 +14,7 @@
       <table class="table table-coverage">
         <tbody>
           <tr v-for="(line, line_nr) in source">
-            <td :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
+            <td :id="line_nr" :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
               !{ line_nr }!
             </td>
             <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
@@ -139,7 +139,9 @@ Vue.component('line-chart', {
 let covmanager = new Vue({
   el: '#main',
   data: {
-    path: window.location.hash.substr(1),
+    path: window.location.hash.substr(1).split('&')[0],
+    line: null,
+    highlight_lines: { previous: [], current: [] },
     coverage: [],
     source: null,
     chartdata: null,
@@ -155,7 +157,29 @@ let covmanager = new Vue({
     this.fetch()
   },
   watch: {
-    path: 'fetch'
+    path: 'fetch',
+    line: 'scroll_to_line',
+    highlight_lines: 'change_highlighted_lines'
+  },
+  updated: function() {
+    // Once we updated the data, check for a line parameter and update the line
+    // field accordingly if the value has changed. Updating the field will
+    // trigger the scrolling function.
+    let hash_components = window.location.hash.substr(1).split('&')
+    if (hash_components.length > 1 && this.line != hash_components[1]) {
+      this.line = hash_components[1]
+    }
+
+    // Also check if we are supposed to highlight any lines
+    if (hash_components.length > 2) {
+      // We always store the current and the previous highlight state when
+      // changing/updating it to ensure that we can undo the previous highlight
+      // without iterating or re-rendering all lines.
+      this.highlight_lines = {
+        previous: this.highlight_lines.current,
+        current:  hash_components[2].split(",")
+      }
+    }
   },
   filters: {
     formatNumber: function (v) {
@@ -279,7 +303,7 @@ let covmanager = new Vue({
       this.sortKey = sortKey
     },
     navigate_top: function () {
-      let path_components = window.location.hash.split("/")
+      let path_components = this.path.split("/")
 
       // Pop one non-empty component or stop when list is empty.
       while (path_components && !path_components.pop()) {}
@@ -340,6 +364,55 @@ let covmanager = new Vue({
       }
       return result;
     },
+    scroll_to_line: function() {
+      if (this.line != null) {
+        let target = $("#" + this.line)
+        if (target) {
+          let target_offset = target.offset().top;
+          let height = target.height();
+          let window_height = $(window).height();
+          let offset;
+
+          if (height < window_height) {
+            offset = target_offset - ((window_height / 2) - (height / 2));
+          } else {
+            offset = target_offset;
+          }
+          $('html, body').animate({ scrollTop : offset }, 700);
+        }
+      } else {
+        window.scroll(0,0)
+      }
+    },
+    change_highlighted_lines: function() {
+      function toggle(line, state) {
+        let lines = []
+        if (line.indexOf('-') > 0) {
+          let start_end = line.split('-')
+          for (let i = start_end[0]; i <= start_end[1]; ++i) {
+            lines.push(i)
+          }
+        } else {
+          lines = [ line ]
+        }
+
+        for (let i = 0; i < lines.length; ++i) {
+          if (lines[i] != "") {
+            let target = $("#" + lines[i])
+            if (target)
+              target.toggleClass("cov-line-highlighted", state)
+          }
+        }
+      }
+
+      for (let i = 0; i < this.highlight_lines.previous.length; ++i) {
+        toggle(this.highlight_lines.previous[i], false)
+      }
+
+      for (let i = 0; i < this.highlight_lines.current.length; ++i) {
+        toggle(this.highlight_lines.current[i], true)
+      }
+    },
     keydown: function (e) {
       if (!e) {
         e = window.event
@@ -382,9 +455,39 @@ let covmanager = new Vue({
 
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
 window.onhashchange = function() {
-  covmanager.path = window.location.hash.substr(1)
-}
+  let hash_components = window.location.hash.substr(1).split("&")
 
+  let new_path = hash_components[0]
+  let new_line = null
+  let new_hl_lines = []
+
+  if (hash_components.length > 1) {
+    new_line = hash_components[1]
+  }
+
+  if (hash_components.length > 2) {
+    new_hl_lines = hash_components[2].split(",")
+  }
+
+  // Prevent reloads when the path hasn't changed
+  if (covmanager.path != new_path) {
+    // If the path has changed, we can ignore the line part of the hash, as it
+    // will be stored in the .updated() function of the Vue once our data is
+    // loaded and rendered.
+    covmanager.path = new_path
+  } else {
+    if (covmanager.line != new_line) {
+      // Scroll to the line only when the path hasn't changed. This happens when
+      // the user manually changes or clears the line part of the hash.
+      covmanager.line = new_line
+    }
+
+    covmanager.highlight_lines = {
+      previous: covmanager.highlight_lines.current,
+      current: new_hl_lines
+    }
+  }
+}
 </script>
 
 {% endblock body_content %}
