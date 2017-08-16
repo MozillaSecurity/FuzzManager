@@ -44,21 +44,21 @@ def json_to_query(json_str):
     This method converts JSON objects into trees of Django Q objects.
     It can be used to provide the user the ability to perform complex
     queries on the database using JSON as a query string.
-    
+
     The decoded JSON may only contain objects. Each object must contain
     an "op" key that describes the operation of the object. This can either
     be "AND", "OR" or "NOT". Right now, it is mandatory to specify an operator
     even if there is only one element in the object.
-    
+
     Any other keys in the object are interpreted as follows:
-    
+
     If the value of the key is an object itself, recursively create a new
     query object and connect all query objects in the current object together
     using the specified operator. In this case, the key itself remains unused.
-    
+
     If the value of the key is a string, directly interpret key and value as
     a query string for the database.
-    
+
     If the operator is "NOT", then only one other key can be present in the
     object. If the operator is "AND" or "OR" and only one other key is present,
     then the operator has no effect.
