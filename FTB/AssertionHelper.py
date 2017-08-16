@@ -92,6 +92,10 @@ def getAssertion(output):
             lastLine = line
             haveSelfHostedJSAssert = True
             haveFatalAssertion = True
+        elif "terminate called after throwing an instance of" in line:
+            # C++ unhandled exception
+            lastLine = line
+            haveFatalAssertion = True
         elif line.startswith("[Non-crash bug] "):
             # Magic string "added" to stderr by some fuzzers.
             lastLine = line

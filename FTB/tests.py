@@ -55,6 +55,12 @@ windowsPathAssertBwSlashes = r"""
 Assertion failure: block->graph().osrBlock(), at c:\Users\fuzz1win\trees\mozilla-central\js\src\jit\Lowering.cpp:4691
 """
 
+cppUnhandledException = """
+terminate called after throwing an instance of 'std::regex_error'
+  what():  regex_error
+TEST-INFO | Main app process: killed by SIGIOT
+"""
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
@@ -137,6 +143,15 @@ class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
              "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
              "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
              ]
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
+    def runTest(self):
+        err = cppUnhandledException.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = "terminate called after throwing an instance of 'std::regex_error'"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
