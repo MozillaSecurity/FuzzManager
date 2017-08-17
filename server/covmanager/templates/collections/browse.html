@@ -284,7 +284,7 @@ let covmanager = new Vue({
           ];
 
           for (let i = 0; i < json["ttdata"].length; ++i) {
-            this.chartdata["labels"].push(this.wrap_text(json["ttdata"][i]["label"]));
+            this.chartdata["labels"].push(this.wrap_text(json["ttdata"][i]["label"], 10));
 
             this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
             this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
@@ -369,8 +369,8 @@ let covmanager = new Vue({
       result = [];
       lastIdx = -1;
       for (let i = 0; i < textParts.length; ++i) {
-        if (lastIdx >= 0 && result[lastIdx].length + textParts[i].length <= maxlen) {
-          result[lastIdx] += textParts[i];
+        if (lastIdx >= 0 && result[lastIdx].length + textParts[i].length + 1 <= maxlen) {
+          result[lastIdx] += ' ' + textParts[i];
         } else {
           result.push(textParts[i]);
           lastIdx++;
