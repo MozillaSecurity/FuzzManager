@@ -269,6 +269,18 @@ let covmanager = new Vue({
               created: [],
               unit: 'lines',
             },
+            {
+              label: 'Total lines (coverable)',
+              borderColor: '#ff9966',
+              fill: 'false',
+              pointRadius: 5,
+              pointBackgroundColor: '#ff9966',
+              yAxisID: 'y-axis-1',
+              data: [],
+              deltas: [],
+              created: [],
+              unit: 'lines',
+            },
           ];
 
           for (let i = 0; i < json["ttdata"].length; ++i) {
@@ -276,11 +288,13 @@ let covmanager = new Vue({
 
             this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
             this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
+            this.chartdata["datasets"][2]["data"].push(json["ttdata"][i]["linesTotal"]);
 
             this.chartdata["datasets"][0]["created"].push(json["ttdata"][i]["created"]);
             if (i > 0) {
               this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
               this.chartdata["datasets"][1]["deltas"].push(json["ttdata"][i]["delta_linesMissed"]);
+              this.chartdata["datasets"][2]["deltas"].push(json["ttdata"][i]["delta_linesTotal"]);
             }
           }
         }
