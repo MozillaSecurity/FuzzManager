@@ -139,9 +139,13 @@ def collections_diff_api(request, path):
 
     for child in start_coverage["children"]:
         add = {}
+
+        if not child in end_coverage["children"]:
+            continue
+
         for k in start_coverage["children"][child]:
             x = start_coverage["children"][child][k]
-            # TODO: This assumes child is in end_coverage, which can fail
+
             if type(x) == int:
                 add["delta_" + k] = end_coverage["children"][child][k] - x
             elif type(x) == float:
