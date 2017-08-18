@@ -35,12 +35,7 @@ def collections_browse(request, collectionid):
 
 @login_required(login_url='/login/')
 def collections_diff(request):
-    # TODO: Selecting IDs here should be based on a search query
-    if "ids" in request.GET:
-        ids = request.GET["ids"].split(",")
-    else:
-        raise Http404("No ids specified.")
-    return render(request, 'collections/browse.html', { 'ids': ids, 'diff_api': True })
+    return render(request, 'collections/browse.html', { 'diff_api': True })
 
 @login_required(login_url='/login/')
 def collections_browse_api(request, collectionid, path):
@@ -305,7 +300,9 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
                            "repository__name",
                            "repository__name__contains",
                            "revision",
+                           "revision__contains",
                            "branch",
+                           "branch__contains",
                            "tools__name",
                            "tools__name__contains",
                            ]
