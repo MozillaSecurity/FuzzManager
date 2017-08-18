@@ -21,7 +21,7 @@ WSGIApplicationGroup %{GLOBAL}
 		# Your LDAP configuration here, including Require directives
 
 		# This user is used by clients to download test cases and signatures
-		Require user fuzzmanager
+		Require valid-user
 	</Location>
 
 	<Location /crashmanager/rest/>
