@@ -18,6 +18,7 @@ import unittest
 
 from GITSourceCodeProvider import GITSourceCodeProvider
 from HGSourceCodeProvider import HGSourceCodeProvider
+from SourceCodeProvider import Utils
 
 class TestGITSourceCodeProvider(unittest.TestCase):
     def setUp(self):
@@ -46,6 +47,13 @@ class TestGITSourceCodeProvider(unittest.TestCase):
                 self.assertTrue(provider.testRevision(revision), "Revision %s is unknown" % revision)
                 self.assertEqual(provider.getSource(filename, revision), tests[filename][revision])
 
+        parents = provider.getParents("deede1283a224184f6654027e23b654a018e81b0")
+        self.assertEqual(len(parents), 1)
+        self.assertEqual(parents[0], "dcbe8ca3dafb34bc90984fb1d74305baf2c58f17")
+
+        parents = provider.getParents("dcbe8ca3dafb34bc90984fb1d74305baf2c58f17")
+        self.assertEqual(len(parents), 0)
+
 class TestHGSourceCodeProvider(unittest.TestCase):
     def setUp(self):
         self.location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg")
@@ -56,11 +64,6 @@ class TestHGSourceCodeProvider(unittest.TestCase):
 
     def runTest(self):
         provider = HGSourceCodeProvider(self.location)
-
-        # c179ace9e260adbabd17426750b5a62403691624
-        # 7a6e60cac4556610ac95734284d4a3ac08bed15c
-        # 05ceb4ce5ed96a107fb40e3b39df7da18f0780c3
-        # c3abaa766d52f438219920d37461b341321d4fef
 
         tests = {
             "a.txt" : {
@@ -77,6 +80,20 @@ class TestHGSourceCodeProvider(unittest.TestCase):
             for revision in tests[filename]:
                 self.assertTrue(provider.testRevision(revision), "Revision %s is unknown" % revision)
                 self.assertEqual(provider.getSource(filename, revision), tests[filename][revision])
+
+        parents = provider.getParents("7a6e60cac455")
+        self.assertEqual(len(parents), 1)
+        self.assertEqual(parents[0], "05ceb4ce5ed96a107fb40e3b39df7da18f0780c3")
+
+        parents = provider.getParents("c3abaa766d52")
+        self.assertEqual(len(parents), 0)
+
+class TestHGDiff(unittest.TestCase):
+    def runTest(self):
+        provider = HGSourceCodeProvider("/home/decoder/Mozilla/repos/mozilla-central-fm")
+        diff = provider.getUnifiedDiff("4f8e0cb21016")
+
+        print(Utils.getDiffLocations(diff))
 
 if __name__ == "__main__":
     unittest.main()

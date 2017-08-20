@@ -45,3 +45,20 @@ class GITSourceCodeProvider(SourceCodeProvider):
         # TODO: This will fail without remotes
         subprocess.check_call(["git", "fetch"], cwd=self.location)
 
+    def getParents(self, revision):
+        try:
+            output = subprocess.check_output(["git", "log", revision, "--format=%P"], cwd=self.location)
+        except subprocess.CalledProcessError:
+            raise UnknownRevisionException
+
+        output = output.splitlines()
+
+        # No parents
+        if not output[0]:
+            return []
+
+        return output[0].split(" ")
+
+    def getUnifiedDiff(self, revision):
+        # TODO: Implement this method for GIT
+        pass

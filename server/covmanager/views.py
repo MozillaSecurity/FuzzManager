@@ -3,7 +3,8 @@ from django.http import Http404
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 import json
-from rest_framework import mixins, viewsets
+import os
+from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
 
@@ -11,6 +12,9 @@ from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, pagin
 
 from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer
+from crashmanager.models import Tool
+
+from SourceCodeProvider import SourceCodeProvider
 
 @login_required(login_url='/login/')
 def index(request):
@@ -31,12 +35,7 @@ def collections_browse(request, collectionid):
 
 @login_required(login_url='/login/')
 def collections_diff(request):
-    # TODO: Selecting IDs here should be based on a search query
-    if "ids" in request.GET:
-        ids = request.GET["ids"].split(",")
-    else:
-        raise Http404("No ids specified.")
-    return render(request, 'collections/browse.html', { 'ids': ids, 'diff_api': True })
+    return render(request, 'collections/browse.html', { 'diff_api': True })
 
 @login_required(login_url='/login/')
 def collections_browse_api(request, collectionid, path):
@@ -155,6 +154,184 @@ def collections_diff_api(request, path):
     data = { "path" : path, "coverage" : start_coverage, "ttdata" : tooltipdata }
     return HttpResponse(json.dumps(data), content_type='application/json')
 
+@login_required(login_url='/login/')
+def collections_patch(request):
+    return render(request, 'collections/patch.html', {})
+
+@login_required(login_url='/login/')
+def collections_patch_api(request, collectionid, patch_revision):
+    collection = get_object_or_404(Collection, pk=collectionid)
+
+    prepatch = "prepatch" in request.GET
+
+    provider = collection.repository.getInstance()
+
+    diff_revision = patch_revision
+    if prepatch:
+        parents = provider.getParents(patch_revision)
+
+        if not parents:
+            raise Http404("Revision has no parents")
+
+        diff_revision = parents[0]
+
+    diff = SourceCodeProvider.Utils.getDiffLocations(provider.getUnifiedDiff(patch_revision))
+
+    total_locations = 0
+    total_missed = 0
+
+    for obj in diff:
+        filename = obj["filename"]
+        locations = obj["locations"]
+
+        prepatch_source = provider.getSource(filename, diff_revision)
+        coll_source = provider.getSource(filename, collection.revision)
+
+        if prepatch_source != coll_source:
+            response = { "error" : "Source code mismatch." }
+            response["filename"] = filename
+            response["prepatch_source"] = prepatch_source
+            response["coll_source"] = coll_source
+            return HttpResponse(json.dumps(response), content_type='application/json')
+
+        (basepath, basename) = os.path.split(filename)
+        coverage = collection.subset(basepath)["children"][basename]["coverage"]
+
+        missed_locations = []
+        not_coverable = []
+
+        for idx in range(0, len(locations)):
+            location = locations[idx]
+            if location > 0 and location < len(coverage):
+                if coverage[location] == 0:
+                    missed_locations.append(location)
+                elif coverage[location] < 0:
+                    if not prepatch:
+                        not_coverable.append(location)
+                        continue
+
+                    # The location specified isn't coverable. We should try to
+                    # find the next coverable location within a certain range
+                    # that isn't on our list anyway.
+
+                    plus_offset = None
+                    minus_offset = None
+
+                    # Maximum offset chosen by fair dice roll
+                    for offset in range(1,4):
+                        if location + offset in locations:
+                            break
+
+                        if location + offset < len(coverage) and coverage[location + offset] >= 0:
+                            plus_offset = offset
+                            break
+
+                    for offset in range(1,4):
+                        if location - offset in locations:
+                            break
+
+                        if location - offset >= 0 and coverage[location - offset] >= 0:
+                            minus_offset = offset
+                            break
+
+                    if plus_offset:
+                        if minus_offset:
+                            if plus_offset >= minus_offset:
+                                locations[idx] = location - offset
+                            else:
+                                locations[idx] = location + offset
+                        else:
+                            locations[idx] = location + offset
+                    elif minus_offset:
+                        locations[idx] = location - offset
+                    else:
+                        # We couldn't find any code close to this that is coverable,
+                        # so we have to consider this code uncoverable and ignore the
+                        # location entirely.
+                        not_coverable.append(location)
+
+                    if coverage[locations[idx]] == 0:
+                        missed_locations.append(locations[idx])
+
+        locations = [x for x in locations if x not in not_coverable]
+
+        obj["missed"] = missed_locations
+        obj["locations"] = locations
+        obj["not_coverable"] = not_coverable
+
+        total_locations += len(locations)
+        total_missed += len(missed_locations)
+
+    results = {
+        "total_locations" : total_locations,
+        "total_missed" : total_missed,
+        "percentage_missed" : round(((float(total_missed) / total_locations) * 100), 2),
+        "results": diff
+    }
+
+    return HttpResponse(json.dumps(results), content_type='application/json')
+
+@login_required(login_url='/login/')
+def repositories_search_api(request):
+    results = []
+
+    if "name" in request.GET:
+        name = request.GET["name"]
+        results = Repository.objects.filter(name__contains=name).values_list('name', flat=True)
+
+    return HttpResponse(json.dumps({"results" : list(results)}), content_type='application/json')
+
+@login_required(login_url='/login/')
+def tools_search_api(request):
+    results = []
+
+    if "name" in request.GET:
+        name = request.GET["name"]
+        results = Tool.objects.filter(name__contains=name).values_list('name', flat=True)
+
+    return HttpResponse(json.dumps({"results" : list(results)}), content_type='application/json')
+
+class CollectionFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts filtering with several collection-specific fields from the URL
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        # Return early on empty queryset
+        if not queryset:
+            return queryset
+
+        filters = {}
+        exactFilterKeys = [
+                           "description__contains",
+                           "repository__name",
+                           "repository__name__contains",
+                           "revision",
+                           "revision__contains",
+                           "branch",
+                           "branch__contains",
+                           "tools__name",
+                           "tools__name__contains",
+                           ]
+
+        for key in exactFilterKeys:
+            if key in request.GET:
+                val = request.QUERY_PARAMS.get(key, None)
+                if val:
+                    filters[key] = val
+
+        if "ids" in request.GET:
+            val = request.QUERY_PARAMS.get("ids", None)
+            if val:
+                filters["pk__in"] = val.split(',')
+
+        if filters:
+            queryset = queryset.filter(**filters).distinct()
+
+        return queryset
+
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
@@ -165,7 +342,11 @@ class CollectionViewSet(mixins.CreateModelMixin,
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
-    filter_backends = [JsonQueryFilterBackend, SimpleQueryFilterBackend]
+    filter_backends = [
+        JsonQueryFilterBackend,
+        SimpleQueryFilterBackend,
+        CollectionFilterBackend
+    ]
 
 class RepositoryViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
