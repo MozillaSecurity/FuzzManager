@@ -162,13 +162,18 @@ def collections_patch(request):
 def collections_patch_api(request, collectionid, patch_revision):
     collection = get_object_or_404(Collection, pk=collectionid)
 
+    prepatch = "prepatch" in request.GET
+
     provider = collection.repository.getInstance()
-    parents = provider.getParents(patch_revision)
 
-    if not parents:
-        raise Http404("Revision has no parents")
+    diff_revision = patch_revision
+    if prepatch:
+        parents = provider.getParents(patch_revision)
 
-    parent = parents[0]
+        if not parents:
+            raise Http404("Revision has no parents")
+
+        diff_revision = parents[0]
 
     diff = SourceCodeProvider.Utils.getDiffLocations(provider.getUnifiedDiff(patch_revision))
 
@@ -179,7 +184,7 @@ def collections_patch_api(request, collectionid, patch_revision):
         filename = obj["filename"]
         locations = obj["locations"]
 
-        prepatch_source = provider.getSource(filename, parent)
+        prepatch_source = provider.getSource(filename, diff_revision)
         coll_source = provider.getSource(filename, collection.revision)
 
         if prepatch_source != coll_source:
@@ -201,6 +206,10 @@ def collections_patch_api(request, collectionid, patch_revision):
                 if coverage[location] == 0:
                     missed_locations.append(location)
                 elif coverage[location] < 0:
+                    if not prepatch:
+                        not_coverable.append(location)
+                        continue
+
                     # The location specified isn't coverable. We should try to
                     # find the next coverable location within a certain range
                     # that isn't on our list anyway.
@@ -312,6 +321,11 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
                 val = request.QUERY_PARAMS.get(key, None)
                 if val:
                     filters[key] = val
+
+        if "ids" in request.GET:
+            val = request.QUERY_PARAMS.get("ids", None)
+            if val:
+                filters["pk__in"] = val.split(',')
 
         if filters:
             queryset = queryset.filter(**filters).distinct()
