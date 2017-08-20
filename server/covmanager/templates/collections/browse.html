@@ -136,10 +136,12 @@ Vue.component('line-chart', {
   }
 })
 
+let pmanager = new HashParamManager()
+
 let covmanager = new Vue({
   el: '#main',
   data: {
-    path: window.location.hash.substr(1).split('&')[0],
+    path: pmanager.get_value("p", ""),
     line: null,
     highlight_lines: { previous: [], current: [] },
     coverage: [],
@@ -165,19 +167,17 @@ let covmanager = new Vue({
     // Once we updated the data, check for a line parameter and update the line
     // field accordingly if the value has changed. Updating the field will
     // trigger the scrolling function.
-    let hash_components = window.location.hash.substr(1).split('&')
-    if (hash_components.length > 1 && this.line != hash_components[1]) {
-      this.line = hash_components[1]
-    }
+    this.line = pmanager.get_value("s")
 
-    // Also check if we are supposed to highlight any lines
-    if (hash_components.length > 2) {
+    // Also check if we are supposed to highlight any lines.
+    let hl = pmanager.get_value("hl", "")
+    if (hl != "") {
       // We always store the current and the previous highlight state when
       // changing/updating it to ensure that we can undo the previous highlight
       // without iterating or re-rendering all lines.
       this.highlight_lines = {
         previous: this.highlight_lines.current,
-        current:  hash_components[2].split(",")
+        current: hl.split(",")
       }
     }
   },
@@ -216,9 +216,12 @@ let covmanager = new Vue({
   methods: {
     apiurl: function() {
       let url = APIURL + this.path;
-      if (GETPARAMS) {
-        url += "?" + GETPARAMS;
+
+      let ids = pmanager.get_value("ids")
+      if (ids) {
+        url += "?ids=" + ids
       }
+
       return url;
     },
     fetch: _.throttle (function () {
@@ -309,8 +312,8 @@ let covmanager = new Vue({
       })
     }, 500),
     navigate: function (location) {
-      console.log(this.coverage)
-      window.location.hash += (this.coverage.children[location]["children"] ? location + '/' : location)
+      pmanager.update_value("p", this.path + (this.coverage.children[location]["children"] ? location + '/' : location))
+      pmanager.update_hash()
     },
     sortBy: function (sortKey) {
       this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
@@ -322,7 +325,8 @@ let covmanager = new Vue({
       // Pop one non-empty component or stop when list is empty.
       while (path_components && !path_components.pop()) {}
 
-      window.location.hash = path_components.join("/") + "/"
+      pmanager.update_value("p", path_components.join("/") + "/")
+      pmanager.update_hash()
     },
     get_extension: function (path) {
       return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
@@ -469,18 +473,15 @@ let covmanager = new Vue({
 
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
 window.onhashchange = function() {
-  let hash_components = window.location.hash.substr(1).split("&")
+  pmanager.update_state()
 
-  let new_path = hash_components[0]
-  let new_line = null
+  let new_path = pmanager.get_value("p", "")
+  let new_line = pmanager.get_value("s", null)
+
   let new_hl_lines = []
-
-  if (hash_components.length > 1) {
-    new_line = hash_components[1]
-  }
-
-  if (hash_components.length > 2) {
-    new_hl_lines = hash_components[2].split(",")
+  let hl = pmanager.get_value("hl", "")
+  if (hl != "") {
+    new_hl_lines = hl.split(",")
   }
 
   // Prevent reloads when the path hasn't changed
