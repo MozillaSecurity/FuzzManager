@@ -556,6 +556,26 @@ stack backtrace:
 Redirecting call to abort() to mozalloc_abort
 """
 
+rustSampleTrace3 = """
+thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+stack backtrace:
+   0:     0x7f6f99931ac3 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcab99e0793da62c7
+                               at /checkout/src/libstd/sys/unix/backtrace/tracing/gcc_s.rs:49
+   1:     0x7f6f9992ea89 - std::panicking::default_hook::{{closure}}::h9ba2c6973907a2be
+                               at /checkout/src/libstd/sys_common/backtrace.rs:71
+                               at /checkout/src/libstd/sys_common/backtrace.rs:60
+                               at /checkout/src/libstd/panicking.rs:355
+   2:     0x7f6f9992deb0 - std::panicking::default_hook::he4d55e2dd21c3cca
+                               at /checkout/src/libstd/panicking.rs:371
+   3:     0x7f6f9992d9d5 - std::panicking::rust_panic_with_hook::ha138c05cd33ad44d
+                               at /checkout/src/libstd/panicking.rs:549
+   4:     0x7f6f998b00ef - std::panicking::begin_panic::h4d68aac0b79bfb98
+                               at /checkout/src/libstd/panicking.rs:511
+   5:     0x7f6f998b00a5 - atomic_refcell::AtomicBorrowRef::do_panic::hbcc7af3a774ab2dd
+                               at /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+   6:     0x7f6f99651b83 - <style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value::h43831540927a6f94
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -2321,6 +2341,13 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
         self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
         self.assertEqual(crashInfo.backtrace[20], "<unknown>")
+        self.assertEqual(crashInfo.crashAddress, 0)
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace3.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161")
+        self.assertEqual(len(crashInfo.backtrace), 7)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
+        self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
         self.assertEqual(crashInfo.crashAddress, 0)
 
 if __name__ == "__main__":

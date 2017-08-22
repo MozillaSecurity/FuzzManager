@@ -1331,7 +1331,7 @@ class CDBCrashInfo(CrashInfo):
 
 class RustCrashInfo(CrashInfo):
 
-    RE_FRAME = re.compile(r"^ +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)(::h[0-9a-f]{16})?$")
+    RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
