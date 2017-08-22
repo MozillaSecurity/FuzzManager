@@ -330,7 +330,7 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
         if filters:
             queryset = queryset.filter(**filters).distinct()
 
-        return queryset
+        return queryset.order_by('-pk')
 
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
@@ -342,6 +342,7 @@ class CollectionViewSet(mixins.CreateModelMixin,
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
+    paginate_by_param = 'limit'
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
