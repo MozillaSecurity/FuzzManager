@@ -6,5 +6,5 @@ if __name__ == '__main__':
         requirements = requirements_fp.read().strip().splitlines()
     setup(name = "FuzzManager",
           version = "0.1",
-          packages = ['Collector', 'CovReporter', 'EC2Reporter', 'FTB', 'FTB.Running', 'FTB.Signatures'],
+          packages = ['Collector', 'CovReporter', 'EC2Reporter', 'FTB', 'FTB.Running', 'FTB.Signatures', 'Reporter'],
           install_requires = requirements)
