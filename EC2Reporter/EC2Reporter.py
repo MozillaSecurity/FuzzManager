@@ -152,6 +152,20 @@ class EC2Reporter():
 
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
+    @remote_checks
+    def disable(self, poolid):
+        '''
+        Disable the pool with the given id.
+        
+        @type poolid: int
+        @param poolid: ID of the pool to cycle
+        '''
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+
+        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+
+        if response.status_code != requests.codes["ok"]:
+            raise self.__serverError(response)
 
     @staticmethod
     def __serverError(response):
@@ -172,6 +186,7 @@ def main(argv=None):
     actions.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
     actions.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
     actions.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
+    actions.add_argument("--disable", dest="disable", type=str, help="Disable the pool with the given ID", metavar="ID")
 
     # Options
     parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
