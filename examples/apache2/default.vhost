@@ -20,7 +20,7 @@ WSGIApplicationGroup %{GLOBAL}
 		AuthUserFile /path/to/.htpasswd
 		# Your LDAP configuration here, including Require directives
 
-		# This user is used by clients to download test cases and signatures
+		# Anyone listed in the .htpasswd file can download test cases and signatures
 		Require valid-user
 	</Location>
 
