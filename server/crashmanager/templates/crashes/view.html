@@ -97,6 +97,7 @@
             <a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}" class="btn btn-success">Download</a>
             {% else %}
             <pre><code>{{ entry.testcase.content }}</code></pre>
+            <a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}" class="btn btn-success">Download using Right-click Save Link As...</a>
             {% endif %}
         </div>
         <br/>

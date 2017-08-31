@@ -148,6 +148,34 @@ asanTraceMemcpyOverlap = """
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
 """
 
+asanMultiTrace = """
+=================================================================
+==8746==ERROR: AddressSanitizer: SEGV on unknown address 0x7f637b59cffc (pc 0x7f63fd5c11af bp 0x7f63a0702090 sp 0x7f63a0701f40 T35)
+Done, waiting 10ms before calling close()
+    #0 0x7f63fd5c11ae in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool) /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35
+    #1 0x7f63fd5c07b0 in mozilla::ipc::IToplevelProtocol::ShmemCreated(IPC::Message const&) /home/worker/workspace/build/src/ipc/glue/ProtocolUtils.cpp:790:38
+    
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35 in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool)
+Thread T35 (Compositor) created by T0 here:
+    #0 0x4a8e16 in __interceptor_pthread_create /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:245:3
+    #1 0x7f63fd4d9ad4 in CreateThread /home/worker/workspace/build/src/ipc/chromium/src/base/platform_thread_posix.cc:139:14
+    
+==8746==ABORTING
+ASAN:DEADLYSIGNAL
+=================================================================
+ASAN:DEADLYSIGNAL
+=================================================================
+==8986==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fcfcfaadeda bp 0x7fcfcb405340 sp 0x7fcfcb405320 T2)
+==8986==The signal is caused by a WRITE memory access.
+==8927==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7f2fc08adeda bp 0x7f2fbc21c340 sp 0x7f2fbc21c320 T2)
+==8986==Hint: address points to the zero page.
+==8927==The signal is caused by a WRITE memory access.
+==8927==Hint: address points to the zero page.
+Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299) 
+###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -474,6 +502,80 @@ rip            0x7ff7f20c1f81   0x7ff7f20c1f81
 => 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       callq  *0xa8(%rax)
 """
 
+rustSampleTrace1 = """
+thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976
+stack backtrace:
+   0: std::sys::imp::backtrace::tracing::imp::unwind_backtrace
+   1: std::sys_common::backtrace::_print
+   2: std::panicking::default_hook::{{closure}}
+   3: std::panicking::default_hook
+   4: std::panicking::rust_panic_with_hook
+   5: std::panicking::begin_panic
+   6: <style::gecko::wrapper::GeckoElement<'le> as style::dom::TElement>::set_dirty_descendants
+   7: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_child
+   8: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_dom_descendants_of
+   9: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_descendants
+  10: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate
+  11: style::data::ElementData::invalidate_style_if_needed
+  12: style::traversal::note_children
+  13: style::traversal::recalc_style_at
+  14: <style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder
+  15: style::parallel::traverse_nodes::{{closure}}
+  16: rayon_core::scope::Scope::execute_job_closure::{{closure}}
+  17: <std::panic::AssertUnwindSafe<F> as core::ops::FnOnce<()>>::call_once
+  18: std::panicking::try::do_call
+  19: <unknown>
+Redirecting call to abort() to mozalloc_abort
+"""
+
+rustSampleTrace2 = """
+thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040
+stack backtrace:
+[27247] WARNING: file /home/worker/workspace/build/src/ipc/chromium/src/base/histogram.cc, line 358
+   0:     0x7fa1ac1cd783 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcab99e0793da62c7
+   1:     0x7fa1ac1c8aa6 - std::sys_common::backtrace::_print::hbfe5b0c7e79c0711
+   2:     0x7fa1ac1dae1a - std::panicking::default_hook::{{closure}}::h9ba2c6973907a2be
+   3:     0x7fa1ac1daa1b - std::panicking::default_hook::he4d55e2dd21c3cca
+   4:     0x7fa1ac1db22b - std::panicking::rust_panic_with_hook::ha138c05cd33ad44d
+   5:     0x7fa1abfba7ea - std::panicking::begin_panic::h3893082380049d75
+   6:     0x7fa1abe75fe4 - <style::gecko::wrapper::GeckoElement<'le> as style::dom::TElement>::set_dirty_descendants::h7e0109538e4478b9
+   7:     0x7fa1ac38d3da - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_child::h3f189b4aebe47c62
+   8:     0x7fa1ac38dec9 - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_dom_descendants_of::h28329f57642c446c
+   9:     0x7fa1ac38ddae - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_descendants::ha9f8400395e35b97
+  10:     0x7fa1ac38d171 - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate::h55792fb45d7f0193
+  11:     0x7fa1ac2cc7fd - style::data::ElementData::invalidate_style_if_needed::h6c92f7a55a3c66c7
+  12:     0x7fa1abc3ac26 - style::traversal::note_children::hbf53f5fd19334f04
+  13:     0x7fa1ac3453da - style::traversal::recalc_style_at::h2554583039965b7b
+  14:     0x7fa1ac31ccfa - <style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder::h5bc6bf3e8a809483
+  15:     0x7fa1abc3982c - style::parallel::traverse_nodes::h149467d755f7edde
+  16:     0x7fa1abc393c9 - style::parallel::traverse_dom::{{closure}}::{{closure}}::hc41734613847a4b8
+  17:     0x7fa1abbee506 - rayon_core::scope::Scope::execute_job_closure::{{closure}}::hb2d2182893d5e162
+  18:     0x7fa1abc67852 - <std::panic::AssertUnwindSafe<F> as core::ops::FnOnce<()>>::call_once::h43762f21b8583545
+  19:     0x7fa1abc0c962 - std::panicking::try::do_call::h09b210c138cd5782
+  20:     0x7fa1ac1dfb0b - <unknown>
+Redirecting call to abort() to mozalloc_abort
+"""
+
+rustSampleTrace3 = """
+thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+stack backtrace:
+   0:     0x7f6f99931ac3 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcab99e0793da62c7
+                               at /checkout/src/libstd/sys/unix/backtrace/tracing/gcc_s.rs:49
+   1:     0x7f6f9992ea89 - std::panicking::default_hook::{{closure}}::h9ba2c6973907a2be
+                               at /checkout/src/libstd/sys_common/backtrace.rs:71
+                               at /checkout/src/libstd/sys_common/backtrace.rs:60
+                               at /checkout/src/libstd/panicking.rs:355
+   2:     0x7f6f9992deb0 - std::panicking::default_hook::he4d55e2dd21c3cca
+                               at /checkout/src/libstd/panicking.rs:371
+   3:     0x7f6f9992d9d5 - std::panicking::rust_panic_with_hook::ha138c05cd33ad44d
+                               at /checkout/src/libstd/panicking.rs:549
+   4:     0x7f6f998b00ef - std::panicking::begin_panic::h4d68aac0b79bfb98
+                               at /checkout/src/libstd/panicking.rs:511
+   5:     0x7f6f998b00a5 - atomic_refcell::AtomicBorrowRef::do_panic::hbcc7af3a774ab2dd
+                               at /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+   6:     0x7f6f99651b83 - <style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value::h43831540927a6f94
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -580,6 +682,17 @@ class ASanParserTestMemcpyOverlap(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "__asan_memcpy")
         self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
         self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]", crashInfo.createShortSignature())
+
+class ASanParserTestMultiTrace(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanMultiTrace.splitlines(), config)
+        self.assertEqual(crashInfo.crashAddress, 0x7f637b59cffc)
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "mozilla::ipc::Shmem::OpenExisting")
+        self.assertEqual(crashInfo.backtrace[3], "CreateThread")
+        self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -2206,6 +2319,36 @@ class UBSanParserTestCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.backtrace[11], "Lex< >")
 
+class RustParserTests(unittest.TestCase):
+
+    def test_1(self):
+        "test RUST_BACKTRACE=1 is parsed correctly"
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace1.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976")
+        self.assertEqual(len(crashInfo.backtrace), 20)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[19], "<unknown>")
+        self.assertEqual(crashInfo.crashAddress, 0)
+
+    def test_2(self):
+        "test RUST_BACKTRACE=full is parsed correctly"
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace2.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040")
+        self.assertEqual(len(crashInfo.backtrace), 21)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[20], "<unknown>")
+        self.assertEqual(crashInfo.crashAddress, 0)
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace3.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161")
+        self.assertEqual(len(crashInfo.backtrace), 7)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
+        self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
+        self.assertEqual(crashInfo.crashAddress, 0)
 
 if __name__ == "__main__":
     unittest.main()

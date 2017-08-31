@@ -469,52 +469,54 @@ class ASanCrashInfo(CrashInfo):
         '''
         CrashInfo.__init__(self)
 
-        if stdout != None:
+        if stdout is not None:
             self.rawStdout.extend(stdout)
 
-        if stderr != None:
+        if stderr is not None:
             self.rawStderr.extend(stderr)
 
-        if crashData != None:
+        if crashData is not None:
             self.rawCrashData.extend(crashData)
 
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        if crashData:
-            asanOutput = crashData
-        else:
-            asanOutput = stderr
+        asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
                                    \sAddressSanitizer:.*\s
                                      (?:on\saddress             # The most common format, used for all overflows
                                        |on\sunknown\saddress    # Used in case of a SIGSEGV
                                        |double-free\son         # Used in case of a double-free
+                                       |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
                                        |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
-                                   \s*0x([0-9a-f]+)"""
+                                   (\s*0x([0-9a-f]+))?"""
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
         expectedIndex = 0
+        reportFound = False
         for traceLine in asanOutput:
-            if self.crashAddress == None:
+            if not reportFound:
                 match = re.search(asanCrashAddressPattern, traceLine)
-
-                if match != None:
+                if match is None:
+                    # Not in the ASan output yet.
+                    # Some lines in eg. debug+asan builds might error if we continue.
+                    continue
+                reportFound = True
+                try:
                     self.crashAddress = long(match.group(1), 16)
+                except TypeError:
+                    pass # No crash address available
 
-                    # Crash Address and Registers are in the same line for ASan
-                    match = re.search(asanRegisterPattern, traceLine)
-                    if match != None:
-                        self.registers["pc"] = long(match.group(1), 16)
-                        self.registers[match.group(2)] = long(match.group(3), 16)
-                        self.registers[match.group(4)] = long(match.group(5), 16)
-                    else:
-                        # We might be dealing with one of the few ASan traces that don't emit registers
-                        pass
-                continue  # Not in the ASan output yet. Some lines in eg. debug+asan builds might error if we continue.
+                # Crash Address and Registers are in the same line for ASan
+                match = re.search(asanRegisterPattern, traceLine)
+                # Collect register values if they are available in the ASan trace
+                if match is not None:
+                    self.registers["pc"] = long(match.group(1), 16)
+                    self.registers[match.group(2)] = long(match.group(3), 16)
+                    self.registers[match.group(4)] = long(match.group(5), 16)
 
             parts = traceLine.strip().split()
 
@@ -522,7 +524,10 @@ class ASanCrashInfo(CrashInfo):
             if not parts or not parts[0].startswith("#"):
                 continue
 
-            index = int(parts[0][1:])
+            try:
+                index = int(parts[0][1:])
+            except ValueError:
+                continue
 
             # We may see multiple traces in ASAN
             if index == 0:
@@ -545,7 +550,7 @@ class ASanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
-        if not self.backtrace and self.crashAddress != None:
+        if not self.backtrace and self.crashAddress is not None:
             # We've seen the crash address but no frames, so this is likely
             # a crash on the heap with no symbols available. Add one artificial
             # frame so it doesn't show up as "No crash detected"
@@ -1326,7 +1331,7 @@ class CDBCrashInfo(CrashInfo):
 
 class RustCrashInfo(CrashInfo):
 
-    RE_FRAME = re.compile(r"^( +\d+: (?P<symbol>.+)| +at .*:\d+|stack backtrace:)$")
+    RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
@@ -1350,17 +1355,19 @@ class RustCrashInfo(CrashInfo):
 
         self.crashAddress = 0 # this is always an assertion, set to 0 to make matching more efficient
 
+        inAssertion = False
         inBacktrace = False
         for line in rustOutput:
             # Start of stack
-            if not inBacktrace:
-                if AssertionHelper.RUST_ASSERTION.match(line) is not None:
-                    inBacktrace = True
+            if not inAssertion:
+                if AssertionHelper.RE_RUST_ASSERT.match(line) is not None:
+                    inAssertion = True
                 continue
 
             frame = self.RE_FRAME.match(line)
-            if frame is None:
+            if frame is None and inBacktrace:
                 break
-
-            if frame.group("symbol"):
-                self.backtrace.append(frame.group("symbol"))
+            elif frame is not None:
+                inBacktrace = True
+                if frame.group("symbol"):
+                    self.backtrace.append(frame.group("symbol"))

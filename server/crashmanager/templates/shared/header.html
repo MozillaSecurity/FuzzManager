@@ -15,6 +15,7 @@
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                         <li><a href="/crashmanager"><i class="glyphicon glyphicon-alert"> </i> CrashManager</a></li>
                         <li><a href="/ec2spotmanager"><i class="glyphicon glyphicon-scale"></i> EC2SpotManager</a></li>
+                        <li><a href="/covmanager"><i class="glyphicon glyphicon-stats"></i> CovManager</a></li>
                     </ul>
                 </li>
             </ul>
@@ -29,6 +30,9 @@
             {% elif app_name == 'ec2spotmanager' %}
                 <li><a href="{% url 'ec2spotmanager:pools' %}"><i class="glyphicon glyphicon-scale"></i> Pools</a></li>
                 <li><a href="{% url 'ec2spotmanager:configs' %}"><i class="glyphicon glyphicon-list-alt"></i> Configurations</a></li>
+            {% elif app_name == 'covmanager' %}
+                <li><a href="{% url 'covmanager:collections' %}"><i class="glyphicon glyphicon-hdd"></i> Collections</a></li>
+                <li><a href="{% url 'covmanager:repositories' %}"><i class="glyphicon glyphicon-book"></i> Repositories</a></li>
 	        {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">

@@ -114,8 +114,17 @@ class BugzillaProvider(Provider):
                 testcase_data = crashEntry.testcase.test.read()
                 crashEntry.testcase.test.close()
 
-                # If the file is too large, also attach it, even if plaintext
-                if len(testcase_data) <= 2048:
+                def is_ascii(data):
+                    try:
+                        data.decode('ascii')
+                        return True
+                    except UnicodeDecodeError:
+                        return False
+
+                # If the file is too large, also attach it, even if plaintext.
+                # Also attach if the file can't be decoded as ascii, as some bug
+                # tracking systems might have trouble with unicode comment data.
+                if len(testcase_data) <= 2048 and is_ascii(testcase_data):
                     sdata['testcase'] = testcase_data
                 else:
                     sdata['testcase'] = "See attachment."

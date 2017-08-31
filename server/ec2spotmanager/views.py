@@ -340,18 +340,28 @@ def __handleConfigPOST(request, config):
 
     if request.POST['ec2_allowed_regions']:
         config.ec2_allowed_regions_list = [x.strip() for x in request.POST['ec2_allowed_regions'].split(',')]
+    else:
+        config.ec2_allowed_regions_list = None
 
     if request.POST['ec2_security_groups']:
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
+    else:
+        config.ec2_security_groups_list = None
 
     if request.POST['ec2_userdata_macros']:
         config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')])
+    else:
+        config.ec2_userdata_macros_dict = None
 
     if request.POST['ec2_tags']:
         config.ec2_tags_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')])
+    else:
+        config.ec2_tags_dict = None
 
     if request.POST['ec2_raw_config']:
         config.ec2_raw_config_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_raw_config'].split(',')])
+    else:
+        config.ec2_raw_config_dict = None
 
     # Ensure we have a primary key before attempting to store files
     config.save()
@@ -361,6 +371,11 @@ def __handleConfigPOST(request, config):
             config.ec2_userdata_file.save("default.sh", ContentFile(""))
         config.ec2_userdata = request.POST['ec2_userdata']
         config.storeTestAndSave()
+    else:
+        if config.ec2_userdata_file:
+            # Forcing test saving with ec2_userdata unset will clean the file
+            config.ec2_userdata = None
+            config.storeTestAndSave()
 
     return redirect('ec2spotmanager:configview', configid=config.pk)
 

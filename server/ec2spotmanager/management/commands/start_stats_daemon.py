@@ -66,7 +66,8 @@ class Command(BaseCommand):
 
                 for entry in entriesAggr:
                     # Figure out if we have an aggregated entry already with the same date
-                    day_entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool, created__contains=entry.created.date())
+                    created = entry.created.date()
+                    day_entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool).filter(created__year=created.year, created__month=created.month, created__day=created.day)
 
                     # We should never have more than one entry per day
                     assert(len(day_entries) < 2)

@@ -18,7 +18,7 @@ import datetime
 
 # Blacklist zones that currently don't allow subnets to be set on them
 # until we found a better way to deal with this situation.
-zone_blacklist = ["us-east-1a"]
+zone_blacklist = ["us-east-1a", "us-east-1f"]
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
