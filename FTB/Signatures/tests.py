@@ -148,6 +148,34 @@ asanTraceMemcpyOverlap = """
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
 """
 
+asanMultiTrace = """
+=================================================================
+==8746==ERROR: AddressSanitizer: SEGV on unknown address 0x7f637b59cffc (pc 0x7f63fd5c11af bp 0x7f63a0702090 sp 0x7f63a0701f40 T35)
+Done, waiting 10ms before calling close()
+    #0 0x7f63fd5c11ae in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool) /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35
+    #1 0x7f63fd5c07b0 in mozilla::ipc::IToplevelProtocol::ShmemCreated(IPC::Message const&) /home/worker/workspace/build/src/ipc/glue/ProtocolUtils.cpp:790:38
+    
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35 in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool)
+Thread T35 (Compositor) created by T0 here:
+    #0 0x4a8e16 in __interceptor_pthread_create /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:245:3
+    #1 0x7f63fd4d9ad4 in CreateThread /home/worker/workspace/build/src/ipc/chromium/src/base/platform_thread_posix.cc:139:14
+    
+==8746==ABORTING
+ASAN:DEADLYSIGNAL
+=================================================================
+ASAN:DEADLYSIGNAL
+=================================================================
+==8986==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fcfcfaadeda bp 0x7fcfcb405340 sp 0x7fcfcb405320 T2)
+==8986==The signal is caused by a WRITE memory access.
+==8927==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7f2fc08adeda bp 0x7f2fbc21c340 sp 0x7f2fbc21c320 T2)
+==8986==Hint: address points to the zero page.
+==8927==The signal is caused by a WRITE memory access.
+==8927==Hint: address points to the zero page.
+Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299) 
+###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -412,6 +440,142 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #5 0x08488e62 in js::jit::CheckICacheLocked (instr=0xf49d1648, i_cache=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:1034
 """
 
+gdbRegressionTrace9 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x083c4a4b in js::ToPrimitiveSlow (cx=0xf7152000, preferredType=JSTYPE_NUMBER, vp=...) at js/src/jsobj.cpp:3084
+#1  0x083d2f59 in js::ToPrimitive (vp=..., preferredType=JSTYPE_NUMBER, cx=<optimized out>) at js/src/jsobj.h:1062
+eax            0xffe0104c       -2092980
+ecx            0xffe01058       -2092968
+edx            0xffe01050       -2092976
+ebx            0x8950ff4        143986676
+esp            0xffe01000       0xffe01000
+ebp            0xffe010c8       0xffe010c8
+esi            0xf7152000       -149610496
+edi            0xffe01040       -2092992
+eip            0x83c4a4b        0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>
+=> 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       call   0x8120ca0 <js::GetProperty(JSContext*, JS::Handle<JSObject*>, JS::Handle<JSObject*>, JS::Handle<jsid>, JS::MutableHandle<JS::Value>)>
+"""
+
+gdbRegressionTrace10 = """
+Thread 1 received signal SIGILL, Illegal instruction.
+0x00007ff7f20c1f81 in ?? ()
+=> 0x7ff7f20c1f81:      (bad)  
+rax            0x55555598e9bd   93824996665789
+rbx            0x2fa    762
+rcx            0x1      1
+rdx            0x4000000000000  1125899906842624
+rsi            0x2fa    762
+rdi            0x7fffffffbfb0   140737488338864
+rbp            0x7fffffffb620   0x7fffffffb620
+rsp            0x7fffffffb5c0   0x7fffffffb5c0
+r8             0x7fffffffb680   140737488336512
+r9             0x5555564fc220   93825008648736
+r10            0x0      0
+r11            0x555555b9ca90   93824998820496
+r12            0x7ffff7e124c0   140737352115392
+r13            0x7fffffffb680   140737488336512
+r14            0x7fffffffbfb0   140737488338864
+r15            0x0      0
+rip            0x7ff7f20c1f81   0x7ff7f20c1f81
+"""
+
+gdbRegressionTrace11 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+0x00007ff7f20c1f81 in ?? ()
+rax            0x7ff7f2090f8a   93824996665789
+rbx            0x2fa    762
+rcx            0x1      1
+rdx            0x4000000000000  1125899906842624
+rsi            0x2fa    762
+rdi            0x7fffffffbfb0   140737488338864
+rbp            0x7fffffffb620   0x7fffffffb620
+rsp            0x7fffffffb5c0   0x7fffffffb5c0
+r8             0x7fffffffb680   140737488336512
+r9             0x5555564fc220   93825008648736
+r10            0x0      0
+r11            0x555555b9ca90   93824998820496
+r12            0x7ffff7e124c0   140737352115392
+r13            0x7fffffffb680   140737488336512
+r14            0x7fffffffbfb0   140737488338864
+r15            0x0      0
+rip            0x7ff7f20c1f81   0x7ff7f20c1f81
+=> 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       callq  *0xa8(%rax)
+"""
+
+rustSampleTrace1 = """
+thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976
+stack backtrace:
+   0: std::sys::imp::backtrace::tracing::imp::unwind_backtrace
+   1: std::sys_common::backtrace::_print
+   2: std::panicking::default_hook::{{closure}}
+   3: std::panicking::default_hook
+   4: std::panicking::rust_panic_with_hook
+   5: std::panicking::begin_panic
+   6: <style::gecko::wrapper::GeckoElement<'le> as style::dom::TElement>::set_dirty_descendants
+   7: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_child
+   8: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_dom_descendants_of
+   9: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_descendants
+  10: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate
+  11: style::data::ElementData::invalidate_style_if_needed
+  12: style::traversal::note_children
+  13: style::traversal::recalc_style_at
+  14: <style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder
+  15: style::parallel::traverse_nodes::{{closure}}
+  16: rayon_core::scope::Scope::execute_job_closure::{{closure}}
+  17: <std::panic::AssertUnwindSafe<F> as core::ops::FnOnce<()>>::call_once
+  18: std::panicking::try::do_call
+  19: <unknown>
+Redirecting call to abort() to mozalloc_abort
+"""
+
+rustSampleTrace2 = """
+thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040
+stack backtrace:
+[27247] WARNING: file /home/worker/workspace/build/src/ipc/chromium/src/base/histogram.cc, line 358
+   0:     0x7fa1ac1cd783 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcab99e0793da62c7
+   1:     0x7fa1ac1c8aa6 - std::sys_common::backtrace::_print::hbfe5b0c7e79c0711
+   2:     0x7fa1ac1dae1a - std::panicking::default_hook::{{closure}}::h9ba2c6973907a2be
+   3:     0x7fa1ac1daa1b - std::panicking::default_hook::he4d55e2dd21c3cca
+   4:     0x7fa1ac1db22b - std::panicking::rust_panic_with_hook::ha138c05cd33ad44d
+   5:     0x7fa1abfba7ea - std::panicking::begin_panic::h3893082380049d75
+   6:     0x7fa1abe75fe4 - <style::gecko::wrapper::GeckoElement<'le> as style::dom::TElement>::set_dirty_descendants::h7e0109538e4478b9
+   7:     0x7fa1ac38d3da - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_child::h3f189b4aebe47c62
+   8:     0x7fa1ac38dec9 - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_dom_descendants_of::h28329f57642c446c
+   9:     0x7fa1ac38ddae - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_descendants::ha9f8400395e35b97
+  10:     0x7fa1ac38d171 - <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate::h55792fb45d7f0193
+  11:     0x7fa1ac2cc7fd - style::data::ElementData::invalidate_style_if_needed::h6c92f7a55a3c66c7
+  12:     0x7fa1abc3ac26 - style::traversal::note_children::hbf53f5fd19334f04
+  13:     0x7fa1ac3453da - style::traversal::recalc_style_at::h2554583039965b7b
+  14:     0x7fa1ac31ccfa - <style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder::h5bc6bf3e8a809483
+  15:     0x7fa1abc3982c - style::parallel::traverse_nodes::h149467d755f7edde
+  16:     0x7fa1abc393c9 - style::parallel::traverse_dom::{{closure}}::{{closure}}::hc41734613847a4b8
+  17:     0x7fa1abbee506 - rayon_core::scope::Scope::execute_job_closure::{{closure}}::hb2d2182893d5e162
+  18:     0x7fa1abc67852 - <std::panic::AssertUnwindSafe<F> as core::ops::FnOnce<()>>::call_once::h43762f21b8583545
+  19:     0x7fa1abc0c962 - std::panicking::try::do_call::h09b210c138cd5782
+  20:     0x7fa1ac1dfb0b - <unknown>
+Redirecting call to abort() to mozalloc_abort
+"""
+
+rustSampleTrace3 = """
+thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+stack backtrace:
+   0:     0x7f6f99931ac3 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcab99e0793da62c7
+                               at /checkout/src/libstd/sys/unix/backtrace/tracing/gcc_s.rs:49
+   1:     0x7f6f9992ea89 - std::panicking::default_hook::{{closure}}::h9ba2c6973907a2be
+                               at /checkout/src/libstd/sys_common/backtrace.rs:71
+                               at /checkout/src/libstd/sys_common/backtrace.rs:60
+                               at /checkout/src/libstd/panicking.rs:355
+   2:     0x7f6f9992deb0 - std::panicking::default_hook::he4d55e2dd21c3cca
+                               at /checkout/src/libstd/panicking.rs:371
+   3:     0x7f6f9992d9d5 - std::panicking::rust_panic_with_hook::ha138c05cd33ad44d
+                               at /checkout/src/libstd/panicking.rs:549
+   4:     0x7f6f998b00ef - std::panicking::begin_panic::h4d68aac0b79bfb98
+                               at /checkout/src/libstd/panicking.rs:511
+   5:     0x7f6f998b00a5 - atomic_refcell::AtomicBorrowRef::do_panic::hbcc7af3a774ab2dd
+                               at /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
+   6:     0x7f6f99651b83 - <style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value::h43831540927a6f94
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -518,6 +682,17 @@ class ASanParserTestMemcpyOverlap(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "__asan_memcpy")
         self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
         self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]", crashInfo.createShortSignature())
+
+class ASanParserTestMultiTrace(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanMultiTrace.splitlines(), config)
+        self.assertEqual(crashInfo.crashAddress, 0x7f637b59cffc)
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "mozilla::ipc::Shmem::OpenExisting")
+        self.assertEqual(crashInfo.backtrace[3], "CreateThread")
+        self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -650,6 +825,29 @@ class GDBParserTestCrashAddressRegression8(unittest.TestCase):
         self.assertEqual(crashInfo8.backtrace[3], "<signal handler called>")
         self.assertEqual(crashInfo8.backtrace[4], "??")
         self.assertEqual(crashInfo8.backtrace[5], "js::jit::CheckICacheLocked")
+
+class GDBParserTestCrashAddressRegression9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo9 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace9.splitlines())
+        self.assertEqual(crashInfo9.crashInstruction, "call   0x8120ca0")
+
+class GDBParserTestCrashAddressRegression10(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo10 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace10.splitlines())
+        self.assertEqual(crashInfo10.crashInstruction, "(bad)")
+        self.assertEqual(crashInfo10.crashAddress, 0x7ff7f20c1f81L)
+
+class GDBParserTestCrashAddressRegression11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo11 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace11.splitlines())
+        self.assertEqual(crashInfo11.crashInstruction, "callq  *0xa8(%rax)")
+        self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032L)
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
@@ -874,6 +1072,40 @@ class AppleSelectorTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
 
+class AppleLionParserTestCrash(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx64")
+
+        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+            crashInfo = AppleCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 13)
+        self.assertEqual(crashInfo.backtrace[0], "js::jit::LIRGenerator::visitNearbyInt")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::LIRGenerator::visitInstruction")
+        self.assertEqual(crashInfo.backtrace[2], "js::jit::LIRGenerator::visitBlock")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::LIRGenerator::generate")
+        self.assertEqual(crashInfo.backtrace[4], "js::jit::GenerateLIR")
+        self.assertEqual(crashInfo.backtrace[5], "js::jit::CompileBackEnd")
+        self.assertEqual(crashInfo.backtrace[6], "_ZN2js3jitL7CompileEP9JSContextN2JS6HandleIP8JSScriptEEPNS0_13BaselineFrameEPhb")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::IonCompileScriptForBaseline")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "_ZL13EnterBaselineP9JSContextRN2js3jit12EnterJitDataE")
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+
+class AppleLionSelectorTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx64")
+
+        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+
 # Test 1a is for Win7 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength
 #     01814577 cc              int     3
@@ -884,7 +1116,7 @@ class CDBParserTestCrash1a(unittest.TestCase):
         with open('cdb-1a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 10)
+        self.assertEqual(len(crashInfo.backtrace), 13)
         self.assertEqual(crashInfo.backtrace[0], "js::GetBytecodeLength")
         self.assertEqual(crashInfo.backtrace[1], "js::coverage::LCovSource::writeScript")
         self.assertEqual(crashInfo.backtrace[2], "js::coverage::LCovCompartment::collectCodeCoverageInfo")
@@ -895,6 +1127,9 @@ class CDBParserTestCrash1a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[7], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[8], "InternalCall")
         self.assertEqual(crashInfo.backtrace[9], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[12], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
@@ -929,7 +1164,7 @@ class CDBParserTestCrash1b(unittest.TestCase):
         with open('cdb-1b-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 10)
+        self.assertEqual(len(crashInfo.backtrace), 13)
         self.assertEqual(crashInfo.backtrace[0], "js::GetBytecodeLength")
         self.assertEqual(crashInfo.backtrace[1], "js::coverage::LCovSource::writeScript")
         self.assertEqual(crashInfo.backtrace[2], "js::coverage::LCovCompartment::collectCodeCoverageInfo")
@@ -940,6 +1175,9 @@ class CDBParserTestCrash1b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[7], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[8], "InternalCall")
         self.assertEqual(crashInfo.backtrace[9], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[12], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
@@ -974,7 +1212,7 @@ class CDBParserTestCrash2a(unittest.TestCase):
         with open('cdb-2a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 9)
+        self.assertEqual(len(crashInfo.backtrace), 25)
         self.assertEqual(crashInfo.backtrace[0], "js::GetBytecodeLength")
         self.assertEqual(crashInfo.backtrace[1], "js::coverage::LCovSource::writeScript")
         self.assertEqual(crashInfo.backtrace[2], "js::coverage::LCovCompartment::collectCodeCoverageInfo")
@@ -984,6 +1222,22 @@ class CDBParserTestCrash2a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[6], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[7], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[8], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "??")
+        self.assertEqual(crashInfo.backtrace[13], "??")
+        self.assertEqual(crashInfo.backtrace[14], "??")
+        self.assertEqual(crashInfo.backtrace[15], "??")
+        self.assertEqual(crashInfo.backtrace[16], "??")
+        self.assertEqual(crashInfo.backtrace[17], "??")
+        self.assertEqual(crashInfo.backtrace[18], "??")
+        self.assertEqual(crashInfo.backtrace[19], "??")
+        self.assertEqual(crashInfo.backtrace[20], "??")
+        self.assertEqual(crashInfo.backtrace[21], "??")
+        self.assertEqual(crashInfo.backtrace[22], "??")
+        self.assertEqual(crashInfo.backtrace[23], "??")
+        self.assertEqual(crashInfo.backtrace[24], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
@@ -1026,7 +1280,7 @@ class CDBParserTestCrash2b(unittest.TestCase):
         with open('cdb-2b-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 9)
+        self.assertEqual(len(crashInfo.backtrace), 25)
         self.assertEqual(crashInfo.backtrace[0], "js::GetBytecodeLength")
         self.assertEqual(crashInfo.backtrace[1], "js::coverage::LCovSource::writeScript")
         self.assertEqual(crashInfo.backtrace[2], "js::coverage::LCovCompartment::collectCodeCoverageInfo")
@@ -1036,6 +1290,22 @@ class CDBParserTestCrash2b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[6], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[7], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[8], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[9], "??")
+        self.assertEqual(crashInfo.backtrace[10], "??")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "??")
+        self.assertEqual(crashInfo.backtrace[13], "??")
+        self.assertEqual(crashInfo.backtrace[14], "??")
+        self.assertEqual(crashInfo.backtrace[15], "??")
+        self.assertEqual(crashInfo.backtrace[16], "??")
+        self.assertEqual(crashInfo.backtrace[17], "??")
+        self.assertEqual(crashInfo.backtrace[18], "??")
+        self.assertEqual(crashInfo.backtrace[19], "??")
+        self.assertEqual(crashInfo.backtrace[20], "??")
+        self.assertEqual(crashInfo.backtrace[21], "??")
+        self.assertEqual(crashInfo.backtrace[22], "??")
+        self.assertEqual(crashInfo.backtrace[23], "??")
+        self.assertEqual(crashInfo.backtrace[24], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
@@ -1078,7 +1348,7 @@ class CDBParserTestCrash3a(unittest.TestCase):
         with open('cdb-3a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 33)
+        self.assertEqual(len(crashInfo.backtrace), 36)
         self.assertEqual(crashInfo.backtrace[0], "js::gc::TenuredCell::arena")
         self.assertEqual(crashInfo.backtrace[1], "js::TenuringTracer::moveToTenured")
         self.assertEqual(crashInfo.backtrace[2], "js::TenuringTracer::traverse")
@@ -1112,6 +1382,9 @@ class CDBParserTestCrash3a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[30], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[31], "InternalCall")
         self.assertEqual(crashInfo.backtrace[32], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[33], "??")
+        self.assertEqual(crashInfo.backtrace[34], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[35], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov eax,dword ptr [eax]")
         self.assertEqual(crashInfo.registers["eax"], long(0x2b2ffff0))
@@ -1146,7 +1419,7 @@ class CDBParserTestCrash3b(unittest.TestCase):
         with open('cdb-3b-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 33)
+        self.assertEqual(len(crashInfo.backtrace), 36)
         self.assertEqual(crashInfo.backtrace[0], "js::gc::TenuredCell::arena")
         self.assertEqual(crashInfo.backtrace[1], "js::TenuringTracer::moveToTenured")
         self.assertEqual(crashInfo.backtrace[2], "js::TenuringTracer::traverse")
@@ -1180,6 +1453,9 @@ class CDBParserTestCrash3b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[30], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[31], "InternalCall")
         self.assertEqual(crashInfo.backtrace[32], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[33], "??")
+        self.assertEqual(crashInfo.backtrace[34], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[35], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov eax,dword ptr [eax]")
         self.assertEqual(crashInfo.registers["eax"], long(0x2b2ffff0))
@@ -1214,7 +1490,7 @@ class CDBParserTestCrash4a(unittest.TestCase):
         with open('cdb-4a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 51)
+        self.assertEqual(len(crashInfo.backtrace), 54)
         self.assertEqual(crashInfo.backtrace[0], "JSObject::allocKindForTenure")
         self.assertEqual(crashInfo.backtrace[1], "js::TenuringTracer::moveToTenured")
         self.assertEqual(crashInfo.backtrace[2], "js::TenuringTraversalFunctor")
@@ -1266,6 +1542,9 @@ class CDBParserTestCrash4a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[48], "Shell")
         self.assertEqual(crashInfo.backtrace[49], "main")
         self.assertEqual(crashInfo.backtrace[50], "__scrt_common_main_seh")
+        self.assertEqual(crashInfo.backtrace[51], "BaseThreadInitThunk")
+        self.assertEqual(crashInfo.backtrace[52], "RtlInitializeExceptionChain")
+        self.assertEqual(crashInfo.backtrace[53], "RtlInitializeExceptionChain")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edi,dword ptr [ecx]")
         self.assertEqual(crashInfo.registers["eax"], long(0x09bfff01))
@@ -1373,7 +1652,7 @@ class CDBParserTestCrash5a(unittest.TestCase):
         with open('cdb-5a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 32)
+        self.assertEqual(len(crashInfo.backtrace), 34)
         self.assertEqual(crashInfo.backtrace[0], "js::gc::IsInsideNursery")
         self.assertEqual(crashInfo.backtrace[1], "js::gc::TenuredCell::arena")
         self.assertEqual(crashInfo.backtrace[2], "js::TenuringTracer::moveToTenured")
@@ -1406,6 +1685,8 @@ class CDBParserTestCrash5a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[29], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[30], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[31], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[32], "??")
+        self.assertEqual(crashInfo.backtrace[33], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edx,dword ptr [rcx]")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000001))
@@ -1448,7 +1729,7 @@ class CDBParserTestCrash5b(unittest.TestCase):
         with open('cdb-5b-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 32)
+        self.assertEqual(len(crashInfo.backtrace), 34)
         self.assertEqual(crashInfo.backtrace[0], "js::gc::IsInsideNursery")
         self.assertEqual(crashInfo.backtrace[1], "js::gc::TenuredCell::arena")
         self.assertEqual(crashInfo.backtrace[2], "js::TenuringTracer::moveToTenured")
@@ -1481,6 +1762,8 @@ class CDBParserTestCrash5b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[29], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[30], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[31], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[32], "??")
+        self.assertEqual(crashInfo.backtrace[33], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edx,dword ptr [rcx]")
         self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000001))
@@ -1523,7 +1806,7 @@ class CDBParserTestCrash6a(unittest.TestCase):
         with open('cdb-6a-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 26)
+        self.assertEqual(len(crashInfo.backtrace), 58)
         self.assertEqual(crashInfo.backtrace[0], "JSObject::allocKindForTenure")
         self.assertEqual(crashInfo.backtrace[1], "js::TenuringTracer::moveToTenured")
         self.assertEqual(crashInfo.backtrace[2], "js::DispatchTyped")
@@ -1550,6 +1833,38 @@ class CDBParserTestCrash6a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[23], "js::proxy_Call")
         self.assertEqual(crashInfo.backtrace[24], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[25], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[26], "??")
+        self.assertEqual(crashInfo.backtrace[27], "??")
+        self.assertEqual(crashInfo.backtrace[28], "??")
+        self.assertEqual(crashInfo.backtrace[29], "??")
+        self.assertEqual(crashInfo.backtrace[30], "??")
+        self.assertEqual(crashInfo.backtrace[31], "??")
+        self.assertEqual(crashInfo.backtrace[32], "??")
+        self.assertEqual(crashInfo.backtrace[33], "??")
+        self.assertEqual(crashInfo.backtrace[34], "??")
+        self.assertEqual(crashInfo.backtrace[35], "??")
+        self.assertEqual(crashInfo.backtrace[36], "??")
+        self.assertEqual(crashInfo.backtrace[37], "??")
+        self.assertEqual(crashInfo.backtrace[38], "??")
+        self.assertEqual(crashInfo.backtrace[39], "??")
+        self.assertEqual(crashInfo.backtrace[40], "??")
+        self.assertEqual(crashInfo.backtrace[41], "??")
+        self.assertEqual(crashInfo.backtrace[42], "??")
+        self.assertEqual(crashInfo.backtrace[43], "??")
+        self.assertEqual(crashInfo.backtrace[44], "??")
+        self.assertEqual(crashInfo.backtrace[45], "??")
+        self.assertEqual(crashInfo.backtrace[46], "??")
+        self.assertEqual(crashInfo.backtrace[47], "??")
+        self.assertEqual(crashInfo.backtrace[48], "??")
+        self.assertEqual(crashInfo.backtrace[49], "??")
+        self.assertEqual(crashInfo.backtrace[50], "??")
+        self.assertEqual(crashInfo.backtrace[51], "??")
+        self.assertEqual(crashInfo.backtrace[52], "??")
+        self.assertEqual(crashInfo.backtrace[53], "??")
+        self.assertEqual(crashInfo.backtrace[54], "??")
+        self.assertEqual(crashInfo.backtrace[55], "??")
+        self.assertEqual(crashInfo.backtrace[56], "??")
+        self.assertEqual(crashInfo.backtrace[57], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov r8,qword ptr [rcx]")
         self.assertEqual(crashInfo.registers["rax"], long(0x000000013fcfeef0))
@@ -1592,7 +1907,7 @@ class CDBParserTestCrash6b(unittest.TestCase):
         with open('cdb-6b-crashlog.txt', 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
-        self.assertEqual(len(crashInfo.backtrace), 26)
+        self.assertEqual(len(crashInfo.backtrace), 58)
         self.assertEqual(crashInfo.backtrace[0], "JSObject::allocKindForTenure")
         self.assertEqual(crashInfo.backtrace[1], "js::TenuringTracer::moveToTenured")
         self.assertEqual(crashInfo.backtrace[2], "js::DispatchTyped")
@@ -1619,6 +1934,38 @@ class CDBParserTestCrash6b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[23], "js::proxy_Call")
         self.assertEqual(crashInfo.backtrace[24], "js::InternalCallOrConstruct")
         self.assertEqual(crashInfo.backtrace[25], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[26], "??")
+        self.assertEqual(crashInfo.backtrace[27], "??")
+        self.assertEqual(crashInfo.backtrace[28], "??")
+        self.assertEqual(crashInfo.backtrace[29], "??")
+        self.assertEqual(crashInfo.backtrace[30], "??")
+        self.assertEqual(crashInfo.backtrace[31], "??")
+        self.assertEqual(crashInfo.backtrace[32], "??")
+        self.assertEqual(crashInfo.backtrace[33], "??")
+        self.assertEqual(crashInfo.backtrace[34], "??")
+        self.assertEqual(crashInfo.backtrace[35], "??")
+        self.assertEqual(crashInfo.backtrace[36], "??")
+        self.assertEqual(crashInfo.backtrace[37], "??")
+        self.assertEqual(crashInfo.backtrace[38], "??")
+        self.assertEqual(crashInfo.backtrace[39], "??")
+        self.assertEqual(crashInfo.backtrace[40], "??")
+        self.assertEqual(crashInfo.backtrace[41], "??")
+        self.assertEqual(crashInfo.backtrace[42], "??")
+        self.assertEqual(crashInfo.backtrace[43], "??")
+        self.assertEqual(crashInfo.backtrace[44], "??")
+        self.assertEqual(crashInfo.backtrace[45], "??")
+        self.assertEqual(crashInfo.backtrace[46], "??")
+        self.assertEqual(crashInfo.backtrace[47], "??")
+        self.assertEqual(crashInfo.backtrace[48], "??")
+        self.assertEqual(crashInfo.backtrace[49], "??")
+        self.assertEqual(crashInfo.backtrace[50], "??")
+        self.assertEqual(crashInfo.backtrace[51], "??")
+        self.assertEqual(crashInfo.backtrace[52], "??")
+        self.assertEqual(crashInfo.backtrace[53], "??")
+        self.assertEqual(crashInfo.backtrace[54], "??")
+        self.assertEqual(crashInfo.backtrace[55], "??")
+        self.assertEqual(crashInfo.backtrace[56], "??")
+        self.assertEqual(crashInfo.backtrace[57], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov r8,qword ptr [rcx]")
         self.assertEqual(crashInfo.registers["rax"], long(0x00007ff74d8fee30))
@@ -1651,6 +1998,317 @@ class CDBSelectorTest6b(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, long(0x00007ff74d469ff3))
 
+# Test 7 is for Windows Server 2012 R2 with 32-bit js debug deterministic shell:
+#     +205
+#     25d80b01 cc              int     3
+class CDBParserTestCrash7(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-7c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 46)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "arena_run_dalloc")
+        self.assertEqual(crashInfo.backtrace[2], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[4], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[5], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[6], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "je_free")
+        self.assertEqual(crashInfo.backtrace[10], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[11], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[12], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[13], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[14], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[15], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[16], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[17], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[18], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[19], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[20], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[21], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[22], "??")
+        self.assertEqual(crashInfo.backtrace[23], "??")
+        self.assertEqual(crashInfo.backtrace[24], "EnterIon")
+        self.assertEqual(crashInfo.backtrace[25], "js::jit::IonCannon")
+        self.assertEqual(crashInfo.backtrace[26], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[27], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[28], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[29], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[30], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[31], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[32], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[33], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[34], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[35], "ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[36], "JS_ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[37], "RunFile")
+        self.assertEqual(crashInfo.backtrace[38], "Process")
+        self.assertEqual(crashInfo.backtrace[39], "ProcessArgs")
+        self.assertEqual(crashInfo.backtrace[40], "Shell")
+        self.assertEqual(crashInfo.backtrace[41], "main")
+        self.assertEqual(crashInfo.backtrace[42], "__scrt_common_main_seh")
+        self.assertEqual(crashInfo.backtrace[43], "kernel32")
+        self.assertEqual(crashInfo.backtrace[44], "ntdll")
+        self.assertEqual(crashInfo.backtrace[45], "ntdll")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00c8a948))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x0053e32c))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x6802052b))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["esi"], long(0x25d8094b))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0053e370))
+        self.assertEqual(crashInfo.registers["eip"], long(0x25d80b01))
+        self.assertEqual(crashInfo.registers["esp"], long(0x0053e370))
+        self.assertEqual(crashInfo.registers["ebp"], long(0xffe00000))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+
+class CDBSelectorTest7(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-7c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+
+# Test 8 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     0142865d cc              int     3
+class CDBParserTestCrash8(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-8c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x73f1705d))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00ea9210))
+        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0a03d110))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0142865d))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00eaa780))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00eaa7ec))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+
+class CDBSelectorTest8(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-8c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+
+# Test 9 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
+#     +1d8
+#     0f2bb4f3 cc              int     3
+class CDBParserTestCrash9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-9c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 44)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "??")
+        self.assertEqual(crashInfo.backtrace[2], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[3], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[4], "??")
+        self.assertEqual(crashInfo.backtrace[5], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[6], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[7], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[8], "??")
+        self.assertEqual(crashInfo.backtrace[9], "js::Activation::Activation")
+        self.assertEqual(crashInfo.backtrace[10], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[11], "??")
+        self.assertEqual(crashInfo.backtrace[12], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[13], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[14], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[15], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[16], "??")
+        self.assertEqual(crashInfo.backtrace[17], "??")
+        self.assertEqual(crashInfo.backtrace[18], "js::Activation::Activation")
+        self.assertEqual(crashInfo.backtrace[19], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[20], "??")
+        self.assertEqual(crashInfo.backtrace[21], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[22], "js::InternalCallOrConstruct")
+        self.assertEqual(crashInfo.backtrace[23], "InternalCall")
+        self.assertEqual(crashInfo.backtrace[24], "js::jit::DoCallFallback")
+        self.assertEqual(crashInfo.backtrace[25], "??")
+        self.assertEqual(crashInfo.backtrace[26], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[27], "??")
+        self.assertEqual(crashInfo.backtrace[28], "EnterBaseline")
+        self.assertEqual(crashInfo.backtrace[29], "js::jit::EnterBaselineMethod")
+        self.assertEqual(crashInfo.backtrace[30], "js::RunScript")
+        self.assertEqual(crashInfo.backtrace[31], "js::ExecuteKernel")
+        self.assertEqual(crashInfo.backtrace[32], "js::Execute")
+        self.assertEqual(crashInfo.backtrace[33], "ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[34], "JS_ExecuteScript")
+        self.assertEqual(crashInfo.backtrace[35], "RunFile")
+        self.assertEqual(crashInfo.backtrace[36], "Process")
+        self.assertEqual(crashInfo.backtrace[37], "ProcessArgs")
+        self.assertEqual(crashInfo.backtrace[38], "Shell")
+        self.assertEqual(crashInfo.backtrace[39], "main")
+        self.assertEqual(crashInfo.backtrace[40], "__scrt_common_main_seh")
+        self.assertEqual(crashInfo.backtrace[41], "kernel32")
+        self.assertEqual(crashInfo.backtrace[42], "ntdll")
+        self.assertEqual(crashInfo.backtrace[43], "ntdll")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00b0ea18))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x00000400))
+        self.assertEqual(crashInfo.registers["edx"], long(0x73e74f80))
+        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
+        self.assertEqual(crashInfo.registers["edi"], long(0x00b0ea00))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0f2bb4f3))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00b0ea00))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00b0eab0))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+
+class CDBSelectorTest9(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-9c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+
+# Test 10 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
+#     +82
+#     1c2fbbb0 cc              int     3
+class CDBParserTestCrash10(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-10c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 5)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "js::jit::PrepareOsrTempData")
+        self.assertEqual(crashInfo.backtrace[2], "??")
+        self.assertEqual(crashInfo.backtrace[3], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[4], "JSObject::makeLazyGroup")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x06fda948))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x020de8dc))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x5f7b6461))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["esi"], long(0x1c2fbaab))
+        self.assertEqual(crashInfo.registers["edi"], long(0x020de910))
+        self.assertEqual(crashInfo.registers["eip"], long(0x1c2fbbb0))
+        self.assertEqual(crashInfo.registers["esp"], long(0x020de910))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00000018))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+
+class CDBSelectorTest10(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-10c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+
+# Test 11 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     0156865d cc              int     3
+class CDBParserTestCrash11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-11c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x738f705d))
+        self.assertEqual(crashInfo.registers["edx"], long(0x00e7b0e0))
+        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0ba37110))
+        self.assertEqual(crashInfo.registers["eip"], long(0x0156865d))
+        self.assertEqual(crashInfo.registers["esp"], long(0x00e7c650))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x00e7c6bc))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+
+class CDBSelectorTest11(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-11c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+
+# Test 12 is for Windows Server 2012 R2 with 32-bit js opt profiling deterministic shell:
+#     +1d8
+#     1fa0b7f8 cc              int     3
+class CDBParserTestCrash12(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-12c-crashlog.txt', 'r') as f:
+            crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
+
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "??")
+        self.assertEqual(crashInfo.backtrace[2], "js::AddTypePropertyId")
+        self.assertEqual(crashInfo.backtrace[3], "JSObject::makeLazyGroup")
+
+        self.assertEqual(crashInfo.crashInstruction, "int 3")
+        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
+        self.assertEqual(crashInfo.registers["ebx"], long(0x0044ea78))
+        self.assertEqual(crashInfo.registers["ecx"], long(0x00000000))
+        self.assertEqual(crashInfo.registers["edx"], long(0x73bf4f80))
+        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
+        self.assertEqual(crashInfo.registers["edi"], long(0x0044ea50))
+        self.assertEqual(crashInfo.registers["eip"], long(0x1fa0b7f8))
+        self.assertEqual(crashInfo.registers["esp"], long(0x0044ea50))
+        self.assertEqual(crashInfo.registers["ebp"], long(0x0044eb00))
+
+        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+
+class CDBSelectorTest12(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "windows")
+
+        with open('cdb-12c-crashlog.txt', 'r') as f:
+            crashData = f.read().splitlines()
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
+        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -1661,6 +2319,36 @@ class UBSanParserTestCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.backtrace[11], "Lex< >")
 
+class RustParserTests(unittest.TestCase):
+
+    def test_1(self):
+        "test RUST_BACKTRACE=1 is parsed correctly"
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace1.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976")
+        self.assertEqual(len(crashInfo.backtrace), 20)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[19], "<unknown>")
+        self.assertEqual(crashInfo.crashAddress, 0)
+
+    def test_2(self):
+        "test RUST_BACKTRACE=full is parsed correctly"
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace2.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040")
+        self.assertEqual(len(crashInfo.backtrace), 21)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[20], "<unknown>")
+        self.assertEqual(crashInfo.crashAddress, 0)
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace3.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161")
+        self.assertEqual(len(crashInfo.backtrace), 7)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
+        self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
+        self.assertEqual(crashInfo.crashAddress, 0)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,245 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block css.custom %}
+  <link rel='stylesheet' href='/static/css/covmanager.css'>
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+    <div class="panel-body">
+  		<div class="panel panel-default" style="float: left;">
+  		<div class="panel-heading"><i class="glyphicon glyphicon-book"></i> Patch Information</div>
+      <div class="panel-body">
+  			<div>
+  				<label>Repository:</label><input type="text" class="form-control glyphicon glyphicon-tasks" v-model="repository_search"
+  					@focus="repository_suggestions_enabled = true" @blur="repository_suggestions_enabled = false"
+            @keyup.enter="take_top_suggestion"/>
+  				<div v-show="repository_suggestions_enabled">
+  					<div v-for="name in repository_suggestions" v-on:mousedown="set_repository(name)">!{ name }!</div>
+  				</div>
+  			</div>
+  			<div><label>Patch Revision:</label><input type="text" class="form-control" v-model="patch_revision"/></div>
+  		</div>
+  		</div>
+
+  		<div class="panel panel-default" style="float: left;">
+  		<div class="panel-heading"><i class="glyphicon glyphicon-filter"></i> Target Collections</div>
+  		<div class="panel-body">
+  			<div>
+  				<span><b>!{ collections_count }!</b> collections selected for analysis.</span>
+          <button @click="run_analysis" class="btn btn-default" :disabled="!analysis_enabled">Run Analysis</button>
+  			</div>
+      </div>
+    	</div>
+
+  		<div class="panel panel-default" style="float: right;">
+  		<div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Options</div>
+  		<div class="panel-body">
+        <input type="checkbox" id="checkbox" v-model="prepatch">
+        <label for="checkbox">Prepatch Analysis (Experimental)</label>
+  		</div>
+  	  </div>
+
+    </div>
+
+    <template v-if="loading">
+      <div class="loader"></div>
+    </template>
+    <template v-else-if="analysis_results">
+      <table class="table table-condensed table-hover table-db">
+        <thead>
+          <tr>
+            <th style="width: 50%">Collection ID</th>
+            <th>Tools</th>
+            <th>Analysis Status</th>
+            <th>Details</th>
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="analysis_result in analysis_results">
+            <td>!{ analysis_result.collection.id }!</td>
+            <td>!{ analysis_result.collection.tools }!</td>
+            <td>
+              <div v-if="analysis_result.status">Success</div>
+              <div v-else>Failed</div>
+            </td>
+            <td><div v-for="detail in analysis_result.details">!{ detail }!</div></td>
+            <td><div v-for="(link, filename) in analysis_result.links"><a :href="link" target="_blank">!{ filename }!</a></div></td>
+          </tr>
+        </tbody>
+    </template>
+</div>
+
+<script>
+let APIURLS = {
+   repository_search : '{% url 'covmanager:repositories_search_api' %}',
+   collections : '{% url 'covmanager:collections_api' %}',
+   collections_patch_api : '{% url 'covmanager:collections_patch' %}' + "api/",
+   browse: '{% url 'covmanager:collections_browse' 0 %}', // TODO: It would be nice to solve this more cleanly
+}
+
+let pmanager = new HashParamManager()
+
+let covmanager = new Vue({
+  el: '#main',
+  data: {
+    repository: null,
+    repository_search: "",
+    repository_suggestions: [],
+    repository_suggestions_enabled: false,
+
+    patch_revision: null,
+
+    collection_ids: [],
+    collections: [],
+    prepatch: false,
+    analysis_results: null,
+
+    loading: false
+  },
+  created: function() {
+    let self = this
+    pmanager.forEach(function(k,v) {
+      // Try to guess the repository from the search query
+      k = k.replace(/__contains$/, '')
+      k = k.replace(/__name$/, '')
+
+      if (k == "repository") {
+        self.repository_search = v
+      }
+    })
+
+    let ids = pmanager.get_value("ids", "")
+    if (ids != "") {
+      self.collection_ids = ids.split(",")
+    } else {
+      sweetAlert('Oops', "Patch analysis requires an ID list from search", 'error')
+    }
+  },
+  watch: {
+    repository_search: 'update_repository_search',
+  },
+  computed: {
+    collections_count: function () {
+      return this.collection_ids.length
+    },
+    analysis_enabled: function() {
+      return this.collection_ids.length > 0 && this.patch_revision && this.repository != null
+    }
+  },
+  methods: {
+    run_analysis: function() {
+      if (this.collection_ids) {
+        this.fetch_collections()
+      }
+    },
+    update_repository_search: _.throttle (function () {
+      fetch(APIURLS.repository_search + "?name=" + this.repository_search, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.repository_suggestions = json["results"]
+
+        if (this.repository_suggestions.indexOf(this.repository_search) >= 0) {
+          this.repository = name
+        } else {
+          this.repository = null
+        }
+      })
+    }, 500),
+    set_repository: function(name) {
+       this.repository_suggestions = []
+       this.repository_suggestions_enabled = false
+       this.repository_search = name
+       this.repository = name
+    },
+    take_top_suggestion: function() {
+      if (this.repository_suggestions) {
+          this.set_repository(this.repository_suggestions[0])
+      }
+    },
+    fetch_collections: _.throttle (function () {
+      this.loading = true
+
+      fetch(APIURLS.collections
+        + "?ids=" + this.collection_ids.join(",")
+        + "&repository__name=" + this.repository, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.collections = json["results"]
+        analysis_results = []
+
+        let self = this;
+        var requests = this.collections.reverse().map(function(collection, i) {
+          return fetch(APIURLS.collections_patch_api + collection.id + "/" + self.patch_revision
+            + (self.prepatch ? "?prepatch=1" : ""), {
+              method: 'GET',
+              credentials: 'same-origin'
+          }).then(response => {
+            if (response.ok) {
+              return response.json()
+            }
+            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+          }).then(json => {
+            analysis_result = {
+              collection: collection,
+              status: true,
+              details: [],
+              links: {},
+            }
+
+            if ("results" in json) {
+              analysis_result.details.push(json["percentage_missed"] + " %")
+
+              for (let i = 0; i < json["results"].length; ++i) {
+                let result = json["results"][i]
+
+                if (result["missed"]) {
+                  let link = APIURLS.browse.replace("/0/", "/" + collection.id + "/")
+
+                  let highlight_lines = result["missed"]
+
+                  link += "#p=" + result["filename"]
+                  link += "&s=" + highlight_lines[0]
+                  link += "&hl=" + highlight_lines.join(",")
+
+                  analysis_result.links[result["filename"]] = link
+                }
+              }
+            } else if ("error" in json) {
+              analysis_result.status = false
+              analysis_result.details.push(json["error"])
+              if ("filename" in json) {
+                analysis_result.details.push(json["filename"])
+              }
+            }
+
+            analysis_results.push(analysis_result)
+          })
+        });
+
+        let instance = this
+        Promise.all(requests).then(function() {
+          instance.analysis_results = analysis_results
+          instance.loading = false
+        })
+      })
+    }, 500),
+  }
+})
+</script>
+
+{% endblock body_content %}

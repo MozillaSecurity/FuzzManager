@@ -17,6 +17,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 
+RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
+RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
+RE_PID = re.compile(r"^\[\d+\]\s+")
+RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
+
+
 def getAssertion(output):
     '''
     This helper method provides a way to extract and process the
@@ -33,15 +39,29 @@ def getAssertion(output):
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
 
+    # The self-hosted JS asserts are followed by an additional regular
+    # JS assertion which we need to ignore in that case
+    haveSelfHostedJSAssert = False
+
     for line in output:
         # Remove any PID output at the beginning of the line
-        line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
+        line = re.sub(RE_PID, "", line, count=1)
 
         if addNext:
             lastLine.append(line)
             addNext = False
         elif line.startswith("Assertion failure"):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
+
+            # If we've seen a self-hosted JS assertion, then we ignore
+            # the regular assertion that follows it which will always
+            # be "Assertion failure: false" to abort the program.
+            if haveSelfHostedJSAssert and "false" in line:
+                continue
+
+            lastLine = line
+            haveFatalAssertion = True
+        elif "panicked at" in line and RE_RUST_ASSERT.match(line) is not None:
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
@@ -62,9 +82,20 @@ def getAssertion(output):
             # Skia assertion
             lastLine = line
             haveFatalAssertion = True
-        elif "MOZ_CRASH" in line and re.search("Hit MOZ_CRASH\(.+\)", line):
+        elif line.startswith("ASSERTION") and RE_ASSERTION.search(line):
+            lastLine = line
+            haveFatalAssertion = True
+        elif not haveFatalAssertion and "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line):
             # MOZ_CRASH line, but with a message (we should only look at these)
             lastLine = line
+        elif "Self-hosted JavaScript assertion info" in line:
+            lastLine = line
+            haveSelfHostedJSAssert = True
+            haveFatalAssertion = True
+        elif "terminate called after throwing an instance of" in line:
+            # C++ unhandled exception
+            lastLine = line
+            haveFatalAssertion = True
         elif line.startswith("[Non-crash bug] "):
             # Magic string "added" to stderr by some fuzzers.
             lastLine = line
@@ -146,8 +177,24 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append(":[0-9]+")
         replacementPatterns.append(", line [0-9]+")
 
-        # Strip full path
-        replacementPatterns.append(" ([a-zA-Z]:)?/.+/")
+        # Replace rust thread #s
+        replacementPatterns.append("Thread#[0-9]+' panicked")
+
+        # Strip full paths
+        pathPattern = "([a-zA-Z]:)?/.+/"
+
+        # In order to reliably identify paths, we require them to be prefixed
+        # by some character that doesn't belong to the path. It turns out that
+        # spaces, quotes and comma are the only things used in the assertions
+        # we support so far. However, we don't want to group these characters
+        # into a regex so avoid cluttering the signature too much.
+        replacementPatterns.append(" " + pathPattern)
+        replacementPatterns.append("'" + pathPattern)
+        replacementPatterns.append('"' + pathPattern)
+        replacementPatterns.append(',' + pathPattern)
+
+        # Some implementations wrap the path into parentheses
+        replacementPatterns.append('\\(' + pathPattern)
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.

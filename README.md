@@ -105,7 +105,7 @@ FuzzManager jobs:
 # Attempt to fit recently added crash entries into existing buckets
 */5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_crashes
 # Export all signatures to a zip file for downloading by clients
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.zip
+*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
 
 ## Client Setup/Usage

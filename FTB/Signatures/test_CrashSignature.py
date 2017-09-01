@@ -161,6 +161,16 @@ READ of size 6143520 at 0x7fd766c42800 thread T0
     #3 0x4f63a6 in Run(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:1193
 """
 
+testTraceNegativeSizeParam = """
+==12549==ERROR: AddressSanitizer: negative-size-param: (size=-17179869184)
+    #0 0x4a4afb in __asan_memmove /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:445:3
+    #1 0x7f7d02324aa2 in MoveOverlappingRegion src/obj-firefox/dist/include/nsTArray.h:621:5
+    #2 0x7f7d02324aa2 in ShiftData<nsTArrayInfallibleAllocator> /src/obj-firefox/dist/include/nsTArray-inl.h:272
+    #3 0x7f7d02324aa2 in RemoveElementsAt /src/obj-firefox/dist/include/nsTArray.h:2061
+    #4 0x7f7d02324aa2 in mozilla::a11y::HyperTextAccessible::InsertChildAt(unsigned int, mozilla::a11y::Accessible*) /src/accessible/generic/HyperTextAccessible.cpp:1914
+    #5 0x7f7d02312322 in mozilla::a11y::DocAccessible::DoARIAOwnsRelocation(mozilla::a11y::Accessible*) /src/accessible/generic/DocAccessible.cpp:2089:19
+"""
+
 testSignature1 = '''{"symptoms": [
     {
     "functionName": "GetObjectAllocKindForCopy",
@@ -523,6 +533,16 @@ class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
         self.assertFalse(crashSignatureNeg.matches(crashInfoPos))
         self.assertTrue(crashSignatureNeg.matches(crashInfoNeg))
 
+class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceNegativeSizeParam.splitlines())
+
+        testSig = crashInfoPos.createCrashSignature()
+
+        self.assertIn("/ERROR: AddressSanitizer", str(testSig))
+        self.assertIn("negative\\\\-size\\\\-param", str(testSig))
+        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
 
 
 if __name__ == "__main__":

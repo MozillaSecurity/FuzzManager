@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import json
@@ -12,6 +12,8 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
+if getattr(settings, 'USE_CELERY', None):
+    from .tasks import triage_new_crash
 
 class Tool(models.Model):
     name = models.CharField(max_length=63)
@@ -202,6 +204,22 @@ class CrashEntry(models.Model):
 
         return crashInfo
 
+    def reparseCrashInfo(self, save=True):
+        # Purges cached crash information and then forces a reparsing
+        # of the raw crash information. Based on the new crash information,
+        # the depending fields are also repopulated.
+        #
+        # This method should only be called if either the raw crash information
+        # has changed or the implementation parsing it was updated.
+        self.cachedCrashInfo = None
+        crashInfo = self.getCrashInfo()
+        if crashInfo.crashAddress != None:
+            self.crashAddress = hex(crashInfo.crashAddress)
+        self.shortSignature = crashInfo.createShortSignature()
+
+        if save:
+            return self.save()
+
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely
 # deletes the file on the filesystem which would otherwise remain.
@@ -211,6 +229,13 @@ def CrashEntry_delete(sender, instance, **kwargs):
         if instance.testcase.test:
             instance.testcase.test.delete(False)
         instance.testcase.delete(False)
+
+# post_save handler for celery integration
+if getattr(settings, 'USE_CELERY', None):
+    @receiver(post_save, sender=CrashEntry)
+    def CrashEntry_save(sender, instance, **kwargs):
+        if kwargs.get('created', False) and not instance.triagedOnce:
+            triage_new_crash.delay(instance.pk)
 
 class BugzillaTemplate(models.Model):
     name = models.TextField()
@@ -244,6 +269,7 @@ class User(models.Model):
     defaultProviderId = models.IntegerField(default=1)
     defaultToolsFilter = models.ManyToManyField(Tool)
     restricted = models.BooleanField(blank=False, default=False)
+    bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
 
     @staticmethod
     def get_or_create_restricted(request_user):
@@ -252,3 +278,11 @@ class User(models.Model):
             user.restricted = True
             user.save()
         return (user, created)
+
+class BucketWatch(models.Model):
+    user = models.ForeignKey(User)
+    bucket = models.ForeignKey(Bucket)
+    # This is the primary key of last crash marked viewed by the user
+    # Store as an integer to prevent problems if the particular crash
+    # is deleted later. We only care about its place in the ordering.
+    lastCrash = models.IntegerField(default=0)

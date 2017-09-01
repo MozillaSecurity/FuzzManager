@@ -21,7 +21,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 import argparse
-from lockfile import FileLock, LockTimeout
+from fasteners import InterProcessLock
 import os
 import platform
 import random
@@ -152,6 +152,35 @@ class EC2Reporter():
 
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
+    @remote_checks
+    def disable(self, poolid):
+        '''
+        Disable the pool with the given id.
+        
+        @type poolid: int
+        @param poolid: ID of the pool to disable
+        '''
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+
+        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+
+        if response.status_code != requests.codes["ok"]:
+            raise self.__serverError(response)
+
+    @remote_checks
+    def enable(self, poolid):
+        '''
+        Enable the pool with the given id.
+        
+        @type poolid: int
+        @param poolid: ID of the pool to enable
+        '''
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+
+        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+
+        if response.status_code != requests.codes["ok"]:
+            raise self.__serverError(response)
 
     @staticmethod
     def __serverError(response):
@@ -172,6 +201,8 @@ def main(argv=None):
     actions.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
     actions.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
     actions.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
+    actions.add_argument("--disable", dest="disable", type=str, help="Disable the pool with the given ID", metavar="ID")
+    actions.add_argument("--enable", dest="enable", type=str, help="Enable the pool with the given ID", metavar="ID")
 
     # Options
     parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
@@ -207,11 +238,12 @@ def main(argv=None):
             if opts.random_offset > 0:
                 random.seed(reporter.clientId)
 
-            lock = FileLock(opts.report_file)
+            lock = InterProcessLock(opts.report_file + ".lock")
             while True:
-                try:
-                    if os.path.exists(opts.report_file):
-                        lock.acquire(opts.keep_reporting)
+                if os.path.exists(opts.report_file):
+                    if not lock.acquire(timeout=opts.keep_reporting):
+                        continue
+                    try:
                         with open(opts.report_file) as f:
                             report = f.read()
                         try:
@@ -219,14 +251,13 @@ def main(argv=None):
                         except RuntimeError as e:
                             # Ignore errors if the server is temporarily unavailable
                             print("Failed to contact server: %s" % e, file=sys.stderr)
+                    finally:
                         lock.release()
 
-                    random_offset = 0
-                    if opts.random_offset:
-                        random_offset = random.randint(-opts.random_offset, opts.random_offset)
-                    time.sleep(opts.keep_reporting + random_offset)
-                except LockTimeout:
-                    continue
+                random_offset = 0
+                if opts.random_offset:
+                    random_offset = random.randint(-opts.random_offset, opts.random_offset)
+                time.sleep(opts.keep_reporting + random_offset)
         else:
             with open(opts.report_file) as f:
                 report = f.read()

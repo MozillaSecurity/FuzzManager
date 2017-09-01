@@ -30,11 +30,21 @@ jsshellMozCrash = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
 """
 
+jsSelfHostedAssert = """
+Self-hosted JavaScript assertion info: "/srv/repos/mozilla-central/js/src/builtin/Intl.js:847: non-canonical BestAvailableLocale locale"
+Assertion failure: false, at /srv/repos/mozilla-central/js/src/vm/SelfHosting.cpp:362
+"""
+
 v8Abort = """
 #
 # Fatal error in ../src/compiler.cc, line 219
 # Check failed: !feedback_vector_->metadata()->SpecDiffersFrom( literal()->feedback_vector_spec()).
 #
+"""
+
+chakraAssert = """
+ASSERTION 15887: (/srv/repos/ChakraCore/lib/Runtime/ByteCode/ByteCodeEmitter.cpp, line 4827) scope->HasInnerScopeIndex()
+ Failure: (scope->HasInnerScopeIndex())
 """
 
 windowsPathAssertFwdSlashes = """
@@ -43,6 +53,12 @@ Assertion failure: block->graph().osrBlock(), at c:/Users/fuzz1win/trees/mozilla
 
 windowsPathAssertBwSlashes = r"""
 Assertion failure: block->graph().osrBlock(), at c:\Users\fuzz1win\trees\mozilla-central\js\src\jit\Lowering.cpp:4691
+"""
+
+cppUnhandledException = """
+terminate called after throwing an instance of 'std::regex_error'
+  what():  regex_error
+TEST-INFO | Main app process: killed by SIGIOT
 """
 
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
@@ -61,6 +77,15 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+class AssertionHelperTestJSSelfHosted(unittest.TestCase):
+    def runTest(self):
+        err = jsSelfHostedAssert.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = 'Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js:[0-9]+: non\\-canonical BestAvailableLocale locale"'
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
 class AssertionHelperTestV8Abort(unittest.TestCase):
     def runTest(self):
         err = v8Abort.splitlines()
@@ -76,6 +101,15 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
 
         self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
         self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
+
+class AssertionHelperTestChakraAssert(unittest.TestCase):
+    def runTest(self):
+        err = chakraAssert.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = 'ASSERTION [0-9]{2,}: \\\\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) scope\\->HasInnerScopeIndex\\(\\)'
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
 
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
     def runTest(self):
@@ -109,6 +143,15 @@ class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
              "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
              "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
              ]
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
+    def runTest(self):
+        err = cppUnhandledException.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = "terminate called after throwing an instance of 'std::regex_error'"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 

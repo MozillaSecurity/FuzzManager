@@ -7,6 +7,8 @@ WSGIApplicationGroup %{GLOBAL}
 
 	Alias /static/ /path/to/repo/FuzzManager/server/crashmanager/static/
 	Alias /tests/ /path/to/repo/FuzzManager/server/tests/
+    Alias /crashmanager/tests/ /path/to/FuzzManager/server/tests/
+    Alias /crashmanager/files/ /path/to/FuzzManager/server/files/
 
 	WSGIScriptAlias / /path/to/repo/FuzzManager/server/server/wsgi.py process-group=fuzzmanager.your.domain
 	WSGIPassAuthorization On

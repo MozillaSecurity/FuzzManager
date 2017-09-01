@@ -32,7 +32,15 @@
 		{% endif %}
             </div>
             </td></tr>
-            <tr><td>Crashes covered by this signature</td><td>{{ bucket.size }}</td></tr>
+            <tr><td>Crashes covered by this signature</td><td>{{ bucket.size }}
+            <br/><br/>
+            <form action="{% url 'crashmanager:sigwatchnew' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="bucket" value="{{ bucket.pk }}"/>
+            <input type="hidden" name="crash" value="{{ latestCrash }}"/>
+            <input type="submit" name="submit" value="Watch for New Crashes" title="Add/Update" class="btn btn-default"/>
+            </form>
+            </td></tr>
             {% if bucket.bestEntry %}
             <tr><td>Best Crash Entry</td><td><a href="{% url 'crashmanager:crashview' bucket.bestEntry.pk %}">{{ bucket.bestEntry.pk }}</a> (Size: {{bucket.bestEntry.testcase.size }})</td></tr>
             {% endif %}
