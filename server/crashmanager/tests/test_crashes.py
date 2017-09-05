@@ -14,11 +14,9 @@ import httplib
 import logging
 
 from django.core.urlresolvers import reverse
-from django.core.files.base import ContentFile
-from django.contrib.auth.models import User
+import pytest
 
 from . import TestCase
-from ..models import CrashEntry, Tool, Client, Platform, Product, OS, Bucket, TestCase as cmTestCase, User as cmUser
 
 
 log = logging.getLogger("fm.crashmanager.tests.crashes")
@@ -27,96 +25,6 @@ log = logging.getLogger("fm.crashmanager.tests.crashes")
 class CrashesViewTests(TestCase):
     name = "crashmanager:crashes"
     entries_fmt = "There are %d unbucketed entries in the database."
-
-    @staticmethod
-    def create_crash(tool="testtool",
-                     platform="testplatform",
-                     product="testproduct",
-                     os="testos",
-                     testcase=None,
-                     client="testclient",
-                     bucket=None,
-                     stdout="",
-                     stderr="",
-                     crashdata="",
-                     metadata="",
-                     env="",
-                     args="",
-                     crashAddress="",
-                     crashAddressNumeric=None,
-                     shortSignature="",
-                     cachedCrashInfo="",
-                     triagedOnce=False):
-        # create tool
-        tool, created = Tool.objects.get_or_create(name=tool)
-        if created:
-            log.debug("Created Tool pk=%d", tool.pk)
-        # create platform
-        platform, created = Platform.objects.get_or_create(name=platform)
-        if created:
-            log.debug("Created Platform pk=%d", platform.pk)
-        # create product
-        product, created = Product.objects.get_or_create(name=product)
-        if created:
-            log.debug("Created Product pk=%d", product.pk)
-        # create os
-        os, created = OS.objects.get_or_create(name=os)
-        if created:
-            log.debug("Created OS pk=%d", os.pk)
-        # create client
-        client, created = Client.objects.get_or_create(name=client)
-        if created:
-            log.debug("Created Client pk=%d", client.pk)
-        result = CrashEntry.objects.create(tool=tool,
-                                           platform=platform,
-                                           product=product,
-                                           os=os,
-                                           testcase=testcase,
-                                           client=client,
-                                           bucket=bucket,
-                                           rawStdout=stdout,
-                                           rawStderr=stderr,
-                                           rawCrashData=crashdata,
-                                           metadata=metadata,
-                                           env=env,
-                                           args=args,
-                                           crashAddress=crashAddress,
-                                           crashAddressNumeric=crashAddressNumeric,
-                                           shortSignature=shortSignature,
-                                           cachedCrashInfo=cachedCrashInfo,
-                                           triagedOnce=triagedOnce)
-        log.debug("Created CrashEntry pk=%d", result.pk)
-        return result
-
-    @staticmethod
-    def create_testcase(filename,
-                        testdata="",
-                        quality=0,
-                        isBinary=False):
-        result = cmTestCase(quality=quality, isBinary=isBinary, size=len(testdata))
-        result.test.save(filename, ContentFile(testdata))
-        result.save()
-        return result
-
-    @staticmethod
-    def create_bucket(bug=None,
-                      signature="",
-                      shortDescription="",
-                      frequent=False,
-                      permanent=False):
-        result = Bucket.objects.create(bug=bug,
-                                       signature=signature,
-                                       shortDescription=shortDescription,
-                                       frequent=frequent,
-                                       permanent=permanent)
-        log.debug("Created Bucket pk=%d", result.pk)
-        return result
-
-    @staticmethod
-    def create_toolfilter(tool):
-        user = User.objects.get(username='test')
-        cmuser, _ = cmUser.objects.get_or_create(user=user)
-        cmuser.defaultToolsFilter.add(Tool.objects.get(name=tool))
 
     def test_no_login(self):
         """Request without login hits the login redirect"""
@@ -285,3 +193,37 @@ class CrashesViewTests(TestCase):
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(set(crashlist), {crashes[0]})  # same crashes we created
         self.assertContains(response, self.entries_fmt % 1)
+
+
+class AllCrashesViewTests(CrashesViewTests):
+    name = "crashmanager:allcrashes"
+    entries_fmt = "Displaying all %d entries in database."
+
+    @pytest.mark.xfail
+    def test_filters(self):
+        super(AllCrashesViewTests, self).test_filters()
+
+    @pytest.mark.xfail
+    def test_bucketed(self):
+        super(AllCrashesViewTests, self).test_bucketed()
+
+    @pytest.mark.xfail
+    def test_no_unbucketed(self):
+        super(AllCrashesViewTests, self).test_no_unbucketed()
+
+    def test_toolfilter(self):
+        """Check that crashes/all/ view disregards toolfilter."""
+        self.client.login(username='test', password='test')
+        crashes = (self.create_crash(shortSignature="crash #1", tool="tool #1"),
+                   self.create_crash(shortSignature="crash #2", tool="tool #2"))
+        self.create_toolfilter("tool #1")
+        response = self.client.get(reverse(self.name))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "crash #1")
+        self.assertContains(response, "crash #2")
+        crashlist = response.context['crashlist']
+        self.assertEqual(len(crashlist), 2)  # 2 crashes
+        self.assertEqual(crashlist.number, 1)  # 1st page
+        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
+        self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
+        self.assertContains(response, self.entries_fmt % 2)
