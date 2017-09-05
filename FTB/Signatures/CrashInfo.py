@@ -1109,9 +1109,17 @@ class MinidumpCrashInfo(CrashInfo):
                 if traceLine.startswith("%s|" % crashThread):
                     components = traceLine.split("|")
 
-                    # If we have no symbols, don't use addresses for now (they are not portable for signature generation)
                     if not len(components[3]):
-                        self.backtrace.append("??")
+                        # If we have no symbols, but we have a library/component, using that allows
+                        # us to match on the libary name in the stack which is helpful for crashes
+                        # in low level libraries.
+                        if len(components[2]):
+                            frame = components[2]
+                            if len(components) >= 7 and len(components[6]):
+                                frame = "%s+%s" % (frame, components[6])
+                            self.backtrace.append(CrashInfo.sanitizeStackFrame(frame))
+                        else:
+                            self.backtrace.append("??")
                     else:
                         self.backtrace.append(CrashInfo.sanitizeStackFrame(components[3]))
             elif traceLine.startswith("Crash|"):

@@ -594,6 +594,18 @@ codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overfl
 SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.h:182:37 in
 """
 
+minidumpSwrast = """
+OS|Linux|0.0.0 Linux 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:52 UTC 2017 i686
+CPU|x86|GenuineIntel family 6 model 63 stepping 2|8
+GPU|||
+Crash|SIGSEGV|0x40|34
+34|0|||||0x9e50a2ee
+34|1|swrast_dri.so||||0x470ecc
+0|0|linux-gate.so||||0xc31
+0|1|libc-2.23.so||||0xf42b2
+0|2|libxul.so||||0x43ebda
+"""
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -1025,8 +1037,8 @@ class MinidumpParserTestCrash(unittest.TestCase):
             crashInfo = MinidumpCrashInfo([], f.read().splitlines(), config)
 
         self.assertEqual(len(crashInfo.backtrace), 44)
-        self.assertEqual(crashInfo.backtrace[0], "??")
-        self.assertEqual(crashInfo.backtrace[5], "??")
+        self.assertEqual(crashInfo.backtrace[0], "libc-2.15.so+0xe6b03")
+        self.assertEqual(crashInfo.backtrace[5], "libglib-2.0.so.0.3200.1+0x48123")
         self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent")
         self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent")
 
@@ -2349,6 +2361,14 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
         self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
         self.assertEqual(crashInfo.crashAddress, 0)
+
+class MinidumpModuleInStackTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, minidumpSwrast.splitlines())
+        self.assertEqual(crashInfo.backtrace[0], "??")
+        self.assertEqual(crashInfo.backtrace[1], "swrast_dri.so+0x470ecc")
 
 if __name__ == "__main__":
     unittest.main()
