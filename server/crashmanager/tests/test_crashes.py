@@ -25,6 +25,8 @@ log = logging.getLogger("fm.crashmanager.tests.crashes")
 
 
 class CrashesViewTests(TestCase):
+    name = "crashmanager:crashes"
+    entries_fmt = "There are %d unbucketed entries in the database."
 
     @staticmethod
     def create_crash(tool="testtool",
@@ -118,25 +120,25 @@ class CrashesViewTests(TestCase):
 
     def test_no_login(self):
         """Request without login hits the login redirect"""
-        path = reverse('crashmanager:crashes')
+        path = reverse(self.name)
         self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
     def test_no_crashes(self):
         """If no crashes in db, an appropriate message is shown."""
         self.client.login(username='test', password='test')
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 0)  # 0 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertContains(response, "There are 0 unbucketed entries in the database.")
+        self.assertContains(response, self.entries_fmt % 0)
 
     def test_with_crash(self):
         """Insert one crash and check that it is shown ok."""
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature="crash #1")
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         self.assertContains(response, "crash #1")
         crashlist = response.context['crashlist']
@@ -144,14 +146,14 @@ class CrashesViewTests(TestCase):
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(crashlist[0], crash)  # same crash we created
-        self.assertContains(response, "There are 1 unbucketed entries in the database.")
+        self.assertContains(response, self.entries_fmt % 1)
 
     def test_with_crashes(self):
         """Insert two crashes and check that they are shown ok."""
         self.client.login(username='test', password='test')
         crash1 = self.create_crash(shortSignature="crash #1")
         crash2 = self.create_crash(shortSignature="crash #2")
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         self.assertContains(response, "crash #1")
         self.assertContains(response, "crash #2")
@@ -160,7 +162,7 @@ class CrashesViewTests(TestCase):
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(set(crashlist), {crash1, crash2})  # same crashes we created
-        self.assertContains(response, "There are 2 unbucketed entries in the database.")
+        self.assertContains(response, self.entries_fmt % 2)
 
     def test_with_pagination(self):
         """Insert more than the page limit and check that they are paginated ok."""
@@ -170,7 +172,7 @@ class CrashesViewTests(TestCase):
                    self.create_crash(shortSignature="crash #3")]
 
         def check_page(page, exp_page, crash):
-            response = self.client.get(reverse('crashmanager:crashes'), {'page': page, 'page_size': 1})
+            response = self.client.get(reverse(self.name), {'page': page, 'page_size': 1})
             self.assertEqual(response.status_code, httplib.OK)
             self.assertContains(response, crash.shortSignature)
             crashlist = response.context['crashlist']
@@ -178,7 +180,7 @@ class CrashesViewTests(TestCase):
             self.assertEqual(crashlist.paginator.num_pages, len(crashes))  # n pages total
             self.assertEqual(len(crashlist), 1)  # 1 crash/page
             self.assertEqual(crashlist[0], crash)  # same crash we created
-            self.assertContains(response, "There are %d unbucketed entries in the database." % len(crashes))
+            self.assertContains(response, self.entries_fmt % len(crashes))
 
         for page, crash in enumerate(reversed(crashes)):
             check_page(page + 1, page + 1, crash)
@@ -192,13 +194,13 @@ class CrashesViewTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription="bucket #1")
         self.create_crash(shortSignature="crash #1", bucket=bucket)
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 0)  # 0 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertContains(response, "There are 0 unbucketed entries in the database.")
+        self.assertContains(response, self.entries_fmt % 0)
 
     def test_bucketed(self):
         """Insert two crashes and bucket one, see that unbucketed is shown."""
@@ -206,14 +208,14 @@ class CrashesViewTests(TestCase):
         bucket = self.create_bucket(shortDescription="bucket #1")
         self.create_crash(shortSignature="crash #1", bucket=bucket)
         crash = self.create_crash(shortSignature="crash #2")
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 1)  # 1 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(crashlist[0], crash)  # same crash we created
-        self.assertContains(response, "There are 1 unbucketed entries in the database.")
+        self.assertContains(response, self.entries_fmt % 1)
 
     def test_bucketed_all_param(self):
         """Check that all param shows bucketed crashes."""
@@ -221,14 +223,14 @@ class CrashesViewTests(TestCase):
         bucket = self.create_bucket(shortDescription="bucket #1")
         crashes = [self.create_crash(shortSignature="crash #1", bucket=bucket),
                    self.create_crash(shortSignature="crash #2", bucket=bucket)]
-        response = self.client.get(reverse('crashmanager:crashes'), {'all': 1})
+        response = self.client.get(reverse(self.name), {'all': 1})
         self.assertEqual(response.status_code, httplib.OK)
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 2)  # 2 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
-        self.assertContains(response, "There are 2 unbucketed entries in the database.")  # XXX: this message is wrong
+        self.assertContains(response, self.entries_fmt % 2)  # XXX: this message is wrong
 
     def test_filters(self):
         """Check that filter params are respected."""
@@ -259,7 +261,7 @@ class CrashesViewTests(TestCase):
                                     ({'tool__name__contains': '#2'}, {crashes[1]})):
             log.debug('requesting with %r', params)
             log.debug('expecting: %r', exp_crashes)
-            response = self.client.get(reverse('crashmanager:crashes'), params)
+            response = self.client.get(reverse(self.name), params)
             self.assertEqual(response.status_code, httplib.OK)
             crashlist = response.context['crashlist']
             self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
@@ -274,7 +276,7 @@ class CrashesViewTests(TestCase):
         crashes = (self.create_crash(shortSignature="crash #1", tool="tool #1"),
                    self.create_crash(shortSignature="crash #2", tool="tool #2"))
         self.create_toolfilter("tool #1")
-        response = self.client.get(reverse('crashmanager:crashes'))
+        response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         self.assertContains(response, "crash #1")
         crashlist = response.context['crashlist']
@@ -282,21 +284,4 @@ class CrashesViewTests(TestCase):
         self.assertEqual(crashlist.number, 1)  # 1st page
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(set(crashlist), {crashes[0]})  # same crashes we created
-        self.assertContains(response, "There are 1 unbucketed entries in the database.")
-
-    def test_all_view(self):
-        """Check that crashes/all/ view disregards toolfilter."""
-        self.client.login(username='test', password='test')
-        crashes = (self.create_crash(shortSignature="crash #1", tool="tool #1"),
-                   self.create_crash(shortSignature="crash #2", tool="tool #2"))
-        self.create_toolfilter("tool #1")
-        response = self.client.get(reverse('crashmanager:allcrashes'))
-        self.assertEqual(response.status_code, httplib.OK)
-        self.assertContains(response, "crash #1")
-        self.assertContains(response, "crash #2")
-        crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 2)  # 2 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
-        self.assertContains(response, "Displaying all 2 entries in database.")
+        self.assertContains(response, self.entries_fmt % 1)
