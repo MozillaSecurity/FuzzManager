@@ -1,5 +1,5 @@
 '''
-Tests
+Tests for Crashes rest api.
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -10,74 +10,38 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-from models import CrashEntry
-
-from django.test import TestCase
-from django.core.urlresolvers import reverse
-from django.contrib.auth.models import User
-from rest_framework.test import APITestCase #APIRequestFactory
-
 import httplib
+#import logging
 import os.path
-from urlparse import urlparse
+
+from django.contrib.auth.models import User
+from rest_framework.test import APITestCase  # APIRequestFactory
+
+from . import TestCase
+from ..models import CrashEntry
 
 
-class CrashManagerTests(TestCase):
-
-    def setUp(self):
-        User.objects.create_user('test', 'test@mozilla.com', 'test')
-
-    def test_0(self):
-        'test that request without login hits the login redirect'
-        self.assertRedirects(self.client.get('/'), '/login/?next=/')
-
-    def test_1(self):
-        'test that request of root url redirects to crashes view'
-        self.client.login(username='test', password='test')
-        self.assertRedirects(self.client.get('/'), reverse('crashmanager:crashes'))
-
-    def test_2(self):
-        'test that crash list works'
-        self.client.login(username='test', password='test')
-        response = self.client.get(reverse('crashmanager:crashes'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "There are 0 unbucketed entries in the database.")
-        for k in response.context:
-            print(k)
-            print("="*80)
-            print(response.context[k])
-            print("="*132)
-        self.assertQuerysetEqual(response.context['latest_question_list'], [])
-
-    #def test_3(self):
-    #    'test that tool filter works on crash list'
-    #    self.assertQuerysetEqual(
-    #        response.context['latest_question_list'],
-    #        ['<Question: Past question.>']
-    #    )
+#log = logging.getLogger("fm.crashmanager.tests.crashes.rest")
 
 
-class RestCrashesTests(APITestCase):
+class RestCrashesTests(APITestCase, TestCase):
 
-    def setUp(self):
-        User.objects.create_user('test', 'test@mozilla.com', 'test')
-
-    def test_0(self):
-        'must yield forbidden without authentication'
+    def test_no_auth(self):
+        """must yield forbidden without authentication"""
         url = '/crashmanager/rest/crashes/'
         self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
         self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
         self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
 
-    def test_1(self):
-        'test that authenticated requests work'
+    def test_auth(self):
+        """test that authenticated requests work"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/crashes/')
         self.assertEqual(resp.status_code, httplib.OK)
 
-    def test_2(self):
-        'test that crash reporting works'
+    def test_report_crash(self):
+        """test that crash reporting works"""
         data = {
             'rawStdout': 'data on\nstdout',
             'rawStderr': 'data on\nstderr',
@@ -107,4 +71,3 @@ class RestCrashesTests(APITestCase):
         for field in ('platform', 'product', 'os', 'client', 'tool'):
             self.assertEqual(getattr(crash, field).name, data[field])
         self.assertEqual(crash.product.version, data['product_version'])
-
