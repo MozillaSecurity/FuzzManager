@@ -179,15 +179,18 @@ class NewSignatureTests(TestCase):
         self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
     def test_new(self):
-        """Create signature from scratch, not reassigning crashes"""
+        """Check that the form looks ok"""
         self.client.login(username='test', password='test')
-        crash = self.create_crash(shortSignature='crash #1', stderr="blah")
         response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, httplib.OK)
         self.assertContains(response, 'name="shortDescription"')
         self.assertContains(response, 'name="signature"')
         self.assertContains(response, 'name="frequent"')
         self.assertContains(response, 'name="reassign"')
+
+    def test_create(self):
+        """Create signature from scratch, not reassigning crashes"""
+        self.client.login(username='test', password='test')
         sig = json.dumps({
             'symptoms': [
                 {"src": "stderr",
@@ -195,6 +198,7 @@ class NewSignatureTests(TestCase):
                  "value": "/^blah/"}
             ]
         })
+        crash = self.create_crash(shortSignature='crash #1', stderr="blah")
         response = self.client.post(reverse(self.name), {'shortDescription': 'bucket #1',
                                                          'signature': sig,
                                                          'submit_save': '1'})
@@ -206,7 +210,7 @@ class NewSignatureTests(TestCase):
         self.assertFalse(bucket.permanent)
         self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
 
-    def test_new_w_crashes(self):
+    def test_create_w_reassign(self):
         """Create signature from scratch and reassign crashes"""
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature='crash #1', stderr="blah")
@@ -254,7 +258,7 @@ class NewSignatureTests(TestCase):
         self.assertEqual(in_list[0], crash)
 
     def test_new_from_crash(self):
-        """Create signature from crash"""
+        """Check that the form includes crash info when creating from crash"""
         self.client.login(username='test', password='test')
         stderr = "Program received signal SIGSEGV, Segmentation fault.\n#0  sym_a ()\n#1  sym_b ()"
         crash = self.create_crash(shortSignature='crash #1', stderr=stderr)
@@ -264,8 +268,111 @@ class NewSignatureTests(TestCase):
         self.assertContains(response, 'name="signature"')
         self.assertContains(response, 'name="frequent"')
         self.assertContains(response, 'name="reassign"')
+
         # check that it looks like a signature was created from our crash
         self.assertContains(response, 'symptoms')
         self.assertContains(response, 'stackFrames')
         self.assertContains(response, 'sym_a')
         self.assertContains(response, 'sym_b')
+
+        # create a bucket from the proposed signature and see that it matches the crash
+        sig = response.context['bucket']['signature']
+        response = self.client.post(reverse(self.name), {'shortDescription': 'bucket #1',
+                                                         'signature': sig,
+                                                         'reassign': '1',
+                                                         'submit_save': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(shortDescription='bucket #1')
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        self.assertEqual(crash.bucket, bucket)
+        self.assertFalse(bucket.frequent)
+        self.assertFalse(bucket.permanent)
+        self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
+
+
+class EditSignatureTests(TestCase):
+    name = "crashmanager:sigedit"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'sigid': 1})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_edit(self):
+        """Check that the form looks ok"""
+        self.client.login(username='test', password='test')
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        bucket = self.create_bucket(shortDescription="bucket #1", signature=sig)
+        response = self.client.get(reverse(self.name, kwargs={'sigid': bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, 'name="shortDescription"')
+        self.assertContains(response, 'name="signature"')
+        self.assertContains(response, 'name="frequent"')
+        self.assertContains(response, 'name="reassign"')
+        self.assertContains(response, 'symptoms')
+        self.assertContains(response, 'stderr')
+        self.assertContains(response, 'blah')
+        self.assertContains(response, 'bucket #1')
+
+    def test_edit_w_reassign(self):
+        """Edit signature and reassign crashes"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash(shortSignature='crash #1', stderr="blah")
+        bucket = self.create_bucket()
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        path = reverse(self.name, kwargs={'sigid': bucket.pk})
+        response = self.client.post(path, {'shortDescription': 'bucket #1',
+                                           'signature': sig,
+                                           'reassign': '1',
+                                           'submit_save': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+        self.assertEqual(json.loads(bucket.signature), json.loads(sig))
+        self.assertEqual(bucket.shortDescription, "bucket #1")
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        self.assertEqual(crash.bucket, bucket)
+        self.assertFalse(bucket.frequent)
+        self.assertFalse(bucket.permanent)
+        self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
+
+    def test_preview(self):
+        """Preview signature edit with crash matching"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket()
+        crash1 = self.create_crash(shortSignature='crash #1', stderr="foo", bucket=bucket)
+        crash2 = self.create_crash(shortSignature='crash #2', stderr="blah")
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        path = reverse(self.name, kwargs={'sigid': bucket.pk})
+        response = self.client.post(path, {'shortDescription': 'bucket #1',
+                                           'signature': sig,
+                                           'reassign': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+        in_list = response.context['inList']
+        out_list = response.context['outList']
+        self.assertEqual(len(in_list), 1)
+        self.assertEqual(len(out_list), 1)
+        crash1 = CrashEntry.objects.get(pk=crash1.pk)  # re-read
+        crash2 = CrashEntry.objects.get(pk=crash2.pk)  # re-read
+        self.assertEqual(crash1.bucket, bucket)
+        self.assertIsNone(crash2.bucket)
+        self.assertEqual(out_list[0], crash1)
+        self.assertEqual(in_list[0], crash2)
