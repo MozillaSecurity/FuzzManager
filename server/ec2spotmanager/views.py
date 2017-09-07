@@ -566,14 +566,17 @@ class UptimeChartViewAccumulated(JSONView):
     def get_data_colors(self, entries):
         colors = []
         red = (204, 0, 0)
+        orange = (255, 128, 0)
         yellow = (255, 204, 0)
         green = (0, 163, 0)
 
         for point in entries:
-            if point.uptime_percentage == 100.00:
+            if point.uptime_percentage >= 95.00:
                 colors.append("rgba(%d, %d, %d, 1)" % green)
-            elif not point.uptime_percentage:
+            elif point.uptime_percentage <= 25.00:
                 colors.append("rgba(%d, %d, %d, 1)" % red)
+            elif point.uptime_percentage <= 50.00:
+                colors.append("rgba(%d, %d, %d, 1)" % orange)
             else:
                 colors.append("rgba(%d, %d, %d, 1)" % yellow)
 
