@@ -654,3 +654,34 @@ class PoolCycleView(APIView):
         pool.save()
 
         return Response({}, status=status.HTTP_200_OK)
+
+class PoolEnableView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, poolid, format=None):
+        pool = get_object_or_404(InstancePool, pk=poolid)
+
+        if pool.isEnabled:
+            return Response({"error" : 'Pool is already enabled.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        pool.last_cycled = None
+        pool.isEnabled = True
+        pool.save()
+
+        return Response({}, status=status.HTTP_200_OK)
+
+class PoolDisableView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, poolid, format=None):
+        pool = get_object_or_404(InstancePool, pk=poolid)
+
+        if not pool.isEnabled:
+            return Response({"error" : 'Pool is already disabled.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        pool.isEnabled = False
+        pool.save()
+
+        return Response({}, status=status.HTTP_200_OK)
