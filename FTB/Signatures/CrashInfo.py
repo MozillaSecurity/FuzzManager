@@ -164,6 +164,9 @@ class CrashInfo():
 
             return c
 
+        # some results are weak, meaning any other CrashInfo detected after it will take precedence
+        weakResult = None
+
         asanString = "ERROR: AddressSanitizer:"
         gdbString = " received signal SIG"
         gdbCoreString = "Program terminated with signal "
@@ -203,7 +206,8 @@ class CrashInfo():
                 rustFirstDetected = True
                 minidumpFirstDetected = False
             elif rustFirstDetected and rustSecondString in line:
-                return RustCrashInfo(stdout, stderr, configuration, auxCrashData)
+                weakResult = RustCrashInfo(stdout, stderr, configuration, auxCrashData)
+                rustFirstDetected = False
             elif not minidumpFirstDetected and minidumpFirstString in line:
                 # Only match Minidump output if the *next* line also contains
                 # the second search string defined above.
@@ -218,7 +222,7 @@ class CrashInfo():
         # Default fallback to be used if there is neither ASan nor GDB output.
         # This is still useful in case there is no crash but we want to match
         # e.g. stdout/stderr output with signatures.
-        return NoCrashInfo(stdout, stderr, configuration, auxCrashData)
+        return weakResult or NoCrashInfo(stdout, stderr, configuration, auxCrashData)
 
     def createShortSignature(self):
         '''

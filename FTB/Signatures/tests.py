@@ -17,7 +17,7 @@ import unittest
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
-    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo
+    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo, RustCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
@@ -574,6 +574,27 @@ stack backtrace:
    5:     0x7f6f998b00a5 - atomic_refcell::AtomicBorrowRef::do_panic::hbcc7af3a774ab2dd
                                at /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
    6:     0x7f6f99651b83 - <style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value::h43831540927a6f94
+"""
+
+rustSampleTrace4 = r"""
+thread 'StyleThread#2' panicked at 'already mutably borrowed', Z:\build\build\src\third_party\rust\atomic_refcell\src\lib.rs:161
+stack backtrace:
+   0:     0x7ffc41f3074f - <unknown>
+   1:     0x7ffc41f2f97c - <unknown>
+   2:     0x7ffc41f2f1ee - <unknown>
+   3:     0x7ffc41f2eacf - <unknown>
+OS|Windows NT|10.0.14393 
+CPU|amd64|family 6 model 94 stepping 3|4
+GPU|||
+Crash|EXCEPTION_ILLEGAL_INSTRUCTION|0x7ffc41f2f276|36
+36|0|xul.dll|std::panicking::rust_panic_with_hook|git:github.com/rust-lang/rust:src/libstd/panicking.rs:0ade339411587887bf01bcfa2e9ae4414c8900d4|555|0x41
+36|1|xul.dll|std::panicking::begin_panic<&str>|git:github.com/rust-lang/rust:src/libstd/panicking.rs:0ade339411587887bf01bcfa2e9ae4414c8900d4|511|0x12
+36|2|xul.dll|atomic_refcell::AtomicBorrowRef::do_panic|hg:hg.mozilla.org/mozilla-central:third_party/rust/atomic_refcell/src/lib.rs:37b95547f0d2|161|0x18
+36|3|xul.dll|style::values::specified::color::{{impl}}::to_computed_value|hg:hg.mozilla.org/mozilla-central:servo/components/style/values/specified/color.rs:37b95547f0d2|288|0xc
+0|0|ntdll.dll|AslpFilePartialViewFree|||0x36808
+0|1|||||0xcd07ffd740
+0|2|KERNELBASE.dll|FSPErrorMessages::CMessageHashVectorBuilder::GetEndIndexHash(unsigned short const *)|||0x38
+0|3|||||0xcd07ffd740
 """
 
 ubsanSampleTrace1 = """
@@ -2334,9 +2355,10 @@ class UBSanParserTestCrash(unittest.TestCase):
 class RustParserTests(unittest.TestCase):
 
     def test_1(self):
-        "test RUST_BACKTRACE=1 is parsed correctly"
+        """test RUST_BACKTRACE=1 is parsed correctly"""
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace1.splitlines())
+        self.assertIsInstance(crashInfo, RustCrashInfo)
         self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976")
         self.assertEqual(len(crashInfo.backtrace), 20)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
@@ -2345,9 +2367,10 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0)
 
     def test_2(self):
-        "test RUST_BACKTRACE=full is parsed correctly"
+        """test RUST_BACKTRACE=full is parsed correctly"""
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace2.splitlines())
+        self.assertIsInstance(crashInfo, RustCrashInfo)
         self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040")
         self.assertEqual(len(crashInfo.backtrace), 21)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
@@ -2355,12 +2378,26 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[20], "<unknown>")
         self.assertEqual(crashInfo.crashAddress, 0)
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace3.splitlines())
+        self.assertIsInstance(crashInfo, RustCrashInfo)
         self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161")
         self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
         self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
         self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
         self.assertEqual(crashInfo.crashAddress, 0)
+
+    def test_3(self):
+        """test rust backtraces are weakly found, ie. minidump output wins even if it comes after"""
+        config = ProgramConfiguration("test", "x86-64", "win")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace4.splitlines())
+        self.assertIsInstance(crashInfo, MinidumpCrashInfo)
+        self.assertEqual(crashInfo.createShortSignature(), r"thread 'StyleThread#2' panicked at 'already mutably borrowed', Z:\build\build\src\third_party\rust\atomic_refcell\src\lib.rs:161")
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "std::panicking::rust_panic_with_hook")
+        self.assertEqual(crashInfo.backtrace[1], "std::panicking::begin_panic<&str>")
+        self.assertEqual(crashInfo.backtrace[2], "atomic_refcell::AtomicBorrowRef::do_panic")
+        self.assertEqual(crashInfo.backtrace[3], "style::values::specified::color::{{impl}}::to_computed_value")
+        self.assertEqual(crashInfo.crashAddress, 0x7ffc41f2f276)
 
 class MinidumpModuleInStackTest(unittest.TestCase):
     def runTest(self):
