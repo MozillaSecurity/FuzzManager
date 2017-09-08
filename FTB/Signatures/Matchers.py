@@ -17,19 +17,31 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
+import numbers
 import re
+import sys
 from FTB.Signatures import JSONHelper
+
+
+if sys.version_info.major == 3:
+    unicode_ = str
+else:
+    unicode_ = unicode
+
 
 class StringMatch():
     def __init__(self, obj):
         self.isPCRE = False
         self.compiledValue = None
 
-        if isinstance(obj, str) or isinstance(obj, unicode):
-            self.value = str(obj)
+        if isinstance(obj, unicode_):
+            obj = obj.encode("utf-8")
+
+        if isinstance(obj, bytes):
+            self.value = bytes(obj)
 
             # Support the short form using forward slashes to indicate a PCRE
-            if self.value.startswith("/") and self.value.endswith("/"):
+            if self.value.startswith(b"/") and self.value.endswith(b"/"):
                 self.isPCRE = True
                 self.value = self.value[1:-1]
                 try:
@@ -40,7 +52,7 @@ class StringMatch():
             self.value = JSONHelper.getStringChecked(obj, "value", True)
 
             matchType = JSONHelper.getStringChecked(obj, "matchType", False)
-            if matchType != None:
+            if matchType is not None:
                 if matchType.lower() == "contains":
                     pass
                 elif matchType.lower() == "pcre":
@@ -54,7 +66,7 @@ class StringMatch():
 
     def matches(self, val):
         if self.isPCRE:
-            return self.compiledValue.search(val) != None
+            return self.compiledValue.search(val) is not None
         else:
             return self.value in val
 
@@ -63,7 +75,7 @@ class StringMatch():
 
     def __repr__(self):
         if (self.isPCRE):
-            return '/%s/' % self.value
+            return b'/%s/' % self.value
 
         return self.value
 
@@ -74,7 +86,10 @@ class NumberMatch():
     def __init__(self, obj):
         self.matchType = None
 
-        if isinstance(obj, str) or isinstance(obj, unicode):
+        if isinstance(obj, unicode_):
+            obj = obj.encode("utf-8")
+
+        if isinstance(obj, bytes):
             if len(obj) > 0:
                 numberMatchComponents = obj.split(None, 1)
                 numIdx = 0
@@ -83,35 +98,35 @@ class NumberMatch():
                     numIdx = 1
                     matchType = numberMatchComponents[0]
 
-                    if matchType == "==":
+                    if matchType == b"==":
                         pass
-                    elif matchType == "<":
+                    elif matchType == b"<":
                         self.matchType = NumberMatchType.LT
-                    elif matchType == "<=":
+                    elif matchType == b"<=":
                         self.matchType = NumberMatchType.LE
-                    elif matchType == ">":
+                    elif matchType == b">":
                         self.matchType = NumberMatchType.GT
-                    elif matchType == ">=":
+                    elif matchType == b">=":
                         self.matchType = NumberMatchType.GE
                     else:
                         raise RuntimeError("Unknown match operator specified: %s" % matchType)
 
                 try:
-                    self.value = long(numberMatchComponents[numIdx], 16)
+                    self.value = int(numberMatchComponents[numIdx], 16)
                 except ValueError:
                     raise RuntimeError("Invalid number specified: %s" % numberMatchComponents[numIdx])
             else:
                 # We're trying to match the fact that we cannot calculate a crash address
                 self.value = None
 
-        elif isinstance(obj, int):
+        elif isinstance(obj, numbers.Integral):
             self.value = obj
         else:
             raise RuntimeError("Invalid type %s in NumberMatch." % type(obj))
 
     def matches(self, value):
-        if value == None:
-            return self.value == None
+        if value is None:
+            return self.value is None
 
         if self.matchType == NumberMatchType.GE:
             return value >= self.value

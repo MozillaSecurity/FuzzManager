@@ -617,10 +617,10 @@ class ASanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "js::CallJSNative")
         self.assertEqual(crashInfo.backtrace[6], "js::jit::DoCallFallback")
 
-        self.assertEqual(crashInfo.crashAddress, 0x00000014L)
-        self.assertEqual(crashInfo.registers["pc"], 0x0810845fL)
-        self.assertEqual(crashInfo.registers["sp"], 0xffc57860L)
-        self.assertEqual(crashInfo.registers["bp"], 0xffc57f18L)
+        self.assertEqual(crashInfo.crashAddress, 0x00000014)
+        self.assertEqual(crashInfo.registers["pc"], 0x0810845f)
+        self.assertEqual(crashInfo.registers["sp"], 0xffc57860)
+        self.assertEqual(crashInfo.registers["bp"], 0xffc57f18)
 
 class ASanParserTestHeapCrash(unittest.TestCase):
     def runTest(self):
@@ -629,10 +629,10 @@ class ASanParserTestHeapCrash(unittest.TestCase):
         crashInfo = ASanCrashInfo([], asanTraceHeapCrash.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 1)
 
-        self.assertEqual(crashInfo.crashAddress, 0x00000019L)
-        self.assertEqual(crashInfo.registers["pc"], 0xf718072eL)
-        self.assertEqual(crashInfo.registers["sp"], 0xff87d130L)
-        self.assertEqual(crashInfo.registers["bp"], 0x000006a1L)
+        self.assertEqual(crashInfo.crashAddress, 0x00000019)
+        self.assertEqual(crashInfo.registers["pc"], 0xf718072e)
+        self.assertEqual(crashInfo.registers["sp"], 0xff87d130)
+        self.assertEqual(crashInfo.registers["bp"], 0x000006a1)
 
         self.assertEqual(crashInfo.createShortSignature(), "[@ ??]")
 
@@ -645,7 +645,7 @@ class ASanParserTestUAF(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "void mozilla::PodCopy<char16_t>")
         self.assertEqual(crashInfo.backtrace[4], "JSFunction::native")
 
-        self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800L)
+        self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800)
 
         self.assertEqual("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] with READ of size 6143520", crashInfo.createShortSignature())
 
@@ -657,7 +657,7 @@ class ASanParserTestInvalidFree(unittest.TestCase):
         self.assertEqual(len(crashInfo.backtrace), 1)
         self.assertEqual(crashInfo.backtrace[0], "__interceptor_free")
 
-        self.assertEqual(crashInfo.crashAddress, 0x62a00006c200L)
+        self.assertEqual(crashInfo.crashAddress, 0x62a00006c200)
 
         self.assertEqual("AddressSanitizer: attempting free on address which was not malloc()-ed [@ __interceptor_free]", crashInfo.createShortSignature())
 
@@ -670,7 +670,7 @@ class ASanParserTestDebugAssertion(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "nsCycleCollector::CollectWhite")
         self.assertEqual(crashInfo.backtrace[6], "mozilla::DefaultDelete<ScopedXPCOMStartup>::operator()")
 
-        self.assertEqual(crashInfo.crashAddress, 0x0L)
+        self.assertEqual(crashInfo.crashAddress, 0x0)
 
         self.assertEqual("Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521", crashInfo.createShortSignature())
 
@@ -689,7 +689,7 @@ class ASanParserTestMemcpyOverlap(unittest.TestCase):
         config = ProgramConfiguration("test", "x86-64", "linux")
 
         crashInfo = ASanCrashInfo([], asanTraceMemcpyOverlap.splitlines(), config)
-        self.assertEqual(crashInfo.crashAddress, 0x7f47486b18f8L)
+        self.assertEqual(crashInfo.crashAddress, 0x7f47486b18f8)
         self.assertEqual(len(crashInfo.backtrace), 2)
         self.assertEqual(crashInfo.backtrace[0], "__asan_memcpy")
         self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
@@ -716,9 +716,9 @@ class GDBParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[2], "js::ion::MPhi::addInput")
         self.assertEqual(crashInfo.backtrace[6], "processCfgStack")
 
-        self.assertEqual(crashInfo.registers["eax"], 0x0L)
-        self.assertEqual(crashInfo.registers["ebx"], 0x8962ff4L)
-        self.assertEqual(crashInfo.registers["eip"], 0x818bc33L)
+        self.assertEqual(crashInfo.registers["eax"], 0x0)
+        self.assertEqual(crashInfo.registers["ebx"], 0x8962ff4)
+        self.assertEqual(crashInfo.registers["eip"], 0x818bc33)
 
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
@@ -728,45 +728,45 @@ class GDBParserTestCrashAddress(unittest.TestCase):
         crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines(), config)
         crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
 
-        self.assertEqual(crashInfo1.crashAddress, 0x1L)
+        self.assertEqual(crashInfo1.crashAddress, 0x1)
         self.assertEqual(crashInfo2.crashAddress, None)
-        self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0L)
+        self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0)
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
     def runTest(self):
         registerMap64 = {}
-        registerMap64["rax"] = 0x0L
-        registerMap64["rbx"] = -1L
-        registerMap64["rsi"] = 0xde6e5L
-        registerMap64["rdi"] = 0x7ffff6543238L
+        registerMap64["rax"] = 0x0
+        registerMap64["rbx"] = -1
+        registerMap64["rsi"] = 0xde6e5
+        registerMap64["rdi"] = 0x7ffff6543238
 
         registerMap32 = {}
-        registerMap32["eax"] = 0x0L
-        registerMap32["ebx"] = -1L
-        registerMap32["ecx"] = 0xf75fffb8L
+        registerMap32["eax"] = 0x0
+        registerMap32["ebx"] = -1
+        registerMap32["ecx"] = 0xf75fffb8
 
         # Simple tests
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,0x10(%rax)", registerMap64), 0x10L)
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,0x10(%eax)", registerMap32), 0x10L)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,0x10(%rax)", registerMap64), 0x10)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,0x10(%eax)", registerMap32), 0x10)
 
 
         # Overflow tests
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xFL)
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32), 0xFL)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xF)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32), 0xF)
 
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), int64(uint64(0xfffffffffffffff0L)))
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), int32(uint32(0xfffffff0L)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), int64(uint64(0xfffffffffffffff0)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), int32(uint32(0xfffffff0)))
 
         # Scalar test
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32), 0x0L)
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32), 0x0)
 
         # Real world examples
         # Note: The crash address here can also be 0xf7600000 because the double quadword
         # move can fail on the second 8 bytes if the source address is not 16-byte aligned
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), int32(uint32(0xf75ffff8L)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), int32(uint32(0xf75ffff8)))
 
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffeL)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffe)))
 
 class GDBParserTestRegression1(unittest.TestCase):
     def runTest(self):
@@ -783,7 +783,7 @@ class GDBParserTestCrashAddressRegression2(unittest.TestCase):
 
         crashInfo2 = GDBCrashInfo([], gdbRegressionTrace2.splitlines(), config)
 
-        self.assertEqual(crashInfo2.crashAddress, 0xfffd579cL)
+        self.assertEqual(crashInfo2.crashAddress, 0xfffd579c)
 
 class GDBParserTestCrashAddressRegression3(unittest.TestCase):
     def runTest(self):
@@ -791,7 +791,7 @@ class GDBParserTestCrashAddressRegression3(unittest.TestCase):
 
         crashInfo3 = GDBCrashInfo([], gdbRegressionTrace3.splitlines(), config)
 
-        self.assertEqual(crashInfo3.crashAddress, 0x7fffffffffffL)
+        self.assertEqual(crashInfo3.crashAddress, 0x7fffffffffff)
 
 class GDBParserTestCrashAddressRegression4(unittest.TestCase):
     def runTest(self):
@@ -799,7 +799,7 @@ class GDBParserTestCrashAddressRegression4(unittest.TestCase):
 
         crashInfo4 = GDBCrashInfo([], gdbRegressionTrace4.splitlines(), config)
 
-        self.assertEqual(crashInfo4.crashAddress, 0x0L)
+        self.assertEqual(crashInfo4.crashAddress, 0x0)
 
 class GDBParserTestCrashAddressRegression5(unittest.TestCase):
     def runTest(self):
@@ -807,7 +807,7 @@ class GDBParserTestCrashAddressRegression5(unittest.TestCase):
 
         crashInfo5 = GDBCrashInfo([], gdbRegressionTrace5.splitlines(), config)
 
-        self.assertEqual(crashInfo5.crashAddress, 0xfffd573cL)
+        self.assertEqual(crashInfo5.crashAddress, 0xfffd573c)
 
 class GDBParserTestCrashAddressRegression6(unittest.TestCase):
     def runTest(self):
@@ -815,7 +815,7 @@ class GDBParserTestCrashAddressRegression6(unittest.TestCase):
 
         crashInfo6 = GDBCrashInfo([], gdbRegressionTrace6.splitlines(), config)
 
-        self.assertEqual(crashInfo6.crashAddress, 0xf7673132L)
+        self.assertEqual(crashInfo6.crashAddress, 0xf7673132)
 
 class GDBParserTestCrashAddressRegression7(unittest.TestCase):
     def runTest(self):
@@ -851,7 +851,7 @@ class GDBParserTestCrashAddressRegression10(unittest.TestCase):
 
         crashInfo10 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace10.splitlines())
         self.assertEqual(crashInfo10.crashInstruction, "(bad)")
-        self.assertEqual(crashInfo10.crashAddress, 0x7ff7f20c1f81L)
+        self.assertEqual(crashInfo10.crashAddress, 0x7ff7f20c1f81)
 
 class GDBParserTestCrashAddressRegression11(unittest.TestCase):
     def runTest(self):
@@ -859,7 +859,7 @@ class GDBParserTestCrashAddressRegression11(unittest.TestCase):
 
         crashInfo11 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace11.splitlines())
         self.assertEqual(crashInfo11.crashInstruction, "callq  *0xa8(%rax)")
-        self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032L)
+        self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032)
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
@@ -1015,19 +1015,19 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
 
 class RegisterHelperValueTest(unittest.TestCase):
     def runTest(self):
-        registerMap = { "rax" : 0xfffffffffffffe00L, "rbx" : 0x7ffff79a7640L }
+        registerMap = { "rax" : 0xfffffffffffffe00, "rbx" : 0x7ffff79a7640 }
 
-        self.assertEqual(RegisterHelper.getRegisterValue("rax", registerMap), 0xfffffffffffffe00L)
-        self.assertEqual(RegisterHelper.getRegisterValue("eax", registerMap), 0xfffffe00L)
-        self.assertEqual(RegisterHelper.getRegisterValue("ax", registerMap), 0xfe00L)
-        self.assertEqual(RegisterHelper.getRegisterValue("ah", registerMap), 0xfeL)
-        self.assertEqual(RegisterHelper.getRegisterValue("al", registerMap), 0x0L)
+        self.assertEqual(RegisterHelper.getRegisterValue("rax", registerMap), 0xfffffffffffffe00)
+        self.assertEqual(RegisterHelper.getRegisterValue("eax", registerMap), 0xfffffe00)
+        self.assertEqual(RegisterHelper.getRegisterValue("ax", registerMap), 0xfe00)
+        self.assertEqual(RegisterHelper.getRegisterValue("ah", registerMap), 0xfe)
+        self.assertEqual(RegisterHelper.getRegisterValue("al", registerMap), 0x0)
 
-        self.assertEqual(RegisterHelper.getRegisterValue("rbx", registerMap), 0x7ffff79a7640L)
-        self.assertEqual(RegisterHelper.getRegisterValue("ebx", registerMap), 0xf79a7640L)
-        self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640L)
-        self.assertEqual(RegisterHelper.getRegisterValue("bh", registerMap), 0x76L)
-        self.assertEqual(RegisterHelper.getRegisterValue("bl", registerMap), 0x40L)
+        self.assertEqual(RegisterHelper.getRegisterValue("rbx", registerMap), 0x7ffff79a7640)
+        self.assertEqual(RegisterHelper.getRegisterValue("ebx", registerMap), 0xf79a7640)
+        self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640)
+        self.assertEqual(RegisterHelper.getRegisterValue("bh", registerMap), 0x76)
+        self.assertEqual(RegisterHelper.getRegisterValue("bl", registerMap), 0x40)
 
 class MinidumpParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1042,7 +1042,7 @@ class MinidumpParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[6], "nsAppShell::ProcessNextNativeEvent")
         self.assertEqual(crashInfo.backtrace[7], "nsBaseAppShell::DoProcessNextNativeEvent")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
+        self.assertEqual(crashInfo.crashAddress, 0x3e800006acb)
 
 class MinidumpSelectorTest(unittest.TestCase):
     def runTest(self):
@@ -1052,7 +1052,7 @@ class MinidumpSelectorTest(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x3e800006acb))
+        self.assertEqual(crashInfo.crashAddress, 0x3e800006acb)
 
 class AppleParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1072,7 +1072,7 @@ class AppleParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[7], "??")
         self.assertEqual(crashInfo.backtrace[8], "-[NSApplication _nextEventMatchingEventMask:untilDate:inMode:dequeue:]")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
+        self.assertEqual(crashInfo.crashAddress, 0x00007fff5f3fff98)
 
 class AppleSelectorTest(unittest.TestCase):
     def runTest(self):
@@ -1082,7 +1082,7 @@ class AppleSelectorTest(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00007fff5f3fff98))
+        self.assertEqual(crashInfo.crashAddress, 0x00007fff5f3fff98)
 
 class AppleLionParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1106,7 +1106,7 @@ class AppleLionParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[11], "??")
         self.assertEqual(crashInfo.backtrace[12], "_ZL13EnterBaselineP9JSContextRN2js3jit12EnterJitDataE")
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+        self.assertEqual(crashInfo.crashAddress, 0x0000000000000000)
 
 class AppleLionSelectorTest(unittest.TestCase):
     def runTest(self):
@@ -1116,7 +1116,7 @@ class AppleLionSelectorTest(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000000000000))
+        self.assertEqual(crashInfo.crashAddress, 0x0000000000000000)
 
 # Test 1a is for Win7 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength
@@ -1144,17 +1144,17 @@ class CDBParserTestCrash1a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[12], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x00000001))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x6a24705d))
-        self.assertEqual(crashInfo.registers["edx"], long(0x0034d9d4))
-        self.assertEqual(crashInfo.registers["esi"], long(0x0925b3ec))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0925b3d1))
-        self.assertEqual(crashInfo.registers["eip"], long(0x01814577))
-        self.assertEqual(crashInfo.registers["esp"], long(0x0034ef5c))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x0034ef5c))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ebx"], 0x00000001)
+        self.assertEqual(crashInfo.registers["ecx"], 0x6a24705d)
+        self.assertEqual(crashInfo.registers["edx"], 0x0034d9d4)
+        self.assertEqual(crashInfo.registers["esi"], 0x0925b3ec)
+        self.assertEqual(crashInfo.registers["edi"], 0x0925b3d1)
+        self.assertEqual(crashInfo.registers["eip"], 0x01814577)
+        self.assertEqual(crashInfo.registers["esp"], 0x0034ef5c)
+        self.assertEqual(crashInfo.registers["ebp"], 0x0034ef5c)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x01814577))
+        self.assertEqual(crashInfo.crashAddress, 0x01814577)
 
 class CDBSelectorTest1a(unittest.TestCase):
     def runTest(self):
@@ -1164,7 +1164,7 @@ class CDBSelectorTest1a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x01814577))
+        self.assertEqual(crashInfo.crashAddress, 0x01814577)
 
 # Test 1b is for Win10 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
@@ -1192,17 +1192,17 @@ class CDBParserTestCrash1b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[12], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x00000001))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x765e06ef))
-        self.assertEqual(crashInfo.registers["edx"], long(0x00000060))
-        self.assertEqual(crashInfo.registers["esi"], long(0x039604ec))
-        self.assertEqual(crashInfo.registers["edi"], long(0x039604d1))
-        self.assertEqual(crashInfo.registers["eip"], long(0x01344577))
-        self.assertEqual(crashInfo.registers["esp"], long(0x02b2ee1c))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x02b2ee1c))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ebx"], 0x00000001)
+        self.assertEqual(crashInfo.registers["ecx"], 0x765e06ef)
+        self.assertEqual(crashInfo.registers["edx"], 0x00000060)
+        self.assertEqual(crashInfo.registers["esi"], 0x039604ec)
+        self.assertEqual(crashInfo.registers["edi"], 0x039604d1)
+        self.assertEqual(crashInfo.registers["eip"], 0x01344577)
+        self.assertEqual(crashInfo.registers["esp"], 0x02b2ee1c)
+        self.assertEqual(crashInfo.registers["ebp"], 0x02b2ee1c)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x01344577))
+        self.assertEqual(crashInfo.crashAddress, 0x01344577)
 
 class CDBSelectorTest1b(unittest.TestCase):
     def runTest(self):
@@ -1212,7 +1212,7 @@ class CDBSelectorTest1b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x01344577))
+        self.assertEqual(crashInfo.crashAddress, 0x01344577)
 
 # Test 2a is for Win7 with 64-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength
@@ -1252,25 +1252,25 @@ class CDBParserTestCrash2a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[24], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["rbx"], long(0x0000000006c139ac))
-        self.assertEqual(crashInfo.registers["rcx"], long(0x000007fef38241f0))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x000007fef38255f0))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x0000000006c1399e))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x0000000006cf2101))
-        self.assertEqual(crashInfo.registers["rip"], long(0x0000000140144e62))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000000027e500))
-        self.assertEqual(crashInfo.registers["rbp"], long(0x0000000006cf2120))
-        self.assertEqual(crashInfo.registers["r8"], long(0x000000000027ce88))
-        self.assertEqual(crashInfo.registers["r9"], long(0x00000000020cc069))
-        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["r11"], long(0x000000000027e3f0))
-        self.assertEqual(crashInfo.registers["r12"], long(0x0000000006c0d088))
-        self.assertEqual(crashInfo.registers["r13"], long(0x0000000006c139ad))
-        self.assertEqual(crashInfo.registers["r14"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["r15"], long(0x0000000006c13991))
+        self.assertEqual(crashInfo.registers["rax"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["rbx"], 0x0000000006c139ac)
+        self.assertEqual(crashInfo.registers["rcx"], 0x000007fef38241f0)
+        self.assertEqual(crashInfo.registers["rdx"], 0x000007fef38255f0)
+        self.assertEqual(crashInfo.registers["rsi"], 0x0000000006c1399e)
+        self.assertEqual(crashInfo.registers["rdi"], 0x0000000006cf2101)
+        self.assertEqual(crashInfo.registers["rip"], 0x0000000140144e62)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000000027e500)
+        self.assertEqual(crashInfo.registers["rbp"], 0x0000000006cf2120)
+        self.assertEqual(crashInfo.registers["r8"], 0x000000000027ce88)
+        self.assertEqual(crashInfo.registers["r9"], 0x00000000020cc069)
+        self.assertEqual(crashInfo.registers["r10"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["r11"], 0x000000000027e3f0)
+        self.assertEqual(crashInfo.registers["r12"], 0x0000000006c0d088)
+        self.assertEqual(crashInfo.registers["r13"], 0x0000000006c139ad)
+        self.assertEqual(crashInfo.registers["r14"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["r15"], 0x0000000006c13991)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000140144e62))
+        self.assertEqual(crashInfo.crashAddress, 0x0000000140144e62)
 
 class CDBSelectorTest2a(unittest.TestCase):
     def runTest(self):
@@ -1280,7 +1280,7 @@ class CDBSelectorTest2a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0000000140144e62))
+        self.assertEqual(crashInfo.crashAddress, 0x0000000140144e62)
 
 # Test 2b is for Win10 with 64-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+52
@@ -1320,25 +1320,25 @@ class CDBParserTestCrash2b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[24], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["rbx"], long(0x0000024dbf40baac))
-        self.assertEqual(crashInfo.registers["rcx"], long(0x00000000ffffffff))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x0000024dbf40ba9e))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x0000024dbf4f2201))
-        self.assertEqual(crashInfo.registers["rip"], long(0x00007ff71e424e62))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000de223fe3d0))
-        self.assertEqual(crashInfo.registers["rbp"], long(0x0000024dbf4f22e0))
-        self.assertEqual(crashInfo.registers["r8"], long(0x000000de223fcd78))
-        self.assertEqual(crashInfo.registers["r9"], long(0x0000024dbebe0735))
-        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["r11"], long(0x000000de223fe240))
-        self.assertEqual(crashInfo.registers["r12"], long(0x0000024dbf414088))
-        self.assertEqual(crashInfo.registers["r13"], long(0x0000024dbf40baad))
-        self.assertEqual(crashInfo.registers["r14"], long(0x0000000000000000))
-        self.assertEqual(crashInfo.registers["r15"], long(0x0000024dbf40ba91))
+        self.assertEqual(crashInfo.registers["rax"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["rbx"], 0x0000024dbf40baac)
+        self.assertEqual(crashInfo.registers["rcx"], 0x00000000ffffffff)
+        self.assertEqual(crashInfo.registers["rdx"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["rsi"], 0x0000024dbf40ba9e)
+        self.assertEqual(crashInfo.registers["rdi"], 0x0000024dbf4f2201)
+        self.assertEqual(crashInfo.registers["rip"], 0x00007ff71e424e62)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000de223fe3d0)
+        self.assertEqual(crashInfo.registers["rbp"], 0x0000024dbf4f22e0)
+        self.assertEqual(crashInfo.registers["r8"], 0x000000de223fcd78)
+        self.assertEqual(crashInfo.registers["r9"], 0x0000024dbebe0735)
+        self.assertEqual(crashInfo.registers["r10"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["r11"], 0x000000de223fe240)
+        self.assertEqual(crashInfo.registers["r12"], 0x0000024dbf414088)
+        self.assertEqual(crashInfo.registers["r13"], 0x0000024dbf40baad)
+        self.assertEqual(crashInfo.registers["r14"], 0x0000000000000000)
+        self.assertEqual(crashInfo.registers["r15"], 0x0000024dbf40ba91)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff71e424e62))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff71e424e62)
 
 class CDBSelectorTest2b(unittest.TestCase):
     def runTest(self):
@@ -1348,7 +1348,7 @@ class CDBSelectorTest2b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff71e424e62))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff71e424e62)
 
 # Test 3a is for Win7 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena
@@ -1399,17 +1399,17 @@ class CDBParserTestCrash3a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[35], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov eax,dword ptr [eax]")
-        self.assertEqual(crashInfo.registers["eax"], long(0x2b2ffff0))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x0041de08))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x2b2b2b2b))
-        self.assertEqual(crashInfo.registers["edx"], long(0x0a200310))
-        self.assertEqual(crashInfo.registers["esi"], long(0x0041dc68))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0a200310))
-        self.assertEqual(crashInfo.registers["eip"], long(0x00f36a63))
-        self.assertEqual(crashInfo.registers["esp"], long(0x0041dc04))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x0041dc2c))
+        self.assertEqual(crashInfo.registers["eax"], 0x2b2ffff0)
+        self.assertEqual(crashInfo.registers["ebx"], 0x0041de08)
+        self.assertEqual(crashInfo.registers["ecx"], 0x2b2b2b2b)
+        self.assertEqual(crashInfo.registers["edx"], 0x0a200310)
+        self.assertEqual(crashInfo.registers["esi"], 0x0041dc68)
+        self.assertEqual(crashInfo.registers["edi"], 0x0a200310)
+        self.assertEqual(crashInfo.registers["eip"], 0x00f36a63)
+        self.assertEqual(crashInfo.registers["esp"], 0x0041dc04)
+        self.assertEqual(crashInfo.registers["ebp"], 0x0041dc2c)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00f36a63))
+        self.assertEqual(crashInfo.crashAddress, 0x00f36a63)
 
 class CDBSelectorTest3a(unittest.TestCase):
     def runTest(self):
@@ -1419,7 +1419,7 @@ class CDBSelectorTest3a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00f36a63))
+        self.assertEqual(crashInfo.crashAddress, 0x00f36a63)
 
 # Test 3b is for Win10 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+13
@@ -1470,17 +1470,17 @@ class CDBParserTestCrash3b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[35], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov eax,dword ptr [eax]")
-        self.assertEqual(crashInfo.registers["eax"], long(0x2b2ffff0))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x02b2deb8))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x2b2b2b2b))
-        self.assertEqual(crashInfo.registers["edx"], long(0x04200310))
-        self.assertEqual(crashInfo.registers["esi"], long(0x02b2dd18))
-        self.assertEqual(crashInfo.registers["edi"], long(0x04200310))
-        self.assertEqual(crashInfo.registers["eip"], long(0x00ed6a63))
-        self.assertEqual(crashInfo.registers["esp"], long(0x02b2dcb4))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x02b2dcdc))
+        self.assertEqual(crashInfo.registers["eax"], 0x2b2ffff0)
+        self.assertEqual(crashInfo.registers["ebx"], 0x02b2deb8)
+        self.assertEqual(crashInfo.registers["ecx"], 0x2b2b2b2b)
+        self.assertEqual(crashInfo.registers["edx"], 0x04200310)
+        self.assertEqual(crashInfo.registers["esi"], 0x02b2dd18)
+        self.assertEqual(crashInfo.registers["edi"], 0x04200310)
+        self.assertEqual(crashInfo.registers["eip"], 0x00ed6a63)
+        self.assertEqual(crashInfo.registers["esp"], 0x02b2dcb4)
+        self.assertEqual(crashInfo.registers["ebp"], 0x02b2dcdc)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00ed6a63))
+        self.assertEqual(crashInfo.crashAddress, 0x00ed6a63)
 
 class CDBSelectorTest3b(unittest.TestCase):
     def runTest(self):
@@ -1490,7 +1490,7 @@ class CDBSelectorTest3b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00ed6a63))
+        self.assertEqual(crashInfo.crashAddress, 0x00ed6a63)
 
 # Test 4a is for Win7 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
@@ -1559,17 +1559,17 @@ class CDBParserTestCrash4a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[53], "RtlInitializeExceptionChain")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edi,dword ptr [ecx]")
-        self.assertEqual(crashInfo.registers["eax"], long(0x09bfff01))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x002adc18))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x2b2b2b2b))
-        self.assertEqual(crashInfo.registers["edx"], long(0x002ae2f0))
-        self.assertEqual(crashInfo.registers["esi"], long(0x09b00310))
-        self.assertEqual(crashInfo.registers["edi"], long(0x09b00310))
-        self.assertEqual(crashInfo.registers["eip"], long(0x00d44c59))
-        self.assertEqual(crashInfo.registers["esp"], long(0x002ada8c))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x002adc18))
+        self.assertEqual(crashInfo.registers["eax"], 0x09bfff01)
+        self.assertEqual(crashInfo.registers["ebx"], 0x002adc18)
+        self.assertEqual(crashInfo.registers["ecx"], 0x2b2b2b2b)
+        self.assertEqual(crashInfo.registers["edx"], 0x002ae2f0)
+        self.assertEqual(crashInfo.registers["esi"], 0x09b00310)
+        self.assertEqual(crashInfo.registers["edi"], 0x09b00310)
+        self.assertEqual(crashInfo.registers["eip"], 0x00d44c59)
+        self.assertEqual(crashInfo.registers["esp"], 0x002ada8c)
+        self.assertEqual(crashInfo.registers["ebp"], 0x002adc18)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00d44c59))
+        self.assertEqual(crashInfo.crashAddress, 0x00d44c59)
 
 class CDBSelectorTest4a(unittest.TestCase):
     def runTest(self):
@@ -1579,7 +1579,7 @@ class CDBSelectorTest4a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00d44c59))
+        self.assertEqual(crashInfo.crashAddress, 0x00d44c59)
 
 # Test 4b is for Win10 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
@@ -1632,17 +1632,17 @@ class CDBParserTestCrash4b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[37], "EnterBaseline")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edi,dword ptr [ecx]")
-        self.assertEqual(crashInfo.registers["eax"], long(0x02efff01))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x016fddb8))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x2b2b2b2b))
-        self.assertEqual(crashInfo.registers["edx"], long(0x016fe490))
-        self.assertEqual(crashInfo.registers["esi"], long(0x02e00310))
-        self.assertEqual(crashInfo.registers["edi"], long(0x02e00310))
-        self.assertEqual(crashInfo.registers["eip"], long(0x00404c59))
-        self.assertEqual(crashInfo.registers["esp"], long(0x016fdc2c))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x016fddb8))
+        self.assertEqual(crashInfo.registers["eax"], 0x02efff01)
+        self.assertEqual(crashInfo.registers["ebx"], 0x016fddb8)
+        self.assertEqual(crashInfo.registers["ecx"], 0x2b2b2b2b)
+        self.assertEqual(crashInfo.registers["edx"], 0x016fe490)
+        self.assertEqual(crashInfo.registers["esi"], 0x02e00310)
+        self.assertEqual(crashInfo.registers["edi"], 0x02e00310)
+        self.assertEqual(crashInfo.registers["eip"], 0x00404c59)
+        self.assertEqual(crashInfo.registers["esp"], 0x016fdc2c)
+        self.assertEqual(crashInfo.registers["ebp"], 0x016fddb8)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00404c59))
+        self.assertEqual(crashInfo.crashAddress, 0x00404c59)
 
 class CDBSelectorTest4b(unittest.TestCase):
     def runTest(self):
@@ -1652,7 +1652,7 @@ class CDBSelectorTest4b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00404c59))
+        self.assertEqual(crashInfo.crashAddress, 0x00404c59)
 
 # Test 5a is for Win7 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery
@@ -1701,25 +1701,25 @@ class CDBParserTestCrash5a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[33], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edx,dword ptr [rcx]")
-        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000001))
-        self.assertEqual(crashInfo.registers["rbx"], long(0xfffe2b2b2b2b2b2b))
-        self.assertEqual(crashInfo.registers["rcx"], long(0xfffe2b2b2b2fffe8))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x0000000000000001))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x000000000040c078))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x0000000006a00420))
-        self.assertEqual(crashInfo.registers["rip"], long(0x000000013f4975db))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000000040bc40))
-        self.assertEqual(crashInfo.registers["rbp"], long(0x0000000000000006))
-        self.assertEqual(crashInfo.registers["r8"], long(0x0000000006633200))
-        self.assertEqual(crashInfo.registers["r9"], long(0x000000014079b1a0))
-        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000031))
-        self.assertEqual(crashInfo.registers["r11"], long(0x0000000000000033))
-        self.assertEqual(crashInfo.registers["r12"], long(0xfffa7fffffffffff))
-        self.assertEqual(crashInfo.registers["r13"], long(0xfffc000000000000))
-        self.assertEqual(crashInfo.registers["r14"], long(0x000000000040c078))
-        self.assertEqual(crashInfo.registers["r15"], long(0x000000014079b1a0))
+        self.assertEqual(crashInfo.registers["rax"], 0x0000000000000001)
+        self.assertEqual(crashInfo.registers["rbx"], 0xfffe2b2b2b2b2b2b)
+        self.assertEqual(crashInfo.registers["rcx"], 0xfffe2b2b2b2fffe8)
+        self.assertEqual(crashInfo.registers["rdx"], 0x0000000000000001)
+        self.assertEqual(crashInfo.registers["rsi"], 0x000000000040c078)
+        self.assertEqual(crashInfo.registers["rdi"], 0x0000000006a00420)
+        self.assertEqual(crashInfo.registers["rip"], 0x000000013f4975db)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000000040bc40)
+        self.assertEqual(crashInfo.registers["rbp"], 0x0000000000000006)
+        self.assertEqual(crashInfo.registers["r8"], 0x0000000006633200)
+        self.assertEqual(crashInfo.registers["r9"], 0x000000014079b1a0)
+        self.assertEqual(crashInfo.registers["r10"], 0x0000000000000031)
+        self.assertEqual(crashInfo.registers["r11"], 0x0000000000000033)
+        self.assertEqual(crashInfo.registers["r12"], 0xfffa7fffffffffff)
+        self.assertEqual(crashInfo.registers["r13"], 0xfffc000000000000)
+        self.assertEqual(crashInfo.registers["r14"], 0x000000000040c078)
+        self.assertEqual(crashInfo.registers["r15"], 0x000000014079b1a0)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x000000013f4975db))
+        self.assertEqual(crashInfo.crashAddress, 0x000000013f4975db)
 
 class CDBSelectorTest5a(unittest.TestCase):
     def runTest(self):
@@ -1729,7 +1729,7 @@ class CDBSelectorTest5a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x000000013f4975db))
+        self.assertEqual(crashInfo.crashAddress, 0x000000013f4975db)
 
 # Test 5b is for Win10 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
@@ -1778,25 +1778,25 @@ class CDBParserTestCrash5b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[33], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov edx,dword ptr [rcx]")
-        self.assertEqual(crashInfo.registers["rax"], long(0x0000000000000001))
-        self.assertEqual(crashInfo.registers["rbx"], long(0xfffe2b2b2b2b2b2b))
-        self.assertEqual(crashInfo.registers["rcx"], long(0xfffe2b2b2b2fffe8))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x0000000000000001))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x000000c4a47fc528))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x0000021699700420))
-        self.assertEqual(crashInfo.registers["rip"], long(0x00007ff71dcf75db))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000c4a47fc0f0))
-        self.assertEqual(crashInfo.registers["rbp"], long(0x0000000000000006))
-        self.assertEqual(crashInfo.registers["r8"], long(0x0000021699633200))
-        self.assertEqual(crashInfo.registers["r9"], long(0x00007ff71effa590))
-        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000031))
-        self.assertEqual(crashInfo.registers["r11"], long(0x0000000000000033))
-        self.assertEqual(crashInfo.registers["r12"], long(0xfffa7fffffffffff))
-        self.assertEqual(crashInfo.registers["r13"], long(0xfffc000000000000))
-        self.assertEqual(crashInfo.registers["r14"], long(0x000000c4a47fc528))
-        self.assertEqual(crashInfo.registers["r15"], long(0x00007ff71effa590))
+        self.assertEqual(crashInfo.registers["rax"], 0x0000000000000001)
+        self.assertEqual(crashInfo.registers["rbx"], 0xfffe2b2b2b2b2b2b)
+        self.assertEqual(crashInfo.registers["rcx"], 0xfffe2b2b2b2fffe8)
+        self.assertEqual(crashInfo.registers["rdx"], 0x0000000000000001)
+        self.assertEqual(crashInfo.registers["rsi"], 0x000000c4a47fc528)
+        self.assertEqual(crashInfo.registers["rdi"], 0x0000021699700420)
+        self.assertEqual(crashInfo.registers["rip"], 0x00007ff71dcf75db)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000c4a47fc0f0)
+        self.assertEqual(crashInfo.registers["rbp"], 0x0000000000000006)
+        self.assertEqual(crashInfo.registers["r8"], 0x0000021699633200)
+        self.assertEqual(crashInfo.registers["r9"], 0x00007ff71effa590)
+        self.assertEqual(crashInfo.registers["r10"], 0x0000000000000031)
+        self.assertEqual(crashInfo.registers["r11"], 0x0000000000000033)
+        self.assertEqual(crashInfo.registers["r12"], 0xfffa7fffffffffff)
+        self.assertEqual(crashInfo.registers["r13"], 0xfffc000000000000)
+        self.assertEqual(crashInfo.registers["r14"], 0x000000c4a47fc528)
+        self.assertEqual(crashInfo.registers["r15"], 0x00007ff71effa590)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff71dcf75db))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff71dcf75db)
 
 class CDBSelectorTest5b(unittest.TestCase):
     def runTest(self):
@@ -1806,7 +1806,7 @@ class CDBSelectorTest5b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff71dcf75db))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff71dcf75db)
 
 # Test 6a is for Win7 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
@@ -1879,25 +1879,25 @@ class CDBParserTestCrash6a(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[57], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov r8,qword ptr [rcx]")
-        self.assertEqual(crashInfo.registers["rax"], long(0x000000013fcfeef0))
-        self.assertEqual(crashInfo.registers["rbx"], long(0x0000000008d00420))
-        self.assertEqual(crashInfo.registers["rcx"], long(0x2b2b2b2b2b2b2b2b))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x000000000681b940))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x000000000034c7b0))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x0000000008d00420))
-        self.assertEqual(crashInfo.registers["rip"], long(0x000000013f869ff3))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000000034c4b0))
-        self.assertEqual(crashInfo.registers["rbp"], long(0xfffe000000000000))
-        self.assertEqual(crashInfo.registers["r8"], long(0x000000000034c5b0))
-        self.assertEqual(crashInfo.registers["r9"], long(0x000000000001fffc))
-        self.assertEqual(crashInfo.registers["r10"], long(0x000000000000061d))
-        self.assertEqual(crashInfo.registers["r11"], long(0x000000000685a000))
-        self.assertEqual(crashInfo.registers["r12"], long(0x000000013fd23a98))
-        self.assertEqual(crashInfo.registers["r13"], long(0xfffa7fffffffffff))
-        self.assertEqual(crashInfo.registers["r14"], long(0x000000000034d550))
-        self.assertEqual(crashInfo.registers["r15"], long(0x0000000000000003))
+        self.assertEqual(crashInfo.registers["rax"], 0x000000013fcfeef0)
+        self.assertEqual(crashInfo.registers["rbx"], 0x0000000008d00420)
+        self.assertEqual(crashInfo.registers["rcx"], 0x2b2b2b2b2b2b2b2b)
+        self.assertEqual(crashInfo.registers["rdx"], 0x000000000681b940)
+        self.assertEqual(crashInfo.registers["rsi"], 0x000000000034c7b0)
+        self.assertEqual(crashInfo.registers["rdi"], 0x0000000008d00420)
+        self.assertEqual(crashInfo.registers["rip"], 0x000000013f869ff3)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000000034c4b0)
+        self.assertEqual(crashInfo.registers["rbp"], 0xfffe000000000000)
+        self.assertEqual(crashInfo.registers["r8"], 0x000000000034c5b0)
+        self.assertEqual(crashInfo.registers["r9"], 0x000000000001fffc)
+        self.assertEqual(crashInfo.registers["r10"], 0x000000000000061d)
+        self.assertEqual(crashInfo.registers["r11"], 0x000000000685a000)
+        self.assertEqual(crashInfo.registers["r12"], 0x000000013fd23a98)
+        self.assertEqual(crashInfo.registers["r13"], 0xfffa7fffffffffff)
+        self.assertEqual(crashInfo.registers["r14"], 0x000000000034d550)
+        self.assertEqual(crashInfo.registers["r15"], 0x0000000000000003)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x000000013f869ff3))
+        self.assertEqual(crashInfo.crashAddress, 0x000000013f869ff3)
 
 class CDBSelectorTest6a(unittest.TestCase):
     def runTest(self):
@@ -1907,7 +1907,7 @@ class CDBSelectorTest6a(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x000000013f869ff3))
+        self.assertEqual(crashInfo.crashAddress, 0x000000013f869ff3)
 
 # Test 6b is for Win10 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+13
@@ -1980,25 +1980,25 @@ class CDBParserTestCrash6b(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[57], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "mov r8,qword ptr [rcx]")
-        self.assertEqual(crashInfo.registers["rax"], long(0x00007ff74d8fee30))
-        self.assertEqual(crashInfo.registers["rbx"], long(0x00000285ef400420))
-        self.assertEqual(crashInfo.registers["rcx"], long(0x2b2b2b2b2b2b2b2b))
-        self.assertEqual(crashInfo.registers["rdx"], long(0x00000285ef21b940))
-        self.assertEqual(crashInfo.registers["rsi"], long(0x000000e87fbfc340))
-        self.assertEqual(crashInfo.registers["rdi"], long(0x00000285ef400420))
-        self.assertEqual(crashInfo.registers["rip"], long(0x00007ff74d469ff3))
-        self.assertEqual(crashInfo.registers["rsp"], long(0x000000e87fbfc040))
-        self.assertEqual(crashInfo.registers["rbp"], long(0xfffe000000000000))
-        self.assertEqual(crashInfo.registers["r8"], long(0x00000e87fbfc140))
-        self.assertEqual(crashInfo.registers["r9"], long(0x00000000001fffc))
-        self.assertEqual(crashInfo.registers["r10"], long(0x0000000000000649))
-        self.assertEqual(crashInfo.registers["r11"], long(0x00000285ef25a000))
-        self.assertEqual(crashInfo.registers["r12"], long(0x00007ff74d9239a0))
-        self.assertEqual(crashInfo.registers["r13"], long(0xfffa7fffffffffff))
-        self.assertEqual(crashInfo.registers["r14"], long(0x000000e87fbfd0e0))
-        self.assertEqual(crashInfo.registers["r15"], long(0x0000000000000003))
+        self.assertEqual(crashInfo.registers["rax"], 0x00007ff74d8fee30)
+        self.assertEqual(crashInfo.registers["rbx"], 0x00000285ef400420)
+        self.assertEqual(crashInfo.registers["rcx"], 0x2b2b2b2b2b2b2b2b)
+        self.assertEqual(crashInfo.registers["rdx"], 0x00000285ef21b940)
+        self.assertEqual(crashInfo.registers["rsi"], 0x000000e87fbfc340)
+        self.assertEqual(crashInfo.registers["rdi"], 0x00000285ef400420)
+        self.assertEqual(crashInfo.registers["rip"], 0x00007ff74d469ff3)
+        self.assertEqual(crashInfo.registers["rsp"], 0x000000e87fbfc040)
+        self.assertEqual(crashInfo.registers["rbp"], 0xfffe000000000000)
+        self.assertEqual(crashInfo.registers["r8"], 0x00000e87fbfc140)
+        self.assertEqual(crashInfo.registers["r9"], 0x00000000001fffc)
+        self.assertEqual(crashInfo.registers["r10"], 0x0000000000000649)
+        self.assertEqual(crashInfo.registers["r11"], 0x00000285ef25a000)
+        self.assertEqual(crashInfo.registers["r12"], 0x00007ff74d9239a0)
+        self.assertEqual(crashInfo.registers["r13"], 0xfffa7fffffffffff)
+        self.assertEqual(crashInfo.registers["r14"], 0x000000e87fbfd0e0)
+        self.assertEqual(crashInfo.registers["r15"], 0x0000000000000003)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff74d469ff3))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff74d469ff3)
 
 class CDBSelectorTest6b(unittest.TestCase):
     def runTest(self):
@@ -2008,7 +2008,7 @@ class CDBSelectorTest6b(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x00007ff74d469ff3))
+        self.assertEqual(crashInfo.crashAddress, 0x00007ff74d469ff3)
 
 # Test 7 is for Windows Server 2012 R2 with 32-bit js debug deterministic shell:
 #     +205
@@ -2069,17 +2069,17 @@ class CDBParserTestCrash7(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[45], "ntdll")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00c8a948))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x0053e32c))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x6802052b))
-        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["esi"], long(0x25d8094b))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0053e370))
-        self.assertEqual(crashInfo.registers["eip"], long(0x25d80b01))
-        self.assertEqual(crashInfo.registers["esp"], long(0x0053e370))
-        self.assertEqual(crashInfo.registers["ebp"], long(0xffe00000))
+        self.assertEqual(crashInfo.registers["eax"], 0x00c8a948)
+        self.assertEqual(crashInfo.registers["ebx"], 0x0053e32c)
+        self.assertEqual(crashInfo.registers["ecx"], 0x6802052b)
+        self.assertEqual(crashInfo.registers["edx"], 0x00000000)
+        self.assertEqual(crashInfo.registers["esi"], 0x25d8094b)
+        self.assertEqual(crashInfo.registers["edi"], 0x0053e370)
+        self.assertEqual(crashInfo.registers["eip"], 0x25d80b01)
+        self.assertEqual(crashInfo.registers["esp"], 0x0053e370)
+        self.assertEqual(crashInfo.registers["ebp"], 0xffe00000)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+        self.assertEqual(crashInfo.crashAddress, 0x25d80b01)
 
 class CDBSelectorTest7(unittest.TestCase):
     def runTest(self):
@@ -2089,7 +2089,7 @@ class CDBSelectorTest7(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x25d80b01))
+        self.assertEqual(crashInfo.crashAddress, 0x25d80b01)
 
 # Test 8 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
@@ -2105,17 +2105,17 @@ class CDBParserTestCrash8(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x73f1705d))
-        self.assertEqual(crashInfo.registers["edx"], long(0x00ea9210))
-        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0a03d110))
-        self.assertEqual(crashInfo.registers["eip"], long(0x0142865d))
-        self.assertEqual(crashInfo.registers["esp"], long(0x00eaa780))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x00eaa7ec))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ebx"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ecx"], 0x73f1705d)
+        self.assertEqual(crashInfo.registers["edx"], 0x00ea9210)
+        self.assertEqual(crashInfo.registers["esi"], 0x00000383)
+        self.assertEqual(crashInfo.registers["edi"], 0x0a03d110)
+        self.assertEqual(crashInfo.registers["eip"], 0x0142865d)
+        self.assertEqual(crashInfo.registers["esp"], 0x00eaa780)
+        self.assertEqual(crashInfo.registers["ebp"], 0x00eaa7ec)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+        self.assertEqual(crashInfo.crashAddress, 0x0142865d)
 
 class CDBSelectorTest8(unittest.TestCase):
     def runTest(self):
@@ -2125,7 +2125,7 @@ class CDBSelectorTest8(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0142865d))
+        self.assertEqual(crashInfo.crashAddress, 0x0142865d)
 
 # Test 9 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +1d8
@@ -2184,17 +2184,17 @@ class CDBParserTestCrash9(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[43], "ntdll")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x00b0ea18))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x00000400))
-        self.assertEqual(crashInfo.registers["edx"], long(0x73e74f80))
-        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
-        self.assertEqual(crashInfo.registers["edi"], long(0x00b0ea00))
-        self.assertEqual(crashInfo.registers["eip"], long(0x0f2bb4f3))
-        self.assertEqual(crashInfo.registers["esp"], long(0x00b0ea00))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x00b0eab0))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000020)
+        self.assertEqual(crashInfo.registers["ebx"], 0x00b0ea18)
+        self.assertEqual(crashInfo.registers["ecx"], 0x00000400)
+        self.assertEqual(crashInfo.registers["edx"], 0x73e74f80)
+        self.assertEqual(crashInfo.registers["esi"], 0xffffff8c)
+        self.assertEqual(crashInfo.registers["edi"], 0x00b0ea00)
+        self.assertEqual(crashInfo.registers["eip"], 0x0f2bb4f3)
+        self.assertEqual(crashInfo.registers["esp"], 0x00b0ea00)
+        self.assertEqual(crashInfo.registers["ebp"], 0x00b0eab0)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+        self.assertEqual(crashInfo.crashAddress, 0x0f2bb4f3)
 
 class CDBSelectorTest9(unittest.TestCase):
     def runTest(self):
@@ -2204,7 +2204,7 @@ class CDBSelectorTest9(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0f2bb4f3))
+        self.assertEqual(crashInfo.crashAddress, 0x0f2bb4f3)
 
 # Test 10 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +82
@@ -2224,17 +2224,17 @@ class CDBParserTestCrash10(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[4], "JSObject::makeLazyGroup")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x06fda948))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x020de8dc))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x5f7b6461))
-        self.assertEqual(crashInfo.registers["edx"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["esi"], long(0x1c2fbaab))
-        self.assertEqual(crashInfo.registers["edi"], long(0x020de910))
-        self.assertEqual(crashInfo.registers["eip"], long(0x1c2fbbb0))
-        self.assertEqual(crashInfo.registers["esp"], long(0x020de910))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x00000018))
+        self.assertEqual(crashInfo.registers["eax"], 0x06fda948)
+        self.assertEqual(crashInfo.registers["ebx"], 0x020de8dc)
+        self.assertEqual(crashInfo.registers["ecx"], 0x5f7b6461)
+        self.assertEqual(crashInfo.registers["edx"], 0x00000000)
+        self.assertEqual(crashInfo.registers["esi"], 0x1c2fbaab)
+        self.assertEqual(crashInfo.registers["edi"], 0x020de910)
+        self.assertEqual(crashInfo.registers["eip"], 0x1c2fbbb0)
+        self.assertEqual(crashInfo.registers["esp"], 0x020de910)
+        self.assertEqual(crashInfo.registers["ebp"], 0x00000018)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+        self.assertEqual(crashInfo.crashAddress, 0x1c2fbbb0)
 
 class CDBSelectorTest10(unittest.TestCase):
     def runTest(self):
@@ -2244,7 +2244,7 @@ class CDBSelectorTest10(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x1c2fbbb0))
+        self.assertEqual(crashInfo.crashAddress, 0x1c2fbbb0)
 
 # Test 11 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
@@ -2260,17 +2260,17 @@ class CDBParserTestCrash11(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "??")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x738f705d))
-        self.assertEqual(crashInfo.registers["edx"], long(0x00e7b0e0))
-        self.assertEqual(crashInfo.registers["esi"], long(0x00000383))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0ba37110))
-        self.assertEqual(crashInfo.registers["eip"], long(0x0156865d))
-        self.assertEqual(crashInfo.registers["esp"], long(0x00e7c650))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x00e7c6bc))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ebx"], 0x00000000)
+        self.assertEqual(crashInfo.registers["ecx"], 0x738f705d)
+        self.assertEqual(crashInfo.registers["edx"], 0x00e7b0e0)
+        self.assertEqual(crashInfo.registers["esi"], 0x00000383)
+        self.assertEqual(crashInfo.registers["edi"], 0x0ba37110)
+        self.assertEqual(crashInfo.registers["eip"], 0x0156865d)
+        self.assertEqual(crashInfo.registers["esp"], 0x00e7c650)
+        self.assertEqual(crashInfo.registers["ebp"], 0x00e7c6bc)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+        self.assertEqual(crashInfo.crashAddress, 0x0156865d)
 
 class CDBSelectorTest11(unittest.TestCase):
     def runTest(self):
@@ -2280,7 +2280,7 @@ class CDBSelectorTest11(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x0156865d))
+        self.assertEqual(crashInfo.crashAddress, 0x0156865d)
 
 # Test 12 is for Windows Server 2012 R2 with 32-bit js opt profiling deterministic shell:
 #     +1d8
@@ -2299,17 +2299,17 @@ class CDBParserTestCrash12(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "JSObject::makeLazyGroup")
 
         self.assertEqual(crashInfo.crashInstruction, "int 3")
-        self.assertEqual(crashInfo.registers["eax"], long(0x00000020))
-        self.assertEqual(crashInfo.registers["ebx"], long(0x0044ea78))
-        self.assertEqual(crashInfo.registers["ecx"], long(0x00000000))
-        self.assertEqual(crashInfo.registers["edx"], long(0x73bf4f80))
-        self.assertEqual(crashInfo.registers["esi"], long(0xffffff8c))
-        self.assertEqual(crashInfo.registers["edi"], long(0x0044ea50))
-        self.assertEqual(crashInfo.registers["eip"], long(0x1fa0b7f8))
-        self.assertEqual(crashInfo.registers["esp"], long(0x0044ea50))
-        self.assertEqual(crashInfo.registers["ebp"], long(0x0044eb00))
+        self.assertEqual(crashInfo.registers["eax"], 0x00000020)
+        self.assertEqual(crashInfo.registers["ebx"], 0x0044ea78)
+        self.assertEqual(crashInfo.registers["ecx"], 0x00000000)
+        self.assertEqual(crashInfo.registers["edx"], 0x73bf4f80)
+        self.assertEqual(crashInfo.registers["esi"], 0xffffff8c)
+        self.assertEqual(crashInfo.registers["edi"], 0x0044ea50)
+        self.assertEqual(crashInfo.registers["eip"], 0x1fa0b7f8)
+        self.assertEqual(crashInfo.registers["esp"], 0x0044ea50)
+        self.assertEqual(crashInfo.registers["ebp"], 0x0044eb00)
 
-        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+        self.assertEqual(crashInfo.crashAddress, 0x1fa0b7f8)
 
 class CDBSelectorTest12(unittest.TestCase):
     def runTest(self):
@@ -2319,7 +2319,7 @@ class CDBSelectorTest12(unittest.TestCase):
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
-        self.assertEqual(crashInfo.crashAddress, long(0x1fa0b7f8))
+        self.assertEqual(crashInfo.crashAddress, 0x1fa0b7f8)
 
 class UBSanParserTestCrash(unittest.TestCase):
     def runTest(self):
