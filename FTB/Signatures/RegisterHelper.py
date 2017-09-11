@@ -41,7 +41,7 @@ def getStackPointer(registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to value
         
-        @rtype: long
+        @rtype: int
         @return: The value of the stack pointer
     '''
     
@@ -58,7 +58,7 @@ def getInstructionPointer(registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to value
         
-        @rtype: long
+        @rtype: int
         @return: The value of the instruction pointer
     '''
     
@@ -79,7 +79,7 @@ def getRegisterValue(register, registerMap):
         @type registerMap: map
         @param registerMap: Map of register names to values
         
-        @rtype: long
+        @rtype: int
         @return: The register value
     '''
         
@@ -94,7 +94,7 @@ def getRegisterValue(register, registerMap):
         # what else to do.
         higherRegister = register.replace("e", "r", 1)
         if higherRegister in registerMap:
-            return registerMap[higherRegister] & 0xFFFFFFFFL
+            return registerMap[higherRegister] & 0xFFFFFFFF
     
     if len(register) == 2: 
         # We're either requesting the lower 16 bit of a register (ax), 
@@ -103,31 +103,31 @@ def getRegisterValue(register, registerMap):
             # Find proper higher register
             reg32 = "e" + register
             if reg32 in registerMap:
-                return registerMap[reg32] & 0xFFFFL
+                return registerMap[reg32] & 0xFFFF
             
             reg64 = "r" + register
             if reg64 in registerMap:
-                return registerMap[reg64] & 0xFFFFL
+                return registerMap[reg64] & 0xFFFF
         elif register.endswith("h"):
             higherRegister = register.replace("h", "x", 1)
             # Find proper higher register
             reg32 = "e" + higherRegister
             if reg32 in registerMap:
-                return (registerMap[reg32] & 0xFF00L) >> 8
+                return (registerMap[reg32] & 0xFF00) >> 8
 
             reg64 = "r" + higherRegister
             if reg64 in registerMap:
-                return (registerMap[reg64] & 0xFF00L) >> 8
+                return (registerMap[reg64] & 0xFF00) >> 8
         elif register.endswith("l"):
             higherRegister = register.replace("l", "x", 1)
             # Find proper higher register
             reg32 = "e" + higherRegister
             if reg32 in registerMap:
-                return registerMap[reg32] & 0xFFL
+                return registerMap[reg32] & 0xFF
             
             reg64 = "r" + higherRegister
             if reg64 in registerMap:
-                return registerMap[reg64] & 0xFFL
+                return registerMap[reg64] & 0xFF
             
     return None
     

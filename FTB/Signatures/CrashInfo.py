@@ -31,6 +31,12 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
+if sys.version_info.major == 3:
+    unicode_ = str
+else:
+    unicode_ = unicode
+
+
 class CrashInfo():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
@@ -97,7 +103,7 @@ class CrashInfo():
         cacheObject['registers'] = self.registers
 
         if self.crashAddress is not None:
-            cacheObject['crashAddress'] = long(self.crashAddress)
+            cacheObject['crashAddress'] = int(self.crashAddress)
         else:
             cacheObject['crashAddress'] = None
 
@@ -128,19 +134,19 @@ class CrashInfo():
         @return: Crash information object
         '''
 
-        assert stdout == None or isinstance(stdout, list) or isinstance(stdout, basestring)
-        assert stderr == None or isinstance(stderr, list) or isinstance(stderr, basestring)
-        assert auxCrashData == None or isinstance(auxCrashData, list) or isinstance(auxCrashData, basestring)
+        assert stdout is None or isinstance(stdout, (list, unicode_, bytes))
+        assert stderr is None or isinstance(stderr, (list, unicode_, bytes))
+        assert auxCrashData is None or isinstance(auxCrashData, (list, unicode_, bytes))
 
         assert isinstance(configuration, ProgramConfiguration)
 
-        if isinstance(stdout, basestring):
+        if isinstance(stdout, (unicode_, bytes)):
             stdout = stdout.splitlines()
 
-        if isinstance(stderr, basestring):
+        if isinstance(stderr, (unicode_, bytes)):
             stderr = stderr.splitlines()
 
-        if isinstance(auxCrashData, basestring):
+        if isinstance(auxCrashData, (unicode_, bytes)):
             auxCrashData = auxCrashData.splitlines()
 
         if cacheObject is not None:
@@ -381,7 +387,7 @@ class CrashInfo():
         if includeCrashAddress:
             if self.crashAddress == None:
                 crashAddress = ""
-            elif self.crashAddress != 0L and self.crashAddress < 0x100L:
+            elif self.crashAddress != 0 and self.crashAddress < 0x100:
                 # Try to match crash addresses that are small but non-zero
                 # with a generic range that is likely associated with null-deref.
                 crashAddress = "< 0x100"
@@ -510,7 +516,7 @@ class ASanCrashInfo(CrashInfo):
                     continue
                 reportFound = True
                 try:
-                    self.crashAddress = long(match.group(1), 16)
+                    self.crashAddress = int(match.group(1), 16)
                 except TypeError:
                     pass # No crash address available
 
@@ -518,9 +524,9 @@ class ASanCrashInfo(CrashInfo):
                 match = re.search(asanRegisterPattern, traceLine)
                 # Collect register values if they are available in the ASan trace
                 if match is not None:
-                    self.registers["pc"] = long(match.group(1), 16)
-                    self.registers[match.group(2)] = long(match.group(3), 16)
-                    self.registers[match.group(4)] = long(match.group(5), 16)
+                    self.registers["pc"] = int(match.group(1), 16)
+                    self.registers[match.group(2)] = int(match.group(3), 16)
+                    self.registers[match.group(4)] = int(match.group(5), 16)
 
             parts = traceLine.strip().split()
 
@@ -756,12 +762,12 @@ class GDBCrashInfo(CrashInfo):
                 if match != None:
                     pastFrames = True
                     register = match.group(1)
-                    value = long(match.group(2), 16)
+                    value = int(match.group(2), 16)
                     self.registers[register] = value
                 else:
                     match = re.search(gdbCrashAddressPattern, traceLine)
                     if match != None:
-                        self.crashAddress = long(match.group(1), 16)
+                        self.crashAddress = int(match.group(1), 16)
                     else:
                         match = re.search(gdbCrashInstructionPattern, traceLine)
                         if match != None:
@@ -822,7 +828,7 @@ class GDBCrashInfo(CrashInfo):
         if self.crashAddress == None and self.crashInstruction != None:
             crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
 
-            if isinstance(crashAddress, basestring):
+            if isinstance(crashAddress, (unicode_, bytes)):
                 self.failureReason = crashAddress
                 return
 
@@ -842,10 +848,10 @@ class GDBCrashInfo(CrashInfo):
 
         @type crashInstruction: string
         @param crashInstruction: Crash instruction string as provided by GDB
-        @type registerMap: Map from string to long
+        @type registerMap: Map from string to int
         @param registerMap: Map of register names to values
 
-        @rtype: long
+        @rtype: int
         @return The calculated crash address
 
         On error, a string containing the failure message is returned instead.
@@ -912,9 +918,9 @@ class GDBCrashInfo(CrashInfo):
         def calculateDerefOpAddress(derefOp):
             match = re.match("\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match != None:
-                offset = 0L
+                offset = 0
                 if len(match.group(1)):
-                    offset = long(match.group(1), 16)
+                    offset = int(match.group(1), 16)
 
                 val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
 
@@ -923,10 +929,10 @@ class GDBCrashInfo(CrashInfo):
                     return (None, "Missing value for register %s " % match.group(2))
                 else:
                     if RegisterHelper.getBitWidth(registerMap) == 32:
-                        return (long(int32(uint32(offset)) + int32(uint32(val))), None)
+                        return (int(int32(uint32(offset)) + int32(uint32(val))), None)
                     else:
                         # Assume 64 bit width
-                        return (long(int64(uint64(offset)) + int64(uint64(val))), None)
+                        return (int(int64(uint64(offset)) + int64(uint64(val))), None)
             else:
                 return (None, "Failed to match dereference operation.")
 
@@ -1017,7 +1023,7 @@ class GDBCrashInfo(CrashInfo):
                     for x in (parts[1], parts[0]):
                         result = re.match("\\$?(\\-?0x[0-9a-f]+)", x)
                         if result != None:
-                            return long(result.group(1), 16)
+                            return int(result.group(1), 16)
             elif len(parts) == 3:
                 # Example instruction: shrb   -0x69(%rdx,%rbx,8)
                 if "(" in parts[0] and ")" in parts[2]:
@@ -1057,14 +1063,14 @@ class GDBCrashInfo(CrashInfo):
 
         match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
         if match != None:
-            offset = 0L
+            offset = 0
             if len(match.group(1)) > 0:
-                offset = long(match.group(1), 16)
+                offset = int(match.group(1), 16)
 
             regA = RegisterHelper.getRegisterValue(match.group(2), registerMap)
             regB = RegisterHelper.getRegisterValue(match.group(3), registerMap)
 
-            mult = long(match.group(4), 16)
+            mult = int(match.group(4), 16)
 
             # If we're missing any of the two register values, return None
             if regA == None or regB == None:
@@ -1078,7 +1084,7 @@ class GDBCrashInfo(CrashInfo):
             else:
                 # Assume 64 bit width
                 val = int64(uint64(regA)) + int64(uint64(offset)) + (int64(uint64(regB)) * int64(uint64(mult)))
-            return (long(val), None)
+            return (int(val), None)
 
         return (None, "Unknown failure.")
 
@@ -1129,7 +1135,7 @@ class MinidumpCrashInfo(CrashInfo):
             elif traceLine.startswith("Crash|"):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
-                self.crashAddress = long(components[2], 16)
+                self.crashAddress = int(components[2], 16)
 
 
 class AppleCrashInfo(CrashInfo):
@@ -1159,7 +1165,7 @@ class AppleCrashInfo(CrashInfo):
                 #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
                 address = line.split(" ")[-1]
                 if address.startswith('0x'):
-                    self.crashAddress = long(address, 16)
+                    self.crashAddress = int(address, 16)
 
             # Start of stack for crashing thread
             if re.match(r'Thread \d+ Crashed:', line):
@@ -1255,10 +1261,10 @@ class CDBCrashInfo(CrashInfo):
                 # Extract the eip/rip specifically for use later
                 if "eip=" in line:
                     address = line.split("eip=")[1].split()[0]
-                    self.crashAddress = long(address, 16)
+                    self.crashAddress = int(address, 16)
                 elif "rip=" in line:
                     address = line.split("rip=")[1].split()[0]
-                    self.crashAddress = long(address, 16)
+                    self.crashAddress = int(address, 16)
 
                 # First extract the line
                 # 32-bit example:
@@ -1275,7 +1281,7 @@ class CDBCrashInfo(CrashInfo):
                     match = re.search(cdbRegisterPattern, instr)
                     if match is not None:
                         register = match.group(1)
-                        value = long(match.group(2), 16)
+                        value = int(match.group(2), 16)
                         self.registers[register] = value
 
             # Crash instruction
