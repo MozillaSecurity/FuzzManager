@@ -376,3 +376,50 @@ class EditSignatureTests(TestCase):
         self.assertIsNone(crash2.bucket)
         self.assertEqual(out_list[0], crash1)
         self.assertEqual(in_list[0], crash2)
+
+
+class DelSignatureTests(TestCase):
+    name = 'crashmanager:sigdel'
+    entries_fmt = "Also delete all %d entries with this bucket"
+
+    def test_template(self):
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Are you sure that you want to delete this signature?")
+        self.assertContains(response, self.entries_fmt % 0)
+        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Are you sure that you want to delete this signature?")
+        self.assertContains(response, self.entries_fmt % 1)
+
+    def test_empty(self):
+        """Test deleting a signature with no crashes"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertRedirects(response, reverse('crashmanager:signatures'))
+        self.assertEqual(Bucket.objects.count(), 0)
+
+    def test_leave_entries(self):
+        """Test deleting a signature with crashes and leave entries"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertRedirects(response, reverse('crashmanager:signatures'))
+        self.assertEqual(Bucket.objects.count(), 0)
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        self.assertIsNone(crash.bucket)
+
+    def test_del_entries(self):
+        """Test deleting a signature with crashes and removing entries"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}), {'delentries': '1'})
+        self.assertRedirects(response, reverse('crashmanager:signatures'))
+        self.assertEqual(Bucket.objects.count(), 0)
+        self.assertEqual(CrashEntry.objects.count(), 0)
