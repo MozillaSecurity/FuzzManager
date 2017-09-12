@@ -19,7 +19,7 @@ from django.core.files.base import ContentFile
 from django.contrib.auth.models import User
 
 from . import TestCase
-from ..models import Bucket, CrashEntry
+from ..models import Bucket, BucketWatch, CrashEntry
 
 
 log = logging.getLogger("fm.crashmanager.tests.signatures")
@@ -423,3 +423,122 @@ class DelSignatureTests(TestCase):
         self.assertRedirects(response, reverse('crashmanager:signatures'))
         self.assertEqual(Bucket.objects.count(), 0)
         self.assertEqual(CrashEntry.objects.count(), 0)
+
+
+class WatchSignatureTests(TestCase):
+
+    def test_empty(self):
+        """If no watched signatures, that should be shown"""
+        self.client.login(username='test', password='test')
+        response = self.client.get(reverse('crashmanager:sigwatch'))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Displaying 0 watched signature entries from the database.")
+
+    def test_buckets(self):
+        """Watched signatures should be listed"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        self.create_bucketwatch(bucket=bucket)
+        response = self.client.get(reverse('crashmanager:sigwatch'))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Displaying 1 watched signature entries from the database.")
+        siglist = response.context['siglist']
+        self.assertEqual(len(siglist), 1)
+        self.assertEqual(siglist[0], bucket)
+
+    def test_buckets_new_crashes(self):
+        """Watched signatures should show new crashes"""
+        self.client.login(username='test', password='test')
+        buckets = (self.create_bucket(shortDescription='bucket #1'),
+                   self.create_bucket(shortDescription='bucket #2'))
+        crash1 = self.create_crash(shortSignature='crash #1', bucket=buckets[1], tool='tool #1')
+        self.create_toolfilter('tool #1')
+        self.create_bucketwatch(bucket=buckets[0])
+        self.create_bucketwatch(bucket=buckets[1], crash=crash1)
+        self.create_crash(shortSignature='crash #2', bucket=buckets[1], tool='tool #1')
+        response = self.client.get(reverse('crashmanager:sigwatch'))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Displaying 2 watched signature entries from the database.")
+        siglist = response.context['siglist']
+        self.assertEqual(len(siglist), 2)
+        self.assertEqual(siglist[0], buckets[1])
+        self.assertEqual(siglist[0].newCrashes, 1)
+        self.assertEqual(siglist[1], buckets[0])
+        self.assertEqual(siglist[1].newCrashes, 0)
+
+    def test_del(self):
+        """Deleting a signature watch"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        self.create_bucketwatch(bucket=bucket)
+        response = self.client.get(reverse('crashmanager:sigwatchdel', kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response,
+                            "Are you sure that you want to stop watching this signature for new crash entries?")
+        self.assertContains(response, bucket.shortDescription)
+        response = self.client.post(reverse('crashmanager:sigwatchdel', kwargs={"sigid": bucket.pk}))
+        self.assertEqual(BucketWatch.objects.count(), 0)
+        self.assertEqual(Bucket.objects.get(), bucket)
+        self.assertRedirects(response, reverse('crashmanager:sigwatch'))
+
+    def test_delsig(self):
+        """Deleting a watched signature"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        self.create_bucketwatch(bucket=bucket)
+        bucket.delete()
+        self.assertEqual(BucketWatch.objects.count(), 0)
+
+    def test_update(self):
+        """Updating a signature watch"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription="bucket #1")
+        crash1 = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        watch = self.create_bucketwatch(bucket=bucket, crash=crash1)
+        crash2 = self.create_crash(shortSignature='crash #2', bucket=bucket)
+        response = self.client.post(reverse('crashmanager:sigwatchnew'), {"bucket": "%d" % bucket.pk,
+                                                                          "crash": "%d" % crash2.pk})
+        self.assertRedirects(response, reverse('crashmanager:sigwatch'))
+        watch = BucketWatch.objects.get(pk=watch.pk)
+        self.assertEqual(watch.bucket, bucket)
+        self.assertEqual(watch.lastCrash, crash2.pk)
+
+    def test_new(self):
+        """Creating a signature watch"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription="bucket #1")
+        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        response = self.client.post(reverse('crashmanager:sigwatchnew'), {"bucket": "%d" % bucket.pk,
+                                                                          "crash": "%d" % crash.pk})
+        self.assertRedirects(response, reverse('crashmanager:sigwatch'))
+        watch = BucketWatch.objects.get()
+        self.assertEqual(watch.bucket, bucket)
+        self.assertEqual(watch.lastCrash, crash.pk)
+
+    def test_crashes(self):
+        """Crashes in a signature watch should be shown correctly."""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(shortDescription='bucket #1')
+        crash1 = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        url = reverse("crashmanager:sigwatchcrashes", kwargs={"sigid": bucket.pk})
+        watch = self.create_bucketwatch(bucket=bucket)
+        # check that crash1 is shown
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, httplib.OK)
+        crashes = response.context['crashlist']
+        self.assertEqual(len(crashes), 1)
+        self.assertEqual(crashes[0], crash1)
+        watch.lastCrash = crash1.pk
+        watch.save()
+        # check that no crashes are shown
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, httplib.OK)
+        crashes = response.context['crashlist']
+        self.assertEqual(len(crashes), 0)
+        crash2 = self.create_crash(shortSignature='crash #2', bucket=bucket)
+        # check that crash2 is shown
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, httplib.OK)
+        crashes = response.context['crashlist']
+        self.assertEqual(len(crashes), 1)
+        self.assertEqual(crashes[0], crash2)

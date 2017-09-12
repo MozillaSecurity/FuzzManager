@@ -16,8 +16,8 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.test import TestCase as DjangoTestCase
 
-from ..models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, Product, TestCase as cmTestCase, \
-                     Tool, User as cmUser
+from ..models import Bucket, BucketWatch, Bug, BugProvider, Client, CrashEntry, OS, Platform, Product, \
+                     TestCase as cmTestCase, Tool, User as cmUser
 
 logging.getLogger("django").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)
@@ -138,3 +138,13 @@ class TestCase(DjangoTestCase):
         user = User.objects.get(username='test')
         cmuser, _ = cmUser.objects.get_or_create(user=user)
         cmuser.defaultToolsFilter.add(Tool.objects.get(name=tool))
+
+    @staticmethod
+    def create_bucketwatch(bucket, crash=0):
+        user = User.objects.get(username='test')
+        cmuser, _ = cmUser.objects.get_or_create(user=user)
+        if crash:
+            crash = crash.pk
+        result = BucketWatch.objects.create(bucket=bucket, user=cmuser, lastCrash=crash)
+        log.debug("Created BucketWatch pk=%d", result.pk)
+        return result
