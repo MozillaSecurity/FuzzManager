@@ -11,12 +11,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import httplib
+import json
 import logging
 
 from django.core.urlresolvers import reverse
 import pytest
 
 from . import TestCase
+from ..models import CrashEntry
 
 
 log = logging.getLogger("fm.crashmanager.tests.crashes")
@@ -227,3 +229,24 @@ class AllCrashesViewTests(CrashesViewTests):
         self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
         self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
         self.assertContains(response, self.entries_fmt % 2)
+
+
+class AutoAssignCrashesTests(TestCase):
+
+    def test_autoassign(self):
+        """Create crashes and a signature that would match it and see that autoassign buckets it"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash(shortSignature='crash #1', stderr="blah")
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        bucket = self.create_bucket(shortDescription='bucket #1', signature=sig)
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        self.assertIsNone(crash.bucket)
+        self.assertRedirects(self.client.get(reverse('crashmanager:autoassign')), reverse('crashmanager:crashes'))
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        self.assertEqual(crash.bucket, bucket)
