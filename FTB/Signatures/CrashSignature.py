@@ -42,7 +42,7 @@ class CrashSignature():
 
         try:
             obj = json.loads(rawSignature, object_pairs_hook=OrderedDict)
-        except ValueError, e:
+        except ValueError as e:
             raise RuntimeError("Invalid JSON: %s" % e)
 
         # Get the symptoms objects (mandatory)
