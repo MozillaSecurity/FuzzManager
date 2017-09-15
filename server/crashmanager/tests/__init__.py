@@ -16,8 +16,8 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.test import TestCase as DjangoTestCase
 
-from ..models import Bucket, BucketWatch, Bug, BugProvider, Client, CrashEntry, OS, Platform, Product, \
-                     TestCase as cmTestCase, Tool, User as cmUser
+from ..models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, Client, CrashEntry, OS, Platform, \
+                     Product, TestCase as cmTestCase, Tool, User as cmUser
 
 logging.getLogger("django").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)
@@ -100,13 +100,19 @@ class TestCase(DjangoTestCase):
         return result
 
     @staticmethod
+    def create_bugprovider(classname="BugzillaProvider", hostname="", urlTemplate="%s"):
+        result = BugProvider.objects.create(classname=classname,
+                                            hostname=hostname,
+                                            urlTemplate=urlTemplate)
+        log.debug("Created BugProvider pk=%d", result.pk)
+        return result
+
+    @staticmethod
     def create_bug(externalId, externalType=None, closed=None):
         if externalType is None:
-            externalType, _ = \
-                BugProvider.objects.get_or_create(classname="BugzillaProvider",
-                                                  hostname="bugzilla.mozilla.org",
-                                                  urlTemplate="https://bugzilla.mozilla.org/show_bug.cgi?id=%s")
+            externalType = TestCase.create_bugprovider()
         result = Bug.objects.create(externalId=externalId, externalType=externalType, closed=closed)
+        log.debug("Created Bug pk=%d", result.pk)
         return result
 
     @staticmethod
@@ -117,6 +123,54 @@ class TestCase(DjangoTestCase):
         result = cmTestCase(quality=quality, isBinary=isBinary, size=len(testdata))
         result.test.save(filename, ContentFile(testdata))
         result.save()
+        return result
+
+    @staticmethod
+    def create_template(name="",
+                        product="",
+                        component="",
+                        summary="",
+                        version="",
+                        description="",
+                        whiteboard="",
+                        keywords="",
+                        op_sys="",
+                        platform="",
+                        priority="",
+                        severity="",
+                        alias="",
+                        cc="",
+                        assigned_to="",
+                        qa_contact="",
+                        target_milestone="",
+                        attrs="",
+                        security="",
+                        security_group="",
+                        comment="",
+                        testcase_filename=""):
+        result = BugzillaTemplate.objects.create(name=name,
+                                                 product=product,
+                                                 component=component,
+                                                 summary=summary,
+                                                 version=version,
+                                                 description=description,
+                                                 whiteboard=whiteboard,
+                                                 keywords=keywords,
+                                                 op_sys=op_sys,
+                                                 platform=platform,
+                                                 priority=priority,
+                                                 severity=severity,
+                                                 alias=alias,
+                                                 cc=cc,
+                                                 assigned_to=assigned_to,
+                                                 qa_contact=qa_contact,
+                                                 target_milestone=target_milestone,
+                                                 attrs=attrs,
+                                                 security=security,
+                                                 security_group=security_group,
+                                                 comment=comment,
+                                                 testcase_filename=testcase_filename)
+        log.debug("Created BugzillaTemplate pk=%d", result.pk)
         return result
 
     @staticmethod

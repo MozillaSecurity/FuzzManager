@@ -170,6 +170,98 @@ class AllSignaturesViewTests(SignaturesViewTests):
         self.assertContains(response, self.entries_fmt % 2)
 
 
+class FindSignatureTests(TestCase):
+    name = "crashmanager:findsigs"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'crashid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash()
+        bucket = self.create_bucket(signature=json.dumps({"symptoms": [
+                                                             {'src': 'stderr',
+                                                              'type': 'output',
+                                                              'value': '//'}]}))
+
+        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class LinkSignatureTests(TestCase):
+    name = "crashmanager:siglink"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'sigid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket()
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class UnlinkSignatureTests(TestCase):
+    name = "crashmanager:sigunlink"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'sigid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket()
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class OptSignatureTests(TestCase):
+    name = "crashmanager:sigopt"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'sigid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(signature=json.dumps({"symptoms": [
+                                                             {'src': 'stderr',
+                                                              'type': 'output',
+                                                              'value': '//'}]}))
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class TrySignatureTests(TestCase):
+    name = "crashmanager:sigtry"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'sigid': 0, 'crashid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket(signature=json.dumps({"symptoms": [
+                                                             {'src': 'stderr',
+                                                              'type': 'output',
+                                                              'value': '//'}]}))
+        crash = self.create_crash()
+        response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk, "crashid": crash.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
 class NewSignatureTests(TestCase):
     name = "crashmanager:signew"
 

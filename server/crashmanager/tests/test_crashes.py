@@ -258,6 +258,54 @@ class AutoAssignCrashesTests(TestCase):
         self.assertEqual(crash.bucket, bucket)
 
 
+class CrashDeleteTests(TestCase):
+    name = "crashmanager:crashdel"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'crashid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash()
+        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class CrashEditTests(TestCase):
+    name = "crashmanager:crashedit"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'crashid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash()
+        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
+class CrashViewTests(TestCase):
+    name = "crashmanager:crashview"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name, kwargs={'crashid': 0})
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_simpleget(self):
+        """No errors are thrown in template"""
+        self.client.login(username='test', password='test')
+        crash = self.create_crash()
+        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
+        self.assertEqual(response.status_code, httplib.OK)
+
+
 class QueryCrashesTests(TestCase):
     name = "crashmanager:querycrashes"
 
