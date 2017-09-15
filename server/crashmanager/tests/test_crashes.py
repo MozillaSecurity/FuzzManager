@@ -232,6 +232,12 @@ class AllCrashesViewTests(CrashesViewTests):
 
 
 class AutoAssignCrashesTests(TestCase):
+    name = "crashmanager:autoassign"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name)
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
     def test_autoassign(self):
         """Create crashes and a signature that would match it and see that autoassign buckets it"""
@@ -247,6 +253,6 @@ class AutoAssignCrashesTests(TestCase):
         bucket = self.create_bucket(shortDescription='bucket #1', signature=sig)
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertIsNone(crash.bucket)
-        self.assertRedirects(self.client.get(reverse('crashmanager:autoassign')), reverse('crashmanager:crashes'))
+        self.assertRedirects(self.client.get(reverse(self.name)), reverse('crashmanager:crashes'))
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertEqual(crash.bucket, bucket)
