@@ -256,3 +256,58 @@ class AutoAssignCrashesTests(TestCase):
         self.assertRedirects(self.client.get(reverse(self.name)), reverse('crashmanager:crashes'))
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertEqual(crash.bucket, bucket)
+
+
+class QueryCrashesTests(TestCase):
+    name = "crashmanager:querycrashes"
+
+    def test_no_login(self):
+        """Request without login hits the login redirect"""
+        path = reverse(self.name)
+        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+
+    def test_query(self):
+        """Crash list queries"""
+        self.client.login(username='test', password='test')
+        buckets = [self.create_bucket(shortDescription="bucket #1"),
+                   None]
+        testcases = [None,
+                     self.create_testcase("test.txt", quality=3)]
+        crashes = [self.create_crash(shortSignature="crash #%d" % (i + 1),
+                                     client="client #%d" % (i + 1),
+                                     os="os #%d" % (i + 1),
+                                     product="product #%d" % (i + 1),
+                                     platform="platform #%d" % (i + 1),
+                                     tool="tool #%d" % (i + 1),
+                                     bucket=buckets[i],
+                                     testcase=testcases[i])
+                   for i in range(2)]
+        response = self.client.get(reverse(self.name))
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Search Query")
+        self.assertNotContains(response, "Invalid query")
+        response = self.client.get(reverse(self.name), {"query": "badjson"})
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Invalid query")
+        response = self.client.post(reverse(self.name), {"query": "badjson"})
+        self.assertEqual(response.status_code, httplib.OK)
+        self.assertContains(response, "Invalid query")
+        for params, exp_crashes in (({'op': 'OR', 'bucket': buckets[0].pk}, {crashes[0]}),
+                                    ({'op': 'OR', 'client__name': 'client #2'}, {crashes[1]}),
+                                    ({'op': 'OR', 'client__name__contains': '#2'}, {crashes[1]}),
+                                    ({'op': 'OR', 'client__name__contains': 'client'}, set(crashes)),
+                                    ({'op': 'OR', 'os__name': 'os #2'}, {crashes[1]}),
+                                    ({'op': 'NOT', 'os__name': 'os #2'}, {crashes[0]}),
+                                    ({'op': 'OR', 'product__name': 'product #2'}, {crashes[1]}),
+                                    ({'op': 'OR', 'platform__name': 'platform #2'}, {crashes[1]}),
+                                    ({'op': 'OR', 'testcase__quality': 3}, {crashes[1]}),
+                                    ({'op': 'OR', 'tool__name': 'tool #2'}, {crashes[1]}),
+                                    ({'op': 'OR', 'tool__name__contains': '#2'}, {crashes[1]})):
+            log.debug('requesting with %r', params)
+            log.debug('expecting: %r', exp_crashes)
+            response = self.client.get(reverse(self.name), {'query': json.dumps(params)})
+            self.assertEqual(response.status_code, httplib.OK)
+            crashlist = response.context['crashlist']
+            self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
+            self.assertEqual(set(crashlist), exp_crashes)  # expected crashes
+            self.assertContains(response, "Your search matched %d entries in database." % len(exp_crashes))
