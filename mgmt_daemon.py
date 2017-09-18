@@ -20,6 +20,8 @@ from __future__ import print_function
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
+from FTB.Signatures.CrashInfo import CrashInfo
+
 import argparse
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -35,12 +37,53 @@ import subprocess
 import sys
 import time
 import traceback
+import threading
 
 haveFFPuppet = True
 try:
     from ffpuppet import FFPuppet
 except ImportError:
     haveFFPuppet = False
+
+class LibFuzzerMonitor(threading.Thread):
+    def __init__(self, fd):
+        assert callable(fd.readline)
+
+        threading.Thread.__init__(self)
+
+        self.fd = fd
+        self.trace = []
+        self.inTrace = False
+        self.testcase = None
+
+    def run(self):
+        while True:
+            line = self.fd.readline(4096)
+
+            if not line:
+                break
+
+            if self.inTrace:
+                self.trace.append(line.rstrip())
+                if line.find("==ABORTING") >= 0:
+                    self.inTrace = False
+            elif line.find("==ERROR: AddressSanitizer") >= 0:
+                self.trace.append(line.rstrip())
+                self.inTrace = True
+
+            if line.find("Test unit written to ") >= 0:
+                self.testcase = line.split()[-1]
+
+            # Pass-through output
+            sys.stderr.write(line)
+
+        self.fd.close()
+
+    def getASanTrace(self):
+        return self.trace
+
+    def getTestcase(self):
+        return self.testcase
 
 def get_machine_id(base_dir):
     '''
@@ -715,280 +758,394 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     # setup argparser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(usage='%s --libfuzzer or --aflfuzz [OPTIONS] --cmd <COMMAND AND ARGUMENTS>' % program_name)
 
-    parser.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
-    parser.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true', help="Cleanup S3 queue entries older than specified refresh interval")
-    parser.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
-    parser.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
-    parser.add_argument("--s3-build-upload", dest="s3_build_upload", help="Use S3 to upload a new build for the specified project", metavar="FILE")
-    parser.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
-    parser.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
-    parser.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
-    parser.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
-    parser.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
-    parser.add_argument("--s3-corpus-status", dest="s3_corpus_status", action='store_true', help="Display S3 corpus status")
-    parser.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
-    parser.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
-    parser.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
-    parser.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
-    parser.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
-    parser.add_argument("--afl-timeout", dest="afl_timeout", type=int, default=1000, help="Timeout per test to pass to AFL for corpus refreshing", metavar="MSECS")
-    
-    parser.add_argument("--firefox", dest="firefox", action='store_true', help="Test Program is Firefox (requires FFPuppet installed)")
-    parser.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
-    parser.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions", help="Path extension file for Firefox", metavar="FILE")
-    parser.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox", metavar="FILE")
-    parser.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE", help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
-    
-    parser.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
-    parser.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
-    parser.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
-    parser.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
-    
-    parser.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
-    parser.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket", metavar="NAME")
+    mainGroup = parser.add_argument_group(title="Main Options", description=None)
+    aflGroup = parser.add_argument_group(title="AFL Options", description="Use these arguments in AFL mode")
+    libfGroup = parser.add_argument_group(title="Libfuzzer Options", description="Use these arguments in Libfuzzer mode" )
+    fmGroup = parser.add_argument_group(title="FuzzManager Options", description="Use these to specify FuzzManager parameters" )
+  
+    mainGroup.add_argument("--libfuzzer", dest="libfuzzer", action='store_true', help="Enable LibFuzzer mode")
+    mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
+    mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
 
-    parser.add_argument('rargs', nargs=argparse.REMAINDER)
+    libfGroup.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
+    libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
+    libfGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
+
+    fmGroup.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
+    fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
+    fmGroup.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
+    fmGroup.add_argument("--serverhost", help="Server hostname for remote signature management.", metavar="HOST")
+    fmGroup.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
+    fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
+    fmGroup.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
+    fmGroup.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
+    fmGroup.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    fmGroup.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
+    fmGroup.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
+    fmGroup.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    fmGroup.add_argument("--tool", dest="tool", help="Name of the tool that found this issue", metavar="NAME")
+    fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
+    
+    aflGroup.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
+    aflGroup.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true', help="Cleanup S3 queue entries older than specified refresh interval")
+    aflGroup.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
+    aflGroup.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-build-upload", dest="s3_build_upload", help="Use S3 to upload a new build for the specified project", metavar="FILE")
+    aflGroup.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
+    aflGroup.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
+    aflGroup.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-status", dest="s3_corpus_status", action='store_true', help="Display S3 corpus status")
+    aflGroup.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
+    aflGroup.add_argument("--afl-timeout", dest="afl_timeout", type=int, default=1000, help="Timeout per test to pass to AFL for corpus refreshing", metavar="MSECS")
+    aflGroup.add_argument("--firefox", dest="firefox", action='store_true', help="Test Program is Firefox (requires FFPuppet installed)")
+    aflGroup.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
+    aflGroup.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions", help="Path extension file for Firefox", metavar="FILE")
+    aflGroup.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox", metavar="FILE")
+    aflGroup.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE", help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
+    aflGroup.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
+    aflGroup.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
+    aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
+    aflGroup.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
+    aflGroup.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
+    aflGroup.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket", metavar="NAME")
+    aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
 
     if len(argv) == 0:
         parser.print_help()
         return 2
 
-    # process options
     opts = parser.parse_args(argv)
-    
-    if opts.firefox or opts.firefox_start_afl:
-        if not haveFFPuppet:
-            print("Error: --firefox and --firefox-start-afl require FFPuppet to be installed", file=sys.stderr)
+	
+    if not opts.libfuzzer and not opts.aflfuzz:
+	opts.aflfuzz = True
+	
+    if opts.cmd and opts.aflfuzz:
+	if not opts.firefox:
+		print("Error: Use --cmd either with libfuzzer or with afl in firefox mode", file=sys.sdderr)
+		return 2
+
+    if opts.libfuzzer:       
+        if not opts.rargs:
+            print("Error: No arguments specified", file=sys.stderr)
             return 2
-        
-        if opts.custom_cmdline_file:
-            print("Error: --custom-cmdline-file is incompatible with firefox options", file=sys.stderr)
+
+        binary = opts.rargs[0]
+        if not os.path.exists(binary):
+            print("Error: Specified binary does not exist: %s" % binary, file=sys.stderr)
             return 2
-        
-        if not opts.firefox_prefs or not opts.firefox_testpath:
-            print("Error: --firefox and --firefox-start-afl require --firefox-prefs and --firefox-testpath to be specified", file=sys.stderr)
+
+        configuration = ProgramConfiguration.fromBinary(binary)
+        if configuration == None:
+            print("Error: Failed to load program configuration based on binary", file=sys.stderr)
             return 2
-        
-    if opts.firefox_start_afl:
-        if not opts.aflbindir:
-            print("Error: Must specify --afl-binary-dir for starting AFL with firefox", file=sys.stderr)
-            return 2
-        
-        (ffp, cmd, env) = setup_firefox(opts.firefox_start_afl, opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
-        
-        afl_cmd = [ os.path.join(opts.aflbindir, "afl-fuzz") ]
-        
-        opts.rargs.remove("--")
-        
-        afl_cmd.extend(opts.rargs)
-        afl_cmd.extend(cmd)
-        
-        try:
-            subprocess.call(afl_cmd, env=env)
-        except:
-            traceback.print_exc()
-        
-        ffp.clean_up()
-        return 0
-    
-    afl_out_dirs = []
-    if opts.afloutdir:
-        if not os.path.exists(os.path.join(opts.afloutdir, "crashes")):
-            # The specified directory doesn't have a "crashes" sub directory.
-            # Either the wrong directory was specified, or this is an AFL multi-process
-            # sychronization directory. Try to figure this out here.
-            sync_dirs = os.listdir(opts.afloutdir)
-            
-            for sync_dir in sync_dirs:
-                if os.path.exists(os.path.join(opts.afloutdir, sync_dir, "crashes")):
-                    afl_out_dirs.append(os.path.join(opts.afloutdir, sync_dir))
-            
-            if not afl_out_dirs:
-                print("Error: Directory %s does not appear to be a valid AFL output/sync directory" % opts.afloutdir, file=sys.stderr)
+
+        env = {}
+        if opts.env:
+            env = dict(kv.split('=', 1) for kv in opts.env)
+            configuration.addEnvironmentVariables(env)
+
+        # Copy the system environment variables by default and overwrite them
+        # if they are specified through env.
+        env = dict(os.environ)
+        if opts.env:
+            oenv = dict(kv.split('=', 1) for kv in opts.env)
+            configuration.addEnvironmentVariables(oenv)
+            for envkey in oenv:
+                env[envkey] = oenv[envkey]
+
+        args = opts.rargs[1:]
+        if args:
+                configuration.addProgramArguments(args)
+
+        metadata = {}
+        if opts.metadata:
+            metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
+            configuration.addMetadata(metadata)
+
+        # Set LD_LIBRARY_PATH for convenience
+            if not 'LD_LIBRARY_PATH' in env:
+                env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
+
+        collector = Collector(opts.sigdir, opts.fuzzmanager_toolname)
+
+        signature_repeat_count = 0
+        last_signature = None
+
+        while(True):
+            process = subprocess.Popen(
+                 opts.rargs,
+                 # stdout=None,
+                 stderr=subprocess.PIPE,
+                 env=env,
+                 universal_newlines=True
+                )
+
+            monitor = LibFuzzerMonitor(process.stderr)
+            monitor.start()
+            monitor.join()
+
+            print("Process terminated, processing results...", file=sys.stderr)
+
+            trace = monitor.getASanTrace()
+            testcase = monitor.getTestcase()
+
+            crashInfo = CrashInfo.fromRawCrashData([], [], configuration, auxCrashData=trace)
+
+            (sigfile, metadata) = collector.search(crashInfo)
+
+            if sigfile != None:
+                if last_signature == sigfile:
+                    signature_repeat_count += 1
+                else:
+                    last_signature = sigfile
+                    signature_repeat_count = 0
+
+                print("Crash matches signature %s, not submitting..." % sigfile, file=sys.stderr)
+            else:
+                collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
+                collector.submit(crashInfo, testcase)
+                print("Successfully submitted crash.", file=sys.stderr)
+
+            if signature_repeat_count >= 10:
+                print("Too many crashes with the same signature, exiting...", file=sys.stderr)
+                break
+	
+    if opts.aflfuzz:
+        if opts.firefox or opts.firefox_start_afl:
+            if not haveFFPuppet:
+                print("Error: --firefox and --firefox-start-afl require FFPuppet to be installed", file=sys.stderr)
                 return 2
-        else:
-            afl_out_dirs.append(opts.afloutdir)
-    
-    # Upload and FuzzManager modes require specifying the AFL directory
-    if opts.s3_queue_upload or opts.fuzzmanager:
-        if not opts.afloutdir:
-            print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
-            return 2
-        
-    if (opts.s3_queue_upload 
-        or opts.s3_corpus_refresh 
-        or opts.s3_build_download 
-        or opts.s3_build_upload 
-        or opts.s3_corpus_download 
-        or opts.s3_corpus_upload
-        or opts.s3_queue_status):
-        if not opts.s3_bucket or not opts.project:
-            print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
-            return 2
-        
-    if opts.s3_queue_status:
-        status_data = get_queue_status(opts.s3_bucket, opts.project)
-        total_queue_files = 0
-        
-        for queue_name in status_data:
-            print("Queue %s: %s" % (queue_name, status_data[queue_name]))
-            total_queue_files += status_data[queue_name]
-        print("Total queue files: %s" % total_queue_files)
-        
-        return 0
-
-    if opts.s3_corpus_status:
-        status_data = get_corpus_status(opts.s3_bucket, opts.project)
-        total_corpus_files = 0
-        
-        for (status_dt, status_cnt) in sorted(status_data.items()):
-            print("Added %s: %s" % (status_dt, status_cnt))
-            total_corpus_files += status_cnt
-        print("Total corpus files: %s" % total_corpus_files)
-        
-        return 0
-    
-    if opts.s3_queue_cleanup:
-        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
-        return 0
-    
-    if opts.s3_build_download:
-        download_build(opts.s3_build_download, opts.s3_bucket, opts.project)
-        return 0
-
-    if opts.s3_build_upload:
-        upload_build(opts.s3_build_upload, opts.s3_bucket, opts.project)
-        return 0
-    
-    if opts.s3_corpus_download:
-        if opts.s3_corpus_download_size != None:
-            opts.s3_corpus_download_size = int(opts.s3_corpus_download_size)
-                
-        download_corpus(opts.s3_corpus_download, opts.s3_bucket, opts.project, opts.s3_corpus_download_size)
-        return 0
-    
-    if opts.s3_corpus_upload:
-        upload_corpus(opts.s3_corpus_upload, opts.s3_bucket, opts.project, opts.s3_corpus_replace)
-        return 0
-
-    if opts.s3_corpus_refresh:
-        if not opts.aflbindir:
-            print("Error: Must specify --afl-binary-dir for refreshing the test corpus", file=sys.stderr)
-            return 2
-        
-        if not os.path.exists(opts.s3_corpus_refresh):
-            os.makedirs(opts.s3_corpus_refresh)
             
-        queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
+            if opts.custom_cmdline_file:
+                print("Error: --custom-cmdline-file is incompatible with firefox options", file=sys.stderr)
+                return 2
+            
+            if not opts.firefox_prefs or not opts.firefox_testpath:
+                print("Error: --firefox and --firefox-start-afl require --firefox-prefs and --firefox-testpath to be specified", file=sys.stderr)
+                return 2
+            
+        if opts.firefox_start_afl:
+            if not opts.aflbindir:
+                print("Error: Must specify --afl-binary-dir for starting AFL with firefox", file=sys.stderr)
+                return 2
+            
+            (ffp, cmd, env) = setup_firefox(opts.firefox_start_afl, opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+            
+            afl_cmd = [ os.path.join(opts.aflbindir, "afl-fuzz") ]
+            
+            opts.rargs.remove("--")
+            
+            afl_cmd.extend(opts.rargs)
+            afl_cmd.extend(cmd)
+            
+            try:
+                subprocess.call(afl_cmd, env=env)
+            except:
+                traceback.print_exc()
+            
+            ffp.clean_up()
+            return 0
         
-        print("Cleaning old AFL queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
-        clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
-        
-        print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
-        download_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
-        
-        cmdline_file = os.path.join(opts.s3_corpus_refresh, "cmdline")
-        if not os.path.exists(cmdline_file):
-            print("Error: Failed to download a cmdline file from queue directories.", file=sys.stderr)
-            return 2
-        
-        print("Downloading build")
-        download_build(os.path.join(opts.s3_corpus_refresh, "build"), opts.s3_bucket, opts.project)
-        
-        with open(os.path.join(opts.s3_corpus_refresh, "cmdline"), 'r') as cmdline_file:
-            cmdline = cmdline_file.read().splitlines()
+        afl_out_dirs = []
+        if opts.afloutdir:
+            if not os.path.exists(os.path.join(opts.afloutdir, "crashes")):
+                # The specified directory doesn't have a "crashes" sub directory.
+                # Either the wrong directory was specified, or this is an AFL multi-process
+                # sychronization directory. Try to figure this out here.
+                sync_dirs = os.listdir(opts.afloutdir)
                 
-        # Assume cmdline[0] is the name of the binary
-        binary_name = os.path.basename(cmdline[0])
+                for sync_dir in sync_dirs:
+                    if os.path.exists(os.path.join(opts.afloutdir, sync_dir, "crashes")):
+                        afl_out_dirs.append(os.path.join(opts.afloutdir, sync_dir))
+                
+                if not afl_out_dirs:
+                    print("Error: Directory %s does not appear to be a valid AFL output/sync directory" % opts.afloutdir, file=sys.stderr)
+                    return 2
+            else:
+                afl_out_dirs.append(opts.afloutdir)
         
-        # Try locating our binary in the build we just unpacked
-        binary_search_result = [os.path.join(dirpath, filename) 
-            for dirpath, dirnames, filenames in os.walk(os.path.join(opts.s3_corpus_refresh, "build")) 
-                for filename in filenames 
-                    if (filename == binary_name and (stat.S_IXUSR & os.stat(os.path.join(dirpath, filename))[stat.ST_MODE]))]
+        # Upload and FuzzManager modes require specifying the AFL directory
+        if opts.s3_queue_upload or opts.fuzzmanager:
+            if not opts.afloutdir:
+                print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
+                return 2
+            
+        if (opts.s3_queue_upload 
+            or opts.s3_corpus_refresh 
+            or opts.s3_build_download 
+            or opts.s3_build_upload 
+            or opts.s3_corpus_download 
+            or opts.s3_corpus_upload
+            or opts.s3_queue_status):
+            if not opts.s3_bucket or not opts.project:
+                print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
+                return 2
+            
+        if opts.s3_queue_status:
+            status_data = get_queue_status(opts.s3_bucket, opts.project)
+            total_queue_files = 0
+            
+            for queue_name in status_data:
+                print("Queue %s: %s" % (queue_name, status_data[queue_name]))
+                total_queue_files += status_data[queue_name]
+            print("Total queue files: %s" % total_queue_files)
+            
+            return 0
+
+        if opts.s3_corpus_status:
+            status_data = get_corpus_status(opts.s3_bucket, opts.project)
+            total_corpus_files = 0
+            
+            for (status_dt, status_cnt) in sorted(status_data.items()):
+                print("Added %s: %s" % (status_dt, status_cnt))
+                total_corpus_files += status_cnt
+            print("Total corpus files: %s" % total_corpus_files)
+            
+            return 0
         
-        if not binary_search_result:
-            print("Error: Failed to locate binary %s in unpacked build." % binary_name, file=sys.stderr)
-            return 2
+        if opts.s3_queue_cleanup:
+            clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
+            return 0
         
-        if len(binary_search_result) > 1:
-            print("Error: Binary name %s is ambiguous in unpacked build." % binary_name, file=sys.stderr)
-            return 2
+        if opts.s3_build_download:
+            download_build(opts.s3_build_download, opts.s3_bucket, opts.project)
+            return 0
+
+        if opts.s3_build_upload:
+            upload_build(opts.s3_build_upload, opts.s3_bucket, opts.project)
+            return 0
         
-        cmdline[0] = binary_search_result[0]
+        if opts.s3_corpus_download:
+            if opts.s3_corpus_download_size != None:
+                opts.s3_corpus_download_size = int(opts.s3_corpus_download_size)
+                    
+            download_corpus(opts.s3_corpus_download, opts.s3_bucket, opts.project, opts.s3_corpus_download_size)
+            return 0
         
-        # Download our current corpus into the queues directory as well
-        print("Downloading corpus from s3://%s/%s/corpus/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
-        download_corpus(queues_dir, opts.s3_bucket, opts.project)
-        
-        # Ensure the directory for our new tests is empty
-        updated_tests_dir = os.path.join(opts.s3_corpus_refresh, "tests")
-        if os.path.exists(updated_tests_dir):
-            shutil.rmtree(updated_tests_dir)
-        os.mkdir(updated_tests_dir)
-        
-        # Run afl-cmin
-        afl_cmin = os.path.join(opts.aflbindir, "afl-cmin")
-        if not os.path.exists(afl_cmin):
-            print("Error: Unable to locate afl-cmin binary.", file=sys.stderr)
-            return 2
-        
-        if opts.firefox:
-            (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
-            cmdline = ffCmd
-        
-        afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', str(opts.afl_timeout), '-m', 'none']
-        
-        if opts.test_file:
-            afl_cmdline.extend(['-f', opts.test_file])
-        
-        afl_cmdline.extend(cmdline)
-        
-        print("Running afl-cmin")
-        with open(os.devnull, 'w') as devnull:
-            env = os.environ.copy()
-            env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
+        if opts.s3_corpus_upload:
+            upload_corpus(opts.s3_corpus_upload, opts.s3_bucket, opts.project, opts.s3_corpus_replace)
+            return 0
+
+        if opts.s3_corpus_refresh:
+            if not opts.aflbindir:
+                print("Error: Must specify --afl-binary-dir for refreshing the test corpus", file=sys.stderr)
+                return 2
+            
+            if not os.path.exists(opts.s3_corpus_refresh):
+                os.makedirs(opts.s3_corpus_refresh)
+                
+            queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
+            
+            print("Cleaning old AFL queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
+            clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
+            
+            print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
+            download_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
+            
+            cmdline_file = os.path.join(opts.s3_corpus_refresh, "cmdline")
+            if not os.path.exists(cmdline_file):
+                print("Error: Failed to download a cmdline file from queue directories.", file=sys.stderr)
+                return 2
+            
+            print("Downloading build")
+            download_build(os.path.join(opts.s3_corpus_refresh, "build"), opts.s3_bucket, opts.project)
+            
+            with open(os.path.join(opts.s3_corpus_refresh, "cmdline"), 'r') as cmdline_file:
+                cmdline = cmdline_file.read().splitlines()
+                    
+            # Assume cmdline[0] is the name of the binary
+            binary_name = os.path.basename(cmdline[0])
+            
+            # Try locating our binary in the build we just unpacked
+            binary_search_result = [os.path.join(dirpath, filename) 
+                for dirpath, dirnames, filenames in os.walk(os.path.join(opts.s3_corpus_refresh, "build")) 
+                    for filename in filenames 
+                        if (filename == binary_name and (stat.S_IXUSR & os.stat(os.path.join(dirpath, filename))[stat.ST_MODE]))]
+            
+            if not binary_search_result:
+                print("Error: Failed to locate binary %s in unpacked build." % binary_name, file=sys.stderr)
+                return 2
+            
+            if len(binary_search_result) > 1:
+                print("Error: Binary name %s is ambiguous in unpacked build." % binary_name, file=sys.stderr)
+                return 2
+            
+            cmdline[0] = binary_search_result[0]
+            
+            # Download our current corpus into the queues directory as well
+            print("Downloading corpus from s3://%s/%s/corpus/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
+            download_corpus(queues_dir, opts.s3_bucket, opts.project)
+            
+            # Ensure the directory for our new tests is empty
+            updated_tests_dir = os.path.join(opts.s3_corpus_refresh, "tests")
+            if os.path.exists(updated_tests_dir):
+                shutil.rmtree(updated_tests_dir)
+            os.mkdir(updated_tests_dir)
+            
+            # Run afl-cmin
+            afl_cmin = os.path.join(opts.aflbindir, "afl-cmin")
+            if not os.path.exists(afl_cmin):
+                print("Error: Unable to locate afl-cmin binary.", file=sys.stderr)
+                return 2
             
             if opts.firefox:
-                env.update(ffEnv)
+                (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+                cmdline = ffCmd
             
-            subprocess.check_call(afl_cmdline, stdout=devnull, env=env)
-        
-        if opts.firefox:
-            ffpInst.clean_up()
-        
-        # replace existing corpus with reduced corpus
-        print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
-        upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project, corpus_delete=True)
-        
-        # Prune the queues directory once we successfully uploaded the new
-        # test corpus, but leave everything that's part of our new corpus
-        # so we don't have to download those files again.
-        test_files = [file for file in os.listdir(updated_tests_dir) if os.path.isfile(os.path.join(updated_tests_dir, file))]
-        obsolete_queue_files = [file for file in os.listdir(queues_dir) if os.path.isfile(os.path.join(queues_dir, file)) and file not in test_files]
-        
-        for file in obsolete_queue_files:
-            os.remove(os.path.join(queues_dir, file))
-    
-    if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
-        last_queue_upload = 0
-        while True:
-            if opts.fuzzmanager:
-                for afl_out_dir in afl_out_dirs:
-                    scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname, opts.test_file)
+            afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', str(opts.afl_timeout), '-m', 'none']
             
-            # Only upload queue files every 20 minutes
-            if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
-                for afl_out_dir in afl_out_dirs:
-                    upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=True)
-                last_queue_upload = int(time.time())
+            if opts.test_file:
+                afl_cmdline.extend(['-f', opts.test_file])
             
-            if opts.aflstats:
-                write_aggregated_stats(afl_out_dirs, opts.aflstats)
+            afl_cmdline.extend(cmdline)
+            
+            print("Running afl-cmin")
+            with open(os.devnull, 'w') as devnull:
+                env = os.environ.copy()
+                env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
                 
-            time.sleep(10)
+                if opts.firefox:
+                    env.update(ffEnv)
+                
+                subprocess.check_call(afl_cmdline, stdout=devnull, env=env)
+            
+            if opts.firefox:
+                ffpInst.clean_up()
+            
+            # replace existing corpus with reduced corpus
+            print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
+            upload_corpus(updated_tests_dir, opts.s3_bucket, opts.project, corpus_delete=True)
+            
+            # Prune the queues directory once we successfully uploaded the new
+            # test corpus, but leave everything that's part of our new corpus
+            # so we don't have to download those files again.
+            test_files = [file for file in os.listdir(updated_tests_dir) if os.path.isfile(os.path.join(updated_tests_dir, file))]
+            obsolete_queue_files = [file for file in os.listdir(queues_dir) if os.path.isfile(os.path.join(queues_dir, file)) and file not in test_files]
+            
+            for file in obsolete_queue_files:
+                os.remove(os.path.join(queues_dir, file))
+        
+        if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
+            last_queue_upload = 0
+            while True:
+                if opts.fuzzmanager:
+                    for afl_out_dir in afl_out_dirs:
+                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname, opts.test_file)
+                
+                # Only upload queue files every 20 minutes
+                if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
+                    for afl_out_dir in afl_out_dirs:
+                        upload_queue_dir(afl_out_dir, opts.s3_bucket, opts.project, new_cov_only=True)
+                    last_queue_upload = int(time.time())
+                
+                if opts.aflstats:
+                    write_aggregated_stats(afl_out_dirs, opts.aflstats)
+                    
+                time.sleep(10)
 
 if __name__ == "__main__":
     sys.exit(main())
