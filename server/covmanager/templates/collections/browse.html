@@ -59,7 +59,7 @@
         <tbody>
           <tr v-for="(value, path) in ordered_collection">
             <td @click="navigate(value.name)">
-              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ value.name }!</span>
+              <i :class="['glyphicon', add_path_class(value)]"></i> <span class="path">!{ value.name }!</span>
             </td>
             <td>!{ value.linesTotal | formatNumber }!</td>
             <td>!{ value.linesCovered | formatNumber }!</td>
@@ -330,9 +330,6 @@ let covmanager = new Vue({
       pmanager.update_value("p", path_components.join("/") + "/")
       pmanager.update_hash()
     },
-    get_extension: function (path) {
-      return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
-    },
     cov_pct_style: function (pct) { // Todo: Add to a CSS class.
       let status_color
       if (pct == 100.00) {
@@ -358,12 +355,12 @@ let covmanager = new Vue({
       }
       return classArray
     },
-    add_path_class: function (path) {
+    add_path_class: function (value) {
       let classArray = this.class ? this.class.split(' ') : []
-      if (this.get_extension(path)) {
-        classArray.push("glyphicon-file")
-      } else {
+      if ("children" in value) {
         classArray.push("glyphicon-folder-close")
+      } else {
+        classArray.push("glyphicon-file")
       }
       return classArray
     },
