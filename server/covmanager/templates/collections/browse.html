@@ -58,8 +58,8 @@
         </thead>
         <tbody>
           <tr v-for="(value, path) in ordered_collection">
-            <td @click="navigate(value.name)">
-              <i :class="['glyphicon', add_path_class(value)]"></i> <span class="path">!{ value.name }!</span>
+            <td @click="navigate(value)">
+              <i :class="['glyphicon', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name }!</span>
             </td>
             <td>!{ value.linesTotal | formatNumber }!</td>
             <td>!{ value.linesCovered | formatNumber }!</td>
@@ -313,7 +313,13 @@ let covmanager = new Vue({
         this.search = ""
       })
     }, 500),
-    navigate: function (location) {
+    navigate: function (value) {
+      if (this.chartdata && !("children" in value)) {
+        // Block navigating to files if we are in diff mode
+        return
+      }
+
+      let location = value.name
       pmanager.update_value("p", this.path + (this.coverage.children[location]["children"] ? location + '/' : location))
       pmanager.update_hash()
     },
@@ -363,6 +369,14 @@ let covmanager = new Vue({
         classArray.push("glyphicon-file")
       }
       return classArray
+    },
+    get_span_path_class: function (value) {
+      // If we are in diff mode (we have chart data), then we don't want to
+      // show file paths as clickable.
+      if (!this.chartdata || "children" in value) {
+        return "path"
+      }
+      return ""
     },
     highlight_code: function (code) {
       return Prism.highlight(code, Prism.languages.cpp)
@@ -535,7 +549,7 @@ let covmanager = new Vue({
           // ENTER was pressed, navigate
           let target = Object.keys(this.filtered_children)[0]
           if (target) {
-            this.navigate(target)
+            this.navigate(this.filtered_children[target])
           }
         }
       }
