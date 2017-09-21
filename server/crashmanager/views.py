@@ -283,7 +283,8 @@ def signatures(request):
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
 
-def _crashes_common(request, ignore_toolfilter=False):
+@login_required(login_url='/login/')
+def crashes(request, ignore_toolfilter=False):
     filters = {}
     q = None
     isSearch = True
@@ -341,14 +342,6 @@ def _crashes_common(request, ignore_toolfilter=False):
             }
 
     return render(request, 'crashes/index.html', data)
-
-@login_required(login_url='/login/')
-def allCrashes(request):
-    return _crashes_common(request, ignore_toolfilter=True)
-
-@login_required(login_url='/login/')
-def crashes(request):
-    return _crashes_common(request)
 
 @login_required(login_url='/login/')
 def queryCrashes(request):
