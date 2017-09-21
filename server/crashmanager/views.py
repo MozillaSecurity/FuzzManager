@@ -154,12 +154,6 @@ def allSignatures(request):
     return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
-def allCrashes(request):
-    entries = CrashEntry.objects.all().order_by('-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
-    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
-
-@login_required(login_url='/login/')
 def watchedSignatures(request):
     # for this user, list watches
     # buckets   sig       new crashes   remove
@@ -289,14 +283,13 @@ def signatures(request):
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
 
-@login_required(login_url='/login/')
-def crashes(request):
+def _crashes_common(request, ignore_toolfilter=False):
     filters = {}
     q = None
     isSearch = True
 
     entries = CrashEntry.objects.all().order_by('-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries)
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=ignore_toolfilter)
 
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -339,9 +332,25 @@ def crashes(request):
 
     entries = entries.filter(**filters)
 
-    data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'crashlist' : paginate_requested_list(request, entries) }
+    data = {
+            'q' : q,
+            'request' : request,
+            'isAll': ignore_toolfilter,
+            'isSearch' : isSearch,
+            'crashlist' : paginate_requested_list(request, entries)
+            }
 
     return render(request, 'crashes/index.html', data)
+
+@login_required(login_url='/login/')
+def allCrashes(request):
+    return _crashes_common(request, ignore_toolfilter=True)
+    entries = CrashEntry.objects.all().order_by('-id')
+    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
+
+@login_required(login_url='/login/')
+def crashes(request):
+    return _crashes_common(request)
 
 @login_required(login_url='/login/')
 def queryCrashes(request):
