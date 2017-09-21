@@ -14,7 +14,7 @@
       <table class="table table-coverage">
         <tbody>
           <tr v-for="(line, line_nr) in source">
-            <td :id="line_nr" :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]">
+            <td :id="line_nr" :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]" @click="line_click_handler(line_nr)">
               !{ line_nr }!
             </td>
             <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
@@ -58,8 +58,8 @@
         </thead>
         <tbody>
           <tr v-for="(value, path) in ordered_collection">
-            <td @click="navigate(value.name)">
-              <i :class="['glyphicon', add_path_class(path)]"></i> <span class="path">!{ value.name }!</span>
+            <td @click="navigate(value)">
+              <i :class="['glyphicon', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name }!</span>
             </td>
             <td>!{ value.linesTotal | formatNumber }!</td>
             <td>!{ value.linesCovered | formatNumber }!</td>
@@ -151,7 +151,9 @@ let covmanager = new Vue({
     sortKey: "",
     reverse: false,
     show_top_nav: false,
-    loading: false
+    loading: false,
+    last_line_clicked: null,
+    line_click_timer: null
   },
   created: function () {
     window.addEventListener('keydown', this.keydown)
@@ -311,7 +313,13 @@ let covmanager = new Vue({
         this.search = ""
       })
     }, 500),
-    navigate: function (location) {
+    navigate: function (value) {
+      if (this.chartdata && !("children" in value)) {
+        // Block navigating to files if we are in diff mode
+        return
+      }
+
+      let location = value.name
       pmanager.update_value("p", this.path + (this.coverage.children[location]["children"] ? location + '/' : location))
       pmanager.update_hash()
     },
@@ -327,9 +335,6 @@ let covmanager = new Vue({
 
       pmanager.update_value("p", path_components.join("/") + "/")
       pmanager.update_hash()
-    },
-    get_extension: function (path) {
-      return (/[.]/.exec(path)) ? /[^.]+$/.exec(path)[0] : undefined
     },
     cov_pct_style: function (pct) { // Todo: Add to a CSS class.
       let status_color
@@ -356,14 +361,22 @@ let covmanager = new Vue({
       }
       return classArray
     },
-    add_path_class: function (path) {
+    add_path_class: function (value) {
       let classArray = this.class ? this.class.split(' ') : []
-      if (this.get_extension(path)) {
-        classArray.push("glyphicon-file")
-      } else {
+      if ("children" in value) {
         classArray.push("glyphicon-folder-close")
+      } else {
+        classArray.push("glyphicon-file")
       }
       return classArray
+    },
+    get_span_path_class: function (value) {
+      // If we are in diff mode (we have chart data), then we don't want to
+      // show file paths as clickable.
+      if (!this.chartdata || "children" in value) {
+        return "path"
+      }
+      return ""
     },
     highlight_code: function (code) {
       return Prism.highlight(code, Prism.languages.cpp)
@@ -431,6 +444,92 @@ let covmanager = new Vue({
         toggle(this.highlight_lines.current[i], true)
       }
     },
+    line_click_handler: function(line) {
+      // Handling click and double click on the same element as different events
+      // without overlapping them is not possible. We therefore need to emulate
+      // double click handling ourselves by using a timer.
+      var self = this
+      if (self.last_line_clicked == line) {
+        clearTimeout(self.line_click_timer)
+        self.last_line_clicked = null
+        self.toggle_highlight_line(line)
+      } else {
+        self.last_line_clicked = line
+        self.line_click_timer = setTimeout(function() {
+          self.last_line_clicked = null
+          self.set_scroll_line(line)
+        }, 300);
+      }
+    },
+    set_scroll_line: function(line) {
+      pmanager.update_value("s", line)
+      pmanager.update_hash()
+    },
+    toggle_highlight_line: function(line) {
+      // This method is a bit lenghty because we need to first destructure the
+      // existing parameters in the URL, then toggle, then restructure them
+      // to update the hash. Updating the hash also updates the internal
+      // properties of the model and does the actual highlight.
+
+      // Get the current hl parameters from hash
+      let hl = pmanager.get_value("hl", "")
+
+      // Transform these into a set of lines highlighted
+      let lines = {}
+      let hl_parts = []
+      if (hl != "") {
+        hl_parts = hl.split(",")
+      }
+      hl_parts.forEach(function (hl_part) {
+        if (hl_part.indexOf('-') > 0) {
+          let start_end = hl_part.split('-')
+          for (let i = start_end[0]; i <= start_end[1]; ++i) {
+            lines[i] = true
+          }
+        } else {
+          lines[hl_part] = true
+        }
+      })
+
+      // Do the actual toggle
+      if (lines[line]) {
+        delete lines[line]
+      } else {
+        lines[line] = true
+      }
+
+      // Turn the set into a sorted array for iterating
+      let sorted_lines = Object.keys(lines).sort((a, b) => a - b)
+      let new_hl_parts = []
+
+      let range_start = -1;
+      let last_line = -1;
+
+      // The next loop has a lookahead of 1 to build ranges. By adding one
+      // dummy element at the end, we can avoid some code duplication here
+      // and the function properly finishes the last line/range.
+      sorted_lines.push(-1)
+      sorted_lines.forEach(function(sorted_line) {
+          if (last_line >= 0) {
+            if (last_line != sorted_line - 1) {
+              if (range_start == last_line) {
+                /* Single line to add */
+                new_hl_parts.push(last_line)
+              } else {
+                /* Add a range from range_start to last_line */
+                new_hl_parts.push(range_start + "-" + last_line)
+              }
+              range_start = sorted_line
+            }
+          } else {
+            range_start = sorted_line
+          }
+          last_line = sorted_line
+      })
+
+      pmanager.update_value("hl", new_hl_parts.join(","))
+      pmanager.update_hash()
+    },
     keydown: function (e) {
       if (!e) {
         e = window.event
@@ -450,7 +549,7 @@ let covmanager = new Vue({
           // ENTER was pressed, navigate
           let target = Object.keys(this.filtered_children)[0]
           if (target) {
-            this.navigate(target)
+            this.navigate(this.filtered_children[target])
           }
         }
       }
