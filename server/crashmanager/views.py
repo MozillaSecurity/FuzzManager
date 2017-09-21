@@ -302,6 +302,8 @@ def crashes(request, ignore_toolfilter=False):
                        "product__version",
                        "platform__name",
                        "testcase__quality",
+                       "testcase__quality__gt",
+                       "testcase__quality__lt",
                        "tool__name",
                        "tool__name__contains",
                        ]
