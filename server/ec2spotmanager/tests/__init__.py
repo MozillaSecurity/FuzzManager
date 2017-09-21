@@ -16,7 +16,7 @@ from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
 from django.test import TestCase as DjangoTestCase
 
-from ..models import PoolConfiguration
+from ..models import InstancePool, PoolConfiguration, PoolStatusEntry
 
 
 log = logging.getLogger("fm.ec2spotmanager.tests")
@@ -61,4 +61,16 @@ class TestCase(DjangoTestCase):
             result.ec2_raw_config_dict = ec2_raw_config
         result.save()
         log.debug("Created PoolConfiguration pk=%d", result.pk)
+        return result
+
+    @staticmethod
+    def create_pool(config, enabled=False, last_cycled=None):
+        result = InstancePool.objects.create(config=config, isEnabled=enabled, last_cycled=last_cycled)
+        log.debug("Created InstancePool pk=%d", result.pk)
+        return result
+
+    @staticmethod
+    def create_poolmsg(pool):
+        result = PoolStatusEntry.objects.create(pool=pool, type=0)
+        log.debug("Created PoolStatusEntry pk=%d", result.pk)
         return result
