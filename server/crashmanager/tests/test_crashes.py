@@ -15,7 +15,6 @@ import json
 import logging
 
 from django.core.urlresolvers import reverse
-import pytest
 
 from . import TestCase
 from ..models import CrashEntry
@@ -200,18 +199,6 @@ class CrashesViewTests(TestCase):
 class AllCrashesViewTests(CrashesViewTests):
     name = "crashmanager:allcrashes"
     entries_fmt = "Displaying all %d entries in database."
-
-    @pytest.mark.xfail
-    def test_filters(self):
-        super(AllCrashesViewTests, self).test_filters()
-
-    @pytest.mark.xfail
-    def test_bucketed(self):
-        super(AllCrashesViewTests, self).test_bucketed()
-
-    @pytest.mark.xfail
-    def test_no_unbucketed(self):
-        super(AllCrashesViewTests, self).test_no_unbucketed()
 
     def test_toolfilter(self):
         """Check that crashes/all/ view disregards toolfilter."""
