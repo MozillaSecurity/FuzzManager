@@ -345,8 +345,6 @@ def _crashes_common(request, ignore_toolfilter=False):
 @login_required(login_url='/login/')
 def allCrashes(request):
     return _crashes_common(request, ignore_toolfilter=True)
-    entries = CrashEntry.objects.all().order_by('-id')
-    return render(request, 'crashes/index.html', { 'isAll': True, 'crashlist' : paginate_requested_list(request, entries) })
 
 @login_required(login_url='/login/')
 def crashes(request):
