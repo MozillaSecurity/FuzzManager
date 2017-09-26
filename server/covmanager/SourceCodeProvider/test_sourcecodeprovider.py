@@ -88,6 +88,7 @@ class TestHGSourceCodeProvider(unittest.TestCase):
         parents = provider.getParents("c3abaa766d52")
         self.assertEqual(len(parents), 0)
 
+@unittest.skipIf(not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"), reason="not decoder")
 class TestHGDiff(unittest.TestCase):
     def runTest(self):
         provider = HGSourceCodeProvider("/home/decoder/Mozilla/repos/mozilla-central-fm")
