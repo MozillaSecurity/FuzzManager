@@ -31,7 +31,7 @@ testAuthCreds = ("admin", "admin")
 haveServer = True
 try:
     requests.get(testServerURL)
-except ConnectionError, e:
+except ConnectionError as e:
     haveServer = False
     
 asanTraceCrash = """

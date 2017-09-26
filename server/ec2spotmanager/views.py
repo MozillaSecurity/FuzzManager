@@ -566,14 +566,17 @@ class UptimeChartViewAccumulated(JSONView):
     def get_data_colors(self, entries):
         colors = []
         red = (204, 0, 0)
+        orange = (255, 128, 0)
         yellow = (255, 204, 0)
         green = (0, 163, 0)
 
         for point in entries:
-            if point.uptime_percentage == 100.00:
+            if point.uptime_percentage >= 95.00:
                 colors.append("rgba(%d, %d, %d, 1)" % green)
-            elif not point.uptime_percentage:
+            elif point.uptime_percentage <= 25.00:
                 colors.append("rgba(%d, %d, %d, 1)" % red)
+            elif point.uptime_percentage <= 50.00:
+                colors.append("rgba(%d, %d, %d, 1)" % orange)
             else:
                 colors.append("rgba(%d, %d, %d, 1)" % yellow)
 
@@ -647,6 +650,37 @@ class PoolCycleView(APIView):
             return Response({"error" : 'Pool is disabled.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         pool.last_cycled = None
+        pool.save()
+
+        return Response({}, status=status.HTTP_200_OK)
+
+class PoolEnableView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, poolid, format=None):
+        pool = get_object_or_404(InstancePool, pk=poolid)
+
+        if pool.isEnabled:
+            return Response({"error" : 'Pool is already enabled.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        pool.last_cycled = None
+        pool.isEnabled = True
+        pool.save()
+
+        return Response({}, status=status.HTTP_200_OK)
+
+class PoolDisableView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, poolid, format=None):
+        pool = get_object_or_404(InstancePool, pk=poolid)
+
+        if not pool.isEnabled:
+            return Response({"error" : 'Pool is already disabled.'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        pool.isEnabled = False
         pool.save()
 
         return Response({}, status=status.HTTP_200_OK)

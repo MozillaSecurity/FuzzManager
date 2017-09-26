@@ -121,7 +121,7 @@ class EC2Reporter():
     def report(self, text):
         '''
         Send textual report to server, overwriting any existing reports.
-        
+
         @type text: string
         @param text: Report text to send
         '''
@@ -142,7 +142,7 @@ class EC2Reporter():
     def cycle(self, poolid):
         '''
         Cycle the pool with the given id.
-        
+
         @type poolid: int
         @param poolid: ID of the pool to cycle
         '''
@@ -152,11 +152,12 @@ class EC2Reporter():
 
         if response.status_code != requests.codes["ok"]:
             raise self.__serverError(response)
+
     @remote_checks
     def disable(self, poolid):
         '''
         Disable the pool with the given id.
-        
+
         @type poolid: int
         @param poolid: ID of the pool to disable
         '''
@@ -171,7 +172,7 @@ class EC2Reporter():
     def enable(self, poolid):
         '''
         Enable the pool with the given id.
-        
+
         @type poolid: int
         @param poolid: ID of the pool to enable
         '''
@@ -232,6 +233,12 @@ def main(argv=None):
 
     if opts.cycle:
         reporter.cycle(opts.cycle)
+        return 0
+    elif opts.enable:
+        reporter.enable(opts.enable)
+        return 0
+    elif opts.disable:
+        reporter.disable(opts.disable)
         return 0
     elif opts.report_file:
         if opts.keep_reporting:

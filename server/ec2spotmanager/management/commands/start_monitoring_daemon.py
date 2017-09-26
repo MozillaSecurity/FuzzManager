@@ -267,7 +267,12 @@ class Command(BaseCommand):
         # This method will run async to spawn our machines
         def start_instances_async(pool, config, count, images, region, zone, instances):
             userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata)
-            userdata = LaniakeaCommandLine.handle_tags(userdata, config.ec2_userdata_macros)
+
+            # Copy the userdata_macros and populate with internal variables
+            ec2_userdata_macros = dict(config.ec2_userdata_macros)
+            ec2_userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+
+            userdata = LaniakeaCommandLine.handle_tags(userdata, ec2_userdata_macros)
             if not userdata:
                 logger.error("[Pool %d] Failed to compile userdata." % pool.id)
 
@@ -553,4 +558,3 @@ class Command(BaseCommand):
 
                 logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database." % (pool.id, instance.ec2_instance_id))
                 instance.delete()
-
