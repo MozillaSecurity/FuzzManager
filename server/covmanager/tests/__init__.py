@@ -54,7 +54,7 @@ class TestCase(DjangoTestCase):
         return path
 
     def create_repository(self, repotype, name="testrepo"):
-        location = self.mkdtemp()
+        location = self.mkdtemp(prefix='testrepo', dir=os.path.dirname(__file__))
         if repotype == "git":
             classname = "GITSourceCodeProvider"
         elif repotype == "hg":

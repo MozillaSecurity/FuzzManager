@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import httplib
 import json
 import logging
+import os
 
 from django.core.urlresolvers import reverse
 import pytest
@@ -82,7 +83,7 @@ class CollectionsDiffApiViewTests(TestCase):
     def test_simpleget(self):
         """No errors are thrown in template"""
         repo = self.create_repository("git")
-        cov_path = self.mkstemp()
+        cov_path = self.mkstemp(prefix='testcov', dir=os.path.dirname(__file__))
         with open(cov_path, "w") as covf:
             json.dump({"children": []}, covf)
         cov1 = open(cov_path)
