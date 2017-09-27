@@ -1,6 +1,5 @@
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files.base import ContentFile
-from django.forms import widgets
 import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -21,7 +20,7 @@ class CollectionSerializer(serializers.ModelSerializer):
     repository = serializers.CharField(max_length=255, write_only=True)
     client = serializers.CharField(max_length=255, write_only=True)
     tools = serializers.CharField(max_length=1023, write_only=True)
-    coverage = serializers.CharField(widget=widgets.Textarea, required=False)
+    coverage = serializers.CharField(required=False)
 
     class Meta:
         model = Collection

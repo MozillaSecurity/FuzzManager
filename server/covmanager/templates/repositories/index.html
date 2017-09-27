@@ -15,7 +15,7 @@
     </thead>
     <tbody>
     {% for repository in repositories %}
-      <tr class="{% cycle odd,even %}">
+      <tr class="{% cycle 'odd' 'even' %}">
         <td><a>{{ repository.pk }}</a></td>
         <td>{{ repository.name }}</td>
         <td>{{ repository.classname }}</td>

@@ -318,12 +318,12 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
 
         for key in exactFilterKeys:
             if key in request.GET:
-                val = request.QUERY_PARAMS.get(key, None)
+                val = request.query_params.get(key, None)
                 if val:
                     filters[key] = val
 
         if "ids" in request.GET:
-            val = request.QUERY_PARAMS.get("ids", None)
+            val = request.query_params.get("ids", None)
             if val:
                 filters["pk__in"] = val.split(',')
 
