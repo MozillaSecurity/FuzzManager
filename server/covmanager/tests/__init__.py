@@ -113,6 +113,14 @@ class TestCase(DjangoTestCase):
         finally:
             os.chdir(path)
 
+    def create_collection_file(self, data):
+        path = self.mkstemp(prefix="testcov", suffix=".data")
+        with open(path, "w") as fp:
+            fp.write(data)
+        result = CollectionFile.objects.create(file=File(open(path)))
+        log.debug("Created CollectionFile pk=%d", result.pk)
+        return result
+
     def create_collection(self,
                           created=None,
                           description="",
@@ -121,10 +129,14 @@ class TestCase(DjangoTestCase):
                           branch="",
                           tools=("testtool",),
                           client="testclient",
-                          coverage=None):
+                          coverage='{"linesTotal":0,'
+                                   '"name":null,'
+                                   '"coveragePercent":0.0,'
+                                   '"children":{},'
+                                   '"linesMissed":0,'
+                                   '"linesCovered":0}'):
         # create collectionfile
-        coverage = CollectionFile.objects.create(file=File(coverage))
-        log.debug("Created CollectionFile pk=%d", coverage.pk)
+        coverage = self.create_collection_file(coverage)
         # create client
         client, created = Client.objects.get_or_create(name=client)
         if created:

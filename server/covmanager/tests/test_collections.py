@@ -14,6 +14,7 @@ import httplib
 import json
 import logging
 import os
+import re
 
 from django.core.urlresolvers import reverse
 import pytest
@@ -122,13 +123,26 @@ class CollectionsPatchApiViewTests(TestCase):
         path = reverse(self.name, kwargs={'collectionid': 0, 'patch_revision': 'abc'})
         self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
-    @pytest.mark.xfail
     def test_simpleget(self):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
-        repo = self.create_repository("git")
-        col = self.create_collection(repository=repo)
-        response = self.client.get(reverse(self.name, kwargs={'collectionid': col.pk, 'patch_revision': 'abc'}))
+        repo = self.create_repository("hg")
+        col = self.create_collection(repository=repo,
+                                     coverage=json.dumps({"linesTotal": 1,
+                                                          "name": None,
+                                                          "coveragePercent": 0.0,
+                                                          "children": {"test.c": {"coverage": []}},
+                                                          "linesMissed": 1,
+                                                          "linesCovered": 0}))
+        with open(os.path.join(repo.location, "test.c"), "w") as fp:
+            fp.write("hello")
+        self.hg(repo, "add", "test.c")
+        self.hg(repo, "commit", "-m", "init")
+        with open(os.path.join(repo.location, "test.c"), "w") as fp:
+            fp.write("world")
+        self.hg(repo, "commit", "-m", "update")
+        rev = re.match(r"changeset:   1:([0-9a-f]+)", self.hg(repo, "log")).group(1)
+        response = self.client.get(reverse(self.name, kwargs={'collectionid': col.pk, 'patch_revision': rev}))
         log.debug(response)
         self.assertEqual(response.status_code, httplib.OK)
 
@@ -157,10 +171,11 @@ class CollectionsBrowseApiViewTests(TestCase):
         path = reverse(self.name, kwargs={'collectionid': 0, 'path': ''})
         self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
-    @pytest.mark.xfail
     def test_simpleget(self):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
-        response = self.client.get(reverse(self.name, kwargs={'collectionid': 0, 'path': ''}))
+        repo = self.create_repository("git")
+        col = self.create_collection(repository=repo)
+        response = self.client.get(reverse(self.name, kwargs={'collectionid': col.pk, 'path': ''}))
         log.debug(response)
         self.assertEqual(response.status_code, httplib.OK)
