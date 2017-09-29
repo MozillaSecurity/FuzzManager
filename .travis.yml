@@ -15,6 +15,6 @@ before_script:
     - pip install --upgrade codecov pytest-flake8 pytest-pylint pytest-cov pytest-django
 script:
     - PYTHONPATH=.. cd server && python -m pytest -v --cov=.. --cov-config=.coveragerc --ignore ../server ..
-    - PYTHONPATH=.. cd server && python -m pytest -v --cov=.. --cov-config=.coveragerc --cov-append
+    - PYTHONPATH=.. cd server && python -m pytest -v --cov=.. --cov-config=.coveragerc --cov-append .
 after_success:
     - codecov

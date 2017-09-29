@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 from numpy import int64, uint64, int32, uint32
+import os
 import unittest
 
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -19,6 +20,8 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
     NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo, RustCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
+
+CWD = os.path.dirname(__file__)
 
 
 asanTraceCrash = """
@@ -1054,7 +1057,7 @@ class MinidumpParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
 
-        with open('minidump-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'minidump-example.txt'), 'r') as f:
             crashInfo = MinidumpCrashInfo([], f.read().splitlines(), config)
 
         self.assertEqual(len(crashInfo.backtrace), 44)
@@ -1069,7 +1072,7 @@ class MinidumpSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
 
-        with open('minidump-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'minidump-example.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1079,7 +1082,7 @@ class AppleParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx")
 
-        with open('apple-crash-report-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'apple-crash-report-example.txt'), 'r') as f:
             crashInfo = AppleCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 9)
@@ -1099,7 +1102,7 @@ class AppleSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx")
 
-        with open('apple-crash-report-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'apple-crash-report-example.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1109,7 +1112,7 @@ class AppleLionParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx64")
 
-        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'apple-10-7-crash-report-example.txt'), 'r') as f:
             crashInfo = AppleCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 13)
@@ -1133,7 +1136,7 @@ class AppleLionSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx64")
 
-        with open('apple-10-7-crash-report-example.txt', 'r') as f:
+        with open(os.path.join(CWD, 'apple-10-7-crash-report-example.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1146,7 +1149,7 @@ class CDBParserTestCrash1a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-1a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-1a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 13)
@@ -1181,7 +1184,7 @@ class CDBSelectorTest1a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-1a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-1a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1194,7 +1197,7 @@ class CDBParserTestCrash1b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-1b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-1b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 13)
@@ -1229,7 +1232,7 @@ class CDBSelectorTest1b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-1b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-1b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1242,7 +1245,7 @@ class CDBParserTestCrash2a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-2a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-2a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 25)
@@ -1297,7 +1300,7 @@ class CDBSelectorTest2a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-2a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-2a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1310,7 +1313,7 @@ class CDBParserTestCrash2b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-2b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-2b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 25)
@@ -1365,7 +1368,7 @@ class CDBSelectorTest2b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-2b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-2b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1378,7 +1381,7 @@ class CDBParserTestCrash3a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-3a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-3a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 36)
@@ -1436,7 +1439,7 @@ class CDBSelectorTest3a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-3a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-3a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1449,7 +1452,7 @@ class CDBParserTestCrash3b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-3b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-3b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 36)
@@ -1507,7 +1510,7 @@ class CDBSelectorTest3b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-3b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-3b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1520,7 +1523,7 @@ class CDBParserTestCrash4a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-4a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-4a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 54)
@@ -1596,7 +1599,7 @@ class CDBSelectorTest4a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-4a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-4a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1609,7 +1612,7 @@ class CDBParserTestCrash4b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-4b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-4b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 38)
@@ -1669,7 +1672,7 @@ class CDBSelectorTest4b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-4b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-4b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1682,7 +1685,7 @@ class CDBParserTestCrash5a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-5a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-5a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 34)
@@ -1746,7 +1749,7 @@ class CDBSelectorTest5a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-5a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-5a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1759,7 +1762,7 @@ class CDBParserTestCrash5b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-5b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-5b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 34)
@@ -1823,7 +1826,7 @@ class CDBSelectorTest5b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-5b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-5b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1836,7 +1839,7 @@ class CDBParserTestCrash6a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-6a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-6a-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 58)
@@ -1924,7 +1927,7 @@ class CDBSelectorTest6a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-6a-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-6a-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -1937,7 +1940,7 @@ class CDBParserTestCrash6b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-6b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-6b-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 58)
@@ -2025,7 +2028,7 @@ class CDBSelectorTest6b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
 
-        with open('cdb-6b-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-6b-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2038,7 +2041,7 @@ class CDBParserTestCrash7(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-7c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-7c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 46)
@@ -2106,7 +2109,7 @@ class CDBSelectorTest7(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-7c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-7c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2119,7 +2122,7 @@ class CDBParserTestCrash8(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-8c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-8c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 1)
@@ -2142,7 +2145,7 @@ class CDBSelectorTest8(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-8c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-8c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2155,7 +2158,7 @@ class CDBParserTestCrash9(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-9c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-9c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 44)
@@ -2221,7 +2224,7 @@ class CDBSelectorTest9(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-9c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-9c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2234,7 +2237,7 @@ class CDBParserTestCrash10(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-10c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-10c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 5)
@@ -2261,7 +2264,7 @@ class CDBSelectorTest10(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-10c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-10c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2274,7 +2277,7 @@ class CDBParserTestCrash11(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-11c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-11c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 1)
@@ -2297,7 +2300,7 @@ class CDBSelectorTest11(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-11c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-11c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
@@ -2310,7 +2313,7 @@ class CDBParserTestCrash12(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-12c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-12c-crashlog.txt'), 'r') as f:
             crashInfo = CDBCrashInfo([], [], config, f.read().splitlines())
 
         self.assertEqual(len(crashInfo.backtrace), 4)
@@ -2336,7 +2339,7 @@ class CDBSelectorTest12(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
 
-        with open('cdb-12c-crashlog.txt', 'r') as f:
+        with open(os.path.join(CWD, 'cdb-12c-crashlog.txt'), 'r') as f:
             crashData = f.read().splitlines()
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
