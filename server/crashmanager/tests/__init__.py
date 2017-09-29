@@ -43,6 +43,7 @@ class TestCase(DjangoTestCase):
     def create_crash(tool="testtool",
                      platform="testplatform",
                      product="testproduct",
+                     product_version=None,
                      os="testos",
                      testcase=None,
                      client="testclient",
@@ -70,6 +71,9 @@ class TestCase(DjangoTestCase):
         product, created = Product.objects.get_or_create(name=product)
         if created:
             log.debug("Created Product pk=%d", product.pk)
+        if product_version is not None:
+            product.version = product_version
+            product.save()
         # create os
         os, created = OS.objects.get_or_create(name=os)
         if created:
@@ -144,7 +148,7 @@ class TestCase(DjangoTestCase):
                         qa_contact="",
                         target_milestone="",
                         attrs="",
-                        security="",
+                        security=False,
                         security_group="",
                         comment="",
                         testcase_filename=""):
