@@ -19,12 +19,36 @@ import tempfile
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.test import TestCase as DjangoTestCase
+import pytest
 
 from crashmanager.models import Client, Tool
 from ..models import Collection, CollectionFile, Repository
 
 
 log = logging.getLogger("fm.covmanager.tests")
+
+
+def _check_hg():
+    try:
+        proc = subprocess.Popen(["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.communicate()
+        if output and proc.wait() == 0:
+            return True
+    except OSError:  # FileNotFoundError
+        pass
+    return False
+HAVE_HG = _check_hg()
+
+def _check_git():
+    try:
+        proc = subprocess.Popen(["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.communicate()
+        if output and proc.wait() == 1:
+            return True
+    except OSError:  # FileNotFoundError
+        pass
+    return False
+HAVE_GIT = _check_git()
 
 
 class TestCase(DjangoTestCase):
@@ -56,14 +80,38 @@ class TestCase(DjangoTestCase):
     def create_repository(self, repotype, name="testrepo"):
         location = self.mkdtemp(prefix='testrepo', dir=os.path.dirname(__file__))
         if repotype == "git":
+            if not HAVE_GIT:
+                pytest.skip("git is not available")
             classname = "GITSourceCodeProvider"
         elif repotype == "hg":
+            if not HAVE_GIT:
+                pytest.skip("hg is not available")
             classname = "HGSourceCodeProvider"
         else:
             raise Exception("unknown repository type: %s (expecting git or hg)" % repotype)
         result = Repository.objects.create(classname=classname, name=name, location=location)
         log.debug("Created Repository pk=%d", result.pk)
+        if repotype == "git":
+            self.git(result, "init")
+        elif repotype == "hg":
+            self.hg(result, "init")
         return result
+
+    def hg(self, repo, *args):
+        path = os.getcwd()
+        try:
+            os.chdir(repo.location)
+            return subprocess.check_output(["hg"] + list(args))
+        finally:
+            os.chdir(path)
+
+    def git(self, repo, *args):
+        path = os.getcwd()
+        try:
+            os.chdir(repo.location)
+            return subprocess.check_output(["git"] + list(args))
+        finally:
+            os.chdir(path)
 
     def create_collection(self,
                           created=None,
