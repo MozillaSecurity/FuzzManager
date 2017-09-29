@@ -144,8 +144,7 @@ class TestCase(DjangoTestCase):
         # create repository
         if repository is None:
             repository = self.create_repository("git")
-        result = Collection.objects.create(#created=created,
-                                           description=description,
+        result = Collection.objects.create(description=description,
                                            repository=repository,
                                            revision=revision,
                                            branch=branch,
