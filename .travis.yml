@@ -19,4 +19,4 @@ script:
     - PYTHONPATH=.. python -m pytest -v --cov=.. --cov-config=.coveragerc --cov-append .
     - cd ..
 after_success:
-    - codecov
+    - codecov --file .coverage
