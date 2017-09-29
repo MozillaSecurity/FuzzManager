@@ -84,15 +84,8 @@ class CollectionsDiffApiViewTests(TestCase):
     def test_simpleget(self):
         """No errors are thrown in template"""
         repo = self.create_repository("git")
-        cov_path = self.mkstemp(prefix='testcov', dir=os.path.dirname(__file__))
-        with open(cov_path, "w") as covf:
-            json.dump({"children": []}, covf)
-        cov1 = open(cov_path)
-        self.addCleanup(cov1.close)
-        cov2 = open(cov_path)
-        self.addCleanup(cov2.close)
-        col1 = self.create_collection(repository=repo, coverage=cov1)
-        col2 = self.create_collection(repository=repo, coverage=cov2)
+        col1 = self.create_collection(repository=repo, coverage=json.dumps({"children": []}))
+        col2 = self.create_collection(repository=repo, coverage=json.dumps({"children": []}))
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'path': ''}), {'ids': '%d,%d' % (col1.pk, col2.pk)})
         log.debug(response)
