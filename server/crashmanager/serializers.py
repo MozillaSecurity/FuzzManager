@@ -18,18 +18,16 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
     # create these instances first and issue multiple requests in total.
-    #
-    # write_only here means don't try to read it automatically in super().to_native()
-    platform = serializers.CharField(max_length=63, write_only=True)
-    product = serializers.CharField(max_length=63, write_only=True)
-    product_version = serializers.CharField(max_length=63, required=False, write_only=True)
-    os = serializers.CharField(max_length=63, write_only=True)
-    client = serializers.CharField(max_length=255, write_only=True)
-    tool = serializers.CharField(max_length=63, write_only=True)
-    testcase = serializers.CharField(required=False)
-    testcase_ext = serializers.CharField(required=False, write_only=True)
-    testcase_quality = serializers.IntegerField(required=False, default=0, write_only=True)
-    testcase_isbinary = serializers.BooleanField(required=False, default=False, write_only=True)
+    platform = serializers.CharField(source='platform.name', max_length=63)
+    product = serializers.CharField(source='product.name', max_length=63)
+    product_version = serializers.CharField(source='product.version', max_length=63, required=False)
+    os = serializers.CharField(source='os.name', max_length=63)
+    client = serializers.CharField(source='client.name', max_length=255)
+    tool = serializers.CharField(source='tool.name', max_length=63)
+    testcase = serializers.CharField(source='testcase.test', required=False)
+    testcase_ext = serializers.CharField(required=False)
+    testcase_quality = serializers.IntegerField(source='testcase.quality', required=False, default=0)
+    testcase_isbinary = serializers.BooleanField(source='testcase.isBinary', required=False, default=False)
 
     class Meta:
         model = CrashEntry
@@ -40,31 +38,6 @@ class CrashEntrySerializer(serializers.ModelSerializer):
                   'env', 'args', 'bucket', 'id'
                   )
         read_only_fields = ('bucket', 'id')
-
-    def to_native(self, obj):
-        '''
-        Serialize (flatten) our object. We need custom flattening because we
-        want the foreign relationships of our object to be flattened into our
-        object by name. Furthermore, we display the testcase here if it is
-        not binary.
-        '''
-        serialized = super(CrashEntrySerializer, self).to_native(obj)
-        if obj != None:
-            serialized["product"] = obj.product.name
-            if obj.product.version:
-                serialized["product_version"] = obj.product.version
-
-            serialized["os"] = obj.os.name
-            serialized["platform"] = obj.platform.name
-            serialized["client"] = obj.client.name
-            serialized["tool"] = obj.tool.name
-
-            if obj.testcase:
-                serialized["testcase_isbinary"] = obj.testcase.isBinary
-                serialized["testcase_quality"] = obj.testcase.quality
-                serialized["testcase"] = str(obj.testcase.test)
-
-        return serialized
 
     def create(self, attrs):
         '''
@@ -77,63 +50,33 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         if missing_keys:
             raise InvalidArgumentException({key: ["This field is required."] for key in missing_keys})
 
-        product = attrs.pop('product', None)
-        product_version = attrs.pop('product_version', None)
-        platform = attrs.pop('platform', None)
-        os = attrs.pop('os', None)
-        client = attrs.pop('client', None)
-        tool = attrs.pop('tool', None)
-        testcase = attrs.pop('testcase', None)
-        testcase_ext = attrs.pop('testcase_ext', None)
-        testcase_quality = attrs.pop('testcase_quality', 0)
-        testcase_isbinary = attrs.pop('testcase_isbinary', False)
+        attrs['product'] = Product.objects.get_or_create(**attrs['product'])[0]
+        attrs['platform'] = Platform.objects.get_or_create(**attrs['platform'])[0]
+        attrs['os'] = OS.objects.get_or_create(**attrs['os'])[0]
+        attrs['client'] = Client.objects.get_or_create(**attrs['client'])[0]
+        attrs['tool'] = Tool.objects.get_or_create(**attrs['tool'])[0]
 
         # Parse the incoming data using the crash signature package from FTB
-        configuration = ProgramConfiguration(product, platform, os, product_version)
-        crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'], attrs['rawStderr'], configuration, attrs['rawCrashData'])
+        configuration = ProgramConfiguration(attrs['product'].name, attrs['platform'].name, attrs['os'].name,
+                                             attrs['product'].version)
+        crashInfo = CrashInfo.fromRawCrashData(attrs['rawStdout'], attrs['rawStderr'], configuration,
+                                               attrs['rawCrashData'])
 
         # Populate certain fields here from the CrashInfo object we just got
-        if crashInfo.crashAddress != None:
+        if crashInfo.crashAddress is not None:
             attrs['crashAddress'] = hex(crashInfo.crashAddress)
         attrs['shortSignature'] = crashInfo.createShortSignature()
 
-        def createOrGetModelByName(model, attrs):
-            '''
-            Generically determine if the given model with the given attributes
-            already exists in our database. If so, return that object, otherwise
-            create it on the fly.
-            
-            @type model: Class
-            @param model: The model to use for filtering and instantiating
-            
-            @type attrs: dict
-            @param attrs: Dictionary of attributes to use for filtering/instantiating
-            
-            @rtype: model
-            @return The model instance
-            '''
-            objs = model.objects.filter(**attrs)
-
-            if len(objs) > 1:
-                raise MultipleObjectsReturned("Multiple objects with same keyword combination in database!")
-
-            if len(objs) == 0:
-                dbobj = model(**attrs)
-                dbobj.save()
-                return dbobj
-            else:
-                return objs.first()
-
-        # Get or instantiate objects for product, platform, os, client and tool
-        attrs['product'] = createOrGetModelByName(Product, { 'name' : product, 'version' : product_version })
-        attrs['platform'] = createOrGetModelByName(Platform, { 'name' : platform })
-        attrs['os'] = createOrGetModelByName(OS, { 'name' : os })
-        attrs['client'] = createOrGetModelByName(Client, { 'name' : client })
-        attrs['tool'] = createOrGetModelByName(Tool, { 'name' : tool })
-
         # If a testcase is supplied, create a testcase object and store it
-        if testcase:
-            if testcase_ext == None:
+        if 'testcase' in attrs:
+
+            testcase = attrs['testcase']
+            testcase_ext = attrs.pop('testcase_ext', None)
+            testcase_quality = testcase.get('quality', 0)
+            testcase_isbinary = testcase.get('isBinary', False)
+            testcase = testcase['test']
+
+            if testcase_ext is None:
                 raise RuntimeError("Must provide testcase extension when providing testcase")
 
             if testcase_isbinary:
