@@ -17,5 +17,6 @@ script:
     - cd server
     - PYTHONPATH=.. python -m pytest -v --cov=.. --cov-config=.coveragerc --ignore ../server ..
     - PYTHONPATH=.. python -m pytest -v --cov=.. --cov-config=.coveragerc --cov-append .
+    - cd ..
 after_success:
     - codecov
