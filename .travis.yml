@@ -12,11 +12,8 @@ install:
     - git --version
 before_script:
     - pip install -r requirements.txt
-    - pip install --upgrade codecov pytest-flake8 pytest-pylint pytest-cov pytest-django
+    - pip install --upgrade codecov pytest-flake8 pytest-pylint pytest-cov pytest-django pytest-pythonpath
 script:
-    - cd server
-    - PYTHONPATH=.. python -m pytest -v --cov=.. --cov-config=.coveragerc --ignore ../server ..
-    - PYTHONPATH=.. python -m pytest -v --cov=.. --cov-config=.coveragerc --cov-append .
-    - cd ..
+    - python -m pytest -v --cov=. --cov-report term-missing
 after_success:
-    - codecov --file .coverage
+    - codecov --file .coverage -X gcov
