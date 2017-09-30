@@ -100,8 +100,8 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 
 class BucketSerializer(serializers.ModelSerializer):
-    bug = serializers.SlugRelatedField(slug_field="externalId", read_only=True)
-    # write_only here means don't try to read it automatically in super().to_native()
+    bug = serializers.CharField(source='bug.externalId')
+    # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True)
     best_quality = serializers.IntegerField(write_only=True)
@@ -111,12 +111,10 @@ class BucketSerializer(serializers.ModelSerializer):
         fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
         read_only_fields = ('id', 'frequent', 'permanent', 'shortDescription', 'signature')
 
-    def to_native(self, obj):
-        serialized = super(BucketSerializer, self).to_native(obj)
-        if obj is not None:
-            serialized["size"] = obj.size
-            serialized["best_quality"] = obj.quality
-            # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
-            # see note in BucketAnnotateFilterBackend
-
+    def to_representation(self, obj):
+        serialized = super(BucketSerializer, self).to_representation(obj)
+        serialized['size'] = obj.size
+        serialized['best_quality'] = obj.quality
+        # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
+        # see note in BucketAnnotateFilterBackend
         return serialized
