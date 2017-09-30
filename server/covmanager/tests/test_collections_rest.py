@@ -10,15 +10,14 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import dateparse, timezone
-import pytest
 from rest_framework.test import APITestCase  # APIRequestFactory
+import requests
 
 from . import TestCase
 from ..models import Collection
@@ -32,18 +31,19 @@ class RestCollectionsTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/covmanager/rest/collections/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url).status_code, requests.codes['unauthorized'])
 
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.patch('/covmanager/rest/collections/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_post(self):
         """post should be allowed"""
@@ -63,7 +63,8 @@ class RestCollectionsTests(APITestCase, TestCase):
                                                                   "revision": "abc",
                                                                   "client": "testclient",
                                                                   "tools": "testtool"})
-        self.assertEqual(resp.status_code, httplib.CREATED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['created'])
         self.assertEqual(Collection.objects.count(), 1)
         result = Collection.objects.all()[0]
         self.assertEqual(result.repository, repo)
@@ -81,14 +82,16 @@ class RestCollectionsTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/covmanager/rest/collections/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/covmanager/rest/collections/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_get(self):
         """get should be allowed"""
@@ -97,7 +100,8 @@ class RestCollectionsTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/covmanager/rest/collections/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'count', 'previous', 'results', 'next'})
         self.assertEqual(resp['count'], 1)
@@ -111,8 +115,7 @@ class RestCollectionsTests(APITestCase, TestCase):
         self.assertEqual(resp['branch'], 'master')
         self.assertEqual(resp['repository'], 'testrepo')
         created = dateparse.parse_datetime(resp['created'])
-        log.debug(created)
-        log.debug(timezone.now())
+        log.debug('time now: %s', timezone.now())
         self.assertLess((timezone.now() - created).total_seconds(), 60)
         self.assertEqual(resp['description'], 'testdesc')
         self.assertEqual(resp['client'], 'testclient')
@@ -126,39 +129,43 @@ class RestCollectionTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/covmanager/rest/collections/1/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url).status_code, requests.codes['unauthorized'])
 
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.patch('/covmanager/rest/collections/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_post(self):
         """post should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.post('/covmanager/rest/collections/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_put(self):
         """put should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/covmanager/rest/collections/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/covmanager/rest/collections/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_get(self):
         """get should not be allowed"""
@@ -167,7 +174,8 @@ class RestCollectionTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/covmanager/rest/collections/%d/' % coll.pk)
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'branch', 'repository', 'created', 'description', 'client', 'coverage',
                                             'tools', 'id', 'revision'})
@@ -175,8 +183,7 @@ class RestCollectionTests(APITestCase, TestCase):
         self.assertEqual(resp['branch'], 'master')
         self.assertEqual(resp['repository'], 'testrepo')
         created = dateparse.parse_datetime(resp['created'])
-        log.debug(created)
-        log.debug(timezone.now())
+        log.debug('time now: %s', timezone.now())
         self.assertLess((timezone.now() - created).total_seconds(), 60)
         self.assertEqual(resp['description'], 'testdesc')
         self.assertEqual(resp['client'], 'testclient')
