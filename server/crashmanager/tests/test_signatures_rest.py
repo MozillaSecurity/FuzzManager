@@ -10,11 +10,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
-#import logging
+import logging
 import os.path
 
+import requests
 from django.contrib.auth.models import User
 from rest_framework.test import APITestCase  # APIRequestFactory
 
@@ -22,7 +22,7 @@ from . import TestCase
 from ..models import CrashEntry, TestCase as cmTestCase
 
 
-#log = logging.getLogger("fm.crashmanager.tests.signatures.rest")
+log = logging.getLogger("fm.crashmanager.tests.signatures.rest")  # pylint: disable=invalid-name
 
 
 class RestSignaturesTests(APITestCase, TestCase):
@@ -30,46 +30,46 @@ class RestSignaturesTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/crashmanager/rest/buckets/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url).status_code, requests.codes['unauthorized'])
 
     def test_auth(self):
         """test that authenticated requests work"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
 
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.patch('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_put(self):
         """put should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_post(self):
         """post should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.post('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_query_buckets(self):
         """test that buckets can be queried"""
@@ -93,7 +93,7 @@ class RestSignaturesTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'count', 'next', 'previous', 'results'})
         self.assertEqual(resp['count'], 2)
@@ -133,46 +133,46 @@ class RestSignatureTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/crashmanager/rest/buckets/1/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url).status_code, requests.codes['unauthorized'])
 
     def test_auth(self):
         """test that authenticated requests work"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/crashmanager/rest/buckets/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.patch('/crashmanager/rest/buckets/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_put(self):
         """put should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/crashmanager/rest/buckets/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_post(self):
         """post should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.post('/crashmanager/rest/buckets/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_get(self):
         """test that individual Signature can be fetched"""
@@ -193,7 +193,7 @@ class RestSignatureTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/%d/' % bucket.pk)
-        self.assertEqual(resp.status_code, httplib.OK)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
                                             'signature', 'size'})

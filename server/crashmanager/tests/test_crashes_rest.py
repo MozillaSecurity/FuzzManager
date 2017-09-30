@@ -10,19 +10,19 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
-#import logging
+import logging
 import os.path
 
+import requests
 from django.contrib.auth.models import User
-from rest_framework.test import APITestCase  # APIRequestFactory
+from rest_framework.test import APITestCase
 
 from . import TestCase
 from ..models import CrashEntry, TestCase as cmTestCase
 
 
-#log = logging.getLogger("fm.crashmanager.tests.crashes.rest")
+log = logging.getLogger("fm.crashmanager.tests.crashes.rest")  # pylint: disable=invalid-name
 
 
 class RestCrashesTests(APITestCase, TestCase):
@@ -30,39 +30,43 @@ class RestCrashesTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/crashmanager/rest/crashes/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
     def test_auth(self):
         """test that authenticated requests work"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/crashes/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
 
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.patch('/crashmanager/rest/crashes/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_put(self):
         """put should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/crashmanager/rest/crashes/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/crashmanager/rest/crashes/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_report_crash(self):
         """test that crash reporting works"""
@@ -83,7 +87,8 @@ class RestCrashesTests(APITestCase, TestCase):
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.post('/crashmanager/rest/crashes/', data=data)
-        self.assertEqual(resp.status_code, httplib.CREATED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['created'])
         crash = CrashEntry.objects.get()
         for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
             self.assertEqual(getattr(crash, field), data[field])
@@ -121,7 +126,8 @@ class RestCrashesTests(APITestCase, TestCase):
                                                      "bucket": None,
                                                      "testcase__quality": 5,
                                                      "tool__name__in": ["tool1"]})})
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'count', 'next', 'previous', 'results'})
         self.assertEqual(resp['count'], 1)
@@ -152,39 +158,43 @@ class RestCrashTests(APITestCase, TestCase):
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = '/crashmanager/rest/crashes/1/'
-        self.assertEqual(self.client.get(url).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.post(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.put(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.patch(url, {}).status_code, httplib.UNAUTHORIZED)
-        self.assertEqual(self.client.delete(url, {}).status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
     def test_auth(self):
         """test that authenticated requests work"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/crashes/')
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
 
     def test_delete(self):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.delete('/crashmanager/rest/crashes/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_put(self):
         """put should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.put('/crashmanager/rest/crashes/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_post(self):
         """post should not be allowed"""
         user = User.objects.get(username='test')
         self.client.force_authenticate(user=user)
         resp = self.client.post('/crashmanager/rest/crashes/1/')
-        self.assertEqual(resp.status_code, httplib.METHOD_NOT_ALLOWED)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
     def test_get(self):
         """test that individual CrashEntry can be fetched"""
@@ -202,7 +212,8 @@ class RestCrashTests(APITestCase, TestCase):
                                   tool="tool #1",
                                   testcase=test)
         resp = self.client.get('/crashmanager/rest/crashes/%d/' % crash.pk)
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
                                             'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
@@ -241,8 +252,10 @@ class RestCrashTests(APITestCase, TestCase):
                   'rawCrashData', 'rawStderr', 'rawStdout', 'testcase', 'testcase_isbinary', 'tool'}
         for field in fields:
             resp = self.client.patch('/crashmanager/rest/crashes/%d/' % crash.pk, {field: ""})
-            self.assertEqual(resp.status_code, httplib.BAD_REQUEST)
+            log.debug(resp)
+            self.assertEqual(resp.status_code, requests.codes['bad_request'])
         resp = self.client.patch('/crashmanager/rest/crashes/%d/' % crash.pk, {"testcase_quality": "5"})
-        self.assertEqual(resp.status_code, httplib.OK)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['ok'])
         test = cmTestCase.objects.get(pk=test.pk)  # re-read
         self.assertEqual(test.quality, 5)

@@ -10,17 +10,17 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 
-from django.core.urlresolvers import reverse
 import pytest
+import requests
+from django.core.urlresolvers import reverse
 
 from . import HAVE_GIT, HAVE_HG, TestCase
 
 
-log = logging.getLogger("fm.covmanager.tests.repos")
+log = logging.getLogger("fm.covmanager.tests.repos")  # pylint: disable=invalid-name
 
 
 class RepositoriesViewTests(TestCase):
@@ -36,7 +36,7 @@ class RepositoriesViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
     def test_list(self):
         """Repositories are listed"""
@@ -52,7 +52,7 @@ class RepositoriesViewTests(TestCase):
             pytest.skip("no repositories available")
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(set(response.context['repositories']), set(repos))
 
 
@@ -69,7 +69,7 @@ class RepositoriesSearchViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
     @pytest.mark.skipIf(not HAVE_GIT)
     def test_search_git(self):
@@ -78,13 +78,13 @@ class RepositoriesSearchViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name), {"name": "blah"})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         response = json.loads(response.content)
         self.assertEqual(set(response.keys()), {"results"})
         self.assertEqual(response["results"], [])
         response = self.client.get(reverse(self.name), {"name": "test"})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         response = json.loads(response.content)
         self.assertEqual(set(response.keys()), {"results"})
         self.assertEqual(set(response["results"]), {"gittest1", "gittest2"})
@@ -96,13 +96,13 @@ class RepositoriesSearchViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name), {"name": "blah"})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         response = json.loads(response.content)
         self.assertEqual(set(response.keys()), {"results"})
         self.assertEqual(response["results"], [])
         response = self.client.get(reverse(self.name), {"name": "test"})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         response = json.loads(response.content)
         self.assertEqual(set(response.keys()), {"results"})
         self.assertEqual(set(response["results"]), {"hgtest1", "hgtest2"})

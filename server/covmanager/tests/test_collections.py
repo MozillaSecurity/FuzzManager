@@ -10,19 +10,18 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 import os
 import re
 
+import requests
 from django.core.urlresolvers import reverse
-import pytest
 
 from . import TestCase
 
 
-log = logging.getLogger("fm.covmanager.tests.collections")
+log = logging.getLogger("fm.covmanager.tests.collections")  # pylint: disable=invalid-name
 
 
 class CollectionsViewTests(TestCase):
@@ -38,7 +37,7 @@ class CollectionsViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsApiViewTests(TestCase):
@@ -47,14 +46,14 @@ class CollectionsApiViewTests(TestCase):
     def test_no_login(self):
         """Request without login hits the login redirect"""
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.UNAUTHORIZED)
+        self.assertEqual(response.status_code, requests.codes['unauthorized'])
 
     def test_simpleget(self):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsDiffViewTests(TestCase):
@@ -70,7 +69,7 @@ class CollectionsDiffViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsDiffApiViewTests(TestCase):
@@ -89,7 +88,7 @@ class CollectionsDiffApiViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'path': ''}), {'ids': '%d,%d' % (col1.pk, col2.pk)})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsPatchViewTests(TestCase):
@@ -105,7 +104,7 @@ class CollectionsPatchViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsPatchApiViewTests(TestCase):
@@ -137,7 +136,7 @@ class CollectionsPatchApiViewTests(TestCase):
         rev = re.match(r"changeset:   1:([0-9a-f]+)", self.hg(repo, "log")).group(1)
         response = self.client.get(reverse(self.name, kwargs={'collectionid': col.pk, 'patch_revision': rev}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsBrowseViewTests(TestCase):
@@ -153,7 +152,7 @@ class CollectionsBrowseViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'collectionid': 0}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsBrowseApiViewTests(TestCase):
@@ -171,4 +170,4 @@ class CollectionsBrowseApiViewTests(TestCase):
         col = self.create_collection(repository=repo)
         response = self.client.get(reverse(self.name, kwargs={'collectionid': col.pk, 'path': ''}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])

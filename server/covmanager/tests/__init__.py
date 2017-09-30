@@ -25,7 +25,7 @@ from crashmanager.models import Client, Tool
 from ..models import Collection, CollectionFile, Repository
 
 
-log = logging.getLogger("fm.covmanager.tests")
+log = logging.getLogger("fm.covmanager.tests")  # pylint: disable=invalid-name
 
 
 def _check_hg():

@@ -10,18 +10,17 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 
-from django.core.urlresolvers import reverse
 import pytest
+import requests
+from django.core.urlresolvers import reverse
 
 from . import TestCase
-from ..models import CrashEntry
 
 
-log = logging.getLogger("fm.crashmanager.tests.bugs")
+log = logging.getLogger("fm.crashmanager.tests.bugs")  # pytest: disable=invalid-name
 
 
 class BugProvidersTests(TestCase):
@@ -36,7 +35,8 @@ class BugProvidersTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CreateBugProvidersTests(TestCase):
@@ -51,7 +51,8 @@ class CreateBugProvidersTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class DeleteBugProvidersTests(TestCase):
@@ -67,7 +68,8 @@ class DeleteBugProvidersTests(TestCase):
         self.client.login(username='test', password='test')
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class EditBugProvidersTests(TestCase):
@@ -83,7 +85,8 @@ class EditBugProvidersTests(TestCase):
         self.client.login(username='test', password='test')
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class ViewBugProvidersTests(TestCase):
@@ -99,7 +102,8 @@ class ViewBugProvidersTests(TestCase):
         self.client.login(username='test', password='test')
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CreateBugTests(TestCase):
@@ -117,7 +121,8 @@ class CreateBugTests(TestCase):
         crash = self.create_crash(bucket=bucket)
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}), {'provider': prov.pk})
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CreateBugCommentTests(TestCase):
@@ -134,7 +139,8 @@ class CreateBugCommentTests(TestCase):
         crash = self.create_crash()
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}), {'provider': prov.pk})
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CreateBugTemplateTests(TestCase):
@@ -150,7 +156,8 @@ class CreateBugTemplateTests(TestCase):
         self.client.login(username='test', password='test')
         prov = self.create_bugprovider()
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class EditBugTemplateTests(TestCase):
@@ -169,7 +176,8 @@ class EditBugTemplateTests(TestCase):
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk,
                                                               'templateId': temp.pk,
                                                               'mode': 'create'}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class EditBugCommentTemplateTests(TestCase):
@@ -188,4 +196,5 @@ class EditBugCommentTemplateTests(TestCase):
         response = self.client.get(reverse(self.name, kwargs={'providerId': prov.pk,
                                                               'templateId': temp.pk,
                                                               'mode': 'comment'}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])

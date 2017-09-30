@@ -21,7 +21,9 @@ from ..models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, Cl
 
 logging.getLogger("django").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)
-log = logging.getLogger("fm.crashmanager.tests")
+
+
+log = logging.getLogger("fm.crashmanager.tests")  # pytest: disable=invalid-name
 
 
 class TestCase(DjangoTestCase):

@@ -10,19 +10,17 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 
+import requests
 from django.core.urlresolvers import reverse
-from django.core.files.base import ContentFile
-from django.contrib.auth.models import User
 
 from . import TestCase
 from ..models import Bucket, BucketWatch, CrashEntry
 
 
-log = logging.getLogger("fm.crashmanager.tests.signatures")
+log = logging.getLogger("fm.crashmanager.tests.signatures")  # pylint: disable=invalid-name
 
 
 class SignaturesViewTests(TestCase):
@@ -38,7 +36,8 @@ class SignaturesViewTests(TestCase):
         """If no sigs in db, an appropriate message is shown."""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 0)  # 0 buckets
         self.assertContains(response, self.entries_fmt % 0)
@@ -48,7 +47,8 @@ class SignaturesViewTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription="bucket #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 1)  # 1 bucket
         self.assertEqual(siglist[0], bucket)  # same bucket we created
@@ -61,7 +61,8 @@ class SignaturesViewTests(TestCase):
         buckets = (self.create_bucket(shortDescription="bucket #1"),
                    self.create_bucket(shortDescription="bucket #2"))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 2)  # 2 buckets
         self.assertEqual(set(siglist), set(buckets))  # same buckets we created
@@ -74,7 +75,8 @@ class SignaturesViewTests(TestCase):
         self.client.login(username='test', password='test')
         self.create_bucket(shortDescription="bucket #1", bug=self.create_bug('123'))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 0)  # 0 buckets
         self.assertContains(response, self.entries_fmt % 0)
@@ -85,7 +87,8 @@ class SignaturesViewTests(TestCase):
         bucket = self.create_bucket(shortDescription="bucket #1")
         self.create_bucket(shortDescription="bucket #2", bug=self.create_bug('123'))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 1)  # 1 bucket
         self.assertEqual(siglist[0], bucket)  # same bucket we created
@@ -103,7 +106,8 @@ class SignaturesViewTests(TestCase):
         self.create_crash(shortSignature="crash #4", tool="tool #1", bucket=bucket2)
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         log.debug(siglist)
         self.assertEqual(len(siglist), 2)  # 2 buckets
@@ -125,7 +129,8 @@ class AllSignaturesViewTests(SignaturesViewTests):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription="bucket #1", bug=self.create_bug('123'))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "bucket #1")
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 1)  # 1 bucket
@@ -138,7 +143,8 @@ class AllSignaturesViewTests(SignaturesViewTests):
         buckets = (self.create_bucket(shortDescription="bucket #1"),
                    self.create_bucket(shortDescription="bucket #2", bug=self.create_bug('123')))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 2)  # 2 buckets
         self.assertEqual(set(siglist), set(buckets))  # same buckets we created
@@ -157,7 +163,8 @@ class AllSignaturesViewTests(SignaturesViewTests):
         self.create_crash(shortSignature="crash #4", tool="tool #1", bucket=bucket2)
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         siglist = response.context['siglist']
         log.debug(siglist)
         self.assertEqual(len(siglist), 2)  # 2 buckets
@@ -188,7 +195,8 @@ class FindSignatureTests(TestCase):
                                                               'value': '//'}]}))
 
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class LinkSignatureTests(TestCase):
@@ -204,7 +212,8 @@ class LinkSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket()
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class UnlinkSignatureTests(TestCase):
@@ -220,7 +229,8 @@ class UnlinkSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket()
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class OptSignatureTests(TestCase):
@@ -239,7 +249,8 @@ class OptSignatureTests(TestCase):
                                                               'type': 'output',
                                                               'value': '//'}]}))
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class TrySignatureTests(TestCase):
@@ -259,7 +270,8 @@ class TrySignatureTests(TestCase):
                                                               'value': '//'}]}))
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk, "crashid": crash.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class NewSignatureTests(TestCase):
@@ -274,7 +286,8 @@ class NewSignatureTests(TestCase):
         """Check that the form looks ok"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, 'name="shortDescription"')
         self.assertContains(response, 'name="signature"')
         self.assertContains(response, 'name="frequent"')
@@ -355,7 +368,8 @@ class NewSignatureTests(TestCase):
         stderr = "Program received signal SIGSEGV, Segmentation fault.\n#0  sym_a ()\n#1  sym_b ()"
         crash = self.create_crash(shortSignature='crash #1', stderr=stderr)
         response = self.client.get(reverse(self.name) + '?crashid=%d' % crash.pk)
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, 'name="shortDescription"')
         self.assertContains(response, 'name="signature"')
         self.assertContains(response, 'name="frequent"')
@@ -402,7 +416,8 @@ class EditSignatureTests(TestCase):
         })
         bucket = self.create_bucket(shortDescription="bucket #1", signature=sig)
         response = self.client.get(reverse(self.name, kwargs={'sigid': bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, 'name="shortDescription"')
         self.assertContains(response, 'name="signature"')
         self.assertContains(response, 'name="frequent"')
@@ -478,12 +493,14 @@ class DelSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription='bucket #1')
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Are you sure that you want to delete this signature?")
         self.assertContains(response, self.entries_fmt % 0)
         crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Are you sure that you want to delete this signature?")
         self.assertContains(response, self.entries_fmt % 1)
 
@@ -492,6 +509,7 @@ class DelSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription='bucket #1')
         response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:signatures'))
         self.assertEqual(Bucket.objects.count(), 0)
 
@@ -501,6 +519,7 @@ class DelSignatureTests(TestCase):
         bucket = self.create_bucket(shortDescription='bucket #1')
         crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}))
+        log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:signatures'))
         self.assertEqual(Bucket.objects.count(), 0)
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
@@ -512,6 +531,7 @@ class DelSignatureTests(TestCase):
         bucket = self.create_bucket(shortDescription='bucket #1')
         crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}), {'delentries': '1'})
+        log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:signatures'))
         self.assertEqual(Bucket.objects.count(), 0)
         self.assertEqual(CrashEntry.objects.count(), 0)
@@ -523,7 +543,8 @@ class WatchSignatureTests(TestCase):
         """If no watched signatures, that should be shown"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse('crashmanager:sigwatch'))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Displaying 0 watched signature entries from the database.")
 
     def test_buckets(self):
@@ -532,7 +553,8 @@ class WatchSignatureTests(TestCase):
         bucket = self.create_bucket(shortDescription='bucket #1')
         self.create_bucketwatch(bucket=bucket)
         response = self.client.get(reverse('crashmanager:sigwatch'))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Displaying 1 watched signature entries from the database.")
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 1)
@@ -549,7 +571,8 @@ class WatchSignatureTests(TestCase):
         self.create_bucketwatch(bucket=buckets[1], crash=crash1)
         self.create_crash(shortSignature='crash #2', bucket=buckets[1], tool='tool #1')
         response = self.client.get(reverse('crashmanager:sigwatch'))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Displaying 2 watched signature entries from the database.")
         siglist = response.context['siglist']
         self.assertEqual(len(siglist), 2)
@@ -564,11 +587,13 @@ class WatchSignatureTests(TestCase):
         bucket = self.create_bucket(shortDescription='bucket #1')
         self.create_bucketwatch(bucket=bucket)
         response = self.client.get(reverse('crashmanager:sigwatchdel', kwargs={"sigid": bucket.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response,
                             "Are you sure that you want to stop watching this signature for new crash entries?")
         self.assertContains(response, bucket.shortDescription)
         response = self.client.post(reverse('crashmanager:sigwatchdel', kwargs={"sigid": bucket.pk}))
+        log.debug(response)
         self.assertEqual(BucketWatch.objects.count(), 0)
         self.assertEqual(Bucket.objects.get(), bucket)
         self.assertRedirects(response, reverse('crashmanager:sigwatch'))
@@ -590,6 +615,7 @@ class WatchSignatureTests(TestCase):
         crash2 = self.create_crash(shortSignature='crash #2', bucket=bucket)
         response = self.client.post(reverse('crashmanager:sigwatchnew'), {"bucket": "%d" % bucket.pk,
                                                                           "crash": "%d" % crash2.pk})
+        log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:sigwatch'))
         watch = BucketWatch.objects.get(pk=watch.pk)
         self.assertEqual(watch.bucket, bucket)
@@ -602,6 +628,7 @@ class WatchSignatureTests(TestCase):
         crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.post(reverse('crashmanager:sigwatchnew'), {"bucket": "%d" % bucket.pk,
                                                                           "crash": "%d" % crash.pk})
+        log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:sigwatch'))
         watch = BucketWatch.objects.get()
         self.assertEqual(watch.bucket, bucket)
@@ -616,7 +643,8 @@ class WatchSignatureTests(TestCase):
         watch = self.create_bucketwatch(bucket=bucket)
         # check that crash1 is shown
         response = self.client.get(url)
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashes = response.context['crashlist']
         self.assertEqual(len(crashes), 1)
         self.assertEqual(crashes[0], crash1)
@@ -624,13 +652,15 @@ class WatchSignatureTests(TestCase):
         watch.save()
         # check that no crashes are shown
         response = self.client.get(url)
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashes = response.context['crashlist']
         self.assertEqual(len(crashes), 0)
         crash2 = self.create_crash(shortSignature='crash #2', bucket=bucket)
         # check that crash2 is shown
         response = self.client.get(url)
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashes = response.context['crashlist']
         self.assertEqual(len(crashes), 1)
         self.assertEqual(crashes[0], crash2)

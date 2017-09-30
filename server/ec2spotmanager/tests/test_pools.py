@@ -10,18 +10,16 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
-import json
 import logging
 
-#from moto import mock_ec2_deprecated
-
+import requests
 from django.core.urlresolvers import reverse
+# from moto import mock_ec2_deprecated
 
 from . import TestCase
 
 
-log = logging.getLogger("fm.ec2spotmanager.tests.pools")
+log = logging.getLogger("fm.ec2spotmanager.tests.pools")  # pylint: disable=invalid-name
 
 
 class PoolsViewTests(TestCase):
@@ -38,7 +36,7 @@ class PoolsViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         poollist = response.context['poollist']
         self.assertEqual(len(poollist), 0)  # 0 pools
         self.assertContains(response, self.entries_fmt % 0)
@@ -50,7 +48,7 @@ class PoolsViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         poollist = response.context['poollist']
         self.assertEqual(len(poollist), 1)  # 1 pools
         self.assertContains(response, self.entries_fmt % 1)
@@ -64,7 +62,7 @@ class PoolsViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         poollist = response.context['poollist']
         self.assertEqual(len(poollist), 2)  # 2 pools
         self.assertContains(response, self.entries_fmt % 2)
@@ -84,7 +82,7 @@ class CreatePoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class ViewPoolViewTests(TestCase):
@@ -102,7 +100,7 @@ class ViewPoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class PoolPricesViewTests(TestCase):
@@ -123,7 +121,7 @@ class PoolPricesViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class DeletePoolViewTests(TestCase):
@@ -141,7 +139,7 @@ class DeletePoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class EnablePoolViewTests(TestCase):
@@ -159,7 +157,7 @@ class EnablePoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class DisablePoolViewTests(TestCase):
@@ -177,7 +175,7 @@ class DisablePoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CyclePoolViewTests(TestCase):
@@ -195,7 +193,7 @@ class CyclePoolViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'poolid': pool.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class DeletePoolMessageViewTests(TestCase):
@@ -214,4 +212,4 @@ class DeletePoolMessageViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'msgid': msg.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])

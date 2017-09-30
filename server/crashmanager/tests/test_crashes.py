@@ -10,17 +10,17 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
-import httplib
 import json
 import logging
 
+import requests
 from django.core.urlresolvers import reverse
 
 from . import TestCase
 from ..models import CrashEntry
 
 
-log = logging.getLogger("fm.crashmanager.tests.crashes")
+log = logging.getLogger("fm.crashmanager.tests.crashes")  # pylint: disable=invalid-name
 
 
 class CrashesViewTests(TestCase):
@@ -36,7 +36,8 @@ class CrashesViewTests(TestCase):
         """If no crashes in db, an appropriate message is shown."""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 0)  # 0 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
@@ -48,7 +49,8 @@ class CrashesViewTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature="crash #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "crash #1")
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 1)  # 1 crash
@@ -63,7 +65,8 @@ class CrashesViewTests(TestCase):
         crash1 = self.create_crash(shortSignature="crash #1")
         crash2 = self.create_crash(shortSignature="crash #2")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "crash #1")
         self.assertContains(response, "crash #2")
         crashlist = response.context['crashlist']
@@ -82,7 +85,8 @@ class CrashesViewTests(TestCase):
 
         def check_page(page, exp_page, crash):
             response = self.client.get(reverse(self.name), {'page': page, 'page_size': 1})
-            self.assertEqual(response.status_code, httplib.OK)
+            log.debug(response)
+            self.assertEqual(response.status_code, requests.codes['ok'])
             self.assertContains(response, crash.shortSignature)
             crashlist = response.context['crashlist']
             self.assertEqual(crashlist.number, exp_page)  # page num
@@ -104,7 +108,8 @@ class CrashesViewTests(TestCase):
         bucket = self.create_bucket(shortDescription="bucket #1")
         self.create_crash(shortSignature="crash #1", bucket=bucket)
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 0)  # 0 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
@@ -118,7 +123,8 @@ class CrashesViewTests(TestCase):
         self.create_crash(shortSignature="crash #1", bucket=bucket)
         crash = self.create_crash(shortSignature="crash #2")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 1)  # 1 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
@@ -133,7 +139,8 @@ class CrashesViewTests(TestCase):
         crashes = [self.create_crash(shortSignature="crash #1", bucket=bucket),
                    self.create_crash(shortSignature="crash #2", bucket=bucket)]
         response = self.client.get(reverse(self.name), {'all': 1})
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 2)  # 2 crashes
         self.assertEqual(crashlist.number, 1)  # 1st page
@@ -171,7 +178,8 @@ class CrashesViewTests(TestCase):
             log.debug('requesting with %r', params)
             log.debug('expecting: %r', exp_crashes)
             response = self.client.get(reverse(self.name), params)
-            self.assertEqual(response.status_code, httplib.OK)
+            log.debug(response)
+            self.assertEqual(response.status_code, requests.codes['ok'])
             crashlist = response.context['crashlist']
             self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
             self.assertEqual(crashlist.number, 1)  # 1st page
@@ -186,7 +194,8 @@ class CrashesViewTests(TestCase):
                    self.create_crash(shortSignature="crash #2", tool="tool #2"))
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "crash #1")
         crashlist = response.context['crashlist']
         self.assertEqual(len(crashlist), 1)  # 1 crash
@@ -207,7 +216,8 @@ class AllCrashesViewTests(CrashesViewTests):
                    self.create_crash(shortSignature="crash #2", tool="tool #2"))
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "crash #1")
         self.assertContains(response, "crash #2")
         crashlist = response.context['crashlist']
@@ -258,7 +268,8 @@ class CrashDeleteTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CrashEditTests(TestCase):
@@ -274,7 +285,8 @@ class CrashEditTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CrashViewTests(TestCase):
@@ -290,7 +302,8 @@ class CrashViewTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class QueryCrashesTests(TestCase):
@@ -318,14 +331,17 @@ class QueryCrashesTests(TestCase):
                                      testcase=testcases[i])
                    for i in range(2)]
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Search Query")
         self.assertNotContains(response, "Invalid query")
         response = self.client.get(reverse(self.name), {"query": "badjson"})
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Invalid query")
         response = self.client.post(reverse(self.name), {"query": "badjson"})
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Invalid query")
         for params, exp_crashes in (({'op': 'OR', 'bucket': buckets[0].pk}, {crashes[0]}),
                                     ({'op': 'OR', 'client__name': 'client #2'}, {crashes[1]}),
@@ -341,7 +357,8 @@ class QueryCrashesTests(TestCase):
             log.debug('requesting with %r', params)
             log.debug('expecting: %r', exp_crashes)
             response = self.client.get(reverse(self.name), {'query': json.dumps(params)})
-            self.assertEqual(response.status_code, httplib.OK)
+            log.debug(response)
+            self.assertEqual(response.status_code, requests.codes['ok'])
             crashlist = response.context['crashlist']
             self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
             self.assertEqual(set(crashlist), exp_crashes)  # expected crashes

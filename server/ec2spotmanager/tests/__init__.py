@@ -13,13 +13,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import logging
 
 from django.contrib.auth.models import User
-from django.core.files.base import ContentFile
 from django.test import TestCase as DjangoTestCase
 
 from ..models import Instance, InstancePool, PoolConfiguration, PoolStatusEntry
 
 
-log = logging.getLogger("fm.ec2spotmanager.tests")
+log = logging.getLogger("fm.ec2spotmanager.tests")  # pylint: disable=invalid-name
 
 
 class TestCase(DjangoTestCase):

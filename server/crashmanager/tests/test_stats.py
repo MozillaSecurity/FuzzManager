@@ -11,20 +11,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import datetime
-import httplib
 import logging
 
+import requests
 from django.core.urlresolvers import reverse
-import pytest
 
 from . import TestCase
 
 
-log = logging.getLogger("fm.crashmanager.tests.stats")
-
-
-# should show # of crashes logged in past hour, filtered by toolfilter
-# should list buckets with count if crashes are bucketed
+log = logging.getLogger("fm.crashmanager.tests.stats")  # pylint: disable=invalid-name
 
 
 class StatsViewTests(TestCase):
@@ -40,7 +35,7 @@ class StatsViewTests(TestCase):
         """If no crashes in db, an appropriate message is shown."""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(response.context['total_reports_per_hour'], 0)
         self.assertContains(response, self.entries_fmt % 0)
         self.assertEqual(len(response.context['frequentBuckets']), 0)
@@ -50,7 +45,7 @@ class StatsViewTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature="crash #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(response.context['total_reports_per_hour'], 1)
         self.assertContains(response, self.entries_fmt % 1)
         self.assertEqual(len(response.context['frequentBuckets']), 0)
@@ -65,7 +60,7 @@ class StatsViewTests(TestCase):
                    self.create_crash(shortSignature="crash #4", tool="tool #2"))
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(response.context['total_reports_per_hour'], 4)
         self.assertContains(response, self.entries_fmt % 4)
         response_buckets = response.context['frequentBuckets']
@@ -78,14 +73,14 @@ class StatsViewTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature="crash #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(response.context['total_reports_per_hour'], 1)
         self.assertContains(response, self.entries_fmt % 1)
         self.assertEqual(len(response.context['frequentBuckets']), 0)
         crash.created -= datetime.timedelta(hours=1, seconds=1)
         crash.save()
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertEqual(response.context['total_reports_per_hour'], 0)
         self.assertContains(response, self.entries_fmt % 0)
         self.assertEqual(len(response.context['frequentBuckets']), 0)

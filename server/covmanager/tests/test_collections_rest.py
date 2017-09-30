@@ -23,7 +23,7 @@ from . import TestCase
 from ..models import Collection
 
 
-log = logging.getLogger("fm.covmanager.tests.collections.rest")
+log = logging.getLogger("fm.covmanager.tests.collections.rest")  # pylint: disable=invalid-name
 
 
 class RestCollectionsTests(APITestCase, TestCase):

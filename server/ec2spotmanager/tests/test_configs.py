@@ -11,17 +11,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import decimal
-import httplib
 import json
 import logging
 
+import requests
 from django.core.urlresolvers import reverse
 
 from . import TestCase
 from ..models import PoolConfiguration
 
 
-log = logging.getLogger("fm.ec2spotmanager.tests.configs")
+log = logging.getLogger("fm.ec2spotmanager.tests.configs")  # pylint: disable=invalid-name
 
 
 class ConfigsViewTests(TestCase):
@@ -30,13 +30,16 @@ class ConfigsViewTests(TestCase):
     def test_no_login(self):
         """Request without login hits the login redirect"""
         path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+        response = self.client.get(path)
+        log.debug(response)
+        self.assertRedirects(response, '/login/?next=' + path)
 
     def test_no_configs(self):
         """If no configs in db, an appropriate message is shown."""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         configtree = response.context['roots']
         self.assertEqual(len(configtree), 0)  # 0 configs
 
@@ -45,7 +48,8 @@ class ConfigsViewTests(TestCase):
         self.client.login(username='test', password='test')
         config = self.create_config("config #1")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         configtree = response.context['roots']
         self.assertEqual(len(configtree), 1)  # 1 config
         self.assertEqual(set(configtree), {config})  # same config
@@ -58,7 +62,8 @@ class ConfigsViewTests(TestCase):
         configs = (self.create_config("config #1"),
                    self.create_config("config #2"))
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         configtree = response.context['roots']
         self.assertEqual(len(configtree), 2)  # 2 configs
         self.assertEqual(set(configtree), set(configs))  # same configs
@@ -74,7 +79,8 @@ class ConfigsViewTests(TestCase):
         config2 = self.create_config("config #2", parent=config1)
         config3 = self.create_config("config #3")
         response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, httplib.OK)
+        log.debug(response)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         configtree = response.context['roots']
         self.assertEqual(len(configtree), 2)  # 2 top-level configs
         self.assertEqual(set(configtree), {config1, config3})
@@ -104,14 +110,16 @@ class CreateConfigViewTests(TestCase):
     def test_no_login(self):
         """Request without login hits the login redirect"""
         path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+        response = self.client.get(path)
+        log.debug(response)
+        self.assertRedirects(response, '/login/?next=' + path)
 
     def test_create_form(self):
         """Config creation form should be shown"""
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Create Configuration")
         self.assertContains(response, 'name="name"')
         self.assertContains(response, 'name="size"')
@@ -175,7 +183,7 @@ class CreateConfigViewTests(TestCase):
                                  ec2_raw_config={'hello': 'world'})
         response = self.client.get(reverse(self.name), {'clone': cfg.pk})
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Clone Configuration")
         self.assertContains(response, 'config #1 (Cloned)')
         self.assertContains(response, '1234567')
@@ -221,7 +229,7 @@ class ViewConfigViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'configid': cfg.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, 'config #1')
         self.assertContains(response, '1234567')
         self.assertContains(response, '7654321')
@@ -246,7 +254,9 @@ class EditConfigViewTests(TestCase):
     def test_no_login(self):
         """Request without login hits the login redirect"""
         path = reverse(self.name, kwargs={'configid': 0})
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+        response = self.client.get(path)
+        log.debug(response)
+        self.assertRedirects(response, '/login/?next=' + path)
 
     def test_edit(self):
         """Edit an existing config"""
@@ -267,7 +277,7 @@ class EditConfigViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'configid': cfg.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Edit Configuration")
         self.assertContains(response, 'config #1')
         self.assertContains(response, '1234567')
@@ -293,7 +303,9 @@ class DelConfigViewTests(TestCase):
     def test_no_login(self):
         """Request without login hits the login redirect"""
         path = reverse(self.name, kwargs={'configid': 0})
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
+        response = self.client.get(path)
+        log.debug(response)
+        self.assertRedirects(response, '/login/?next=' + path)
 
     def test_delete(self):
         """Delete an existing config"""
@@ -310,4 +322,4 @@ class DelConfigViewTests(TestCase):
         self.client.login(username='test', password='test')
         response = self.client.get(reverse(self.name, kwargs={'configid': cfg.pk}))
         log.debug(response)
-        self.assertEqual(response.status_code, httplib.OK)
+        self.assertEqual(response.status_code, requests.codes['ok'])
