@@ -21,7 +21,7 @@ from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
     NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo, RustCrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
-CWD = os.path.dirname(__file__)
+CWD = os.path.dirname(os.path.realpath(__file__))
 
 
 asanTraceCrash = """
