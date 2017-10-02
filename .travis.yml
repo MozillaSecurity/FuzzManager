@@ -16,4 +16,4 @@ before_script:
 script:
     - python -m pytest -v --cov=. --cov-report term-missing
 after_success:
-    - codecov --file .coverage -X gcov
+    - codecov -X gcov

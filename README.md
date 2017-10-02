@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/MozillaSecurity/FuzzManager.svg?branch=master)](https://travis-ci.org/MozillaSecurity/FuzzManager)
+[![codecov](https://codecov.io/gh/MozillaSecurity/FuzzManager/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/FuzzManager)
+
 # What is FuzzManager
 
 With this project, we aim to create a management toolchain for fuzzing. Unlike
