@@ -2,9 +2,7 @@
 from setuptools import setup
 
 if __name__ == '__main__':
-    with open('requirements-client.txt') as requirements_fp:
-        requirements = requirements_fp.read().strip().splitlines()
-    setup(name = "FuzzManager",
-          version = "0.1",
-          packages = ['Collector', 'CovReporter', 'EC2Reporter', 'FTB', 'FTB.Running', 'FTB.Signatures', 'Reporter'],
-          install_requires = requirements)
+    setup(name='FuzzManager',
+          version='0.1.1',
+          packages=['Collector', 'CovReporter', 'EC2Reporter', 'FTB', 'FTB.Running', 'FTB.Signatures', 'Reporter'],
+          install_requires=['fasteners>=0.14.1', 'numpy>=1.11.2', 'requests>=2.5.0'])
