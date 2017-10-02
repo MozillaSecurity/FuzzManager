@@ -349,8 +349,7 @@ class CollectionViewSet(mixins.CreateModelMixin,
         CollectionFilterBackend
     ]
 
-class RepositoryViewSet(mixins.CreateModelMixin,
-                        mixins.ListModelMixin,
+class RepositoryViewSet(mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
                         viewsets.GenericViewSet):
     """

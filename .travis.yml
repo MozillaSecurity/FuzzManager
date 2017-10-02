@@ -1,0 +1,19 @@
+dist: trusty
+sudo: false
+language: python
+python:
+    - 2.7
+before_install:
+    - pip install --upgrade setuptools pip
+    - pip install --upgrade virtualenv
+install:
+    - pip --version
+    - virtualenv --version
+    - git --version
+before_script:
+    - pip install -r requirements.txt
+    - pip install --upgrade codecov pytest-flake8 pytest-pylint pytest-cov pytest-django pytest-pythonpath
+script:
+    - python -m pytest -v --cov=. --cov-report term-missing
+after_success:
+    - codecov -X gcov
