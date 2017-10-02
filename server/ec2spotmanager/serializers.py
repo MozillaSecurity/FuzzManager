@@ -11,17 +11,6 @@ class MachineStatusSerializer(serializers.ModelSerializer):
         model = Instance
         fields = ['status_data']
 
-    def to_native(self, obj):
-        '''
-        Serialize (flatten) our object.
-        '''
-        serialized = super(MachineStatusSerializer, self).to_native(obj)
-        if obj != None:
-            # Do stuff with serialized object, e.g. removing fields
-            pass
-
-        return serialized
-
     def update(self, instance, attrs):
         '''
         Update the status_data field of a given instance
