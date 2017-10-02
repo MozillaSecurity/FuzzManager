@@ -41,7 +41,7 @@ class Command(NoArgsCommand):
                 # So the only way we have left is to manually select a given amount of pks
                 # and store them in a list to use pk__in with the list and a DELETE query.
 
-                pks = list(CrashEntry.objects.filter(bucket__bug = bug).values_list('pk')[:500])
+                pks = list(CrashEntry.objects.filter(bucket__bug = bug).values_list('pk', flat=True)[:500])
                 CrashEntry.objects.filter(pk__in=pks).delete()
 
             bug.delete()
@@ -59,7 +59,7 @@ class Command(NoArgsCommand):
         # Again, for the same reason as mentioned above, we have to delete entries in batches.
         expiryDate = datetime.now().date() - timedelta(days=cleanup_crashes_after_days)
         while CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).count() > 0:
-            pks = list(CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).values_list('pk')[:500])
+            pks = list(CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).values_list('pk', flat=True)[:500])
             CrashEntry.objects.filter(pk__in=pks).delete()
 
         # Cleanup all bugs that don't belong to any bucket anymore
