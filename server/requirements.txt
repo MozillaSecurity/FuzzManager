@@ -1,0 +1,8 @@
+boto==2.48.0
+celery==4.1.0
+Django==1.11.5
+django-chartjs==1.2
+djangorestframework==3.6.4
+fasteners==0.14.1
+numpy==1.13.3
+requests==2.18.4

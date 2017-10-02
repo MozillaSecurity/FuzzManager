@@ -1,8 +1,8 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 
 from ec2spotmanager import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/report/$', views.MachineStatusViewSet.as_view()),
     url(r'^rest/pool/(?P<poolid>\d+)/cycle/$', views.PoolCycleView.as_view()),
@@ -27,4 +27,4 @@ urlpatterns = patterns('',
     url(r'^configurations/(?P<configid>\d+)/cycle/$', views.forceCyclePoolsByConfig, name='configcycle'),
     url(r'^pools/(?P<poolid>\d+)/chart_json_detailed/$', views.UptimeChartViewDetailed.as_view(), name='line_chart_json_detailed'),
     url(r'^pools/(?P<poolid>\d+)/chart_json_accumulated/$', views.UptimeChartViewAccumulated.as_view(), name='line_chart_json_accumulated'),
-)
+]

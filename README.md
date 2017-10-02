@@ -47,8 +47,8 @@ Please send any questions regarding the project to choller-at-mozilla-dot-com.
 
 ## Dependencies
 
-All dependencies are listed in `requirements.txt`. You can use pip to install
-these dependencies using `sudo pip install -r requirements.txt` and/or you can
+All dependencies are listed in `server/requirements.txt`. You can use pip to install
+these dependencies using `sudo pip install -r server/requirements.txt` and/or you can
 use your distribution's package management to fulfill them.
 
 ## Server Setup

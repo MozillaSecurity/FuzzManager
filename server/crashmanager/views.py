@@ -1133,7 +1133,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
         """
         Return a filtered queryset.
         """
-        querystr = request.QUERY_PARAMS.get('query', None)
+        querystr = request.query_params.get('query', None)
         if querystr is not None:
             try:
                 _, queryobj = json_to_query(querystr)
@@ -1172,7 +1172,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
             obj = CrashEntry.objects.get(pk=pk)
         except CrashEntry.DoesNotExist:
             raise Http404
-        given_fields = set(request.DATA.keys())
+        given_fields = set(request.data.keys())
         disallowed_fields = given_fields - allowed_fields
         if disallowed_fields:
             if len(disallowed_fields) == 1:
@@ -1180,11 +1180,11 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
             else:
                 error_str = "fields %r" % list(disallowed_fields)
             raise InvalidArgumentException("%s cannot be updated" % error_str)
-        if "testcase_quality" in request.DATA:
+        if "testcase_quality" in request.data:
             if obj.testcase is None:
                 raise InvalidArgumentException("crash has no testcase")
             try:
-                testcase_quality = int(request.DATA["testcase_quality"])
+                testcase_quality = int(request.data["testcase_quality"])
             except ValueError:
                 raise InvalidArgumentException("invalid testcase_quality")
             # NB: if other fields are added, all validation should occur before any DB writes.

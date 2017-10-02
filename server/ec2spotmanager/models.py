@@ -22,7 +22,7 @@ POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low", 2: "confi
 POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.iteritems())
 
 class OverwritingStorage(FileSystemStorage):
-    def get_available_name(self, name):
+    def get_available_name(self, name, max_length=None):
         if self.exists(name):
             os.remove(os.path.join(getattr(settings, 'USERDATA_STORAGE', None), name))
         return name

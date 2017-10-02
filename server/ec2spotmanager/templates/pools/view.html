@@ -1,6 +1,5 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% load url from future %}
 {% load recursetags %}
 {% load datetags %}
 
@@ -101,7 +100,7 @@
 			</tr>
 		</thead>
 		<tbody>
-		  {% for instance in instances %}<tr class="{% cycle odd,even %}">
+		  {% for instance in instances %}<tr class="{% cycle 'odd' 'even' %}">
  			<td>{{ instance.created|date:"r" }}<br/>{{ instance.created|date_ago }}</td>
 			<td>{{ instance.ec2_instance_id|escape }}</td>
 			<td>{{ instance.hostname|escape }}</td>

@@ -1,13 +1,16 @@
-from django.core.management.base import NoArgsCommand
+from django.core.management import BaseCommand, CommandError
 from crashmanager.models import Bug, BugProvider
 from django.conf import settings
 from crashmanager.management.common import mgmt_lock_required
 import warnings
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     help = "Check the status of all bugs we have"
     @mgmt_lock_required
-    def handle_noargs(self, **options):      
+    def handle(self, *args, **options):
+        if args:
+            raise CommandError("Command doesn't accept any arguments")
+
         # Suppress warnings about native datetime vs. timezone
         warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
         

@@ -629,12 +629,11 @@ class MachineStatusViewSet(APIView):
         return response
 
     def post(self, request, *args, **kwargs):
-        # When upgrading to DRF 3.x, change DATA to data
-        if not 'client' in request.DATA:
+        if not 'client' in request.data:
             Response(status=status.HTTP_400_BAD_REQUEST)
 
-        instance = get_object_or_404(Instance, hostname=request.DATA['client'])
-        serializer = MachineStatusSerializer(instance=instance, partial=True, data=request.DATA)
+        instance = get_object_or_404(Instance, hostname=request.data['client'])
+        serializer = MachineStatusSerializer(instance=instance, partial=True, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

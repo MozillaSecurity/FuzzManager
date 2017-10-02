@@ -112,7 +112,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
         """
         Return a filtered queryset.
         """
-        querystr = request.QUERY_PARAMS.get('query', None)
+        querystr = request.query_params.get('query', None)
         if querystr is not None:
             try:
                 _, queryobj = json_to_query(querystr)
@@ -133,7 +133,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         if not queryset:
             return queryset
 
-        querystr = request.QUERY_PARAMS.get('squery', None)
+        querystr = request.query_params.get('squery', None)
         if querystr is not None:
             queryobj = None
             for field in queryset[0].simple_query_fields:
