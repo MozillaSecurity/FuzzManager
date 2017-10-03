@@ -1,10 +1,13 @@
-from django.core.management import BaseCommand, CommandError
-from crashmanager.models import CrashEntry, Bucket, Bug
-from django.db.models.aggregates import Count
-from datetime import datetime, timedelta
+from datetime import timedelta
+
 from django.conf import settings
+from django.core.management import BaseCommand, CommandError
+from django.db.models.aggregates import Count
+from django.utils import timezone
+
 from crashmanager.management.common import mgmt_lock_required
-import warnings
+from crashmanager.models import CrashEntry, Bucket, Bug
+
 
 class Command(BaseCommand):
     help = "Cleanup old crash entries."
@@ -13,14 +16,11 @@ class Command(BaseCommand):
         if args:
             raise CommandError("Command doesn't accept any arguments")
 
-        # Suppress warnings about native datetime vs. timezone
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
-
         cleanup_crashes_after_days = getattr(settings, 'CLEANUP_CRASHES_AFTER_DAYS', 14)
         cleanup_fixed_buckets_after_days = getattr(settings, 'CLEANUP_FIXED_BUCKETS_AFTER_DAYS', 3)
 
         # Select all buckets that have been closed for x days
-        expiryDate = datetime.now().date() - timedelta(days=cleanup_fixed_buckets_after_days)
+        expiryDate = timezone.now().date() - timedelta(days=cleanup_fixed_buckets_after_days)
         bugs = Bug.objects.filter(closed__lt = expiryDate)
         for bug in bugs:
             # Deleting the bug causes buckets referring to this bug as well as entries

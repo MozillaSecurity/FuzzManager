@@ -1,19 +1,12 @@
-from datetime import tzinfo, timedelta, datetime
+from datetime import timedelta
 from django import template
-
-class UTC(tzinfo):
-    def utcoffset(self, dt):
-        return timedelta(0)
-    def tzname(self, dt):
-        return "UTC"
-    def dst(self, dt):
-        return timedelta(0)
+from django.utils import timezone
 
 register = template.Library()
 
 @register.filter
 def date_ago(d):
-    delta = datetime.now(UTC()) - d
+    delta = timezone.now() - d
 
     days = delta.days
     hours = delta.seconds // 3600

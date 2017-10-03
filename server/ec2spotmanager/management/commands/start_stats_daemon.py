@@ -4,6 +4,7 @@ from django.db.models.query_utils import Q
 from django.utils import timezone
 import logging
 import time
+import datetime
 
 from ec2spotmanager.management.common import pid_lock_file
 from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance, INSTANCE_STATE
@@ -33,7 +34,7 @@ class Command(BaseCommand):
             if not pool.isEnabled:
                 continue
 
-            current_delta = timezone.datetime.now() - timezone.timedelta(seconds=stats_delta_secs)
+            current_delta = timezone.now() - datetime.timedelta(seconds=stats_delta_secs)
             entries = PoolUptimeDetailedEntry.objects.filter(pool=pool, created__gte=current_delta)
 
             # We should never have more than one entry per time-delta

@@ -1,12 +1,15 @@
-from django.core.management.base import LabelCommand
-from crashmanager.models import CrashEntry, Bucket
-from django.db.models.aggregates import Count, Min
-from crashmanager.management.common import mgmt_lock_required
-from tempfile import mkdtemp
 import json
-import shutil
 import os
+import shutil
+from tempfile import mkdtemp
 from zipfile import ZipFile
+
+from django.core.management.base import LabelCommand
+from django.db.models.aggregates import Count, Min
+
+from crashmanager.management.common import mgmt_lock_required
+from crashmanager.models import CrashEntry, Bucket
+
 
 class Command(LabelCommand):
     help = "Export signatures and their metadata."
