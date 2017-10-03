@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
@@ -8,6 +8,7 @@ from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
 from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 import json
 import operator
 from rest_framework import filters, mixins, viewsets
@@ -119,7 +120,7 @@ def index(request):
 
 @login_required(login_url='/login/')
 def stats(request):
-    lastHourDelta = datetime.now() - timedelta(hours=1)
+    lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta)
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)

@@ -15,12 +15,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from datetime import datetime
-from django.forms.models import model_to_dict
-from django.shortcuts import render, get_object_or_404
 import json
 import os
 import re
+
+from django.forms.models import model_to_dict
+from django.shortcuts import render, get_object_or_404
+from django.utils import dateparse
 
 from BugzillaREST import BugzillaREST
 from crashmanager.Bugtracker.Provider import Provider
@@ -446,6 +447,6 @@ class BugzillaProvider(Provider):
             elif bugs[bugId]["dupe_of"]:
                 ret[bugId] = str(bugs[bugId]["dupe_of"])
             else:
-                ret[bugId] = datetime.strptime(bugs[bugId]["cf_last_resolved"], "%Y-%m-%dT%H:%M:%SZ")
+                ret[bugId] = dateparse.parse_datetime(bugs[bugId]["cf_last_resolved"])
 
         return ret

@@ -13,8 +13,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-import boto.ec2
 import datetime
+
+import boto.ec2
+from django.utils import timezone
+
 
 # Blacklist zones that currently don't allow subnets to be set on them
 # until we found a better way to deal with this situation.
@@ -24,7 +27,7 @@ zone_blacklist = ["us-east-1a", "us-east-1f"]
 # by the multiprocessing module when calling this asynchronously.
 def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_type):
     '''Gets spot prices of the specified region and instance type'''
-    now = datetime.datetime.now()
+    now = timezone.now()
     start = now - datetime.timedelta(hours=6)
     region = boto.ec2.connect_to_region(region_name,
                                    aws_access_key_id=aws_key_id,

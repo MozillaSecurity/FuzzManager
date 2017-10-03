@@ -1,8 +1,9 @@
-from django.core.management import BaseCommand, CommandError
-from crashmanager.models import Bug, BugProvider
 from django.conf import settings
+from django.core.management import BaseCommand, CommandError
+
 from crashmanager.management.common import mgmt_lock_required
-import warnings
+from crashmanager.models import Bug, BugProvider
+
 
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
@@ -11,9 +12,6 @@ class Command(BaseCommand):
         if args:
             raise CommandError("Command doesn't accept any arguments")
 
-        # Suppress warnings about native datetime vs. timezone
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".*received a naive datetime.*")
-        
         providers = BugProvider.objects.all()
         for provider in providers:
             providerInstance = provider.getInstance()
