@@ -60,7 +60,7 @@ class Command(BaseCommand):
         # deleted when the bucket is deleted).
         #
         # Again, for the same reason as mentioned above, we have to delete entries in batches.
-        expiryDate = datetime.now().date() - timedelta(days=cleanup_crashes_after_days)
+        expiryDate = timezone.now().date() - timedelta(days=cleanup_crashes_after_days)
         while CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).count() > 0:
             pks = list(CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).values_list('pk', flat=True)[:500])
             CrashEntry.objects.filter(pk__in=pks).delete()
