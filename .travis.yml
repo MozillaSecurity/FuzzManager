@@ -17,3 +17,10 @@ script:
     - python -m pytest -v --cov=. --cov-report term-missing
 after_success:
     - codecov -X gcov
+deploy:
+    provider: pypi
+    user: truber
+    password:
+        secure: Mu/+/+tbRRSNv2vHYrkOtjm9yCQl9luvdR3M7vq4BOEXd1NEZWR/sHpxOnV97QHINpGqQurUkHE8osrUBCXGkid2G/83HCkCmdwJ53PAdR+ddqz3TPeFX4EsW9j0YuiSABp9Em9EJ1LhIbUAo88GfY55xr1jPS0EaNS1bB8L5Yo=
+    on:
+        tags: true
