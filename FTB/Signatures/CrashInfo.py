@@ -174,7 +174,7 @@ class CrashInfo():
         weakResult = None
 
         asanString = "ERROR: AddressSanitizer:"
-        gdbString = " received signal SIG"
+        gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
         appleString = "Mac OS X"
