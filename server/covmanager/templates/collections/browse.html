@@ -49,6 +49,7 @@
             <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
             <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
             <th v-if="chartdata" @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">Coverage Difference</th>
+            <th v-if="chartdata" @click="sortBy('delta_linesTotal')" :class="{ active: sortKey == 'delta_linesTotal' }">Total Lines Difference</th>
           </tr>
           <tr v-if="show_top_nav">
             <td @click="navigate_top">
@@ -66,6 +67,7 @@
             <td>!{ value.linesMissed | formatNumber }!</td>
             <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
             <td v-if="chartdata" class="text-right" :style="cov_pct_style(value.delta_coveragePercent)">!{ value.delta_coveragePercent }! %</td>
+            <td v-if="chartdata" class="text-right">!{ value.delta_linesTotal }!</td>
           </tr>
         </tbody>
         <tfoot class="table-coverage-foot" v-show="!search">
@@ -76,6 +78,7 @@
             <td>!{ coverage.linesMissed | formatNumber }!</td>
             <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
             <td v-if="chartdata" class="text-right" :style="cov_pct_style(coverage.delta_coveragePercent)">!{ coverage.delta_coveragePercent }! %</td>
+            <td v-if="chartdata" class="text-right">!{ coverage.delta_linesTotal }!</td>
           </tr>
       </tfoot>
       </table>
