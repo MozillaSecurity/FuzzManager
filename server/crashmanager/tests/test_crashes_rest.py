@@ -101,6 +101,39 @@ class RestCrashesTests(APITestCase, TestCase):
             self.assertEqual(getattr(crash, field).name, data[field])
         self.assertEqual(crash.product.version, data['product_version'])
 
+    def test_report_crash_empty(self):
+        """test that crash reporting works with empty fields where allowed"""
+        data = {
+            'rawStdout': '',
+            'rawStderr': '',
+            'rawCrashData': '',
+            'testcase': 'blah',
+            'testcase_isbinary': False,
+            'testcase_quality': 0,
+            'testcase_ext': '',
+            'platform': 'x',
+            'product': 'x',
+            'product_version': '',
+            'os': 'x',
+            'client': 'x',
+            'tool': 'x'}
+        user = User.objects.get(username='test')
+        self.client.force_authenticate(user=user)
+        resp = self.client.post('/crashmanager/rest/crashes/', data=data)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['created'])
+        crash = CrashEntry.objects.get()
+        for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
+            self.assertEqual(getattr(crash, field), data[field])
+        self.assertEqual(os.path.splitext(crash.testcase.test.path)[1].lstrip('.'), data['testcase_ext'])
+        with open(crash.testcase.test.path) as fp:
+            self.assertEqual(fp.read(), data['testcase'])
+        self.assertEqual(crash.testcase.isBinary, data['testcase_isbinary'])
+        self.assertEqual(crash.testcase.quality, data['testcase_quality'])
+        for field in ('platform', 'product', 'os', 'client', 'tool'):
+            self.assertEqual(getattr(crash, field).name, data[field])
+        self.assertEqual(crash.product.version, data['product_version'])
+
     def test_query_crash(self):
         """test that crashes can be queried"""
         buckets = [self.create_bucket(shortDescription="bucket #1"), None, None, None]
