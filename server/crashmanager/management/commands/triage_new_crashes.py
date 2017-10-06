@@ -8,9 +8,6 @@ class Command(BaseCommand):
     help = "Iterates over all unbucketed crash entries that have never been triaged before to assign them into the existing buckets."
     @mgmt_lock_required
     def handle(self, *args, **options):
-        if args:
-            raise CommandError("Command doesn't accept any arguments")
-
         entries = CrashEntry.objects.filter(triagedOnce=False, bucket=None)
         buckets = Bucket.objects.all()
 
