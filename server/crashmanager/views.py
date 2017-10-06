@@ -127,7 +127,7 @@ def stats(request):
 
     bucketFrequencyMap = {}
     for entry in entries:
-        if entry.bucket != None:
+        if entry.bucket is not None:
             if entry.bucket.pk in bucketFrequencyMap:
                 bucketFrequencyMap[entry.bucket.pk] += 1
             else:
@@ -326,7 +326,7 @@ def crashes(request, ignore_toolfilter=False):
                                  )
 
     # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q == None:
+    if not filters and q is None:
         isSearch = False
 
     # Do not display triaged crash entries unless there is an all=1 parameter
@@ -496,7 +496,7 @@ def __handleSignaturePost(request, bucket):
     # either fetched or created.
     try:
         signature = bucket.getSignature()
-    except RuntimeError, e:
+    except RuntimeError as e:
         data = { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e }
         return render(request, 'signatures/edit.html', data)
 
@@ -521,9 +521,9 @@ def __handleSignaturePost(request, bucket):
 
         for entry in entries:
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
-            if match and entry.bucket == None:
+            if match and entry.bucket is None:
                 inList.append(entry)
-            elif not match and entry.bucket != None:
+            elif not match and entry.bucket is not None:
                 outList.append(entry)
 
         if 'submit_save' in request.POST:
@@ -588,7 +588,7 @@ def newSignature(request):
                                                                forceCrashInstruction=forceCrashInstruction,
                                                                maxFrames=maxStackFrames
                                                                )
-            if (proposedSignature == None):
+            if proposedSignature is None:
                 errorMsg = crashInfo.failureReason
                 proposedSignature = crashInfo.createCrashSignature(maxFrames=maxStackFrames)
 
@@ -667,7 +667,7 @@ def editSignature(request, sigid):
         # TODO: FIXME: Update bug here as well
         return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
-        if sigid != None:
+        if sigid is not None:
             bucket = get_object_or_404(Bucket, pk=sigid)
             check_authorized_for_signature(request, bucket)
 
@@ -712,7 +712,7 @@ def linkSignature(request, sigid):
             # This is a preview request
             bugData = provider.getInstance().getBugData(bugId, username, password)
 
-            if bugData == None:
+            if bugData is None:
                 data['error_message'] = 'Bug not found in external database.'
             else:
                 data['summary'] = bugData['summary']
