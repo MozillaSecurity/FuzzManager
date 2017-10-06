@@ -402,7 +402,7 @@ def autoAssignCrashEntries(request):
                 entry_modified = True
 
             if entry_modified:
-                entry.save()
+                entry.save(update_fields=['bucket', 'triagedOnce'])
 
     # This query ensures that all issues that have been bucketed manually before
     # the server had a chance to triage them will have their triageOnce flag set,
@@ -523,15 +523,12 @@ def __handleSignaturePost(request, bucket):
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
             if match and entry.bucket == None:
                 inList.append(entry)
-                if 'submit_save' in request.POST:
-                    entry.bucket = bucket
-                    entry.save()
             elif not match and entry.bucket != None:
                 outList.append(entry)
-                if 'submit_save' in request.POST:
-                    entry.bucket = None
-                    entry.triagedOnce = False
-                    entry.save()
+
+        if 'submit_save' in request.POST:
+            CrashEntry.objects.filter(pk__in=[o.pk for o in inList]).update(bucket=bucket)
+            CrashEntry.objects.filter(pk__in=[o.pk for o in outList]).update(bucket=None, triagedOnce=False)
 
     # Save bucket and redirect to viewing it
     if 'submit_save' in request.POST:
@@ -737,7 +734,7 @@ def unlinkSignature(request, sigid):
 
     if request.method == 'POST':
         bucket.bug = None
-        bucket.save()
+        bucket.save(update_fields=['bug'])
         return redirect('crashmanager:sigview', sigid=bucket.pk)
     elif request.method == 'GET':
         return render(request, 'signatures/unlink.html', { 'bucket' : bucket })
@@ -924,7 +921,7 @@ def findSignatures(request, crashid):
 
     if matchingBucket:
         entry.bucket = matchingBucket
-        entry.save()
+        entry.save(update_fields=['bucket'])
         return render(request, 'signatures/find.html', { 'bucket' : matchingBucket, 'crashentry' : entry })
     else:
         similarBuckets.sort(key=lambda x: (x.foreignMatchCount, x.offCount))
@@ -949,7 +946,7 @@ def createExternalBug(request, crashid):
         extBug = Bug(externalId=extBugId, externalType=provider)
         extBug.save()
         entry.bucket.bug = extBug
-        entry.bucket.save()
+        entry.bucket.save(update_fields=['bug'])
 
         return redirect('crashmanager:sigview', sigid=entry.bucket.pk)
     elif request.method == 'GET':
@@ -1021,7 +1018,7 @@ def deleteBugProvider(request, providerId):
         buckets = Bucket.objects.filter(bug__in=bugs)
         for bucket in buckets:
             bucket.bug = None
-            bucket.save()
+            bucket.save(update_fields=['bug'])
 
         provider.delete()
         return redirect('crashmanager:bugproviders')
