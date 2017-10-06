@@ -122,7 +122,7 @@ def index(request):
 def stats(request):
     lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
-    entries = CrashEntry.objects.filter(created__gt=lastHourDelta)
+    entries = CrashEntry.objects.filter(created__gt=lastHourDelta).select_related('bucket')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucketFrequencyMap = {}
@@ -383,7 +383,7 @@ def queryCrashes(request):
 
 @login_required(login_url='/login/')
 def autoAssignCrashEntries(request):
-    entries = CrashEntry.objects.filter(bucket=None)
+    entries = CrashEntry.objects.filter(bucket=None).select_related('product', 'platform', 'os', 'testcase')
     buckets = Bucket.objects.all()
 
     for bucket in buckets:
@@ -515,7 +515,9 @@ def __handleSignaturePost(request, bucket):
 
         signature = bucket.getSignature()
         needTest = signature.matchRequiresTest()
-        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
+        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket)).select_related('product', 'platform', 'os')
+        if needTest:
+            entries.select_related('testcase')
 
         for entry in entries:
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
@@ -766,10 +768,12 @@ def optimizeSignature(request, sigid):
     buckets = Bucket.objects.all()
 
     # Get all unbucketed entries for that user, respecting the tools filter though
-    entries = CrashEntry.objects.filter(bucket=None).order_by('-id').prefetch_related("platform", "product", "os")
+    entries = CrashEntry.objects.filter(bucket=None).order_by('-id').select_related("platform", "product", "os", "tool")
     entries = filter_crash_entries_by_toolfilter(request, entries)
 
     signature = bucket.getSignature()
+    if signature.matchRequiresTest():
+        entries.select_related("testcase")
 
     optimizedSignature = None
     matchingEntries = []
@@ -799,7 +803,7 @@ def optimizeSignature(request, sigid):
                     continue
 
                 if not otherBucket.pk in firstEntryPerBucketCache:
-                    c = CrashEntry.objects.filter(bucket=otherBucket).first()
+                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os").first()
                     firstEntryPerBucketCache[otherBucket.pk] = c
                     if c:
                         # Omit testcase for performance reasons for now
@@ -1161,7 +1165,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
     API endpoint that allows adding/viewing CrashEntries
     """
     authentication_classes = (TokenAuthentication,)
-    queryset = CrashEntry.objects.all()
+    queryset = CrashEntry.objects.all().select_related('product', 'platform', 'os', 'client', 'tool', 'testcase')
     serializer_class = CrashEntrySerializer
     filter_backends = [JsonQueryFilterBackend]
 
@@ -1201,7 +1205,7 @@ class BucketViewSet(mixins.ListModelMixin,
     API endpoint that allows viewing Buckets
     """
     authentication_classes = (TokenAuthentication,)
-    queryset = Bucket.objects.all()
+    queryset = Bucket.objects.all().select_related('bug')
     serializer_class = BucketSerializer
     filter_backends = [BucketAnnotateFilterBackend, JsonQueryFilterBackend]
 
