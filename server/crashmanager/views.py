@@ -335,6 +335,7 @@ def crashes(request, ignore_toolfilter=False):
         filters["bucket"] = None
 
     entries = entries.filter(**filters)
+    entries = entries.select_related('bucket', 'tool', 'os', 'product', 'platform', 'testcase')
 
     data = {
             'q' : q,
