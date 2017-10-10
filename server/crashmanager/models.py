@@ -204,7 +204,7 @@ class CrashEntry(models.Model):
 
         return crashInfo
 
-    def reparseCrashInfo(self, save=True):
+    def reparseCrashInfo(self):
         # Purges cached crash information and then forces a reparsing
         # of the raw crash information. Based on the new crash information,
         # the depending fields are also repopulated.
@@ -217,8 +217,20 @@ class CrashEntry(models.Model):
             self.crashAddress = hex(crashInfo.crashAddress)
         self.shortSignature = crashInfo.createShortSignature()
 
-        if save:
-            return self.save()
+        # If the entry has a bucket, check if it still fits into
+        # this bucket, otherwise remove it.
+        if self.bucket is not None:
+            sig = self.bucket.getSignature()
+            crashInfo = self.getCrashInfo(attachTestcase=sig.matchRequiresTest())
+            if not sig.matches(crashInfo):
+                self.bucket = None
+
+        # If this entry now isn't in a bucket, mark it to be auto-triaged
+        # again by the server.
+        if self.bucket is None:
+            self.triagedOnce = False
+
+        return self.save()
 
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely

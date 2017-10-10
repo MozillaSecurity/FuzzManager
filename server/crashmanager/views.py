@@ -442,8 +442,7 @@ def editCrashEntry(request, crashid):
         entry.metadataList = request.POST['metadata'].splitlines()
 
         # Regenerate crash information and fields depending on it
-        entry.reparseCrashInfo(save=False)
-        crashInfo = entry.getCrashInfo()
+        entry.reparseCrashInfo()
 
         if entry.testcase:
             if entry.testcase.isBinary:
@@ -457,22 +456,6 @@ def editCrashEntry(request, crashid):
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.storeTestAndSave()
 
-                # Directly attach the testcase here, since we have it
-                crashInfo.testcase = entry.testcase.content
-
-        # If the entry has a bucket, check if it still fits into
-        # this bucket, otherwise remove it.
-        if entry.bucket:
-            sig = entry.bucket.getSignature()
-            if not sig.matches(crashInfo):
-                entry.bucket = None
-
-        # If this entry now isn't in a bucket, mark it to be auto-triaged
-        # again by the server.
-        if not entry.bucket:
-            entry.triagedOnce = False
-
-        entry.save()
         return redirect('crashmanager:crashview', crashid=entry.pk)
     else:
         return render(request, 'crashes/edit.html', { 'entry' : entry })
@@ -1211,21 +1194,21 @@ def json_to_query(json_str):
     This method converts JSON objects into trees of Django Q objects.
     It can be used to provide the user the ability to perform complex
     queries on the database using JSON as a query string.
-    
+
     The decoded JSON may only contain objects. Each object must contain
     an "op" key that describes the operation of the object. This can either
     be "AND", "OR" or "NOT". Right now, it is mandatory to specify an operator
     even if there is only one element in the object.
-    
+
     Any other keys in the object are interpreted as follows:
-    
+
     If the value of the key is an object itself, recursively create a new
     query object and connect all query objects in the current object together
     using the specified operator. In this case, the key itself remains unused.
-    
+
     If the value of the key is a string, directly interpret key and value as
     a query string for the database.
-    
+
     If the operator is "NOT", then only one other key can be present in the
     object. If the operator is "AND" or "OR" and only one other key is present,
     then the operator has no effect.
@@ -1270,4 +1253,3 @@ def json_to_query(json_str):
         return qobj
 
     return (obj, get_query_obj(obj))
-
