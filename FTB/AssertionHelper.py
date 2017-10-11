@@ -122,11 +122,12 @@ def getAuxiliaryAbortMessage(output):
         if "ERROR: AddressSanitizer" in line:
             if not "SEGV on unknown address" in line:
                 # Strip address, registers and PID prefix
-                line = re.sub("on address 0x[0-9a-f]+", "", line)
-                line = re.sub("at pc 0x[0-9a-f]+", "", line)
-                line = re.sub("bp 0x[0-9a-f]+", "", line)
-                line = re.sub("sp 0x[0-9a-f]+", "", line)
-                line = re.sub("^[0-9=]+", "", line)
+                line = re.sub(r"on address 0x[0-9a-f]+", "", line)
+                line = re.sub(r"(at |\()pc 0x[0-9a-f]+", "", line)
+                line = re.sub(r"bp 0x[0-9a-f]+", "", line)
+                line = re.sub(r"sp 0x[0-9a-f]+", "", line)
+                line = re.sub(r"T[0-9]+\)", "", line)
+                line = re.sub(r"^[0-9=]+", "", line)
                 lastLine = line.strip()
                 needASanRW = True
         elif needASanRW and "READ of size" in line or "WRITE of size" in line:
