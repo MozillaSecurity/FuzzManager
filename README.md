@@ -65,9 +65,14 @@ Afterwards, you should run the following commands
 
 ```
 $ cd server
-$ python manage.py syncdb
+$ python manage.py makemigrations
+$ python manage.py migrate
+
 ```
 During syncdb, make sure that you create a user as we need it later on.
+
+    echo "from django.contrib.auth.models import User; User.objects.filter(email='fuzzmanager@internal.com').delete(); User.objects.create_superuser('fuzzmanager', 'fuzzmanager@internal.com', 'yourpassword')" | python manage.py shell
+
 
 ### Local testing
 
@@ -93,6 +98,19 @@ Use the following command to get an authentication token for a Django user:
 
 `python manage.py get_auth_token username`
 
+Obtain the fuzzmanager auth_token to be used in .fuzzmanagerconf as well as the basic authentication password
+
+    python manage.py get_auth_token fuzzmanager
+    4a253efa90f514bd89ae9a86d1dc264aa3133945
+   
+Set fuzzmanager's http basic authentication password to the auth_token 
+
+`htpasswd -cb .htpasswd fuzzmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
+
+This .htpasswd file can be stored anywhere on your hard drive.
+Your Apache AuthUserFile line should be updated to reflect your path.
+See examples/apache2/default.vhost for an example
+
 You can use the user that you created during `syncdb` for simple setups.
 
 ### Server Cronjobs
@@ -108,7 +126,7 @@ FuzzManager jobs:
 # Attempt to fit recently added crash entries into existing buckets
 */5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_crashes
 # Export all signatures to a zip file for downloading by clients
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
+*/30 * * * * cd /path/to/FuzzManager/server && mkdir -p files && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
 
 ## Client Setup/Usage
@@ -197,3 +215,4 @@ If your crashes can be reproduced on the command line by just running a command 
 ## Web Interface Usage and Workflow
 
 TBD
+
