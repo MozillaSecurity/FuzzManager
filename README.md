@@ -62,7 +62,9 @@ Afterwards, you should run the following commands
 
 ```
 $ cd server
-$ python manage.py syncdb
+$ python manage.py makemigrations
+$ python manage.py migrate
+
 ```
 During syncdb, make sure that you create a user as we need it later on.
 
