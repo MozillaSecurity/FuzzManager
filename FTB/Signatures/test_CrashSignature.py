@@ -171,6 +171,19 @@ testTraceNegativeSizeParam = """
     #5 0x7f7d02312322 in mozilla::a11y::DocAccessible::DoARIAOwnsRelocation(mozilla::a11y::Accessible*) /src/accessible/generic/DocAccessible.cpp:2089:19
 """
 
+testAsanStackOverflow = """
+==9482==ERROR: AddressSanitizer: stack-overflow on address 0x7ffec10e9f58 (pc 0x0000004a5349 bp 0x7ffec10ea7b0 sp 0x7ffec10e9f60 T0)
+    #0 0x4a5348 in __asan_memset /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:430:3
+    #1 0x7fc2baf40c75 in PropertyProvider::GetSpacingInternal(gfxTextRun::Range, gfxFont::Spacing*, bool) const /builds/worker/workspace/build/src/layout/generic/nsTextFrame.cpp:3445:29
+    #2 0x7fc2b632ca48 in GetAdjustedSpacing /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:370:16
+    #3 0x7fc2b632ca48 in gfxTextRun::GetAdjustedSpacingArray(gfxTextRun::Range, gfxTextRun::PropertyProvider*, gfxTextRun::Range, nsTArray<gfxFont::Spacing>*) const /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:403
+    #4 0x7fc2b63317c7 in gfxTextRun::AccumulateMetricsForRun(gfxFont*, gfxTextRun::Range, gfxFont::BoundingBoxType, mozilla::gfx::DrawTarget*, gfxTextRun::PropertyProvider*, gfxTextRun::Range, mozilla::gfx::ShapedTextFlags, gfxFont::RunMetrics*) const /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:785:24
+    #5 0x7fc2b6330885 in gfxTextRun::MeasureText(gfxTextRun::Range, gfxFont::BoundingBoxType, mozilla::gfx::DrawTarget*, gfxTextRun::PropertyProvider*) const /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:859:9
+    #6 0x7fc2b6334328 in gfxTextRun::BreakAndMeasureText(unsigned int, unsigned int, bool, double, gfxTextRun::PropertyProvider*, gfxTextRun::SuppressBreak, double*, bool, gfxFont::RunMetrics*, gfxFont::BoundingBoxType, mozilla::gfx::DrawTarget*, bool*, unsigned int*, bool, gfxBreakPriority*) /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:1183:21
+    #7 0x7fc2baf7cd24 in nsTextFrame::ReflowText(nsLineLayout&, int, mozilla::gfx::DrawTarget*, mozilla::ReflowOutput&, nsReflowStatus&) /builds/worker/workspace/build/src/layout/generic/nsTextFrame.cpp:9476:15
+    #8 0x7fc2baeb732c in nsLineLayout::ReflowFrame(nsIFrame*, nsReflowStatus&, mozilla::ReflowOutput*, bool&) /builds/worker/workspace/build/src/layout/generic/nsLineLayout.cpp:924:7
+"""
+
 testSignature1 = '''{"symptoms": [
     {
     "functionName": "GetObjectAllocKindForCopy",
@@ -543,6 +556,16 @@ class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
         self.assertIn("/ERROR: AddressSanitizer", str(testSig))
         self.assertIn("negative\\\\-size\\\\-param", str(testSig))
         self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+
+class SignatureAsanStackOverflowTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanStackOverflow.splitlines())
+
+        testSig = crashInfoPos.createCrashSignature()
+
+        # Check matches appropriately
+        self.assertTrue(testSig.matches(crashInfoPos))
 
 
 if __name__ == "__main__":

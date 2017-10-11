@@ -26,6 +26,14 @@ asanOverflow = """
 READ of size 8 at 0x60300021e6c8 thread T20 (MediaPlayback #1)
 """
 
+asanNegativeSize="""
+==12549==ERROR: AddressSanitizer: negative-size-param: (size=-17179869184)
+"""
+
+asanStackOverflow = """
+==9482==ERROR: AddressSanitizer: stack-overflow on address 0x7ffec10e9f58 (pc 0x0000004a5349 bp 0x7ffec10ea7b0 sp 0x7ffec10e9f60 T0)
+"""
+
 jsshellMozCrash = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
 """
@@ -67,6 +75,24 @@ class AssertionHelperTestASanFFAbort(unittest.TestCase):
 
         self.assertEqual(AssertionHelper.getAssertion(err), None)
         self.assertEqual(AssertionHelper.getAuxiliaryAbortMessage(err), None)
+
+class AssertionHelperTestASanNegativeSize(unittest.TestCase):
+    def runTest(self):
+        err = asanNegativeSize.splitlines()
+
+        self.assertEqual(AssertionHelper.getAssertion(err), None)
+        assertMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
+        expectedAssertMsg = r"ERROR: AddressSanitizer: negative\-size\-param: \(size=\-[0-9]{2,}\)"
+        self.assertEqual(assertMsg, expectedAssertMsg)
+
+class AssertionHelperTestASanStackOverflow(unittest.TestCase):
+    def runTest(self):
+        err = asanStackOverflow.splitlines()
+
+        self.assertEqual(AssertionHelper.getAssertion(err), None)
+        assertMsg = AssertionHelper.getAuxiliaryAbortMessage(err)
+        expectedAssertMsg = "ERROR: AddressSanitizer: stack-overflow"
+        self.assertEqual(assertMsg, expectedAssertMsg)
 
 class AssertionHelperTestMozCrash(unittest.TestCase):
     def runTest(self):
