@@ -65,9 +65,33 @@ Afterwards, you should run the following commands
 
 ```
 $ cd server
-$ python manage.py syncdb
+$ python manage.py migrate
 ```
-During syncdb, make sure that you create a user as we need it later on.
+
+Create the fuzzmanager user.
+```
+$ python ./manage.py createsuperuser
+Username (leave blank to use 'user'): fuzzmanager
+Email address: fuzzmanager@internal.com
+Password:
+Password (again):
+Superuser created successfully.
+```
+Get fuzzmanager authorization token
+```
+$ python manage.py get_auth_token fuzzmanager
+4a253efa90f514bd89ae9a86d1dc264aa3133945
+```
+Since the fuzzmanager account is used as a service account, we need to set the http basic authentication password to the auth token.
+```
+htpasswd -cb .htpasswd fuzzmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
+```
+This .htpasswd file can be stored anywhere on your hard drive.
+Your Apache AuthUserFile line should be updated to reflect your path.
+See examples/apache2/default.vhost for an example
+
+
+
 
 ### Local testing
 
