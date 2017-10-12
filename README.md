@@ -71,7 +71,7 @@ $ python manage.py migrate
 Create the fuzzmanager user.
 ```
 $ python ./manage.py createsuperuser
-Username (leave blank to use 'kkuehl'): fuzzmanager
+Username (leave blank to use 'user'): fuzzmanager
 Email address: fuzzmanager@internal.com
 Password:
 Password (again):

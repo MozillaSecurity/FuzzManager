@@ -1,15 +1,15 @@
-#!/usr/bin/env python
+from __future__ import print_function
 
-import os
-import sys
 import argparse
+import os
 import random
 import string
+import sys
+
 import django
 
 
-def main(arguments):
-
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--username', dest='username', type=str, required=True)
     parser.add_argument('--email', dest='email', type=str, required=True)
@@ -26,7 +26,7 @@ def main(arguments):
     username = args.username
     email = args.email
     password = ''.join(random.sample(string.letters, 20)) if args.password is None else args.password
-    superuser = args.superuser 
+    superuser = args.superuser
 
     try:
         user_obj = User.objects.get(username=args.username)
@@ -38,8 +38,8 @@ def main(arguments):
         else:
             User.objects.create_user(username, email, password)
 
-    print password
+    print('Password: {}'.format(password))
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())
