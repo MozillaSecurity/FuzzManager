@@ -76,7 +76,7 @@ class CovReporter(Reporter):
     def submit(self, coverage, description=""):
         '''
         Send coverage data to server.
-        
+
         @type coverage: dict
         @param coverage: Coverage Data
         '''
@@ -103,13 +103,13 @@ class CovReporter(Reporter):
     def preprocess_coverage_data(coverage):
         '''
         Preprocess the given coverage data.
-        
+
         Preprocessing includes structuring the coverage data by directory
-        for better performance as well as computing coverage summaries per directory. 
-        
+        for better performance as well as computing coverage summaries per directory.
+
         @type coverage: dict
         @param coverage: Coverage Data
-        
+
         @rtype dict
         @return Preprocessed Coverage Data
         '''
@@ -151,40 +151,7 @@ class CovReporter(Reporter):
         # Now we need to calculate the coverage summaries (lines total and covered)
         # for each subtree in the tree. We can do this easily by using a recursive
         # definition.
-
-        def calculate_summary_fields(node, name=None):
-            node["name"] = name
-            node["linesTotal"] = 0
-            node["linesCovered"] = 0
-
-            if "children" in node:
-                # This node has subtrees, recurse on them
-                for child_name in node["children"]:
-                    child = node["children"][child_name]
-                    calculate_summary_fields(child, child_name)
-                    node["linesTotal"] += child["linesTotal"]
-                    node["linesCovered"] += child["linesCovered"]
-            else:
-                # This is a leaf, calculate linesTotal and linesCovered from
-                # actual coverage data.
-                coverage = node["coverage"]
-
-                for l in coverage:
-                    if l >= 0:
-                        node["linesTotal"] += 1
-                        if l > 0:
-                            node["linesCovered"] += 1
-
-            # Calculate two more values based on total/covered because we need
-            # them in the UI later anyway and can save some time by doing it here.
-            node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
-
-            if node["linesTotal"] > 0:
-                node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
-            else:
-                node["coveragePercent"] = 0.0
-
-        calculate_summary_fields(ret)
+        CovReporter.__calculate_summary_fields(ret)
 
         return ret
 
@@ -192,20 +159,20 @@ class CovReporter(Reporter):
     def version_info_from_coverage_data(coverage):
         '''
         Extract various version fields from the given coverage data.
-        
+
         Certain coverage data formats store version information in the data,
         e.g. the revision or the branch. This method is used by the submit
         method to extract this information.
-        
+
         The extracted fields currently include:
-        
+
         revision
         branch
-        
+
         @type coverage: string
         @param coverage: Coverage Data
-        
-        @return Dictionary with version data 
+
+        @return Dictionary with version data
         @rtype dict
         '''
 
@@ -217,6 +184,97 @@ class CovReporter(Reporter):
             return ret
         else:
             raise RuntimeError("Unknown coverage format")
+
+    @staticmethod
+    def create_combined_coverage(coverage_files):
+        '''
+        Read coverage data from multiple files and return a single dictionary
+        containing the merged data.
+
+        @type coverage_files: list
+        @param coverage_files: List of filenames containing coverage data
+
+        @return Dictionary with combined coverage data
+        @rtype dict
+        '''
+
+        ret = None
+
+        for coverage_file in coverage_files:
+            with open(coverage_file) as f:
+                coverage = preprocess_coverage_data(json.load(f))
+
+                if ret is None:
+                    ret = coverage
+                else:
+                    __merge_coverage_data(ret, coverage)
+
+        return ret
+
+    @staticmethod
+    def __merge_coverage_data(r,s):
+        def merge_recursive(r,s):
+            #print("%s vs %s" % (r['name'], s['name']))
+            #print(s)
+            assert(r['name'] == s['name'])
+
+            if "children" in s:
+                for child in s['children']:
+                    if child in r['children']:
+                        # Slow path, child is in both data blobs,
+                        # perform recursive merge.
+                        merge_recursive(r['children'][child], s['children'][child])
+                    else:
+                        # Fast path, subtree only in merge source
+                        r['children'][child] = s['children'][child]
+            else:
+                assert(len(r['coverage']) == len(s['coverage']))
+
+                for idx in range(0,len(r['coverage'])):
+                    if s['coverage'][idx] < 0:
+                        # Verify that coverable vs. not coverable matches
+                        assert(r['coverage'][idx] < 0)
+                    else:
+                        r['coverage'][idx] += s['coverage'][idx]
+
+        # Merge recursively
+        merge_recursive(r,s)
+
+        # Recursively re-calculate all summary fields
+        CovReporter.__calculate_summary_fields(r)
+
+    @staticmethod
+    def __calculate_summary_fields(node, name=None):
+        node["name"] = name
+        node["linesTotal"] = 0
+        node["linesCovered"] = 0
+
+        if "children" in node:
+            # This node has subtrees, recurse on them
+            for child_name in node["children"]:
+                child = node["children"][child_name]
+                CovReporter.__calculate_summary_fields(child, child_name)
+                node["linesTotal"] += child["linesTotal"]
+                node["linesCovered"] += child["linesCovered"]
+        else:
+            # This is a leaf, calculate linesTotal and linesCovered from
+            # actual coverage data.
+            coverage = node["coverage"]
+
+            for l in coverage:
+                if l >= 0:
+                    node["linesTotal"] += 1
+                    if l > 0:
+                        node["linesCovered"] += 1
+
+        # Calculate two more values based on total/covered because we need
+        # them in the UI later anyway and can save some time by doing it here.
+        node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
+
+        if node["linesTotal"] > 0:
+            node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
+        else:
+            node["coveragePercent"] = 0.0
 
 def main(argv=None):
     '''Command line options.'''
@@ -230,6 +288,8 @@ def main(argv=None):
     action_group = parser.add_argument_group("Actions", "A single action must be selected.")
     actions = action_group.add_mutually_exclusive_group(required=True)
     actions.add_argument("--submit", help="Submit the given file as coverage data", metavar="FILE")
+    actions.add_argument("--multi-submit", action="store_true", help="Submit multiple files (specified last on the command line)")
+
 
     # Generic Settings
     parser.add_argument("--serverhost", help="Server hostname for remote signature management", metavar="HOST")
@@ -243,6 +303,7 @@ def main(argv=None):
     parser.add_argument("--repository", help="Name of the repository this coverage was measured on", metavar="NAME")
     parser.add_argument("--description", default="", help="Description for this coverage collection", metavar="NAME")
 
+    parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
     # process options
     opts = parser.parse_args(argv)
@@ -254,13 +315,20 @@ def main(argv=None):
 
     reporter = CovReporter(opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid, opts.tool, opts.repository)
 
-    if opts.submit:
+    if opts.submit or opts.multi_submit:
         if not opts.repository:
             print("Error: Must specify --repository when submitting coverage", file=sys.stderr)
             return 2
 
-        with open(opts.submit) as f:
-            coverage = json.load(f)
+        if opts.submit:
+            with open(opts.submit) as f:
+                coverage = json.load(f)
+        else:
+            if not opts.rargs:
+                print("Error: Must specify at least one file with --multi-submit", file=sys.stderr)
+                return 2
+
+            coverage = CovReporter.create_combined_coverage(opts.rargs)
 
         reporter.submit(coverage, opts.description)
     return 0
