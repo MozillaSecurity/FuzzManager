@@ -73,14 +73,35 @@ class CovReporter(Reporter):
         self.repository = repository
 
     @remote_checks
-    def submit(self, coverage, description=""):
+    def submit(self, coverage, preprocessed=False, version=None, description=""):
         '''
         Send coverage data to server.
 
         @type coverage: dict
         @param coverage: Coverage Data
+
+        @type covformat: int
+        @param covformat: Format of the coverage data (COVERALLS or COVMAN).
+
+        @type version: dict
+        @param version: A dictionary containing keys 'revision' and 'branch', just
+                        as returned by version_info_from_coverage_data. If left
+                        empty, the implementation will attempt to extract the
+                        information from the coverage data itself.
+
+        @type description: string
+        @param description: Optional descripton for this coverage data
         '''
         url = "%s://%s:%s/covmanager/rest/collections/" % (self.serverProtocol, self.serverHost, self.serverPort)
+
+        if version is None:
+            # Use version information extracted from coverage data
+            version = CovReporter.version_info_from_coverage_data(coverage)
+
+        if not preprocessed:
+            # Preprocess our coverage data to transform it into the server-side
+            # format unless the data has already been preprocessed before.
+            coverage = CovReporter.preprocess_coverage_data(coverage)
 
         # Serialize our coverage information
         data = {}
@@ -88,11 +109,9 @@ class CovReporter(Reporter):
         data["repository"] = self.repository
         data["tools"] = self.tool
         data["client"] = self.clientId
-        data["coverage"] = json.dumps(CovReporter.preprocess_coverage_data(coverage), separators=(',', ':'))
+        data["coverage"] = json.dumps(coverage, separators=(',', ':'))
         data["description"] = description
-
-        # Update our POST data with version information extracted from coverage data
-        data.update(CovReporter.version_info_from_coverage_data(coverage))
+        data.update(version)
 
         response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -189,27 +208,35 @@ class CovReporter(Reporter):
     def create_combined_coverage(coverage_files):
         '''
         Read coverage data from multiple files and return a single dictionary
-        containing the merged data.
+        containing the merged data (already preprocessed).
 
         @type coverage_files: list
         @param coverage_files: List of filenames containing coverage data
 
-        @return Dictionary with combined coverage data
-        @rtype dict
+        @return Dictionary with combined coverage data and version information
+        @rtype tuple(dict,dict)
         '''
 
         ret = None
+        version = None
 
         for coverage_file in coverage_files:
             with open(coverage_file) as f:
-                coverage = preprocess_coverage_data(json.load(f))
+                coverage = json.load(f)
+
+                if version is None:
+                    version = CovReporter.version_info_from_coverage_data(coverage)
+
+                coverage = CovReporter.preprocess_coverage_data(coverage)
 
                 if ret is None:
                     ret = coverage
                 else:
-                    __merge_coverage_data(ret, coverage)
+                    CovReporter.__merge_coverage_data(ret, coverage)
 
-        return ret
+
+
+        return (ret, version)
 
     @staticmethod
     def __merge_coverage_data(r,s):
@@ -323,14 +350,15 @@ def main(argv=None):
         if opts.submit:
             with open(opts.submit) as f:
                 coverage = json.load(f)
+            reporter.submit(coverage, description=opts.description)
         else:
             if not opts.rargs:
                 print("Error: Must specify at least one file with --multi-submit", file=sys.stderr)
                 return 2
 
-            coverage = CovReporter.create_combined_coverage(opts.rargs)
+            (coverage, version) = CovReporter.create_combined_coverage(opts.rargs)
+            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description)
 
-        reporter.submit(coverage, opts.description)
     return 0
 
 if __name__ == "__main__":
