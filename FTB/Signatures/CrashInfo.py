@@ -391,11 +391,8 @@ class CrashInfo():
                 # Try to match crash addresses that are small but non-zero
                 # with a generic range that is likely associated with null-deref.
                 crashAddress = "< 0x100"
-            elif self.crashAddress > 0x7ff000000000:
-                # Try to match large addresses
-                crashAddress = "> 0x7ff000000000"
             else:
-                crashAddress = "> 0x100"
+                crashAddress = "> 0xFF"
 
             crashAddressSymptomObj = { "type" : "crashAddress", "address" : crashAddress }
             symptomArr.append(crashAddressSymptomObj)

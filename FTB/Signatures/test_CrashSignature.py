@@ -206,7 +206,7 @@ testSignature1 = '''{"symptoms": [
     "type": "stackFrame"
   },
     {
-    "address": "0x2b2b2b2b",
+    "address": "> 0xFF",
     "type": "crashAddress"
   }
 ]}
@@ -243,7 +243,7 @@ testSignature3 = '''{"symptoms": [
     "type": "stackFrame"
   },
   {
-    "address": "0x2b2b2b2b",
+    "address": "> 0xFF",
     "type": "crashAddress"
   },
     {
