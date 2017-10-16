@@ -385,14 +385,14 @@ class CrashInfo():
         includeCrashInstruction = (stackIsInsufficient and self.crashInstruction != None) or forceCrashInstruction
 
         if includeCrashAddress:
-            if self.crashAddress == None:
+            if self.crashAddress is None:
                 crashAddress = ""
-            elif self.crashAddress != 0 and self.crashAddress < 0x100:
+            elif self.crashAddress < 0x100:
                 # Try to match crash addresses that are small but non-zero
                 # with a generic range that is likely associated with null-deref.
                 crashAddress = "< 0x100"
             else:
-                crashAddress = hex(self.crashAddress).rstrip("L")
+                crashAddress = "> 0xFF"
 
             crashAddressSymptomObj = { "type" : "crashAddress", "address" : crashAddress }
             symptomArr.append(crashAddressSymptomObj)
