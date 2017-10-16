@@ -241,8 +241,6 @@ class CovReporter(Reporter):
     @staticmethod
     def __merge_coverage_data(r,s):
         def merge_recursive(r,s):
-            #print("%s vs %s" % (r['name'], s['name']))
-            #print(s)
             assert(r['name'] == s['name'])
 
             if "children" in s:
@@ -255,14 +253,40 @@ class CovReporter(Reporter):
                         # Fast path, subtree only in merge source
                         r['children'][child] = s['children'][child]
             else:
-                assert(len(r['coverage']) == len(s['coverage']))
+                rc = r['coverage']
+                sc = s['coverage']
 
-                for idx in range(0,len(r['coverage'])):
-                    if s['coverage'][idx] < 0:
+                # GCOV bug, if the file has 0% coverage, then  all of the file
+                # is reported as not coverable. If s has that property, we simply
+                # ignore it. If r has that property, we replace it by s.
+                if sc.count(-1) == len(sc):
+                    return
+
+                if rc.count(-1) == len(rc):
+                    r['children'] = sc
+
+                # GCOV has mismatches on headers sometimes, ignore these, we
+                # cannot fix this in any reasonable way.
+                if len(rc) != len(sc):
+                    print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
+                    return
+
+                # Disable the assertion for now
+                #assert(len(r['coverage']) == len(s['coverage']))
+
+                for idx in range(0,len(rc)):
+                    if sc[idx] < 0:
                         # Verify that coverable vs. not coverable matches
-                        assert(r['coverage'][idx] < 0)
+                        # Unfortunately, GCOV again messes this up for headers sometimes
+                        if rc[idx] >= 0:
+                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %(r['name'], idx, rc[idx], sc[idx]))
+
+                        # Disable the assertion for now
+                        #assert(r['coverage'][idx] < 0)
+                    elif rc[idx] < 0 and sc[idx] >= 0:
+                        rc[idx] = sc[idx]
                     else:
-                        r['coverage'][idx] += s['coverage'][idx]
+                        rc[idx] += sc[idx]
 
         # Merge recursively
         merge_recursive(r,s)
