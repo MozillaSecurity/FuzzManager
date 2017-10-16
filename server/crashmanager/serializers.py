@@ -68,7 +68,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         attrs['shortSignature'] = crashInfo.createShortSignature()
 
         # If a testcase is supplied, create a testcase object and store it
-        if 'testcase' in attrs:
+        if 'test' in attrs['testcase']:
 
             testcase = attrs['testcase']
             testcase_ext = attrs.pop('testcase_ext', None)
