@@ -101,6 +101,31 @@ class RestCrashesTests(APITestCase, TestCase):
             self.assertEqual(getattr(crash, field).name, data[field])
         self.assertEqual(crash.product.version, data['product_version'])
 
+    def test_report_crash_no_test(self):
+        """test that crash reporting works with no testcase"""
+        data = {
+            'rawStdout': 'data on\nstdout',
+            'rawStderr': 'data on\nstderr',
+            'rawCrashData': 'some\ncrash\ndata',
+            'platform': 'x86',
+            'product': 'mozilla-central',
+            'product_version': 'badf00d',
+            'os': 'linux',
+            'client': 'client1',
+            'tool': 'tool1'}
+        user = User.objects.get(username='test')
+        self.client.force_authenticate(user=user)
+        resp = self.client.post('/crashmanager/rest/crashes/', data=data)
+        log.debug(resp)
+        self.assertEqual(resp.status_code, requests.codes['created'])
+        crash = CrashEntry.objects.get()
+        for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
+            self.assertEqual(getattr(crash, field), data[field])
+        self.assertIsNone(crash.testcase)
+        for field in ('platform', 'product', 'os', 'client', 'tool'):
+            self.assertEqual(getattr(crash, field).name, data[field])
+        self.assertEqual(crash.product.version, data['product_version'])
+
     def test_report_crash_empty(self):
         """test that crash reporting works with empty fields where allowed"""
         data = {
