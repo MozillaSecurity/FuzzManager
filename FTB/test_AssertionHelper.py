@@ -69,6 +69,12 @@ terminate called after throwing an instance of 'std::regex_error'
 TEST-INFO | Main app process: killed by SIGIOT
 """
 
+rustPanic1 = """
+thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976"""
+
+rustPanic2 = """
+thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20"""
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
@@ -99,7 +105,7 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
         err = jsshellMozCrash.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at ([a-zA-Z]:)?/.+/ScopeObject\\.cpp:[0-9]+"
+        expectedMsg = "Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at ([a-zA-Z]:)?/.+/ScopeObject\\.cpp(:[0-9]+)+"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
@@ -108,7 +114,7 @@ class AssertionHelperTestJSSelfHosted(unittest.TestCase):
         err = jsSelfHostedAssert.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = 'Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js:[0-9]+: non\\-canonical BestAvailableLocale locale"'
+        expectedMsg = 'Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js(:[0-9]+)+: non\\-canonical BestAvailableLocale locale"'
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
@@ -148,7 +154,7 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
         sanitizedMsg1 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg1)
         sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
 
-        expectedMsg = "Assertion failure: block\\->graph\\(\\)\\.osrBlock\\(\\), at ([a-zA-Z]:)?/.+/Lowering\\.cpp:[0-9]+"
+        expectedMsg = "Assertion failure: block\\->graph\\(\\)\\.osrBlock\\(\\), at ([a-zA-Z]:)?/.+/Lowering\\.cpp(:[0-9]+)+"
 
         self.assertEqual(sanitizedMsg1, expectedMsg)
 
@@ -178,6 +184,22 @@ class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = "terminate called after throwing an instance of 'std::regex_error'"
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+class AssertionHelperTestRustPanic(unittest.TestCase):
+    def runTest(self):
+        err = rustPanic1.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = r"thread 'StyleThread#[0-9]+' panicked at 'assertion failed: self\.get_data\(\)\.is_some\(\)', ([a-zA-Z]:)?/.+/wrapper\.rs(:[0-9]+)+"
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+        err = rustPanic2.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = r"thread 'RenderBackend' panicked at 'called `Option::unwrap\(\)` on a `None` value', ([a-zA-Z]:)?/.+/option\.rs(:[0-9]+)+"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 

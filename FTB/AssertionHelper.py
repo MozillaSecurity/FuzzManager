@@ -20,7 +20,7 @@ import re
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
 RE_PID = re.compile(r"^\[\d+\]\s+")
-RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs:\d+$")
+RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs(:\d+)+$")
 
 
 def getAssertion(output):
@@ -175,7 +175,7 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append("0x[0-9a-fA-F]+")
 
         # Strip line numbers as they can easily change across versions
-        replacementPatterns.append(":[0-9]+")
+        replacementPatterns.append("(:[0-9]+)+")
         replacementPatterns.append(", line [0-9]+")
 
         # Replace rust thread #s
