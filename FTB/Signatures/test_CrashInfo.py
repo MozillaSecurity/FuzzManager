@@ -600,6 +600,18 @@ Crash|EXCEPTION_ILLEGAL_INSTRUCTION|0x7ffc41f2f276|36
 0|3|||||0xcd07ffd740
 """
 
+rustSampleTrace5 = """
+thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20
+stack backtrace:
+   0:     0x7f89cd640233 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::hcdf51e4c9dc54357
+                               at /checkout/src/libstd/sys/unix/backtrace/tracing/gcc_s.rs:49
+   1:     0x7f89cd63d13f - std::panicking::default_hook::{{closure}}::h46820a72bf0cb624
+                               at /checkout/src/libstd/sys_common/backtrace.rs:71
+                               at /checkout/src/libstd/sys_common/backtrace.rs:60
+                               at /checkout/src/libstd/panicking.rs:380
+   2:     0x7f89cd63c58d - std::panicking::default_hook::h4c1ef1cc83189c8e
+"""
+
 ubsanSampleTrace1 = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -2401,6 +2413,18 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[2], "atomic_refcell::AtomicBorrowRef::do_panic")
         self.assertEqual(crashInfo.backtrace[3], "style::values::specified::color::{{impl}}::to_computed_value")
         self.assertEqual(crashInfo.crashAddress, 0x7ffc41f2f276)
+
+    def test_4(self):
+        """test another rust backtrace"""
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace5.splitlines())
+        self.assertIsInstance(crashInfo, RustCrashInfo)
+        self.assertEqual(crashInfo.createShortSignature(), "thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
+        self.assertEqual(crashInfo.backtrace[1], "std::panicking::default_hook::{{closure}}")
+        self.assertEqual(crashInfo.backtrace[2], "std::panicking::default_hook")
+        self.assertEqual(crashInfo.crashAddress, 0)
 
 class MinidumpModuleInStackTest(unittest.TestCase):
     def runTest(self):
