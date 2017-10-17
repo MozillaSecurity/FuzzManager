@@ -13,9 +13,7 @@ a process upon you that does not fit your requirements.
 CrashManager is the part of FuzzManager responsible for managing crash results
 submitted to the server. The main features are:
 
-* Store crash information gathered from various sources. The underlying client
-library already supports a variety of tools like GDB, ASan and Minidumps but
-can be extended to support any form of crash information you would like.
+* Store crash information gathered from various sources. See FTB.
 
 * Bucket crashes using flexible, human-readable signatures that can match a
 large number of symptoms of a crash, are proposed by the server but can be
@@ -26,9 +24,21 @@ optimization of signatures that helps you group duplicates into one bucket.
 support only Bugzilla as a bugtracker right now, but again the API is designed
 to be extendable.
 
-* Provide an easy client interface that allows your clients to submit crashes as
-well as download and match existing signatures to avoid reporting frequent
-issues repeatedly.
+### FTB
+
+FTB (Fuzzing Tool Box) is the underlying library that contains classes for parsing
+crash output from various tools (CrashInfo), bucketing crashes (CrashSignature), and
+parsing assertions (AssertionHelper). This can be used locally without having a
+running FuzzManager server instance to support crash logging and bucketing. FTB already
+supports a variety of tools like GDB, ASan and Minidumps but can be extended to support
+any form of crash information you would like.
+
+### Collector
+
+Collector is a command-line utility or a Python class that can be used to communicate
+with a CrashManager server.  Collector provides an easy client interface that allows
+your clients to submit crashes as well as download and match existing signatures to
+avoid reporting frequent issues repeatedly.
 
 ## EC2SpotManager
 
@@ -45,16 +55,20 @@ Please send any questions regarding the project to choller-at-mozilla-dot-com.
 
 # Getting Started
 
-## Dependencies
+## Client Setup
 
-All dependencies are listed in `server/requirements.txt`. You can use pip to install
-these dependencies using `sudo pip install -r server/requirements.txt` and/or you can
-use your distribution's package management to fulfill them.
+The client portion of FuzzManager (FTB and Collector) can be installed with
+`pip install FuzzManager`. This is all you need if you just need to talk to a
+FuzzManager server instance or use FTB locally.
 
 ## Server Setup
 
 The server part of FuzzManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
+
+Server dependencies are listed in `server/requirements.txt`. You can use pip to install
+these dependencies using `pip install -r server/requirements.txt` and/or you can
+use your distribution's package management to fulfill them.
 
 You can set the server up just like any other Django project. The Django
 configuration file is found at `server/server/settings.py`. The default will
@@ -89,8 +103,6 @@ htpasswd -cb .htpasswd fuzzmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
 This .htpasswd file can be stored anywhere on your hard drive.
 Your Apache AuthUserFile line should be updated to reflect your path.
 See examples/apache2/default.vhost for an example
-
-
 
 
 ### Local testing
@@ -135,7 +147,7 @@ FuzzManager jobs:
 */30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
 
-## Client Setup/Usage
+## Client Usage
 
 In order to talk to FuzzManager, your fuzzer should use the client interface provided, called the Collector. It can be used as a standalone command line tool or directly as a Python class in case your fuzzer is written in Python.
 
