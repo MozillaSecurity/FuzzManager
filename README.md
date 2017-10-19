@@ -107,7 +107,7 @@ See examples/apache2/default.vhost for an example
 ### Important changes in settings.py
 It is important that you edit FuzzManager/server/settings.py and adjust the following variables according to your needs.
 
-ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = []
 
 See [ALLOWED_HOSTS documentation](https://docs.djangoproject.com/en/1.11/ref/settings/#allowed-hosts)
 
@@ -115,7 +115,7 @@ See [ALLOWED_HOSTS documentation](https://docs.djangoproject.com/en/1.11/ref/set
 You may also want to increase the maximum size in bytes allowed in a request body. The default of 2.5MB may not be enough
 in some cases by adding the following variable.
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = <YOUR VALUE HERE>
+    DATA_UPLOAD_MAX_MEMORY_SIZE = <YOUR VALUE HERE>
 
 See [DATA_UPLOAD_MAX_MEMORY_SIZE](https://docs.djangoproject.com/en/1.11/ref/settings/#data-upload-max-memory-size)
 
