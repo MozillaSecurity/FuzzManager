@@ -36,8 +36,7 @@ except:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-DATA_UPLOAD_MAX_MEMORY_SIZE = 26214400
+ALLOWED_HOSTS = []
 
 
 # Application definition
