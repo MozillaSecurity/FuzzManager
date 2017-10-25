@@ -37,6 +37,11 @@ __version__ = 0.1
 __date__ = '2017-07-10'
 __updated__ = '2017-07-10'
 
+# Debugging variables to keep track of GCOV errors
+null_coverable_count = 0
+length_mismatch_count = 0
+coverable_mismatch_count = 0
+
 class CovReporter(Reporter):
     def __init__(self, serverHost=None, serverPort=None,
                  serverProtocol=None, serverAuthToken=None,
@@ -102,6 +107,10 @@ class CovReporter(Reporter):
             # Preprocess our coverage data to transform it into the server-side
             # format unless the data has already been preprocessed before.
             coverage = CovReporter.preprocess_coverage_data(coverage)
+
+        if len(description) > 0:
+            description += " "
+        description += "(dv1:%s,%s,%s)" % (null_coverable_count, length_mismatch_count, coverable_mismatch_count)
 
         # Serialize our coverage information
         data = {}
@@ -241,6 +250,14 @@ class CovReporter(Reporter):
     @staticmethod
     def __merge_coverage_data(r,s):
         def merge_recursive(r,s):
+            # These globals are mainly for debugging purposes. We count the number
+            # of warnings we encounter during merging, which are mostly due to
+            # bugs in GCOV. These statistics can be included in the report description
+            # to track the status of these bugs.
+            global null_coverable_count
+            global length_mismatch_count
+            global coverable_mismatch_count
+
             assert(r['name'] == s['name'])
 
             if "children" in s:
@@ -256,19 +273,28 @@ class CovReporter(Reporter):
                 rc = r['coverage']
                 sc = s['coverage']
 
-                # GCOV bug, if the file has 0% coverage, then  all of the file
+                # GCOV bug, if the file has 0% coverage, then all of the file
                 # is reported as not coverable. If s has that property, we simply
                 # ignore it. If r has that property, we replace it by s.
                 if sc.count(-1) == len(sc):
+                    if rc.count(-1) != len(rc):
+                        print("Warning: File %s reports no coverable lines" % r['name'])
+                        null_coverable_count += 1
                     return
 
                 if rc.count(-1) == len(rc):
-                    r['children'] = sc
+                    if sc.count(-1) != len(sc):
+                        print("Warning: File %s reports no coverable lines" % r['name'])
+                        null_coverable_count += 1
+
+                    r['coverage'] = sc
+                    return
 
                 # GCOV has mismatches on headers sometimes, ignore these, we
                 # cannot fix this in any reasonable way.
                 if len(rc) != len(sc):
                     print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
+                    length_mismatch_count += 1
                     return
 
                 # Disable the assertion for now
@@ -280,6 +306,7 @@ class CovReporter(Reporter):
                         # Unfortunately, GCOV again messes this up for headers sometimes
                         if rc[idx] >= 0:
                             print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %(r['name'], idx, rc[idx], sc[idx]))
+                            coverable_mismatch_count += 1
 
                         # Disable the assertion for now
                         #assert(r['coverage'][idx] < 0)
