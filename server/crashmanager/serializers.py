@@ -53,7 +53,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         try:
             attrs['product'] = Product.objects.get_or_create(**attrs['product'])[0]
         except Product.MultipleObjectsReturned:
-            attrs['product'] = Product.objects.filter(**attrs['product']).first()
+            attrs['product'] = Product.objects.filter(**attrs['product']).order_by('id').first()
 
         attrs['platform'] = Platform.objects.get_or_create(**attrs['platform'])[0]
         attrs['os'] = OS.objects.get_or_create(**attrs['os'])[0]
