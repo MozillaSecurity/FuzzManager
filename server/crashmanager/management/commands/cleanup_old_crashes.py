@@ -18,8 +18,10 @@ class Command(BaseCommand):
         cleanup_fixed_buckets_after_days = getattr(settings, 'CLEANUP_FIXED_BUCKETS_AFTER_DAYS', 3)
 
         # Select all buckets that have been closed for x days
-        expiryDate = timezone.now().date() - timedelta(days=cleanup_fixed_buckets_after_days)
-        bugs = Bug.objects.filter(closed__lt = expiryDate)
+        now = timezone.now()
+        expiryDate = now - timedelta(days=cleanup_fixed_buckets_after_days, hours=now.hour, minutes=now.minute,
+                                     seconds=now.second, microseconds=now.microsecond)
+        bugs = Bug.objects.filter(closed__lt=expiryDate)
         for bug in bugs:
             # Deleting the bug causes buckets referring to this bug as well as entries
             # referring these buckets to be deleted as well due to cascading delete.
@@ -48,9 +50,7 @@ class Command(BaseCommand):
             bug.delete()
 
         # Select all buckets that are empty and delete them
-        buckets = Bucket.objects.annotate(size=Count('crashentry')).filter(size=0, bug=None, permanent=False)
-        for bucket in buckets:
-            bucket.delete()
+        Bucket.objects.annotate(size=Count('crashentry')).filter(size=0, bug=None, permanent=False).delete()
 
         # Select all entries that are older than x days and either not in any bucket
         # or the bucket has no bug associated with it. If the bucket has a bug associated
@@ -58,14 +58,11 @@ class Command(BaseCommand):
         # deleted when the bucket is deleted).
         #
         # Again, for the same reason as mentioned above, we have to delete entries in batches.
-        expiryDate = timezone.now().date() - timedelta(days=cleanup_crashes_after_days)
-        while CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).count() > 0:
-            pks = list(CrashEntry.objects.filter(created__lt = expiryDate, bucket__bug = None).values_list('pk', flat=True)[:500])
+        expiryDate = now - timedelta(days=cleanup_crashes_after_days, hours=now.hour, minutes=now.minute,
+                                     seconds=now.second, microseconds=now.microsecond)
+        while CrashEntry.objects.filter(created__lt=expiryDate, bucket__bug=None).count():
+            pks = list(CrashEntry.objects.filter(created__lt=expiryDate, bucket__bug=None).values_list('pk', flat=True)[:500])
             CrashEntry.objects.filter(pk__in=pks).delete()
 
         # Cleanup all bugs that don't belong to any bucket anymore
-        bugs = Bug.objects.all()
-        associatedBugIds = Bucket.objects.values_list('bug', flat=True)
-        for bug in bugs:
-            if not bug.pk in associatedBugIds:
-                bug.delete()
+        Bug.objects.filter(bucket__isnull=True).delete()
