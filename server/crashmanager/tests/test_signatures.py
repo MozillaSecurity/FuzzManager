@@ -316,7 +316,7 @@ class NewSignatureTests(TestCase):
         self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
 
     def test_create_w_reassign(self):
-        """Create signature from scratch and reassign crashes"""
+        """Create signature from scratch and reassign a crash"""
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature='crash #1', stderr="blah")
         sig = json.dumps({
@@ -334,6 +334,30 @@ class NewSignatureTests(TestCase):
         bucket = Bucket.objects.get(shortDescription='bucket #1')
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertEqual(crash.bucket, bucket)
+        self.assertFalse(bucket.frequent)
+        self.assertFalse(bucket.permanent)
+        self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
+
+    def test_create_w_reassign_many(self):
+        """Create signature from scratch and reassign many crashes"""
+        self.client.login(username='test', password='test')
+        crashes = [self.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        response = self.client.post(reverse(self.name), {'shortDescription': 'bucket #1',
+                                                         'signature': sig,
+                                                         'reassign': '1',
+                                                         'submit_save': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(shortDescription='bucket #1')
+        crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
+        for crash in crashes:
+            self.assertEqual(crash.bucket, bucket)
         self.assertFalse(bucket.frequent)
         self.assertFalse(bucket.permanent)
         self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
@@ -361,6 +385,37 @@ class NewSignatureTests(TestCase):
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertIsNone(crash.bucket)
         self.assertEqual(in_list[0], crash)
+        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">1</span>')
+        self.assertContains(response, 'New issues that will be assigned to this bucket:')
+
+    def test_preview_many(self):
+        """Preview signature with crash matching"""
+        self.client.login(username='test', password='test')
+        crashes = [self.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        response = self.client.post(reverse(self.name), {'shortDescription': 'bucket #1',
+                                                         'signature': sig,
+                                                         'reassign': '1'})
+        log.debug(response)
+        self.assertFalse(Bucket.objects.filter(shortDescription='bucket #1').exists())
+        in_list = response.context['inList']
+        out_list = response.context['outList']
+        self.assertEqual(len(in_list), 100)
+        self.assertEqual(len(out_list), 0)
+        self.assertEqual(response.context['inListCount'], 201)
+        for crash in crashes:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            self.assertIsNone(crash.bucket)
+        for shown, crash in zip(reversed(in_list), crashes[-100:]):
+            self.assertEqual(shown, crash)
+        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">201</span>')
+        self.assertContains(response, 'New issues that will be assigned to this bucket (truncated):')
 
     def test_new_from_crash(self):
         """Check that the form includes crash info when creating from crash"""
@@ -428,7 +483,7 @@ class EditSignatureTests(TestCase):
         self.assertContains(response, 'bucket #1')
 
     def test_edit_w_reassign(self):
-        """Edit signature and reassign crashes"""
+        """Edit signature and reassign a crash"""
         self.client.login(username='test', password='test')
         crash = self.create_crash(shortSignature='crash #1', stderr="blah")
         bucket = self.create_bucket()
@@ -450,6 +505,34 @@ class EditSignatureTests(TestCase):
         self.assertEqual(bucket.shortDescription, "bucket #1")
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertEqual(crash.bucket, bucket)
+        self.assertFalse(bucket.frequent)
+        self.assertFalse(bucket.permanent)
+        self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
+
+    def test_edit_w_reassign_many(self):
+        """Edit signature and reassign many crashes"""
+        self.client.login(username='test', password='test')
+        crashes = [self.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+        bucket = self.create_bucket()
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        path = reverse(self.name, kwargs={'sigid': bucket.pk})
+        response = self.client.post(path, {'shortDescription': 'bucket #1',
+                                           'signature': sig,
+                                           'reassign': '1',
+                                           'submit_save': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+        self.assertEqual(json.loads(bucket.signature), json.loads(sig))
+        self.assertEqual(bucket.shortDescription, "bucket #1")
+        for crash in crashes:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            self.assertEqual(crash.bucket, bucket)
         self.assertFalse(bucket.frequent)
         self.assertFalse(bucket.permanent)
         self.assertRedirects(response, reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk}))
@@ -483,6 +566,50 @@ class EditSignatureTests(TestCase):
         self.assertIsNone(crash2.bucket)
         self.assertEqual(out_list[0], crash1)
         self.assertEqual(in_list[0], crash2)
+        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">1</span>')
+        self.assertContains(response, 'Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">1</span>')
+        self.assertContains(response, 'New issues that will be assigned to this bucket:')
+        self.assertContains(response, 'Issues that will be removed from this bucket:')
+
+    def test_preview_many(self):
+        """Preview signature edit with crash matching"""
+        self.client.login(username='test', password='test')
+        bucket = self.create_bucket()
+        crashes1 = [self.create_crash(shortSignature='crash #1', stderr="foo", bucket=bucket) for _ in range(201)]
+        crashes2 = [self.create_crash(shortSignature='crash #2', stderr="blah") for _ in range(201)]
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        path = reverse(self.name, kwargs={'sigid': bucket.pk})
+        response = self.client.post(path, {'shortDescription': 'bucket #1',
+                                           'signature': sig,
+                                           'reassign': '1'})
+        log.debug(response)
+        bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+        in_list = response.context['inList']
+        out_list = response.context['outList']
+        self.assertEqual(len(in_list), 100)
+        self.assertEqual(len(out_list), 100)
+        self.assertEqual(response.context['inListCount'], 201)
+        self.assertEqual(response.context['outListCount'], 201)
+        for crash in crashes1:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            self.assertEqual(crash.bucket, bucket)
+        for crash in crashes2:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            self.assertIsNone(crash.bucket)
+        for shown, crash in zip(reversed(in_list), crashes2[-100:]):
+            self.assertEqual(shown, crash)
+        for shown, crash in zip(reversed(out_list), crashes1[-100:]):
+            self.assertEqual(shown, crash)
+        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">201</span>')
+        self.assertContains(response, 'Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">201</span>')
+        self.assertContains(response, 'New issues that will be assigned to this bucket (truncated):')
+        self.assertContains(response, 'Issues that will be removed from this bucket (truncated):')
 
 
 class DelSignatureTests(TestCase):
