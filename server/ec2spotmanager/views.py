@@ -619,9 +619,7 @@ class UptimeChartViewAccumulated(JSONView):
         return [x.created.strftime("%b %d") for x in entries]
 
 class MachineStatusViewSet(APIView):
-
     authentication_classes = (TokenAuthentication,)
-    queryset = Instance.objects.all()
 
     def get(self, request, *args, **kwargs):
         result = {}
@@ -629,8 +627,8 @@ class MachineStatusViewSet(APIView):
         return response
 
     def post(self, request, *args, **kwargs):
-        if not 'client' in request.data:
-            Response(status=status.HTTP_400_BAD_REQUEST)
+        if 'client' not in request.data:
+            return Response({"error": '"client" is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         instance = get_object_or_404(Instance, hostname=request.data['client'])
         serializer = MachineStatusSerializer(instance=instance, partial=True, data=request.data)

@@ -51,16 +51,39 @@ class RestStatusTests(APITestCase, TestCase):
         host = self.create_instance('host1')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
         self.assertEqual(resp.status_code, requests.codes['created'])
+        resp = json.loads(resp.content)
+        self.assertEqual(resp, {'status_data': 'data'})
         host = Instance.objects.get(pk=host.pk)  # re-read
         self.assertEqual(host.status_data, 'data')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1'})
         self.assertEqual(resp.status_code, requests.codes['created'])
         host = Instance.objects.get(pk=host.pk)  # re-read
         self.assertIsNone(host.status_data)
-        with self.assertRaises(KeyError):  # this is wrong, should return BAD_REQUEST instead
-            self.client.post('/ec2spotmanager/rest/report/')
+        resp = self.client.post('/ec2spotmanager/rest/report/')
+        self.assertEqual(resp.status_code, requests.codes['bad_request'])
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host2'})
         self.assertEqual(resp.status_code, requests.codes['not_found'])
+
+    def test_report2(self):
+        """post should update the status field on the instance"""
+        user = User.objects.get(username='test')
+        self.client.force_authenticate(user=user)
+        host1 = self.create_instance('host1')
+        host2 = self.create_instance('host2')
+        resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
+        self.assertEqual(resp.status_code, requests.codes['created'])
+        resp = json.loads(resp.content)
+        self.assertEqual(resp, {'status_data': 'data'})
+        host1 = Instance.objects.get(pk=host1.pk)  # re-read
+        self.assertEqual(host1.status_data, 'data')
+        resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host2', 'status_data': 'data2'})
+        self.assertEqual(resp.status_code, requests.codes['created'])
+        resp = json.loads(resp.content)
+        self.assertEqual(resp, {'status_data': 'data2'})
+        host2 = Instance.objects.get(pk=host2.pk)  # re-read
+        self.assertEqual(host2.status_data, 'data2')
+        host1 = Instance.objects.get(pk=host1.pk)  # re-read
+        self.assertEqual(host1.status_data, 'data')
 
     def test_put(self):
         """put should not be allowed"""
