@@ -17,7 +17,7 @@ from rest_framework.response import Response
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
+from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User, TestCase
 from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
 
 def check_authorized_for_crash_entry(request, entry):
@@ -647,12 +647,18 @@ def viewSignature(request, sigid):
 
     check_authorized_for_signature(request, bucket)
 
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
+    testcases = []
+    crashes = CrashEntry.objects.filter(bucket=sigid)
+    crashes = filter_crash_entries_by_toolfilter(request, crashes, restricted_only=True)
+    for testcase in TestCase.objects.filter(pk__in=crashes.values_list('testcase_id', flat=True), quality=bucket.quality).order_by('size'):
+        if not testcases or testcase.size == testcases[0].size:
+            testcases.append(testcase)
+        else:
+            break
 
     bucket.bestEntry = None
-    if entries:
-        bucket.bestEntry = entries[0]
+    if testcases:
+        bucket.bestEntry = CrashEntry.objects.filter(testcase_id__in=[tc.pk for tc in testcases]).order_by('-id').select_related('testcase')[0]
 
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
