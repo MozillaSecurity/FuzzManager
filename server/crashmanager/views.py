@@ -626,7 +626,7 @@ def viewSignature(request, sigid):
 
     check_authorized_for_signature(request, bucket)
 
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')
+    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-id')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucket.bestEntry = None
