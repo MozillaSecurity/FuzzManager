@@ -480,11 +480,13 @@ def __handleSignaturePost(request, bucket):
     try:
         signature = bucket.getSignature()
     except RuntimeError as e:
-        data = { 'bucket' : bucket, 'error_message' : 'Signature is not valid: %s' % e }
+        data = {'bucket': bucket, 'error_message': 'Signature is not valid: %s' % e}
         return render(request, 'signatures/edit.html', data)
 
+    submitSave = bool('submit_save' in request.POST)
+
     # Only save if we hit "save" (not e.g. "preview")
-    if 'submit_save' in request.POST:
+    if submitSave:
         bucket.save()
 
     # If the reassign checkbox is checked, assign all unassigned issues that match
@@ -493,35 +495,54 @@ def __handleSignaturePost(request, bucket):
     #
     # Again, we only actually save if we hit "save". For previewing, we just count
     # how many issues would be assigned and removed.
-    if "reassign" in request.POST:
-        (inList, outList) = ([], [])
+    if 'reassign' in request.POST:
+        inList, outList = [], []
+        inListCount, outListCount = 0, 0
 
         signature = bucket.getSignature()
         needTest = signature.matchRequiresTest()
-        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket)).select_related('product', 'platform', 'os')
+        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
+        entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
         if needTest:
-            entries.select_related('testcase')
+            entries = entries.select_related('testcase')
+        if not submitSave:
+            entries = entries.select_related('tool').order_by('-id')  # used by the preview list
 
+        # If we are saving, we only care about the id of each entry
+        # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
         for entry in entries:
             match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
-            if match and entry.bucket is None:
-                inList.append(entry)
-            elif not match and entry.bucket is not None:
-                outList.append(entry)
+            if match and entry.bucket_id is None:
+                if submitSave:
+                    inList.append(entry.pk)
+                elif len(inList) < 100:
+                    inList.append(entry)
+                inListCount += 1
+            elif not match and entry.bucket_id is not None:
+                if submitSave:
+                    outList.append(entry.pk)
+                elif len(outList) < 100:
+                    outList.append(entry)
+                outListCount += 1
 
-        if 'submit_save' in request.POST:
-            CrashEntry.objects.filter(pk__in=[o.pk for o in inList]).update(bucket=bucket)
-            CrashEntry.objects.filter(pk__in=[o.pk for o in outList]).update(bucket=None, triagedOnce=False)
+        if submitSave:
+            while inList:
+                updList, inList = inList[:500], inList[500:]
+                CrashEntry.objects.filter(pk__in=updList).update (bucket=bucket)
+            while outList:
+                updList, outList = outList[:500], outList[500:]
+                CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
 
     # Save bucket and redirect to viewing it
-    if 'submit_save' in request.POST:
+    if submitSave:
         return redirect('crashmanager:sigview', sigid=bucket.pk)
 
     # Render the preview page
     data = {
             'bucket' : bucket,
             'error_message' : "This is a preview, don't forget to save!",
-            'inList' : inList, 'outList' : outList
+            'inList' : inList, 'outList' : outList,
+            'inListCount': inListCount, 'outListCount': outListCount,
             }
     return render(request, 'signatures/edit.html', data)
 
