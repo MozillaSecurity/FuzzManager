@@ -544,7 +544,10 @@ class ASanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+                #raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+                print("Error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+                index = expectedIndex
+                print("Set index %s to the expected %s and continuing ....)" % (index, expectedIndex))
 
             component = None
             if len(parts) > 2:
