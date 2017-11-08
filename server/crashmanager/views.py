@@ -649,14 +649,15 @@ def viewSignature(request, sigid):
 
     entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-id')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
+    entries = entries.values_list('pk', flat=True)[:1]
 
     bucket.bestEntry = None
     if entries:
-        bucket.bestEntry = entries[0]
+        bucket.bestEntry = CrashEntry.objects.select_related('testcase').get(pk=entries[0])
 
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
-    return render(request, 'signatures/view.html', { 'bucket' : bucket, 'latestCrash' : latestCrash })
+    return render(request, 'signatures/view.html', {'bucket': bucket, 'latestCrash': latestCrash})
 
 @login_required(login_url='/login/')
 def editSignature(request, sigid):
