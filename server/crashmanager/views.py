@@ -510,20 +510,26 @@ def __handleSignaturePost(request, bucket):
 
         # If we are saving, we only care about the id of each entry
         # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
-        for entry in entries:
-            match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
-            if match and entry.bucket_id is None:
-                if submitSave:
-                    inList.append(entry.pk)
-                elif len(inList) < 100:
-                    inList.append(entry)
-                inListCount += 1
-            elif not match and entry.bucket_id is not None:
-                if submitSave:
-                    outList.append(entry.pk)
-                elif len(outList) < 100:
-                    outList.append(entry)
-                outListCount += 1
+        entriesOffset = 0
+        while True:
+            entriesChunk = entries[entriesOffset:entriesOffset + 100]
+            if not entriesChunk:
+                break
+            entriesOffset += 100
+            for entry in entriesChunk:
+                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
+                if match and entry.bucket_id is None:
+                    if submitSave:
+                        inList.append(entry.pk)
+                    elif len(inList) < 100:
+                        inList.append(entry)
+                    inListCount += 1
+                elif not match and entry.bucket_id is not None:
+                    if submitSave:
+                        outList.append(entry.pk)
+                    elif len(outList) < 100:
+                        outList.append(entry)
+                    outListCount += 1
 
         if submitSave:
             while inList:
