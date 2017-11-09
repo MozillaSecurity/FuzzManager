@@ -121,7 +121,7 @@ class OutputSymptom(Symptom):
         else:
             checkedOutput = crashInfo.rawCrashData
 
-        for line in checkedOutput:
+        for line in reversed(checkedOutput):
             if self.output.matches(line):
                 return True
 
