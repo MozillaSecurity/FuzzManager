@@ -25,6 +25,8 @@ class HGSourceCodeProvider(SourceCodeProvider):
         super(HGSourceCodeProvider, self).__init__(location)
 
     def getSource(self, filename, revision):
+        revision = revision.replace('+', '')
+
         # Avoid passing in absolute filenames to HG
         if filename.startswith("/"):
             filename = filename[1:]
@@ -40,6 +42,8 @@ class HGSourceCodeProvider(SourceCodeProvider):
             raise UnknownFilenameException
 
     def testRevision(self, revision):
+        revision = revision.replace('+', '')
+
         try:
             subprocess.check_output(["hg", "log", "-r", revision], cwd=self.location, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
@@ -51,6 +55,8 @@ class HGSourceCodeProvider(SourceCodeProvider):
         subprocess.check_call(["hg", "pull"], cwd=self.location)
 
     def getParents(self, revision):
+        revision = revision.replace('+', '')
+
         try:
             output = subprocess.check_output(["hg", "log", "-r", revision, "--template", r'{parents}\n', "--debug"], cwd=self.location)
         except subprocess.CalledProcessError:
@@ -68,6 +74,8 @@ class HGSourceCodeProvider(SourceCodeProvider):
         return parents
 
     def getUnifiedDiff(self, revision):
+        revision = revision.replace('+', '')
+
         try:
             output = subprocess.check_output(["hg", "diff", "--git", "-U0", "-c", revision], cwd=self.location)
         except subprocess.CalledProcessError:
