@@ -27,7 +27,7 @@ class CrashSignature():
     def __init__(self, rawSignature):
         '''
         Constructor
-        
+
         @type rawSignature: string
         @param rawSignature: A JSON-formatted string representing the crash signature
         '''
@@ -72,10 +72,10 @@ class CrashSignature():
     def matches(self, crashInfo):
         '''
         Match this signature against the given crash information
-        
+
         @type crashInfo: CrashInfo
         @param crashInfo: The crash info to match the signature against
-        
+
         @rtype: bool
         @return: True if the signature matches, False otherwise
         '''
@@ -109,10 +109,10 @@ class CrashSignature():
     def matchRequiresTest(self):
         '''
         Check if the signature requires a testcase to match.
-        
+
         This method can be used to avoid attaching a testcase to the crashInfo
         before matching, avoiding unnecessary I/O on testcase files.
-        
+
         @rtype: bool
         @return: True if the signature requires a testcase to match
         '''
@@ -121,6 +121,29 @@ class CrashSignature():
                 return True
 
         return False
+
+    def getRequiredOutputSources(self):
+        '''
+        Return a list of output sources required by this signature for matching.
+
+        This method can be used to avoid loading raw output fields from the
+        database if they are not required for the particular signature.
+
+        @rtype: list(str)
+        @return: A list of output identifiers (e.g. stdout, stderr or crashdata)
+                 required by this signature.
+        '''
+        ret = []
+
+        for symptom in self.symptoms:
+            if isinstance(symptom, OutputSymptom):
+                if symptom.src is None:
+                    # If src is not specified in the signature, the default
+                    # is to match all available output sources.
+                    return ['stdout', 'stderr', 'crashdata']
+                ret.append(symptom.src)
+
+        return ret
 
     def getDistance(self, crashInfo):
         distance = 0
