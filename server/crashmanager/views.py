@@ -152,6 +152,7 @@ def settings(request):
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')).order_by('-id')
     entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
+    entries = entries.select_related('bug', 'bug__externalType')
     return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
@@ -280,6 +281,8 @@ def signatures(request):
 
     # Annotate size and quality to each bucket that we're going to display.
     entries = entries.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+
+    entries = entries.select_related('bug', 'bug__externalType')
 
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
