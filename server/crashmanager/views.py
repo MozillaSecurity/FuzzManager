@@ -393,7 +393,6 @@ def queryCrashes(request):
 @login_required(login_url='/login/')
 def autoAssignCrashEntries(request):
     entries = CrashEntry.objects.filter(bucket=None).select_related('product', 'platform', 'os', 'testcase')
-    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
     buckets = Bucket.objects.all()
 
     for bucket in buckets:
