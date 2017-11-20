@@ -827,11 +827,13 @@ def optimizeSignature(request, sigid):
                     continue
 
                 if not otherBucket.pk in firstEntryPerBucketCache:
-                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os").first()
+                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
+                    c = CrashEntry.deferRawFields(c, requiredOutputs)
+                    c = c.first()
                     firstEntryPerBucketCache[otherBucket.pk] = c
                     if c:
                         # Omit testcase for performance reasons for now
-                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
+                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)
 
                 firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
                 if firstEntryCrashInfo:
@@ -846,7 +848,7 @@ def optimizeSignature(request, sigid):
                 optimizedSignature = None
             else:
                 for otherEntry in entries:
-                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
+                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)):
                         matchingEntries.append(otherEntry)
 
                 # Fallback for when the optimization algorithm failed for some reason
