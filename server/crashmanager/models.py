@@ -187,7 +187,7 @@ class CrashEntry(models.Model):
             self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
 
 
-    def getCrashInfo(self, attachTestcase=False, requiredOutputSources=["stdout", "stderr", "crashdata"]):
+    def getCrashInfo(self, attachTestcase=False, requiredOutputSources=("stdout", "stderr", "crashdata")):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
@@ -244,7 +244,7 @@ class CrashEntry(models.Model):
         return self.save()
 
     @staticmethod
-    def deferRawFields(queryset, requiredOutputSources=[]):
+    def deferRawFields(queryset, requiredOutputSources=()):
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.
         if not "stdout" in requiredOutputSources:
