@@ -37,7 +37,7 @@ def check_authorized_for_signature(request, signature):
             raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
 
         entries = CrashEntry.objects.filter(bucket=signature)
-        entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+        entries = CrashEntry.deferRawFields(entries)
         entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
         if not entries:
             raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
@@ -125,7 +125,7 @@ def stats(request):
     lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta).select_related('bucket')
-    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+    entries = CrashEntry.deferRawFields(entries)
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucketFrequencyMap = {}
@@ -230,7 +230,7 @@ def bucketWatchCrashes(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
     entries = CrashEntry.objects.all().order_by('-id').filter(bucket=bucket, id__gt=watch.lastCrash)
-    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+    entries = CrashEntry.deferRawFields(entries)
     entries = filter_crash_entries_by_toolfilter(request, entries)
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
@@ -343,7 +343,7 @@ def crashes(request, ignore_toolfilter=False):
 
     entries = entries.filter(**filters)
     entries = entries.select_related('bucket', 'tool', 'os', 'product', 'platform', 'testcase')
-    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+    entries = CrashEntry.deferRawFields(entries)
 
     data = {
             'q' : q,
@@ -380,7 +380,7 @@ def queryCrashes(request):
 
     if query:
         entries = CrashEntry.objects.all().order_by('-id').filter(query)
-        entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+        entries = CrashEntry.deferRawFields(entries)
         entries = filter_crash_entries_by_toolfilter(request, entries)
 
     # Re-get the lines as we might have reformatted
@@ -514,6 +514,10 @@ def __handleSignaturePost(request, bucket):
         entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
         if needTest:
             entries = entries.select_related('testcase')
+
+        requiredOutputs = signature.getRequiredOutputSources()
+        entries = CrashEntry.deferRawFields(entries, requiredOutputs)
+
         if not submitSave:
             entries = entries.select_related('tool').order_by('-id')  # used by the preview list
 
@@ -526,7 +530,7 @@ def __handleSignaturePost(request, bucket):
                 break
             entriesOffset += 100
             for entry in entriesChunk:
-                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest))
+                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest, requiredOutputSources=requiredOutputs))
                 if match and entry.bucket_id is None:
                     if submitSave:
                         inList.append(entry.pk)
@@ -792,6 +796,9 @@ def optimizeSignature(request, sigid):
     if signature.matchRequiresTest():
         entries.select_related("testcase")
 
+    requiredOutputs = signature.getRequiredOutputSources()
+    entries = CrashEntry.deferRawFields(entries, requiredOutputs)
+
     optimizedSignature = None
     matchingEntries = []
 
@@ -800,7 +807,7 @@ def optimizeSignature(request, sigid):
     firstEntryPerBucketCache = {}
 
     for entry in entries:
-        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest())
+        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(), requiredOutputSources=requiredOutputs)
 
         # For optimization, disregard any issues that directly match since those could be
         # incoming new issues and we don't want these to block the optimization.
@@ -820,11 +827,13 @@ def optimizeSignature(request, sigid):
                     continue
 
                 if not otherBucket.pk in firstEntryPerBucketCache:
-                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os").first()
+                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
+                    c = CrashEntry.deferRawFields(c, requiredOutputs)
+                    c = c.first()
                     firstEntryPerBucketCache[otherBucket.pk] = c
                     if c:
                         # Omit testcase for performance reasons for now
-                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
+                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)
 
                 firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
                 if firstEntryCrashInfo:
@@ -839,7 +848,7 @@ def optimizeSignature(request, sigid):
                 optimizedSignature = None
             else:
                 for otherEntry in entries:
-                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False)):
+                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)):
                         matchingEntries.append(otherEntry)
 
                 # Fallback for when the optimization algorithm failed for some reason

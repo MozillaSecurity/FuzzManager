@@ -187,7 +187,7 @@ class CrashEntry(models.Model):
             self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
 
 
-    def getCrashInfo(self, attachTestcase=False):
+    def getCrashInfo(self, attachTestcase=False, requiredOutputSources=("stdout", "stderr", "crashdata")):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
@@ -196,7 +196,18 @@ class CrashEntry(models.Model):
         if self.cachedCrashInfo:
             cachedCrashInfo = json.loads(self.cachedCrashInfo)
 
-        crashInfo = CrashInfo.fromRawCrashData(self.rawStdout, self.rawStderr, configuration, self.rawCrashData, cacheObject=cachedCrashInfo)
+        # We can skip loading raw output fields from the database iff
+        #   1) we know we don't need them for matching *and*
+        #   2) we already have the crash data cached
+        (rawStdout, rawStderr, rawCrashData) = (None, None, None)
+        if cachedCrashInfo is None or "stdout" in requiredOutputSources:
+            rawStdout = self.rawStdout
+        if cachedCrashInfo is None or "stderr" in requiredOutputSources:
+            rawStderr = self.rawStderr
+        if cachedCrashInfo is None or "crashdata" in requiredOutputSources:
+            rawCrashData = self.rawCrashData
+
+        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData, cacheObject=cachedCrashInfo)
 
         if attachTestcase and self.testcase != None and not self.testcase.isBinary:
             self.testcase.loadTest()
@@ -231,6 +242,18 @@ class CrashEntry(models.Model):
             self.triagedOnce = False
 
         return self.save()
+
+    @staticmethod
+    def deferRawFields(queryset, requiredOutputSources=()):
+        # This method calls defer() on the given query set for every raw field
+        # that is not required as specified in requiredOutputSources.
+        if not "stdout" in requiredOutputSources:
+            queryset = queryset.defer('rawStdout')
+        if not "stderr" in requiredOutputSources:
+            queryset = queryset.defer('rawStderr')
+        if not "crashdata" in requiredOutputSources:
+            queryset = queryset.defer('rawCrashData')
+        return queryset
 
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely
