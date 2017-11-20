@@ -36,7 +36,9 @@ def check_authorized_for_signature(request, signature):
         if not defaultToolsFilter:
             raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
 
-        entries = CrashEntry.objects.filter(bucket=signature).filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        entries = CrashEntry.objects.filter(bucket=signature)
+        entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
+        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
         if not entries:
             raise PermissionDenied({ "message" : "You don't have permission to access this signature." })
 
@@ -123,6 +125,7 @@ def stats(request):
     lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta).select_related('bucket')
+    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     bucketFrequencyMap = {}
@@ -152,6 +155,7 @@ def settings(request):
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')).order_by('-id')
     entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
+    entries = entries.select_related('bug', 'bug__externalType')
     return render(request, 'signatures/index.html', { 'isAll': True, 'siglist' : entries })
 
 @login_required(login_url='/login/')
@@ -226,6 +230,7 @@ def bucketWatchCrashes(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
     entries = CrashEntry.objects.all().order_by('-id').filter(bucket=bucket, id__gt=watch.lastCrash)
+    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
     entries = filter_crash_entries_by_toolfilter(request, entries)
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
@@ -280,6 +285,8 @@ def signatures(request):
 
     # Annotate size and quality to each bucket that we're going to display.
     entries = entries.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+
+    entries = entries.select_related('bug', 'bug__externalType')
 
     data = { 'q' : q, 'request' : request, 'isSearch' : isSearch, 'siglist' : entries }
     return render(request, 'signatures/index.html', data)
@@ -336,6 +343,7 @@ def crashes(request, ignore_toolfilter=False):
 
     entries = entries.filter(**filters)
     entries = entries.select_related('bucket', 'tool', 'os', 'product', 'platform', 'testcase')
+    entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
 
     data = {
             'q' : q,
@@ -372,6 +380,7 @@ def queryCrashes(request):
 
     if query:
         entries = CrashEntry.objects.all().order_by('-id').filter(query)
+        entries = entries.defer('rawStdout', 'rawStderr', 'rawCrashData')
         entries = filter_crash_entries_by_toolfilter(request, entries)
 
     # Re-get the lines as we might have reformatted
