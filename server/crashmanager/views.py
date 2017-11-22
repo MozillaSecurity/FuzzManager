@@ -1184,7 +1184,6 @@ class BucketAnnotateFilterBackend(filters.BaseFilterBackend):
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 class CrashEntryViewSet(mixins.CreateModelMixin,
-                        mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
                         viewsets.GenericViewSet):
     """
@@ -1194,6 +1193,30 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
     queryset = CrashEntry.objects.all().select_related('product', 'platform', 'os', 'client', 'tool', 'testcase')
     serializer_class = CrashEntrySerializer
     filter_backends = [JsonQueryFilterBackend]
+
+    def list(self, request, *args, **kwargs):
+        """
+        Based on ListModelMixin.list()
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+
+        include_raw = request.query_params.get('include_raw', '1')
+        try:
+            include_raw = int(include_raw)
+            assert include_raw in {0, 1}
+        except (AssertionError, ValueError):
+            raise InvalidArgumentException({'include_raw': ['Expecting 0 or 1.']})
+
+        if not include_raw:
+            queryset = queryset.defer('rawStdout', 'rawStderr', 'rawCrashData')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, include_raw=include_raw, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, include_raw=include_raw, many=True)
+        return Response(serializer.data)
 
     def partial_update(self, request, pk=None):
         """
