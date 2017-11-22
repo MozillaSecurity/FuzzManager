@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 from fasteners import InterProcessLock
+import functools
 import os
 import platform
 import random
@@ -42,6 +43,7 @@ __updated__ = '2014-10-01'
 
 def remote_checks(f):
     'Decorator to perform error checks before using remote features'
+    @functools.wraps(f)
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")

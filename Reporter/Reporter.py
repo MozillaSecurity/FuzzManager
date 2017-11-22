@@ -18,6 +18,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 from abc import ABCMeta
+import functools
 import os
 import platform
 import sys
@@ -30,6 +31,7 @@ from FTB.ConfigurationFiles import ConfigurationFiles
 
 def remote_checks(f):
     'Decorator to perform error checks before using remote features'
+    @functools.wraps(f)
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
@@ -42,6 +44,7 @@ def remote_checks(f):
 
 def signature_checks(f):
     'Decorator to perform error checks before using signature features'
+    @functools.wraps(f)
     def decorator(self, *args, **kwargs):
         if not self.sigCacheDir:
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")

@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 import base64
+import functools
 import hashlib
 import json
 import os
@@ -50,6 +51,7 @@ __updated__ = '2014-10-01'
 
 def remote_checks(f):
     'Decorator to perform error checks before using remote features'
+    @functools.wraps(f)
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
@@ -62,6 +64,7 @@ def remote_checks(f):
 
 def signature_checks(f):
     'Decorator to perform error checks before using signature features'
+    @functools.wraps(f)
     def decorator(self, *args, **kwargs):
         if not self.sigCacheDir:
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
