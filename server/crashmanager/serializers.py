@@ -45,9 +45,9 @@ class CrashEntrySerializer(serializers.ModelSerializer):
                   'rawStdout', 'rawStderr', 'rawCrashData', 'metadata',
                   'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
                   'platform', 'product', 'product_version', 'os', 'client', 'tool',
-                  'env', 'args', 'bucket', 'id'
+                  'env', 'args', 'bucket', 'id', 'shortSignature', 'crashAddress',
                   )
-        read_only_fields = ('bucket', 'id')
+        read_only_fields = ('bucket', 'id', 'shortSignature', 'crashAddress')
 
     def create(self, attrs):
         '''
