@@ -11,31 +11,24 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-import unittest
-import requests
-import tempfile
-import os
+import sys
+import zipfile
+if sys.version_info.major == 3:
+    from urllib.parse import urlsplit
+else:
+    from urlparse import urlsplit
 
+import pytest
+import requests
 from requests.exceptions import ConnectionError
+
 from Collector import Collector
-import shutil
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashSignature import CrashSignature
+from crashmanager.models import CrashEntry
 
-# Server and credentials (user/password) used for testing
-testServerURL = "http://127.0.0.1:8000/rest/"
-testAuthCreds = ("admin", "admin")
-
-# Check if we have a remote server for testing, if not, skip tests
-haveServer = True
-try:
-    requests.get(testServerURL)
-except ConnectionError as e:
-    haveServer = False
-    
-asanTraceCrash = """
-ASAN:SIGSEGV
+asanTraceCrash = '''ASAN:SIGSEGV
 =================================================================
 ==5854==ERROR: AddressSanitizer: SEGV on unknown address 0x00000014 (pc 0x0810845f sp 0xffc57860 bp 0xffc57f18 T0)
     #0 0x810845e in js::AbstractFramePtr::asRematerializedFrame() const /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114
@@ -48,74 +41,97 @@ ASAN:SIGSEGV
 
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
-==5854==ABORTING
-"""
+==5854==ABORTING'''
 
-exampleTestCase = '''function init() {
-    while ( {}, this) !(Object === "Infinity");      
+exampleTestCase = b'''function init() {
+    while ( {}, this) !(Object === "Infinity");
 }
-eval("init()");
-'''
+eval("init()");'''
 
-@unittest.skipIf(not haveServer, reason="No remote server available for testing")
-class TestCollectorSubmit(unittest.TestCase):
-    def setUp(self):
-        self.url = testServerURL + "crashes/"
-        self.tmpCacheDir = tempfile.mkdtemp(prefix="collector-tmp-")
-        
-    def tearDown(self):
-        shutil.rmtree(self.tmpCacheDir)
-        
-    def getRemoteCrashEntryCount(self):
-        response = requests.get(self.url, auth=testAuthCreds)
-        return len(response.json())
-        
-    def runTest(self):
-        collector = Collector(self.tmpCacheDir, 
-                              serverHost='127.0.0.1', 
-                              serverPort='8000',
-                              serverProtocol='http',
-                              serverUser=testAuthCreds[0],
-                              serverPass=testAuthCreds[1],  
-                              clientId='test-fuzzer1')
-        
-        config = ProgramConfiguration("mozilla-central", "x86-64", "linux", version="ba0bc4f26681")
-        crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)
-        
-        # TODO: This is only a rudimentary check to see if we submitted *something*.
-        # We should check more precisely that the information submitted is correct.
-        issueCount = self.getRemoteCrashEntryCount()
-        collector.submit(crashInfo, exampleTestCase)
-        self.assertEqual(self.getRemoteCrashEntryCount(), issueCount + 1)
-        
-@unittest.skipIf(not haveServer, reason="No remote server available for testing")
-class TestCollectorRefresh(unittest.TestCase):
-    def setUp(self):
-        self.tmpCacheDir = tempfile.mkdtemp(prefix="collector-tmp-")
-        
-    def tearDown(self):
-        shutil.rmtree(self.tmpCacheDir)
-        
-    def runTest(self):
-        collector = Collector(self.tmpCacheDir, 
-                              serverHost='127.0.0.1', 
-                              serverPort='8000',
-                              serverProtocol='http',
-                              serverUser=testAuthCreds[0],
-                              serverPass=testAuthCreds[1],  
-                              clientId='test-fuzzer1')
-        
+pytest_plugins = 'server.tests'
+
+
+def test_collector_submit(live_server, tmpdir, fm_user):
+    ''''''
+    # create a collector
+    url = urlsplit(live_server.url)
+    collector = Collector(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
+                          serverHost=url.hostname,
+                          serverPort=url.port,
+                          serverProtocol=url.scheme,
+                          serverAuthToken=fm_user.token,
+                          clientId='test-fuzzer1',
+                          tool='test-tool')
+    testcase_path = tmpdir.mkdir('testcase').join('testcase.js').strpath
+    with open(testcase_path, 'w') as testcase_fp:
+        testcase_fp.write(exampleTestCase)
+    config = ProgramConfiguration('mozilla-central', 'x86-64', 'linux', version='ba0bc4f26681')
+    crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)
+
+    # submit a crash to test server using collector
+    result = collector.submit(crashInfo, testcase_path)
+
+    # see that the issue was created in the server
+    entry = CrashEntry.objects.get(pk=result['id'])
+    assert entry.rawStdout == ''
+    assert entry.rawStderr == asanTraceCrash
+    assert entry.rawCrashData == ''
+    assert entry.tool.name == 'test-tool'
+    assert entry.client.name == 'test-fuzzer1'
+    assert entry.product.name == config.product
+    assert entry.product.version == config.version
+    assert entry.platform.name == config.platform
+    assert entry.os.name == config.os
+    assert entry.testcase.quality == 0
+    assert not entry.testcase.isBinary
+    assert entry.testcase.size == len(exampleTestCase)
+    with open(entry.testcase.test.path, 'rb') as testcase_fp:
+        assert testcase_fp.read() == exampleTestCase
+
+
+def test_collector_refresh(live_server, tmpdir, fm_user, monkeypatch):
+    # create a test signature zip
+    test2 = tmpdir.join('test2.signature').strpath
+    with open(test2, 'w') as fp:
+        fp.write('test2')
+    with zipfile.ZipFile(tmpdir.join('out.zip').strpath, 'w') as zf:
+        zf.write(test2, 'test2.signature')
+
+    # create an old signature
+    tmpdir.mkdir('sigs')
+    with open(tmpdir.join('sigs', 'test1.signature').strpath, 'w'):
+        pass
+    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test1.signature'}
+
+    with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
+        class response_t(object):
+            status_code = requests.codes["ok"]
+            text = "OK"
+            raw = fp
+        # this asserts the expected arguments, and returns the open handle to out.zip as 'raw' which is read by refresh()
+        def myget(url, stream=None, auth=None):
+            assert url == live_server.url + '/crashmanager/files/signatures.zip'
+            assert stream is True
+            assert len(auth) == 2
+            assert auth[0] == 'fuzzmanager'
+            assert auth[1] == fm_user.token
+            return response_t()
+        monkeypatch.setattr(requests, 'get', myget)
+
+        # create Collector
+        url = urlsplit(live_server.url)
+        collector = Collector(sigCacheDir=tmpdir.join('sigs').strpath,
+                              serverHost=url.hostname,
+                              serverPort=url.port,
+                              serverProtocol=url.scheme,
+                              serverAuthToken=fm_user.token,
+                              clientId='test-fuzzer1',
+                              tool='test-tool')
+
+        # call refresh
         collector.refresh()
-        
-        receivedSignatures = False
-        
-        for sigFile in os.listdir(self.tmpCacheDir):
-            receivedSignatures = True
-            CrashSignature.fromFile(os.path.join(self.tmpCacheDir, sigFile))
-        
-        if not receivedSignatures:
-            self.skipTest("Server did not provide signatures")
 
-
-if __name__ == "__main__":
-    unittest.main()
+    # check that it worked
+    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test2.signature'}
+    with open(tmpdir.join('sigs', 'test2.signature').strpath) as fp:
+        assert fp.read() == 'test2'
