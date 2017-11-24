@@ -251,9 +251,6 @@ class Collector(Reporter):
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost to use remote features.")
-
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
 
         response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
@@ -320,7 +317,7 @@ class Collector(Reporter):
 
             return (testCaseData, isBinary(testCaseData))
 
-def main():
+def main(args=None):
     '''Command line options.'''
 
     # setup argparser
@@ -361,7 +358,6 @@ def main():
     parser.add_argument('--metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
     parser.add_argument("--binary", help="Binary that has a configuration file for reading", metavar="BINARY")
 
-
     parser.add_argument("--testcase", help="File containing testcase", metavar="FILE")
     parser.add_argument("--testcasequality", default=0, type=int, help="Integer indicating test case quality (%(default)s is best and default)", metavar="VAL")
 
@@ -373,14 +369,13 @@ def main():
     parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
     # process options
-    opts = parser.parse_args()
+    opts = parser.parse_args(args=args)
 
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for submitting.
     if opts.autosubmit:
         if not opts.rargs:
-            print("Error: Action --autosubmit requires test arguments to be specified", file=sys.stderr)
-            return 2
+            parser.error("Action --autosubmit requires test arguments to be specified")
 
         # Store the binary candidate only if --binary wasn't also specified
         if not opts.binary:
@@ -394,16 +389,14 @@ def main():
             for idx, arg in enumerate(opts.rargs[1:]):
                 if os.path.exists(arg):
                     if testcase:
-                        print("Error: Multiple potential testcases specified on command line. Must explicitely specify test using --testcase.")
-                        return 2
+                        parser.error("Multiple potential testcases specified on command line. Must explicitly specify test using --testcase.")
                     testcase = arg
                     testcaseidx = idx
 
     # Either --autosubmit was specified, or someone specified --binary manually
     # Check that the binary actually exists
     if opts.binary and not os.path.exists(opts.binary):
-        print("Error: Specified binary does not exist: %s" % opts.binary)
-        return 2
+        parser.error("Error: Specified binary does not exist: %s" % opts.binary)
 
     stdout = None
     stderr = None
@@ -451,16 +444,13 @@ def main():
         # If configuring through binary failed, try to manually create ProgramConfiguration from command line arguments
         if configuration is None:
             if opts.platform is None or opts.product is None or opts.os is None:
-                print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
-                return 2
+                parser.error("Must specify/configure at least --platform, --product and --os")
 
             configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args, metadata)
 
-
         if not opts.autosubmit:
             if opts.stderr is None and opts.crashdata is None:
-                print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
-                return 2
+                parser.error("Must specify at least either --stderr or --crashdata file")
 
             if opts.stdout:
                 with open(opts.stdout) as f:
@@ -499,7 +489,7 @@ def main():
     if opts.search:
         (sig, metadata) = collector.search(crashInfo)
         if sig is None:
-            print("No match found")
+            print("No match found", file=sys.stderr)
             return 3
         print(sig)
         if metadata:
@@ -510,7 +500,7 @@ def main():
         sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
         if not sigFile:
             print("Failed to generate a signature for the given crash information.", file=sys.stderr)
-            return 2
+            return 1
         print(sigFile)
         return 0
 
@@ -521,13 +511,13 @@ def main():
             collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
-            return 2
+            return 1
 
     if opts.download:
         (retFile, retJSON) = collector.download(opts.download)
         if not retFile:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
-            return 2
+            return 1
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
@@ -536,7 +526,7 @@ def main():
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
-            print("Environment variables: %s", " ".join([ "%s = %s" % (k, v) for (k, v) in env.items()]))
+            print("Environment variables: %s", " ".join("%s = %s" % (k, v) for (k, v) in env.items()))
             print("")
 
         if "metadata" in retJSON and retJSON["metadata"]:
@@ -545,7 +535,6 @@ def main():
             for k, v in metadata.items():
                 print("%s = %s" % (k, v))
             print("")
-
 
         print(retFile)
         return 0
