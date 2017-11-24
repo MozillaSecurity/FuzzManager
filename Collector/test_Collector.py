@@ -78,7 +78,7 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
                           clientId='test-fuzzer1',
                           tool='test-tool')
     testcase_path = tmpdir.mkdir('testcase').join('testcase.js').strpath
-    with open(testcase_path, 'w') as testcase_fp:
+    with open(testcase_path, 'wb') as testcase_fp:
         testcase_fp.write(exampleTestCase)
     config = ProgramConfiguration('mozilla-central', 'x86-64', 'linux', version='ba0bc4f26681')
     crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)

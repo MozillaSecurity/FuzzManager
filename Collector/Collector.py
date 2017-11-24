@@ -309,13 +309,14 @@ class Collector(Reporter):
         @return: Tuple containing the file contents and a boolean indicating if the content is binary
 
         '''
-        with open(testCase) as f:
+        with open(testCase, 'rb') as f:
             testCaseData = f.read()
 
-            textBytes = bytearray([7, 8, 9, 10, 12, 13, 27]) + bytearray(range(0x20, 0x100))
-            isBinary = lambda input: bool(input.translate(None, textBytes))
+        noopBytes = bytearray(range(0x100))
+        textBytes = bytearray([7, 8, 9, 10, 12, 13, 27]) + bytearray(range(0x20, 0x100))
+        isBinary = bool(testCaseData.translate(noopBytes, textBytes))
 
-            return (testCaseData, isBinary(testCaseData))
+        return (testCaseData, isBinary)
 
 def main(args=None):
     '''Command line options.'''
