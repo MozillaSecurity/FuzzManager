@@ -11,6 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+import os
 import sys
 import zipfile
 if sys.version_info.major == 3:
@@ -22,7 +23,7 @@ import pytest
 import requests
 from requests.exceptions import ConnectionError
 
-from Collector import Collector
+from Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashSignature import CrashSignature
@@ -51,8 +52,16 @@ eval("init()");'''
 pytest_plugins = 'server.tests'
 
 
+def test_collector_help(capsys):
+    '''Test that help prints without throwing'''
+    with pytest.raises(SystemExit):
+        main()
+    _, err = capsys.readouterr()
+    assert err.startswith('usage: ')
+
+
 def test_collector_submit(live_server, tmpdir, fm_user):
-    ''''''
+    '''Test crash submission'''
     # create a collector
     url = urlsplit(live_server.url)
     collector = Collector(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
@@ -89,7 +98,8 @@ def test_collector_submit(live_server, tmpdir, fm_user):
         assert testcase_fp.read() == exampleTestCase
 
 
-def test_collector_refresh(live_server, tmpdir, fm_user, monkeypatch):
+def test_collector_refresh(tmpdir, monkeypatch):
+    '''Test signature downloads'''
     # create a test signature zip
     test2 = tmpdir.join('test2.signature').strpath
     with open(test2, 'w') as fp:
@@ -110,21 +120,20 @@ def test_collector_refresh(live_server, tmpdir, fm_user, monkeypatch):
             raw = fp
         # this asserts the expected arguments, and returns the open handle to out.zip as 'raw' which is read by refresh()
         def myget(url, stream=None, auth=None):
-            assert url == live_server.url + '/crashmanager/files/signatures.zip'
+            assert url == 'gopher://aol.com:70/crashmanager/files/signatures.zip'
             assert stream is True
             assert len(auth) == 2
             assert auth[0] == 'fuzzmanager'
-            assert auth[1] == fm_user.token
+            assert auth[1] == 'token'
             return response_t()
         monkeypatch.setattr(requests, 'get', myget)
 
         # create Collector
-        url = urlsplit(live_server.url)
         collector = Collector(sigCacheDir=tmpdir.join('sigs').strpath,
-                              serverHost=url.hostname,
-                              serverPort=url.port,
-                              serverProtocol=url.scheme,
-                              serverAuthToken=fm_user.token,
+                              serverHost='aol.com',
+                              serverPort=70,
+                              serverProtocol='gopher',
+                              serverAuthToken='token',
                               clientId='test-fuzzer1',
                               tool='test-tool')
 
@@ -135,3 +144,81 @@ def test_collector_refresh(live_server, tmpdir, fm_user, monkeypatch):
     assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test2.signature'}
     with open(tmpdir.join('sigs', 'test2.signature').strpath) as fp:
         assert fp.read() == 'test2'
+
+
+def test_collector_generate_search(tmpdir):
+    '''Test sigcache generation and search'''
+    # create a cache dir
+    cache_dir = tmpdir.mkdir('sigcache').strpath
+
+    # create a collector
+    collector = Collector(sigCacheDir=cache_dir)
+
+    # generate a signature from the crash data
+    config = ProgramConfiguration('mozilla-central', 'x86-64', 'linux', version='ba0bc4f26681')
+    crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)
+    sig = collector.generate(crashInfo, False, False, 8)
+    assert {f.strpath for f in tmpdir.join('sigcache').listdir()} == {sig}
+
+    # search the sigcache and see that it matches the original
+    sigMatch, meta = collector.search(crashInfo)
+    assert sigMatch == sig
+    assert meta is None
+
+    # write metadata and make sure that's returned if it exists
+    sigBase, _ = os.path.splitext(sig)
+    with open(sigBase + '.metadata', 'w') as f:
+        f.write('{}')
+    sigMatch, meta = collector.search(crashInfo)
+    assert sigMatch == sig
+    assert meta == {}
+
+    # make sure another crash doesn't match
+    crashInfo = CrashInfo.fromRawCrashData([], [], config)
+    sigMatch, meta = collector.search(crashInfo)
+    assert sigMatch is None
+    assert meta is None
+
+
+def test_collector_download(tmpdir, monkeypatch):
+    '''Test testcase downloads'''
+    class response1_t(object):
+        status_code = requests.codes["ok"]
+        text = 'OK'
+        def json(self):
+            return {'testcase': 'path/to/testcase.txt'}
+    class response2_t(object):
+        status_code = requests.codes["ok"]
+        text = 'OK'
+        content = b'testcase\xFF'
+    # myget1 mocks requests.get to return the rest response to the crashentry get
+    def myget1(url, headers=None):
+        assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/'
+        assert headers == {'Authorization':'Token token'}
+        monkeypatch.undo()
+        monkeypatch.chdir(tmpdir)  # download writes to cwd, so make that tmpdir
+        monkeypatch.setattr(requests, 'get', myget2)
+        return response1_t()
+    # myget2 mocks requests.get to return the testcase data specified in myget1
+    def myget2(url, auth=None):
+        assert url == 'gopher://aol.com:70/crashmanager/path/to/testcase.txt'
+        assert len(auth) == 2
+        assert auth[0] == 'fuzzmanager'
+        assert auth[1] == 'token'
+        return response2_t()
+    monkeypatch.setattr(requests, 'get', myget1)
+
+    # create Collector
+    collector = Collector(serverHost='aol.com',
+                          serverPort=70,
+                          serverProtocol='gopher',
+                          serverAuthToken='token',
+                          tool='test-tool')
+
+    # call refresh
+    collector.download(123)
+
+    # check that it worked
+    assert {f.basename for f in tmpdir.listdir()} == {'testcase.txt'}
+    with open('testcase.txt', 'rb') as fp:
+        assert fp.read() == response2_t.content
