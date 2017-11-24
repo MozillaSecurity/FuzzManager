@@ -67,6 +67,7 @@ def test_collector_help(capsys):
 def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
     '''Test crash submission'''
     monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
+    monkeypatch.setattr(time, 'sleep', lambda t: None)
 
     # create a collector
     url = urlsplit(live_server.url)
