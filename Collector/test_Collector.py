@@ -11,8 +11,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+from __future__ import absolute_import
+import json
 import os
+import platform
 import sys
+import time
 import zipfile
 if sys.version_info.major == 3:
     from urllib.parse import urlsplit
@@ -23,7 +27,7 @@ import pytest
 import requests
 from requests.exceptions import ConnectionError
 
-from Collector import Collector, main
+from Collector.Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashSignature import CrashSignature
@@ -60,8 +64,10 @@ def test_collector_help(capsys):
     assert err.startswith('usage: ')
 
 
-def test_collector_submit(live_server, tmpdir, fm_user):
+def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
     '''Test crash submission'''
+    monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
+
     # create a collector
     url = urlsplit(live_server.url)
     collector = Collector(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
@@ -96,9 +102,79 @@ def test_collector_submit(live_server, tmpdir, fm_user):
     assert entry.testcase.size == len(exampleTestCase)
     with open(entry.testcase.test.path, 'rb') as testcase_fp:
         assert testcase_fp.read() == exampleTestCase
+    assert entry.metadata == ''
+    assert entry.env == ''
+    assert entry.args == ''
+
+    # create a test config
+    with open(tmpdir.join('.fuzzmanagerconf').strpath, 'w') as fp:
+        fp.write('[Main]\n')
+        fp.write('serverhost = %s\n' % url.hostname)
+        fp.write('serverport = %d\n' % url.port)
+        fp.write('serverproto = %s\n' % url.scheme)
+        fp.write('serverauthtoken = %s\n' % fm_user.token)
+
+    # try a binary testcase via cmd line
+    testcase_path = tmpdir.join('testcase.bin').strpath
+    with open(testcase_path, 'wb') as testcase_fp:
+        testcase_fp.write(b'\0')
+    stdout = tmpdir.join('stdout.txt').strpath
+    with open(stdout, 'w') as fp:
+        fp.write('stdout data')
+    stderr = tmpdir.join('stderr.txt').strpath
+    with open(stderr, 'w') as fp:
+        fp.write('stderr data')
+    crashdata = tmpdir.join('crashdata.txt').strpath
+    with open(crashdata, 'w') as fp:
+        fp.write(asanTraceCrash)
+    result = main([
+        '--submit',
+        '--tool', 'tool2',
+        '--product', 'mozilla-inbound',
+        '--productversion', '12345',
+        '--os', 'minix',
+        '--platform', 'pdp11',
+        '--env', 'PATH=/home/ken', 'LD_PRELOAD=hack.so',
+        '--metadata', 'var1=val1', 'var2=val2',
+        '--args', './myprog',
+        '--testcase', testcase_path,
+        '--testcasequality', '5',
+        '--stdout', stdout,
+        '--stderr', stderr,
+        '--crashdata', crashdata,
+    ])
+    assert result == 0
+    entry = CrashEntry.objects.get(pk__gt=entry.id)  # newer than the last result, will fail if the test db is active
+    assert entry.rawStdout == 'stdout data'
+    assert entry.rawStderr == 'stderr data'
+    assert entry.rawCrashData == asanTraceCrash
+    assert entry.tool.name == 'tool2'
+    assert entry.client.name == platform.node()
+    assert entry.product.name == 'mozilla-inbound'
+    assert entry.product.version == '12345'
+    assert entry.platform.name == 'pdp11'
+    assert entry.os.name == 'minix'
+    assert entry.testcase.quality == 5
+    assert entry.testcase.isBinary
+    assert entry.testcase.size == 1
+    with open(entry.testcase.test.path, 'rb') as testcase_fp:
+        assert testcase_fp.read() == b'\0'
+    assert json.loads(entry.metadata) == {'var1': 'val1', 'var2': 'val2'}
+    assert json.loads(entry.env) == {'PATH': '/home/ken', 'LD_PRELOAD': 'hack.so'}
+    assert json.loads(entry.args) == ['./myprog']
+
+    class response_t(object):
+        status_code = 500
+        text = "Error"
+    def mypost(url, data, headers=None):
+        return response_t()
+    monkeypatch.setattr(time, 'sleep', lambda t: None)
+    monkeypatch.setattr(requests, 'post', mypost)
+    with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
+        collector.submit(crashInfo, testcase_path)
 
 
-def test_collector_refresh(tmpdir, monkeypatch):
+def test_collector_refresh(tmpdir, monkeypatch, capsys):
     '''Test signature downloads'''
     # create a test signature zip
     test2 = tmpdir.join('test2.signature').strpath
@@ -111,7 +187,9 @@ def test_collector_refresh(tmpdir, monkeypatch):
     tmpdir.mkdir('sigs')
     with open(tmpdir.join('sigs', 'test1.signature').strpath, 'w'):
         pass
-    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test1.signature'}
+    with open(tmpdir.join('sigs', 'other.txt').strpath, 'w'):
+        pass
+    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test1.signature', 'other.txt'}
 
     with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
         class response_t(object):
@@ -141,9 +219,49 @@ def test_collector_refresh(tmpdir, monkeypatch):
         collector.refresh()
 
     # check that it worked
-    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test2.signature'}
+    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test2.signature', 'other.txt'}
     with open(tmpdir.join('sigs', 'test2.signature').strpath) as fp:
         assert fp.read() == 'test2'
+    assert 'other.txt' in capsys.readouterr()[1]  # should have had a warning about unrecognized file
+
+    # check that 404 raises
+    monkeypatch.undo()
+    class response_t(object):
+        status_code = requests.codes["not found"]
+        text = "Not found"
+    def myget(url, stream=None, auth=None):
+        return response_t()
+    monkeypatch.setattr(requests, 'get', myget)
+    with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
+        collector.refresh()
+
+    # check that bad zips raise errors
+    monkeypatch.undo()
+    with open(tmpdir.join('sigs', 'other.txt').strpath, 'rb') as fp:
+        class response_t(object):
+            status_code = requests.codes["ok"]
+            text = "OK"
+            raw = fp
+        def myget(url, stream=None, auth=None):
+            return response_t()
+        monkeypatch.setattr(requests, 'get', myget)
+        with pytest.raises(zipfile.BadZipfile, match='not a zip file'):
+            collector.refresh()
+    monkeypatch.undo()
+    with open(tmpdir.join('out.zip').strpath, 'r+b') as fp:
+        # corrupt the CRC field for the signature file in the zip
+        fp.seek(0x42)
+        fp.write(b'\xFF')
+    with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
+        class response_t(object):
+            status_code = requests.codes["ok"]
+            text = "OK"
+            raw = fp
+        def myget(url, stream=None, auth=None):
+            return response_t()
+        monkeypatch.setattr(requests, 'get', myget)
+        with pytest.raises(RuntimeError, match='Bad CRC'):
+            collector.refresh()
 
 
 def test_collector_generate_search(tmpdir):
@@ -178,6 +296,10 @@ def test_collector_generate_search(tmpdir):
     sigMatch, meta = collector.search(crashInfo)
     assert sigMatch is None
     assert meta is None
+
+    # returns None if sig generation fails
+    result = collector.generate(crashInfo, True, True, 8)
+    assert result is None
 
 
 def test_collector_download(tmpdir, monkeypatch):
@@ -222,3 +344,43 @@ def test_collector_download(tmpdir, monkeypatch):
     assert {f.basename for f in tmpdir.listdir()} == {'testcase.txt'}
     with open('testcase.txt', 'rb') as fp:
         assert fp.read() == response2_t.content
+
+    # testcase GET returns http error
+    class response2_t(object):
+        status_code = 404
+        text = 'Not found'
+    monkeypatch.undo()
+    monkeypatch.setattr(requests, 'get', myget1)
+    with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
+        collector.download(123)
+
+    # download with no testcase
+    class response1_t(object):
+        status_code = requests.codes["ok"]
+        text = 'OK'
+        def json(self):
+            return {'testcase': ''}
+    monkeypatch.undo()
+    monkeypatch.setattr(requests, 'get', myget1)
+    result = collector.download(123)
+    assert result is None
+
+    # invalid REST response
+    class response1_t(object):
+        status_code = requests.codes["ok"]
+        text = 'OK'
+        def json(self):
+            return []
+    monkeypatch.undo()
+    monkeypatch.setattr(requests, 'get', myget1)
+    with pytest.raises(RuntimeError, match='malformed JSON'):
+        collector.download(123)
+
+    # REST query returns http error
+    class response1_t(object):
+        status_code = 404
+        text = 'Not found'
+    monkeypatch.undo()
+    monkeypatch.setattr(requests, 'get', myget1)
+    with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
+        collector.download(123)
