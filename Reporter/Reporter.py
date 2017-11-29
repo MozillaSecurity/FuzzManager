@@ -35,7 +35,7 @@ def remote_checks(f):
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
-        if not self.serverHost:
+        if not self.serverAuthToken:
             raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
         if not self.tool:
             raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
@@ -58,7 +58,7 @@ class Reporter():
                  serverProtocol=None, serverAuthToken=None,
                  clientId=None, tool=None):
         '''
-        Initialize the Collector. This constructor will also attempt to read
+        Initialize the Reporter. This constructor will also attempt to read
         a configuration file to populate any missing properties that have not
         been passed to this constructor.
 

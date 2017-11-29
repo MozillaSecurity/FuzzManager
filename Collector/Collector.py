@@ -22,7 +22,6 @@ from __future__ import print_function
 
 import argparse
 import base64
-import functools
 import hashlib
 import json
 import os
@@ -43,111 +42,14 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
+from Reporter.Reporter import Reporter, signature_checks, remote_checks
 
 __all__ = []
 __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
-def remote_checks(f):
-    'Decorator to perform error checks before using remote features'
-    @functools.wraps(f)
-    def decorator(self, *args, **kwargs):
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
-        if not self.tool:
-            raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
-        return f(self, *args, **kwargs)
-    return decorator
-
-def signature_checks(f):
-    'Decorator to perform error checks before using signature features'
-    @functools.wraps(f)
-    def decorator(self, *args, **kwargs):
-        if not self.sigCacheDir:
-            raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
-        return f(self, *args, **kwargs)
-    return decorator
-
-class Collector():
-    def __init__(self, sigCacheDir=None, serverHost=None, serverPort=None,
-                 serverProtocol=None, serverAuthToken=None,
-                 clientId=None, tool=None):
-        '''
-        Initialize the Collector. This constructor will also attempt to read
-        a configuration file to populate any missing properties that have not
-        been passed to this constructor.
-
-        @type sigCacheDir: string
-        @param sigCacheDir: Directory to be used for caching signatures
-        @type serverHost: string
-        @param serverHost: Server host to contact for refreshing signatures
-        @type serverPort: int
-        @param serverPort: Server port to use when contacting server
-        @type serverAuthToken: string
-        @param serverAuthToken: Token for server authentication
-        @type clientId: string
-        @param clientId: Client ID stored in the server when submitting issues
-        @type tool: string
-        @param tool: Name of the tool that found this issue
-        '''
-        self.sigCacheDir = sigCacheDir
-        self.serverHost = serverHost
-        self.serverPort = serverPort
-        self.serverProtocol = serverProtocol
-        self.serverAuthToken = serverAuthToken
-        self.clientId = clientId
-        self.tool = tool
-
-        # Now search for the global configuration file. If it exists, read its contents
-        # and set all Collector settings that haven't been explicitely set by the user.
-        globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
-        if os.path.exists(globalConfigFile):
-            configInstance = ConfigurationFiles([ globalConfigFile ])
-            globalConfig = configInstance.mainConfig
-
-            if self.sigCacheDir is None and "sigdir" in globalConfig:
-                self.sigCacheDir = globalConfig["sigdir"]
-
-            if self.serverHost is None and "serverhost" in globalConfig:
-                self.serverHost = globalConfig["serverhost"]
-
-            if self.serverPort is None and "serverport" in globalConfig:
-                self.serverPort = int(globalConfig["serverport"])
-
-            if self.serverProtocol is None and "serverproto" in globalConfig:
-                self.serverProtocol = globalConfig["serverproto"]
-
-            if self.serverAuthToken is None:
-                if "serverauthtoken" in globalConfig:
-                    self.serverAuthToken = globalConfig["serverauthtoken"]
-                elif "serverauthtokenfile" in globalConfig:
-                    with open(globalConfig["serverauthtokenfile"]) as f:
-                        self.serverAuthToken = f.read().rstrip()
-
-            if self.clientId is None and "clientid" in globalConfig:
-                self.clientId = globalConfig["clientid"]
-
-            if self.tool is None and "tool" in globalConfig:
-                self.tool = globalConfig["tool"]
-
-        # Set some defaults that we can't set through default arguments, otherwise
-        # they would overwrite configuration file settings
-        if self.serverProtocol is None:
-            self.serverProtocol = "https"
-
-        # Try to be somewhat intelligent about the default port, depending on protocol
-        if self.serverPort is None:
-            if self.serverProtocol == "https":
-                self.serverPort = 433
-            else:
-                self.serverPort = 80
-
-        if self.serverHost is not None and self.clientId is None:
-            self.clientId = platform.node()
-
+class Collector(Reporter):
     @remote_checks
     @signature_checks
     def refresh(self):
@@ -161,7 +63,7 @@ class Collector():
         response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
@@ -271,7 +173,7 @@ class Collector():
                     current_timeout *= 2
                     continue
 
-                raise self.__serverError(response)
+                raise Reporter.serverError(response)
             else:
                 return response.json()
 
@@ -349,15 +251,12 @@ class Collector():
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost to use remote features.")
-
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
 
         response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
         respJson = response.json()
 
@@ -371,7 +270,7 @@ class Collector():
         response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
         localFile = os.path.basename(respJson["testcase"])
         with open(localFile, 'wb') as f:
@@ -399,11 +298,6 @@ class Collector():
         return sigfile
 
     @staticmethod
-    def __serverError(response):
-        return RuntimeError("Server unexpectedly responded with status code %s: %s" %
-                            (response.status_code, response.text))
-
-    @staticmethod
     def read_testcase(testCase):
         '''
         Read a testcase file, return the content and indicate if it is binary or not.
@@ -415,15 +309,16 @@ class Collector():
         @return: Tuple containing the file contents and a boolean indicating if the content is binary
 
         '''
-        with open(testCase) as f:
+        with open(testCase, 'rb') as f:
             testCaseData = f.read()
 
-            textBytes = bytearray([7, 8, 9, 10, 12, 13, 27]) + bytearray(range(0x20, 0x100))
-            isBinary = lambda input: bool(input.translate(None, textBytes))
+        noopBytes = bytearray(range(0x100))
+        textBytes = bytearray([7, 8, 9, 10, 12, 13, 27]) + bytearray(range(0x20, 0x100))
+        isBinary = bool(testCaseData.translate(noopBytes, textBytes))
 
-            return (testCaseData, isBinary(testCaseData))
+        return (testCaseData, isBinary)
 
-def main():
+def main(args=None):
     '''Command line options.'''
 
     # setup argparser
@@ -464,7 +359,6 @@ def main():
     parser.add_argument('--metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
     parser.add_argument("--binary", help="Binary that has a configuration file for reading", metavar="BINARY")
 
-
     parser.add_argument("--testcase", help="File containing testcase", metavar="FILE")
     parser.add_argument("--testcasequality", default=0, type=int, help="Integer indicating test case quality (%(default)s is best and default)", metavar="VAL")
 
@@ -476,14 +370,13 @@ def main():
     parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
     # process options
-    opts = parser.parse_args()
+    opts = parser.parse_args(args=args)
 
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for submitting.
     if opts.autosubmit:
         if not opts.rargs:
-            print("Error: Action --autosubmit requires test arguments to be specified", file=sys.stderr)
-            return 2
+            parser.error("Action --autosubmit requires test arguments to be specified")
 
         # Store the binary candidate only if --binary wasn't also specified
         if not opts.binary:
@@ -497,16 +390,14 @@ def main():
             for idx, arg in enumerate(opts.rargs[1:]):
                 if os.path.exists(arg):
                     if testcase:
-                        print("Error: Multiple potential testcases specified on command line. Must explicitely specify test using --testcase.")
-                        return 2
+                        parser.error("Multiple potential testcases specified on command line. Must explicitly specify test using --testcase.")
                     testcase = arg
                     testcaseidx = idx
 
     # Either --autosubmit was specified, or someone specified --binary manually
     # Check that the binary actually exists
     if opts.binary and not os.path.exists(opts.binary):
-        print("Error: Specified binary does not exist: %s" % opts.binary)
-        return 2
+        parser.error("Error: Specified binary does not exist: %s" % opts.binary)
 
     stdout = None
     stderr = None
@@ -554,16 +445,13 @@ def main():
         # If configuring through binary failed, try to manually create ProgramConfiguration from command line arguments
         if configuration is None:
             if opts.platform is None or opts.product is None or opts.os is None:
-                print("Error: Must specify/configure at least --platform, --product and --os", file=sys.stderr)
-                return 2
+                parser.error("Must specify/configure at least --platform, --product and --os")
 
             configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args, metadata)
 
-
         if not opts.autosubmit:
             if opts.stderr is None and opts.crashdata is None:
-                print("Error: Must specify at least either --stderr or --crashdata file", file=sys.stderr)
-                return 2
+                parser.error("Must specify at least either --stderr or --crashdata file")
 
             if opts.stdout:
                 with open(opts.stdout) as f:
@@ -602,7 +490,7 @@ def main():
     if opts.search:
         (sig, metadata) = collector.search(crashInfo)
         if sig is None:
-            print("No match found")
+            print("No match found", file=sys.stderr)
             return 3
         print(sig)
         if metadata:
@@ -613,7 +501,7 @@ def main():
         sigFile = collector.generate(crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes)
         if not sigFile:
             print("Failed to generate a signature for the given crash information.", file=sys.stderr)
-            return 2
+            return 1
         print(sigFile)
         return 0
 
@@ -624,13 +512,13 @@ def main():
             collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
-            return 2
+            return 1
 
     if opts.download:
         (retFile, retJSON) = collector.download(opts.download)
         if not retFile:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
-            return 2
+            return 1
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
@@ -639,7 +527,7 @@ def main():
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
-            print("Environment variables: %s", " ".join([ "%s = %s" % (k, v) for (k, v) in env.items()]))
+            print("Environment variables: %s", " ".join("%s = %s" % (k, v) for (k, v) in env.items()))
             print("")
 
         if "metadata" in retJSON and retJSON["metadata"]:
@@ -648,7 +536,6 @@ def main():
             for k, v in metadata.items():
                 print("%s = %s" % (k, v))
             print("")
-
 
         print(retFile)
         return 0

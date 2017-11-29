@@ -35,89 +35,18 @@ FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
 from FTB.ConfigurationFiles import ConfigurationFiles
+from Reporter.Reporter import Reporter, remote_checks
 
 __all__ = []
 __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
-def remote_checks(f):
-    'Decorator to perform error checks before using remote features'
-    @functools.wraps(f)
-    def decorator(self, *args, **kwargs):
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
-        if not self.serverHost:
-            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
-        if not self.clientId:
-            raise RuntimeError("Must specify clientId (configuration property: clientid) to use remote features.")
-        return f(self, *args, **kwargs)
-    return decorator
-
-class EC2Reporter():
-    def __init__(self, serverHost=None, serverPort=None,
-                 serverProtocol=None, serverAuthToken=None,
-                 clientId=None):
-        '''
-        Initialize the Reporter. This constructor will also attempt to read
-        a configuration file to populate any missing properties that have not
-        been passed to this constructor.
-
-        @type serverHost: string
-        @param serverHost: Server host to contact for refreshing signatures
-        @type serverPort: int
-        @param serverPort: Server port to use when contacting server
-        @type serverAuthToken: string
-        @param serverAuthToken: Token for server authentication
-        @type clientId: string
-        @param clientId: Client ID stored in the server when submitting issues
-        '''
-        self.serverHost = serverHost
-        self.serverPort = serverPort
-        self.serverProtocol = serverProtocol
-        self.serverAuthToken = serverAuthToken
-        self.clientId = clientId
-
-        # Now search for the global configuration file. If it exists, read its contents
-        # and set all Collector settings that haven't been explicitely set by the user.
-        globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
-        if os.path.exists(globalConfigFile):
-            configInstance = ConfigurationFiles([ globalConfigFile ])
-            globalConfig = configInstance.mainConfig
-
-            if self.serverHost is None and "serverhost" in globalConfig:
-                self.serverHost = globalConfig["serverhost"]
-
-            if self.serverPort is None and "serverport" in globalConfig:
-                self.serverPort = globalConfig["serverport"]
-
-            if self.serverProtocol is None and "serverproto" in globalConfig:
-                self.serverProtocol = globalConfig["serverproto"]
-
-            if self.serverAuthToken is None:
-                if "serverauthtoken" in globalConfig:
-                    self.serverAuthToken = globalConfig["serverauthtoken"]
-                elif "serverauthtokenfile" in globalConfig:
-                    with open(globalConfig["serverauthtokenfile"]) as f:
-                        self.serverAuthToken = f.read().rstrip()
-
-            if self.clientId is None and "clientid" in globalConfig:
-                self.clientId = globalConfig["clientid"]
-
-        # Set some defaults that we can't set through default arguments, otherwise
-        # they would overwrite configuration file settings
-        if self.serverProtocol is None:
-            self.serverProtocol = "https"
-
-        # Try to be somewhat intelligent about the default port, depending on protocol
-        if self.serverPort is None:
-            if self.serverProtocol == "https":
-                self.serverPort = 433
-            else:
-                self.serverPort = 80
-
-        if self.serverHost is not None and self.clientId is None:
-            self.clientId = platform.node()
+class EC2Reporter(Reporter):
+    @functools.wraps(Reporter.__init__)
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('tool', 'N/A')  # tool is required by remote_checks, but unused by EC2Reporter
+        super(EC2Reporter, self).__init__(*args, **kwargs)
 
     @remote_checks
     def report(self, text):
@@ -138,7 +67,7 @@ class EC2Reporter():
         response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["created"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
     @remote_checks
     def cycle(self, poolid):
@@ -153,7 +82,7 @@ class EC2Reporter():
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
     @remote_checks
     def disable(self, poolid):
@@ -168,7 +97,7 @@ class EC2Reporter():
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
+            raise Reporter.serverError(response)
 
     @remote_checks
     def enable(self, poolid):
@@ -183,12 +112,7 @@ class EC2Reporter():
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
-            raise self.__serverError(response)
-
-    @staticmethod
-    def __serverError(response):
-        return RuntimeError("Server unexpectedly responded with status code %s: %s" %
-                            (response.status_code, response.text))
+            raise Reporter.serverError(response)
 
 def main(argv=None):
     '''Command line options.'''
