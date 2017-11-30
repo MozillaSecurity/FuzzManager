@@ -12,13 +12,6 @@
 					<span class="label label-danger">Not Running</span>
 				{% endif %}
 			</td></tr>
-			<tr><td style="width: 200px;">Stats Daemon Status:</td><td>
-				{% if statsDaemonRunning %}
-					<span class="label label-success">Running</span>
-				{% else %}
-					<span class="label label-danger">Not Running</span>
-				{% endif %}
-			</td></tr>
 		</table>
 		<div class="btn-group">
 			<a href="{% url 'ec2spotmanager:poolcreate' %}" class="btn btn-default">Create Pool</a>
