@@ -7,5 +7,5 @@ import os
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings_nondebug')
 
-app = Celery('tasks', broker='amqp://guest@localhost//')
+app = Celery('tasks', broker='amqp://')
 app.config_from_object(settings)

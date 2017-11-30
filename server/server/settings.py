@@ -236,3 +236,18 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
+# CELERY_TASK_ROUTES = {"crashmanager.cron.*": {"queue": "cron"}}
+# CELERYBEAT_SCHEDULE = {
+#     'Poll Bugzilla every 15 minutes': {
+#         'task': 'crashmanager.cron.bug_update_status',
+#         'schedule': 15 * 60,
+#     },
+#     'Cleanup CrashEntry/Bucket objects every 30 minutes': {
+#         'task': 'crashmanager.cron.cleanup_old_crashes',
+#         'schedule': 30 * 60,
+#     },
+#     'Create signatures.zip hourly': {
+#         'task': 'crashmanager.cron.export_signatures',
+#         'schedule': 60 * 60,
+#     },
+# }
