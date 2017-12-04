@@ -1,14 +1,11 @@
 from collections import OrderedDict
-from django.conf import settings
 import os
 import sys
 
-# Add the server basedir to PYTHONPATH so Celery on the command line
-# can find the Django settings imports and packages properly
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-sys.path += [os.path.abspath(os.path.join(BASE_DIR, ".."))]
+from django.conf import settings
 
 from celeryconf import app
+from . import cron  # ensure cron tasks get registered
 
 # This is a per-worker global cache mapping short descriptions of
 # crashes to a list of bucket candidates to try first.
@@ -16,8 +13,7 @@ triage_cache = OrderedDict()
 
 @app.task
 def triage_new_crash(pk):
-    global triage_cache
-    from crashmanager.models import CrashEntry, Bucket
+    from .models import CrashEntry, Bucket
     entry = CrashEntry.objects.get(pk=pk)
     crashInfo = entry.getCrashInfo(attachTestcase=True)
 
