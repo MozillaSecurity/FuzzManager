@@ -26,6 +26,7 @@ def export_signatures():
     os.close(fd)
     try:
         call_command('export_signatures', tmpf)
+        os.chmod(tmpf, 0o644)
         shutil.copy(tmpf, SIGNATURES_ZIP)
     finally:
         os.unlink(tmpf)
