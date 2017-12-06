@@ -237,7 +237,7 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 # CELERY_TASK_ROUTES = {"crashmanager.cron.*": {"queue": "cron"}}
-# CELERYBEAT_SCHEDULE = {
+# CELERY_BEAT_SCHEDULE = {
 #     'Poll Bugzilla every 15 minutes': {
 #         'task': 'crashmanager.cron.bug_update_status',
 #         'schedule': 15 * 60,
