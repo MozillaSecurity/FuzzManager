@@ -5,7 +5,7 @@ After=rabbitmq-server.service
 [Service]
 User=ubuntu
 SyslogIdentifier=fm-celery-cron
-ExecStart=/usr/local/bin/celery -A celeryconf -l INFO -n cron@%h -Q cron worker
+ExecStart=/usr/local/bin/celery -A celeryconf -l INFO -c 1 -n cron@%h -Q cron worker
 WorkingDirectory=/path/to/FuzzManager/server
 
 [Install]
