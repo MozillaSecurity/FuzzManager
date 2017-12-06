@@ -21,9 +21,14 @@ class Command(BaseCommand):
 
         with ZipFile(filename, 'w') as zipFile:
             for bucket in Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')):
-                try:
-                    bucket.bestEntry = CrashEntry.objects.filter(bucket=bucket.pk).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-created')[0]
-                except IndexError:
+                bestEntryQuery = (CrashEntry.objects
+                                  .filter(bucket_id=bucket.pk)
+                                  .filter(testcase__quality=bucket.quality)
+                                  .defer('rawCrashData', 'rawStderr', 'rawStdout')
+                                  .order_by('testcase__size', '-id'))
+                if bestEntryQuery.count():
+                    bucket.bestEntry = bestEntryQuery[0]
+                else:
                     bucket.bestEntry = None
 
                 metadata = {}
