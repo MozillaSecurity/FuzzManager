@@ -94,7 +94,6 @@ def pools(request):
             'isSearch' : isSearch,
             'poollist' : entries,
             'machineDaemonRunning' : checkDaemon("monitoring_daemon"),
-            'statsDaemonRunning' : checkDaemon("stats_daemon"),
             }
 
     return render(request, 'pools/index.html', data)

@@ -236,7 +236,10 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
-# CELERY_TASK_ROUTES = {"crashmanager.cron.*": {"queue": "cron"}}
+# CELERY_TASK_ROUTES = {
+#     'crashmanager.cron.*': {'queue': 'cron'},
+#     'ec2spotmanager.cron.*': {'queue': 'cron'},
+# }
 # CELERY_BEAT_SCHEDULE = {
 #     'Poll Bugzilla every 15 minutes': {
 #         'task': 'crashmanager.cron.bug_update_status',
@@ -249,5 +252,9 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 #     'Create signatures.zip hourly': {
 #         'task': 'crashmanager.cron.export_signatures',
 #         'schedule': 60 * 60,
+#     },
+#     'Update EC2SpotManager statistics': {
+#         'task': 'ec2spotmanager.cron.update_stats',
+#         'schedule': 60,
 #     },
 # }
