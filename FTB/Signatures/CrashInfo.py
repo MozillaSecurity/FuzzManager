@@ -177,7 +177,7 @@ class CrashInfo():
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         ubsanString = ": runtime error: "
-        ubsanRegex = r".+?:\d+:\d+:\s+runtime\serror:\s+.+?"
+        ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
         appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
 
@@ -644,14 +644,13 @@ class UBSanCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the UBSan trace, otherwise use stderr
         ubsanOutput = crashData if crashData else stderr
-        ubsanErrorPattern = ":\\d+:\\d+:\\s+runtime\\s+error:\\s+"
+        ubsanErrorPattern = r":\d+:\d+:\s+runtime\s+error:\s+"
         ubsanPatternSeen = False
 
         expectedIndex = 0
         for traceLine in ubsanOutput:
-            if re.match(ubsanErrorPattern, traceLine) is not None:
+            if re.search(ubsanErrorPattern, traceLine) is not None:
                 ubsanPatternSeen = True
-                expectedIndex += 1
                 continue
 
             parts = traceLine.strip().split()
@@ -702,7 +701,7 @@ class UBSanCrashInfo(CrashInfo):
                 return "UndefinedBehaviorSanitizer: %s" % " ".join(abortMsg)
             return "UndefinedBehaviorSanitizer: %s" % abortMsg
 
-        if self.backtrace:
+        if not self.backtrace:
             return "No crash detected"
 
         return "UndefinedBehaviorSanitizer: [@ %s]" % self.backtrace[0]
