@@ -637,6 +637,14 @@ src/opus_demo.c:870:40: runtime error: division by zero
     #2 0x402de8 in _start (/home/user/code/opus/opus_demo+0x402de8)
 """
 
+ubsanTraceMissingPattern = """
+blah...
+blah...
+    #0 0x42a550 in main /home/user/code/opus/src/opus_demo.c:870:40
+    #1 0x7f751aef582f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/../csu/libc-start.c:291
+    #2 0x402de8 in _start (/home/user/code/opus/opus_demo+0x402de8)
+"""
+
 minidumpSwrast = """
 OS|Linux|0.0.0 Linux 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:52 UTC 2017 i686
 CPU|x86|GenuineIntel family 6 model 63 stepping 2|8
@@ -2381,6 +2389,13 @@ class UBSanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.createShortSignature(), "UndefinedBehaviorSanitizer: src/opus_demo.c:870:40: runtime error: division by zero")
         self.assertEqual(len(crashInfo.backtrace), 3)
         self.assertEqual(crashInfo.backtrace[0], "main")
+        self.assertIsNone(crashInfo.crashAddress)
+
+    def test_3(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceMissingPattern.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "No crash detected")
+        self.assertEqual(len(crashInfo.backtrace), 0)
         self.assertIsNone(crashInfo.crashAddress)
 
 class RustParserTests(unittest.TestCase):

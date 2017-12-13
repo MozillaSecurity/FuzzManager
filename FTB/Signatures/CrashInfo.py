@@ -649,8 +649,9 @@ class UBSanCrashInfo(CrashInfo):
 
         expectedIndex = 0
         for traceLine in ubsanOutput:
-            if re.search(ubsanErrorPattern, traceLine) is not None:
-                ubsanPatternSeen = True
+            if not ubsanPatternSeen:
+                if re.search(ubsanErrorPattern, traceLine) is not None:
+                    ubsanPatternSeen = True
                 continue
 
             parts = traceLine.strip().split()
