@@ -612,7 +612,7 @@ stack backtrace:
    2:     0x7f89cd63c58d - std::panicking::default_hook::h4c1ef1cc83189c8e
 """
 
-ubsanSampleTrace1 = """
+ubsanTraceSignedIntOverflow = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
     #1 0x51a11b in WelsDec::ParseSliceHeaderSyntaxs(WelsDec::TagWelsDecoderContext*, WelsCommon::TagBitStringAux*, bool) /home/user/code/openh264/codec/decoder/core/src/decoder_core.cpp:692:3
@@ -628,6 +628,13 @@ codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overfl
     #11 0x0 in Lex<<lambda at /builds/slave/m-in-l64-asan-0000000000000000/build/src/image/decoders/nsBMPDecoder.cpp:346:33> > /test.cpp:1:1
 
 SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.h:182:37 in
+"""
+
+ubsanTraceDivByZero = """
+src/opus_demo.c:870:40: runtime error: division by zero
+    #0 0x42a550 in main /home/user/code/opus/src/opus_demo.c:870:40
+    #1 0x7f751aef582f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/../csu/libc-start.c:291
+    #2 0x402de8 in _start (/home/user/code/opus/opus_demo+0x402de8)
 """
 
 minidumpSwrast = """
@@ -2358,14 +2365,23 @@ class CDBSelectorTest12(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0x1fa0b7f8)
 
 class UBSanParserTestCrash(unittest.TestCase):
-    def runTest(self):
+    def test_1(self):
         config = ProgramConfiguration("test", "x86", "linux")
-
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanSampleTrace1.splitlines())
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceSignedIntOverflow.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "UndefinedBehaviorSanitizer: codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'")
+        self.assertEqual(len(crashInfo.backtrace), 12)
         self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe")
         self.assertEqual(crashInfo.backtrace[9], "_start")
-
         self.assertEqual(crashInfo.backtrace[11], "Lex< >")
+        self.assertIsNone(crashInfo.crashAddress)
+
+    def test_2(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceDivByZero.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), "UndefinedBehaviorSanitizer: src/opus_demo.c:870:40: runtime error: division by zero")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "main")
+        self.assertIsNone(crashInfo.crashAddress)
 
 class RustParserTests(unittest.TestCase):
 

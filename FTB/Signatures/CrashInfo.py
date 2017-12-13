@@ -152,13 +152,13 @@ class CrashInfo():
         if cacheObject is not None:
             c = CrashInfo()
 
-            if stdout != None:
+            if stdout is not None:
                 c.rawStdout.extend(stdout)
 
-            if stderr != None:
+            if stderr is not None:
                 c.rawStderr.extend(stderr)
 
-            if auxCrashData != None:
+            if auxCrashData is not None:
                 c.rawCrashData.extend(auxCrashData)
 
             c.configuration = configuration
@@ -176,7 +176,8 @@ class CrashInfo():
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
-        ubsanString = "SUMMARY: AddressSanitizer: undefined-behavior"
+        ubsanString = ": runtime error: "
+        ubsanRegex = r".+?:\d+:\d+:\s+runtime\serror:\s+.+?"
         appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
 
@@ -192,13 +193,13 @@ class CrashInfo():
 
         # Search both crashData and stderr, but prefer crashData
         lines = []
-        if auxCrashData != None:
+        if auxCrashData is not None:
             lines.extend(auxCrashData)
-        if stderr != None:
+        if stderr is not None:
             lines.extend(stderr)
 
         for line in lines:
-            if ubsanString in line:
+            if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif asanString in line:
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
@@ -630,30 +631,28 @@ class UBSanCrashInfo(CrashInfo):
         '''
         CrashInfo.__init__(self)
 
-        if stdout != None:
+        if stdout is not None:
             self.rawStdout.extend(stdout)
 
-        if stderr != None:
+        if stderr is not None:
             self.rawStderr.extend(stderr)
 
-        if crashData != None:
+        if crashData is not None:
             self.rawCrashData.extend(crashData)
 
         self.configuration = configuration
 
         # If crashData is given, use that to find the UBSan trace, otherwise use stderr
-        if crashData:
-            ubsanOutput = crashData
-        else:
-            ubsanOutput = stderr
-
-        ubsanErrorPattern = ":\\d+:\\d+: runtime error:"
+        ubsanOutput = crashData if crashData else stderr
+        ubsanErrorPattern = ":\\d+:\\d+:\\s+runtime\\s+error:\\s+"
         ubsanPatternSeen = False
 
         expectedIndex = 0
         for traceLine in ubsanOutput:
-            if re.match(ubsanErrorPattern, traceLine) != None:
+            if re.match(ubsanErrorPattern, traceLine) is not None:
                 ubsanPatternSeen = True
+                expectedIndex += 1
+                continue
 
             parts = traceLine.strip().split()
 
@@ -663,7 +662,7 @@ class UBSanCrashInfo(CrashInfo):
 
             index = int(parts[0][1:])
 
-            if not expectedIndex == index:
+            if expectedIndex != index:
                 raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
 
             component = None
@@ -698,13 +697,12 @@ class UBSanCrashInfo(CrashInfo):
         if not abortMsg and self.rawCrashData:
             abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
 
-        if abortMsg != None:
+        if abortMsg is not None:
             if isinstance(abortMsg, list):
                 return "UndefinedBehaviorSanitizer: %s" % " ".join(abortMsg)
-            else:
-                return "UndefinedBehaviorSanitizer: %s" % abortMsg
+            return "UndefinedBehaviorSanitizer: %s" % abortMsg
 
-        if not len(self.backtrace):
+        if self.backtrace:
             return "No crash detected"
 
         return "UndefinedBehaviorSanitizer: [@ %s]" % self.backtrace[0]
