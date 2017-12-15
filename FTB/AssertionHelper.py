@@ -22,7 +22,7 @@ RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
 RE_PID = re.compile(r"^\[\d+\]\s+")
 RE_RUST_ASSERT = re.compile(r"^thread .*? panicked at '.+$")
 RE_RUST_END = re.compile(r".+?\.rs(:\d+)+")
-RE_V8_END = re.compile(r"^# Check failed: ")
+RE_V8_END = re.compile(r"^")
 
 
 def getAssertion(output):
@@ -65,7 +65,7 @@ def getAssertion(output):
             lastLine = line
             haveFatalAssertion = True
         elif "panicked at" in line and RE_RUST_ASSERT.match(line) is not None:
-            # Is this a single line asset?
+            # Is this a single line assert?
             if RE_RUST_END.search(line) is None:
                 endRegex = RE_RUST_END
                 lastLine = [line]
