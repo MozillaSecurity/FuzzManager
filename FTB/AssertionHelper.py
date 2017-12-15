@@ -21,7 +21,7 @@ RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
 RE_PID = re.compile(r"^\[\d+\]\s+")
 RE_RUST_ASSERT = re.compile(r"^thread .*? panicked at '.+$")
-RE_RUST_END = re.compile(r".+?\.rs(:\d+)+")
+RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
 RE_V8_END = re.compile(r"^")
 
 
