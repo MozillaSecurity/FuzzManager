@@ -612,6 +612,17 @@ stack backtrace:
    2:     0x7f89cd63c58d - std::panicking::default_hook::h4c1ef1cc83189c8e
 """
 
+rustSampleTrace6 = """
+thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
+  left: `Inline`,
+ right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8
+stack backtrace:
+   0:     0x7f7a3a170663 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::h8ed7485deb8ab958
+   1:     0x7f7a3a16adb0 - std::sys_common::backtrace::_print::h3d4f9ea58578e60f
+   2:     0x7f7a3a17db63 - std::panicking::default_hook::{{closure}}::h0088fe51b67c687c
+   3:     0x7f7a3a17d8d2 - std::panicking::default_hook::hf425c768c5ffbbad
+"""
+
 ubsanTraceSignedIntOverflow = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -2455,6 +2466,25 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
         self.assertEqual(crashInfo.backtrace[1], "std::panicking::default_hook::{{closure}}")
         self.assertEqual(crashInfo.backtrace[2], "std::panicking::default_hook")
+        self.assertEqual(crashInfo.crashAddress, 0)
+
+    def test_5(self):
+        """test multi-line with minidump trace in sterror rust backtrace"""
+        auxData = ["OS|Linux|0.0.0 Linux ... x86_64",
+                   "CPU|amd64|family 6 model 63 stepping 2|8",
+                   "GPU|||",
+                   "Crash|SIGSEGV|0x0|0",
+                   "0|0|firefox|mozalloc_abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:6d82e132348f|33|0x0",
+                   "0|1|firefox|abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:6d82e132348f|80|0x5",
+                   "0|2|libxul.so|panic_abort::__rust_start_panic|git:github.com/rust-lang/rust:src/libpanic_abort/lib.rs:05e2e1c41414e8fc73d0f267ea8dab1a3eeeaa99|59|0x5"]
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], rustSampleTrace6.splitlines(), config, auxData)
+        self.assertIsInstance(crashInfo, MinidumpCrashInfo)
+        self.assertIn("panicked at 'assertion failed: `(left == right)`", crashInfo.createShortSignature())
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "mozalloc_abort")
+        self.assertEqual(crashInfo.backtrace[1], "abort")
+        self.assertEqual(crashInfo.backtrace[2], "panic_abort::__rust_start_panic")
         self.assertEqual(crashInfo.crashAddress, 0)
 
 class MinidumpModuleInStackTest(unittest.TestCase):
