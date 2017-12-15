@@ -20,7 +20,9 @@ import re
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
 RE_PID = re.compile(r"^\[\d+\]\s+")
-RE_RUST_ASSERT = re.compile(r"^thread .* panicked at .*\.rs(:\d+)+$")
+RE_RUST_ASSERT = re.compile(r"^thread .*? panicked at '.+$")
+RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
+RE_V8_END = re.compile(r"^")
 
 
 def getAssertion(output):
@@ -34,7 +36,7 @@ def getAssertion(output):
     @param output: List of strings to be searched
     '''
     lastLine = None
-    addNext = False
+    endRegex = None
 
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
@@ -47,9 +49,10 @@ def getAssertion(output):
         # Remove any PID output at the beginning of the line
         line = re.sub(RE_PID, "", line, count=1)
 
-        if addNext:
+        if endRegex is not None:
             lastLine.append(line)
-            addNext = False
+            if endRegex.search(line) is not None:
+                endRegex = None
         elif line.startswith("Assertion failure"):
             # Firefox fatal assertion (MOZ_ASSERT, JS_ASSERT)
 
@@ -62,15 +65,20 @@ def getAssertion(output):
             lastLine = line
             haveFatalAssertion = True
         elif "panicked at" in line and RE_RUST_ASSERT.match(line) is not None:
-            lastLine = line
+            # Is this a single line assert?
+            if RE_RUST_END.search(line) is None:
+                endRegex = RE_RUST_END
+                lastLine = [line]
+            else:
+                lastLine = line
             haveFatalAssertion = True
         elif line.startswith("# Fatal error in"):
             # Support v8 non-standard multi-line assertion output
             # We need to return this as array so we can create two
             # symptoms for it as the matchers work by line.
-            lastLine = [ line ]
+            endRegex = RE_V8_END
+            lastLine = [line]
             haveFatalAssertion = True
-            addNext = True
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
             lastLine = line

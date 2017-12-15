@@ -75,6 +75,11 @@ thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()'
 rustPanic2 = """
 thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20"""
 
+rustPanic3 = """
+thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
+  left: `Inline`,
+ right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8"""
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
@@ -188,20 +193,24 @@ class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
         self.assertEqual(sanitizedMsg, expectedMsg)
 
 class AssertionHelperTestRustPanic(unittest.TestCase):
-    def runTest(self):
+    def test_01(self):
         err = rustPanic1.splitlines()
-
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = r"thread 'StyleThread#[0-9]+' panicked at 'assertion failed: self\.get_data\(\)\.is_some\(\)', ([a-zA-Z]:)?/.+/wrapper\.rs(:[0-9]+)+"
-
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+    def test_02(self):
         err = rustPanic2.splitlines()
-
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = r"thread 'RenderBackend' panicked at 'called `Option::unwrap\(\)` on a `None` value', ([a-zA-Z]:)?/.+/option\.rs(:[0-9]+)+"
-
         self.assertEqual(sanitizedMsg, expectedMsg)
+
+    def test_03(self):
+        err = rustPanic3.splitlines()
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        self.assertEqual(len(sanitizedMsg), 3)
+        self.assertEqual(sanitizedMsg[0], r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`")
+        self.assertEqual(sanitizedMsg[-1], r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+")
 
 if __name__ == "__main__":
     unittest.main()
