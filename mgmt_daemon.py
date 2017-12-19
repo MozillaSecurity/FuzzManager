@@ -85,6 +85,28 @@ class LibFuzzerMonitor(threading.Thread):
     def getTestcase(self):
         return self.testcase
 
+def command_file_to_list(cmd_file):
+    '''
+    Open and parse custom command line file
+    
+    @type cmd_file: String
+    @param cmd_file: Command line file containing list of commands
+    
+    @rtype: Tuple
+    @return: Test index in list and the command as a list of strings
+    '''
+    cmdline = list()
+    idx = 0
+    test_idx = None
+    with open(cmd_file, 'r') as cmd_fp:
+        for line in cmd_fp:
+            if '@@' in line:
+                test_idx = idx
+            cmdline.append(line.rstrip())
+            idx += 1
+
+    return test_idx, cmdline
+
 def get_machine_id(base_dir):
     '''
     Get (and if necessary generate) the machine id which is based on
@@ -115,7 +137,7 @@ def get_machine_id(base_dir):
         with open(id_file, 'r') as id_fd:
             return id_fd.read()
 
-def write_aggregated_stats(base_dirs, outfile):
+def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
     '''
     Generate aggregated statistics from the given base directories
     and write them to the specified output file.
@@ -125,6 +147,10 @@ def write_aggregated_stats(base_dirs, outfile):
     
     @type outfile: str
     @param outfile: Output file for aggregated statistics
+
+    @type cmdline_path: String
+    @param cmdline_path: Optional command line file to use instead of the
+                         one found inside the base directory.
     '''
 
     # Which fields to add
@@ -146,6 +172,9 @@ def write_aggregated_stats(base_dirs, outfile):
     # Which fields should be aggregated by max
     wanted_fields_max = ['last_path']
 
+    # Warnings to include
+    warnings = list()
+
     aggregated_stats = {}
 
     for field in wanted_fields_total:
@@ -164,6 +193,9 @@ def write_aggregated_stats(base_dirs, outfile):
 
     for base_dir in base_dirs:
         stats_path = os.path.join(base_dir, "fuzzer_stats")
+
+        if not cmdline_path:
+            cmdline_path = os.path.join(base_dir, "cmdline")
 
         if os.path.exists(stats_path):
             with open(stats_path, 'r') as stats_file:
@@ -198,6 +230,28 @@ def write_aggregated_stats(base_dirs, outfile):
         else:
             aggregated_stats[field_name] = val
 
+    # Verify fuzzmanagerconf exists and can be parsed
+    _, cmdline = command_file_to_list(cmdline_path)
+    target_binary = cmdline[0] if cmdline else None
+
+    if target_binary is not None:
+        if not os.path.isfile("%s.fuzzmanagerconf" % target_binary):
+            warnings.append("WARNING: Missing %s.fuzzmanagerconf\n" % target_binary)
+        elif ProgramConfiguration.fromBinary(target_binary) is None:
+            warnings.append("WARNING: Invalid %s.fuzzmanagerconf\n" % target_binary)
+
+    # Look for unreported crashes
+    failed_reports = 0
+    for base_dir in base_dirs:
+        crashes_dir = os.path.join(base_dir, "crashes")
+        if not os.path.isdir(crashes_dir):
+            continue
+        for crash_file in os.listdir(crashes_dir):
+            if crash_file.endswith(".failed"):
+                failed_reports += 1
+    if failed_reports:
+        warnings.append("WARNING: Unreported crashes detected (%d)\n" % failed_reports)
+
     # Write out data
     fields = []
     fields.extend(wanted_fields_total)
@@ -218,6 +272,9 @@ def write_aggregated_stats(base_dirs, outfile):
                 val = " ".join(val)
 
             f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+
+        for warning in warnings:
+            f.write(warning)
 
     return
 
@@ -265,8 +322,6 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
 
     if crash_files:
         # First try to read necessary information for reproducing crashes
-        cmdline = []
-        test_idx = None
 
         base_env = {}
         test_in_env = None
@@ -282,14 +337,7 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
         if not cmdline_path:
             cmdline_path = os.path.join(base_dir, "cmdline")
 
-        with open(cmdline_path, 'r') as cmdline_file:
-            idx = 0
-            for line in cmdline_file:
-                if '@@' in line:
-                    test_idx = idx
-                cmdline.append(line.rstrip('\n'))
-                idx += 1
-
+        test_idx, cmdline = command_file_to_list(cmdline_path)
         if test_idx is not None:
             orig_test_arg = cmdline[test_idx]
 
@@ -1142,7 +1190,7 @@ def main(argv=None):
                     last_queue_upload = int(time.time())
 
                 if opts.aflstats:
-                    write_aggregated_stats(afl_out_dirs, opts.aflstats)
+                    write_aggregated_stats(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
 
                 time.sleep(10)
 
