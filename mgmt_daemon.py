@@ -824,7 +824,7 @@ def main(argv=None):
 
     if opts.cmd and opts.aflfuzz:
 	if not opts.firefox:
-		print("Error: Use --cmd either with libfuzzer or with afl in firefox mode", file=sys.sdderr)
+		print("Error: Use --cmd either with libfuzzer or with afl in firefox mode", file=sys.stderr)
 		return 2
 
     if opts.libfuzzer:
