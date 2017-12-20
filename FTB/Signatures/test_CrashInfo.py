@@ -679,7 +679,7 @@ Crash|SIGSEGV|0x40|34
 
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
-        config = ProgramConfiguration("test", "x86", "linux")
+        config = ProgramConfiguration("test", "x86-64", "windows")
 
         crashInfo = ASanCrashInfo([], asanTraceAV.splitlines(), config)
         self.assertEqual(len(crashInfo.backtrace), 3)

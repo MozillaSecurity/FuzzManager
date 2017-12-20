@@ -578,7 +578,7 @@ class SignatureAsanStackOverflowTest(unittest.TestCase):
 
 class SignatureAsanAccessViolationTest(unittest.TestCase):
     def runTest(self):
-        config = ProgramConfiguration("test", "x86-64", "linux")
+        config = ProgramConfiguration("test", "x86-64", "windows")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanAccessViolation.splitlines())
 
         testSig = crashInfoPos.createCrashSignature()
