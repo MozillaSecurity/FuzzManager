@@ -8,17 +8,21 @@ from celeryconf import app
 
 SIGNATURES_ZIP = os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir, 'files', 'signatures.zip'))
 
+
 @app.task
 def bug_update_status():
     call_command('bug_update_status')
+
 
 @app.task
 def cleanup_old_crashes():
     call_command('cleanup_old_crashes')
 
+
 @app.task
 def triage_new_crashes():
     call_command('triage_new_crashes')
+
 
 @app.task
 def export_signatures():

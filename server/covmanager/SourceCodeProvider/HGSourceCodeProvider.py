@@ -20,6 +20,7 @@ import subprocess
 
 from SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
 
+
 class HGSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location):
         super(HGSourceCodeProvider, self).__init__(location)

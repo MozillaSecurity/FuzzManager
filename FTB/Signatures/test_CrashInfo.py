@@ -157,13 +157,13 @@ asanMultiTrace = """
 Done, waiting 10ms before calling close()
     #0 0x7f63fd5c11ae in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool) /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35
     #1 0x7f63fd5c07b0 in mozilla::ipc::IToplevelProtocol::ShmemCreated(IPC::Message const&) /home/worker/workspace/build/src/ipc/glue/ProtocolUtils.cpp:790:38
-    
+
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35 in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool)
 Thread T35 (Compositor) created by T0 here:
     #0 0x4a8e16 in __interceptor_pthread_create /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:245:3
     #1 0x7f63fd4d9ad4 in CreateThread /home/worker/workspace/build/src/ipc/chromium/src/base/platform_thread_posix.cc:139:14
-    
+
 ==8746==ABORTING
 ASAN:DEADLYSIGNAL
 =================================================================
@@ -175,7 +175,7 @@ ASAN:DEADLYSIGNAL
 ==8986==Hint: address points to the zero page.
 ==8927==The signal is caused by a WRITE memory access.
 ==8927==Hint: address points to the zero page.
-Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299) 
+Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299)
 ###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
 """
 
@@ -427,7 +427,7 @@ r14     0x7fffffffae00  140737488334336
 r15     0x7fffffffadf0  140737488334320
 rip     0xb7e884 <JSObject::as<js::ModuleEnvironmentObject>()+52>
 => 0xb7e884 <JSObject::as<js::ModuleEnvironmentObject>()+52>:   movl   $0x0,0x0
-   0xb7e88f <JSObject::as<js::ModuleEnvironmentObject>()+63>:   ud2    
+   0xb7e88f <JSObject::as<js::ModuleEnvironmentObject>()+63>:   ud2
 A debugging session is active.
 
         Inferior 1 [process 24244] will be killed.
@@ -462,7 +462,7 @@ eip            0x83c4a4b        0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSTyp
 gdbRegressionTrace10 = """
 Thread 1 received signal SIGILL, Illegal instruction.
 0x00007ff7f20c1f81 in ?? ()
-=> 0x7ff7f20c1f81:      (bad)  
+=> 0x7ff7f20c1f81:      (bad)
 rax            0x55555598e9bd   93824996665789
 rbx            0x2fa    762
 rcx            0x1      1
@@ -586,7 +586,7 @@ stack backtrace:
    1:     0x7ffc41f2f97c - <unknown>
    2:     0x7ffc41f2f1ee - <unknown>
    3:     0x7ffc41f2eacf - <unknown>
-OS|Windows NT|10.0.14393 
+OS|Windows NT|10.0.14393
 CPU|amd64|family 6 model 94 stepping 3|4
 GPU|||
 Crash|EXCEPTION_ILLEGAL_INSTRUCTION|0x7ffc41f2f276|36
@@ -668,6 +668,7 @@ Crash|SIGSEGV|0x40|34
 0|2|libxul.so||||0x43ebda
 """
 
+
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -684,6 +685,7 @@ class ASanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.registers["sp"], 0xffc57860)
         self.assertEqual(crashInfo.registers["bp"], 0xffc57f18)
 
+
 class ASanParserTestHeapCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -698,6 +700,7 @@ class ASanParserTestHeapCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.createShortSignature(), "[@ ??]")
 
+
 class ASanParserTestUAF(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -711,6 +714,7 @@ class ASanParserTestUAF(unittest.TestCase):
 
         self.assertEqual("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] with READ of size 6143520", crashInfo.createShortSignature())
 
+
 class ASanParserTestInvalidFree(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -722,6 +726,7 @@ class ASanParserTestInvalidFree(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0x62a00006c200)
 
         self.assertEqual("AddressSanitizer: attempting free on address which was not malloc()-ed [@ __interceptor_free]", crashInfo.createShortSignature())
+
 
 class ASanParserTestDebugAssertion(unittest.TestCase):
     def runTest(self):
@@ -736,6 +741,7 @@ class ASanParserTestDebugAssertion(unittest.TestCase):
 
         self.assertEqual("Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521", crashInfo.createShortSignature())
 
+
 class ASanDetectionTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -745,6 +751,7 @@ class ASanDetectionTest(unittest.TestCase):
 
         self.assertIsInstance(crashInfo1, ASanCrashInfo)
         self.assertIsInstance(crashInfo2, ASanCrashInfo)
+
 
 class ASanParserTestMemcpyOverlap(unittest.TestCase):
     def runTest(self):
@@ -757,6 +764,7 @@ class ASanParserTestMemcpyOverlap(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
         self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]", crashInfo.createShortSignature())
 
+
 class ASanParserTestMultiTrace(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -767,6 +775,7 @@ class ASanParserTestMultiTrace(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "mozilla::ipc::Shmem::OpenExisting")
         self.assertEqual(crashInfo.backtrace[3], "CreateThread")
         self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
+
 
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -782,6 +791,7 @@ class GDBParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.registers["ebx"], 0x8962ff4)
         self.assertEqual(crashInfo.registers["eip"], 0x818bc33)
 
+
 class GDBParserTestCrashAddress(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -793,6 +803,7 @@ class GDBParserTestCrashAddress(unittest.TestCase):
         self.assertEqual(crashInfo1.crashAddress, 0x1)
         self.assertEqual(crashInfo2.crashAddress, None)
         self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0)
+
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
     def runTest(self):
@@ -810,7 +821,6 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         # Simple tests
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,0x10(%rax)", registerMap64), 0x10)
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,0x10(%eax)", registerMap32), 0x10)
-
 
         # Overflow tests
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xF)
@@ -830,6 +840,7 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffe)))
 
+
 class GDBParserTestRegression1(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -839,6 +850,7 @@ class GDBParserTestRegression1(unittest.TestCase):
         self.assertEqual(crashInfo1.backtrace[0], "js::ScriptedIndirectProxyHandler::defineProperty")
         self.assertEqual(crashInfo1.backtrace[1], "js::SetPropertyIgnoringNamedGetter")
 
+
 class GDBParserTestCrashAddressRegression2(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -846,6 +858,7 @@ class GDBParserTestCrashAddressRegression2(unittest.TestCase):
         crashInfo2 = GDBCrashInfo([], gdbRegressionTrace2.splitlines(), config)
 
         self.assertEqual(crashInfo2.crashAddress, 0xfffd579c)
+
 
 class GDBParserTestCrashAddressRegression3(unittest.TestCase):
     def runTest(self):
@@ -855,6 +868,7 @@ class GDBParserTestCrashAddressRegression3(unittest.TestCase):
 
         self.assertEqual(crashInfo3.crashAddress, 0x7fffffffffff)
 
+
 class GDBParserTestCrashAddressRegression4(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -862,6 +876,7 @@ class GDBParserTestCrashAddressRegression4(unittest.TestCase):
         crashInfo4 = GDBCrashInfo([], gdbRegressionTrace4.splitlines(), config)
 
         self.assertEqual(crashInfo4.crashAddress, 0x0)
+
 
 class GDBParserTestCrashAddressRegression5(unittest.TestCase):
     def runTest(self):
@@ -871,6 +886,7 @@ class GDBParserTestCrashAddressRegression5(unittest.TestCase):
 
         self.assertEqual(crashInfo5.crashAddress, 0xfffd573c)
 
+
 class GDBParserTestCrashAddressRegression6(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -878,6 +894,7 @@ class GDBParserTestCrashAddressRegression6(unittest.TestCase):
         crashInfo6 = GDBCrashInfo([], gdbRegressionTrace6.splitlines(), config)
 
         self.assertEqual(crashInfo6.crashAddress, 0xf7673132)
+
 
 class GDBParserTestCrashAddressRegression7(unittest.TestCase):
     def runTest(self):
@@ -887,6 +904,7 @@ class GDBParserTestCrashAddressRegression7(unittest.TestCase):
         crashInfo7 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace7.splitlines())
 
         self.assertEqual(crashInfo7.backtrace[1], "js::ScopeIter::settle")
+
 
 class GDBParserTestCrashAddressRegression8(unittest.TestCase):
     def runTest(self):
@@ -900,12 +918,14 @@ class GDBParserTestCrashAddressRegression8(unittest.TestCase):
         self.assertEqual(crashInfo8.backtrace[4], "??")
         self.assertEqual(crashInfo8.backtrace[5], "js::jit::CheckICacheLocked")
 
+
 class GDBParserTestCrashAddressRegression9(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo9 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace9.splitlines())
         self.assertEqual(crashInfo9.crashInstruction, "call   0x8120ca0")
+
 
 class GDBParserTestCrashAddressRegression10(unittest.TestCase):
     def runTest(self):
@@ -915,6 +935,7 @@ class GDBParserTestCrashAddressRegression10(unittest.TestCase):
         self.assertEqual(crashInfo10.crashInstruction, "(bad)")
         self.assertEqual(crashInfo10.crashAddress, 0x7ff7f20c1f81)
 
+
 class GDBParserTestCrashAddressRegression11(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -922,6 +943,7 @@ class GDBParserTestCrashAddressRegression11(unittest.TestCase):
         crashInfo11 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace11.splitlines())
         self.assertEqual(crashInfo11.crashInstruction, "callq  *0xa8(%rax)")
         self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032)
+
 
 class CrashSignatureOutputTest(unittest.TestCase):
     def runTest(self):
@@ -962,6 +984,7 @@ class CrashSignatureOutputTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
         self.assert_(outputSignature2.matches(crashInfo))
 
+
 class CrashSignatureAddressTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -982,6 +1005,7 @@ class CrashSignatureAddressTest(unittest.TestCase):
         # For crashInfo3, we don't have a crash address. Ensure we don't match
         self.assertFalse(addressSig1.matches(crashInfo3))
         self.assertFalse(addressSig1Neg.matches(crashInfo3))
+
 
 class CrashSignatureRegisterTest(unittest.TestCase):
     def runTest(self):
@@ -1023,6 +1047,7 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         self.assertFalse(instructionSig2.matches(crashInfo3))
         self.assertFalse(instructionSig3.matches(crashInfo3))
 
+
 class CrashSignatureStackFrameTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -1048,6 +1073,7 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
 
         self.assert_(stackFrameSig2.matches(crashInfo1))
         self.assertFalse(stackFrameSig2Neg.matches(crashInfo1))
+
 
 class CrashSignatureStackSizeTest(unittest.TestCase):
     def runTest(self):
@@ -1075,9 +1101,10 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
         self.assert_(stackSizeSig2.matches(crashInfo1))
         self.assertFalse(stackSizeSig2Neg.matches(crashInfo1))
 
+
 class RegisterHelperValueTest(unittest.TestCase):
     def runTest(self):
-        registerMap = { "rax" : 0xfffffffffffffe00, "rbx" : 0x7ffff79a7640 }
+        registerMap = {"rax": 0xfffffffffffffe00, "rbx": 0x7ffff79a7640}
 
         self.assertEqual(RegisterHelper.getRegisterValue("rax", registerMap), 0xfffffffffffffe00)
         self.assertEqual(RegisterHelper.getRegisterValue("eax", registerMap), 0xfffffe00)
@@ -1090,6 +1117,7 @@ class RegisterHelperValueTest(unittest.TestCase):
         self.assertEqual(RegisterHelper.getRegisterValue("bx", registerMap), 0x7640)
         self.assertEqual(RegisterHelper.getRegisterValue("bh", registerMap), 0x76)
         self.assertEqual(RegisterHelper.getRegisterValue("bl", registerMap), 0x40)
+
 
 class MinidumpParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1106,6 +1134,7 @@ class MinidumpParserTestCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x3e800006acb)
 
+
 class MinidumpSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -1115,6 +1144,7 @@ class MinidumpSelectorTest(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x3e800006acb)
+
 
 class AppleParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1136,6 +1166,7 @@ class AppleParserTestCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00007fff5f3fff98)
 
+
 class AppleSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx")
@@ -1145,6 +1176,7 @@ class AppleSelectorTest(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00007fff5f3fff98)
+
 
 class AppleLionParserTestCrash(unittest.TestCase):
     def runTest(self):
@@ -1170,6 +1202,7 @@ class AppleLionParserTestCrash(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0000000000000000)
 
+
 class AppleLionSelectorTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "macosx64")
@@ -1179,6 +1212,7 @@ class AppleLionSelectorTest(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x0000000000000000)
+
 
 # Test 1a is for Win7 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength
@@ -1218,6 +1252,7 @@ class CDBParserTestCrash1a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x01814577)
 
+
 class CDBSelectorTest1a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1227,6 +1262,7 @@ class CDBSelectorTest1a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x01814577)
+
 
 # Test 1b is for Win10 with 32-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
@@ -1266,6 +1302,7 @@ class CDBParserTestCrash1b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x01344577)
 
+
 class CDBSelectorTest1b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1275,6 +1312,7 @@ class CDBSelectorTest1b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x01344577)
+
 
 # Test 2a is for Win7 with 64-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength
@@ -1334,6 +1372,7 @@ class CDBParserTestCrash2a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0000000140144e62)
 
+
 class CDBSelectorTest2a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -1343,6 +1382,7 @@ class CDBSelectorTest2a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x0000000140144e62)
+
 
 # Test 2b is for Win10 with 64-bit js debug deterministic shell hitting the assertion failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+52
@@ -1402,6 +1442,7 @@ class CDBParserTestCrash2b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00007ff71e424e62)
 
+
 class CDBSelectorTest2b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -1411,6 +1452,7 @@ class CDBSelectorTest2b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00007ff71e424e62)
+
 
 # Test 3a is for Win7 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena
@@ -1473,6 +1515,7 @@ class CDBParserTestCrash3a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00f36a63)
 
+
 class CDBSelectorTest3a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1482,6 +1525,7 @@ class CDBSelectorTest3a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00f36a63)
+
 
 # Test 3b is for Win10 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+13
@@ -1544,6 +1588,7 @@ class CDBParserTestCrash3b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00ed6a63)
 
+
 class CDBSelectorTest3b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1553,6 +1598,7 @@ class CDBSelectorTest3b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00ed6a63)
+
 
 # Test 4a is for Win7 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
@@ -1633,6 +1679,7 @@ class CDBParserTestCrash4a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00d44c59)
 
+
 class CDBSelectorTest4a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1642,6 +1689,7 @@ class CDBSelectorTest4a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00d44c59)
+
 
 # Test 4b is for Win10 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
@@ -1706,6 +1754,7 @@ class CDBParserTestCrash4b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00404c59)
 
+
 class CDBSelectorTest4b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -1715,6 +1764,7 @@ class CDBSelectorTest4b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00404c59)
+
 
 # Test 5a is for Win7 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery
@@ -1783,6 +1833,7 @@ class CDBParserTestCrash5a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x000000013f4975db)
 
+
 class CDBSelectorTest5a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -1792,6 +1843,7 @@ class CDBSelectorTest5a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x000000013f4975db)
+
 
 # Test 5b is for Win10 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
@@ -1860,6 +1912,7 @@ class CDBParserTestCrash5b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00007ff71dcf75db)
 
+
 class CDBSelectorTest5b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -1869,6 +1922,7 @@ class CDBSelectorTest5b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00007ff71dcf75db)
+
 
 # Test 6a is for Win7 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
@@ -1961,6 +2015,7 @@ class CDBParserTestCrash6a(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x000000013f869ff3)
 
+
 class CDBSelectorTest6a(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -1970,6 +2025,7 @@ class CDBSelectorTest6a(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x000000013f869ff3)
+
 
 # Test 6b is for Win10 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+13
@@ -2062,6 +2118,7 @@ class CDBParserTestCrash6b(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x00007ff74d469ff3)
 
+
 class CDBSelectorTest6b(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -2071,6 +2128,7 @@ class CDBSelectorTest6b(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x00007ff74d469ff3)
+
 
 # Test 7 is for Windows Server 2012 R2 with 32-bit js debug deterministic shell:
 #     +205
@@ -2143,6 +2201,7 @@ class CDBParserTestCrash7(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x25d80b01)
 
+
 class CDBSelectorTest7(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2152,6 +2211,7 @@ class CDBSelectorTest7(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x25d80b01)
+
 
 # Test 8 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
@@ -2179,6 +2239,7 @@ class CDBParserTestCrash8(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0142865d)
 
+
 class CDBSelectorTest8(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2188,6 +2249,7 @@ class CDBSelectorTest8(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x0142865d)
+
 
 # Test 9 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +1d8
@@ -2258,6 +2320,7 @@ class CDBParserTestCrash9(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0f2bb4f3)
 
+
 class CDBSelectorTest9(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2267,6 +2330,7 @@ class CDBSelectorTest9(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x0f2bb4f3)
+
 
 # Test 10 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +82
@@ -2298,6 +2362,7 @@ class CDBParserTestCrash10(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x1c2fbbb0)
 
+
 class CDBSelectorTest10(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2307,6 +2372,7 @@ class CDBSelectorTest10(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x1c2fbbb0)
+
 
 # Test 11 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
@@ -2334,6 +2400,7 @@ class CDBParserTestCrash11(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0156865d)
 
+
 class CDBSelectorTest11(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2343,6 +2410,7 @@ class CDBSelectorTest11(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x0156865d)
+
 
 # Test 12 is for Windows Server 2012 R2 with 32-bit js opt profiling deterministic shell:
 #     +1d8
@@ -2373,6 +2441,7 @@ class CDBParserTestCrash12(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x1fa0b7f8)
 
+
 class CDBSelectorTest12(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "windows")
@@ -2382,6 +2451,7 @@ class CDBSelectorTest12(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x1fa0b7f8)
+
 
 class UBSanParserTestCrash(unittest.TestCase):
     def test_1(self):
@@ -2408,6 +2478,7 @@ class UBSanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.createShortSignature(), "No crash detected")
         self.assertEqual(len(crashInfo.backtrace), 0)
         self.assertIsNone(crashInfo.crashAddress)
+
 
 class RustParserTests(unittest.TestCase):
 
@@ -2487,6 +2558,7 @@ class RustParserTests(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[2], "panic_abort::__rust_start_panic")
         self.assertEqual(crashInfo.crashAddress, 0)
 
+
 class MinidumpModuleInStackTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -2494,6 +2566,7 @@ class MinidumpModuleInStackTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, minidumpSwrast.splitlines())
         self.assertEqual(crashInfo.backtrace[0], "??")
         self.assertEqual(crashInfo.backtrace[1], "swrast_dri.so+0x470ecc")
+
 
 if __name__ == "__main__":
     unittest.main()

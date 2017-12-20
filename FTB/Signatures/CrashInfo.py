@@ -319,10 +319,10 @@ class CrashInfo():
                 # for anything newer, use the short form with forward slashes
                 # to increase the readability of the signatures.
                 if minimumSupportedVersion < 12:
-                    stringObj = { "value" : abortMsg, "matchType" : "pcre" }
-                    symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : stringObj }
+                    stringObj = {"value": abortMsg, "matchType": "pcre"}
+                    symptomObj = {"type": "output", "src": abortMsgSrc, "value": stringObj}
                 else:
-                    symptomObj = { "type" : "output", "src" : abortMsgSrc, "value" : "/%s/" % abortMsg }
+                    symptomObj = {"type": "output", "src": abortMsgSrc, "value": "/%s/" % abortMsg}
                 symptomArr.append(symptomObj)
 
         # Consider the first four frames as top stack
@@ -345,7 +345,7 @@ class CrashInfo():
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
                 if not functionName == "??":
-                    symptomObj = { "type" : "stackFrame", "frameNumber" : idx, "functionName" : functionName }
+                    symptomObj = {"type": "stackFrame", "frameNumber": idx, "functionName": functionName}
                     symptomArr.append(symptomObj)
                 elif idx < 4:
                     # If we're in the top 4, we count this as a miss
@@ -377,7 +377,7 @@ class CrashInfo():
                 framesArray = []
 
             if framesArray:
-                symptomArr.append({ "type" : "stackFrames", "functionNames" : framesArray })
+                symptomArr.append({"type": "stackFrames", "functionNames": framesArray})
 
         # Missing too much of the top stack frames, add additional crash information
         stackIsInsufficient = topStackMissCount >= 2 and abortMsgs == None
@@ -395,7 +395,7 @@ class CrashInfo():
             else:
                 crashAddress = "> 0xFF"
 
-            crashAddressSymptomObj = { "type" : "crashAddress", "address" : crashAddress }
+            crashAddressSymptomObj = {"type": "crashAddress", "address": crashAddress}
             symptomArr.append(crashAddressSymptomObj)
 
         if includeCrashInstruction:
@@ -404,10 +404,10 @@ class CrashInfo():
                 self.failureReason = "No crash instruction available from crash data. Reason: %s" % failureReason
                 return None
 
-            crashInstructionSymptomObj = { "type" : "instruction", "instructionName" : self.crashInstruction }
+            crashInstructionSymptomObj = {"type": "instruction", "instructionName": self.crashInstruction}
             symptomArr.append(crashInstructionSymptomObj)
 
-        sigObj = { "symptoms" : symptomArr }
+        sigObj = {"symptoms": symptomArr}
 
         return CrashSignature(json.dumps(sigObj, indent=2))
 
@@ -453,6 +453,7 @@ class CrashInfo():
             frame = re.sub("<lambda at .+?:\d+:\d+>", "", frame)
 
         return frame
+
 
 class NoCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -519,7 +520,7 @@ class ASanCrashInfo(CrashInfo):
                 try:
                     self.crashAddress = int(match.group(1), 16)
                 except TypeError:
-                    pass # No crash address available
+                    pass  # No crash address available
 
                 # Crash Address and Registers are in the same line for ASan
                 match = re.search(asanRegisterPattern, traceLine)
@@ -624,6 +625,7 @@ class ASanCrashInfo(CrashInfo):
 
         return "[@ %s]" % self.backtrace[0]
 
+
 class UBSanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''
@@ -706,6 +708,7 @@ class UBSanCrashInfo(CrashInfo):
             return "No crash detected"
 
         return "UndefinedBehaviorSanitizer: [@ %s]" % self.backtrace[0]
+
 
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -883,7 +886,6 @@ class GDBCrashInfo(CrashInfo):
                 return RegisterHelper.getInstructionPointer(registerMap)
             else:
                 raise RuntimeError("Unsupported non-operand instruction: %s" % instruction)
-
 
         if len(parts) != 2:
             raise RuntimeError("Failed to split instruction and operands apart: %s" % crashInstruction)
@@ -1369,7 +1371,7 @@ class RustCrashInfo(CrashInfo):
         # If crashData is given, use that to find the rust backtrace, otherwise use stderr
         rustOutput = crashData or stderr
 
-        self.crashAddress = 0 # this is always an assertion, set to 0 to make matching more efficient
+        self.crashAddress = 0  # this is always an assertion, set to 0 to make matching more efficient
 
         inAssertion = False
         inBacktrace = False

@@ -14,6 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
+
 def select_better(data, current_price=None, region=None, zone=None, instance_type=None, instance_time=None, indent=1, verbose=False):
     best_region = region
     best_zone = zone
@@ -62,6 +63,7 @@ def select_better(data, current_price=None, region=None, zone=None, instance_typ
     new_ret["price"] = best_price
     print_indent(new_ret)
     return new_ret
+
 
 def get_price_median(data):
     sdata = sorted(data)

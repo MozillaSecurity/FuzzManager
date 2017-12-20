@@ -48,11 +48,13 @@ coverallsAddData = """
 coverallsData = json.loads(coverallsData)
 coverallsAddData = json.loads(coverallsAddData)
 
+
 class TestCovReporterCoverallsVersionData(unittest.TestCase):
     def runTest(self):
         ret = CovReporter.version_info_from_coverage_data(coverallsData)
         self.assertEqual(ret["revision"], "1a0d9545b9805f50a70de703a3c04fc0d22e3839")
         self.assertEqual(ret["branch"], "master")
+
 
 class TestCovReporterPreprocessData(unittest.TestCase):
     def runTest(self):
@@ -86,7 +88,6 @@ class TestCovReporterPreprocessData(unittest.TestCase):
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesCovered], 4)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent], 66.67)
 
-
         # Check name and summary values for topdir1/subdir1/
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][name], "subdir1")
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][linesTotal], 13)
@@ -112,6 +113,7 @@ class TestCovReporterPreprocessData(unittest.TestCase):
 
         # Check that our converter replaces null with -1 to save some space
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0], -1)
+
 
 class TestCovReporterMergeData(unittest.TestCase):
     def runTest(self):
@@ -146,7 +148,6 @@ class TestCovReporterMergeData(unittest.TestCase):
         self.assertEqual(len(result[children]["topdir2"][children]), 1)
         self.assertEqual(len(result[children]["topdir3"][children]), 1)
 
-
         # Check length of coverage list, name and summary values for file1.c
         self.assertEqual(len(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage]), 9)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name], "file1.c")
@@ -159,7 +160,6 @@ class TestCovReporterMergeData(unittest.TestCase):
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][2], 18)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][3], 12)
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][7], 2)
-
 
         # Check name and summary values for topdir1/subdir1/
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][name], "subdir1")
@@ -192,6 +192,7 @@ class TestCovReporterMergeData(unittest.TestCase):
 
         # Check that our converter replaces null with -1 to save some space
         self.assertEqual(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0], -1)
+
 
 if __name__ == "__main__":
     unittest.main()

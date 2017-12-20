@@ -34,6 +34,7 @@ from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 
+
 class LibFuzzerMonitor(threading.Thread):
     def __init__(self, fd):
         assert callable(fd.readline)
@@ -80,6 +81,7 @@ __version__ = 0.1
 __date__ = '2016-07-28'
 __updated__ = '2016-07-28'
 
+
 def main(argv=None):
     '''Command line options.'''
 
@@ -97,9 +99,9 @@ def main(argv=None):
 
     mainGroup = parser.add_argument_group(title="Main arguments", description=None)
     fmGroup = parser.add_argument_group(title="FuzzManager specific options",
-                              description="""Values for the options listed here are typically
-                                          provided through FuzzManager configuration files,
-                                          but can be overwritten using these options:""")
+                                        description="""Values for the options listed here are typically
+                                                    provided through FuzzManager configuration files,
+                                                    but can be overwritten using these options:""")
 
     mainGroup.add_argument('--version', action='version', version=program_version_string)
     mainGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
@@ -187,12 +189,12 @@ def main(argv=None):
 
     while(True):
         process = subprocess.Popen(
-                 opts.rargs,
-                 # stdout=None,
-                 stderr=subprocess.PIPE,
-                 env=env,
-                 universal_newlines=True
-                )
+            opts.rargs,
+            # stdout=None,
+            stderr=subprocess.PIPE,
+            env=env,
+            universal_newlines=True
+        )
 
         monitor = LibFuzzerMonitor(process.stderr)
         monitor.start()
@@ -223,6 +225,7 @@ def main(argv=None):
         if signature_repeat_count >= 10:
             print("Too many crashes with the same signature, exiting...", file=sys.stderr)
             break
+
 
 if __name__ == "__main__":
     sys.exit(main())

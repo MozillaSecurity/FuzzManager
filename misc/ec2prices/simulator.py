@@ -39,6 +39,7 @@ except ImportError:
 
 now = datetime.datetime.now()
 
+
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
 def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws_secret_key, instance_type):
@@ -50,25 +51,25 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
     while True:
         try:
             region = boto.ec2.connect_to_region(region_name,
-                                           aws_access_key_id=aws_key_id,
-                                           aws_secret_access_key=aws_secret_key
-                                           )
+                                                aws_access_key_id=aws_key_id,
+                                                aws_secret_access_key=aws_secret_key
+                                                )
 
             if not region:
                 raise RuntimeError("Invalid region: %s" % region_name)
 
             r = region.get_spot_price_history(start_time=start_time.isoformat(),
                                               end_time=end_time.isoformat(),
-                                            instance_type=instance_type,
-                                            product_description="Linux/UNIX"
-                                            )  # TODO: Make configurable
-
+                                              instance_type=instance_type,
+                                              product_description="Linux/UNIX"
+                                              )  # TODO: Make configurable
             break
         except:
             print("Caught exception, retrying")
             pass
 
     return r
+
 
 def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices, use_multiprocess=False):
     if use_multiprocess:
@@ -108,6 +109,7 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
 
                 prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(), mean_price, cur[2] + 1]
 
+
 class ConfigurationFile():
     def __init__(self, configFile):
         self.simulations = OrderedDict()
@@ -118,7 +120,7 @@ class ConfigurationFile():
             # Make sure keys are kept case-sensitive
             self.parser.optionxform = str
 
-            self.parser.read([ configFile ])
+            self.parser.read([configFile])
 
             sections = self.parser.sections()
             for section in sections:
@@ -152,6 +154,7 @@ class ConfigurationFile():
         for o in options:
             ret[o] = self.parser.get(section, o)
         return ret
+
 
 def main():
     '''Command line options.'''
@@ -219,7 +222,7 @@ def main():
 
     print("")
 
-    sys.stdout.write(" "*col_len)
+    sys.stdout.write(" " * col_len)
     for simulation in results:
         sys.stdout.write(simulation)
         # sys.stdout.write(" "*(col_len - len(simulation)))
@@ -228,7 +231,7 @@ def main():
 
     for simulation_a in results:
         sys.stdout.write(simulation_a)
-        sys.stdout.write(" "*(col_len - len(simulation_a)))
+        sys.stdout.write(" " * (col_len - len(simulation_a)))
         for simulation_b in results:
             price_a = results[simulation_a]
             price_b = results[simulation_b]
@@ -236,8 +239,9 @@ def main():
             p = "%.2f %%" % (100 - (price_a / price_b) * 100)
 
             sys.stdout.write(p)
-            sys.stdout.write(" "*(len(simulation_b) - len(p) + 2))
+            sys.stdout.write(" " * (len(simulation_b) - len(p) + 2))
         sys.stdout.write("\n")
+
 
 if __name__ == "__main__":
     sys.exit(main())

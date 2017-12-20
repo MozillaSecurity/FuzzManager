@@ -31,52 +31,54 @@ try:
 except ConnectionError, e:
     haveServer = False
 
+
 @unittest.skipIf(not haveServer, reason="No remote server available for testing")
 class TestRESTCrashEntryInterface(unittest.TestCase):
     def runTest(self):
         url = testServerURL + "crashes/"
-        
+
         # Must yield forbidden without authentication
         self.assertEqual(requests.get(url).status_code, requests.codes["unauthorized"])
         self.assertEqual(requests.post(url, {}).status_code, requests.codes["unauthorized"])
         self.assertEqual(requests.put(url, {}).status_code, requests.codes["unauthorized"])
-        
+
         # Retry with authentication
         response = requests.get(url, headers=dict(Authorization="Token %s" % testAuthToken))
 
         # Must be empty now
         self.assertEqual(response.status_code, requests.codes["ok"])
         lengthBeforePost = len(response.json())
-        #self.assertEqual(response.json(), [])
-        
+        # self.assertEqual(response.json(), [])
+
         data = {
-                "rawStdout" : "data on\nstdout", 
-                "rawStderr" : "data on\nstderr",
-                "rawCrashData" : "some\ncrash\ndata",
-                "testcase" : "foo();\ntest();",
-                "testcase_isbinary": False,
-                "testcase_quality": 0,
-                "testcase_ext" : "js",
-                "platform" : "x86",
-                "product" : "mozilla-central",
-                "product_version" : "ba0bc4f26681",
-                "os" : "linux",
-                "client" : "client1",
-                "tool" : "tool1",
-                }
-        
+            "rawStdout": "data on\nstdout",
+            "rawStderr": "data on\nstderr",
+            "rawCrashData": "some\ncrash\ndata",
+            "testcase": "foo();\ntest();",
+            "testcase_isbinary": False,
+            "testcase_quality": 0,
+            "testcase_ext": "js",
+            "platform": "x86",
+            "product": "mozilla-central",
+            "product_version": "ba0bc4f26681",
+            "os": "linux",
+            "client": "client1",
+            "tool": "tool1",
+        }
+
         self.assertEqual(requests.post(url, data, headers=dict(Authorization="Token %s" % testAuthToken)).status_code, requests.codes["created"])
         response = requests.get(url, headers=dict(Authorization="Token %s" % testAuthToken))
-        
+
         json = response.json()
         self.assertEqual(len(json), lengthBeforePost + 1)
         self.assertEqual(json[lengthBeforePost]["product_version"], "ba0bc4f26681")
-        
+
+
 @unittest.skipIf(not haveServer, reason="No remote server available for testing")
 class TestRESTSignatureInterface(unittest.TestCase):
     def runTest(self):
         url = testServerURL + "signatures/"
-        
+
         # Must yield forbidden without authentication
         self.assertEqual(requests.get(url).status_code, requests.codes["not_found"])
 

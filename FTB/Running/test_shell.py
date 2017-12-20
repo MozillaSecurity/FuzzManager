@@ -20,18 +20,22 @@ import signal
 import sys
 import time
 
+
 def crash():
     import ctypes
 
     # Causes a NULL deref
     ctypes.string_at(0)
 
+
 def hang():
     while True:
         time.sleep(1)
 
+
 def stop():
     os.kill(os.getpid(), signal.SIGSTOP)
+
 
 def processInput(mode, inputFd):
     received_aa = False

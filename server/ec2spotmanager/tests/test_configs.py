@@ -202,6 +202,7 @@ class CreateConfigViewTests(TestCase):
         self.assertContains(response, 'good=true')
         self.assertContains(response, 'hello=world')
 
+
 class ViewConfigViewTests(TestCase):
     name = "ec2spotmanager:configview"
 

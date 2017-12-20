@@ -32,13 +32,17 @@ async_start_threads_by_poolid = {}
 
 # Global variable for indicating shutdown through InterruptHandler
 pending_shutdown = False
+
+
 def handle_interrupt(signal, frame):
     global pending_shutdown
     logger.info("Shutdown initiated...")
     pending_shutdown = True
 
+
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
+
     @pid_lock_file("monitoring_daemon")
     def handle(self, *args, **options):
         if args:
@@ -189,7 +193,7 @@ class Command(BaseCommand):
         return (best_region, best_zone, rejected_prices)
 
     def create_laniakea_images(self, config):
-        images = { "default" : {} }
+        images = {"default": {}}
 
         # These are the configuration keys we want to put into the target configuration
         # without further preprocessing, except for the adjustment of the key name itself.
@@ -411,16 +415,16 @@ class Command(BaseCommand):
 
             try:
                 if terminateByPool:
-                    boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+                    boto_instances = cluster.find(filters={"tag:SpotManager-PoolId": str(pool.pk)})
 
                     # Data consistency checks
                     for boto_instance in boto_instances:
                         # state_code is a 16-bit value where the high byte is
                         # an opaque internal value and should be ignored.
                         state_code = boto_instance.state_code & 255
-                        if not ((boto_instance.id in instance_ids_by_region[region])
-                                or (state_code == INSTANCE_STATE['shutting-down']
-                                or state_code == INSTANCE_STATE['terminated'])):
+                        if not ((boto_instance.id in instance_ids_by_region[region]) or
+                                (state_code == INSTANCE_STATE['shutting-down'] or
+                                    state_code == INSTANCE_STATE['terminated'])):
                             logger.error("[Pool %d] Instance with EC2 ID %s (status %d) is not in region list for region %s" % (pool.id, boto_instance.id, state_code, region))
 
                     cluster.terminate(boto_instances)
@@ -458,7 +462,6 @@ class Command(BaseCommand):
         debug_not_updatable_continue = set()
         debug_not_in_region = {}
 
-
         for instance_id in instances_by_ids:
             if instance_id:
                 instances_left.append(instances_by_ids[instance_id])
@@ -480,7 +483,7 @@ class Command(BaseCommand):
                 return None
 
             try:
-                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId": str(pool.pk)})
 
                 for boto_instance in boto_instances:
                     # Store ID seen for debugging purposes
@@ -507,8 +510,8 @@ class Command(BaseCommand):
                     # make sure it's a terminated instance because we should never have a running
                     # instance that matches the search above but is not in our database.
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        if not ((state_code == INSTANCE_STATE['shutting-down']
-                            or state_code == INSTANCE_STATE['terminated'])):
+                        if not ((state_code == INSTANCE_STATE['shutting-down'] or
+                                state_code == INSTANCE_STATE['terminated'])):
 
                             # As a last resort, try to find the instance in our database.
                             # If the instance was saved to our database between the entrance

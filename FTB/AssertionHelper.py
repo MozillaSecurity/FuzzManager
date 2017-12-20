@@ -110,6 +110,7 @@ def getAssertion(output):
 
     return lastLine
 
+
 def getAuxiliaryAbortMessage(output):
     '''
     This helper method provides a way to extract and process additional
@@ -139,7 +140,7 @@ def getAuxiliaryAbortMessage(output):
                 lastLine = line.strip()
                 needASanRW = True
         elif needASanRW and "READ of size" in line or "WRITE of size" in line:
-            lastLine = [ lastLine ]
+            lastLine = [lastLine]
             lastLine.append(line)
             needASanRW = False
         elif "glibc detected" in line:
@@ -166,10 +167,9 @@ def getSanitizedAssertionPattern(msgs):
     '''
     assert msgs != None
 
-
     returnList = True
     if not isinstance(msgs, list):
-        msgs = [ msgs ]
+        msgs = [msgs]
         returnList = False
 
     sanitizedMsgs = []
@@ -234,7 +234,7 @@ def escapePattern(msg):
 
     escapedStr = msg
 
-    activeChars = [ "\\", "[", "]", "{", "}", "(", ")", "*", "+", "-", "?", "^", "$", ".", "|" ]
+    activeChars = ["\\", "[", "]", "{", "}", "(", ")", "*", "+", "-", "?", "^", "$", ".", "|"]
 
     for activeChar in activeChars:
         escapedStr = escapedStr.replace(activeChar, "\\" + activeChar)

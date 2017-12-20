@@ -190,9 +190,9 @@ class FindSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash()
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
 
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
         log.debug(response)
@@ -245,9 +245,9 @@ class OptSignatureTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
         log.debug(response)
         self.assertEqual(response.status_code, requests.codes['ok'])
@@ -265,9 +265,9 @@ class TrySignatureTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk, "crashid": crash.pk}))
         log.debug(response)

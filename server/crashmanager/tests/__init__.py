@@ -17,7 +17,7 @@ from django.core.files.base import ContentFile
 from django.test import TestCase as DjangoTestCase
 
 from ..models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, Client, CrashEntry, OS, Platform, \
-                     Product, TestCase as cmTestCase, Tool, User as cmUser
+    Product, TestCase as cmTestCase, Tool, User as cmUser
 
 logging.getLogger("django").setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG)

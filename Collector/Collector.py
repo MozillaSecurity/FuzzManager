@@ -49,6 +49,7 @@ __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
@@ -318,6 +319,7 @@ class Collector(Reporter):
 
         return (testCaseData, isBinary)
 
+
 def main(args=None):
     '''Command line options.'''
 
@@ -543,6 +545,7 @@ def main(args=None):
     if opts.get_clientid:
         print(collector.clientId)
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

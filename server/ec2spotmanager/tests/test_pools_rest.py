@@ -266,6 +266,7 @@ class RestPoolChartDetailedTests(APITestCase, TestCase):
         resp = json.loads(resp.content)
         self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})
 
+
 class RestPoolChartAccumulatedTests(APITestCase, TestCase):
 
     @pytest.mark.xfail  # these are protected by basic auth only

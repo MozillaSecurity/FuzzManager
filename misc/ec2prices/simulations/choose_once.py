@@ -21,6 +21,7 @@ from __future__ import print_function
 
 from .common import select_better
 
+
 def run(data, sim_config, main_config):
     fixed_region = None
     fixed_instance_type = None

@@ -22,6 +22,7 @@ import json
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
+
 class Symptom():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
@@ -127,6 +128,7 @@ class OutputSymptom(Symptom):
 
         return False
 
+
 class StackFrameSymptom(Symptom):
     def __init__(self, obj):
         '''
@@ -161,6 +163,7 @@ class StackFrameSymptom(Symptom):
 
         return False
 
+
 class StackSizeSymptom(Symptom):
     def __init__(self, obj):
         '''
@@ -180,6 +183,7 @@ class StackSizeSymptom(Symptom):
         @return: True if the symptom matches, False otherwise
         '''
         return self.stackSize.matches(len(crashInfo.backtrace))
+
 
 class CrashAddressSymptom(Symptom):
     def __init__(self, obj):
@@ -202,6 +206,7 @@ class CrashAddressSymptom(Symptom):
         # In case the crash address is not available,
         # the NumberMatch class will return false to not match.
         return self.address.matches(crashInfo.crashAddress)
+
 
 class InstructionSymptom(Symptom):
     def __init__(self, obj):
@@ -242,6 +247,7 @@ class InstructionSymptom(Symptom):
 
         return True
 
+
 class TestcaseSymptom(Symptom):
     def __init__(self, obj):
         '''
@@ -273,6 +279,7 @@ class TestcaseSymptom(Symptom):
 
         return False
 
+
 class StackFramesSymptom(Symptom):
     def __init__(self, obj):
         '''
@@ -303,7 +310,7 @@ class StackFramesSymptom(Symptom):
         if self.matches(crashInfo):
             return (0, None)
 
-        for depth in range(1,4):
+        for depth in range(1, 4):
             (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
             if bestDepth != None:
                 guessedFunctionNames = [repr(x) for x in bestGuess]
@@ -316,7 +323,7 @@ class StackFramesSymptom(Symptom):
                     # Do not return empty matches. This happens if there's nothing left except wildcards.
                     return (None, None)
 
-                return (bestDepth, StackFramesSymptom({ "type": "stackFrames", 'functionNames' : guessedFunctionNames }))
+                return (bestDepth, StackFramesSymptom({"type": "stackFrames", 'functionNames': guessedFunctionNames}))
 
         return (None, None)
 
@@ -332,7 +339,7 @@ class StackFramesSymptom(Symptom):
 
         hasVariableStackLengthQuantifier = '???' in [str(x) for x in newSignatureGuess]
 
-        for idx in range(startIdx,len(newSignatureGuess)):
+        for idx in range(startIdx, len(newSignatureGuess)):
             newSignatureGuess.insert(idx, singleWildcardMatch)
 
             # Check if we have a match with our modification
@@ -342,7 +349,7 @@ class StackFramesSymptom(Symptom):
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth + 1, maxDepth)
 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth
@@ -384,7 +391,7 @@ class StackFramesSymptom(Symptom):
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth+1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth + 1, maxDepth)
 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth

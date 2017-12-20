@@ -58,4 +58,4 @@ urlpatterns = [
 # This makes Django serve our testcases from the tests/ URL. When hosting this
 # project in production, one should consider serving tests directly through
 # the webserver rather than through Django for performance reasons.
-urlpatterns += [ url(r'^tests/(.*)$', serve, name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')}) ]
+urlpatterns += [url(r'^tests/(.*)$', serve, name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')})]

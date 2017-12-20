@@ -13,6 +13,7 @@ from crashmanager.models import Client, Tool
 if getattr(settings, 'USE_CELERY', None):
     from .tasks import check_revision_update
 
+
 class Repository(models.Model):
     classname = models.CharField(max_length=255, blank=False)
     name = models.CharField(max_length=255, blank=False)
@@ -24,9 +25,11 @@ class Repository(models.Model):
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.location)
 
+
 class CollectionFile(models.Model):
     file = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'COV_STORAGE', None)), upload_to="coverage")
     format = models.IntegerField(default=0)
+
 
 class Collection(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -70,10 +73,10 @@ class Collection(models.Model):
         the SourceCodeProvider registered for the repository associated with this
         collection. The resulting source code is added to a "source" property in
         the object.
-        
+
         @type path: string
         @param path: The path to the source code that this coverage belongs to.
-        
+
         @type coverage: dict
         @param coverage: The coverage object to annotate. Should be a leaf object,
                          any children are ignored. The coverage object is directly
@@ -86,16 +89,16 @@ class Collection(models.Model):
         """
         Calculate a subset of the coverage stored in this collection
         based on the given path.
-        
+
         @type path: string
         @param path: The path to reduce to. It is expected to use forward
                      slashes. The path is interpreted as relative to the root
                      of the collection.
-                     
+
         @rtype: dict
         @return: An object that represents the requested subset of the coverage.
                  The storage format is the same as the underlying coverage uses.
-                 
+
                  None is returned if the path does not exist in the collection.
         """
         # Load coverage from disk if we haven't done that yet
@@ -126,7 +129,7 @@ class Collection(models.Model):
         Doing so saves data and processing time for other algorithms as for many
         views, the children of children are not relevant (only one depth of view
         at a time).
-        
+
         @type coverage: dict
         @param coverage: A coverage data object in server-side storage format.
                          This object is directly modified by this method for
@@ -146,7 +149,7 @@ class Collection(models.Model):
         """
         This method strips all detailed coverage information from the given
         coverage data. Only the summarized coverage fields are left intact.
-        
+
         @type coverage: dict
         @param coverage: A coverage data object in server-side storage format.
                          This object is directly modified by this method for
@@ -163,6 +166,7 @@ class Collection(models.Model):
             # coverage field might not be present.
             coverage.pop("coverage", None)
 
+
 # This post_delete handler ensures that the corresponding coverage
 # file is deleted when the Collection is gone.
 @receiver(post_delete, sender=Collection)
@@ -170,6 +174,7 @@ def Collection_delete(sender, instance, **kwargs):
     if instance.coverage:
         instance.coverage.file.delete(False)
         instance.coverage.delete(False)
+
 
 # post_save handler for celery integration
 if getattr(settings, 'USE_CELERY', None):

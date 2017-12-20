@@ -42,6 +42,7 @@ null_coverable_count = 0
 length_mismatch_count = 0
 coverable_mismatch_count = 0
 
+
 class CovReporter(Reporter):
     def __init__(self, serverHost=None, serverPort=None,
                  serverProtocol=None, serverAuthToken=None,
@@ -142,7 +143,7 @@ class CovReporter(Reporter):
         @return Preprocessed Coverage Data
         '''
 
-        ret = { "children" : {} }
+        ret = {"children": {}}
 
         if "source_files" in coverage:
             # Coveralls format
@@ -164,14 +165,13 @@ class CovReporter(Reporter):
                 # on the fly if they don't exist yet in our tree.
                 for path_part in path_parts:
                     if not path_part in ptr:
-                        ptr[path_part] = { "children" : {} }
+                        ptr[path_part] = {"children": {}}
 
                     ptr = ptr[path_part]["children"]
 
                 ptr[file_part] = {
-                    "coverage" :  [-1 if x is None else x for x in source_file["coverage"]]
+                    "coverage": [-1 if x is None else x for x in source_file["coverage"]]
                 }
-
 
         else:
             raise RuntimeError("Unknown coverage format")
@@ -243,13 +243,11 @@ class CovReporter(Reporter):
                 else:
                     CovReporter.__merge_coverage_data(ret, coverage)
 
-
-
         return (ret, version)
 
     @staticmethod
-    def __merge_coverage_data(r,s):
-        def merge_recursive(r,s):
+    def __merge_coverage_data(r, s):
+        def merge_recursive(r, s):
             # These globals are mainly for debugging purposes. We count the number
             # of warnings we encounter during merging, which are mostly due to
             # bugs in GCOV. These statistics can be included in the report description
@@ -298,25 +296,25 @@ class CovReporter(Reporter):
                     return
 
                 # Disable the assertion for now
-                #assert(len(r['coverage']) == len(s['coverage']))
+                # assert(len(r['coverage']) == len(s['coverage']))
 
-                for idx in range(0,len(rc)):
+                for idx in range(0, len(rc)):
                     if sc[idx] < 0:
                         # Verify that coverable vs. not coverable matches
                         # Unfortunately, GCOV again messes this up for headers sometimes
                         if rc[idx] >= 0:
-                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %(r['name'], idx, rc[idx], sc[idx]))
+                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" % (r['name'], idx, rc[idx], sc[idx]))
                             coverable_mismatch_count += 1
 
                         # Disable the assertion for now
-                        #assert(r['coverage'][idx] < 0)
+                        # assert(r['coverage'][idx] < 0)
                     elif rc[idx] < 0 and sc[idx] >= 0:
                         rc[idx] = sc[idx]
                     else:
                         rc[idx] += sc[idx]
 
         # Merge recursively
-        merge_recursive(r,s)
+        merge_recursive(r, s)
 
         # Recursively re-calculate all summary fields
         CovReporter.__calculate_summary_fields(r)
@@ -354,6 +352,7 @@ class CovReporter(Reporter):
         else:
             node["coveragePercent"] = 0.0
 
+
 def main(argv=None):
     '''Command line options.'''
 
@@ -367,7 +366,6 @@ def main(argv=None):
     actions = action_group.add_mutually_exclusive_group(required=True)
     actions.add_argument("--submit", help="Submit the given file as coverage data", metavar="FILE")
     actions.add_argument("--multi-submit", action="store_true", help="Submit multiple files (specified last on the command line)")
-
 
     # Generic Settings
     parser.add_argument("--serverhost", help="Server hostname for remote signature management", metavar="HOST")
@@ -411,6 +409,7 @@ def main(argv=None):
             reporter.submit(coverage, preprocessed=True, version=version, description=opts.description)
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

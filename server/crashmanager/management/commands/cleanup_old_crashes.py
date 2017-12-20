@@ -11,6 +11,7 @@ from crashmanager.models import CrashEntry, Bucket, Bug
 
 class Command(BaseCommand):
     help = "Cleanup old crash entries."
+
     @mgmt_lock_required
     def handle(self, *args, **options):
 
@@ -32,7 +33,7 @@ class Command(BaseCommand):
             # we have a post-delete receiver on CrashEntry that has to be called for
             # every single deleted entry with the full instance. Maybe Django loads
             # a copy of all instances to be deleted into memory for this purpose.
-            while CrashEntry.objects.filter(bucket__bug = bug).count() > 500:
+            while CrashEntry.objects.filter(bucket__bug=bug).count() > 500:
                 # Deleting things in buckets is complicated:
                 #
                 # Attempting to combine a subset (LIMIT) with a delete yields
@@ -44,7 +45,7 @@ class Command(BaseCommand):
                 # So the only way we have left is to manually select a given amount of pks
                 # and store them in a list to use pk__in with the list and a DELETE query.
 
-                pks = list(CrashEntry.objects.filter(bucket__bug = bug).values_list('pk', flat=True)[:500])
+                pks = list(CrashEntry.objects.filter(bucket__bug=bug).values_list('pk', flat=True)[:500])
                 CrashEntry.objects.filter(pk__in=pks).delete()
 
             bug.delete()

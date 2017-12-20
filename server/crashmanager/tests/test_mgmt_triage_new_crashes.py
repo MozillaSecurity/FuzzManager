@@ -20,13 +20,13 @@ def test_none():
 
 def test_some():
     buckets = [Bucket.objects.create(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '/foo/'}]})),
+               {'src': 'stderr',
+                'type': 'output',
+                'value': '/foo/'}]})),
                Bucket.objects.create(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '/match/'}]}))]
+                   {'src': 'stderr',
+                    'type': 'output',
+                    'value': '/match/'}]}))]
     defaults = {"client": Client.objects.create(),
                 "os": OS.objects.create(),
                 "platform": Platform.objects.create(),

@@ -6,6 +6,7 @@ from crashmanager.models import CrashEntry, Bucket
 
 class Command(BaseCommand):
     help = "Iterates over all unbucketed crash entries that have never been triaged before to assign them into the existing buckets."
+
     @mgmt_lock_required
     def handle(self, *args, **options):
         entries = CrashEntry.objects.filter(triagedOnce=False, bucket=None)

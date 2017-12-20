@@ -32,7 +32,7 @@ except:
             SECRET_KEY = ''.join([random.choice(chars) for i in range(64)])
             f.write(SECRET_KEY)
     except IOError:
-        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE) 
+        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     'chartjs',
 )
 
+
 # This tiny middleware module allows us to see exceptions on stderr
 # when running a Django instance with runserver.py
 class ExceptionLoggingMiddleware(object):
@@ -70,11 +71,12 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'django.contrib.auth.middleware.RemoteUserMiddleware',
+    # 'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
 )
+
 
 # We add a custom context processor to make our application name
 # and certain other variables available in all our templates
@@ -84,6 +86,7 @@ def resolver_context_processor(request):
         'namespace': request.resolver_match.namespace,
         'url_name': request.resolver_match.url_name
     }
+
 
 TEMPLATES = [
     {
@@ -110,9 +113,9 @@ TEMPLATES = [
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
 # You still have to configure basic auth through your webserver.
 #
-#AUTHENTICATION_BACKENDS = (
-#    'django.contrib.auth.backends.RemoteUserBackend',
-#)
+# AUTHENTICATION_BACKENDS = (
+#     'django.contrib.auth.backends.RemoteUserBackend',
+# )
 
 ROOT_URLCONF = 'server.urls'
 
@@ -128,14 +131,14 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 
-# For a production setup, we recommend to not use sqlite
-# but instead a real database like MySQL or Postgres.
-#    'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#        'OPTIONS': {
-#            'read_default_file': '/path/to/my.cnf',
-#        },
-#    }
+    # For a production setup, we recommend to not use sqlite
+    # but instead a real database like MySQL or Postgres.
+    #    'default': {
+    #        'ENGINE': 'django.db.backends.mysql',
+    #        'OPTIONS': {
+    #            'read_default_file': '/path/to/my.cnf',
+    #        },
+    #    }
 }
 
 # Internationalization
@@ -173,7 +176,7 @@ LOG_DIR = os.path.join(BASE_DIR, "logs")
 # once we try to create the log file, so don't bother checking
 # this here.
 if not os.path.exists(LOG_DIR):
-  os.makedirs(LOG_DIR)
+    os.makedirs(LOG_DIR)
 
 LOGGING = {
     'version': 1,
@@ -186,13 +189,13 @@ LOGGING = {
             'format': '[%(asctime)s] [%(levelname)s] [%(module)s]: %(message)s'
         },
     },
-   'handlers': {
-        'console':{
+    'handlers': {
+        'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'ec2spotmanager_logfile':{
+        'ec2spotmanager_logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOG_DIR, 'ec2spotmanager.log'),
@@ -217,14 +220,14 @@ LOGGING = {
 # If you are running FuzzManager behind a TLS loadbalancer,
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Crashmanager configuration
 #
-#BUGZILLA_USERNAME = "example@example.com"
-#BUGZILLA_PASSWORD = "secret"
-#CLEANUP_CRASHES_AFTER_DAYS = 14
-#CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
+# BUGZILLA_USERNAME = "example@example.com"
+# BUGZILLA_PASSWORD = "secret"
+# CLEANUP_CRASHES_AFTER_DAYS = 14
+# CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
 
 # This is the base directory where the tests/ subdirectory will
 # be created for storing submitted test files.

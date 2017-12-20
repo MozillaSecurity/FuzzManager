@@ -42,6 +42,7 @@ __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
+
 class EC2Reporter(Reporter):
     @functools.wraps(Reporter.__init__)
     def __init__(self, *args, **kwargs):
@@ -113,6 +114,7 @@ class EC2Reporter(Reporter):
 
         if response.status_code != requests.codes["ok"]:
             raise Reporter.serverError(response)
+
 
 def main(argv=None):
     '''Command line options.'''
@@ -199,6 +201,7 @@ def main(argv=None):
 
     reporter.report(report)
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

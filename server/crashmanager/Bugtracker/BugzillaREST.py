@@ -18,6 +18,7 @@ from __future__ import print_function
 import base64
 import requests
 
+
 class BugzillaREST():
     def __init__(self, hostname, username=None, password=None, api_key=None):
         self.hostname = hostname
@@ -63,7 +64,7 @@ class BugzillaREST():
         return True
 
     def getBug(self, bugId):
-        bugs = self.getBugs([ bugId ])
+        bugs = self.getBugs([bugId])
 
         if not bugs:
             return None
@@ -71,11 +72,11 @@ class BugzillaREST():
         return bugs[int(bugId)]
 
     def getBugStatus(self, bugIds):
-        return self.getBugs(bugIds, include_fields=[ "id", "is_open", "resolution", "dupe_of", "cf_last_resolved" ])
+        return self.getBugs(bugIds, include_fields=["id", "is_open", "resolution", "dupe_of", "cf_last_resolved"])
 
     def getBugs(self, bugIds, include_fields=None, exclude_fields=None):
         if not isinstance(bugIds, list):
-            bugIds = [ bugIds ]
+            bugIds = [bugIds]
 
         bugUrl = "%s/bug?id=%s" % (self.baseUrl, ",".join(bugIds))
 

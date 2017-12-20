@@ -33,31 +33,31 @@ class BugzillaProvider(Provider):
         super(BugzillaProvider, self).__init__(pk, hostname)
 
         self.templateFields = [
-                    "name",
-                    "product",
-                    "component",
-                    "summary",
-                    "version",
-                    "description",
-                    "op_sys",
-                    "platform",
-                    "priority",
-                    "severity",
-                    "alias",
-                    "cc",
-                    "assigned_to",
-                    "qa_contact",
-                    "target_milestone",
-                    "whiteboard",
-                    "keywords",
-                    "attrs",
-                    "security_group",
-                    "testcase_filename",
-                ]
+            "name",
+            "product",
+            "component",
+            "summary",
+            "version",
+            "description",
+            "op_sys",
+            "platform",
+            "priority",
+            "severity",
+            "alias",
+            "cc",
+            "assigned_to",
+            "qa_contact",
+            "target_milestone",
+            "whiteboard",
+            "keywords",
+            "attrs",
+            "security_group",
+            "testcase_filename",
+        ]
 
         self.templateFlags = [
-                    "security",
-                ]
+            "security",
+        ]
 
     def getTemplateForUser(self, request, crashEntry):
         if 'template' in request.GET:
@@ -218,15 +218,15 @@ class BugzillaProvider(Provider):
             attachmentData = self.substituteTemplateForCrash(template, crashEntry)
 
         data = {
-                   'hostname' : self.hostname,
-                   'templates' : templates,
-                   'template' : template,
-                   'entry' : crashEntry,
-                   'provider' : self.pk,
-                   'mode' : mode,
-                   'postTarget' : postTarget,
-                   'attachmentData' : attachmentData,
-                }
+            'hostname': self.hostname,
+            'templates': templates,
+            'template': template,
+            'entry': crashEntry,
+            'provider': self.pk,
+            'mode': mode,
+            'postTarget': postTarget,
+            'attachmentData': attachmentData,
+        }
 
         return render(request, 'bugzilla/submit.html', data)
 
@@ -271,7 +271,7 @@ class BugzillaProvider(Provider):
             args["groups"] = ["core-security"]
             # Allow security_group to override the default security group used
             if 'security_group' in request.POST and request.POST['security_group']:
-                args["groups"] = [ request.POST['security_group'] ]
+                args["groups"] = [request.POST['security_group']]
 
         # security_group is a field we need in our template, but it does not correspond
         # to a field in Bugzilla so we need to remove it here.
@@ -389,11 +389,11 @@ class BugzillaProvider(Provider):
             template = {}
 
         data = {
-                'createTemplate' : True,
-                'template' : template,
-                'provider' : self.pk,
-                'mode' : "create",
-                }
+            'createTemplate': True,
+            'template': template,
+            'provider': self.pk,
+            'mode': "create",
+        }
 
         return render(request, 'bugzilla/submit.html', data)
 
@@ -402,11 +402,11 @@ class BugzillaProvider(Provider):
         templates = BugzillaTemplate.objects.all()
 
         data = {
-                'provider' : self.pk,
-                'templates' : templates,
-                'template' : template,
-                'mode' : mode,
-                }
+            'provider': self.pk,
+            'templates': templates,
+            'template': template,
+            'mode': mode,
+        }
 
         return render(request, 'bugzilla/view_edit_template.html', data)
 

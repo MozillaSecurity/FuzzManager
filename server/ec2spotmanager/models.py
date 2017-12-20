@@ -11,15 +11,18 @@ import os
 def get_storage_path(self, name):
     return os.path.join("poolconfig-%s-files" % self.pk, name)
 
+
 class FlatObject(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
 
-INSTANCE_STATE_CODE = { -1 : "requested", 0 : "pending", 16 : "running", 32 : "shutting-down", 48 : "terminated", 64 : "stopping", 80 : "stopped" }
+
+INSTANCE_STATE_CODE = {-1: "requested", 0: "pending", 16: "running", 32: "shutting-down", 48: "terminated", 64: "stopping", 80: "stopped"}
 INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.iteritems())
 
-POOL_STATUS_ENTRY_TYPE_CODE = { 0: "unclassified", 1: "price-too-low", 2: "config-error", 3: "max-spot-instance-count-exceeded", 4: "temporary-failure" }
+POOL_STATUS_ENTRY_TYPE_CODE = {0: "unclassified", 1: "price-too-low", 2: "config-error", 3: "max-spot-instance-count-exceeded", 4: "temporary-failure"}
 POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.iteritems())
+
 
 class OverwritingStorage(FileSystemStorage):
     def get_available_name(self, name, max_length=None):
@@ -64,27 +67,27 @@ class PoolConfiguration(models.Model):
         # The fields which are dictionaries/lists get special treatment
         # because they should behave in an additive manner.
         self.config_fields = [
-                        'size',
-                        'aws_access_key_id',
-                        'aws_secret_access_key',
-                        'cycle_interval',
-                        'ec2_key_name',
-                        'ec2_image_name',
-                        'ec2_instance_type',
-                        'ec2_max_price',
-                        'ec2_userdata',
-                        ]
+            'size',
+            'aws_access_key_id',
+            'aws_secret_access_key',
+            'cycle_interval',
+            'ec2_key_name',
+            'ec2_image_name',
+            'ec2_instance_type',
+            'ec2_max_price',
+            'ec2_userdata',
+        ]
 
         self.list_config_fields = [
-                        'ec2_security_groups',
-                        'ec2_allowed_regions',
-                        ]
+            'ec2_security_groups',
+            'ec2_allowed_regions',
+        ]
 
         self.dict_config_fields = [
-                        'ec2_tags',
-                        'ec2_raw_config',
-                        'ec2_userdata_macros'
-                        ]
+            'ec2_tags',
+            'ec2_raw_config',
+            'ec2_userdata_macros'
+        ]
 
         # For performance reasons we do not deserialize these fields
         # automatically here. You need to explicitly call the
@@ -209,6 +212,7 @@ class PoolConfiguration(models.Model):
 
         return missing_fields
 
+
 @receiver(models.signals.post_delete, sender=PoolConfiguration)
 def deletePoolConfigurationFiles(sender, instance, **kwargs):
     if instance.ec2_userdata:
@@ -220,10 +224,12 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
         if not os.listdir(filedir):
             os.rmdir(filedir)
 
+
 class InstancePool(models.Model):
     config = models.ForeignKey(PoolConfiguration)
     isEnabled = models.BooleanField(default=False)
     last_cycled = models.DateTimeField(blank=True, null=True)
+
 
 class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -235,11 +241,13 @@ class Instance(models.Model):
     ec2_region = models.CharField(max_length=255)
     ec2_zone = models.CharField(max_length=255)
 
+
 class InstanceStatusEntry(models.Model):
     instance = models.ForeignKey(Instance)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
+
 
 class PoolStatusEntry(models.Model):
     pool = models.ForeignKey(InstancePool)
@@ -248,11 +256,13 @@ class PoolStatusEntry(models.Model):
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
 
+
 class PoolUptimeDetailedEntry(models.Model):
     pool = models.ForeignKey(InstancePool)
     created = models.DateTimeField(default=timezone.now)
     target = models.IntegerField()
     actual = models.IntegerField()
+
 
 class PoolUptimeAccumulatedEntry(models.Model):
     pool = models.ForeignKey(InstancePool)

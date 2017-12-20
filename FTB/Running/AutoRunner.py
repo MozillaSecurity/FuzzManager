@@ -70,10 +70,8 @@ class AutoRunner():
         self.stderr = None
         self.auxCrashData = None
 
-
     def getCrashInfo(self, configuration):
         return CrashInfo.fromRawCrashData(self.stdout, self.stderr, configuration, self.auxCrashData)
-
 
     @staticmethod
     def fromBinaryArgs(binary, args=None, env=None, cwd=None, stdin=None):
@@ -136,10 +134,9 @@ class GDBRunner(AutoRunner):
             else:
                 self.cmdArgs.extend(self.args)
 
-
     def run(self):
         if self.force_core:
-            plainCmdArgs = [ self.binary ]
+            plainCmdArgs = [self.binary]
             plainCmdArgs.extend(self.args)
 
             process = subprocess.Popen(
@@ -284,14 +281,14 @@ class ASanRunner(AutoRunner):
             if process.returncode < 0:
                 crashSignals = [
                     # POSIX.1-1990 signals
-                        signal.SIGILL,
-                        signal.SIGABRT,
-                        signal.SIGFPE,
-                        signal.SIGSEGV,
-                        # SUSv2 / POSIX.1-2001 signals
-                        signal.SIGBUS,
-                        signal.SIGSYS,
-                        signal.SIGTRAP,
+                    signal.SIGILL,
+                    signal.SIGABRT,
+                    signal.SIGFPE,
+                    signal.SIGSEGV,
+                    # SUSv2 / POSIX.1-2001 signals
+                    signal.SIGBUS,
+                    signal.SIGSYS,
+                    signal.SIGTRAP,
                 ]
 
                 for crashSignal in crashSignals:

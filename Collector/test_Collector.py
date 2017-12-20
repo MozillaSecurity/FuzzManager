@@ -167,6 +167,7 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
     class response_t(object):
         status_code = 500
         text = "Error"
+
     def mypost(url, data, headers=None):
         return response_t()
     monkeypatch.setattr(time, 'sleep', lambda t: None)
@@ -197,6 +198,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
+
         # this asserts the expected arguments, and returns the open handle to out.zip as 'raw' which is read by refresh()
         def myget(url, stream=None, auth=None):
             assert url == 'gopher://aol.com:70/crashmanager/files/signatures.zip'
@@ -227,9 +229,11 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
 
     # check that 404 raises
     monkeypatch.undo()
+
     class response_t(object):
         status_code = requests.codes["not found"]
         text = "Not found"
+
     def myget(url, stream=None, auth=None):
         return response_t()
     monkeypatch.setattr(requests, 'get', myget)
@@ -243,6 +247,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
+
         def myget(url, stream=None, auth=None):
             return response_t()
         monkeypatch.setattr(requests, 'get', myget)
@@ -258,6 +263,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
+
         def myget(url, stream=None, auth=None):
             return response_t()
         monkeypatch.setattr(requests, 'get', myget)
@@ -308,20 +314,25 @@ def test_collector_download(tmpdir, monkeypatch):
     class response1_t(object):
         status_code = requests.codes["ok"]
         text = 'OK'
+
         def json(self):
             return {'testcase': 'path/to/testcase.txt'}
+
     class response2_t(object):
         status_code = requests.codes["ok"]
         text = 'OK'
         content = b'testcase\xFF'
+
     # myget1 mocks requests.get to return the rest response to the crashentry get
     def myget1(url, headers=None):
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/'
-        assert headers == {'Authorization':'Token token'}
+        assert headers == {'Authorization': 'Token token'}
+
         monkeypatch.undo()
         monkeypatch.chdir(tmpdir)  # download writes to cwd, so make that tmpdir
         monkeypatch.setattr(requests, 'get', myget2)
         return response1_t()
+
     # myget2 mocks requests.get to return the testcase data specified in myget1
     def myget2(url, auth=None):
         assert url == 'gopher://aol.com:70/crashmanager/path/to/testcase.txt'
@@ -359,6 +370,7 @@ def test_collector_download(tmpdir, monkeypatch):
     class response1_t(object):
         status_code = requests.codes["ok"]
         text = 'OK'
+
         def json(self):
             return {'testcase': ''}
     monkeypatch.undo()
@@ -370,6 +382,7 @@ def test_collector_download(tmpdir, monkeypatch):
     class response1_t(object):
         status_code = requests.codes["ok"]
         text = 'OK'
+
         def json(self):
             return []
     monkeypatch.undo()

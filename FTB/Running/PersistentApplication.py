@@ -37,25 +37,26 @@ from FTB.Running.WaitpidMonitor import WaitpidMonitor
 class ApplicationStatus:
     OK, ERROR, TIMEDOUT, CRASHED = range(1, 5)
 
+
 class PersistentMode:
     """
     Persistent fuzzing mode - determines how the program synchronizes the
     execution of multiple testcases in one process.
-    
+
     NONE - No persistence at all, program is supposed to exit after every test.
-    
+
     SPFP - Use the Simple Persistent Fuzzing Protocol (SPFP) to synchronize
            execution. This is a simple message exchange on stdin/stdout/stderr.
-             
+
            The program must stick to the following rules:
-             
+
            Listen on stdin for "spfp-selftest" and respond with "SPFP: PASSED".
            Consider everything else on stdin to be test data, terminated by
            "spfp-endofdata". The program must then respond with "SPFP: OK" or
            "SPFP: ERROR" *after* processing the data (i.e. once it is ready to
            receive new data). The program is also not supposed to quit without
            emitting an "SPFP: QUIT" message before.
-             
+
     SIGSTOP - Use a SIGSTOP-based protocol like AFL implements it. After startup,
               the program is supposed to SIGSTOP itself to indicate that it is
               ready to process data. It should also SIGSTOP itself after each
@@ -63,6 +64,7 @@ class PersistentMode:
               if no synchronization via stdin is possible
     """
     NONE, SPFP, SIGSTOP = range(1, 4)
+
 
 class PersistentApplication():
     '''
@@ -206,18 +208,18 @@ class SimplePersistentApplication(PersistentApplication):
             # at all. Otherwise, all tests should go through the runTest method.
             assert test is None
 
-        popenArgs = [ self.binary ]
+        popenArgs = [self.binary]
         popenArgs.extend(self.args)
 
         self.process = subprocess.Popen(
-                         popenArgs,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         cwd=self.cwd,
-                         env=self.env,
-                         universal_newlines=True
-                        )
+            popenArgs,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.cwd,
+            env=self.env,
+            universal_newlines=True
+        )
 
         # This queue is used to queue up responses that should be directly processed
         # by this class rather than being logged.
@@ -278,7 +280,6 @@ class SimplePersistentApplication(PersistentApplication):
             self.stop()
 
             return ret
-
 
     def stop(self):
         self._terminateProcess()

@@ -9,6 +9,7 @@ STATS_DELTA_SECS = 60 * 15  # 30 minutes
 STATS_TOTAL_DETAILED = 24  # How many hours the detailed statistics should include
 STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statistics
 
+
 @app.task
 def update_stats():
     from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance, INSTANCE_STATE

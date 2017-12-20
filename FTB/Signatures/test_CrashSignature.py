@@ -265,9 +265,9 @@ testSignature4 = '''{"symptoms": [
     "type": "stackFrame"
   },
     {
-    "type": "testcase", 
+    "type": "testcase",
     "value": {
-      "matchType": "pcre", 
+      "matchType": "pcre",
       "value": "SIMD\\\.float\\\d+x"
     }
   }
@@ -286,7 +286,7 @@ testSignature5 = '''{"symptoms": [
     "type": "stackFrame"
   },
     {
-    "type": "testcase", 
+    "type": "testcase",
     "value": "SIMD.float32x4"
   }
 ]}
@@ -304,7 +304,7 @@ testSignature6 = '''{"symptoms": [
     "type": "stackFrame"
   },
     {
-    "type": "testcase", 
+    "type": "testcase",
     "value": "SIMD.float64x4"
   }
 ]}
@@ -312,11 +312,11 @@ testSignature6 = '''{"symptoms": [
 
 testSignature7 = '''{"symptoms": [
     {
-      "type": "stackFrames", 
+      "type": "stackFrames",
       "functionNames": [
-        "js::UnwindIteratorForException", 
-        "CloseLiveIterator", 
-        "HandleExceptionIon", 
+        "js::UnwindIteratorForException",
+        "CloseLiveIterator",
+        "HandleExceptionIon",
         "js::jit::HandleException"
       ]
     }
@@ -334,7 +334,7 @@ test();
 
 testSignatureStackFrames1 = '''{"symptoms": [
     {
-    "type": "stackFrames", 
+    "type": "stackFrames",
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MarkInternal<JSObject>" ]
   }
 ]}
@@ -342,7 +342,7 @@ testSignatureStackFrames1 = '''{"symptoms": [
 
 testSignatureStackFrames2 = '''{"symptoms": [
     {
-    "type": "stackFrames", 
+    "type": "stackFrames",
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MinorGCCallback", "MarkInternal<JSObject>" ]
   }
 ]}
@@ -350,7 +350,7 @@ testSignatureStackFrames2 = '''{"symptoms": [
 
 testSignatureStackFrames3 = '''{"symptoms": [
     {
-    "type": "stackFrames", 
+    "type": "stackFrames",
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "?", "MarkInternal<JSObject>" ]
   }
 ]}
@@ -358,7 +358,7 @@ testSignatureStackFrames3 = '''{"symptoms": [
 
 testSignatureStackFrames4 = '''{"symptoms": [
     {
-    "type": "stackFrames", 
+    "type": "stackFrames",
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "???", "MarkInternal<JSObject>" ]
   }
 ]}
@@ -366,7 +366,7 @@ testSignatureStackFrames4 = '''{"symptoms": [
 
 testSignatureStackFrames5 = '''{"symptoms": [
     {
-    "type": "stackFrames", 
+    "type": "stackFrames",
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MarkInternal<JSObject>" ]
   }
 ]}
@@ -397,6 +397,7 @@ testSignatureEmptyCrashAddress = '''{"symptoms": [
 ]}
 '''
 
+
 class SignatureCreateTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -418,6 +419,7 @@ class SignatureCreateTest(unittest.TestCase):
         #  The third crashInfo misses 2 frames from the top 4 frames, so it will
         #  also include the crash address, even though we did not request it.
         self.assertEqual(json.loads(str(crashSig3)), json.loads(testSignature3))
+
 
 class SignatureTestCaseMatchTest(unittest.TestCase):
     def runTest(self):
@@ -449,6 +451,7 @@ class SignatureTestCaseMatchTest(unittest.TestCase):
         # This one does not match at all
         self.assertFalse(testSig6.matches(crashInfo))
 
+
 class SignatureStackFramesTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -467,6 +470,7 @@ class SignatureStackFramesTest(unittest.TestCase):
         self.assertTrue(testSig4.matches(crashInfo))
         self.assertFalse(testSig5.matches(crashInfo))
 
+
 class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
     def runTest(self):
         # Do some direct matcher tests on edge cases
@@ -476,16 +480,17 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
         # Test the diff algorithm, test array contains:
         # stack, signature, expected distance, proposed signature
         testArray = [
-                     (['a', 'b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 1, ['a', 'b', '???', 'a', 'b', '?', 'c']),
-                     (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
-                     (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 3, ['?', 'b', '???', 'a', '?', 'x', '?']),
-                     ]
+            (['a', 'b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 1, ['a', 'b', '???', 'a', 'b', '?', 'c']),
+            (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
+            (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 3, ['?', 'b', '???', 'a', '?', 'x', '?']),
+        ]
 
         for (stack, rawSig, expectedDepth, expectedSig) in testArray:
             for maxDepth in (expectedDepth, 3):
-                (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [ StringMatch(x) for x in rawSig ], 0, 1, maxDepth)
+                (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [StringMatch(x) for x in rawSig], 0, 1, maxDepth)
                 self.assertEqual(expectedDepth, actualDepth)
-                self.assertEqual(expectedSig, [ str(x) for x in actualSig ])
+                self.assertEqual(expectedSig, [str(x) for x in actualSig])
+
 
 class SignaturePCREShortTest(unittest.TestCase):
     def runTest(self):
@@ -498,6 +503,7 @@ class SignaturePCREShortTest(unittest.TestCase):
 
         self.assertTrue(testSig1.matches(crashInfo))
         self.assertFalse(testSig2.matches(crashInfo))
+
 
 class SignatureStackFramesWildcardTailTest(unittest.TestCase):
     def runTest(self):
@@ -513,6 +519,7 @@ class SignatureStackFramesWildcardTailTest(unittest.TestCase):
         self.assertEqual(str(testSig.symptoms[0].functionNames[6]), "js::jit::CheckOverRecursedWithExtra")
         self.assertEqual(len(testSig.symptoms[0].functionNames), 7)
 
+
 class SignatureStackFramesRegressionTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
@@ -523,6 +530,7 @@ class SignatureStackFramesRegressionTest(unittest.TestCase):
 
         self.assertTrue(testSigEmptyCrashAddress.matches(crashInfoPos))
         self.assertFalse(testSigEmptyCrashAddress.matches(crashInfoNeg))
+
 
 class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
     def runTest(self):
@@ -546,6 +554,7 @@ class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
         self.assertFalse(crashSignatureNeg.matches(crashInfoPos))
         self.assertTrue(crashSignatureNeg.matches(crashInfoNeg))
 
+
 class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -556,6 +565,7 @@ class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
         self.assertIn("/ERROR: AddressSanitizer", str(testSig))
         self.assertIn("negative\\\\-size\\\\-param", str(testSig))
         self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+
 
 class SignatureAsanStackOverflowTest(unittest.TestCase):
     def runTest(self):

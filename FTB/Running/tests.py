@@ -20,6 +20,7 @@ from FTB.Running.PersistentApplication import SimplePersistentApplication, Persi
 
 TEST_PATH = os.path.dirname(__file__)
 
+
 class PersistentApplicationTestModeNone(unittest.TestCase):
     def runTest(self):
         def _check(spa):
@@ -53,6 +54,7 @@ class PersistentApplicationTestModeNone(unittest.TestCase):
         (_, inputFile) = tempfile.mkstemp()
         _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "none", inputFile], inputFile=inputFile))
         os.remove(inputFile)
+
 
 class PersistentApplicationTestOtherModes(unittest.TestCase):
     def runTest(self):
@@ -104,6 +106,7 @@ class PersistentApplicationTestOtherModes(unittest.TestCase):
                                            persistentMode=PersistentMode.SIGSTOP, processingTimeout=2, inputFile=inputFile))
         os.remove(inputFile)
 
+
 class PersistentApplicationTestPerf(unittest.TestCase):
     def runTest(self):
         def _check(spa):
@@ -138,22 +141,24 @@ class PersistentApplicationTestFaultySigstop(unittest.TestCase):
     def runTest(self):
         (_, inputFile) = tempfile.mkstemp()
         spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
-                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
+                                          persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
 
         with self.assertRaises(RuntimeError):
             spa.start()
 
         os.remove(inputFile)
 
+
 class PersistentApplicationTestStopWithoutStart(unittest.TestCase):
     def runTest(self):
         (_, inputFile) = tempfile.mkstemp()
         spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
-                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
+                                          persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
 
         # Should not throw, instead it should be a no-op
         spa.stop()
         os.remove(inputFile)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -26,7 +26,7 @@ asanOverflow = """
 READ of size 8 at 0x60300021e6c8 thread T20 (MediaPlayback #1)
 """
 
-asanNegativeSize="""
+asanNegativeSize = """
 ==12549==ERROR: AddressSanitizer: negative-size-param: (size=-17179869184)
 """
 
@@ -80,12 +80,14 @@ thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
   left: `Inline`,
  right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8"""
 
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
 
         self.assertEqual(AssertionHelper.getAssertion(err), None)
         self.assertEqual(AssertionHelper.getAuxiliaryAbortMessage(err), None)
+
 
 class AssertionHelperTestASanNegativeSize(unittest.TestCase):
     def runTest(self):
@@ -96,6 +98,7 @@ class AssertionHelperTestASanNegativeSize(unittest.TestCase):
         expectedAssertMsg = r"ERROR: AddressSanitizer: negative\-size\-param: \(size=\-[0-9]{2,}\)"
         self.assertEqual(assertMsg, expectedAssertMsg)
 
+
 class AssertionHelperTestASanStackOverflow(unittest.TestCase):
     def runTest(self):
         err = asanStackOverflow.splitlines()
@@ -104,6 +107,7 @@ class AssertionHelperTestASanStackOverflow(unittest.TestCase):
         assertMsg = AssertionHelper.getAuxiliaryAbortMessage(err)
         expectedAssertMsg = "ERROR: AddressSanitizer: stack-overflow"
         self.assertEqual(assertMsg, expectedAssertMsg)
+
 
 class AssertionHelperTestMozCrash(unittest.TestCase):
     def runTest(self):
@@ -114,6 +118,7 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+
 class AssertionHelperTestJSSelfHosted(unittest.TestCase):
     def runTest(self):
         err = jsSelfHostedAssert.splitlines()
@@ -122,6 +127,7 @@ class AssertionHelperTestJSSelfHosted(unittest.TestCase):
         expectedMsg = 'Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js(:[0-9]+)+: non\\-canonical BestAvailableLocale locale"'
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
 
 class AssertionHelperTestV8Abort(unittest.TestCase):
     def runTest(self):
@@ -132,12 +138,13 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
         self.assertEqual(len(sanitizedMsgs), 2)
 
         expectedMsgs = [
-                         "# Fatal error in \\.\\./src/compiler\\.cc, line [0-9]+",
-                         "# Check failed: !feedback_vector_\\->metadata\\(\\)\\->SpecDiffersFrom\\( literal\\(\\)\\->feedback_vector_spec\\(\\)\\)\\."
+            "# Fatal error in \\.\\./src/compiler\\.cc, line [0-9]+",
+            "# Check failed: !feedback_vector_\\->metadata\\(\\)\\->SpecDiffersFrom\\( literal\\(\\)\\->feedback_vector_spec\\(\\)\\)\\."
         ]
 
         self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
         self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
+
 
 class AssertionHelperTestChakraAssert(unittest.TestCase):
     def runTest(self):
@@ -147,6 +154,7 @@ class AssertionHelperTestChakraAssert(unittest.TestCase):
         expectedMsg = 'ASSERTION [0-9]{2,}: \\\\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) scope\\->HasInnerScopeIndex\\(\\)'
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
 
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
     def runTest(self):
@@ -171,17 +179,19 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
         # We currently don't support backward slashes, but if we add support, uncomment this test
         # self.assertTrue(re.match(expectedMsg, assertionMsg2))
 
+
 class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
     def runTest(self):
         err = asanOverflow.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
         expectedMsg = [
-             "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
-             "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
-             ]
+            "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
+            "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
+        ]
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
 
 class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
     def runTest(self):
@@ -191,6 +201,7 @@ class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
         expectedMsg = "terminate called after throwing an instance of 'std::regex_error'"
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
 
 class AssertionHelperTestRustPanic(unittest.TestCase):
     def test_01(self):
@@ -211,6 +222,7 @@ class AssertionHelperTestRustPanic(unittest.TestCase):
         self.assertEqual(len(sanitizedMsg), 3)
         self.assertEqual(sanitizedMsg[0], r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`")
         self.assertEqual(sanitizedMsg[-1], r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+")
+
 
 if __name__ == "__main__":
     unittest.main()
