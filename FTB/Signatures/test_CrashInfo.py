@@ -24,6 +24,15 @@ from FTB.Signatures.CrashSignature import CrashSignature
 CWD = os.path.dirname(os.path.realpath(__file__))
 
 
+asanTraceAV = """
+==5328==ERROR: AddressSanitizer: access-violation on unknown address 0x000000000050 (pc 0x7ffa9a30c9e7 bp 0x00f9915f0a20 sp 0x00f9915f0940 T0)
+==5328==The signal is caused by a READ memory access.
+==5328==Hint: address points to the zero page.
+    #0 0x7ffa9a30c9e6 in nsCSSFrameConstructor::WipeContainingBlock z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:12715
+    #1 0x7ffa9a3051d7 in nsCSSFrameConstructor::ContentAppended z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:7690
+    #2 0x7ffa9a1f0241 in mozilla::RestyleManager::ProcessRestyledFrames z:\\build\\build\\src\\layout\\base\\RestyleManager.cpp:1414
+"""
+
 asanTraceCrash = """
 ASAN:SIGSEGV
 =================================================================
@@ -667,6 +676,21 @@ Crash|SIGSEGV|0x40|34
 0|1|libc-2.23.so||||0xf42b2
 0|2|libxul.so||||0x43ebda
 """
+
+class ASanParserTestAccessViolation(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+
+        crashInfo = ASanCrashInfo([], asanTraceAV.splitlines(), config)
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "nsCSSFrameConstructor::WipeContainingBlock")
+        self.assertEqual(crashInfo.backtrace[1], "nsCSSFrameConstructor::ContentAppended")
+        self.assertEqual(crashInfo.backtrace[2], "mozilla::RestyleManager::ProcessRestyledFrames")
+
+        self.assertEqual(crashInfo.crashAddress, 0x50)
+        self.assertEqual(crashInfo.registers["pc"], 0x7ffa9a30c9e7)
+        self.assertEqual(crashInfo.registers["sp"], 0x00f9915f0940)
+        self.assertEqual(crashInfo.registers["bp"], 0x00f9915f0a20)
 
 class ASanParserTestCrash(unittest.TestCase):
     def runTest(self):

@@ -184,6 +184,15 @@ testAsanStackOverflow = """
     #8 0x7fc2baeb732c in nsLineLayout::ReflowFrame(nsIFrame*, nsReflowStatus&, mozilla::ReflowOutput*, bool&) /builds/worker/workspace/build/src/layout/generic/nsLineLayout.cpp:924:7
 """
 
+testAsanAccessViolation = """
+==5328==ERROR: AddressSanitizer: access-violation on unknown address 0x000000000050 (pc 0x7ffa9a30c9e7 bp 0x00f9915f0a20 sp 0x00f9915f0940 T0)
+==5328==The signal is caused by a READ memory access.
+==5328==Hint: address points to the zero page.
+    #0 0x7ffa9a30c9e6 in nsCSSFrameConstructor::WipeContainingBlock z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:12715
+    #1 0x7ffa9a3051d7 in nsCSSFrameConstructor::ContentAppended z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:7690
+    #2 0x7ffa9a1f0241 in mozilla::RestyleManager::ProcessRestyledFrames z:\\build\\build\\src\\layout\\base\\RestyleManager.cpp:1414
+"""
+
 testSignature1 = '''{"symptoms": [
     {
     "functionName": "GetObjectAllocKindForCopy",
@@ -567,6 +576,16 @@ class SignatureAsanStackOverflowTest(unittest.TestCase):
         # Check matches appropriately
         self.assertTrue(testSig.matches(crashInfoPos))
 
+class SignatureAsanAccessViolationTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "windows")
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanAccessViolation.splitlines())
+
+        testSig = crashInfoPos.createCrashSignature()
+
+        self.assertIn("/ERROR: AddressSanitizer", str(testSig))
+        self.assertIn("access\\\\-violation", str(testSig))
+        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
