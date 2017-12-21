@@ -25,7 +25,6 @@ import base64
 import hashlib
 import json
 import os
-import platform
 import requests
 import shutil
 import sys
@@ -38,11 +37,11 @@ FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
 from FTB.ConfigurationFiles import ConfigurationFiles
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Running.AutoRunner import AutoRunner
-from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.Signatures.CrashSignature import CrashSignature
-from Reporter.Reporter import Reporter, signature_checks, remote_checks
+from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
+from FTB.Running.AutoRunner import AutoRunner  # noqa
+from FTB.Signatures.CrashInfo import CrashInfo  # noqa
+from FTB.Signatures.CrashSignature import CrashSignature  # noqa
+from Reporter.Reporter import Reporter, signature_checks, remote_checks  # noqa
 
 __all__ = []
 __version__ = 0.1

@@ -30,9 +30,9 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 sys.path += [FTB_PATH]
 
-from Collector.Collector import Collector
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashInfo import CrashInfo
+from Collector.Collector import Collector  # noqa
+from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
+from FTB.Signatures.CrashInfo import CrashInfo  # noqa
 
 
 class LibFuzzerMonitor(threading.Thread):

@@ -18,10 +18,6 @@ import platform
 import sys
 import time
 import zipfile
-if sys.version_info.major == 3:
-    from urllib.parse import urlsplit
-else:
-    from urlparse import urlsplit
 
 import pytest
 import requests
@@ -32,6 +28,11 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashSignature import CrashSignature
 from crashmanager.models import CrashEntry
+
+if sys.version_info.major == 3:
+    from urllib.parse import urlsplit
+else:
+    from urlparse import urlsplit
 
 asanTraceCrash = '''ASAN:SIGSEGV
 =================================================================
