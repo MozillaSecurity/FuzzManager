@@ -27,4 +27,4 @@ class CovManagerTests(TestCase):
         self.client.login(username='test', password='test')
         self.assertRedirects(self.client.get(reverse('covmanager:index')), reverse('covmanager:collections'))
 
-# url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),
+#url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),

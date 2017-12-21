@@ -296,7 +296,7 @@ class CovReporter(Reporter):
                     return
 
                 # Disable the assertion for now
-                # assert(len(r['coverage']) == len(s['coverage']))
+                #assert(len(r['coverage']) == len(s['coverage']))
 
                 for idx in range(0, len(rc)):
                     if sc[idx] < 0:
@@ -307,7 +307,7 @@ class CovReporter(Reporter):
                             coverable_mismatch_count += 1
 
                         # Disable the assertion for now
-                        # assert(r['coverage'][idx] < 0)
+                        #assert(r['coverage'][idx] < 0)
                     elif rc[idx] < 0 and sc[idx] >= 0:
                         rc[idx] = sc[idx]
                     else:

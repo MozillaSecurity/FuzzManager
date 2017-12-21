@@ -71,7 +71,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.auth.middleware.RemoteUserMiddleware',
+    #'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
@@ -113,9 +113,9 @@ TEMPLATES = [
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
 # You still have to configure basic auth through your webserver.
 #
-# AUTHENTICATION_BACKENDS = (
-#     'django.contrib.auth.backends.RemoteUserBackend',
-# )
+#AUTHENTICATION_BACKENDS = (
+#    'django.contrib.auth.backends.RemoteUserBackend',
+#)
 
 ROOT_URLCONF = 'server.urls'
 
@@ -220,14 +220,14 @@ LOGGING = {
 # If you are running FuzzManager behind a TLS loadbalancer,
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Crashmanager configuration
 #
-# BUGZILLA_USERNAME = "example@example.com"
-# BUGZILLA_PASSWORD = "secret"
-# CLEANUP_CRASHES_AFTER_DAYS = 14
-# CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
+#BUGZILLA_USERNAME = "example@example.com"
+#BUGZILLA_PASSWORD = "secret"
+#CLEANUP_CRASHES_AFTER_DAYS = 14
+#CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
 
 # This is the base directory where the tests/ subdirectory will
 # be created for storing submitted test files.

@@ -48,7 +48,7 @@ class TestRESTCrashEntryInterface(unittest.TestCase):
         # Must be empty now
         self.assertEqual(response.status_code, requests.codes["ok"])
         lengthBeforePost = len(response.json())
-        # self.assertEqual(response.json(), [])
+        #self.assertEqual(response.json(), [])
 
         data = {
             "rawStdout": "data on\nstdout",
