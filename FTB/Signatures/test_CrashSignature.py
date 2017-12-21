@@ -586,6 +586,7 @@ class SignatureAsanStackOverflowTest(unittest.TestCase):
         # Check matches appropriately
         self.assertTrue(testSig.matches(crashInfoPos))
 
+
 class SignatureAsanAccessViolationTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -596,6 +597,7 @@ class SignatureAsanAccessViolationTest(unittest.TestCase):
         self.assertIn("/ERROR: AddressSanitizer", str(testSig))
         self.assertIn("access\\\\-violation", str(testSig))
         self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
