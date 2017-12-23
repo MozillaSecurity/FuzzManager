@@ -254,7 +254,8 @@ class CrashInfo():
 
         return "[@ %s]" % self.backtrace[0]
 
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8, minimumSupportedVersion=13):
+    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8,
+                             minimumSupportedVersion=13):
         '''
         @param forceCrashAddress: If True, the crash address will be included in any case
         @type forceCrashAddress: bool
@@ -504,7 +505,7 @@ class ASanCrashInfo(CrashInfo):
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
                                        |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
-                                   (\s*0x([0-9a-f]+))?"""
+                                   (\s*0x([0-9a-f]+))?"""  # noqa
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
         expectedIndex = 0
@@ -546,7 +547,8 @@ class ASanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" %
+                                   (index, expectedIndex))
 
             component = None
             if len(parts) > 2:
@@ -609,7 +611,8 @@ class ASanCrashInfo(CrashInfo):
             # Strip various forms of special thread information and messages
             asanMsg = re.sub(" in thread T.+", "", asanMsg)
             asanMsg = re.sub(" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
-            asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap", "overlap", asanMsg)
+            asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
+                             "overlap", asanMsg)
 
             if len(self.backtrace):
                 asanMsg += " [@ %s]" % self.backtrace[0]
@@ -665,7 +668,8 @@ class UBSanCrashInfo(CrashInfo):
             index = int(parts[0][1:])
 
             if expectedIndex != index:
-                raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" % (index, expectedIndex))
+                raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" %
+                                   (index, expectedIndex))
 
             component = None
             if len(parts) > 2:
@@ -753,7 +757,8 @@ class GDBCrashInfo(CrashInfo):
             # buffer content. If we detect this constellation, then it's highly likely
             # that we have a valid trace line but no pattern that fits it. We need
             # to make sure that we report this.
-            if not pastFrames and re.match("\\s*#\\d+.+", lastLineBuf) != None and re.match("\\s*#\\d+.+", traceLine) != None:
+            if (not pastFrames and re.match("\\s*#\\d+.+", lastLineBuf) != None and
+                    re.match("\\s*#\\d+.+", traceLine) != None):
                 print("Fatal error parsing this GDB trace line:", file=sys.stderr)
                 print(lastLineBuf, file=sys.stderr)
                 raise RuntimeError("Fatal error parsing GDB trace")
@@ -808,7 +813,8 @@ class GDBCrashInfo(CrashInfo):
                 if len(self.backtrace) != frameIndex and frameIndex == 0:
                     self.backtrace.pop(0)
                 elif len(self.backtrace) != frameIndex:
-                    print("Fatal error parsing this GDB trace (Index mismatch, wanted %s got %s ): " % (len(self.backtrace), frameIndex), file=sys.stderr)
+                    print("Fatal error parsing this GDB trace (Index mismatch, wanted %s got %s ): " %
+                          (len(self.backtrace), frameIndex), file=sys.stderr)
                     print(os.linesep.join(gdbOutput), file=sys.stderr)
                     raise RuntimeError("Fatal error parsing GDB trace")
 
@@ -985,7 +991,7 @@ class GDBCrashInfo(CrashInfo):
                             #  (gdb) p $_siginfo._sifields._sigfault.si_addr
                             #    $1 = (void *) 0x7ff846e64d28
                             #    (gdb) x /i $pc
-                            #    => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)
+                            #    => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)  # noqa
                             #    (gdb) info reg $ds
                             #    ds             0x0      0
                             #    (gdb) info reg $es
@@ -1011,7 +1017,8 @@ class GDBCrashInfo(CrashInfo):
                         else:
                             return val
                 else:
-                    failureReason = "Failed to decode two-operand instruction: No dereference operation or hardcoded address detected."
+                    failureReason = ("Failed to decode two-operand instruction: No dereference operation or "
+                                     "hardcoded address detected.")
                     # We might still be reading from/writing to a hardcoded address.
                     # Note that it's not possible to have two hardcoded addresses
                     # in one instruction, one operand must be a register or immediate
@@ -1050,7 +1057,8 @@ class GDBCrashInfo(CrashInfo):
                 else:
                     return result
             else:
-                raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" % crashInstruction)
+                raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" %
+                                   crashInstruction)
         else:
             failureReason = "Architecture is not supported."
 
@@ -1178,7 +1186,7 @@ class AppleCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # Example:
-                # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)
+                # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)  # noqa
                 components = line.split(None, 3)
                 stackEntry = components[3]
                 if stackEntry.startswith('0'):
@@ -1315,9 +1323,9 @@ class CDBCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # 32-bit example:
-                #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9
+                #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9  # noqa
                 # 64-bit example:
-                #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13
+                #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13  # noqa
                 if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
                         or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
                     inCrashingThread = False
@@ -1349,7 +1357,8 @@ class CDBCrashInfo(CrashInfo):
 
 class RustCrashInfo(CrashInfo):
 
-    RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
+    RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)"
+                          r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
         '''

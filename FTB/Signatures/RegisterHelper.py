@@ -33,7 +33,8 @@ def getRegisterPattern():
     '''
         Return a pattern including all register names that are considered valid
     '''
-    return "(" + '|'.join(["%s"] * len(validRegisters.values())) % tuple(['|'.join(i) for i in validRegisters.values()]) + ")"
+    return "(" + '|'.join(["%s"] * len(validRegisters.values())) % tuple(
+        ['|'.join(i) for i in validRegisters.values()]) + ")"
 
 
 def getStackPointer(registerMap):

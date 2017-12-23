@@ -105,21 +105,29 @@ def main(argv=None):
 
     mainGroup.add_argument('--version', action='version', version=program_version_string)
     mainGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
-    mainGroup.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
+    mainGroup.add_argument('--env', dest='env', nargs='+', type=str,
+                           help="List of environment variables in the form 'KEY=VALUE'")
 
     # Settings
     fmGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
-    fmGroup.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
+    fmGroup.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management",
+                         metavar="HOST")
     fmGroup.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
-    fmGroup.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
+    fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)",
+                         metavar="PROTO")
+    fmGroup.add_argument("--serverauthtokenfile", dest="serverauthtokenfile",
+                         help="File containing the server authentication token", metavar="FILE")
     fmGroup.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
-    fmGroup.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    fmGroup.add_argument("--platform", dest="platform",
+                         help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
     fmGroup.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
-    fmGroup.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
-    fmGroup.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    fmGroup.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on",
+                         metavar="VERSION")
+    fmGroup.add_argument("--os", dest="os", help="OS this crash appeared on",
+                         metavar="(windows|linux|macosx|b2g|android)")
     fmGroup.add_argument("--tool", dest="tool", help="Name of the tool that found this issue", metavar="NAME")
-    fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
+    fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str,
+                         help="List of metadata variables in the form 'KEY=VALUE'")
 
     parser.add_argument('rargs', nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
 
@@ -145,7 +153,8 @@ def main(argv=None):
         return 2
 
         if opts.platform == None or opts.product == None or opts.os == None:
-            print("Error: Must use binary configuration file or specify/configure at least --platform, --product and --os", file=sys.stderr)
+            print(("Error: Must use binary configuration file or specify/configure at least "
+                   "--platform, --product and --os"), file=sys.stderr)
             return 2
 
         configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version)
@@ -182,7 +191,8 @@ def main(argv=None):
         with open(opts.serverauthtokenfile) as f:
             serverauthtoken = f.read().rstrip()
 
-    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid, opts.tool)
+    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken,
+                          opts.clientid, opts.tool)
 
     signature_repeat_count = 0
     last_signature = None

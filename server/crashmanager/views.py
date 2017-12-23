@@ -164,7 +164,8 @@ def settings(request):
 
 @login_required(login_url='/login/')
 def allSignatures(request):
-    entries = Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')).order_by('-id')
+    entries = Bucket.objects.annotate(size=Count('crashentry'),
+                                      quality=Min('crashentry__testcase__quality')).order_by('-id')
     entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
     entries = entries.select_related('bug', 'bug__externalType')
     return render(request, 'signatures/index.html', {'isAll': True, 'siglist': entries})
@@ -184,7 +185,8 @@ def watchedSignatures(request):
     # therefore this needs to be a single filter() call, otherwise we get duplicate crashentries in the result
     # this is why tool filtering is done manually here and not using filter_signatures_by_toolfilter()
     defaultToolsFilter = user.defaultToolsFilter.all()
-    buckets = Bucket.objects.filter(user=user, crashentry__gt=F('bucketwatch__lastCrash'), crashentry__tool__in=defaultToolsFilter)
+    buckets = Bucket.objects.filter(user=user, crashentry__gt=F('bucketwatch__lastCrash'),
+                                    crashentry__tool__in=defaultToolsFilter)
     buckets = buckets.annotate(newCrashes=Count('crashentry'))
     buckets = buckets.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
     # what's left is only watched buckets with new crashes
@@ -249,7 +251,8 @@ def bucketWatchCrashes(request, sigid):
     entries = filter_crash_entries_by_toolfilter(request, entries)
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
-    data = {'crashlist': paginate_requested_list(request, entries), 'isWatch': True, 'bucket': bucket, 'latestCrash': latestCrash}
+    data = {'crashlist': paginate_requested_list(request, entries), 'isWatch': True, 'bucket': bucket,
+            'latestCrash': latestCrash}
 
     return render(request, 'crashes/index.html', data)
 
@@ -390,7 +393,8 @@ def queryCrashes(request):
     try:
         (obj, query) = json_to_query(rawQuery)
     except RuntimeError as e:
-        return render(request, 'crashes/index.html', {'error_message': "Invalid query: %s" % e, 'query_lines': query_lines, 'isQuery': True})
+        return render(request, 'crashes/index.html', {'error_message': "Invalid query: %s" % e,
+                                                      'query_lines': query_lines, 'isQuery': True})
 
     # Prettify the raw query for displaying
     rawQuery = json.dumps(obj, indent=2)
@@ -553,7 +557,8 @@ def __handleSignaturePost(request, bucket):
                 break
             entriesOffset += 100
             for entry in entriesChunk:
-                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest, requiredOutputSources=requiredOutputs))
+                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
+                                                             requiredOutputSources=requiredOutputs))
                 if match and entry.bucket_id is None:
                     if submitSave:
                         inList.append(entry.pk)
@@ -682,7 +687,8 @@ def deleteSignature(request, sigid):
 
 @login_required(login_url='/login/')
 def viewSignature(request, sigid):
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
+    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),
+                                                      quality=Min('crashentry__testcase__quality'))
 
     if not bucket:
         raise Http404
@@ -691,7 +697,8 @@ def viewSignature(request, sigid):
 
     check_authorized_for_signature(request, bucket)
 
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(testcase__quality=bucket.quality).order_by('testcase__size', '-id')
+    entries = CrashEntry.objects.filter(bucket=sigid).filter(
+        testcase__quality=bucket.quality).order_by('testcase__size', '-id')
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
     entries = entries.values_list('pk', flat=True)[:1]
 
@@ -837,7 +844,8 @@ def optimizeSignature(request, sigid):
     firstEntryPerBucketCache = {}
 
     for entry in entries:
-        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(), requiredOutputSources=requiredOutputs)
+        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(),
+                                             requiredOutputSources=requiredOutputs)
 
         # For optimization, disregard any issues that directly match since those could be
         # incoming new issues and we don't want these to block the optimization.
@@ -863,7 +871,8 @@ def optimizeSignature(request, sigid):
                     firstEntryPerBucketCache[otherBucket.pk] = c
                     if c:
                         # Omit testcase for performance reasons for now
-                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)
+                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False,
+                                                                                  requiredOutputSources=requiredOutputs)
 
                 firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
                 if firstEntryCrashInfo:
@@ -878,7 +887,8 @@ def optimizeSignature(request, sigid):
                 optimizedSignature = None
             else:
                 for otherEntry in entries:
-                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False, requiredOutputSources=requiredOutputs)):
+                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False,
+                                                                          requiredOutputSources=requiredOutputs)):
                         matchingEntries.append(otherEntry)
 
                 # Fallback for when the optimization algorithm failed for some reason
@@ -891,7 +901,8 @@ def optimizeSignature(request, sigid):
     if optimizedSignature:
         diff = signature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
 
-    return render(request, 'signatures/optimize.html', {'bucket': bucket, 'optimizedSignature': optimizedSignature, 'diff': diff, 'matchingEntries': matchingEntries})
+    return render(request, 'signatures/optimize.html', {'bucket': bucket, 'optimizedSignature': optimizedSignature,
+                                                        'diff': diff, 'matchingEntries': matchingEntries})
 
 
 @login_required(login_url='/login/')
@@ -959,7 +970,8 @@ def findSignatures(request, crashid):
                 bucket.offCount = distance
 
                 if matchesInOtherBuckets + nonMatchesInOtherBuckets > 0:
-                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (matchesInOtherBuckets + nonMatchesInOtherBuckets)) * 100, 2)
+                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (
+                        matchesInOtherBuckets + nonMatchesInOtherBuckets)) * 100, 2)
                 else:
                     bucket.foreignMatchPercentage = 0
 
@@ -994,7 +1006,8 @@ def createExternalBug(request, crashid):
     check_authorized_for_crash_entry(request, entry)
 
     if not entry.bucket:
-        return renderError(request, "Cannot create an external bug for an issue that is not associated to a bucket/signature")
+        return renderError(request, ("Cannot create an external bug for an issue that is not associated "
+                                     "to a bucket/signature"))
 
     if request.method == 'POST':
         provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
@@ -1134,7 +1147,8 @@ def createBugProvider(request):
     deny_restricted_users(request)
 
     if request.method == 'POST':
-        provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'], urlTemplate=request.POST['urlTemplate'])
+        provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'],
+                               urlTemplate=request.POST['urlTemplate'])
 
         try:
             provider.getInstance()
@@ -1182,7 +1196,8 @@ def userSettings(request):
             if user.restricted:
                 raise PermissionDenied({"message": "You don't have permission to change your tools filter."})
             user.defaultToolsFilter.clear()
-            user.defaultToolsFilter = [Tool.objects.get(name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
+            user.defaultToolsFilter = [Tool.objects.get(
+                name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
             data = createUserSettingsData(user, msg="Tools filter updated successfully.")
         elif "changetemplate" in request.POST:
             user.defaultProviderId = int(request.POST['defaultProvider'])

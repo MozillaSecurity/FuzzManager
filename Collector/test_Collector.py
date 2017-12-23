@@ -46,7 +46,7 @@ asanTraceCrash = '''ASAN:SIGSEGV
 
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
-==5854==ABORTING'''
+==5854==ABORTING'''  # noqa
 
 exampleTestCase = b'''function init() {
     while ( {}, this) !(Object === "Infinity");
@@ -199,7 +199,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             text = "OK"
             raw = fp
 
-        # this asserts the expected arguments, and returns the open handle to out.zip as 'raw' which is read by refresh()
+        # this asserts the expected arguments and returns the open handle to out.zip as 'raw' which is read by refresh()
         def myget(url, stream=None, auth=None):
             assert url == 'gopher://aol.com:70/crashmanager/files/signatures.zip'
             assert stream is True

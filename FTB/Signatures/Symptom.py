@@ -349,7 +349,8 @@ class StackFramesSymptom(Symptom):
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth + 1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx,
+                                                                        depth + 1, maxDepth)
 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth
@@ -391,7 +392,8 @@ class StackFramesSymptom(Symptom):
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx, depth + 1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx,
+                                                                        depth + 1, maxDepth)
 
                 if newBestDepth != None and (bestDepth == None or newBestDepth < bestDepth):
                     bestDepth = newBestDepth

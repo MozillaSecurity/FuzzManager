@@ -30,7 +30,7 @@ coverallsData = """
     {"name":"topdir1/subdir2/file3.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,12,12,10,2,0,0,null]},
     {"name":"topdir2/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,0,0,0,0,0,0,null]}
   ]
-}"""
+}"""  # noqa
 
 coverallsAddData = """
 { "git": { "branch":"master", "head": { "id":"1a0d9545b9805f50a70de703a3c04fc0d22e3839"} },
@@ -43,7 +43,7 @@ coverallsAddData = """
     {"name":"topdir1/subdir3/file4.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,6,6,0,0,0,1]},
     {"name":"topdir3/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,1,1,1,1,1,1,null]}
   ]
-}"""
+}"""  # noqa
 
 coverallsData = json.loads(coverallsData)
 coverallsAddData = json.loads(coverallsAddData)

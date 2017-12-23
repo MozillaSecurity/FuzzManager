@@ -45,7 +45,8 @@ now = datetime.datetime.now()
 def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws_secret_key, instance_type):
     '''Gets spot prices of the specified region and instance type'''
 
-    print("Region %s Instance Type %s Start %s End %s" % (region_name, instance_type, start_time.isoformat(), end_time.isoformat()))
+    print("Region %s Instance Type %s Start %s End %s" % (region_name, instance_type, start_time.isoformat(),
+                                                          end_time.isoformat()))
     r = None
 
     while True:
@@ -71,7 +72,8 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
     return r
 
 
-def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices, use_multiprocess=False):
+def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices,
+                    use_multiprocess=False):
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
@@ -80,7 +82,8 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
     for instance_type in instance_types:
         for region in regions:
             if use_multiprocess:
-                f = pool.apply_async(get_spot_price_per_region, [region, start_time, end_time, aws_key_id, aws_secret_key, instance_type])
+                f = pool.apply_async(get_spot_price_per_region, [region, start_time, end_time, aws_key_id,
+                                                                 aws_secret_key, instance_type])
             else:
                 f = get_spot_price_per_region(region, start_time, end_time, aws_key_id, aws_secret_key, instance_type)
             results.append(f)
@@ -101,13 +104,15 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
                 prices[entry.region.name][zone][entry.instance_type] = OrderedDict()
 
             if not start_time.isoformat() in prices[entry.region.name][zone][entry.instance_type]:
-                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(), entry.price, 1]
+                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(),
+                                                                                                entry.price, 1]
             else:
                 cur = prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()]
 
                 mean_price = float((cur[1] * cur[2]) + entry.price) / float(cur[2] + 1)
 
-                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(), mean_price, cur[2] + 1]
+                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(),
+                                                                                                mean_price, cur[2] + 1]
 
 
 class ConfigurationFile():
@@ -127,7 +132,8 @@ class ConfigurationFile():
                 sectionMap = self.getSectionMap(section)
 
                 if section.lower() == "main":
-                    mandatoryFields = ["aws_access_key_id", "aws_secret_key", "regions", "interval", "instance_types", "cache_file"]
+                    mandatoryFields = ["aws_access_key_id", "aws_secret_key", "regions", "interval", "instance_types",
+                                       "cache_file"]
 
                     for mandatoryField in mandatoryFields:
                         if not mandatoryField in sectionMap:
@@ -200,7 +206,8 @@ def main():
                 stop = now - datetime.timedelta(hours=hour)
                 start = now - datetime.timedelta(hours=hour + 1)
 
-                get_spot_prices(regions, start, stop, aws_access_key_id, aws_secret_key, instance_types, priceData, use_multiprocess=False)
+                get_spot_prices(regions, start, stop, aws_access_key_id, aws_secret_key, instance_types, priceData,
+                                use_multiprocess=False)
 
             with open(cacheFile, mode='w') as cacheFd:
                 json.dump(priceData, cacheFd)

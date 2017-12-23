@@ -66,7 +66,8 @@ class TestRESTCrashEntryInterface(unittest.TestCase):
             "tool": "tool1",
         }
 
-        self.assertEqual(requests.post(url, data, headers=dict(Authorization="Token %s" % testAuthToken)).status_code, requests.codes["created"])
+        self.assertEqual(requests.post(url, data, headers=dict(Authorization="Token %s" % testAuthToken)).status_code,
+                         requests.codes["created"])
         response = requests.get(url, headers=dict(Authorization="Token %s" % testAuthToken))
 
         json = response.json()

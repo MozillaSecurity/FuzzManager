@@ -42,7 +42,7 @@ r14     0x1673be0       23542752
 r15     0x201   513
 rip     0x4d0b32 <js::Nursery::moveToTenured(js::gc::MinorCollectionTracer*, JSObject*)+34>
 => 0x4d0b32 <js::Nursery::moveToTenured(js::gc::MinorCollectionTracer*, JSObject*)+34>: mov    (%rax),%r8
-"""
+"""  # noqa
 
 testTrace2 = """Program terminated with signal 11, Segmentation fault.
 #0  JSObject::markChildren (this=0x7fc33ef5a060, trc=0x3538be0)
@@ -78,7 +78,7 @@ r15    0x0    0
 rip    0x84de35 <JSObject::markChildren(JSTracer*)+53>
 => 0x84de35 <JSObject::markChildren(JSTracer*)+53>:    mov    (%rax),%rax
    0x84de38 <JSObject::markChildren(JSTracer*)+56>:    mov    0x68(%rax),%rax
-"""
+"""  # noqa
 
 testTrace3 = """ASAN:SIGSEGV
 =================================================================
@@ -94,7 +94,7 @@ testTrace3 = """ASAN:SIGSEGV
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:128 JSObject::getClass() const
 ==7116==ABORTING
-"""
+"""  # noqa
 
 testTraceHeapWithCrashAddress = """
 Program terminated with signal 11, Segmentation fault.
@@ -149,7 +149,7 @@ READ of size 6143520 at 0x7fd766c42800 thread T0
     #1 0x5904e2 in js::frontend::CompileScript(js::ExclusiveContext*, js::LifoAlloc*, JS::Handle<JSObject*>, JS::Handle<JSScript*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long, JSString*, unsigned int, js::SourceCompressionTask*) /srv/repos/mozilla-central/js/src/frontend/BytecodeCompiler.cpp:215
     #2 0xc7eb8d in JS::Compile(JSContext*, JS::Handle<JSObject*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/jsapi.cpp:4478
     #3 0x4f63a6 in Run(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:1193
-"""
+"""  # noqa
 
 testTraceWithAuxAndAbortMessage = """
 Hit MOZ_CRASH(named lambda static scopes should have been skipped) at /srv/repos/mozilla-central/js/src/vm/ScopeObject.cpp:1277
@@ -159,7 +159,7 @@ READ of size 6143520 at 0x7fd766c42800 thread T0
     #1 0x5904e2 in js::frontend::CompileScript(js::ExclusiveContext*, js::LifoAlloc*, JS::Handle<JSObject*>, JS::Handle<JSScript*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long, JSString*, unsigned int, js::SourceCompressionTask*) /srv/repos/mozilla-central/js/src/frontend/BytecodeCompiler.cpp:215
     #2 0xc7eb8d in JS::Compile(JSContext*, JS::Handle<JSObject*>, JS::ReadOnlyCompileOptions const&, char16_t const*, unsigned long) /srv/repos/mozilla-central/js/src/jsapi.cpp:4478
     #3 0x4f63a6 in Run(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:1193
-"""
+"""  # noqa
 
 testTraceNegativeSizeParam = """
 ==12549==ERROR: AddressSanitizer: negative-size-param: (size=-17179869184)
@@ -169,7 +169,7 @@ testTraceNegativeSizeParam = """
     #3 0x7f7d02324aa2 in RemoveElementsAt /src/obj-firefox/dist/include/nsTArray.h:2061
     #4 0x7f7d02324aa2 in mozilla::a11y::HyperTextAccessible::InsertChildAt(unsigned int, mozilla::a11y::Accessible*) /src/accessible/generic/HyperTextAccessible.cpp:1914
     #5 0x7f7d02312322 in mozilla::a11y::DocAccessible::DoARIAOwnsRelocation(mozilla::a11y::Accessible*) /src/accessible/generic/DocAccessible.cpp:2089:19
-"""
+"""  # noqa
 
 testAsanStackOverflow = """
 ==9482==ERROR: AddressSanitizer: stack-overflow on address 0x7ffec10e9f58 (pc 0x0000004a5349 bp 0x7ffec10ea7b0 sp 0x7ffec10e9f60 T0)
@@ -182,7 +182,7 @@ testAsanStackOverflow = """
     #6 0x7fc2b6334328 in gfxTextRun::BreakAndMeasureText(unsigned int, unsigned int, bool, double, gfxTextRun::PropertyProvider*, gfxTextRun::SuppressBreak, double*, bool, gfxFont::RunMetrics*, gfxFont::BoundingBoxType, mozilla::gfx::DrawTarget*, bool*, unsigned int*, bool, gfxBreakPriority*) /builds/worker/workspace/build/src/gfx/thebes/gfxTextRun.cpp:1183:21
     #7 0x7fc2baf7cd24 in nsTextFrame::ReflowText(nsLineLayout&, int, mozilla::gfx::DrawTarget*, mozilla::ReflowOutput&, nsReflowStatus&) /builds/worker/workspace/build/src/layout/generic/nsTextFrame.cpp:9476:15
     #8 0x7fc2baeb732c in nsLineLayout::ReflowFrame(nsIFrame*, nsReflowStatus&, mozilla::ReflowOutput*, bool&) /builds/worker/workspace/build/src/layout/generic/nsLineLayout.cpp:924:7
-"""
+"""  # noqa
 
 testAsanAccessViolation = """
 ==5328==ERROR: AddressSanitizer: access-violation on unknown address 0x000000000050 (pc 0x7ffa9a30c9e7 bp 0x00f9915f0a20 sp 0x00f9915f0940 T0)
@@ -191,7 +191,7 @@ testAsanAccessViolation = """
     #0 0x7ffa9a30c9e6 in nsCSSFrameConstructor::WipeContainingBlock z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:12715
     #1 0x7ffa9a3051d7 in nsCSSFrameConstructor::ContentAppended z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:7690
     #2 0x7ffa9a1f0241 in mozilla::RestyleManager::ProcessRestyledFrames z:\\build\\build\\src\\layout\\base\\RestyleManager.cpp:1414
-"""
+"""  # noqa
 
 testSignature1 = '''{"symptoms": [
     {
@@ -355,7 +355,7 @@ testSignatureStackFrames2 = '''{"symptoms": [
     "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MinorGCCallback", "MarkInternal<JSObject>" ]
   }
 ]}
-'''
+'''  # noqa
 
 testSignatureStackFrames3 = '''{"symptoms": [
     {
@@ -489,14 +489,18 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
         # Test the diff algorithm, test array contains:
         # stack, signature, expected distance, proposed signature
         testArray = [
-            (['a', 'b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 1, ['a', 'b', '???', 'a', 'b', '?', 'c']),
-            (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
-            (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'], 3, ['?', 'b', '???', 'a', '?', 'x', '?']),
+            (['a', 'b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'],
+             1, ['a', 'b', '???', 'a', 'b', '?', 'c']),
+            (['b', 'x', 'a', 'b', 'c'], ['a', 'b', '???', 'a', 'b', 'x', 'c'],
+             2, ['?', 'b', '???', 'a', 'b', '?', 'c']),
+            (['b', 'x', 'a', 'd', 'x'], ['a', 'b', '???', 'a', 'b', 'x', 'c'],
+             3, ['?', 'b', '???', 'a', '?', 'x', '?']),
         ]
 
         for (stack, rawSig, expectedDepth, expectedSig) in testArray:
             for maxDepth in (expectedDepth, 3):
-                (actualDepth, actualSig) = StackFramesSymptom._diff(stack, [StringMatch(x) for x in rawSig], 0, 1, maxDepth)
+                (actualDepth, actualSig) = StackFramesSymptom._diff(stack,
+                                                                    [StringMatch(x) for x in rawSig], 0, 1, maxDepth)
                 self.assertEqual(expectedDepth, actualDepth)
                 self.assertEqual(expectedSig, [str(x) for x in actualSig])
 
@@ -532,8 +536,10 @@ class SignatureStackFramesWildcardTailTest(unittest.TestCase):
 class SignatureStackFramesRegressionTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
-        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceHeapWithCrashAddress.splitlines())
-        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceHeapWithoutCrashAddress.splitlines())
+        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
+                                                  auxCrashData=testTraceHeapWithCrashAddress.splitlines())
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config,
+                                                  auxCrashData=testTraceHeapWithoutCrashAddress.splitlines())
 
         testSigEmptyCrashAddress = CrashSignature(testSignatureEmptyCrashAddress)
 
@@ -545,7 +551,8 @@ class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxMessage.splitlines())
-        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxAndAbortMessage.splitlines())
+        crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
+                                                  auxCrashData=testTraceWithAuxAndAbortMessage.splitlines())
 
         crashSignaturePos = crashInfoPos.createCrashSignature()
         crashSignatureNeg = crashInfoNeg.createCrashSignature()

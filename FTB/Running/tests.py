@@ -52,7 +52,8 @@ class PersistentApplicationTestModeNone(unittest.TestCase):
 
         # Now use a temporary file instead
         (_, inputFile) = tempfile.mkstemp()
-        _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "none", inputFile], inputFile=inputFile))
+        _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "none", inputFile],
+                                           inputFile=inputFile))
         os.remove(inputFile)
 
 
@@ -103,7 +104,8 @@ class PersistentApplicationTestOtherModes(unittest.TestCase):
         # Check with sigstop and temporary file as source
         (_, inputFile) = tempfile.mkstemp()
         _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "sigstop", inputFile],
-                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=2, inputFile=inputFile))
+                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=2,
+                                           inputFile=inputFile))
         os.remove(inputFile)
 
 
@@ -133,14 +135,16 @@ class PersistentApplicationTestPerf(unittest.TestCase):
         # Check with sigstop and temporary file as source
         (_, inputFile) = tempfile.mkstemp()
         _check(SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "sigstop", inputFile],
-                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=3, inputFile=inputFile))
+                                           persistentMode=PersistentMode.SIGSTOP, processingTimeout=3,
+                                           inputFile=inputFile))
         os.remove(inputFile)
 
 
 class PersistentApplicationTestFaultySigstop(unittest.TestCase):
     def runTest(self):
         (_, inputFile) = tempfile.mkstemp()
-        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
+        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
+                                                     inputFile],
                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
 
         with self.assertRaises(RuntimeError):
@@ -152,7 +156,8 @@ class PersistentApplicationTestFaultySigstop(unittest.TestCase):
 class PersistentApplicationTestStopWithoutStart(unittest.TestCase):
     def runTest(self):
         (_, inputFile) = tempfile.mkstemp()
-        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", inputFile],
+        spa = SimplePersistentApplication("python", [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
+                                                     inputFile],
                                           persistentMode=PersistentMode.SIGSTOP, inputFile=inputFile)
 
         # Should not throw, instead it should be a no-op

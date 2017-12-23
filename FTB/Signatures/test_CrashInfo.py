@@ -31,7 +31,7 @@ asanTraceAV = """
     #0 0x7ffa9a30c9e6 in nsCSSFrameConstructor::WipeContainingBlock z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:12715
     #1 0x7ffa9a3051d7 in nsCSSFrameConstructor::ContentAppended z:\\build\\build\\src\\layout\\base\\nsCSSFrameConstructor.cpp:7690
     #2 0x7ffa9a1f0241 in mozilla::RestyleManager::ProcessRestyledFrames z:\\build\\build\\src\\layout\\base\\RestyleManager.cpp:1414
-"""
+"""  # noqa
 
 asanTraceCrash = """
 ASAN:SIGSEGV
@@ -48,7 +48,7 @@ ASAN:SIGSEGV
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
 ==5854==ABORTING
-"""
+"""  # noqa
 
 asanTraceHeapCrash = """
 ASAN:SIGSEGV
@@ -118,12 +118,12 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
   Poisoned by user:      f7
   ASan internal:         fe
 ==19462==ABORTING
-"""
+"""  # noqa
 
 asanTraceInvalidFree = """
 ==30731==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x62a00006c200 in thread T24 (MediaPD~oder #1)
     #0 0x4c8690 in __interceptor_free /srv/repos/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:38
-"""
+"""  # noqa
 
 asanTraceDebugAssertion = """
 ### XPCOM_MEM_LEAK_LOG defined -- logging leaks to wtmp1/q1-final-leaks.txt
@@ -152,13 +152,13 @@ ASAN:SIGSEGV
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/obj-firefox/dist/include/mozilla/gfx/Logging.h:524 mozilla::gfx::Log<1, mozilla::gfx::CriticalLogger>::WriteLog(std::string const&)
 ==17560==ABORTING
-"""
+"""  # noqa
 
 asanTraceMemcpyOverlap = """
 ==4782==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x7f47486b18f8,0x7f47486b3904) and [0x7f47486b1800, 0x7f47486b380c) overlap
     #0 0x49b496 in __asan_memcpy /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:393:3
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
-"""
+"""  # noqa
 
 asanMultiTrace = """
 =================================================================
@@ -186,7 +186,7 @@ ASAN:DEADLYSIGNAL
 ==8927==Hint: address points to the zero page.
 Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299)
 ###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
-"""
+"""  # noqa
 
 gdbCrashAddress1 = """
 (gdb) bt 16
@@ -197,7 +197,7 @@ eax            0x1      1
 ecx            0x1      1
 (gdb) x /i $pc
 => 0x812bf19 <js::types::TypeObject::addProperty(JSContext*, jsid, js::types::Property**)+121>: mov    (%ecx),%ecx
-"""
+"""  # noqa
 
 gdbCrashAddress2 = """
 Program terminated with signal 11, Segmentation fault.
@@ -211,7 +211,7 @@ pc      0x1a03ae <js::ion::IonCache::linkAndAttachStub(JSContext*, js::ion::Macr
 cpsr    0xd0030 852016
 => 0x1a03ae <js::ion::IonCache::linkAndAttachStub(JSContext*, js::ion::MacroAssembler&, js::ion::IonCache::StubAttacher&, js::ion::IonScript*, char const*)+122>:       ldr.w   r4, [r10]
    0x1a03b2 <js::ion::IonCache::linkAndAttachStub(JSContext*, js::ion::MacroAssembler&, js::ion::IonCache::StubAttacher&, js::ion::IonScript*, char const*)+126>:       mov     r3, r0
-"""
+"""  # noqa
 
 gdbCrashAddress3 = """
 (gdb) bt 16
@@ -223,7 +223,7 @@ rdx            0x1      1
 rbx            0x1      1
 (gdb) x /i $pc
 => 0x812bf19 <js::types::TypeObject::addProperty(JSContext*, jsid, js::types::Property**)+121>: shrb   -0x69(%rdx,%rbx,8)
-"""
+"""  # noqa
 
 gdbSampleTrace1 = """
 [New Thread 14711]
@@ -251,7 +251,7 @@ esp    0xff916ed0    4287721168
 eip    0x818bc33 <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)+419>
 => 0x818bc33 <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)+419>:    movl   $0x7b,0x0
    0x818bc3d <js::InvokeKernel(JSContext*, JS::CallArgs, js::MaybeConstruct)+429>:    call   0x804af50 <abort@plt>
-"""
+"""  # noqa
 
 gdbSampleTrace2 = """
 Program terminated with signal 11, Segmentation fault.
@@ -269,7 +269,7 @@ rbx            0x1      1
 r14            0x1      1
 => 0x7f01fffecf41:    mov    0x8(%r14),%rbx
    0x7f01fffecf45:    cmp    %rbx,0x18(%rdi)
-"""
+"""  # noqa
 
 gdbSampleTrace3 = """
 Program terminated with signal 11, Segmentation fault.
@@ -283,7 +283,7 @@ Program terminated with signal 11, Segmentation fault.
 #5  0x08780467 in js::ion::DoConcatStrings (cx=0x9224850, lhs=$jsval(-nan(0xfff85f6bb4ff0)), rhs=$jsval(-nan(0xfff85f6c194e0)), res=$jsval(-nan(0xfff8200000000))) at /srv/repos/ionmonkey/js/src/ion/BaselineIC.cpp:2037
 #6  0xf772685f in ?? ()
 #7  0xf772bb76 in ?? ()
-"""
+"""  # noqa
 
 gdbRegressionTrace1 = """
 Program received signal SIGSEGV, Segmentation fault.
@@ -297,7 +297,7 @@ js::ScriptedIndirectProxyHandler::defineProperty (this=0x930fad4, cx=0x9339130, 
 #5  0x08535ec0 in setGeneric (strict=<optimized out>, vp=..., id=..., receiver=..., obj=(JSObject * const) 0xf6247040 [object Proxy], cx=0x9339130) at /srv/repos/mozilla-central/js/src/vm/NativeObject.h:1428
 #6  js::baseops::SetPropertyHelper<(js::ExecutionMode)0> (cxArg=0x9339130, obj=(js::NativeObject * const) 0xf6700050 [object Array], receiver=(JSObject * const) 0xf6700050 [object Array], id=$jsid(0), qualified=js::baseops::Qualified, vp=$jsval(-nan(0xfff88f62460d0)), strict=false) at /srv/repos/mozilla-central/js/src/vm/NativeObject.cpp:2353
 #7  0x08519490 in setGeneric (strict=false, vp=..., id=..., receiver=..., obj=(JSObject * const) 0xf6700050 [object Array], cx=0x9339130) at /srv/repos/mozilla-central/js/src/vm/NativeObject.h:1430
-"""
+"""  # noqa
 
 gdbRegressionTrace2 = """
 Program received signal SIGSEGV, Segmentation fault.
@@ -369,7 +369,7 @@ r13    0x7fffffffd6f0    140737488344816
 r14    0x1    1
 r15    0x7ffff6914800    140737330104320
 rip    0x0    0
-=> 0x0: """
+=> 0x0: """  # noqa
 
 gdbRegressionTrace5 = """
 Program received signal SIGSEGV, Segmentation fault.
@@ -440,7 +440,7 @@ rip     0xb7e884 <JSObject::as<js::ModuleEnvironmentObject>()+52>
 A debugging session is active.
 
         Inferior 1 [process 24244] will be killed.
-"""
+"""  # noqa
 
 gdbRegressionTrace8 = """
 Program terminated with signal SIGSEGV, Segmentation fault.
@@ -450,7 +450,7 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #3 <signal handler called>
 #4 0xf7442cfc in ?? () from /lib32/libc.so.6
 #5 0x08488e62 in js::jit::CheckICacheLocked (instr=0xf49d1648, i_cache=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:1034
-"""
+"""  # noqa
 
 gdbRegressionTrace9 = """
 Program terminated with signal SIGSEGV, Segmentation fault.
@@ -466,7 +466,7 @@ esi            0xf7152000       -149610496
 edi            0xffe01040       -2092992
 eip            0x83c4a4b        0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>
 => 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       call   0x8120ca0 <js::GetProperty(JSContext*, JS::Handle<JSObject*>, JS::Handle<JSObject*>, JS::Handle<jsid>, JS::MutableHandle<JS::Value>)>
-"""
+"""  # noqa
 
 gdbRegressionTrace10 = """
 Thread 1 received signal SIGILL, Illegal instruction.
@@ -538,7 +538,7 @@ stack backtrace:
   18: std::panicking::try::do_call
   19: <unknown>
 Redirecting call to abort() to mozalloc_abort
-"""
+"""  # noqa
 
 rustSampleTrace2 = """
 thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040
@@ -566,7 +566,7 @@ stack backtrace:
   19:     0x7fa1abc0c962 - std::panicking::try::do_call::h09b210c138cd5782
   20:     0x7fa1ac1dfb0b - <unknown>
 Redirecting call to abort() to mozalloc_abort
-"""
+"""  # noqa
 
 rustSampleTrace3 = """
 thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
@@ -586,7 +586,7 @@ stack backtrace:
    5:     0x7f6f998b00a5 - atomic_refcell::AtomicBorrowRef::do_panic::hbcc7af3a774ab2dd
                                at /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161
    6:     0x7f6f99651b83 - <style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value::h43831540927a6f94
-"""
+"""  # noqa
 
 rustSampleTrace4 = r"""
 thread 'StyleThread#2' panicked at 'already mutably borrowed', Z:\build\build\src\third_party\rust\atomic_refcell\src\lib.rs:161
@@ -607,7 +607,7 @@ Crash|EXCEPTION_ILLEGAL_INSTRUCTION|0x7ffc41f2f276|36
 0|1|||||0xcd07ffd740
 0|2|KERNELBASE.dll|FSPErrorMessages::CMessageHashVectorBuilder::GetEndIndexHash(unsigned short const *)|||0x38
 0|3|||||0xcd07ffd740
-"""
+"""  # noqa
 
 rustSampleTrace5 = """
 thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20
@@ -648,7 +648,7 @@ codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overfl
     #11 0x0 in Lex<<lambda at /builds/slave/m-in-l64-asan-0000000000000000/build/src/image/decoders/nsBMPDecoder.cpp:346:33> > /test.cpp:1:1
 
 SUMMARY: AddressSanitizer: undefined-behavior codec/decoder/core/inc/dec_golomb.h:182:37 in
-"""
+"""  # noqa
 
 ubsanTraceDivByZero = """
 src/opus_demo.c:870:40: runtime error: division by zero
@@ -737,7 +737,8 @@ class ASanParserTestUAF(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x7fd766c42800)
 
-        self.assertEqual("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] with READ of size 6143520", crashInfo.createShortSignature())
+        self.assertEqual(("AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] "
+                          "with READ of size 6143520"), crashInfo.createShortSignature())
 
 
 class ASanParserTestInvalidFree(unittest.TestCase):
@@ -750,7 +751,8 @@ class ASanParserTestInvalidFree(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x62a00006c200)
 
-        self.assertEqual("AddressSanitizer: attempting free on address which was not malloc()-ed [@ __interceptor_free]", crashInfo.createShortSignature())
+        self.assertEqual(("AddressSanitizer: attempting free on address which was not malloc()-ed "
+                          "[@ __interceptor_free]"), crashInfo.createShortSignature())
 
 
 class ASanParserTestDebugAssertion(unittest.TestCase):
@@ -764,7 +766,9 @@ class ASanParserTestDebugAssertion(unittest.TestCase):
 
         self.assertEqual(crashInfo.crashAddress, 0x0)
 
-        self.assertEqual("Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521", crashInfo.createShortSignature())
+        self.assertEqual(("Assertion failure: false (An assert from the graphics logger), at "
+                          "/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521"),
+                         crashInfo.createShortSignature())
 
 
 class ASanDetectionTest(unittest.TestCase):
@@ -787,7 +791,8 @@ class ASanParserTestMemcpyOverlap(unittest.TestCase):
         self.assertEqual(len(crashInfo.backtrace), 2)
         self.assertEqual(crashInfo.backtrace[0], "__asan_memcpy")
         self.assertEqual(crashInfo.backtrace[1], "S32_Opaque_BlitRow32")
-        self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]", crashInfo.createShortSignature())
+        self.assertEqual("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]",
+                         crashInfo.createShortSignature())
 
 
 class ASanParserTestMultiTrace(unittest.TestCase):
@@ -851,8 +856,10 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64), 0xF)
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32), 0xF)
 
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64), int64(uint64(0xfffffffffffffff0)))
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32), int32(uint32(0xfffffff0)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64),
+                         int64(uint64(0xfffffffffffffff0)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32),
+                         int32(uint32(0xfffffff0)))
 
         # Scalar test
         self.assertEqual(GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32), 0x0)
@@ -860,10 +867,12 @@ class GDBParserTestCrashAddressSimple(unittest.TestCase):
         # Real world examples
         # Note: The crash address here can also be 0xf7600000 because the double quadword
         # move can fail on the second 8 bytes if the source address is not 16-byte aligned
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32), int32(uint32(0xf75ffff8)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32),
+                         int32(uint32(0xf75ffff8)))
 
         # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
-        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64), int64(uint64(0x7ffff66ffffe)))
+        self.assertEqual(GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64),
+                         int64(uint64(0x7ffff66ffffe)))
 
 
 class GDBParserTestRegression1(unittest.TestCase):
@@ -976,7 +985,8 @@ class CrashSignatureOutputTest(unittest.TestCase):
 
         crashSignature1 = '{ "symptoms" : [ { "type" : "output", "value" : "test" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : "test" } ] }'
-        crashSignature2 = '{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : { "value" : "^fest$", "matchType" : "pcre" } } ] }'
+        crashSignature2 = ('{ "symptoms" : [ { "type" : "output", "src" : "stderr", "value" : { '
+                           '"value" : "^fest$", "matchType" : "pcre" } } ] }')
 
         outputSignature1 = CrashSignature(crashSignature1)
         outputSignature1Neg = CrashSignature(crashSignature1Neg)
@@ -1040,8 +1050,10 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "instruction", "registerNames" : ["r14", "rax"] } ] }'
         crashSignature2 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov" } ] }'
         crashSignature2Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "cmp" } ] }'
-        crashSignature3 = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rbx"] } ] }'
-        crashSignature3Neg = '{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", "registerNames" : ["r14", "rax"] } ] }'
+        crashSignature3 = ('{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", '
+                           '"registerNames" : ["r14", "rbx"] } ] }')
+        crashSignature3Neg = ('{ "symptoms" : [ { "type" : "instruction", "instructionName" : "mov", '
+                              '"registerNames" : ["r14", "rax"] } ] }')
 
         instructionSig1 = CrashSignature(crashSignature1)
         instructionSig1Neg = CrashSignature(crashSignature1Neg)
@@ -1080,8 +1092,10 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
         crashSignature1 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "internalAppend" } ] }'
         crashSignature1Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "foobar" } ] }'
 
-        crashSignature2 = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "<= 4" } ] }'
-        crashSignature2Neg = '{ "symptoms" : [ { "type" : "stackFrame", "functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "> 4" } ] }'
+        crashSignature2 = ('{ "symptoms" : [ { "type" : "stackFrame", '
+                           '"functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "<= 4" } ] }')
+        crashSignature2Neg = ('{ "symptoms" : [ { "type" : "stackFrame", '
+                              '"functionName" : "js::ion::MBasicBlock::setBackedge", "frameNumber" : "> 4" } ] }')
 
         stackFrameSig1 = CrashSignature(crashSignature1)
         stackFrameSig1Neg = CrashSignature(crashSignature1Neg)
@@ -1187,7 +1201,8 @@ class AppleParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[5], "??")
         self.assertEqual(crashInfo.backtrace[6], "__cxa_finalize_ranges")
         self.assertEqual(crashInfo.backtrace[7], "??")
-        self.assertEqual(crashInfo.backtrace[8], "-[NSApplication _nextEventMatchingEventMask:untilDate:inMode:dequeue:]")
+        self.assertEqual(crashInfo.backtrace[8],
+                         "-[NSApplication _nextEventMatchingEventMask:untilDate:inMode:dequeue:]")
 
         self.assertEqual(crashInfo.crashAddress, 0x00007fff5f3fff98)
 
@@ -1217,7 +1232,8 @@ class AppleLionParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "js::jit::LIRGenerator::generate")
         self.assertEqual(crashInfo.backtrace[4], "js::jit::GenerateLIR")
         self.assertEqual(crashInfo.backtrace[5], "js::jit::CompileBackEnd")
-        self.assertEqual(crashInfo.backtrace[6], "_ZN2js3jitL7CompileEP9JSContextN2JS6HandleIP8JSScriptEEPNS0_13BaselineFrameEPhb")
+        self.assertEqual(crashInfo.backtrace[6], ("_ZN2js3jitL7CompileEP9JSContextN2JS6Handle"
+                                                  "IP8JSScriptEEPNS0_13BaselineFrameEPhb"))
         self.assertEqual(crashInfo.backtrace[7], "js::jit::IonCompileScriptForBaseline")
         self.assertEqual(crashInfo.backtrace[8], "??")
         self.assertEqual(crashInfo.backtrace[9], "??")
@@ -2239,7 +2255,8 @@ class CDBSelectorTest7(unittest.TestCase):
 
 
 # Test 8 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
-#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [
+#         c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
 #     0142865d cc              int     3
 class CDBParserTestCrash8(unittest.TestCase):
     def runTest(self):
@@ -2400,7 +2417,8 @@ class CDBSelectorTest10(unittest.TestCase):
 
 
 # Test 11 is for Windows Server 2012 R2 with 32-bit js debug profiling deterministic shell:
-#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+#     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [
+#         c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
 #     0156865d cc              int     3
 class CDBParserTestCrash11(unittest.TestCase):
     def runTest(self):
@@ -2482,7 +2500,10 @@ class UBSanParserTestCrash(unittest.TestCase):
     def test_1(self):
         config = ProgramConfiguration("test", "x86", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceSignedIntOverflow.splitlines())
-        self.assertEqual(crashInfo.createShortSignature(), "UndefinedBehaviorSanitizer: codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'")
+        self.assertEqual(crashInfo.createShortSignature(), ("UndefinedBehaviorSanitizer: "
+                                                            "codec/decoder/core/inc/dec_golomb.h:182:37: "
+                                                            "runtime error: signed integer overflow: -2147483648 - "
+                                                            "1 cannot be represented in type 'int'"))
         self.assertEqual(len(crashInfo.backtrace), 12)
         self.assertEqual(crashInfo.backtrace[0], "WelsDec::BsGetUe")
         self.assertEqual(crashInfo.backtrace[9], "_start")
@@ -2492,7 +2513,8 @@ class UBSanParserTestCrash(unittest.TestCase):
     def test_2(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceDivByZero.splitlines())
-        self.assertEqual(crashInfo.createShortSignature(), "UndefinedBehaviorSanitizer: src/opus_demo.c:870:40: runtime error: division by zero")
+        self.assertEqual(crashInfo.createShortSignature(), ("UndefinedBehaviorSanitizer: src/opus_demo.c:870:40: "
+                                                            "runtime error: division by zero"))
         self.assertEqual(len(crashInfo.backtrace), 3)
         self.assertEqual(crashInfo.backtrace[0], "main")
         self.assertIsNone(crashInfo.crashAddress)
@@ -2512,10 +2534,15 @@ class RustParserTests(unittest.TestCase):
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace1.splitlines())
         self.assertIsInstance(crashInfo, RustCrashInfo)
-        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976")
+        self.assertEqual(crashInfo.createShortSignature(), ("thread 'StyleThread#2' panicked at "
+                                                            "'assertion failed: self.get_data().is_some()', "
+                                                            "/home/worker/workspace/build/src/servo/components/"
+                                                            "style/gecko/wrapper.rs:976"))
         self.assertEqual(len(crashInfo.backtrace), 20)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
-        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[14], ("<style::gecko::traversal::RecalcStyleOnly<'recalc> as "
+                                                   "style::traversal::DomTraversal<style::gecko::wrapper::"
+                                                   "GeckoElement<'le>>>::process_preorder"))
         self.assertEqual(crashInfo.backtrace[19], "<unknown>")
         self.assertEqual(crashInfo.crashAddress, 0)
 
@@ -2524,19 +2551,27 @@ class RustParserTests(unittest.TestCase):
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace2.splitlines())
         self.assertIsInstance(crashInfo, RustCrashInfo)
-        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#3' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:1040")
+        self.assertEqual(crashInfo.createShortSignature(), ("thread 'StyleThread#3' panicked at "
+                                                            "'assertion failed: self.get_data().is_some()', "
+                                                            "/home/worker/workspace/build/src/servo/components/style/"
+                                                            "gecko/wrapper.rs:1040"))
         self.assertEqual(len(crashInfo.backtrace), 21)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
-        self.assertEqual(crashInfo.backtrace[14], "<style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder")
+        self.assertEqual(crashInfo.backtrace[14], ("<style::gecko::traversal::RecalcStyleOnly<'recalc> as "
+                                                   "style::traversal::DomTraversal<style::gecko::wrapper::"
+                                                   "GeckoElement<'le>>>::process_preorder"))
         self.assertEqual(crashInfo.backtrace[20], "<unknown>")
         self.assertEqual(crashInfo.crashAddress, 0)
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace3.splitlines())
         self.assertIsInstance(crashInfo, RustCrashInfo)
-        self.assertEqual(crashInfo.createShortSignature(), "thread 'StyleThread#2' panicked at 'already mutably borrowed', /home/worker/workspace/build/src/third_party/rust/atomic_refcell/src/lib.rs:161")
+        self.assertEqual(crashInfo.createShortSignature(), ("thread 'StyleThread#2' panicked at "
+                                                            "'already mutably borrowed', /home/worker/workspace/build/"
+                                                            "src/third_party/rust/atomic_refcell/src/lib.rs:161"))
         self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
         self.assertEqual(crashInfo.backtrace[3], "std::panicking::rust_panic_with_hook")
-        self.assertEqual(crashInfo.backtrace[6], "<style::values::specified::color::Color as style::values::computed::ToComputedValue>::to_computed_value")
+        self.assertEqual(crashInfo.backtrace[6], ("<style::values::specified::color::Color as style::values::computed"
+                                                  "::ToComputedValue>::to_computed_value"))
         self.assertEqual(crashInfo.crashAddress, 0)
 
     def test_3(self):
@@ -2544,7 +2579,10 @@ class RustParserTests(unittest.TestCase):
         config = ProgramConfiguration("test", "x86-64", "win")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace4.splitlines())
         self.assertIsInstance(crashInfo, MinidumpCrashInfo)
-        self.assertEqual(crashInfo.createShortSignature(), r"thread 'StyleThread#2' panicked at 'already mutably borrowed', Z:\build\build\src\third_party\rust\atomic_refcell\src\lib.rs:161")
+        self.assertEqual(crashInfo.createShortSignature(), (r"thread 'StyleThread#2' panicked at "
+                                                            r"'already mutably borrowed', "
+                                                            r"Z:\build\build\src\third_party\rust\atomic_"
+                                                            r"refcell\src\lib.rs:161"))
         self.assertEqual(len(crashInfo.backtrace), 4)
         self.assertEqual(crashInfo.backtrace[0], "std::panicking::rust_panic_with_hook")
         self.assertEqual(crashInfo.backtrace[1], "std::panicking::begin_panic<&str>")
@@ -2557,7 +2595,9 @@ class RustParserTests(unittest.TestCase):
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], [], config, rustSampleTrace5.splitlines())
         self.assertIsInstance(crashInfo, RustCrashInfo)
-        self.assertEqual(crashInfo.createShortSignature(), "thread 'RenderBackend' panicked at 'called `Option::unwrap()` on a `None` value', /checkout/src/libcore/option.rs:335:20")
+        self.assertEqual(crashInfo.createShortSignature(), ("thread 'RenderBackend' panicked at 'called "
+                                                            "`Option::unwrap()` on a `None` value', /checkout/src/"
+                                                            "libcore/option.rs:335:20"))
         self.assertEqual(len(crashInfo.backtrace), 3)
         self.assertEqual(crashInfo.backtrace[0], "std::sys::imp::backtrace::tracing::imp::unwind_backtrace")
         self.assertEqual(crashInfo.backtrace[1], "std::panicking::default_hook::{{closure}}")
@@ -2570,9 +2610,12 @@ class RustParserTests(unittest.TestCase):
                    "CPU|amd64|family 6 model 63 stepping 2|8",
                    "GPU|||",
                    "Crash|SIGSEGV|0x0|0",
-                   "0|0|firefox|mozalloc_abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:6d82e132348f|33|0x0",
-                   "0|1|firefox|abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:6d82e132348f|80|0x5",
-                   "0|2|libxul.so|panic_abort::__rust_start_panic|git:github.com/rust-lang/rust:src/libpanic_abort/lib.rs:05e2e1c41414e8fc73d0f267ea8dab1a3eeeaa99|59|0x5"]
+                   ("0|0|firefox|mozalloc_abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:"
+                    "6d82e132348f|33|0x0"),
+                   ("0|1|firefox|abort|hg:hg.mozilla.org/mozilla-central:memory/mozalloc/mozalloc_abort.cpp:"
+                    "6d82e132348f|80|0x5"),
+                   ("0|2|libxul.so|panic_abort::__rust_start_panic|git:github.com/rust-lang/rust:src/libpanic_abort/"
+                    "lib.rs:05e2e1c41414e8fc73d0f267ea8dab1a3eeeaa99|59|0x5")]
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfo = CrashInfo.fromRawCrashData([], rustSampleTrace6.splitlines(), config, auxData)
         self.assertIsInstance(crashInfo, MinidumpCrashInfo)

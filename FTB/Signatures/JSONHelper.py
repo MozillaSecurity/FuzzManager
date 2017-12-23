@@ -130,4 +130,5 @@ def __getTypeChecked(obj, key, valTypes, mandatory=False):
     if isinstance(val, tuple(valTypes)):
         return val
 
-    raise RuntimeError('Expected any of types "%s" for key "%s" but got type %s' % (", ".join([str(i) for i in valTypes]), key, type(val)))
+    raise RuntimeError('Expected any of types "%s" for key "%s" but got type %s' %
+                       (", ".join([str(i) for i in valTypes]), key, type(val)))

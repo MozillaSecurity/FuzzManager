@@ -84,7 +84,8 @@ def pools(request):
         return daemonRunning
 
     for pool in entries:
-        pool.instance_requested_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['requested']).count()
+        pool.instance_requested_count = Instance.objects.filter(
+            pool=pool, status_code=INSTANCE_STATE['requested']).count()
         pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
         if pool.size == pool.instance_running_count:
             pool.size_label = 'success'
@@ -129,7 +130,8 @@ def viewPool(request, poolid):
         # Figure out if any parameters are missing
         missing = pool.config.getMissingParameters()
 
-    data = {'pool': pool, 'parent_config': parent_config, 'instances': instances, 'config_params_missing': missing, 'config_cyclic': cyclic}
+    data = {'pool': pool, 'parent_config': parent_config, 'instances': instances, 'config_params_missing': missing,
+            'config_cyclic': cyclic}
 
     return render(request, 'pools/view.html', data)
 
@@ -138,7 +140,8 @@ def viewPool(request, poolid):
 def viewPoolPrices(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
-    prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
+    prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key,
+                             config.ec2_instance_type)
 
     zones = []
     latest_price_by_zone = {}
@@ -360,7 +363,8 @@ def __handleConfigPOST(request, config):
         config.ec2_security_groups_list = None
 
     if request.POST['ec2_userdata_macros']:
-        config.ec2_userdata_macros_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')])
+        config.ec2_userdata_macros_dict = dict(
+            y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')])
     else:
         config.ec2_userdata_macros_dict = None
 
@@ -370,7 +374,8 @@ def __handleConfigPOST(request, config):
         config.ec2_tags_dict = None
 
     if request.POST['ec2_raw_config']:
-        config.ec2_raw_config_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_raw_config'].split(',')])
+        config.ec2_raw_config_dict = dict(
+            y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_raw_config'].split(',')])
     else:
         config.ec2_raw_config_dict = None
 
@@ -436,11 +441,14 @@ def deletePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
     if pool.isEnabled:
-        return render(request, 'pools/error.html', {'error_message': 'That pool is still enabled, you must disable it first.'})
+        return render(request, 'pools/error.html', {
+            'error_message': 'That pool is still enabled, you must disable it first.'})
 
     instances = Instance.objects.filter(pool=poolid)
     if instances:
-        return render(request, 'pools/error.html', {'error_message': 'That pool still has instances associated with it. Please wait for their termination first.'})
+        return render(request, 'pools/error.html', {
+            'error_message': ('That pool still has instances associated with it. '
+                              'Please wait for their termination first.')})
 
     if request.method == 'POST':
         pool.delete()
@@ -470,14 +478,18 @@ def deleteConfig(request, configid):
     pools = InstancePool.objects.filter(config=config)
     for pool in pools:
         if pool.isEnabled:
-            return render(request, 'pools/error.html', {'error_message': 'That configuration is still used by one or more (enabled) instance pools.'})
+            return render(request, 'pools/error.html', {
+                'error_message': 'That configuration is still used by one or more (enabled) instance pools.'})
 
         instances = Instance.objects.filter(pool=pool)
         if instances:
-            return render(request, 'pools/error.html', {'error_message': 'A pool using this configuration still has instances associated with it. Please wait for their termination first.'})
+            return render(request, 'pools/error.html', {
+                'error_message': ('A pool using this configuration still has instances associated with it. '
+                                  'Please wait for their termination first.')})
 
     if PoolConfiguration.objects.filter(parent=config):
-        return render(request, 'pools/error.html', {'error_message': 'That configuration is still referenced by one or more other configurations.'})
+        return render(request, 'pools/error.html', {
+            'error_message': 'That configuration is still referenced by one or more other configurations.'})
 
     if request.method == 'POST':
         pools.delete()

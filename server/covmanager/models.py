@@ -27,7 +27,8 @@ class Repository(models.Model):
 
 
 class CollectionFile(models.Model):
-    file = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'COV_STORAGE', None)), upload_to="coverage")
+    file = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'COV_STORAGE', None)),
+                            upload_to="coverage")
     format = models.IntegerField(default=0)
 
 

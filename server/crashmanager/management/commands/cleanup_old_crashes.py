@@ -62,7 +62,8 @@ class Command(BaseCommand):
         expiryDate = now - timedelta(days=cleanup_crashes_after_days, hours=now.hour, minutes=now.minute,
                                      seconds=now.second, microseconds=now.microsecond)
         while CrashEntry.objects.filter(created__lt=expiryDate, bucket__bug=None).count():
-            pks = list(CrashEntry.objects.filter(created__lt=expiryDate, bucket__bug=None).values_list('pk', flat=True)[:500])
+            pks = list(CrashEntry.objects.filter(created__lt=expiryDate,
+                                                 bucket__bug=None).values_list('pk', flat=True)[:500])
             CrashEntry.objects.filter(pk__in=pks).delete()
 
         # Cleanup all bugs that don't belong to any bucket anymore

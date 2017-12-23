@@ -231,7 +231,8 @@ class CrashSignature():
         signatureDiff = difflib.unified_diff(oldLines, newLines, n=context)
 
         for diffLine in signatureDiff:
-            if diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or not diffLine.strip():
+            if (diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or
+                    not diffLine.strip()):
                 continue
 
             diffTuples.append((diffLine[0], diffLine[1:]))

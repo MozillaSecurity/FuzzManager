@@ -322,11 +322,13 @@ class SimplePersistentApplication(PersistentApplication):
                         # process is being terminated by something else, making the testing unreliable.
                         #
                         # TODO: This could be triggered by the Linux kernel OOM killer
-                        raise RuntimeError("SPFP Error: Application terminated with signal: %s" % self.process.returncode)
+                        raise RuntimeError("SPFP Error: Application terminated with signal: %s" %
+                                           self.process.returncode)
                     else:
                         # The application exited, but didn't send us any message before doing so. We consider this
                         # a protocol violation and raise an exception.
-                        raise RuntimeError("SPFP Error: Application exited without message. Exitcode: %s" % self.process.returncode)
+                        raise RuntimeError("SPFP Error: Application exited without message. Exitcode: %s" %
+                                           self.process.returncode)
 
             # Update stdout/err available for the last run
             self.stdout = self.outCollector.output

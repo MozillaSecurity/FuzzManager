@@ -17,10 +17,12 @@ class FlatObject(dict):
     __setattr__ = dict.__setitem__
 
 
-INSTANCE_STATE_CODE = {-1: "requested", 0: "pending", 16: "running", 32: "shutting-down", 48: "terminated", 64: "stopping", 80: "stopped"}
+INSTANCE_STATE_CODE = {-1: "requested", 0: "pending", 16: "running", 32: "shutting-down", 48: "terminated",
+                       64: "stopping", 80: "stopped"}
 INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.iteritems())
 
-POOL_STATUS_ENTRY_TYPE_CODE = {0: "unclassified", 1: "price-too-low", 2: "config-error", 3: "max-spot-instance-count-exceeded", 4: "temporary-failure"}
+POOL_STATUS_ENTRY_TYPE_CODE = {0: "unclassified", 1: "price-too-low", 2: "config-error",
+                               3: "max-spot-instance-count-exceeded", 4: "temporary-failure"}
 POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.iteritems())
 
 
@@ -42,7 +44,8 @@ class PoolConfiguration(models.Model):
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_type = models.CharField(max_length=255, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_userdata_file = models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
+    ec2_userdata_file = models.FileField(storage=OverwritingStorage(
+        location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
     ec2_userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
     ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
@@ -178,7 +181,8 @@ class PoolConfiguration(models.Model):
             # Save the file using save() to avoid problems when initially
             # creating the directory. We use os.path.split to keep the
             # original filename assigned when saving the file.
-            self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1], ContentFile(self.ec2_userdata), save=False)
+            self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1],
+                                        ContentFile(self.ec2_userdata), save=False)
         elif self.ec2_userdata_file:
             self.ec2_userdata_file.delete()
             self.ec2_userdata_file = None

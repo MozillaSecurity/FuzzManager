@@ -78,7 +78,8 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to cycle
         '''
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (self.serverProtocol, self.serverHost, self.serverPort,
+                                                                 poolid)
 
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -93,7 +94,8 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to disable
         '''
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost,
+                                                                   self.serverPort, poolid)
 
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -108,7 +110,8 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to enable
         '''
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (self.serverProtocol, self.serverHost, self.serverPort, poolid)
+        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (self.serverProtocol, self.serverHost,
+                                                                  self.serverPort, poolid)
 
         response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -122,26 +125,33 @@ def main(argv=None):
     # setup argparser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--version', action='version', version='%s v%s (%s)' % (os.path.basename(__file__), __version__, __updated__))
+    parser.add_argument('--version', action='version', version='%s v%s (%s)' %
+                        (os.path.basename(__file__), __version__, __updated__))
 
     # Actions
     action_group = parser.add_argument_group("Actions", "A single action must be selected.")
     actions = action_group.add_mutually_exclusive_group(required=True)
     actions.add_argument("--report", dest="report", type=str, help="Submit the given textual report", metavar="TEXT")
-    actions.add_argument("--report-from-file", dest="report_file", type=str, help="Submit the given file as textual report", metavar="FILE")
+    actions.add_argument("--report-from-file", dest="report_file", type=str,
+                         help="Submit the given file as textual report", metavar="FILE")
     actions.add_argument("--cycle", dest="cycle", type=str, help="Cycle the pool with the given ID", metavar="ID")
     actions.add_argument("--disable", dest="disable", type=str, help="Disable the pool with the given ID", metavar="ID")
     actions.add_argument("--enable", dest="enable", type=str, help="Enable the pool with the given ID", metavar="ID")
 
     # Options
-    parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int, help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
-    parser.add_argument("--random-offset", dest="random_offset", default=0, type=int, help="Random offset for the reporting interval (+/-)", metavar="SECONDS")
+    parser.add_argument("--keep-reporting", dest="keep_reporting", default=0, type=int,
+                        help="Keep reporting from the specified file with specified interval", metavar="SECONDS")
+    parser.add_argument("--random-offset", dest="random_offset", default=0, type=int,
+                        help="Random offset for the reporting interval (+/-)", metavar="SECONDS")
 
     # Settings
-    parser.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management", metavar="HOST")
+    parser.add_argument("--serverhost", dest="serverhost",
+                        help="Server hostname for remote signature management", metavar="HOST")
     parser.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    parser.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
-    parser.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
+    parser.add_argument("--serverproto", dest="serverproto",
+                        help="Server protocol to use (default is https)", metavar="PROTO")
+    parser.add_argument("--serverauthtokenfile", dest="serverauthtokenfile",
+                        help="File containing the server authentication token", metavar="FILE")
     parser.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
 
     # process options

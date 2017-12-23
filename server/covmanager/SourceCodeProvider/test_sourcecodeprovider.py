@@ -38,7 +38,8 @@ class TestGITSourceCodeProvider(unittest.TestCase):
                 "474f46342c82059a819ce7cd3d5e3e0695b9b737": "I'm sorry Dave,\nI'm afraid I can't do that.\n"
             },
             "abc/def.txt": {
-                "deede1283a224184f6654027e23b654a018e81b0": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n",
+                "deede1283a224184f6654027e23b654a018e81b0": ("Hi there!\n\nI'm a multi-line file,\n\n"
+                                                             "nice to meet you.\n"),
                 "474f46342c82059a819ce7cd3d5e3e0695b9b737": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
             }
         }
@@ -73,7 +74,8 @@ class TestHGSourceCodeProvider(unittest.TestCase):
                 "c179ace9e260adbabd17426750b5a62403691624": "I'm sorry Dave,\nI'm afraid I can't do that.\n"
             },
             "abc/def.txt": {
-                "05ceb4ce5ed96a107fb40e3b39df7da18f0780c3": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n",
+                "05ceb4ce5ed96a107fb40e3b39df7da18f0780c3": ("Hi there!\n\nI'm a multi-line file,\n\n"
+                                                             "nice to meet you.\n"),
                 "c179ace9e260adbabd17426750b5a62403691624": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
             }
         }

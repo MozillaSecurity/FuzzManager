@@ -37,7 +37,8 @@ def remote_checks(f):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
         if not self.serverAuthToken:
-            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
+            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) "
+                               "to use remote features.")
         if not self.tool:
             raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
         return f(self, *args, **kwargs)

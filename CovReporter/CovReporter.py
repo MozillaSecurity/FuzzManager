@@ -303,7 +303,8 @@ class CovReporter(Reporter):
                         # Verify that coverable vs. not coverable matches
                         # Unfortunately, GCOV again messes this up for headers sometimes
                         if rc[idx] >= 0:
-                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" % (r['name'], idx, rc[idx], sc[idx]))
+                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
+                                  (r['name'], idx, rc[idx], sc[idx]))
                             coverable_mismatch_count += 1
 
                         # Disable the assertion for now
@@ -359,13 +360,15 @@ def main(argv=None):
     # setup argparser
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--version', action='version', version='%s v%s (%s)' % (os.path.basename(__file__), __version__, __updated__))
+    parser.add_argument('--version', action='version', version='%s v%s (%s)' %
+                        (os.path.basename(__file__), __version__, __updated__))
 
     # Actions
     action_group = parser.add_argument_group("Actions", "A single action must be selected.")
     actions = action_group.add_mutually_exclusive_group(required=True)
     actions.add_argument("--submit", help="Submit the given file as coverage data", metavar="FILE")
-    actions.add_argument("--multi-submit", action="store_true", help="Submit multiple files (specified last on the command line)")
+    actions.add_argument("--multi-submit", action="store_true",
+                         help="Submit multiple files (specified last on the command line)")
 
     # Generic Settings
     parser.add_argument("--serverhost", help="Server hostname for remote signature management", metavar="HOST")
@@ -389,7 +392,8 @@ def main(argv=None):
         with open(opts.serverauthtokenfile) as f:
             serverauthtoken = f.read().rstrip()
 
-    reporter = CovReporter(opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid, opts.tool, opts.repository)
+    reporter = CovReporter(opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid,
+                           opts.tool, opts.repository)
 
     if opts.submit or opts.multi_submit:
         if not opts.repository:

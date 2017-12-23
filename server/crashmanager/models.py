@@ -35,7 +35,8 @@ class OS(models.Model):
 
 
 class TestCase(models.Model):
-    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)), upload_to="tests")
+    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)),
+                            upload_to="tests")
     size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
@@ -217,7 +218,8 @@ class CrashEntry(models.Model):
         if cachedCrashInfo is None or "crashdata" in requiredOutputSources:
             rawCrashData = self.rawCrashData
 
-        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData, cacheObject=cachedCrashInfo)
+        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData,
+                                               cacheObject=cachedCrashInfo)
 
         if attachTestcase and self.testcase != None and not self.testcase.isBinary:
             self.testcase.loadTest()

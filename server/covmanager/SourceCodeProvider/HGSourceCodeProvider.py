@@ -59,7 +59,8 @@ class HGSourceCodeProvider(SourceCodeProvider):
         revision = revision.replace('+', '')
 
         try:
-            output = subprocess.check_output(["hg", "log", "-r", revision, "--template", r'{parents}\n', "--debug"], cwd=self.location)
+            output = subprocess.check_output(["hg", "log", "-r", revision, "--template", r'{parents}\n', "--debug"],
+                                             cwd=self.location)
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 

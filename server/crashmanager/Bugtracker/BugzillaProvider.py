@@ -188,8 +188,10 @@ class BugzillaProvider(Provider):
 
         # Handle ".attached" properties
         if '%crashdata.attached%' in template["description"] or '%crashdata.attached%' in template["comment"]:
-            template["description"] = template["description"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
-            template["comment"] = template["comment"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
+            template["description"] = template["description"].replace(
+                '%crashdata.attached%', "For detailed crash information, see attachment.")
+            template["comment"] = template["comment"].replace(
+                '%crashdata.attached%', "For detailed crash information, see attachment.")
             attachmentData["crashdata_attach"] = sdata['crashdata']
 
         # Remove the specified pathPrefix from traces and assertion
@@ -199,7 +201,8 @@ class BugzillaProvider(Provider):
             template["comment"] = template["comment"].replace(metadata["pathPrefix"], "")
 
             if "crashdata_attach" in attachmentData:
-                attachmentData["crashdata_attach"] = attachmentData["crashdata_attach"].replace(metadata["pathPrefix"], "")
+                attachmentData["crashdata_attach"] = attachmentData["crashdata_attach"].replace(
+                    metadata["pathPrefix"], "")
 
         if crashEntry.shortSignature.startswith("[@"):
             template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
@@ -293,7 +296,8 @@ class BugzillaProvider(Provider):
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
+                                    is_binary=False)
             ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
@@ -353,7 +357,8 @@ class BugzillaProvider(Provider):
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(args["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            cRet = bz.addAttachment(args["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
+                                    is_binary=False)
             ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
