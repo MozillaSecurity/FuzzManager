@@ -601,7 +601,8 @@ def newSignature(request):
         bucket = Bucket(
             signature=request.POST['signature'],
             shortDescription=request.POST['shortDescription'],
-            frequent="frequent" in request.POST
+            frequent="frequent" in request.POST,
+            permanent="permanent" in request.POST
         )
         return __handleSignaturePost(request, bucket)
     elif request.method == 'GET':
@@ -720,6 +721,7 @@ def editSignature(request, sigid):
         bucket.signature = request.POST['signature']
         bucket.shortDescription = request.POST['shortDescription']
         bucket.frequent = "frequent" in request.POST
+        bucket.permanent = "permanent" in request.POST
 
         # TODO: FIXME: Update bug here as well
         return __handleSignaturePost(request, bucket)
