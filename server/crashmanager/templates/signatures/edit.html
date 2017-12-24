@@ -27,6 +27,11 @@
             </div>
 
             <div class="field">
+                <input type="checkbox" id="id_permanent" name="permanent" value="unassigned" {% if bucket.permanent %}checked{% endif %}/>
+                <label for="id_frequent">Mark this bucket as a permanent bucket</label>
+            </div>
+
+            <div class="field">
                 <input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
                 <label for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
             </div>
