@@ -111,14 +111,14 @@ class BugzillaREST():
 
         # Compose our bug attribute using all given arguments with special
         # handling of the self and attrs arguments
-        l = locals()
+        loc = locals()
         bug = {}
-        for k in l:
-            if k == "attrs" and l[k] != None:
-                for ak in l[k]:
-                    bug[ak] = l[k][ak]
-            elif l[k] != None and l[k] != '' and k != "self":
-                bug[k] = l[k]
+        for k in loc:
+            if k == "attrs" and loc[k] != None:
+                for ak in loc[k]:
+                    bug[ak] = loc[k][ak]
+            elif loc[k] != None and loc[k] != '' and k != "self":
+                bug[k] = loc[k]
 
         # Ensure we're logged in
         self.login()
@@ -161,11 +161,11 @@ class BugzillaREST():
     def addAttachment(self, ids, data, file_name, summary, comment=None, is_private=None, is_binary=False):
         # Compose our request using all given arguments with special
         # handling of the self and is_binary arguments
-        l = locals()
+        loc = locals()
         attachment = {}
-        for k in l:
-            if l[k] != None and l[k] != '' and k != "self" and k != "is_binary":
-                attachment[k] = l[k]
+        for k in loc:
+            if loc[k] != None and loc[k] != '' and k != "self" and k != "is_binary":
+                attachment[k] = loc[k]
 
         # Set proper content-type
         if is_binary:

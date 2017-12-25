@@ -338,10 +338,10 @@ class CovReporter(Reporter):
             # actual coverage data.
             coverage = node["coverage"]
 
-            for l in coverage:
-                if l >= 0:
+            for line in coverage:
+                if line >= 0:
                     node["linesTotal"] += 1
-                    if l > 0:
+                    if line > 0:
                         node["linesCovered"] += 1
 
         # Calculate two more values based on total/covered because we need
