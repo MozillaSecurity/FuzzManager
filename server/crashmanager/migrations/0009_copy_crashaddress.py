@@ -13,7 +13,7 @@ def create_migration_tool(apps, schema_editor):
     for entry in CrashEntry.objects.filter(crashAddressNumeric=None):
         try:
             entry.save()
-        except ValueError as e:
+        except ValueError:
             print("Failed to convert crash address value: %s" % entry.crashAddress, file=sys.stderr)
 
 

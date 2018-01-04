@@ -860,8 +860,8 @@ def optimizeSignature(request, sigid):
             # If the signature matches lots of other buckets as well, it is likely too
             # broad and we should not consider it (or later rate it worse than others).
             matchesInOtherBuckets = False
-            nonMatchesInOtherBuckets = 0
-            otherMatchingBucketIds = []
+            nonMatchesInOtherBuckets = 0  # noqa
+            otherMatchingBucketIds = []  # noqa
             for otherBucket in buckets:
                 if otherBucket.pk == bucket.pk:
                     continue
