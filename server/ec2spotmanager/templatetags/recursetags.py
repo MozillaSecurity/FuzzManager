@@ -27,7 +27,7 @@ class RecurseConfigTree(template.Node):
 def recurseconfig(parser, token):
     bits = token.contents.split()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError(_('%s tag requires a start configuration') % bits[0])
+        raise template.TemplateSyntaxError(_('%s tag requires a start configuration') % bits[0])  # noqa
 
     config_var = template.Variable(bits[1])
 
