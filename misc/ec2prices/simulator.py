@@ -65,7 +65,7 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
                                               product_description="Linux/UNIX"
                                               )  # TODO: Make configurable
             break
-        except:
+        except Exception:
             print("Caught exception, retrying")
             pass
 

@@ -50,5 +50,5 @@ def printImportantRegisters():
     for reg in regs:
         try:
             print(reg + "\t" + regAsHexStr(reg) + "\t" + regAsIntStr(reg))
-        except:
+        except Exception:
             print(reg + "\t" + regAsRaw(reg))
