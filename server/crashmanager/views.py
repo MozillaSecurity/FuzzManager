@@ -115,7 +115,7 @@ def paginate_requested_list(request, entries):
     # We need to preserve the query parameters when adding the page to the
     # query URL, so we store the sanitized copy inside our entries object.
     paginator_query = request.GET.copy()
-    if paginator_query.has_key('page'):
+    if 'page' in paginator_query:
         del paginator_query['page']
 
     page_entries.paginator_query = paginator_query
