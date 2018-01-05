@@ -229,7 +229,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
     # check that 404 raises
     monkeypatch.undo()
 
-    class response_t(object):
+    class response_t(object):  # noqa
         status_code = requests.codes["not found"]
         text = "Not found"
 
@@ -242,7 +242,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
     # check that bad zips raise errors
     monkeypatch.undo()
     with open(tmpdir.join('sigs', 'other.txt').strpath, 'rb') as fp:
-        class response_t(object):
+        class response_t(object):  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -258,7 +258,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
         fp.seek(0x42)
         fp.write(b'\xFF')
     with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
-        class response_t(object):
+        class response_t(object):  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -366,7 +366,7 @@ def test_collector_download(tmpdir, monkeypatch):
         collector.download(123)
 
     # download with no testcase
-    class response1_t(object):
+    class response1_t(object):  # noqa
         status_code = requests.codes["ok"]
         text = 'OK'
 
@@ -378,7 +378,7 @@ def test_collector_download(tmpdir, monkeypatch):
     assert result is None
 
     # invalid REST response
-    class response1_t(object):
+    class response1_t(object):  # noqa
         status_code = requests.codes["ok"]
         text = 'OK'
 
@@ -390,7 +390,7 @@ def test_collector_download(tmpdir, monkeypatch):
         collector.download(123)
 
     # REST query returns http error
-    class response1_t(object):
+    class response1_t(object):  # noqa
         status_code = 404
         text = 'Not found'
     monkeypatch.undo()

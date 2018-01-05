@@ -647,7 +647,7 @@ class UptimeChartViewAccumulated(JSONView):
 
 
 class MachineStatusViewSet(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
 
     def get(self, request, *args, **kwargs):
         result = {}
@@ -667,7 +667,7 @@ class MachineStatusViewSet(APIView):
 
 
 class PoolCycleView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):
@@ -683,7 +683,7 @@ class PoolCycleView(APIView):
 
 
 class PoolEnableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):
@@ -700,7 +700,7 @@ class PoolEnableView(APIView):
 
 
 class PoolDisableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):
