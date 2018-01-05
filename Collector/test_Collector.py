@@ -21,7 +21,6 @@ import zipfile
 
 import pytest
 import requests
-from requests.exceptions import ConnectionError
 
 from Collector.Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
