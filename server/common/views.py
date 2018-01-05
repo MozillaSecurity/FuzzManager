@@ -3,7 +3,6 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.shortcuts import render
 import json
-import operator
 from rest_framework import filters
 
 from ..crashmanager.serializers import InvalidArgumentException

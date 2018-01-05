@@ -12,7 +12,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
 import logging
-import os.path
 
 import requests
 from django.contrib.auth.models import User

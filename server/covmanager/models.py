@@ -6,7 +6,6 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import json
-import re
 
 from crashmanager.models import Client, Tool
 

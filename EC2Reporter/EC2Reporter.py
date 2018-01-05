@@ -24,7 +24,6 @@ import argparse
 from fasteners import InterProcessLock
 import functools
 import os
-import platform
 import random
 import requests
 import sys
