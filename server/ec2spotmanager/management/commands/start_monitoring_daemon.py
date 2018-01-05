@@ -19,7 +19,7 @@ from laniakea.laniakea import LaniakeaCommandLine
 
 use_multiprocess_price_fetch = False
 if use_multiprocess_price_fetch:
-    from multiprocessing import Pool, cpu_count
+    from multiprocessing import Pool, cpu_count  # noqa
 
 logger = logging.getLogger("ec2spotmanager")
 
