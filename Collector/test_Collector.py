@@ -25,7 +25,6 @@ import requests
 from Collector.Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashSignature import CrashSignature
 from crashmanager.models import CrashEntry
 
 if sys.version_info.major == 3:

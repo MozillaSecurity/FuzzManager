@@ -12,8 +12,7 @@ import time
 
 from ec2spotmanager.common.prices import get_spot_prices, get_price_median
 from ec2spotmanager.management.common import pid_lock_file
-from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE, \
-    PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+from ec2spotmanager.models import InstancePool, Instance, INSTANCE_STATE, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 from laniakea.core.manager import Laniakea
 from laniakea.laniakea import LaniakeaCommandLine
 

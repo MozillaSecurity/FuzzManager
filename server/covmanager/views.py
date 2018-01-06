@@ -8,7 +8,7 @@ from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
 
-from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, paginate_requested_list, renderError
+from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer

@@ -18,7 +18,6 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase  # APIRequestFactory
 
 from . import TestCase
-from ..models import CrashEntry, TestCase as cmTestCase
 
 
 log = logging.getLogger("fm.crashmanager.tests.signatures.rest")  # pylint: disable=invalid-name
