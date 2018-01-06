@@ -52,7 +52,7 @@ class AutoRunner():
             for envkey in env:
                 self.env[envkey] = env[envkey]
 
-        if not 'LD_LIBRARY_PATH' in self.env:
+        if 'LD_LIBRARY_PATH' not in self.env:
             self.env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
         self.args = args
@@ -205,7 +205,7 @@ class ASanRunner(AutoRunner):
         self.cmdArgs.append(self.binary)
         self.cmdArgs.extend(self.args)
 
-        if not "ASAN_SYMBOLIZER_PATH" in self.env:
+        if "ASAN_SYMBOLIZER_PATH" not in self.env:
             if "ASAN_SYMBOLIZER_PATH" in os.environ:
                 self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
             else:
@@ -220,7 +220,7 @@ class ASanRunner(AutoRunner):
                 "Misconfigured ASAN_SYMBOLIZER_PATH: %s" % self.env["ASAN_SYMBOLIZER_PATH"]
             )
 
-        if not "UBSAN_OPTIONS" in self.env:
+        if "UBSAN_OPTIONS" not in self.env:
             if "UBSAN_OPTIONS" in os.environ:
                 self.env["UBSAN_OPTIONS"] = os.environ["UBSAN_OPTIONS"]
             else:
@@ -229,7 +229,7 @@ class ASanRunner(AutoRunner):
                 # to isolate a UBSan trace.
                 self.env["UBSAN_OPTIONS"] = "print_stacktrace=1"
 
-        if not "ASAN_OPTIONS" in self.env:
+        if "ASAN_OPTIONS" not in self.env:
             if "ASAN_OPTIONS" in os.environ:
                 self.env["ASAN_OPTIONS"] = os.environ["ASAN_OPTIONS"]
             else:

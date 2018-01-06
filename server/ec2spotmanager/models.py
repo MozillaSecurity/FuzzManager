@@ -205,7 +205,7 @@ class PoolConfiguration(models.Model):
 
         # Check regular fields, none of them is optional
         for field in self.config_fields:
-            if not field in flat_config or not flat_config[field]:
+            if field not in flat_config or not flat_config[field]:
                 missing_fields.append(field)
 
         # Most dicts/lists are optional except for the ec2_allowed_regions

@@ -57,7 +57,7 @@ class BugzillaREST():
         response = requests.get(loginUrl)
         json = response.json()
 
-        if not 'token' in json:
+        if 'token' not in json:
             raise RuntimeError('Login failed: %s', response.text)
 
         self.authToken = json["token"]
@@ -94,7 +94,7 @@ class BugzillaREST():
         response = requests.get(bugUrl + "".join(extraParams))
         json = response.json()
 
-        if not "bugs" in json:
+        if "bugs" not in json:
             return None
 
         ret = {}
@@ -142,7 +142,7 @@ class BugzillaREST():
         createUrl = "%s/bug/%s/comment?%s=%s" % (self.baseUrl, id, self.authField, self.authToken)
         response = requests.post(createUrl, cobj).json()
 
-        if not "id" in response:
+        if "id" not in response:
             return response
 
         commentId = str(response["id"])
@@ -150,10 +150,10 @@ class BugzillaREST():
         commentUrl = "%s/bug/comment/%s?%s=%s" % (self.baseUrl, commentId, self.authField, self.authToken)
         response = requests.get(commentUrl).json()
 
-        if not "comments" in response:
+        if "comments" not in response:
             return response
 
-        if not commentId in response["comments"]:
+        if commentId not in response["comments"]:
             return response
 
         return response["comments"][commentId]

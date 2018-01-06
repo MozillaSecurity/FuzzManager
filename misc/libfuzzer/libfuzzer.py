@@ -183,7 +183,7 @@ def main(argv=None):
         configuration.addMetadata(metadata)
 
     # Set LD_LIBRARY_PATH for convenience
-    if not 'LD_LIBRARY_PATH' in env:
+    if 'LD_LIBRARY_PATH' not in env:
         env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
     serverauthtoken = None

@@ -164,7 +164,7 @@ class CovReporter(Reporter):
                 # Walk the tree down, one path part at a time and create parts
                 # on the fly if they don't exist yet in our tree.
                 for path_part in path_parts:
-                    if not path_part in ptr:
+                    if path_part not in ptr:
                         ptr[path_part] = {"children": {}}
 
                     ptr = ptr[path_part]["children"]

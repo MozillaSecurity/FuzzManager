@@ -1052,9 +1052,9 @@ class GDBCrashInfo(CrashInfo):
                 else:
                     raise RuntimeError("Unexpected instruction pattern: %s" % crashInstruction)
             elif len(parts) == 4:
-                if "(" in parts[0] and not ")" in parts[0]:
+                if "(" in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
-                elif not "(" in parts[0] and not ")" in parts[0]:
+                elif "(" not in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[1] + "," + parts[2] + "," + parts[3]
 
                 (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)

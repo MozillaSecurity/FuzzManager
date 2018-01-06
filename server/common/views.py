@@ -82,7 +82,7 @@ def json_to_query(json_str):
 
         qobj = Q()
 
-        if not "op" in obj:
+        if "op" not in obj:
                 raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]

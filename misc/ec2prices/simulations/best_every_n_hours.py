@@ -27,7 +27,7 @@ def run(data, sim_config, main_config):
     zone = data[region].keys()[0]
     instance_type = data[region][zone].keys()[0]
 
-    if not "n" in sim_config:
+    if "n" not in sim_config:
         print("Error: Must specify parameter 'n' for best_every_n_hours handler.")
         return None
 

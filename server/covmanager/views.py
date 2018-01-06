@@ -146,7 +146,7 @@ def collections_diff_api(request, path):
     for child in start_coverage["children"]:
         add = {}
 
-        if not child in end_coverage["children"]:
+        if child not in end_coverage["children"]:
             continue
 
         for k in start_coverage["children"][child]:

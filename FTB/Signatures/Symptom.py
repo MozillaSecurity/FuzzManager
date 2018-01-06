@@ -49,7 +49,7 @@ class Symptom():
         @rtype: Symptom
         @return: Symptom subclass instance matching the given object
         '''
-        if not "type" in obj:
+        if "type" not in obj:
             raise RuntimeError("Missing symptom type in object")
 
         stype = obj["type"]
@@ -238,7 +238,7 @@ class InstructionSymptom(Symptom):
 
         if self.registerNames != None:
             for register in self.registerNames:
-                if not register in crashInfo.crashInstruction:
+                if register not in crashInfo.crashInstruction:
                     return False
 
         if self.instructionName != None:

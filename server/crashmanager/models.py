@@ -259,11 +259,11 @@ class CrashEntry(models.Model):
     def deferRawFields(queryset, requiredOutputSources=()):
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.
-        if not "stdout" in requiredOutputSources:
+        if "stdout" not in requiredOutputSources:
             queryset = queryset.defer('rawStdout')
-        if not "stderr" in requiredOutputSources:
+        if "stderr" not in requiredOutputSources:
             queryset = queryset.defer('rawStderr')
-        if not "crashdata" in requiredOutputSources:
+        if "crashdata" not in requiredOutputSources:
             queryset = queryset.defer('rawCrashData')
         return queryset
 

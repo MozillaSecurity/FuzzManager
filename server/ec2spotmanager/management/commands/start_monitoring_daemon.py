@@ -459,7 +459,7 @@ class Command(BaseCommand):
         instance_ids_by_region = {}
 
         for instance in instances:
-            if not instance.ec2_region in instance_ids_by_region:
+            if instance.ec2_region not in instance_ids_by_region:
                 instance_ids_by_region[instance.ec2_region] = []
             instance_ids_by_region[instance.ec2_region].append(instance.ec2_instance_id)
 
@@ -531,7 +531,7 @@ class Command(BaseCommand):
                     # Whenever we see an instance that is not in our instance list for that region,
                     # make sure it's a terminated instance because we should never have a running
                     # instance that matches the search above but is not in our database.
-                    if not boto_instance.id in instance_ids_by_region[region]:
+                    if boto_instance.id not in instance_ids_by_region[region]:
                         if not ((state_code == INSTANCE_STATE['shutting-down'] or
                                 state_code == INSTANCE_STATE['terminated'])):
 
@@ -574,7 +574,7 @@ class Command(BaseCommand):
 
         if instances_left:
             for instance in instances_left:
-                if not instance.ec2_instance_id in debug_boto_instance_ids_seen:
+                if instance.ec2_instance_id not in debug_boto_instance_ids_seen:
                     logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, "
                                 "has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
 

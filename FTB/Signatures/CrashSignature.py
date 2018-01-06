@@ -79,13 +79,13 @@ class CrashSignature():
         @rtype: bool
         @return: True if the signature matches, False otherwise
         '''
-        if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
+        if self.platforms != None and crashInfo.configuration.platform not in self.platforms:
             return False
 
-        if self.operatingSystems != None and not crashInfo.configuration.os in self.operatingSystems:
+        if self.operatingSystems != None and crashInfo.configuration.os not in self.operatingSystems:
             return False
 
-        if self.products != None and not crashInfo.configuration.product in self.products:
+        if self.products != None and crashInfo.configuration.product not in self.products:
             return False
 
         deferredSymptoms = []
@@ -160,13 +160,13 @@ class CrashSignature():
                 if not symptom.matches(crashInfo):
                     distance += 1
 
-        if self.platforms != None and not crashInfo.configuration.platform in self.platforms:
+        if self.platforms != None and crashInfo.configuration.platform not in self.platforms:
             distance += 1
 
-        if self.operatingSystems != None and not crashInfo.configuration.os in self.operatingSystems:
+        if self.operatingSystems != None and crashInfo.configuration.os not in self.operatingSystems:
             distance += 1
 
-        if self.products != None and not crashInfo.configuration.product in self.products:
+        if self.products != None and crashInfo.configuration.product not in self.products:
             distance += 1
 
         return distance

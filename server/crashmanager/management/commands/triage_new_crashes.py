@@ -22,7 +22,7 @@ class Command(BaseCommand):
             crashInfo = entry.getCrashInfo(attachTestcase=True)
 
             for bucket in buckets:
-                if not bucket.pk in signatureCache:
+                if bucket.pk not in signatureCache:
                     signatureCache[bucket.pk] = bucket.getSignature()
 
                 signature = signatureCache[bucket.pk]
