@@ -12,7 +12,7 @@ from celeryconf import app  # noqa
 
 @app.task
 def check_revision_update(pk):
-    from covmanager.models import Collection, Repository
+    from covmanager.models import Collection, Repository  # noqa
     collection = Collection.objects.get(pk=pk)
 
     # Get the SourceCodeProvider associated with this collection

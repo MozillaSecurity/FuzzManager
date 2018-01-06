@@ -1,1 +1,1 @@
-from . import tasks
+from . import tasks  # noqa

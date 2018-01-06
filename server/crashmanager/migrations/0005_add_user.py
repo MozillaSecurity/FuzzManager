@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from django.conf import settings
-from crashmanager.models import Tool
+from crashmanager.models import Tool  # noqa
 
 
 class Migration(migrations.Migration):
