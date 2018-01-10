@@ -385,6 +385,15 @@ class CrashInfo():
         includeCrashAddress = stackIsInsufficient or forceCrashAddress
         includeCrashInstruction = (stackIsInsufficient and self.crashInstruction != None) or forceCrashInstruction
 
+        if not symptomArr and not includeCrashInstruction:
+            # If at this point, we don't have any symptoms from either backtrace
+            # or abort messages and we also lack a crash instruction, then the
+            # the only potential symptom that remains is the crash address.
+            # That symptom alone would in most cases be too broad for an automatically
+            # generated signature, so we stop at this point.
+            self.failureReason = "Insufficient data to generate crash signature."
+            return None
+
         if includeCrashAddress:
             if self.crashAddress is None:
                 crashAddress = ""
@@ -561,12 +570,6 @@ class ASanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
-        if not self.backtrace and self.crashAddress is not None:
-            # We've seen the crash address but no frames, so this is likely
-            # a crash on the heap with no symbols available. Add one artificial
-            # frame so it doesn't show up as "No crash detected"
-            self.backtrace.append("??")
-
     def createShortSignature(self):
         '''
         @rtype: String
@@ -620,6 +623,10 @@ class ASanCrashInfo(CrashInfo):
             return asanMsg
 
         if not len(self.backtrace):
+            if self.crashAddress is not None:
+                # We seem to have a crash but no backtrace, so let it show up as a crash with no symbols
+                return "[@ ??]"
+
             return "No crash detected"
 
         return "[@ %s]" % self.backtrace[0]
