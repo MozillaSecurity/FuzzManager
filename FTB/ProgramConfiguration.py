@@ -75,7 +75,8 @@ class ProgramConfiguration():
         if "product_version" in mainConfig:
             version = mainConfig["product_version"]
 
-        return ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"], version=version, metadata=config.metadataConfig)
+        return ProgramConfiguration(mainConfig["product"], mainConfig["platform"], mainConfig["os"],
+                                    version=version, metadata=config.metadataConfig)
 
     def addEnvironmentVariables(self, env):
         '''

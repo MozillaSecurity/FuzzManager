@@ -53,8 +53,10 @@ def create_fuzzmanager():
         print('[+] The fuzzmanager account password has been set to the auth_token {}'.format(auth_token))
         output = subprocess.check_output(['htpasswd', '-cb', '.htpasswd', 'fuzzmanager', auth_token])
         print(output)
-        print('[+] .htpasswd created for apache basic authentication with the fuzzmanager user password set to {}'.format(auth_token))
-        print('Update the AuthUserFile path/to/.htpasswd line as shown in examples/apache2/default.vhost to point to this file')
+        print(('[+] .htpasswd created for apache basic authentication with the fuzzmanager '
+               'user password set to {}').format(auth_token))
+        print('Update the AuthUserFile path/to/.htpasswd line as shown in examples/apache2/default.vhost to point to '
+              'this file')
     except User.DoesNotExist:
         print('Something went wrong creating the fuzzmanager account')
 

@@ -7,8 +7,10 @@ from rest_framework.exceptions import APIException
 from crashmanager.models import Client, Tool
 from .models import Collection, CollectionFile, Repository
 
+
 class InvalidArgumentException(APIException):
     status_code = 400
+
 
 class CollectionSerializer(serializers.ModelSerializer):
     # We need to redefine several fields explicitly because we flatten our
@@ -25,9 +27,9 @@ class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
         fields = (
-                  'repository', 'revision', 'branch', 'tools',
-                  'client', 'coverage', 'description', 'id', 'created'
-                  )
+            'repository', 'revision', 'branch', 'tools',
+            'client', 'coverage', 'description', 'id', 'created'
+        )
         read_only_fields = ('id', 'created')
 
     def to_representation(self, obj):
@@ -85,6 +87,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
         # Create our Collection instance
         return super(CollectionSerializer, self).create(attrs)
+
 
 class RepositorySerializer(serializers.ModelSerializer):
     class Meta:

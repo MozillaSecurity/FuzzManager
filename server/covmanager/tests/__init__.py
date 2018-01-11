@@ -37,7 +37,10 @@ def _check_hg():
     except OSError:  # FileNotFoundError
         pass
     return False
+
+
 HAVE_HG = _check_hg()
+
 
 def _check_git():
     try:
@@ -48,6 +51,8 @@ def _check_git():
     except OSError:  # FileNotFoundError
         pass
     return False
+
+
 HAVE_GIT = _check_git()
 
 

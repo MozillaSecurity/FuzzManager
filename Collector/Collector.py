@@ -49,6 +49,7 @@ __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
 
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
@@ -251,7 +252,8 @@ class Collector(Reporter):
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''
-        url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort, crashId)
+        url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
+                                                            crashId)
 
         response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
 
@@ -266,7 +268,8 @@ class Collector(Reporter):
         if not respJson["testcase"]:
             return None
 
-        url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort, respJson["testcase"])
+        url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort,
+                                              respJson["testcase"])
         response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
 
         if response.status_code != requests.codes["ok"]:
@@ -318,6 +321,7 @@ class Collector(Reporter):
 
         return (testCaseData, isBinary)
 
+
 def main(args=None):
     '''Command line options.'''
 
@@ -337,9 +341,14 @@ def main(args=None):
     actions.add_argument("--refresh", action='store_true', help="Perform a signature refresh")
     actions.add_argument("--submit", action='store_true', help="Submit a signature to the server")
     actions.add_argument("--search", action='store_true', help="Search cached signatures for the given crash")
-    actions.add_argument("--generate", action='store_true', help="Create a (temporary) local signature in the cache directory")
-    actions.add_argument("--autosubmit", action='store_true', help="Go into auto-submit mode. In this mode, all remaining arguments are interpreted as the crashing command. This tool will automatically obtain GDB crash information and submit it.")
-    actions.add_argument("--download", type=int, help="Download the testcase for the specified crash entry", metavar="ID")
+    actions.add_argument("--generate", action='store_true',
+                         help="Create a (temporary) local signature in the cache directory")
+    actions.add_argument("--autosubmit", action='store_true',
+                         help=("Go into auto-submit mode. In this mode, all remaining arguments are interpreted "
+                               "as the crashing command. This tool will automatically obtain GDB crash information "
+                               "and submit it."))
+    actions.add_argument("--download", type=int,
+                         help="Download the testcase for the specified crash entry", metavar="ID")
     actions.add_argument("--get-clientid", action='store_true', help="Print the client ID used when submitting issues")
 
     # Settings
@@ -351,21 +360,27 @@ def main(args=None):
     parser.add_argument("--clientid", help="Client ID to use when submitting issues", metavar="ID")
     parser.add_argument("--platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
     parser.add_argument("--product", help="Product this crash appeared on", metavar="PRODUCT")
-    parser.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
+    parser.add_argument("--productversion", dest="product_version",
+                        help="Product version this crash appeared on", metavar="VERSION")
     parser.add_argument("--os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
     parser.add_argument("--tool", help="Name of the tool that found this issue", metavar="NAME")
-    parser.add_argument('--args', nargs='+', type=str, help="List of program arguments. Backslashes can be used for escaping and are stripped.")
+    parser.add_argument('--args', nargs='+', type=str,
+                        help="List of program arguments. Backslashes can be used for escaping and are stripped.")
     parser.add_argument('--env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
     parser.add_argument('--metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
     parser.add_argument("--binary", help="Binary that has a configuration file for reading", metavar="BINARY")
 
     parser.add_argument("--testcase", help="File containing testcase", metavar="FILE")
-    parser.add_argument("--testcasequality", default=0, type=int, help="Integer indicating test case quality (%(default)s is best and default)", metavar="VAL")
+    parser.add_argument("--testcasequality", default=0, type=int,
+                        help="Integer indicating test case quality (%(default)s is best and default)", metavar="VAL")
 
     # Options that affect how signatures are generated
-    parser.add_argument("--forcecrashaddr", action='store_true', help="Force including the crash address into the signature")
-    parser.add_argument("--forcecrashinst", action='store_true', help="Force including the crash instruction into the signature (GDB only)")
-    parser.add_argument("--numframes", default=8, type=int, help="How many frames to include into the signature (default: %(default)s)")
+    parser.add_argument("--forcecrashaddr", action='store_true',
+                        help="Force including the crash address into the signature")
+    parser.add_argument("--forcecrashinst", action='store_true',
+                        help="Force including the crash instruction into the signature (GDB only)")
+    parser.add_argument("--numframes", default=8, type=int,
+                        help="How many frames to include into the signature (default: %(default)s)")
 
     parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
@@ -390,7 +405,8 @@ def main(args=None):
             for idx, arg in enumerate(opts.rargs[1:]):
                 if os.path.exists(arg):
                     if testcase:
-                        parser.error("Multiple potential testcases specified on command line. Must explicitly specify test using --testcase.")
+                        parser.error("Multiple potential testcases specified on command line. "
+                                     "Must explicitly specify test using --testcase.")
                     testcase = arg
                     testcaseidx = idx
 
@@ -447,7 +463,8 @@ def main(args=None):
             if opts.platform is None or opts.product is None or opts.os is None:
                 parser.error("Must specify/configure at least --platform, --product and --os")
 
-            configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args, metadata)
+            configuration = ProgramConfiguration(opts.product, opts.platform, opts.os, opts.product_version, env, args,
+                                                 metadata)
 
         if not opts.autosubmit:
             if opts.stderr is None and opts.crashdata is None:
@@ -476,7 +493,8 @@ def main(args=None):
         with open(opts.serverauthtokenfile) as f:
             serverauthtoken = f.read().rstrip()
 
-    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken, opts.clientid, opts.tool)
+    collector = Collector(opts.sigdir, opts.serverhost, opts.serverport, opts.serverproto, serverauthtoken,
+                          opts.clientid, opts.tool)
 
     if opts.refresh:
         collector.refresh()
@@ -543,6 +561,7 @@ def main(args=None):
     if opts.get_clientid:
         print(collector.clientId)
         return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

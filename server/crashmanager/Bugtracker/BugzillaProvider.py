@@ -33,31 +33,31 @@ class BugzillaProvider(Provider):
         super(BugzillaProvider, self).__init__(pk, hostname)
 
         self.templateFields = [
-                    "name",
-                    "product",
-                    "component",
-                    "summary",
-                    "version",
-                    "description",
-                    "op_sys",
-                    "platform",
-                    "priority",
-                    "severity",
-                    "alias",
-                    "cc",
-                    "assigned_to",
-                    "qa_contact",
-                    "target_milestone",
-                    "whiteboard",
-                    "keywords",
-                    "attrs",
-                    "security_group",
-                    "testcase_filename",
-                ]
+            "name",
+            "product",
+            "component",
+            "summary",
+            "version",
+            "description",
+            "op_sys",
+            "platform",
+            "priority",
+            "severity",
+            "alias",
+            "cc",
+            "assigned_to",
+            "qa_contact",
+            "target_milestone",
+            "whiteboard",
+            "keywords",
+            "attrs",
+            "security_group",
+            "testcase_filename",
+        ]
 
         self.templateFlags = [
-                    "security",
-                ]
+            "security",
+        ]
 
     def getTemplateForUser(self, request, crashEntry):
         if 'template' in request.GET:
@@ -188,8 +188,10 @@ class BugzillaProvider(Provider):
 
         # Handle ".attached" properties
         if '%crashdata.attached%' in template["description"] or '%crashdata.attached%' in template["comment"]:
-            template["description"] = template["description"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
-            template["comment"] = template["comment"].replace('%crashdata.attached%', "For detailed crash information, see attachment.")
+            template["description"] = template["description"].replace(
+                '%crashdata.attached%', "For detailed crash information, see attachment.")
+            template["comment"] = template["comment"].replace(
+                '%crashdata.attached%', "For detailed crash information, see attachment.")
             attachmentData["crashdata_attach"] = sdata['crashdata']
 
         # Remove the specified pathPrefix from traces and assertion
@@ -199,7 +201,8 @@ class BugzillaProvider(Provider):
             template["comment"] = template["comment"].replace(metadata["pathPrefix"], "")
 
             if "crashdata_attach" in attachmentData:
-                attachmentData["crashdata_attach"] = attachmentData["crashdata_attach"].replace(metadata["pathPrefix"], "")
+                attachmentData["crashdata_attach"] = attachmentData["crashdata_attach"].replace(
+                    metadata["pathPrefix"], "")
 
         if crashEntry.shortSignature.startswith("[@"):
             template["attrs"] = template["attrs"] + "\ncf_crash_signature=" + crashEntry.shortSignature
@@ -218,15 +221,15 @@ class BugzillaProvider(Provider):
             attachmentData = self.substituteTemplateForCrash(template, crashEntry)
 
         data = {
-                   'hostname' : self.hostname,
-                   'templates' : templates,
-                   'template' : template,
-                   'entry' : crashEntry,
-                   'provider' : self.pk,
-                   'mode' : mode,
-                   'postTarget' : postTarget,
-                   'attachmentData' : attachmentData,
-                }
+            'hostname': self.hostname,
+            'templates': templates,
+            'template': template,
+            'entry': crashEntry,
+            'provider': self.pk,
+            'mode': mode,
+            'postTarget': postTarget,
+            'attachmentData': attachmentData,
+        }
 
         return render(request, 'bugzilla/submit.html', data)
 
@@ -271,7 +274,7 @@ class BugzillaProvider(Provider):
             args["groups"] = ["core-security"]
             # Allow security_group to override the default security group used
             if 'security_group' in request.POST and request.POST['security_group']:
-                args["groups"] = [ request.POST['security_group'] ]
+                args["groups"] = [request.POST['security_group']]
 
         # security_group is a field we need in our template, but it does not correspond
         # to a field in Bugzilla so we need to remove it here.
@@ -293,7 +296,8 @@ class BugzillaProvider(Provider):
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
+                                    is_binary=False)
             ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
@@ -353,7 +357,8 @@ class BugzillaProvider(Provider):
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(args["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information", is_binary=False)
+            cRet = bz.addAttachment(args["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
+                                    is_binary=False)
             ret["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
@@ -389,11 +394,11 @@ class BugzillaProvider(Provider):
             template = {}
 
         data = {
-                'createTemplate' : True,
-                'template' : template,
-                'provider' : self.pk,
-                'mode' : "create",
-                }
+            'createTemplate': True,
+            'template': template,
+            'provider': self.pk,
+            'mode': "create",
+        }
 
         return render(request, 'bugzilla/submit.html', data)
 
@@ -402,11 +407,11 @@ class BugzillaProvider(Provider):
         templates = BugzillaTemplate.objects.all()
 
         data = {
-                'provider' : self.pk,
-                'templates' : templates,
-                'template' : template,
-                'mode' : mode,
-                }
+            'provider': self.pk,
+            'templates': templates,
+            'template': template,
+            'mode': mode,
+        }
 
         return render(request, 'bugzilla/view_edit_template.html', data)
 

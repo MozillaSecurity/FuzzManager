@@ -79,8 +79,10 @@ class StringMatch():
 
         return self.value
 
+
 class NumberMatchType:
     GE, GT, LE, LT = range(4)
+
 
 class NumberMatch():
     def __init__(self, obj):

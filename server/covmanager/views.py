@@ -16,26 +16,32 @@ from crashmanager.models import Tool
 
 from SourceCodeProvider import SourceCodeProvider
 
+
 @login_required(login_url='/login/')
 def index(request):
     return redirect('covmanager:collections')
 
+
 @login_required(login_url='/login/')
 def repositories(request):
     repositories = Repository.objects.all()
-    return render(request, 'repositories/index.html', { 'repositories' : repositories })
+    return render(request, 'repositories/index.html', {'repositories': repositories})
+
 
 @login_required(login_url='/login/')
 def collections(request):
     return render(request, 'collections/index.html', {})
 
+
 @login_required(login_url='/login/')
 def collections_browse(request, collectionid):
-    return render(request, 'collections/browse.html', { 'collectionid' : collectionid })
+    return render(request, 'collections/browse.html', {'collectionid': collectionid})
+
 
 @login_required(login_url='/login/')
 def collections_diff(request):
-    return render(request, 'collections/browse.html', { 'diff_api': True })
+    return render(request, 'collections/browse.html', {'diff_api': True})
+
 
 @login_required(login_url='/login/')
 def collections_browse_api(request, collectionid, path):
@@ -54,8 +60,9 @@ def collections_browse_api(request, collectionid, path):
         # This is a leaf, we need to add source code
         collection.annotateSource(path, coverage)
 
-    data = { "path" : path, "coverage" : coverage }
+    data = {"path": path, "coverage": coverage}
     return HttpResponse(json.dumps(data), content_type='application/json')
+
 
 @login_required(login_url='/login/')
 def collections_diff_api(request, path):
@@ -151,12 +158,14 @@ def collections_diff_api(request, path):
                 add["delta_" + k] = round(end_coverage["children"][child][k] - x, 4)
         start_coverage["children"][child].update(add)
 
-    data = { "path" : path, "coverage" : start_coverage, "ttdata" : tooltipdata }
+    data = {"path": path, "coverage": start_coverage, "ttdata": tooltipdata}
     return HttpResponse(json.dumps(data), content_type='application/json')
+
 
 @login_required(login_url='/login/')
 def collections_patch(request):
     return render(request, 'collections/patch.html', {})
+
 
 @login_required(login_url='/login/')
 def collections_patch_api(request, collectionid, patch_revision):
@@ -188,7 +197,7 @@ def collections_patch_api(request, collectionid, patch_revision):
         coll_source = provider.getSource(filename, collection.revision)
 
         if prepatch_source != coll_source:
-            response = { "error" : "Source code mismatch." }
+            response = {"error": "Source code mismatch."}
             response["filename"] = filename
             response["prepatch_source"] = prepatch_source
             response["coll_source"] = coll_source
@@ -218,7 +227,7 @@ def collections_patch_api(request, collectionid, patch_revision):
                     minus_offset = None
 
                     # Maximum offset chosen by fair dice roll
-                    for offset in range(1,4):
+                    for offset in range(1, 4):
                         if location + offset in locations:
                             break
 
@@ -226,7 +235,7 @@ def collections_patch_api(request, collectionid, patch_revision):
                             plus_offset = offset
                             break
 
-                    for offset in range(1,4):
+                    for offset in range(1, 4):
                         if location - offset in locations:
                             break
 
@@ -263,13 +272,14 @@ def collections_patch_api(request, collectionid, patch_revision):
         total_missed += len(missed_locations)
 
     results = {
-        "total_locations" : total_locations,
-        "total_missed" : total_missed,
-        "percentage_missed" : round(((float(total_missed) / total_locations) * 100), 2),
+        "total_locations": total_locations,
+        "total_missed": total_missed,
+        "percentage_missed": round(((float(total_missed) / total_locations) * 100), 2),
         "results": diff
     }
 
     return HttpResponse(json.dumps(results), content_type='application/json')
+
 
 @login_required(login_url='/login/')
 def repositories_search_api(request):
@@ -279,7 +289,8 @@ def repositories_search_api(request):
         name = request.GET["name"]
         results = Repository.objects.filter(name__contains=name).values_list('name', flat=True)
 
-    return HttpResponse(json.dumps({"results" : list(results)}), content_type='application/json')
+    return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
+
 
 @login_required(login_url='/login/')
 def tools_search_api(request):
@@ -289,7 +300,8 @@ def tools_search_api(request):
         name = request.GET["name"]
         results = Tool.objects.filter(name__contains=name).values_list('name', flat=True)
 
-    return HttpResponse(json.dumps({"results" : list(results)}), content_type='application/json')
+    return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
+
 
 class CollectionFilterBackend(filters.BaseFilterBackend):
     """
@@ -305,16 +317,16 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
 
         filters = {}
         exactFilterKeys = [
-                           "description__contains",
-                           "repository__name",
-                           "repository__name__contains",
-                           "revision",
-                           "revision__contains",
-                           "branch",
-                           "branch__contains",
-                           "tools__name",
-                           "tools__name__contains",
-                           ]
+            "description__contains",
+            "repository__name",
+            "repository__name__contains",
+            "revision",
+            "revision__contains",
+            "branch",
+            "branch__contains",
+            "tools__name",
+            "tools__name__contains",
+        ]
 
         for key in exactFilterKeys:
             if key in request.GET:
@@ -332,6 +344,7 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
 
         return queryset.order_by('-pk')
 
+
 class CollectionViewSet(mixins.CreateModelMixin,
                         mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,
@@ -348,6 +361,7 @@ class CollectionViewSet(mixins.CreateModelMixin,
         SimpleQueryFilterBackend,
         CollectionFilterBackend
     ]
+
 
 class RepositoryViewSet(mixins.ListModelMixin,
                         mixins.RetrieveModelMixin,

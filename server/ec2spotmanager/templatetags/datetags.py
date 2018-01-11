@@ -4,6 +4,7 @@ from django.utils import timezone
 
 register = template.Library()
 
+
 @register.filter
 def date_ago(d):
     delta = timezone.now() - d

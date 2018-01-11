@@ -21,6 +21,7 @@ from __future__ import print_function
 
 from .common import select_better
 
+
 def run(data, sim_config, main_config):
     region = data.keys()[0]
     zone = data[region].keys()[0]

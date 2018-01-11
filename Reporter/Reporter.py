@@ -29,6 +29,7 @@ sys.path += [FTB_PATH]
 
 from FTB.ConfigurationFiles import ConfigurationFiles
 
+
 def remote_checks(f):
     'Decorator to perform error checks before using remote features'
     @functools.wraps(f)
@@ -36,11 +37,13 @@ def remote_checks(f):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
         if not self.serverAuthToken:
-            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) to use remote features.")
+            raise RuntimeError("Must specify serverAuthToken (configuration property: serverauthtoken) "
+                               "to use remote features.")
         if not self.tool:
             raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
         return f(self, *args, **kwargs)
     return decorator
+
 
 def signature_checks(f):
     'Decorator to perform error checks before using signature features'
@@ -50,6 +53,7 @@ def signature_checks(f):
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
         return f(self, *args, **kwargs)
     return decorator
+
 
 class Reporter():
     __metaclass__ = ABCMeta
@@ -87,7 +91,7 @@ class Reporter():
         # and set all Collector settings that haven't been explicitely set by the user.
         globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
         if os.path.exists(globalConfigFile):
-            configInstance = ConfigurationFiles([ globalConfigFile ])
+            configInstance = ConfigurationFiles([globalConfigFile])
             globalConfig = configInstance.mainConfig
 
             if self.sigCacheDir is None and "sigdir" in globalConfig:

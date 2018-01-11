@@ -8,6 +8,7 @@ from rest_framework.authtoken.models import Token
 class Command(LabelCommand):
 
     help = "Provides the REST interface authentication token for the specified user(s)."
+
     def handle_label(self, label, **options):
         user = User.objects.get(username=label)
 

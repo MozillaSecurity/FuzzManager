@@ -11,6 +11,7 @@ from . import cron  # ensure cron tasks get registered
 # crashes to a list of bucket candidates to try first.
 triage_cache = OrderedDict()
 
+
 @app.task
 def triage_new_crash(pk):
     from .models import CrashEntry, Bucket

@@ -10,10 +10,13 @@
         <table class="table">
             <tr><td>Description</td><td>{{ bucket.shortDescription|escape }}</td></tr>
             {% if bucket.frequent %}
-            <tr><td>Frequent bucket</td><td>{{ entry.client.name|escape }}</td></tr>
+            <tr><td>Frequent bucket</td><td></td></tr>
+            {% endif %}
+            {% if bucket.permanent %}
+            <tr><td>Permanent bucket</td><td></td></tr>
             {% endif %}
             <tr><td>External Bug Status</td>
-                <td>{{ entry.shortSignature|escape }}
+                <td>
             {% if bucket.bug %}
                 Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}" target="_blank">bug {{ bucket.bug.externalId }}</a>.
             {% else %}

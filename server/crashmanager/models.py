@@ -15,22 +15,28 @@ from FTB.Signatures.CrashSignature import CrashSignature
 if getattr(settings, 'USE_CELERY', None):
     from .tasks import triage_new_crash
 
+
 class Tool(models.Model):
     name = models.CharField(max_length=63)
 
+
 class Platform(models.Model):
     name = models.CharField(max_length=63)
+
 
 class Product(models.Model):
     name = models.CharField(max_length=63)
     version = models.CharField(max_length=127, blank=True, null=True)
 
+
 class OS(models.Model):
     name = models.CharField(max_length=63)
     version = models.CharField(max_length=127, blank=True, null=True)
 
+
 class TestCase(models.Model):
-    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)), upload_to="tests")
+    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)),
+                            upload_to="tests")
     size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
@@ -57,8 +63,10 @@ class TestCase(models.Model):
         self.test.close()
         self.save()
 
+
 class Client(models.Model):
     name = models.CharField(max_length=255)
+
 
 class BugProvider(models.Model):
     classname = models.CharField(max_length=255, blank=False)
@@ -73,10 +81,12 @@ class BugProvider(models.Model):
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
 
+
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)
     externalType = models.ForeignKey(BugProvider)
     closed = models.DateTimeField(blank=True, null=True)
+
 
 class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True)
@@ -94,6 +104,7 @@ class Bucket(models.Model):
         # it to a canonical string representation.
         self.signature = self.signature.replace(r"\r\n", r"\n")
         super(Bucket, self).save(*args, **kwargs)
+
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -133,6 +144,7 @@ class CrashEntry(models.Model):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
             utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+
             def sanitize_utf8(s):
                 if not isinstance(s, unicode):
                     s = unicode(s, 'utf-8')
@@ -186,7 +198,6 @@ class CrashEntry(models.Model):
             metadataDict = json.loads(self.metadata)
             self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
 
-
     def getCrashInfo(self, attachTestcase=False, requiredOutputSources=("stdout", "stderr", "crashdata")):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
@@ -207,7 +218,8 @@ class CrashEntry(models.Model):
         if cachedCrashInfo is None or "crashdata" in requiredOutputSources:
             rawCrashData = self.rawCrashData
 
-        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData, cacheObject=cachedCrashInfo)
+        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData,
+                                               cacheObject=cachedCrashInfo)
 
         if attachTestcase and self.testcase != None and not self.testcase.isBinary:
             self.testcase.loadTest()
@@ -255,6 +267,7 @@ class CrashEntry(models.Model):
             queryset = queryset.defer('rawCrashData')
         return queryset
 
+
 # This post_delete handler ensures that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely
 # deletes the file on the filesystem which would otherwise remain.
@@ -265,12 +278,14 @@ def CrashEntry_delete(sender, instance, **kwargs):
             instance.testcase.test.delete(False)
         instance.testcase.delete(False)
 
+
 # post_save handler for celery integration
 if getattr(settings, 'USE_CELERY', None):
     @receiver(post_save, sender=CrashEntry)
     def CrashEntry_save(sender, instance, **kwargs):
         if kwargs.get('created', False) and not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
+
 
 class BugzillaTemplate(models.Model):
     name = models.TextField()
@@ -296,6 +311,7 @@ class BugzillaTemplate(models.Model):
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
 
+
 class User(models.Model):
     user = models.OneToOneField(DjangoUser)
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
@@ -313,6 +329,7 @@ class User(models.Model):
             user.restricted = True
             user.save()
         return (user, created)
+
 
 class BucketWatch(models.Model):
     user = models.ForeignKey(User)

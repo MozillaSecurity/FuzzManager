@@ -9,7 +9,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os, sys
+import os
+import sys
 from django.conf import global_settings
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -31,7 +32,7 @@ except:
             SECRET_KEY = ''.join([random.choice(chars) for i in range(64)])
             f.write(SECRET_KEY)
     except IOError:
-        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE) 
+        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,6 +57,7 @@ INSTALLED_APPS = (
     'chartjs',
 )
 
+
 # This tiny middleware module allows us to see exceptions on stderr
 # when running a Django instance with runserver.py
 class ExceptionLoggingMiddleware(object):
@@ -75,6 +77,7 @@ MIDDLEWARE_CLASSES = (
     'server.settings.ExceptionLoggingMiddleware',
 )
 
+
 # We add a custom context processor to make our application name
 # and certain other variables available in all our templates
 def resolver_context_processor(request):
@@ -83,6 +86,7 @@ def resolver_context_processor(request):
         'namespace': request.resolver_match.namespace,
         'url_name': request.resolver_match.url_name
     }
+
 
 TEMPLATES = [
     {
@@ -127,14 +131,14 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 
-# For a production setup, we recommend to not use sqlite
-# but instead a real database like MySQL or Postgres.
-#    'default': {
-#        'ENGINE': 'django.db.backends.mysql',
-#        'OPTIONS': {
-#            'read_default_file': '/path/to/my.cnf',
-#        },
-#    }
+    # For a production setup, we recommend to not use sqlite
+    # but instead a real database like MySQL or Postgres.
+    #    'default': {
+    #        'ENGINE': 'django.db.backends.mysql',
+    #        'OPTIONS': {
+    #            'read_default_file': '/path/to/my.cnf',
+    #        },
+    #    }
 }
 
 # Internationalization
@@ -172,7 +176,7 @@ LOG_DIR = os.path.join(BASE_DIR, "logs")
 # once we try to create the log file, so don't bother checking
 # this here.
 if not os.path.exists(LOG_DIR):
-  os.makedirs(LOG_DIR)
+    os.makedirs(LOG_DIR)
 
 LOGGING = {
     'version': 1,
@@ -185,13 +189,13 @@ LOGGING = {
             'format': '[%(asctime)s] [%(levelname)s] [%(module)s]: %(message)s'
         },
     },
-   'handlers': {
-        'console':{
+    'handlers': {
+        'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
-        'ec2spotmanager_logfile':{
+        'ec2spotmanager_logfile': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOG_DIR, 'ec2spotmanager.log'),

@@ -3,6 +3,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
+
 class RecurseConfigTree(template.Node):
     def __init__(self, template_nodes, config_var):
         self.template_nodes = template_nodes
@@ -20,6 +21,7 @@ class RecurseConfigTree(template.Node):
 
     def render(self, context):
         return self._render_node(context, self.config_var.resolve(context))
+
 
 @register.tag
 def recurseconfig(parser, token):

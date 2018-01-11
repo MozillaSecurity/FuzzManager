@@ -31,7 +31,8 @@ class Migration(migrations.Migration):
             name='CollectionFile',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('file', models.FileField(storage=django.core.files.storage.FileSystemStorage(location=None), upload_to=b'coverage')),
+                ('file', models.FileField(storage=django.core.files.storage.FileSystemStorage(location=None),
+                                          upload_to=b'coverage')),
                 ('format', models.IntegerField(default=0)),
             ],
             options={

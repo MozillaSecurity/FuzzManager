@@ -20,7 +20,8 @@ class Command(BaseCommand):
     def handle(self, filename, **options):
 
         with ZipFile(filename, 'w') as zipFile:
-            for bucket in Bucket.objects.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality')):
+            for bucket in Bucket.objects.annotate(size=Count('crashentry'),
+                                                  quality=Min('crashentry__testcase__quality')):
                 bestEntryQuery = (CrashEntry.objects
                                   .filter(bucket_id=bucket.pk)
                                   .filter(testcase__quality=bucket.quality)
