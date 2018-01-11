@@ -188,6 +188,11 @@ Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with rea
 ###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv
 """  # noqa
 
+asanTruncatedTrace = """
+==8986==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fcfcfaadeda bp 0x7fcfcb405340 sp 0x7fcfcb405320 T2)
+==8986==The signal is caused by a WRITE memory access.
+"""
+
 gdbCrashAddress1 = """
 (gdb) bt 16
 #0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
@@ -716,7 +721,7 @@ class ASanParserTestHeapCrash(unittest.TestCase):
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = ASanCrashInfo([], asanTraceHeapCrash.splitlines(), config)
-        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(len(crashInfo.backtrace), 0)
 
         self.assertEqual(crashInfo.crashAddress, 0x00000019)
         self.assertEqual(crashInfo.registers["pc"], 0xf718072e)
@@ -806,7 +811,23 @@ class ASanParserTestMultiTrace(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "CreateThread")
         self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
 
+        
+class ASanParserTestTruncatedTrace(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
 
+        crashInfo = ASanCrashInfo([], asanTruncatedTrace.splitlines(), config)
+
+        # Make sure we parsed it as a crash, but without a backtrace
+        self.assertEqual(len(crashInfo.backtrace), 0)
+        self.assertEqual(crashInfo.crashAddress, 0x0)
+
+        # Confirm that generating a crash signature will fail
+        crashSig = crashInfo.createCrashSignature()
+        self.assertEqual(crashSig, None)
+        self.assertTrue("Insufficient data" in crashInfo.failureReason)
+
+        
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
