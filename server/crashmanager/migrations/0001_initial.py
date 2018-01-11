@@ -139,7 +139,8 @@ class Migration(migrations.Migration):
             name='TestCase',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('test', models.FileField(storage=django.core.files.storage.FileSystemStorage(location=b'/home/decoder/Mozilla/repos/FuzzManager/server'), upload_to=b'tests')),
+                ('test', models.FileField(storage=django.core.files.storage.FileSystemStorage(
+                    location=b'/home/decoder/Mozilla/repos/FuzzManager/server'), upload_to=b'tests')),
                 ('size', models.IntegerField(default=0)),
                 ('quality', models.IntegerField(default=0)),
                 ('isBinary', models.BooleanField(default=False)),

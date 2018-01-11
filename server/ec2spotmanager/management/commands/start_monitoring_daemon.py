@@ -32,13 +32,17 @@ async_start_threads_by_poolid = {}
 
 # Global variable for indicating shutdown through InterruptHandler
 pending_shutdown = False
+
+
 def handle_interrupt(signal, frame):
     global pending_shutdown
     logger.info("Shutdown initiated...")
     pending_shutdown = True
 
+
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
+
     @pid_lock_file("monitoring_daemon")
     def handle(self, *args, **options):
         if args:
@@ -58,7 +62,8 @@ class Command(BaseCommand):
 
     def check_instance_pools(self, initialCheck=False):
         # Check all start threads
-        finished_start_thread_poolids = [id for id in async_start_threads_by_poolid if not async_start_threads_by_poolid[id].isAlive()]
+        finished_start_thread_poolids = [
+            id for id in async_start_threads_by_poolid if not async_start_threads_by_poolid[id].isAlive()]
         for id in finished_start_thread_poolids:
             del async_start_threads_by_poolid[id]
 
@@ -96,23 +101,27 @@ class Command(BaseCommand):
             for instance in instances:
                 instance_status_code_fixed = False
                 if instance.status_code >= 256:
-                    logger.warning("[Pool %d] Instance with EC2 ID %s has weird state code %d, attempting to fix..." % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
+                    logger.warning("[Pool %d] Instance with EC2 ID %s has weird state code %d, attempting to fix..." %
+                                   (instance_pool.id, instance.ec2_instance_id, instance.status_code))
                     instance.status_code -= 256
                     instance_status_code_fixed = True
 
-                if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'], INSTANCE_STATE['requested']]:
+                if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
+                                            INSTANCE_STATE['requested']]:
                     instances_missing -= 1
                     running_instances.append(instance)
                 elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
                     # The instance is no longer running, delete it from our database
-                    logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database." % (instance_pool.id, instance.ec2_instance_id))
+                    logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database." %
+                                (instance_pool.id, instance.ec2_instance_id))
                     instance.delete()
                 else:
                     if instance_status_code_fixed:
                         # Restore original status code for error reporting
                         instance.status_code += 256
 
-                    logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d" % (instance_pool.id, instance.ec2_instance_id, instance.status_code))
+                    logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d" %
+                                 (instance_pool.id, instance.ec2_instance_id, instance.status_code))
                     # In some cases, EC2 sends undocumented status codes and we don't know why
                     # For now, reset the status code to 0, consider the instance still present
                     # and hope that with the next update iteration, the problem will be gone.
@@ -135,7 +144,8 @@ class Command(BaseCommand):
                     # self.update_pool_instances(instance_pool, config)
                 continue
 
-            if (not instance_pool.last_cycled) or instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval):
+            if ((not instance_pool.last_cycled) or
+                    instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval)):
                 if pending_shutdown:
                     logger.info("[Pool %d] Shutdown pending, skipping pool cycle..." % instance_pool.id)
                 else:
@@ -150,21 +160,25 @@ class Command(BaseCommand):
                 if pending_shutdown:
                     logger.info("[Pool %d] Shutdown pending, not starting further instances..." % instance_pool.id)
                 elif instance_pool.id in async_start_threads_by_poolid:
-                    logger.debug("[Pool %d] Already has a start thread running, not starting further instances..." % instance_pool.id)
+                    logger.debug("[Pool %d] Already has a start thread running, not starting further instances..." %
+                                 instance_pool.id)
                 else:
-                    logger.info("[Pool %d] Needs %s more instances, starting..." % (instance_pool.id, instances_missing))
+                    logger.info("[Pool %d] Needs %s more instances, starting..." %
+                                (instance_pool.id, instances_missing))
                     self.start_pool_instances(instance_pool, config, count=instances_missing)
             elif instances_missing < 0:
                 # Select the oldest instances we have running and terminate
                 # them so we meet the size limitation again.
-                logger.info("[Pool %d] Has %s instances over limit, terminating..." % (instance_pool.id, -instances_missing))
+                logger.info("[Pool %d] Has %s instances over limit, terminating..." %
+                            (instance_pool.id, -instances_missing))
                 instances = Instance.objects.filter(pool=instance_pool).order_by('created')[:-instances_missing]
                 self.terminate_pool_instances(instance_pool, instances, config)
             else:
                 logger.debug("[Pool %d] Size is ok." % instance_pool.id)
 
     def get_best_region_zone(self, config):
-        prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key, config.ec2_instance_type)
+        prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key,
+                                 config.ec2_instance_type)
 
         # Calculate median values for all availability zones and best zone/price
         best_zone = None
@@ -189,7 +203,7 @@ class Command(BaseCommand):
         return (best_region, best_zone, rejected_prices)
 
     def create_laniakea_images(self, config):
-        images = { "default" : {} }
+        images = {"default": {}}
 
         # These are the configuration keys we want to put into the target configuration
         # without further preprocessing, except for the adjustment of the key name itself.
@@ -294,7 +308,8 @@ class Command(BaseCommand):
 
             cluster = Laniakea(images)
             try:
-                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
+                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
+                                aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
                 logger.exception("[Pool %d] %s: laniakea failure: %s" % (pool.id, "start_instances_async", msg))
 
@@ -316,10 +331,12 @@ class Command(BaseCommand):
 
             try:
                 logger.info("[Pool %d] Creating %s instances..." % (pool.id, count))
-                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags, delete_on_termination=True, timeout=20 * 60)
+                boto_instances = cluster.create_spot(config.ec2_max_price, tags=config.ec2_tags,
+                                                     delete_on_termination=True, timeout=20 * 60)
                 canceled_requests = count - len(boto_instances)
 
-                logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" % (pool.id, len(boto_instances), canceled_requests))
+                logger.info("[Pool %d] Successfully created %s instances, %s requests timed out and were canceled" %
+                            (pool.id, len(boto_instances), canceled_requests))
 
                 for i in range(0, len(boto_instances)):
                     instances[i].hostname = boto_instances[i].public_dns_name
@@ -338,14 +355,16 @@ class Command(BaseCommand):
                 if canceled_requests > 0:
                     for i in range(len(boto_instances), count):
                         # Delete instances belong to canceled spot requests
-                        logger.info("[Pool %d] Deleting instance with id %s (belongs to canceled request)" % (pool.id, instances[i].pk))
+                        logger.info("[Pool %d] Deleting instance with id %s (belongs to canceled request)" %
+                                    (pool.id, instances[i].pk))
                         instances[i].delete()
 
                 # Delete certain warnings we might have created earlier that no longer apply
 
                 # If we ever exceeded the maximum spot instance count, we can clear
                 # the warning now because we obviously succeeded in starting some instances.
-                PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']).delete()
+                PoolStatusEntry.objects.filter(
+                    pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']).delete()
 
                 # The same holds for temporary failures of any sort
                 PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['temporary-failure']).delete()
@@ -355,7 +374,8 @@ class Command(BaseCommand):
             except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
                 if "MaxSpotInstanceCountExceeded" in str(msg):
                     logger.warning("[Pool %d] Maximum instance count exceeded for region %s" % (pool.id, region))
-                    if not PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
+                    if not PoolStatusEntry.objects.filter(
+                            pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']):
                         entry = PoolStatusEntry()
                         entry.pool = pool
                         entry.type = POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']
@@ -396,7 +416,8 @@ class Command(BaseCommand):
         for region in instance_ids_by_region:
             cluster = Laniakea(None)
             try:
-                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
+                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
+                                aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
@@ -411,21 +432,24 @@ class Command(BaseCommand):
 
             try:
                 if terminateByPool:
-                    boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+                    boto_instances = cluster.find(filters={"tag:SpotManager-PoolId": str(pool.pk)})
 
                     # Data consistency checks
                     for boto_instance in boto_instances:
                         # state_code is a 16-bit value where the high byte is
                         # an opaque internal value and should be ignored.
                         state_code = boto_instance.state_code & 255
-                        if not ((boto_instance.id in instance_ids_by_region[region])
-                                or (state_code == INSTANCE_STATE['shutting-down']
-                                or state_code == INSTANCE_STATE['terminated'])):
-                            logger.error("[Pool %d] Instance with EC2 ID %s (status %d) is not in region list for region %s" % (pool.id, boto_instance.id, state_code, region))
+                        if not ((boto_instance.id in instance_ids_by_region[region]) or
+                                (state_code == INSTANCE_STATE['shutting-down'] or
+                                    state_code == INSTANCE_STATE['terminated'])):
+                            logger.error("[Pool %d] Instance with EC2 ID %s (status %d) "
+                                         "is not in region list for region %s" %
+                                         (pool.id, boto_instance.id, state_code, region))
 
                     cluster.terminate(boto_instances)
                 else:
-                    logger.info("[Pool %d] Terminating %s instances in region %s" % (pool.id, len(instance_ids_by_region[region]), region))
+                    logger.info("[Pool %d] Terminating %s instances in region %s" %
+                                (pool.id, len(instance_ids_by_region[region]), region))
                     cluster.terminate(cluster.find(instance_ids=instance_ids_by_region[region]))
             except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
                 logger.exception("[Pool %d] %s: boto failure: %s" % (pool.id, "terminate_pool_instances", msg))
@@ -458,7 +482,6 @@ class Command(BaseCommand):
         debug_not_updatable_continue = set()
         debug_not_in_region = {}
 
-
         for instance_id in instances_by_ids:
             if instance_id:
                 instances_left.append(instances_by_ids[instance_id])
@@ -466,7 +489,8 @@ class Command(BaseCommand):
         for region in instance_ids_by_region:
             cluster = Laniakea(None)
             try:
-                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id, aws_secret_access_key=config.aws_secret_access_key)
+                cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
+                                aws_secret_access_key=config.aws_secret_access_key)
             except Exception as msg:
                 # Log this error to the pool status messages
                 entry = PoolStatusEntry()
@@ -480,7 +504,7 @@ class Command(BaseCommand):
                 return None
 
             try:
-                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId" : str(pool.pk)})
+                boto_instances = cluster.find(filters={"tag:SpotManager-PoolId": str(pool.pk)})
 
                 for boto_instance in boto_instances:
                     # Store ID seen for debugging purposes
@@ -490,7 +514,8 @@ class Command(BaseCommand):
                     # an opaque internal value and should be ignored.
                     state_code = boto_instance.state_code & 255
 
-                    if "SpotManager-Updatable" not in boto_instance.tags or int(boto_instance.tags["SpotManager-Updatable"]) <= 0:
+                    if ("SpotManager-Updatable" not in boto_instance.tags or
+                            int(boto_instance.tags["SpotManager-Updatable"]) <= 0):
                         # The instance is not marked as updatable. We must not touch it because
                         # a spawning thread is still managing this instance. However, we must also
                         # remove this instance from the instances_left list if it's already in our
@@ -507,8 +532,8 @@ class Command(BaseCommand):
                     # make sure it's a terminated instance because we should never have a running
                     # instance that matches the search above but is not in our database.
                     if not boto_instance.id in instance_ids_by_region[region]:
-                        if not ((state_code == INSTANCE_STATE['shutting-down']
-                            or state_code == INSTANCE_STATE['terminated'])):
+                        if not ((state_code == INSTANCE_STATE['shutting-down'] or
+                                state_code == INSTANCE_STATE['terminated'])):
 
                             # As a last resort, try to find the instance in our database.
                             # If the instance was saved to our database between the entrance
@@ -518,9 +543,11 @@ class Command(BaseCommand):
                             q = Instance.objects.filter(ec2_instance_id=boto_instance.id)
                             if q:
                                 instance = q[0]
-                                logger.error("[Pool %d] Instance with EC2 ID %s was reloaded from database." % (pool.id, boto_instance.id))
+                                logger.error("[Pool %d] Instance with EC2 ID %s was reloaded from database." %
+                                             (pool.id, boto_instance.id))
                             else:
-                                logger.error("[Pool %d] Instance with EC2 ID %s is not in our database." % (pool.id, boto_instance.id))
+                                logger.error("[Pool %d] Instance with EC2 ID %s is not in our database." %
+                                             (pool.id, boto_instance.id))
 
                                 # Terminate at this point, we run in an inconsistent state
                                 assert(False)
@@ -548,13 +575,19 @@ class Command(BaseCommand):
         if instances_left:
             for instance in instances_left:
                 if not instance.ec2_instance_id in debug_boto_instance_ids_seen:
-                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
+                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, "
+                                "has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
 
                 if instance.ec2_instance_id in debug_not_updatable_continue:
-                    logger.error("[Pool %d] Deleting instance with EC2 ID %s from our database because it is not updatable but not in our region." % (pool.id, instance.ec2_instance_id))
+                    logger.error("[Pool %d] Deleting instance with EC2 ID %s from our database "
+                                 "because it is not updatable but not in our region." %
+                                 (pool.id, instance.ec2_instance_id))
 
                 if instance.ec2_instance_id in debug_not_in_region:
-                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, has state code %s on EC2" % (pool.id, instance.ec2_instance_id, debug_not_in_region[instance.ec2_instance_id]))
+                    logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, "
+                                "has state code %s on EC2" %
+                                (pool.id, instance.ec2_instance_id, debug_not_in_region[instance.ec2_instance_id]))
 
-                logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database." % (pool.id, instance.ec2_instance_id))
+                logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database." %
+                            (pool.id, instance.ec2_instance_id))
                 instance.delete()

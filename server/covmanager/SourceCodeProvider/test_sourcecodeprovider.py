@@ -20,6 +20,7 @@ from GITSourceCodeProvider import GITSourceCodeProvider
 from HGSourceCodeProvider import HGSourceCodeProvider
 from SourceCodeProvider import Utils
 
+
 class TestGITSourceCodeProvider(unittest.TestCase):
     def setUp(self):
         self.location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git")
@@ -32,13 +33,14 @@ class TestGITSourceCodeProvider(unittest.TestCase):
         provider = GITSourceCodeProvider(self.location)
 
         tests = {
-            "a.txt" : {
-                "dcbe8ca3dafb34bc90984fb1d74305baf2c58f17" : "Hello world\n",
-                "474f46342c82059a819ce7cd3d5e3e0695b9b737" : "I'm sorry Dave,\nI'm afraid I can't do that.\n"
+            "a.txt": {
+                "dcbe8ca3dafb34bc90984fb1d74305baf2c58f17": "Hello world\n",
+                "474f46342c82059a819ce7cd3d5e3e0695b9b737": "I'm sorry Dave,\nI'm afraid I can't do that.\n"
             },
-            "abc/def.txt" : {
-                "deede1283a224184f6654027e23b654a018e81b0" : "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n",
-                "474f46342c82059a819ce7cd3d5e3e0695b9b737" : "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
+            "abc/def.txt": {
+                "deede1283a224184f6654027e23b654a018e81b0": ("Hi there!\n\nI'm a multi-line file,\n\n"
+                                                             "nice to meet you.\n"),
+                "474f46342c82059a819ce7cd3d5e3e0695b9b737": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
             }
         }
 
@@ -54,6 +56,7 @@ class TestGITSourceCodeProvider(unittest.TestCase):
         parents = provider.getParents("dcbe8ca3dafb34bc90984fb1d74305baf2c58f17")
         self.assertEqual(len(parents), 0)
 
+
 class TestHGSourceCodeProvider(unittest.TestCase):
     def setUp(self):
         self.location = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg")
@@ -66,13 +69,14 @@ class TestHGSourceCodeProvider(unittest.TestCase):
         provider = HGSourceCodeProvider(self.location)
 
         tests = {
-            "a.txt" : {
-                "c3abaa766d52f438219920d37461b341321d4fef" : "Hello world\n",
-                "c179ace9e260adbabd17426750b5a62403691624" : "I'm sorry Dave,\nI'm afraid I can't do that.\n"
+            "a.txt": {
+                "c3abaa766d52f438219920d37461b341321d4fef": "Hello world\n",
+                "c179ace9e260adbabd17426750b5a62403691624": "I'm sorry Dave,\nI'm afraid I can't do that.\n"
             },
-            "abc/def.txt" : {
-                "05ceb4ce5ed96a107fb40e3b39df7da18f0780c3" : "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n",
-                "c179ace9e260adbabd17426750b5a62403691624" : "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
+            "abc/def.txt": {
+                "05ceb4ce5ed96a107fb40e3b39df7da18f0780c3": ("Hi there!\n\nI'm a multi-line file,\n\n"
+                                                             "nice to meet you.\n"),
+                "c179ace9e260adbabd17426750b5a62403691624": "Hi there!\n\nI'm a multi-line file,\n\nnice to meet you.\n"
             }
         }
 
@@ -88,6 +92,7 @@ class TestHGSourceCodeProvider(unittest.TestCase):
         parents = provider.getParents("c3abaa766d52")
         self.assertEqual(len(parents), 0)
 
+
 @unittest.skipIf(not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"), reason="not decoder")
 class TestHGDiff(unittest.TestCase):
     def runTest(self):
@@ -95,6 +100,7 @@ class TestHGDiff(unittest.TestCase):
         diff = provider.getUnifiedDiff("4f8e0cb21016")
 
         print(Utils.getDiffLocations(diff))
+
 
 if __name__ == "__main__":
     unittest.main()

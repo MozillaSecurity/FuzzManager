@@ -19,6 +19,7 @@ import subprocess
 
 from SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
 
+
 class GITSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location):
         super(GITSourceCodeProvider, self).__init__(location)

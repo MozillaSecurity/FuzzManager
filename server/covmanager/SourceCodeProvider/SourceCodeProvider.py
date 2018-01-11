@@ -17,11 +17,14 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 
+
 class UnknownRevisionException(Exception):
     pass
 
+
 class UnknownFilenameException(Exception):
     pass
+
 
 class SourceCodeProvider():
     '''
@@ -102,6 +105,7 @@ class SourceCodeProvider():
         """
         return
 
+
 class Utils():
 
     @staticmethod
@@ -137,7 +141,7 @@ class Utils():
         diff = diff.splitlines()
 
         while diff:
-            cobj = { "filename" : None, "locations": [] }
+            cobj = {"filename": None, "locations": []}
 
             skipDiff = False
 

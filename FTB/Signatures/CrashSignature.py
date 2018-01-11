@@ -204,7 +204,7 @@ class CrashSignature():
         symptomsDiff = []
         for symptom in self.symptoms:
             if symptom.matches(crashInfo):
-                symptomsDiff.append({ 'offending' : False, 'symptom' : symptom })
+                symptomsDiff.append({'offending': False, 'symptom': symptom})
             else:
                 # Special-case StackFramesSymptom because we would like to get a fine-grained
                 # view on the offending parts *inside* that symptom. By calling matchWithDiff,
@@ -212,10 +212,10 @@ class CrashSignature():
                 if isinstance(symptom, StackFramesSymptom):
                     proposedSymptom = symptom.diff(crashInfo)[1]
                     if proposedSymptom:
-                        symptomsDiff.append({ 'offending' : True, 'symptom' : symptom, 'proposed' : proposedSymptom })
+                        symptomsDiff.append({'offending': True, 'symptom': symptom, 'proposed': proposedSymptom})
                         continue
 
-                symptomsDiff.append({ 'offending' : True, 'symptom' : symptom })
+                symptomsDiff.append({'offending': True, 'symptom': symptom})
         return symptomsDiff
 
     def getSignatureUnifiedDiffTuples(self, crashInfo):
@@ -231,7 +231,8 @@ class CrashSignature():
         signatureDiff = difflib.unified_diff(oldLines, newLines, n=context)
 
         for diffLine in signatureDiff:
-            if diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or not diffLine.strip():
+            if (diffLine.startswith('+++') or diffLine.startswith('---') or diffLine.startswith('@@') or
+                    not diffLine.strip()):
                 continue
 
             diffTuples.append((diffLine[0], diffLine[1:]))

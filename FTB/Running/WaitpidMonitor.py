@@ -2,7 +2,7 @@
 # encoding: utf-8
 '''
 WaitpidMonitor -- Thread that runs (blocking) waitpid on a process.
-                  Can be used to simulate waitpid with timeout. 
+                  Can be used to simulate waitpid with timeout.
 
 @author:     Christian Holler (:decoder)
 
@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import os
 import threading
+
 
 class WaitpidMonitor(threading.Thread):
     def __init__(self, pid, options):

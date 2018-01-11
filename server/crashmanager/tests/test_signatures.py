@@ -190,9 +190,9 @@ class FindSignatureTests(TestCase):
         self.client.login(username='test', password='test')
         crash = self.create_crash()
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
 
         response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
         log.debug(response)
@@ -245,9 +245,9 @@ class OptSignatureTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
         log.debug(response)
         self.assertEqual(response.status_code, requests.codes['ok'])
@@ -265,9 +265,9 @@ class TrySignatureTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(signature=json.dumps({"symptoms": [
-                                                             {'src': 'stderr',
-                                                              'type': 'output',
-                                                              'value': '//'}]}))
+            {'src': 'stderr',
+             'type': 'output',
+             'value': '//'}]}))
         crash = self.create_crash()
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk, "crashid": crash.pk}))
         log.debug(response)
@@ -385,7 +385,8 @@ class NewSignatureTests(TestCase):
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         self.assertIsNone(crash.bucket)
         self.assertEqual(in_list[0], crash)
-        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">1</span>')
+        self.assertContains(response, ('New issues that will be assigned to this bucket '
+                                       '(<a href="#crashes_in">list</a>): <span class="badge">1</span>'))
         self.assertContains(response, 'New issues that will be assigned to this bucket:')
 
     def test_preview_many(self):
@@ -414,7 +415,8 @@ class NewSignatureTests(TestCase):
             self.assertIsNone(crash.bucket)
         for shown, crash in zip(reversed(in_list), crashes[-100:]):
             self.assertEqual(shown, crash)
-        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">201</span>')
+        self.assertContains(response, ('New issues that will be assigned to this bucket '
+                                       '(<a href="#crashes_in">list</a>): <span class="badge">201</span>'))
         self.assertContains(response, 'New issues that will be assigned to this bucket (truncated):')
 
     def test_new_from_crash(self):
@@ -566,8 +568,10 @@ class EditSignatureTests(TestCase):
         self.assertIsNone(crash2.bucket)
         self.assertEqual(out_list[0], crash1)
         self.assertEqual(in_list[0], crash2)
-        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">1</span>')
-        self.assertContains(response, 'Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">1</span>')
+        self.assertContains(response, ('New issues that will be assigned to this bucket '
+                                       '(<a href="#crashes_in">list</a>): <span class="badge">1</span>'))
+        self.assertContains(response, ('Issues that will be removed from this bucket '
+                                       '(<a href="#crashes_out">list</a>): <span class="badge">1</span>'))
         self.assertContains(response, 'New issues that will be assigned to this bucket:')
         self.assertContains(response, 'Issues that will be removed from this bucket:')
 
@@ -606,8 +610,10 @@ class EditSignatureTests(TestCase):
             self.assertEqual(shown, crash)
         for shown, crash in zip(reversed(out_list), crashes1[-100:]):
             self.assertEqual(shown, crash)
-        self.assertContains(response, 'New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">201</span>')
-        self.assertContains(response, 'Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">201</span>')
+        self.assertContains(response, ('New issues that will be assigned to this bucket '
+                                       '(<a href="#crashes_in">list</a>): <span class="badge">201</span>'))
+        self.assertContains(response, ('Issues that will be removed from this bucket '
+                                       '(<a href="#crashes_out">list</a>): <span class="badge">201</span>'))
         self.assertContains(response, 'New issues that will be assigned to this bucket (truncated):')
         self.assertContains(response, 'Issues that will be removed from this bucket (truncated):')
 

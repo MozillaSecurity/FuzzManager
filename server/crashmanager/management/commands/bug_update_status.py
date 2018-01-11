@@ -7,6 +7,7 @@ from crashmanager.models import Bug, BugProvider
 
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
+
     @mgmt_lock_required
     def handle(self, *args, **options):
         if args:
@@ -17,28 +18,28 @@ class Command(BaseCommand):
             providerInstance = provider.getInstance()
             providerBugs = Bug.objects.filter(externalType=provider)
             bugIds = list(providerBugs.values_list('externalId', flat=True))
-            
+
             if not bugIds:
                 continue
-            
+
             username = getattr(settings, 'BUGZILLA_USERNAME', None)
             password = getattr(settings, 'BUGZILLA_PASSWORD', None)
-            
+
             bugStatus = providerInstance.getBugStatus(bugIds, username, password)
-            
+
             if not bugStatus:
                 raise RuntimeError("Error getting bug status from bug provider.")
-            
+
             # Map to memorize which bugs we have duped to others
             bugDupMap = {}
-            
+
             for bugId in bugStatus:
                 # It is possible that two buckets are linked to one bug which has been marked
                 # as a duplicate of another. Once the first bug has been processed, we don't
                 # need to process any more bugs with the same bug id.
                 if bugId in bugDupMap:
                     continue
-                
+
                 # Due to how duplicating bugs works, we can end up having multiple bug objects
                 # with the same external bug id. Make sure we consider all of them.
                 bugs = providerBugs.filter(externalId=bugId)
@@ -57,4 +58,3 @@ class Command(BaseCommand):
                     elif bug.closed == None:
                         bug.closed = bugStatus[bugId]
                         bug.save()
-                    

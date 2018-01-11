@@ -4,8 +4,10 @@ import json
 import operator
 from rest_framework import filters
 
+
 def renderError(request, err):
-    return render(request, 'error.html', { 'error_message' : err })
+    return render(request, 'error.html', {'error_message': err})
+
 
 def paginate_requested_list(request, entries):
     """
@@ -39,6 +41,7 @@ def paginate_requested_list(request, entries):
 
     return page_entries
 
+
 def json_to_query(json_str):
     """
     This method converts JSON objects into trees of Django Q objects.
@@ -71,7 +74,7 @@ def json_to_query(json_str):
     def get_query_obj(obj, key=None):
 
         if obj is None or isinstance(obj, (basestring, list, int)):
-            kwargs = { key : obj }
+            kwargs = {key: obj}
             qobj = Q(**kwargs)
             return qobj
         elif not isinstance(obj, dict):
@@ -104,6 +107,7 @@ def json_to_query(json_str):
 
     return (obj, get_query_obj(obj))
 
+
 class JsonQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
@@ -121,6 +125,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
             queryset = queryset.filter(queryobj)
         return queryset
 
+
 class SimpleQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query using simple "contains" searches
@@ -137,7 +142,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         if querystr is not None:
             queryobj = None
             for field in queryset[0].simple_query_fields:
-                kwargs = { "%s__contains" % field : querystr }
+                kwargs = {"%s__contains" % field: querystr}
                 if queryobj is None:
                     queryobj = Q(**kwargs)
                 else:

@@ -9,6 +9,7 @@ STATS_DELTA_SECS = 60 * 15  # 30 minutes
 STATS_TOTAL_DETAILED = 24  # How many hours the detailed statistics should include
 STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statistics
 
+
 @app.task
 def update_stats():
     from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance, INSTANCE_STATE
@@ -35,7 +36,8 @@ def update_stats():
 
         current_delta_entry.target = pool.config.flatten().size
 
-        actual = Instance.objects.filter(pool=pool).filter(Q(status_code=INSTANCE_STATE['pending']) | Q(status_code=INSTANCE_STATE['running'])).count()
+        actual = Instance.objects.filter(pool=pool).filter(Q(status_code=INSTANCE_STATE['pending']) |
+                                                           Q(status_code=INSTANCE_STATE['running'])).count()
         if current_delta_entry.actual is None or actual < current_delta_entry.actual:
             current_delta_entry.actual = actual
 
@@ -54,7 +56,8 @@ def update_stats():
             for entry in entriesAggr:
                 # Figure out if we have an aggregated entry already with the same date
                 created = entry.created.date()
-                day_entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool).filter(created__year=created.year, created__month=created.month, created__day=created.day)
+                day_entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool).filter(
+                    created__year=created.year, created__month=created.month, created__day=created.day)
 
                 # We should never have more than one entry per day
                 assert day_entries.count() < 2
@@ -71,7 +74,8 @@ def update_stats():
                 if entry.target > 0:
                     entry_percentage = (float(entry.actual) / entry.target) * 100
 
-                new_uptime_percentage = ((float(day_entry.uptime_percentage) * day_entry.accumulated_count) + entry_percentage) / (day_entry.accumulated_count + 1)
+                new_uptime_percentage = ((float(day_entry.uptime_percentage) * day_entry.accumulated_count) +
+                                         entry_percentage) / (day_entry.accumulated_count + 1)
 
                 day_entry.uptime_percentage = new_uptime_percentage
                 day_entry.accumulated_count = day_entry.accumulated_count + 1

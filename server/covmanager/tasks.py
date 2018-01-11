@@ -10,6 +10,7 @@ sys.path += [os.path.abspath(os.path.join(BASE_DIR, ".."))]
 
 from celeryconf import app
 
+
 @app.task
 def check_revision_update(pk):
     from covmanager.models import Collection, Repository

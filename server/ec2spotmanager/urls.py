@@ -25,6 +25,8 @@ urlpatterns = [
     url(r'^configurations/(?P<configid>\d+)/edit/$', views.editConfig, name='configedit'),
     url(r'^configurations/(?P<configid>\d+)/delete/$', views.deleteConfig, name='configdel'),
     url(r'^configurations/(?P<configid>\d+)/cycle/$', views.forceCyclePoolsByConfig, name='configcycle'),
-    url(r'^pools/(?P<poolid>\d+)/chart_json_detailed/$', views.UptimeChartViewDetailed.as_view(), name='line_chart_json_detailed'),
-    url(r'^pools/(?P<poolid>\d+)/chart_json_accumulated/$', views.UptimeChartViewAccumulated.as_view(), name='line_chart_json_accumulated'),
+    url(r'^pools/(?P<poolid>\d+)/chart_json_detailed/$', views.UptimeChartViewDetailed.as_view(),
+        name='line_chart_json_detailed'),
+    url(r'^pools/(?P<poolid>\d+)/chart_json_accumulated/$', views.UptimeChartViewAccumulated.as_view(),
+        name='line_chart_json_accumulated'),
 ]

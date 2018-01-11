@@ -51,7 +51,10 @@ class Migration(migrations.Migration):
                 ('ec2_security_groups', models.CharField(max_length=255, null=True, blank=True)),
                 ('ec2_instance_type', models.CharField(max_length=255, null=True, blank=True)),
                 ('ec2_image_name', models.CharField(max_length=255, null=True, blank=True)),
-                ('ec2_userdata_file', models.FileField(storage=django.core.files.storage.FileSystemStorage(location=b'/home/decoder/Mozilla/repos/FuzzManager/server'), null=True, upload_to=ec2spotmanager.models.get_storage_path, blank=True)),
+                ('ec2_userdata_file', models.FileField(
+                    storage=django.core.files.storage.FileSystemStorage(
+                        location=b'/home/decoder/Mozilla/repos/FuzzManager/server'),
+                    null=True, upload_to=ec2spotmanager.models.get_storage_path, blank=True)),
                 ('ec2_userdata_macros', models.CharField(max_length=4095, null=True, blank=True)),
                 ('ec2_allowed_regions', models.CharField(max_length=1023, null=True, blank=True)),
                 ('ec2_max_price', models.DecimalField(null=True, max_digits=12, decimal_places=6, blank=True)),

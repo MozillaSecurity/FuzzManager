@@ -45,8 +45,10 @@ urlpatterns = [
     url(r'^bugprovider/(?P<providerId>\d+)/edit/$', views.editBugProvider, name='bugprovideredit'),
     url(r'^bugprovider/(?P<providerId>\d+)/delete/$', views.deleteBugProvider, name='bugproviderdel'),
     url(r'^bugprovider/(?P<providerId>\d+)/templates/create/$', views.createBugTemplate, name='createtemplate'),
-    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/$', views.viewEditBugTemplate, name='viewtemplate', kwargs={'mode': 'create'}),
-    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/comment/$', views.viewEditBugTemplate, name='viewcommenttemplate', kwargs={'mode': 'comment'}),
+    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/$', views.viewEditBugTemplate,
+        name='viewtemplate', kwargs={'mode': 'create'}),
+    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/comment/$', views.viewEditBugTemplate,
+        name='viewcommenttemplate', kwargs={'mode': 'comment'}),
 
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
@@ -58,4 +60,5 @@ urlpatterns = [
 # This makes Django serve our testcases from the tests/ URL. When hosting this
 # project in production, one should consider serving tests directly through
 # the webserver rather than through Django for performance reasons.
-urlpatterns += [ url(r'^tests/(.*)$', serve, name='download', kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')}) ]
+urlpatterns += [url(r'^tests/(.*)$', serve, name='download',
+                    kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')})]

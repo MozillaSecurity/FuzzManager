@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 from django.conf import settings
 
+
 def create_migration_tool(apps, schema_editor):
     Tool = apps.get_model("crashmanager", "Tool")
     db_alias = schema_editor.connection.alias
     Tool.objects.using(db_alias).bulk_create([
         Tool(name="migrated"),
     ])
+
 
 class Migration(migrations.Migration):
 

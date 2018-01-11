@@ -3,9 +3,11 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter
 def basename(value):
     return os.path.basename(value)
+
 
 @register.filter
 def linejoin(value):
@@ -14,9 +16,11 @@ def linejoin(value):
     else:
         return ""
 
+
 @register.filter
 def varformat(arg, val):
     return arg % val
+
 
 @register.filter
 def listcsv(value):
@@ -24,13 +28,15 @@ def listcsv(value):
         return ", ".join(value)
     else:
         return ""
-    
+
+
 @register.filter
 def dictcsv(value):
     if value:
         return ", ".join(["%s=%s" % x for x in value.items()])
     else:
         return ""
+
 
 @register.filter
 def toolcsv(value):

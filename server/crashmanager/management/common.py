@@ -9,6 +9,7 @@ import sys
 
 LOCK_PATH = os.path.realpath(os.path.join(settings.BASE_DIR, 'mgmt'))
 
+
 class ManagementLock(object):
 
     def __init__(self):

@@ -39,30 +39,31 @@ except ImportError:
 
 now = datetime.datetime.now()
 
+
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
 def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws_secret_key, instance_type):
     '''Gets spot prices of the specified region and instance type'''
 
-    print("Region %s Instance Type %s Start %s End %s" % (region_name, instance_type, start_time.isoformat(), end_time.isoformat()))
+    print("Region %s Instance Type %s Start %s End %s" % (region_name, instance_type, start_time.isoformat(),
+                                                          end_time.isoformat()))
     r = None
 
     while True:
         try:
             region = boto.ec2.connect_to_region(region_name,
-                                           aws_access_key_id=aws_key_id,
-                                           aws_secret_access_key=aws_secret_key
-                                           )
+                                                aws_access_key_id=aws_key_id,
+                                                aws_secret_access_key=aws_secret_key
+                                                )
 
             if not region:
                 raise RuntimeError("Invalid region: %s" % region_name)
 
             r = region.get_spot_price_history(start_time=start_time.isoformat(),
                                               end_time=end_time.isoformat(),
-                                            instance_type=instance_type,
-                                            product_description="Linux/UNIX"
-                                            )  # TODO: Make configurable
-
+                                              instance_type=instance_type,
+                                              product_description="Linux/UNIX"
+                                              )  # TODO: Make configurable
             break
         except:
             print("Caught exception, retrying")
@@ -70,7 +71,9 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
 
     return r
 
-def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices, use_multiprocess=False):
+
+def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices,
+                    use_multiprocess=False):
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
@@ -79,7 +82,8 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
     for instance_type in instance_types:
         for region in regions:
             if use_multiprocess:
-                f = pool.apply_async(get_spot_price_per_region, [region, start_time, end_time, aws_key_id, aws_secret_key, instance_type])
+                f = pool.apply_async(get_spot_price_per_region, [region, start_time, end_time, aws_key_id,
+                                                                 aws_secret_key, instance_type])
             else:
                 f = get_spot_price_per_region(region, start_time, end_time, aws_key_id, aws_secret_key, instance_type)
             results.append(f)
@@ -100,13 +104,16 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
                 prices[entry.region.name][zone][entry.instance_type] = OrderedDict()
 
             if not start_time.isoformat() in prices[entry.region.name][zone][entry.instance_type]:
-                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(), entry.price, 1]
+                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(),
+                                                                                                entry.price, 1]
             else:
                 cur = prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()]
 
                 mean_price = float((cur[1] * cur[2]) + entry.price) / float(cur[2] + 1)
 
-                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(), mean_price, cur[2] + 1]
+                prices[entry.region.name][zone][entry.instance_type][start_time.isoformat()] = [end_time.isoformat(),
+                                                                                                mean_price, cur[2] + 1]
+
 
 class ConfigurationFile():
     def __init__(self, configFile):
@@ -118,14 +125,15 @@ class ConfigurationFile():
             # Make sure keys are kept case-sensitive
             self.parser.optionxform = str
 
-            self.parser.read([ configFile ])
+            self.parser.read([configFile])
 
             sections = self.parser.sections()
             for section in sections:
                 sectionMap = self.getSectionMap(section)
 
                 if section.lower() == "main":
-                    mandatoryFields = ["aws_access_key_id", "aws_secret_key", "regions", "interval", "instance_types", "cache_file"]
+                    mandatoryFields = ["aws_access_key_id", "aws_secret_key", "regions", "interval", "instance_types",
+                                       "cache_file"]
 
                     for mandatoryField in mandatoryFields:
                         if not mandatoryField in sectionMap:
@@ -152,6 +160,7 @@ class ConfigurationFile():
         for o in options:
             ret[o] = self.parser.get(section, o)
         return ret
+
 
 def main():
     '''Command line options.'''
@@ -197,7 +206,8 @@ def main():
                 stop = now - datetime.timedelta(hours=hour)
                 start = now - datetime.timedelta(hours=hour + 1)
 
-                get_spot_prices(regions, start, stop, aws_access_key_id, aws_secret_key, instance_types, priceData, use_multiprocess=False)
+                get_spot_prices(regions, start, stop, aws_access_key_id, aws_secret_key, instance_types, priceData,
+                                use_multiprocess=False)
 
             with open(cacheFile, mode='w') as cacheFd:
                 json.dump(priceData, cacheFd)
@@ -219,7 +229,7 @@ def main():
 
     print("")
 
-    sys.stdout.write(" "*col_len)
+    sys.stdout.write(" " * col_len)
     for simulation in results:
         sys.stdout.write(simulation)
         # sys.stdout.write(" "*(col_len - len(simulation)))
@@ -228,7 +238,7 @@ def main():
 
     for simulation_a in results:
         sys.stdout.write(simulation_a)
-        sys.stdout.write(" "*(col_len - len(simulation_a)))
+        sys.stdout.write(" " * (col_len - len(simulation_a)))
         for simulation_b in results:
             price_a = results[simulation_a]
             price_b = results[simulation_b]
@@ -236,8 +246,9 @@ def main():
             p = "%.2f %%" % (100 - (price_a / price_b) * 100)
 
             sys.stdout.write(p)
-            sys.stdout.write(" "*(len(simulation_b) - len(p) + 2))
+            sys.stdout.write(" " * (len(simulation_b) - len(p) + 2))
         sys.stdout.write("\n")
+
 
 if __name__ == "__main__":
     sys.exit(main())
