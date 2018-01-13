@@ -811,7 +811,7 @@ class ASanParserTestMultiTrace(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "CreateThread")
         self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
 
-        
+
 class ASanParserTestTruncatedTrace(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -827,7 +827,7 @@ class ASanParserTestTruncatedTrace(unittest.TestCase):
         self.assertEqual(crashSig, None)
         self.assertTrue("Insufficient data" in crashInfo.failureReason)
 
-        
+
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")
