@@ -148,11 +148,11 @@ def main(argv=None):
         return 2
 
     configuration = ProgramConfiguration.fromBinary(binary)
-    if configuration == None:
+    if configuration is None:
         print("Error: Failed to load program configuration based on binary", file=sys.stderr)
         return 2
 
-        if opts.platform == None or opts.product == None or opts.os == None:
+        if opts.platform is None or opts.product is None or opts.os is None:
             print(("Error: Must use binary configuration file or specify/configure at least "
                    "--platform, --product and --os"), file=sys.stderr)
             return 2
@@ -219,7 +219,7 @@ def main(argv=None):
 
         (sigfile, metadata) = collector.search(crashInfo)
 
-        if sigfile != None:
+        if sigfile is not None:
             if last_signature == sigfile:
                 signature_repeat_count += 1
             else:

@@ -165,7 +165,7 @@ def getSanitizedAssertionPattern(msgs):
     @rtype: string
     @return: Sanitized assertion message (regular expression)
     '''
-    assert msgs != None
+    assert msgs is not None
 
     returnList = True
     if not isinstance(msgs, list):

@@ -117,11 +117,11 @@ class PoolConfiguration(models.Model):
 
         # If we are not the top-most confifugration, recursively call flatten
         # and proceed with the configuration provided by our parent.
-        if self.parent != None:
+        if self.parent is not None:
             flat_parent_config = self.parent.flatten()
 
         for config_field in self.config_fields:
-            if getattr(self, config_field) != None:
+            if getattr(self, config_field) is not None:
                 flat_parent_config[config_field] = getattr(self, config_field)
 
         for field in self.dict_config_fields:

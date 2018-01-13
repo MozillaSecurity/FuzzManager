@@ -54,7 +54,7 @@ class StreamCollector(threading.Thread):
                 self.output.append(line)
 
                 # With maxBacklog specified, emulate a FIFO with the given length
-                if self.maxBacklog != None and len(self.output) > self.maxBacklog:
+                if self.maxBacklog is not None and len(self.output) > self.maxBacklog:
                     self.output.pop(0)
 
         self.fd.close()

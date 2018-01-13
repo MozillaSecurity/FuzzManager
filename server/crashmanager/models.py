@@ -221,7 +221,7 @@ class CrashEntry(models.Model):
         crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData,
                                                cacheObject=cachedCrashInfo)
 
-        if attachTestcase and self.testcase != None and not self.testcase.isBinary:
+        if attachTestcase and self.testcase is not None and not self.testcase.isBinary:
             self.testcase.loadTest()
             crashInfo.testcase = self.testcase.content
 
@@ -236,7 +236,7 @@ class CrashEntry(models.Model):
         # has changed or the implementation parsing it was updated.
         self.cachedCrashInfo = None
         crashInfo = self.getCrashInfo()
-        if crashInfo.crashAddress != None:
+        if crashInfo.crashAddress is not None:
             self.crashAddress = hex(crashInfo.crashAddress)
         self.shortSignature = crashInfo.createShortSignature()
 

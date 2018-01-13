@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 # with the same external bug id. Make sure we consider all of them.
                 bugs = providerBugs.filter(externalId=bugId)
                 for bug in bugs:
-                    if bugStatus[bugId] == None and bug.closed != None:
+                    if bugStatus[bugId] is None and bug.closed is not None:
                         bug.closed = None
                         bug.save()
                     elif isinstance(bugStatus[bugId], str):
@@ -55,6 +55,6 @@ class Command(BaseCommand):
                         bug.externalId = bugStatus[bugId]
                         bug.closed = None
                         bug.save()
-                    elif bug.closed == None:
+                    elif bug.closed is None:
                         bug.closed = bugStatus[bugId]
                         bug.save()

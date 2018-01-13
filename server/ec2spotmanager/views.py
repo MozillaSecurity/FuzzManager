@@ -119,7 +119,7 @@ def viewPool(request, poolid):
     last_config = pool.config
     last_config.children = []
 
-    while not cyclic and last_config.parent != None:
+    while not cyclic and last_config.parent is not None:
         last_config.parent.children = [last_config]
         last_config = last_config.parent
 

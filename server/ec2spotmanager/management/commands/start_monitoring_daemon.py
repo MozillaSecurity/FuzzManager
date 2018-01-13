@@ -195,7 +195,7 @@ class Command(BaseCommand):
                     continue
 
                 median = get_price_median(prices[region][zone])
-                if best_median == None or best_median > median:
+                if best_median is None or best_median > median:
                     best_median = median
                     best_zone = zone
                     best_region = region
@@ -346,7 +346,7 @@ class Command(BaseCommand):
                     instances[i].status_code = boto_instances[i].state_code & 255
                     instances[i].save()
 
-                    assert(instances[i].ec2_instance_id != None)
+                    assert(instances[i].ec2_instance_id is not None)
 
                     # Now that we saved the object into our database, mark the instance as updatable
                     # so our update code can pick it up and update it accordingly when it changes states
