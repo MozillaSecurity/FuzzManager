@@ -1,4 +1,4 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand, CommandError  # noqa
 
 from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket

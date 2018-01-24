@@ -1,7 +1,7 @@
 import base64
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
-from django.forms import widgets
+from django.forms import widgets  # noqa
 import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException

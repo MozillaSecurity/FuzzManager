@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import django.core.files.storage
+import django.core.files.storage  # noqa
 
 
 class Migration(migrations.Migration):

@@ -1,4 +1,4 @@
-from django.http.response import Http404
+from django.http.response import Http404  # noqa
 from rest_framework import serializers
 
 from ec2spotmanager.models import Instance

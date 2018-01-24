@@ -15,7 +15,7 @@ import logging
 
 import requests
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse  # noqa
 from rest_framework.test import APITestCase
 
 from . import TestCase

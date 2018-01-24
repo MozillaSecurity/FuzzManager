@@ -1,6 +1,6 @@
 import boto.ec2
 import boto.exception
-from django.conf import settings
+from django.conf import settings  # noqa
 from django.core.management import BaseCommand, CommandError
 from django.utils import timezone
 import logging

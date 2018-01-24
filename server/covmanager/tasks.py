@@ -1,4 +1,4 @@
-from django.conf import settings
+from django.conf import settings  # noqa
 import os
 import sys
 
