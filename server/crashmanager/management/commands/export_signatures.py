@@ -1,6 +1,4 @@
 import json
-import os
-import shutil
 from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand

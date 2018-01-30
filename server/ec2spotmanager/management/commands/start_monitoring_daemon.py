@@ -1,6 +1,6 @@
 import boto.ec2
 import boto.exception
-from django.conf import settings
+from django.conf import settings  # noqa
 from django.core.management import BaseCommand, CommandError
 from django.utils import timezone
 import logging
@@ -12,15 +12,14 @@ import time
 
 from ec2spotmanager.common.prices import get_spot_prices, get_price_median
 from ec2spotmanager.management.common import pid_lock_file
-from ec2spotmanager.models import PoolConfiguration, InstancePool, Instance, INSTANCE_STATE, \
-    PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+from ec2spotmanager.models import InstancePool, Instance, INSTANCE_STATE, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 from laniakea.core.manager import Laniakea
 from laniakea.laniakea import LaniakeaCommandLine
 
 
 use_multiprocess_price_fetch = False
 if use_multiprocess_price_fetch:
-    from multiprocessing import Pool, cpu_count
+    from multiprocessing import Pool, cpu_count  # noqa
 
 logger = logging.getLogger("ec2spotmanager")
 
@@ -195,7 +194,7 @@ class Command(BaseCommand):
                     continue
 
                 median = get_price_median(prices[region][zone])
-                if best_median == None or best_median > median:
+                if best_median is None or best_median > median:
                     best_median = median
                     best_zone = zone
                     best_region = region
@@ -346,7 +345,7 @@ class Command(BaseCommand):
                     instances[i].status_code = boto_instances[i].state_code & 255
                     instances[i].save()
 
-                    assert(instances[i].ec2_instance_id != None)
+                    assert(instances[i].ec2_instance_id is not None)
 
                     # Now that we saved the object into our database, mark the instance as updatable
                     # so our update code can pick it up and update it accordingly when it changes states
@@ -459,7 +458,7 @@ class Command(BaseCommand):
         instance_ids_by_region = {}
 
         for instance in instances:
-            if not instance.ec2_region in instance_ids_by_region:
+            if instance.ec2_region not in instance_ids_by_region:
                 instance_ids_by_region[instance.ec2_region] = []
             instance_ids_by_region[instance.ec2_region].append(instance.ec2_instance_id)
 
@@ -531,7 +530,7 @@ class Command(BaseCommand):
                     # Whenever we see an instance that is not in our instance list for that region,
                     # make sure it's a terminated instance because we should never have a running
                     # instance that matches the search above but is not in our database.
-                    if not boto_instance.id in instance_ids_by_region[region]:
+                    if boto_instance.id not in instance_ids_by_region[region]:
                         if not ((state_code == INSTANCE_STATE['shutting-down'] or
                                 state_code == INSTANCE_STATE['terminated'])):
 
@@ -574,7 +573,7 @@ class Command(BaseCommand):
 
         if instances_left:
             for instance in instances_left:
-                if not instance.ec2_instance_id in debug_boto_instance_ids_seen:
+                if instance.ec2_instance_id not in debug_boto_instance_ids_seen:
                     logger.info("[Pool %d] Deleting instance with EC2 ID %s from our database, "
                                 "has no corresponding machine on EC2." % (pool.id, instance.ec2_instance_id))
 

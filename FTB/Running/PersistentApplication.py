@@ -261,14 +261,14 @@ class SimplePersistentApplication(PersistentApplication):
 
             # Assume PersistentMode.NONE and expect the process to exit now
             (maxSleepTime, pollInterval) = (self.processingTimeout, 0.2)
-            while self.process.poll() == None and maxSleepTime > 0:
+            while self.process.poll() is None and maxSleepTime > 0:
                 maxSleepTime -= pollInterval
                 time.sleep(pollInterval)
 
             ret = ApplicationStatus.OK
 
             # Process is still alive, consider this a timeout
-            if self.process.poll() == None:
+            if self.process.poll() is None:
                 ret = ApplicationStatus.TIMEDOUT
             elif self._crashed():
                 ret = ApplicationStatus.CRASHED
@@ -295,7 +295,7 @@ class SimplePersistentApplication(PersistentApplication):
             self.stderr = self.errCollector.output
 
     def runTest(self, test):
-        if self.process == None or self.process.poll() != None:
+        if self.process is None or self.process.poll() is not None:
             self.start()
 
         # Write test data and also log it
@@ -305,7 +305,7 @@ class SimplePersistentApplication(PersistentApplication):
             try:
                 response = self.responseQueue.get(block=True, timeout=self.processingTimeout)
             except Queue.Empty:
-                if self.process.poll() == None:
+                if self.process.poll() is None:
                     # The process is still running, force it to stop and return timeout code
                     self.stop()
                     return ApplicationStatus.TIMEDOUT
@@ -372,18 +372,18 @@ class SimplePersistentApplication(PersistentApplication):
 
     def _terminateProcess(self):
         if self.process:
-            if self.process.poll() == None:
+            if self.process.poll() is None:
                 # Try to terminate the process gracefully first
                 self.process.terminate()
 
                 # Emulate a wait() with timeout. Because wait() having
                 # a timeout would be way too easy, wouldn't it? -.-
                 (maxSleepTime, pollInterval) = (3, 0.2)
-                while self.process.poll() == None and maxSleepTime > 0:
+                while self.process.poll() is None and maxSleepTime > 0:
                     maxSleepTime -= pollInterval
                     time.sleep(pollInterval)
 
                 # Process is still alive, kill it and wait
-                if self.process.poll() == None:
+                if self.process.poll() is None:
                     self.process.kill()
                     self.process.wait()

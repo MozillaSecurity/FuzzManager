@@ -63,7 +63,7 @@ def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_mult
         if use_multiprocess:
             result = result.get()
         for entry in result:
-            if not entry.region.name in prices:
+            if entry.region.name not in prices:
                 prices[entry.region.name] = {}
 
             zone = entry.availability_zone
@@ -71,7 +71,7 @@ def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_mult
             if zone in zone_blacklist:
                 continue
 
-            if not zone in prices[entry.region.name]:
+            if zone not in prices[entry.region.name]:
                 prices[entry.region.name][zone] = []
 
             prices[entry.region.name][zone].append(entry.price)

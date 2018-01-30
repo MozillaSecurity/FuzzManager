@@ -1,4 +1,4 @@
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 import hashlib
 from rest_framework import serializers

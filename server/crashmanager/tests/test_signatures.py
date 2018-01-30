@@ -189,7 +189,7 @@ class FindSignatureTests(TestCase):
         """No errors are thrown in template"""
         self.client.login(username='test', password='test')
         crash = self.create_crash()
-        bucket = self.create_bucket(signature=json.dumps({"symptoms": [
+        self.create_bucket(signature=json.dumps({"symptoms": [
             {'src': 'stderr',
              'type': 'output',
              'value': '//'}]}))
@@ -630,7 +630,7 @@ class DelSignatureTests(TestCase):
         self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Are you sure that you want to delete this signature?")
         self.assertContains(response, self.entries_fmt % 0)
-        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.get(reverse(self.name, kwargs={"sigid": bucket.pk}))
         log.debug(response)
         self.assertEqual(response.status_code, requests.codes['ok'])
@@ -662,7 +662,7 @@ class DelSignatureTests(TestCase):
         """Test deleting a signature with crashes and removing entries"""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription='bucket #1')
-        crash = self.create_crash(shortSignature='crash #1', bucket=bucket)
+        self.create_crash(shortSignature='crash #1', bucket=bucket)
         response = self.client.post(reverse(self.name, kwargs={"sigid": bucket.pk}), {'delentries': '1'})
         log.debug(response)
         self.assertRedirects(response, reverse('crashmanager:signatures'))

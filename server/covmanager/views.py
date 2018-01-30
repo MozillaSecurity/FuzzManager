@@ -8,7 +8,7 @@ from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
 
-from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, paginate_requested_list, renderError
+from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer
@@ -146,7 +146,7 @@ def collections_diff_api(request, path):
     for child in start_coverage["children"]:
         add = {}
 
-        if not child in end_coverage["children"]:
+        if child not in end_coverage["children"]:
             continue
 
         for k in start_coverage["children"][child]:

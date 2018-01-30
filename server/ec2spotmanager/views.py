@@ -6,15 +6,14 @@ from django.contrib.auth.views import logout
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.db.models.aggregates import Count
-from django.http.response import Http404
+from django.http.response import Http404  # noqa
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import errno
 from operator import attrgetter
 import os
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.decorators import authentication_classes, api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -119,7 +118,7 @@ def viewPool(request, poolid):
     last_config = pool.config
     last_config.children = []
 
-    while not cyclic and last_config.parent != None:
+    while not cyclic and last_config.parent is not None:
         last_config.parent.children = [last_config]
         last_config = last_config.parent
 
@@ -648,7 +647,7 @@ class UptimeChartViewAccumulated(JSONView):
 
 
 class MachineStatusViewSet(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
 
     def get(self, request, *args, **kwargs):
         result = {}
@@ -668,7 +667,7 @@ class MachineStatusViewSet(APIView):
 
 
 class PoolCycleView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):
@@ -684,7 +683,7 @@ class PoolCycleView(APIView):
 
 
 class PoolEnableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):
@@ -701,7 +700,7 @@ class PoolEnableView(APIView):
 
 
 class PoolDisableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, poolid, format=None):

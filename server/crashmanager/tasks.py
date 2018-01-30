@@ -1,11 +1,9 @@
 from collections import OrderedDict
-import os
-import sys
 
 from django.conf import settings
 
 from celeryconf import app
-from . import cron  # ensure cron tasks get registered
+from . import cron  # noqa ensure cron tasks get registered
 
 # This is a per-worker global cache mapping short descriptions of
 # crashes to a list of bucket candidates to try first.

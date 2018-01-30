@@ -12,14 +12,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
 import logging
-import os.path
 
 import requests
 from django.contrib.auth.models import User
 from rest_framework.test import APITestCase  # APIRequestFactory
 
 from . import TestCase
-from ..models import CrashEntry, TestCase as cmTestCase
 
 
 log = logging.getLogger("fm.crashmanager.tests.signatures.rest")  # pylint: disable=invalid-name

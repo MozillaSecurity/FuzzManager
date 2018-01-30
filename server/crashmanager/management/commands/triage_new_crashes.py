@@ -1,4 +1,4 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand, CommandError  # noqa
 
 from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket
@@ -22,7 +22,7 @@ class Command(BaseCommand):
             crashInfo = entry.getCrashInfo(attachTestcase=True)
 
             for bucket in buckets:
-                if not bucket.pk in signatureCache:
+                if bucket.pk not in signatureCache:
                     signatureCache[bucket.pk] = bucket.getSignature()
 
                 signature = signatureCache[bucket.pk]

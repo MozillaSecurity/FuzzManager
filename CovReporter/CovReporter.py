@@ -30,7 +30,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
 
-from Reporter.Reporter import remote_checks, Reporter
+from Reporter.Reporter import remote_checks, Reporter  # noqa
 
 __all__ = []
 __version__ = 0.1
@@ -164,7 +164,7 @@ class CovReporter(Reporter):
                 # Walk the tree down, one path part at a time and create parts
                 # on the fly if they don't exist yet in our tree.
                 for path_part in path_parts:
-                    if not path_part in ptr:
+                    if path_part not in ptr:
                         ptr[path_part] = {"children": {}}
 
                     ptr = ptr[path_part]["children"]

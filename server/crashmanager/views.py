@@ -25,7 +25,7 @@ def check_authorized_for_crash_entry(request, entry):
     user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
         defaultToolsFilter = user.defaultToolsFilter.all()
-        if not defaultToolsFilter or not entry.tool in defaultToolsFilter:
+        if not defaultToolsFilter or entry.tool not in defaultToolsFilter:
             raise PermissionDenied({"message": "You don't have permission to access this crash entry."})
 
     return
@@ -115,7 +115,7 @@ def paginate_requested_list(request, entries):
     # We need to preserve the query parameters when adding the page to the
     # query URL, so we store the sanitized copy inside our entries object.
     paginator_query = request.GET.copy()
-    if paginator_query.has_key('page'):
+    if 'page' in paginator_query:
         del paginator_query['page']
 
     page_entries.paginator_query = paginator_query
@@ -292,7 +292,7 @@ def signatures(request):
 
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
-    if (not "all" in request.GET or not request.GET["all"]) and not isSearch:
+    if ("all" not in request.GET or not request.GET["all"]) and not isSearch:
         filters["bug"] = None
 
     entries = entries.filter(**filters)
@@ -358,7 +358,7 @@ def crashes(request, ignore_toolfilter=False):
 
     # Do not display triaged crash entries unless there is an all=1 parameter
     # specified in the search query. Otherwise only show untriaged entries.
-    if not "all" in request.GET or not request.GET["all"]:
+    if "all" not in request.GET or not request.GET["all"]:
         filters["bucket"] = None
 
     entries = entries.filter(**filters)
@@ -673,7 +673,7 @@ def deleteSignature(request, sigid):
     check_authorized_for_signature(request, bucket)
 
     if request.method == 'POST':
-        if not "delentries" in request.POST:
+        if "delentries" not in request.POST:
             # Make sure we remove this bucket from all crash entries referring to it,
             # otherwise these would be deleted as well through cascading.
             CrashEntry.objects.filter(bucket=bucket).update(bucket=None, triagedOnce=False)
@@ -860,13 +860,13 @@ def optimizeSignature(request, sigid):
             # If the signature matches lots of other buckets as well, it is likely too
             # broad and we should not consider it (or later rate it worse than others).
             matchesInOtherBuckets = False
-            nonMatchesInOtherBuckets = 0
-            otherMatchingBucketIds = []
+            nonMatchesInOtherBuckets = 0  # noqa
+            otherMatchingBucketIds = []  # noqa
             for otherBucket in buckets:
                 if otherBucket.pk == bucket.pk:
                     continue
 
-                if not otherBucket.pk in firstEntryPerBucketCache:
+                if otherBucket.pk not in firstEntryPerBucketCache:
                     c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
                     c = CrashEntry.deferRawFields(c, requiredOutputs)
                     c = c.first()
@@ -947,7 +947,7 @@ def findSignatures(request, crashid):
                     if otherBucket.pk == bucket.pk:
                         continue
 
-                    if not otherBucket.pk in firstEntryPerBucketCache:
+                    if otherBucket.pk not in firstEntryPerBucketCache:
                         c = CrashEntry.objects.filter(bucket=otherBucket).first()
                         firstEntryPerBucketCache[otherBucket.pk] = c
                         if c:
@@ -1361,7 +1361,7 @@ def json_to_query(json_str):
 
         qobj = Q()
 
-        if not "op" in obj:
+        if "op" not in obj:
                 raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]

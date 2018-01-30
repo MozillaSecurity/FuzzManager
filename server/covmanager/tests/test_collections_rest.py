@@ -14,7 +14,7 @@ import json
 import logging
 
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse  # noqa
 from django.utils import dateparse, timezone
 from rest_framework.test import APITestCase  # APIRequestFactory
 import requests

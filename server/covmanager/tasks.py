@@ -1,5 +1,4 @@
-from collections import OrderedDict
-from django.conf import settings
+from django.conf import settings  # noqa
 import os
 import sys
 
@@ -8,12 +7,12 @@ import sys
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path += [os.path.abspath(os.path.join(BASE_DIR, ".."))]
 
-from celeryconf import app
+from celeryconf import app  # noqa
 
 
 @app.task
 def check_revision_update(pk):
-    from covmanager.models import Collection, Repository
+    from covmanager.models import Collection, Repository  # noqa
     collection = Collection.objects.get(pk=pk)
 
     # Get the SourceCodeProvider associated with this collection

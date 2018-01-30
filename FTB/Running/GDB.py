@@ -16,11 +16,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
 def is64bit():
-    return not str(gdb.parse_and_eval("$rax")) == "void"  # @UndefinedVariable
+    return not str(gdb.parse_and_eval("$rax")) == "void"  # noqa @UndefinedVariable
 
 
 def isARM():
-    return not str(gdb.parse_and_eval("$r0")) == "void"  # @UndefinedVariable
+    return not str(gdb.parse_and_eval("$r0")) == "void"  # noqa @UndefinedVariable
 
 
 def regAsHexStr(reg):
@@ -28,15 +28,15 @@ def regAsHexStr(reg):
         mask = 0xffffffffffffffff
     else:
         mask = 0xffffffff
-    return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # @UndefinedVariable
+    return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # noqa @UndefinedVariable
 
 
 def regAsIntStr(reg):
-    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # @UndefinedVariable
+    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # noqa @UndefinedVariable
 
 
 def regAsRaw(reg):
-    return str(gdb.parse_and_eval("$" + reg))  # @UndefinedVariable
+    return str(gdb.parse_and_eval("$" + reg))  # noqa @UndefinedVariable
 
 
 def printImportantRegisters():
@@ -50,5 +50,5 @@ def printImportantRegisters():
     for reg in regs:
         try:
             print(reg + "\t" + regAsHexStr(reg) + "\t" + regAsIntStr(reg))
-        except:
+        except Exception:
             print(reg + "\t" + regAsRaw(reg))

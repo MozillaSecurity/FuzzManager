@@ -1,12 +1,11 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 import json
-import operator
 from rest_framework import filters
 
 
 def renderError(request, err):
-    return render(request, 'error.html', {'error_message': err})
+    return render(request, 'error.html', {'error_message': err})  # noqa
 
 
 def paginate_requested_list(request, entries):
@@ -33,7 +32,7 @@ def paginate_requested_list(request, entries):
     # We need to preserve the query parameters when adding the page to the
     # query URL, so we store the sanitized copy inside our entries object.
     paginator_query = request.GET.copy()
-    if paginator_query.has_key('page'):
+    if 'page' in paginator_query:
         del paginator_query['page']
 
     page_entries.paginator_query = paginator_query
@@ -67,7 +66,7 @@ def json_to_query(json_str):
     then the operator has no effect.
     """
     try:
-        obj = json.loads(json_str, object_pairs_hook=OrderedDict)
+        obj = json.loads(json_str, object_pairs_hook=OrderedDict)  # noqa
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 
@@ -82,7 +81,7 @@ def json_to_query(json_str):
 
         qobj = Q()
 
-        if not "op" in obj:
+        if "op" not in obj:
                 raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]
@@ -121,7 +120,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
             try:
                 _, queryobj = json_to_query(querystr)
             except RuntimeError as e:
-                raise InvalidArgumentException("error in query: %s" % e)
+                raise InvalidArgumentException("error in query: %s" % e)  # noqa
             queryset = queryset.filter(queryobj)
         return queryset
 

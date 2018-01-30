@@ -32,11 +32,11 @@ class BugzillaREST():
         # method we use (username/password means we need to use token, with
         # API key we can use the api_key field directly).
         self.authField = 'token'
-        if self.api_key != None:
+        if self.api_key is not None:
             self.authField = 'api_key'
 
     def login(self, forceLogin=False):
-        if (self.username == None or self.password == None) and self.api_key == None:
+        if (self.username is None or self.password is None) and self.api_key is None:
             if forceLogin:
                 raise RuntimeError("Need username/password or API key to login.")
             else:
@@ -45,19 +45,19 @@ class BugzillaREST():
         if forceLogin:
             self.authToken = None
 
-        if self.api_key != None:
+        if self.api_key is not None:
             self.authToken = self.api_key
 
         # We either use an API key which doesn't require any prior login
         # or we still have a valid authentication token that we can use.
-        if self.authToken != None:
+        if self.authToken is not None:
             return True
 
         loginUrl = "%s/login?login=%s&password=%s" % (self.baseUrl, self.username, self.password)
         response = requests.get(loginUrl)
         json = response.json()
 
-        if not 'token' in json:
+        if 'token' not in json:
             raise RuntimeError('Login failed: %s', response.text)
 
         self.authToken = json["token"]
@@ -94,7 +94,7 @@ class BugzillaREST():
         response = requests.get(bugUrl + "".join(extraParams))
         json = response.json()
 
-        if not "bugs" in json:
+        if "bugs" not in json:
             return None
 
         ret = {}
@@ -114,10 +114,10 @@ class BugzillaREST():
         loc = locals()
         bug = {}
         for k in loc:
-            if k == "attrs" and loc[k] != None:
+            if k == "attrs" and loc[k] is not None:
                 for ak in loc[k]:
                     bug[ak] = loc[k][ak]
-            elif loc[k] != None and loc[k] != '' and k != "self":
+            elif loc[k] is not None and loc[k] != '' and k != "self":
                 bug[k] = loc[k]
 
         # Ensure we're logged in
@@ -142,7 +142,7 @@ class BugzillaREST():
         createUrl = "%s/bug/%s/comment?%s=%s" % (self.baseUrl, id, self.authField, self.authToken)
         response = requests.post(createUrl, cobj).json()
 
-        if not "id" in response:
+        if "id" not in response:
             return response
 
         commentId = str(response["id"])
@@ -150,10 +150,10 @@ class BugzillaREST():
         commentUrl = "%s/bug/comment/%s?%s=%s" % (self.baseUrl, commentId, self.authField, self.authToken)
         response = requests.get(commentUrl).json()
 
-        if not "comments" in response:
+        if "comments" not in response:
             return response
 
-        if not commentId in response["comments"]:
+        if commentId not in response["comments"]:
             return response
 
         return response["comments"][commentId]
@@ -164,7 +164,7 @@ class BugzillaREST():
         loc = locals()
         attachment = {}
         for k in loc:
-            if loc[k] != None and loc[k] != '' and k != "self" and k != "is_binary":
+            if loc[k] is not None and loc[k] != '' and k != "self" and k != "is_binary":
                 attachment[k] = loc[k]
 
         # Set proper content-type

@@ -7,7 +7,7 @@ import json
 import unittest
 
 from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashInfo import CrashInfo, NoCrashInfo
+from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.Matchers import StringMatch
 from FTB.Signatures.Symptom import StackFramesSymptom

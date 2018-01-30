@@ -191,7 +191,7 @@ Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with rea
 asanTruncatedTrace = """
 ==8986==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fcfcfaadeda bp 0x7fcfcb405340 sp 0x7fcfcb405320 T2)
 ==8986==The signal is caused by a WRITE memory access.
-"""
+"""  # noqa
 
 gdbCrashAddress1 = """
 (gdb) bt 16
@@ -811,7 +811,7 @@ class ASanParserTestMultiTrace(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[3], "CreateThread")
         self.assertEqual("[@ mozilla::ipc::Shmem::OpenExisting]", crashInfo.createShortSignature())
 
-        
+
 class ASanParserTestTruncatedTrace(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
@@ -827,7 +827,7 @@ class ASanParserTestTruncatedTrace(unittest.TestCase):
         self.assertEqual(crashSig, None)
         self.assertTrue("Insufficient data" in crashInfo.failureReason)
 
-        
+
 class GDBParserTestCrash(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86", "linux")

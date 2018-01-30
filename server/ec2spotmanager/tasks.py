@@ -1,1 +1,1 @@
-from . import cron  # ensure cron tasks get registered
+from . import cron  # noqa ensure cron tasks get registered

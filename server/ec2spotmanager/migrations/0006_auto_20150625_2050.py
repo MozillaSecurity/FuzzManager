@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import ec2spotmanager.models
+import ec2spotmanager.models  # noqa
 
 
 class Migration(migrations.Migration):

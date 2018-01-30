@@ -30,9 +30,9 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
 sys.path += [FTB_PATH]
 
-from Collector.Collector import Collector
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashInfo import CrashInfo
+from Collector.Collector import Collector  # noqa
+from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
+from FTB.Signatures.CrashInfo import CrashInfo  # noqa
 
 
 class LibFuzzerMonitor(threading.Thread):
@@ -148,11 +148,11 @@ def main(argv=None):
         return 2
 
     configuration = ProgramConfiguration.fromBinary(binary)
-    if configuration == None:
+    if configuration is None:
         print("Error: Failed to load program configuration based on binary", file=sys.stderr)
         return 2
 
-        if opts.platform == None or opts.product == None or opts.os == None:
+        if opts.platform is None or opts.product is None or opts.os is None:
             print(("Error: Must use binary configuration file or specify/configure at least "
                    "--platform, --product and --os"), file=sys.stderr)
             return 2
@@ -183,7 +183,7 @@ def main(argv=None):
         configuration.addMetadata(metadata)
 
     # Set LD_LIBRARY_PATH for convenience
-    if not 'LD_LIBRARY_PATH' in env:
+    if 'LD_LIBRARY_PATH' not in env:
         env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
     serverauthtoken = None
@@ -219,7 +219,7 @@ def main(argv=None):
 
         (sigfile, metadata) = collector.search(crashInfo)
 
-        if sigfile != None:
+        if sigfile is not None:
             if last_signature == sigfile:
                 signature_repeat_count += 1
             else:

@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
-from django.conf import global_settings
+from django.conf import global_settings  # noqa
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -24,7 +24,7 @@ sys.path += [FTB_PATH]
 SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
     SECRET_KEY = open(SECRET_FILE).read().strip()
-except:
+except Exception:
     try:
         with open(SECRET_FILE, 'w') as f:
             import random

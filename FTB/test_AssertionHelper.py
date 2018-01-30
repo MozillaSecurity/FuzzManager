@@ -163,13 +163,13 @@ class AssertionHelperTestChakraAssert(unittest.TestCase):
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
     def runTest(self):
         err1 = windowsPathAssertFwdSlashes.splitlines()
-        err2 = windowsPathAssertBwSlashes.splitlines()
+        # err2 = windowsPathAssertBwSlashes.splitlines()
 
         assertionMsg1 = AssertionHelper.getAssertion(err1)
-        assertionMsg2 = AssertionHelper.getAssertion(err2)
+        # assertionMsg2 = AssertionHelper.getAssertion(err2)
 
         sanitizedMsg1 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg1)
-        sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
+        # sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
 
         expectedMsg = ("Assertion failure: block\\->graph\\(\\)\\.osrBlock\\(\\), at "
                        "([a-zA-Z]:)?/.+/Lowering\\.cpp(:[0-9]+)+")

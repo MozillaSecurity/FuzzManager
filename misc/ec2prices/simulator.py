@@ -22,7 +22,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import argparse
 import boto.ec2
 from collections import OrderedDict
 import datetime
@@ -65,7 +64,7 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
                                               product_description="Linux/UNIX"
                                               )  # TODO: Make configurable
             break
-        except:
+        except Exception:
             print("Caught exception, retrying")
             pass
 
@@ -92,15 +91,15 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
         if use_multiprocess:
             result = result.get()
         for entry in result:
-            if not entry.region.name in prices:
+            if entry.region.name not in prices:
                 prices[entry.region.name] = {}
 
             zone = entry.availability_zone
 
-            if not zone in prices[entry.region.name]:
+            if zone not in prices[entry.region.name]:
                 prices[entry.region.name][zone] = {}
 
-            if not entry.instance_type in prices[entry.region.name][zone]:
+            if entry.instance_type not in prices[entry.region.name][zone]:
                 prices[entry.region.name][zone][entry.instance_type] = OrderedDict()
 
             if not start_time.isoformat() in prices[entry.region.name][zone][entry.instance_type]:
@@ -136,13 +135,13 @@ class ConfigurationFile():
                                        "cache_file"]
 
                     for mandatoryField in mandatoryFields:
-                        if not mandatoryField in sectionMap:
+                        if mandatoryField not in sectionMap:
                             print("Error: Main configuration is missing mandatory field '%s'." % mandatoryField)
                             return
 
                     self.main = sectionMap
                 else:
-                    if not "handler" in sectionMap:
+                    if "handler" not in sectionMap:
                         print("Warning: Simulation '%s' has no handler set, ignoring..." % section)
                         continue
 

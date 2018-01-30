@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand, CommandError  # noqa
 from django.db.models.aggregates import Count
 from django.utils import timezone
 

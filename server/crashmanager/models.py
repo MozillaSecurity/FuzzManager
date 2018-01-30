@@ -221,7 +221,7 @@ class CrashEntry(models.Model):
         crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData,
                                                cacheObject=cachedCrashInfo)
 
-        if attachTestcase and self.testcase != None and not self.testcase.isBinary:
+        if attachTestcase and self.testcase is not None and not self.testcase.isBinary:
             self.testcase.loadTest()
             crashInfo.testcase = self.testcase.content
 
@@ -236,7 +236,7 @@ class CrashEntry(models.Model):
         # has changed or the implementation parsing it was updated.
         self.cachedCrashInfo = None
         crashInfo = self.getCrashInfo()
-        if crashInfo.crashAddress != None:
+        if crashInfo.crashAddress is not None:
             self.crashAddress = hex(crashInfo.crashAddress)
         self.shortSignature = crashInfo.createShortSignature()
 
@@ -259,11 +259,11 @@ class CrashEntry(models.Model):
     def deferRawFields(queryset, requiredOutputSources=()):
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.
-        if not "stdout" in requiredOutputSources:
+        if "stdout" not in requiredOutputSources:
             queryset = queryset.defer('rawStdout')
-        if not "stderr" in requiredOutputSources:
+        if "stderr" not in requiredOutputSources:
             queryset = queryset.defer('rawStderr')
-        if not "crashdata" in requiredOutputSources:
+        if "crashdata" not in requiredOutputSources:
             queryset = queryset.defer('rawCrashData')
         return queryset
 

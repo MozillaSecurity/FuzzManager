@@ -177,7 +177,7 @@ class BugzillaProvider(Provider):
             # Find all metadata variables requested for subtitution
             metadataVars = re.findall("%metadata\.([a-zA-Z0-9_\-]+)%", source)
             for mVar in metadataVars:
-                if not mVar in metadata:
+                if mVar not in metadata:
                     metadata[mVar] = "(%s not available)" % mVar
 
                 source = source.replace('%metadata.' + mVar + '%', metadata[mVar])
@@ -263,7 +263,7 @@ class BugzillaProvider(Provider):
 
         # Remove any other variables that we don't want to pass on
         for key in request.POST:
-            if not key in self.templateFields:
+            if key not in self.templateFields:
                 del(args[key])
 
         # Convert the attrs field to a dict
@@ -291,7 +291,7 @@ class BugzillaProvider(Provider):
         # Create the bug
         bz = BugzillaREST(self.hostname, username, password, api_key)
         ret = bz.createBug(**args)
-        if not "id" in ret:
+        if "id" not in ret:
             raise RuntimeError("Failed to create bug: %s", ret)
 
         # If we were told to attach the crash data, do so now
@@ -302,7 +302,7 @@ class BugzillaProvider(Provider):
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
-        if crashEntry.testcase != None:
+        if crashEntry.testcase is not None:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
@@ -352,7 +352,7 @@ class BugzillaProvider(Provider):
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
         ret = bz.createComment(**args)
-        if not "id" in ret:
+        if "id" not in ret:
             raise RuntimeError("Failed to create comment: %s", ret)
 
         # If we were told to attach the crash data, do so now
@@ -363,7 +363,7 @@ class BugzillaProvider(Provider):
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
-        if crashEntry.testcase != None:
+        if crashEntry.testcase is not None:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
