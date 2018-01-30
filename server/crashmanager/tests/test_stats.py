@@ -54,10 +54,10 @@ class StatsViewTests(TestCase):
         """Insert crashes and check that they are shown ok."""
         self.client.login(username='test', password='test')
         bucket = self.create_bucket(shortDescription="bucket #1")
-        (self.create_crash(shortSignature="crash #1", tool="tool #1"),
-         self.create_crash(shortSignature="crash #2", tool="tool #1", bucket=bucket),
-         self.create_crash(shortSignature="crash #3", tool="tool #1", bucket=bucket),
-         self.create_crash(shortSignature="crash #4", tool="tool #2"))
+        self.create_crash(shortSignature="crash #1", tool="tool #1")
+        self.create_crash(shortSignature="crash #2", tool="tool #1", bucket=bucket)
+        self.create_crash(shortSignature="crash #3", tool="tool #1", bucket=bucket)
+        self.create_crash(shortSignature="crash #4", tool="tool #2")
         self.create_toolfilter("tool #1")
         response = self.client.get(reverse(self.name))
         self.assertEqual(response.status_code, requests.codes['ok'])
