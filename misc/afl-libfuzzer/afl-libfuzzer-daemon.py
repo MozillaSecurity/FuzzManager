@@ -45,6 +45,7 @@ try:
 except ImportError:
     haveFFPuppet = False
 
+
 class LibFuzzerMonitor(threading.Thread):
     def __init__(self, fd):
         assert callable(fd.readline)
@@ -85,13 +86,14 @@ class LibFuzzerMonitor(threading.Thread):
     def getTestcase(self):
         return self.testcase
 
+
 def command_file_to_list(cmd_file):
     '''
     Open and parse custom command line file
-    
+
     @type cmd_file: String
     @param cmd_file: Command line file containing list of commands
-    
+
     @rtype: Tuple
     @return: Test index in list and the command as a list of strings
     '''
@@ -107,16 +109,17 @@ def command_file_to_list(cmd_file):
 
     return test_idx, cmdline
 
+
 def get_machine_id(base_dir):
     '''
     Get (and if necessary generate) the machine id which is based on
     the current timestamp and the hostname of the machine. The
     generated ID is cached inside the AFL base directory, so all
     future calls to this method return the same ID.
-    
+
     @type base_dir: String
     @param base_dir: AFL base directory
-    
+
     @rtype: String
     @return: The generated/cached machine ID
     '''
@@ -137,14 +140,15 @@ def get_machine_id(base_dir):
         with open(id_file, 'r') as id_fd:
             return id_fd.read()
 
+
 def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
     '''
     Generate aggregated statistics from the given base directories
     and write them to the specified output file.
-    
+
     @type base_dirs: list
     @param base_dirs: List of AFL base directories
-    
+
     @type outfile: str
     @param outfile: Output file for aggregated statistics
 
@@ -181,7 +185,7 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
         aggregated_stats[field] = 0
 
     for field in wanted_fields_mean:
-        aggregated_stats[field] = (0,0)
+        aggregated_stats[field] = (0, 0)
 
     for field in wanted_fields_all:
         aggregated_stats[field] = []
@@ -215,7 +219,7 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
                     aggregated_stats[field_name].append(field_val)
                 elif field_name in wanted_fields_max:
                     num_val = convert_num(field_val)
-                    if (not field_name in aggregated_stats) or aggregated_stats[field_name] < num_val:
+                    if (field_name not in aggregated_stats) or aggregated_stats[field_name] < num_val:
                         aggregated_stats[field_name] = num_val
 
     # If we don't have any data here, then the fuzzers haven't written any statistics yet
@@ -263,7 +267,7 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
 
     with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
         for field in fields:
-            if not field in aggregated_stats:
+            if field not in aggregated_stats:
                 continue
 
             val = aggregated_stats[field]
@@ -278,25 +282,26 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
 
     return
 
+
 def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, test_path=None,
                  firefox=None, firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
-    
+
     @type base_dir: String
     @param base_dir: AFL base directory
-    
+
     @type cmdline_path: String
     @param cmdline_path: Optional command line file to use instead of the
                          one found inside the base directory.
-    
+
     @type env_path: String
     @param env_path: Optional file containing environment variables.
 
     @type test_path: String
     @param test_path: Optional filename where to copy the test before
                       attempting to reproduce a crash.
-    
+
     @rtype: int
     @return: Non-zero return code on failure
     '''
@@ -328,7 +333,7 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
         if env_path:
             with open(env_path, 'r') as env_file:
                 for line in env_file:
-                    (name,val) = line.rstrip('\n').split("=", 1)
+                    (name, val) = line.rstrip('\n').split("=", 1)
                     base_env[name] = val
 
                     if '@@' in val:
@@ -343,7 +348,8 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
 
         configuration = ProgramConfiguration.fromBinary(cmdline[0])
         if not configuration:
-            print("Error: Creating program configuration from binary failed. Check your binary configuration file.", file=sys.stderr)
+            print("Error: Creating program configuration from binary failed."
+                  "Check your binary configuration file.", file=sys.stderr)
             return 2
 
         collector = Collector(tool=tool_name)
@@ -385,21 +391,22 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
         if firefox:
             ffpInst.clean_up()
 
+
 def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
     '''
     Synchronize the queue directory of the specified AFL base directory
     to the specified S3 bucket. This method only uploads files that don't
     exist yet on the receiving side.
-    
+
     @type base_dir: String
     @param base_dir: AFL base directory
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
-    
+
     @type new_cov_only: Boolean
     @param new_cov_only: Only upload files that have new coverage
     '''
@@ -413,7 +420,7 @@ def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
 
         # Only upload files that have new coverage if we aren't told
         # otherwise by the caller.
-        if new_cov_only and not "+cov" in queue_file:
+        if new_cov_only and "+cov" not in queue_file:
             continue
 
         # Ignore files that have been obtained from other local queues
@@ -435,10 +442,10 @@ def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
     upload_list = []
 
     for queue_file in queue_files:
-        if not queue_file in remote_files:
+        if queue_file not in remote_files:
             upload_list.append(os.path.join(queue_dir, queue_file))
 
-    if not "cmdline" in remote_files:
+    if "cmdline" not in remote_files:
         upload_list.append(cmdline_file)
 
     for upload_file in upload_list:
@@ -447,18 +454,19 @@ def upload_queue_dir(base_dir, bucket_name, project_name, new_cov_only=True):
         print("Uploading file %s -> %s" % (upload_file, remote_key.name))
         remote_key.set_contents_from_filename(upload_file)
 
+
 def download_queue_dirs(work_dir, bucket_name, project_name):
     '''
     Downloads all queue files into the queues sub directory of the specified
     local work directory. The files are renamed to match their SHA1 hashes
     to avoid file collisions.
-    
+
     @type base_dir: String
     @param base_dir: Local work directory
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
     '''
@@ -489,7 +497,8 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
         # If we see a cmdline file, fetch it into the main work directory
         if os.path.basename(remote_key.name) == 'cmdline':
             remote_key.get_contents_to_filename(os.path.join(work_dir, 'cmdline'))
-            remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name, {'downloaded' : int(time.time())}, preserve_acl=True)
+            remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name,
+                                         {'downloaded': int(time.time())}, preserve_acl=True)
             continue
 
         tmp_file = os.path.join(download_dir, "tmp")
@@ -502,22 +511,24 @@ def download_queue_dirs(work_dir, bucket_name, project_name):
         os.rename(tmp_file, os.path.join(download_dir, hash_name))
 
         # Ugly, but we have to do a remote copy of the file to change the metadata
-        remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name, {'downloaded' : int(time.time())}, preserve_acl=True)
+        remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name,
+                                     {'downloaded': int(time.time())}, preserve_acl=True)
+
 
 def clean_queue_dirs(work_dir, bucket_name, project_name, min_age=86400):
     '''
     Delete all remote queues that have a downloaded attribute that is older
     than the specified time interval, defaulting to 24 hours.
-    
+
     @type base_dir: String
     @param base_dir: Local work directory
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
-    
+
     @type min_age: int
     @param min_age: Minimum age of the key before it is deleted
     '''
@@ -550,16 +561,17 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age=86400):
 
     bucket.delete_keys(remote_keys_for_deletion, quiet=True)
 
+
 def get_queue_status(bucket_name, project_name):
     '''
     Return status data for all queues in the specified S3 bucket/project
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
-    
+
     @rtype: dict
     @return: Dictionary containing queue size per queue
     '''
@@ -579,22 +591,23 @@ def get_queue_status(bucket_name, project_name):
 
         (queue_name, filename) = remote_key.name.rsplit("/", 1)
 
-        if not queue_name in status_data:
+        if queue_name not in status_data:
             status_data[queue_name] = 0
         status_data[queue_name] += 1
 
     return status_data
 
+
 def get_corpus_status(bucket_name, project_name):
     '''
     Return status data for the corpus of the specified S3 bucket/project
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
-    
+
     @rtype: dict
     @return: Dictionary containing corpus size per date modified
     '''
@@ -616,23 +629,24 @@ def get_corpus_status(bucket_name, project_name):
 
         date_str = "%s-%02d-%02d" % (dt.year, dt.month, dt.day)
 
-        if not date_str in status_data:
+        if date_str not in status_data:
             status_data[date_str] = 0
         status_data[date_str] += 1
 
     return status_data
 
+
 def download_build(build_dir, bucket_name, project_name):
     '''
     Downloads build.zip from the specified S3 bucket and unpacks it
     into the specified build directory.
-    
+
     @type base_dir: String
     @param base_dir: Build directory
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
     '''
@@ -654,20 +668,21 @@ def download_build(build_dir, bucket_name, project_name):
 
     subprocess.check_call(["unzip", zip_dest, "-d", build_dir])
 
+
 def download_corpus(corpus_dir, bucket_name, project_name, random_subset_size=None):
     '''
     Downloads the test corpus from the specified S3 bucket and project
     into the specified directory, without overwriting any files.
-    
+
     @type corpus_dir: String
     @param corpus_dir: Directory where to store test corpus files
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
-    
+
     @type random_subset_size: int
     @param random_subset_size: If specified, only download a random subset of
                                the corpus, with the specified size.
@@ -691,17 +706,18 @@ def download_corpus(corpus_dir, bucket_name, project_name, random_subset_size=No
         if not os.path.exists(dest_file):
             remote_key.get_contents_to_filename(dest_file)
 
+
 def upload_corpus(corpus_dir, bucket_name, project_name, corpus_delete=False):
     '''
     Synchronize the specified test corpus directory to the specified S3 bucket.
     This method only uploads files that don't exist yet on the receiving side.
-    
+
     @type corpus_dir: String
     @param corpus_dir: Directory where the test corpus files are stored
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
 
@@ -725,12 +741,12 @@ def upload_corpus(corpus_dir, bucket_name, project_name, corpus_delete=False):
     delete_list = []
 
     for test_file in test_files:
-        if not test_file in remote_files:
+        if test_file not in remote_files:
             upload_list.append(os.path.join(corpus_dir, test_file))
 
     if corpus_delete:
         for remote_file in remote_files:
-            if not remote_file in test_files:
+            if remote_file not in test_files:
                 delete_list.append(remote_path + remote_file)
 
     for upload_file in upload_list:
@@ -742,17 +758,18 @@ def upload_corpus(corpus_dir, bucket_name, project_name, corpus_delete=False):
     if corpus_delete:
         bucket.delete_keys(delete_list, quiet=True)
 
+
 def upload_build(build_file, bucket_name, project_name):
     '''
     Upload the given build zip file to the specified S3 bucket/project
     directory.
-    
+
     @type build_file: String
     @param build_file: (ZIP) file containing the build that should be uploaded
-    
+
     @type bucket_name: String
     @param bucket_name: Name of the S3 bucket to use
-    
+
     @type project_name: String
     @param project_name: Name of the project folder inside the S3 bucket
     '''
@@ -771,12 +788,13 @@ def upload_build(build_file, bucket_name, project_name):
     print("Uploading file %s -> %s" % (build_file, remote_key.name))
     remote_key.set_contents_from_filename(build_file)
 
+
 def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     ffp = FFPuppet(use_xvfb=True)
 
     # For now we support only one extension, but FFPuppet will handle
     # multiple extensions soon.
-    ext_path=None
+    ext_path = None
     if ext_paths:
         ext_path = ext_paths[0]
 
@@ -805,60 +823,98 @@ def main(argv=None):
         argv = sys.argv[1:]
 
     # setup argparser
-    parser = argparse.ArgumentParser(usage='%s --libfuzzer or --aflfuzz [OPTIONS] --cmd <COMMAND AND ARGUMENTS>' % program_name)
+    parser = argparse.ArgumentParser(usage='%s --libfuzzer or --aflfuzz [OPTIONS] --cmd <COMMAND AND ARGUMENTS>'
+                                     % program_name)
 
     mainGroup = parser.add_argument_group(title="Main Options", description=None)
     aflGroup = parser.add_argument_group(title="AFL Options", description="Use these arguments in AFL mode")
-    libfGroup = parser.add_argument_group(title="Libfuzzer Options", description="Use these arguments in Libfuzzer mode" )
-    fmGroup = parser.add_argument_group(title="FuzzManager Options", description="Use these to specify FuzzManager parameters" )
+    libfGroup = parser.add_argument_group(title="Libfuzzer Options",
+                                          description="Use these arguments in Libfuzzer mode")
+    fmGroup = parser.add_argument_group(title="FuzzManager Options",
+                                        description="Use these to specify FuzzManager parameters")
 
     mainGroup.add_argument("--libfuzzer", dest="libfuzzer", action='store_true', help="Enable LibFuzzer mode")
     mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
-    mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true', help="Use FuzzManager to submit crash results")
+    mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
+                           help="Use FuzzManager to submit crash results")
 
-    libfGroup.add_argument('--env', dest='env', nargs='+', type=str, help="List of environment variables in the form 'KEY=VALUE'")
+    libfGroup.add_argument('--env', dest='env', nargs='+', type=str,
+                           help="List of environment variables in the form 'KEY=VALUE'")
     libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
     libfGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
 
-    fmGroup.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname", help="Override FuzzManager tool name (for submitting crash results)")
-    fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file", metavar="FILE")
-    fmGroup.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables", metavar="FILE")
+    fmGroup.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname",
+                         help="Override FuzzManager tool name (for submitting crash results)")
+    fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
+                         metavar="FILE")
+    fmGroup.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables",
+                         metavar="FILE")
     fmGroup.add_argument("--serverhost", help="Server hostname for remote signature management.", metavar="HOST")
     fmGroup.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
-    fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)", metavar="PROTO")
-    fmGroup.add_argument("--serverauthtokenfile", dest="serverauthtokenfile", help="File containing the server authentication token", metavar="FILE")
+    fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)",
+                         metavar="PROTO")
+    fmGroup.add_argument("--serverauthtokenfile", dest="serverauthtokenfile",
+                         help="File containing the server authentication token", metavar="FILE")
     fmGroup.add_argument("--clientid", dest="clientid", help="Client ID to use when submitting issues", metavar="ID")
-    fmGroup.add_argument("--platform", dest="platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)")
+    fmGroup.add_argument("--platform", dest="platform", help="Platform this crash appeared on",
+                         metavar="(x86|x86-64|arm)")
     fmGroup.add_argument("--product", dest="product", help="Product this crash appeared on", metavar="PRODUCT")
-    fmGroup.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on", metavar="VERSION")
-    fmGroup.add_argument("--os", dest="os", help="OS this crash appeared on", metavar="(windows|linux|macosx|b2g|android)")
+    fmGroup.add_argument("--productversion", dest="product_version", help="Product version this crash appeared on",
+                         metavar="VERSION")
+    fmGroup.add_argument("--os", dest="os", help="OS this crash appeared on",
+                         metavar="(windows|linux|macosx|b2g|android)")
     fmGroup.add_argument("--tool", dest="tool", help="Name of the tool that found this issue", metavar="NAME")
-    fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str, help="List of metadata variables in the form 'KEY=VALUE'")
+    fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str,
+                         help="List of metadata variables in the form 'KEY=VALUE'")
 
-    aflGroup.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true', help="Use S3 to synchronize queues")
-    aflGroup.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true', help="Cleanup S3 queue entries older than specified refresh interval")
-    aflGroup.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true', help="Display S3 queue status")
-    aflGroup.add_argument("--s3-build-download", dest="s3_build_download", help="Use S3 to download the build for the specified project", metavar="DIR")
-    aflGroup.add_argument("--s3-build-upload", dest="s3_build_upload", help="Use S3 to upload a new build for the specified project", metavar="FILE")
-    aflGroup.add_argument("--s3-corpus-download", dest="s3_corpus_download", help="Use S3 to download the test corpus for the specified project", metavar="DIR")
-    aflGroup.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size", help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
-    aflGroup.add_argument("--s3-corpus-upload", dest="s3_corpus_upload", help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
-    aflGroup.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true', help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
-    aflGroup.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh", help="Download queues and corpus from S3, combine and minimize, then re-upload.", metavar="DIR")
-    aflGroup.add_argument("--s3-corpus-status", dest="s3_corpus_status", action='store_true', help="Display S3 corpus status")
-    aflGroup.add_argument("--test-file", dest="test_file", help="Optional path to copy the test file to before reproducing", metavar="FILE")
-    aflGroup.add_argument("--afl-timeout", dest="afl_timeout", type=int, default=1000, help="Timeout per test to pass to AFL for corpus refreshing", metavar="MSECS")
-    aflGroup.add_argument("--firefox", dest="firefox", action='store_true', help="Test Program is Firefox (requires FFPuppet installed)")
-    aflGroup.add_argument("--firefox-prefs", dest="firefox_prefs", help="Path to prefs.js file for Firefox", metavar="FILE")
-    aflGroup.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions", help="Path extension file for Firefox", metavar="FILE")
-    aflGroup.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox", metavar="FILE")
-    aflGroup.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE", help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
-    aflGroup.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400, help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
-    aflGroup.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage", metavar="DIR")
-    aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use", metavar="DIR")
-    aflGroup.add_argument("--afl-stats", dest="aflstats", help="Collect aggregated statistics while scanning output directories", metavar="FILE")
+    aflGroup.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
+                          help="Use S3 to synchronize queues")
+    aflGroup.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true',
+                          help="Cleanup S3 queue entries older than specified refresh interval")
+    aflGroup.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true',
+                          help="Display S3 queue status")
+    aflGroup.add_argument("--s3-build-download", dest="s3_build_download",
+                          help="Use S3 to download the build for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-build-upload", dest="s3_build_upload",
+                          help="Use S3 to upload a new build for the specified project", metavar="FILE")
+    aflGroup.add_argument("--s3-corpus-download", dest="s3_corpus_download",
+                          help="Use S3 to download the test corpus for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-download-size", dest="s3_corpus_download_size",
+                          help="When downloading the corpus, select only SIZE files randomly", metavar="SIZE")
+    aflGroup.add_argument("--s3-corpus-upload", dest="s3_corpus_upload",
+                          help="Use S3 to upload a test corpus for the specified project", metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-replace", dest="s3_corpus_replace", action='store_true',
+                          help="In conjunction with --s3-corpus-upload, deletes all other remote test files")
+    aflGroup.add_argument("--s3-corpus-refresh", dest="s3_corpus_refresh",
+                          help="Download queues and corpus from S3, combine and minimize, then re-upload.",
+                          metavar="DIR")
+    aflGroup.add_argument("--s3-corpus-status", dest="s3_corpus_status", action='store_true',
+                          help="Display S3 corpus status")
+    aflGroup.add_argument("--test-file", dest="test_file",
+                          help="Optional path to copy the test file to before reproducing", metavar="FILE")
+    aflGroup.add_argument("--afl-timeout", dest="afl_timeout", type=int, default=1000,
+                          help="Timeout per test to pass to AFL for corpus refreshing", metavar="MSECS")
+    aflGroup.add_argument("--firefox", dest="firefox", action='store_true',
+                          help="Test Program is Firefox (requires FFPuppet installed)")
+    aflGroup.add_argument("--firefox-prefs", dest="firefox_prefs",
+                          help="Path to prefs.js file for Firefox", metavar="FILE")
+    aflGroup.add_argument("--firefox-extensions", nargs='+', type=str, dest="firefox_extensions",
+                          help="Path extension file for Firefox", metavar="FILE")
+    aflGroup.add_argument("--firefox-testpath", dest="firefox_testpath", help="Path to file to open with Firefox",
+                          metavar="FILE")
+    aflGroup.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE",
+                          help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
+    aflGroup.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400,
+                          help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
+    aflGroup.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage",
+                          metavar="DIR")
+    aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use",
+                          metavar="DIR")
+    aflGroup.add_argument("--afl-stats", dest="aflstats",
+                          help="Collect aggregated statistics while scanning output directories", metavar="FILE")
     aflGroup.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
-    aflGroup.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket", metavar="NAME")
+    aflGroup.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket",
+                          metavar="NAME")
     aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
 
     if not argv:
@@ -868,12 +924,12 @@ def main(argv=None):
     opts = parser.parse_args(argv)
 
     if not opts.libfuzzer and not opts.aflfuzz:
-	opts.aflfuzz = True
+        opts.aflfuzz = True
 
     if opts.cmd and opts.aflfuzz:
-	if not opts.firefox:
-		print("Error: Use --cmd either with libfuzzer or with afl in firefox mode", file=sys.stderr)
-		return 2
+        if not opts.firefox:
+            print("Error: Use --cmd either with libfuzzer or with afl in firefox mode", file=sys.stderr)
+            return 2
 
     if opts.libfuzzer:
         if not opts.rargs:
@@ -914,7 +970,7 @@ def main(argv=None):
             configuration.addMetadata(metadata)
 
         # Set LD_LIBRARY_PATH for convenience
-            if not 'LD_LIBRARY_PATH' in env:
+            if 'LD_LIBRARY_PATH' not in env:
                 env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
         collector = Collector(opts.sigdir, opts.fuzzmanager_toolname)
@@ -924,12 +980,12 @@ def main(argv=None):
 
         while True:
             process = subprocess.Popen(
-                 opts.rargs,
-                 # stdout=None,
-                 stderr=subprocess.PIPE,
-                 env=env,
-                 universal_newlines=True
-                )
+                opts.rargs,
+                # stdout=None,
+                stderr=subprocess.PIPE,
+                env=env,
+                universal_newlines=True
+            )
 
             monitor = LibFuzzerMonitor(process.stderr)
             monitor.start()
@@ -972,7 +1028,8 @@ def main(argv=None):
                 return 2
 
             if not opts.firefox_prefs or not opts.firefox_testpath:
-                print("Error: --firefox and --firefox-start-afl require --firefox-prefs and --firefox-testpath to be specified", file=sys.stderr)
+                print("Error: --firefox and --firefox-start-afl require --firefox-prefs"
+                      "and --firefox-testpath to be specified", file=sys.stderr)
                 return 2
 
         if opts.firefox_start_afl:
@@ -980,9 +1037,10 @@ def main(argv=None):
                 print("Error: Must specify --afl-binary-dir for starting AFL with firefox", file=sys.stderr)
                 return 2
 
-            (ffp, cmd, env) = setup_firefox(opts.firefox_start_afl, opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+            (ffp, cmd, env) = setup_firefox(opts.firefox_start_afl, opts.firefox_prefs, opts.firefox_extensions,
+                                            opts.firefox_testpath)
 
-            afl_cmd = [ os.path.join(opts.aflbindir, "afl-fuzz") ]
+            afl_cmd = [os.path.join(opts.aflbindir, "afl-fuzz")]
 
             opts.rargs.remove("--")
 
@@ -991,7 +1049,7 @@ def main(argv=None):
 
             try:
                 subprocess.call(afl_cmd, env=env)
-            except:
+            except Exception:
                 traceback.print_exc()
 
             ffp.clean_up()
@@ -1010,7 +1068,8 @@ def main(argv=None):
                         afl_out_dirs.append(os.path.join(opts.afloutdir, sync_dir))
 
                 if not afl_out_dirs:
-                    print("Error: Directory %s does not appear to be a valid AFL output/sync directory" % opts.afloutdir, file=sys.stderr)
+                    print("Error: Directory %s does not appear to be a valid AFL output/sync directory"
+                          % opts.afloutdir, file=sys.stderr)
                     return 2
             else:
                 afl_out_dirs.append(opts.afloutdir)
@@ -1021,13 +1080,8 @@ def main(argv=None):
                 print("Error: Must specify AFL output directory using --afl-output-dir", file=sys.stderr)
                 return 2
 
-        if (opts.s3_queue_upload
-            or opts.s3_corpus_refresh
-            or opts.s3_build_download
-            or opts.s3_build_upload
-            or opts.s3_corpus_download
-            or opts.s3_corpus_upload
-            or opts.s3_queue_status):
+        if (opts.s3_queue_upload or opts.s3_corpus_refresh or opts.s3_build_download or opts.s3_build_upload or
+                opts.s3_corpus_download or opts.s3_corpus_upload or opts.s3_queue_status):
             if not opts.s3_bucket or not opts.project:
                 print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
                 return 2
@@ -1090,7 +1144,7 @@ def main(argv=None):
             print("Cleaning old AFL queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
             clean_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project, opts.s3_refresh_interval)
 
-            print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir)) 
+            print("Downloading AFL queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
             download_queue_dirs(opts.s3_corpus_refresh, opts.s3_bucket, opts.project)
 
             cmdline_file = os.path.join(opts.s3_corpus_refresh, "cmdline")
@@ -1109,9 +1163,11 @@ def main(argv=None):
 
             # Try locating our binary in the build we just unpacked
             binary_search_result = [os.path.join(dirpath, filename)
-                for dirpath, dirnames, filenames in os.walk(os.path.join(opts.s3_corpus_refresh, "build")) 
-                    for filename in filenames 
-                        if (filename == binary_name and (stat.S_IXUSR & os.stat(os.path.join(dirpath, filename))[stat.ST_MODE]))]
+                                    for dirpath, dirnames, filenames in
+                                    os.walk(os.path.join(opts.s3_corpus_refresh, "build"))
+                                    for filename in filenames
+                                    if (filename == binary_name and
+                                    (stat.S_IXUSR & os.stat(os.path.join(dirpath, filename))[stat.ST_MODE]))]
 
             if not binary_search_result:
                 print("Error: Failed to locate binary %s in unpacked build." % binary_name, file=sys.stderr)
@@ -1140,10 +1196,12 @@ def main(argv=None):
                 return 2
 
             if opts.firefox:
-                (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions, opts.firefox_testpath)
+                (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], opts.firefox_prefs, opts.firefox_extensions,
+                                                        opts.firefox_testpath)
                 cmdline = ffCmd
 
-            afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', str(opts.afl_timeout), '-m', 'none']
+            afl_cmdline = [afl_cmin, '-e', '-i', queues_dir, '-o', updated_tests_dir, '-t', str(opts.afl_timeout),
+                           '-m', 'none']
 
             if opts.test_file:
                 afl_cmdline.extend(['-f', opts.test_file])
@@ -1170,8 +1228,10 @@ def main(argv=None):
             # Prune the queues directory once we successfully uploaded the new
             # test corpus, but leave everything that's part of our new corpus
             # so we don't have to download those files again.
-            test_files = [file for file in os.listdir(updated_tests_dir) if os.path.isfile(os.path.join(updated_tests_dir, file))]
-            obsolete_queue_files = [file for file in os.listdir(queues_dir) if os.path.isfile(os.path.join(queues_dir, file)) and file not in test_files]
+            test_files = [file for file in os.listdir(updated_tests_dir)
+                          if os.path.isfile(os.path.join(updated_tests_dir, file))]
+            obsolete_queue_files = [file for file in os.listdir(queues_dir)
+                                    if os.path.isfile(os.path.join(queues_dir, file)) and file not in test_files]
 
             for file in obsolete_queue_files:
                 os.remove(os.path.join(queues_dir, file))
@@ -1181,7 +1241,8 @@ def main(argv=None):
             while True:
                 if opts.fuzzmanager:
                     for afl_out_dir in afl_out_dirs:
-                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname, opts.test_file)
+                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname,
+                                     opts.test_file)
 
                 # Only upload queue files every 20 minutes
                 if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
@@ -1193,6 +1254,7 @@ def main(argv=None):
                     write_aggregated_stats(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
 
                 time.sleep(10)
+
 
 if __name__ == "__main__":
     sys.exit(main())
