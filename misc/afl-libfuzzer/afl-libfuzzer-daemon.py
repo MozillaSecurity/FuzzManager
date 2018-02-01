@@ -848,13 +848,12 @@ def main(argv=None):
     libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
     libfGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
 
-    fmGroup.add_argument("--fuzzmanager-toolname", dest="fuzzmanager_toolname",
-                         help="Override FuzzManager tool name (for submitting crash results)")
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
     fmGroup.add_argument("--env-file", dest="env_file", help="Path to a file with additional environment variables",
                          metavar="FILE")
-    fmGroup.add_argument("--serverhost", help="Server hostname for remote signature management.", metavar="HOST")
+    fmGroup.add_argument("--serverhost", dest="serverhost", help="Server hostname for remote signature management.",
+                         metavar="HOST")
     fmGroup.add_argument("--serverport", dest="serverport", type=int, help="Server port to use", metavar="PORT")
     fmGroup.add_argument("--serverproto", dest="serverproto", help="Server protocol to use (default is https)",
                          metavar="PROTO")
@@ -978,7 +977,14 @@ def main(argv=None):
             if 'LD_LIBRARY_PATH' not in env:
                 env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
-        collector = Collector(opts.sigdir, opts.fuzzmanager_toolname)
+        serverauthtoken = None
+        if opts.serverauthtokenfile:
+            with open(opts.serverauthtokenfile) as f:
+                serverauthtoken = f.read().rstrip()
+
+        collector = Collector(sigCacheDir=opts.sigdir, serverHost=opts.serverhost, serverPort=opts.serverport,
+                              serverProtocol=opts.serverproto, serverAuthToken=serverauthtoken,
+                              clientId=opts.clientid, tool=opts.tool)
 
         signature_repeat_count = 0
         last_signature = None
@@ -1246,8 +1252,7 @@ def main(argv=None):
             while True:
                 if opts.fuzzmanager:
                     for afl_out_dir in afl_out_dirs:
-                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.fuzzmanager_toolname,
-                                     opts.test_file)
+                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.tool, opts.test_file)
 
                 # Only upload queue files every 20 minutes
                 if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
