@@ -47,15 +47,15 @@ except ImportError:
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, fd):
-        assert callable(fd.readline)
-
+    def __init__(self, process, killOnOOM=True):
         threading.Thread.__init__(self)
 
-        self.fd = fd
+        self.process = process
+        self.fd = process.stderr
         self.trace = []
         self.inTrace = False
         self.testcase = None
+        self.killOnOOM = killOnOOM
 
     def run(self):
         while True:
@@ -74,6 +74,11 @@ class LibFuzzerMonitor(threading.Thread):
 
             if line.find("Test unit written to ") >= 0:
                 self.testcase = line.split()[-1]
+
+            # LibFuzzer sometimes hangs on out-of-memory. Kill it
+            # right away if we detect this situation.
+            if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
+                self.process.kill()
 
             # Pass-through output
             sys.stderr.write(line)
@@ -987,7 +992,7 @@ def main(argv=None):
                 universal_newlines=True
             )
 
-            monitor = LibFuzzerMonitor(process.stderr)
+            monitor = LibFuzzerMonitor(process)
             monitor.start()
             monitor.join()
 
