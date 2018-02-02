@@ -545,8 +545,10 @@ def clean_queue_dirs(work_dir, bucket_name, project_name, min_age=86400):
     remote_keys_for_deletion = []
 
     for remote_key in remote_keys:
-        # Ignore any folders
+        # For folders, check if they are empty and if so, remove them
         if remote_key.name.endswith("/"):
+            if remote_key.size == 0:
+                remote_keys_for_deletion.append(remote_key.name)
             continue
 
         # Perform a HEAD request to get metadata included
