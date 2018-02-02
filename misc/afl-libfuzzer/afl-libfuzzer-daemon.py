@@ -288,8 +288,8 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
     return
 
 
-def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, test_path=None,
-                 firefox=None, firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
+def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
+                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
 
@@ -356,8 +356,6 @@ def scan_crashes(base_dir, cmdline_path=None, env_path=None, tool_name=None, tes
             print("Error: Creating program configuration from binary failed."
                   "Check your binary configuration file.", file=sys.stderr)
             return 2
-
-        collector = Collector(tool=tool_name)
 
         if firefox:
             (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], firefox_prefs, firefox_extensions, firefox_testpath)
@@ -832,11 +830,13 @@ def main(argv=None):
                                      % program_name)
 
     mainGroup = parser.add_argument_group(title="Main Options", description=None)
-    aflGroup = parser.add_argument_group(title="AFL Options", description="Use these arguments in AFL mode")
+    aflGroup = parser.add_argument_group(title="AFL Options", description="Use these arguments in AFL mode.")
     libfGroup = parser.add_argument_group(title="Libfuzzer Options",
-                                          description="Use these arguments in Libfuzzer mode")
+                                          description="Use these arguments in Libfuzzer mode.")
     fmGroup = parser.add_argument_group(title="FuzzManager Options",
-                                        description="Use these to specify FuzzManager parameters")
+                                        description="Use these to specify or override FuzzManager parameters."
+                                        " Most of these parameters are typically specified in the global FuzzManager"
+                                        " configuration file.")
 
     mainGroup.add_argument("--libfuzzer", dest="libfuzzer", action='store_true', help="Enable LibFuzzer mode")
     mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
@@ -846,7 +846,8 @@ def main(argv=None):
     libfGroup.add_argument('--env', dest='env', nargs='+', type=str,
                            help="List of environment variables in the form 'KEY=VALUE'")
     libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
-    libfGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
+    libfGroup.add_argument("--libfuzzer-restarts", dest="libfuzzer_restarts", type=int,
+                           help="Maximum number of restarts to do with LibFuzzer", metavar="COUNT")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -870,6 +871,7 @@ def main(argv=None):
     fmGroup.add_argument("--tool", dest="tool", help="Name of the tool that found this issue", metavar="NAME")
     fmGroup.add_argument('--metadata', dest='metadata', nargs='+', type=str,
                          help="List of metadata variables in the form 'KEY=VALUE'")
+    fmGroup.add_argument("--sigdir", dest="sigdir", help="Signature cache directory", metavar="DIR")
 
     aflGroup.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                           help="Use S3 to synchronize queues")
@@ -927,6 +929,16 @@ def main(argv=None):
 
     opts = parser.parse_args(argv)
 
+    if opts.fuzzmanager:
+        serverauthtoken = None
+        if opts.serverauthtokenfile:
+            with open(opts.serverauthtokenfile) as f:
+                serverauthtoken = f.read().rstrip()
+
+        collector = Collector(sigCacheDir=opts.sigdir, serverHost=opts.serverhost, serverPort=opts.serverport,
+                              serverProtocol=opts.serverproto, serverAuthToken=serverauthtoken,
+                              clientId=opts.clientid, tool=opts.tool)
+
     if not opts.libfuzzer and not opts.aflfuzz:
         opts.aflfuzz = True
 
@@ -977,19 +989,16 @@ def main(argv=None):
             if 'LD_LIBRARY_PATH' not in env:
                 env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
 
-        serverauthtoken = None
-        if opts.serverauthtokenfile:
-            with open(opts.serverauthtokenfile) as f:
-                serverauthtoken = f.read().rstrip()
-
-        collector = Collector(sigCacheDir=opts.sigdir, serverHost=opts.serverhost, serverPort=opts.serverport,
-                              serverProtocol=opts.serverproto, serverAuthToken=serverauthtoken,
-                              clientId=opts.clientid, tool=opts.tool)
-
         signature_repeat_count = 0
         last_signature = None
+        restarts = opts.libfuzzer_restarts
 
         while True:
+            if restarts is not None:
+                restarts -= 1
+                if restarts < 0:
+                    break
+
             process = subprocess.Popen(
                 opts.rargs,
                 # stdout=None,
@@ -1252,7 +1261,7 @@ def main(argv=None):
             while True:
                 if opts.fuzzmanager:
                     for afl_out_dir in afl_out_dirs:
-                        scan_crashes(afl_out_dir, opts.custom_cmdline_file, opts.env_file, opts.tool, opts.test_file)
+                        scan_crashes(afl_out_dir, collector, opts.custom_cmdline_file, opts.env_file, opts.test_file)
 
                 # Only upload queue files every 20 minutes
                 if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
