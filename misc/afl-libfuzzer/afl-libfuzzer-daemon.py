@@ -530,7 +530,7 @@ def main(argv=None):
     s3m = None
 
     if (opts.s3_queue_upload or opts.s3_corpus_refresh or opts.s3_build_download or opts.s3_build_upload or
-            opts.s3_corpus_download or opts.s3_corpus_upload or opts.s3_queue_status):
+            opts.s3_corpus_download or opts.s3_corpus_upload or opts.s3_queue_status or opts.s3_corpus_status):
         if not opts.s3_bucket or not opts.project:
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
