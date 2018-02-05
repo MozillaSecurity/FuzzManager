@@ -423,7 +423,7 @@ def main(argv=None):
     s3Group.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                          help="Use S3 to synchronize queues")
     s3Group.add_argument("--s3-queue-cleanup", dest="s3_queue_cleanup", action='store_true',
-                         help="Cleanup S3 queue entries older than specified refresh interval")
+                         help="Cleanup S3 closed queues.")
     s3Group.add_argument("--s3-queue-status", dest="s3_queue_status", action='store_true',
                          help="Display S3 queue status")
     s3Group.add_argument("--s3-build-download", dest="s3_build_download",
@@ -491,8 +491,6 @@ def main(argv=None):
                           metavar="FILE")
     aflGroup.add_argument("--firefox-start-afl", dest="firefox_start_afl", metavar="FILE",
                           help="Start AFL with the given Firefox binary, remaining arguments being passed to AFL")
-    aflGroup.add_argument("--s3-refresh-interval", dest="s3_refresh_interval", type=int, default=86400,
-                          help="How often the s3 corpus is refreshed (affects queue cleaning)", metavar="SECS")
     aflGroup.add_argument("--afl-output-dir", dest="afloutdir", help="Path to the AFL output directory to manage",
                           metavar="DIR")
     aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use",
@@ -560,7 +558,7 @@ def main(argv=None):
         return 0
 
     if opts.s3_queue_cleanup:
-        s3m.clean_queue_dirs(opts.s3_refresh_interval)
+        s3m.clean_queue_dirs()
         return 0
 
     if opts.s3_build_download:
@@ -593,7 +591,7 @@ def main(argv=None):
         queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
 
         print("Cleaning old queues from s3://%s/%s/queues/" % (opts.s3_bucket, opts.project))
-        s3m.clean_queue_dirs(opts.s3_refresh_interval)
+        s3m.clean_queue_dirs()
 
         print("Downloading queues from s3://%s/%s/queues/ to %s" % (opts.s3_bucket, opts.project, queues_dir))
         s3m.download_queue_dirs(opts.s3_corpus_refresh)

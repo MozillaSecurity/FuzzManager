@@ -71,30 +71,41 @@ class S3Manager():
         upload_files = [x for x in os.listdir(corpus_dir) if x not in original_corpus]
 
         cmdline_file = os.path.join(base_dir, "cmdline")
-        machine_id = self.__get_machine_id(base_dir)
 
-        return self.__upload_queue_files(corpus_dir, upload_files, machine_id, cmdline_file)
+        return self.__upload_queue_files(corpus_dir, upload_files, base_dir, cmdline_file)
 
     def download_libfuzzer_queues(self, corpus_dir):
         '''
-        Synchronize files from libFuzzer queues directly back into the local corpus directory.
+        Synchronize files from open libFuzzer queues directly back into the local corpus directory.
 
         @type corpus_dir: String
         @param corpus_dir: libFuzzer corpus directory
         '''
         remote_keys = list(self.bucket.list(self.remote_path_queues))
+        remote_queues_closed_names = [x.name.rsplit("/", 1)[0] for x in remote_keys if x.name.endswith("/closed")]
 
         for remote_key in remote_keys:
             # Ignore any folders
-            if remote_key.name.endswith("/") or remote_key.name.endswith("cmdline"):
+            if remote_key.name.endswith("/"):
+                continue
+
+            # Ignore the cmdline and closed files
+            if remote_key.name.endswith("/cmdline") or remote_key.name.endswith("/closed"):
                 continue
 
             (queue_name, filename) = remote_key.name.rsplit("/", 1)
-            dest_file = os.path.join(corpus_dir, os.path.basename(remote_key.name))
 
-            if not os.path.exists(dest_file):
-                print("Syncing from queue %s: %s" % (queue_name, filename))
-                remote_key.get_contents_to_filename(dest_file)
+            if queue_name in remote_queues_closed_names:
+                # If the file is in a queue marked as closed, ignore it
+                continue
+
+            dest_file = os.path.join(corpus_dir, os.path.basename(remote_key.name))
+            if os.path.exists(dest_file):
+                # If the file already exists locally, ignore it
+                continue
+
+            print("Syncing from queue %s: %s" % (queue_name, filename))
+            remote_key.get_contents_to_filename(dest_file)
 
     def upload_afl_queue_dir(self, base_dir, new_cov_only=True):
         '''
@@ -129,14 +140,15 @@ class S3Manager():
             queue_files.append(queue_file)
 
         cmdline_file = os.path.join(base_dir, "cmdline")
-        machine_id = self.__get_machine_id(base_dir)
-        return self.__upload_queue_files(queue_dir, queue_files, machine_id, cmdline_file)
+        return self.__upload_queue_files(queue_dir, queue_files, base_dir, cmdline_file)
 
     def download_queue_dirs(self, work_dir):
         '''
         Downloads all queue files into the queues sub directory of the specified
         local work directory. The files are renamed to match their SHA1 hashes
         to avoid file collisions.
+
+        This method marks all remote queues that have been downloaded as closed.
 
         @type work_dir: String
         @param work_dir: Local work directory
@@ -148,23 +160,40 @@ class S3Manager():
 
         remote_keys = list(self.bucket.list(self.remote_path_queues))
 
+        remote_queue_names = set()
+        remote_queues_already_closed = set()
+
+        # Close all queues that aren't closed already.
+        # This will stop the clients from uploading new data into these queues.
+        #
+        # Unfortunately we have to iterate over all files in the queue path to figure out which queues exist.
+        # Then we have to determine which of them might already been closed (this shouldn't happen normally),
+        # but we should check this anyway and not consider it an error.
         for remote_key in remote_keys:
-            # Ignore any folders
-            if remote_key.name.endswith("/"):
+            (queue_name, filename) = remote_key.name.rsplit("/", 1)
+            remote_queue_names.add(queue_name)
+            if filename == "closed":
+                remote_queues_already_closed.add(queue_name)
+
+        for remote_queue_name in remote_queue_names:
+            if remote_queue_name not in remote_queues_already_closed:
+                closed_key = self.bucket.new_key(remote_queue_name + "/closed")
+                closed_key.set_contents_from_string('')
+
+        for remote_key in remote_keys:
+            # Ignore any folders and the closed file
+            if remote_key.name.endswith("/") or remote_key.name.endswith("/closed"):
                 continue
 
-            # Perform a HEAD request to get metadata included
-            remote_key = self.bucket.get_key(remote_key.name)
+            (queue_name, filename) = remote_key.name.rsplit("/", 1)
 
-            if remote_key.get_metadata('downloaded'):
-                # Don't download the same file twice
+            # This queue was closed before, assume we downloaded it before to save download requests.
+            if queue_name in remote_queues_already_closed:
                 continue
 
             # If we see a cmdline file, fetch it into the main work directory
             if os.path.basename(remote_key.name) == 'cmdline':
                 remote_key.get_contents_to_filename(os.path.join(work_dir, 'cmdline'))
-                remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name,
-                                             {'downloaded': int(time.time())}, preserve_acl=True)
                 continue
 
             tmp_file = os.path.join(download_dir, "tmp")
@@ -176,37 +205,26 @@ class S3Manager():
 
             os.rename(tmp_file, os.path.join(download_dir, hash_name))
 
-            # Ugly, but we have to do a remote copy of the file to change the metadata
-            remote_key = remote_key.copy(remote_key.bucket.name, remote_key.name,
-                                         {'downloaded': int(time.time())}, preserve_acl=True)
-
-    def clean_queue_dirs(self, min_age=86400):
+    def clean_queue_dirs(self):
         '''
-        Delete all remote queues that have a downloaded attribute that is older
-        than the specified time interval, defaulting to 24 hours.
-
-        @type min_age: int
-        @param min_age: Minimum age of the key before it is deleted
+        Delete all closed remote queues.
         '''
         remote_keys = list(self.bucket.list(self.remote_path_queues))
         remote_keys_for_deletion = []
 
+        remote_queues_closed_names = [x.name.rsplit("/", 1)[0] for x in remote_keys if x.name.endswith("/closed")]
+
         for remote_key in remote_keys:
             # For folders, check if they are empty and if so, remove them
             if remote_key.name.endswith("/"):
+                #TODO: This might not work in current boto, check later
                 if remote_key.size == 0:
                     remote_keys_for_deletion.append(remote_key.name)
                 continue
 
-            # Perform a HEAD request to get metadata included
-            remote_key = self.bucket.get_key(remote_key.name)
-
-            downloaded = remote_key.get_metadata('downloaded')
-
-            if not downloaded or int(downloaded) > (int(time.time()) - min_age):
-                continue
-
-            remote_keys_for_deletion.append(remote_key.name)
+            (queue_name, filename) = remote_key.name.rsplit("/", 1)
+            if queue_name in remote_queues_closed_names:
+                remote_keys_for_deletion.append(remote_key.name)
 
         for remote_key_for_deletion in remote_keys_for_deletion:
             print("Deleting old key %s" % remote_key_for_deletion)
@@ -221,6 +239,7 @@ class S3Manager():
         @return: Dictionary containing queue size per queue
         '''
         remote_keys = list(self.bucket.list(self.remote_path_queues))
+        remote_queues_closed_names = [x.name.rsplit("/", 1)[0] for x in remote_keys if x.name.endswith("/closed")]
 
         status_data = {}
 
@@ -229,7 +248,14 @@ class S3Manager():
             if remote_key.name.endswith("/"):
                 continue
 
+            # Ignore the cmdline and closed files
+            if remote_key.name.endswith("/cmdline") or remote_key.name.endswith("/closed"):
+                continue
+
             (queue_name, filename) = remote_key.name.rsplit("/", 1)
+
+            if queue_name in remote_queues_closed_names:
+                queue_name += "*"
 
             if queue_name not in status_data:
                 status_data[queue_name] = 0
@@ -382,7 +408,7 @@ class S3Manager():
         if corpus_delete:
             self.bucket.delete_keys(delete_list, quiet=True)
 
-    def __get_machine_id(self, base_dir):
+    def __get_machine_id(self, base_dir, refresh=False):
         '''
         Get (and if necessary generate) the machine id which is based on
         the current timestamp and the hostname of the machine. The
@@ -392,6 +418,9 @@ class S3Manager():
         @type base_dir: String
         @param base_dir: Base directory
 
+        @type refresh: bool
+        @param refresh: Force generating a new machine ID
+
         @rtype: String
         @return: The generated/cached machine ID
         '''
@@ -400,7 +429,7 @@ class S3Manager():
         # We initially create a unique ID based on the hostname and the
         # current timestamp, then we store this ID in a file inside the
         # fuzzing working directory so we can retrieve it later.
-        if not os.path.exists(id_file):
+        if refresh or not os.path.exists(id_file):
             h = hashlib.new('sha1')
             h.update(platform.node())
             h.update(str(time.time()))
@@ -412,9 +441,18 @@ class S3Manager():
             with open(id_file, 'r') as id_fd:
                 return id_fd.read()
 
-    def __upload_queue_files(self, queue_basedir, queue_files, machine_id, cmdline_file):
+    def __upload_queue_files(self, queue_basedir, queue_files, base_dir, cmdline_file):
+        machine_id = self.__get_machine_id(base_dir)
         remote_path = "%s%s/" % (self.remote_path_queues, machine_id)
         remote_files = [key.name.replace(remote_path, "", 1) for key in list(self.bucket.list(remote_path))]
+
+        if "closed" in remote_files:
+            # The queue we are assigned has been closed remotely.
+            # Switch to a new queue instead.
+            print("Remote queue %s closed, switching to new queue..." % machine_id)
+            machine_id = self.__get_machine_id(base_dir, refresh=True)
+            remote_path = "%s%s/" % (self.remote_path_queues, machine_id)
+            remote_files = [key.name.replace(remote_path, "", 1) for key in list(self.bucket.list(remote_path))]
 
         upload_list = []
 
