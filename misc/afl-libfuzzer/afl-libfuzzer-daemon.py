@@ -69,7 +69,7 @@ class LibFuzzerMonitor(threading.Thread):
                 self.trace.append(line.rstrip())
                 self.inTrace = True
 
-            if not self.inited and line.find(" INITED cov"):
+            if not self.inited and line.find(" INITED cov") >= 0:
                 self.inited = True
 
             if line.find("Test unit written to ") >= 0:
