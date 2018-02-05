@@ -822,6 +822,10 @@ def main(argv=None):
             trace = monitor.getASanTrace()
             testcase = monitor.getTestcase()
 
+            # Don't bother sending stuff to the server with neither trace nor testcase
+            if not trace and not testcase:
+                continue
+
             crashInfo = CrashInfo.fromRawCrashData([], [], configuration, auxCrashData=trace)
 
             (sigfile, metadata) = collector.search(crashInfo)
