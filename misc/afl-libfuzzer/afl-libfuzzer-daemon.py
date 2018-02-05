@@ -52,6 +52,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.inTrace = False
         self.testcase = None
         self.killOnOOM = killOnOOM
+        self.inited = False
 
     def run(self):
         while True:
@@ -67,6 +68,9 @@ class LibFuzzerMonitor(threading.Thread):
             elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.trace.append(line.rstrip())
                 self.inTrace = True
+
+            if not self.inited and line.find(" INITED cov"):
+                self.inited = True
 
             if line.find("Test unit written to ") >= 0:
                 self.testcase = line.split()[-1]
@@ -808,6 +812,10 @@ def main(argv=None):
 
                     # Pull down queue files from other queues directly into the corpus
                     s3m.download_libfuzzer_queues(corpus_dir)
+
+            if not monitor.inited:
+                print("Process did not startup correctly, aborting...", file=sys.stderr)
+                return 2
 
             print("Process terminated, processing results...", file=sys.stderr)
 
