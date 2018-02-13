@@ -261,4 +261,8 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 #         'task': 'ec2spotmanager.cron.update_stats',
 #         'schedule': 60,
 #     },
+#     'Check EC2SpotManager pools': {
+#         'task': 'ec2spotmanager.cron.check_instance_pools',
+#         'schedule': 60,
+#     },
 # }

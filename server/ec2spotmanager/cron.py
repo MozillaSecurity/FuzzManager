@@ -91,3 +91,11 @@ def update_stats():
         if n > 0:
             for entry in entries[:n]:
                 entry.delete()
+
+
+@app.task
+def check_instance_pools():
+    from .models import InstancePool
+    from .tasks import check_instance_pool
+    for instance_pool in InstancePool.objects.all():
+        check_instance_pool.delay(instance_pool.id)
