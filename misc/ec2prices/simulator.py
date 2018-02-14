@@ -30,11 +30,8 @@ import json
 import os
 import sys
 
+from six.moves import configparser
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 now = datetime.datetime.now()
 
@@ -200,7 +197,7 @@ def main():
             with open(cacheFile, mode='r') as cacheFd:
                 priceData = json.load(cacheFd, object_pairs_hook=OrderedDict)
         else:
-            for hour in reversed(range(0, interval)):
+            for hour in range(interval - 1, -1, -1):
                 print("Obtaining hour %s" % (hour + 1))
                 stop = now - datetime.timedelta(hours=hour)
                 start = now - datetime.timedelta(hours=hour + 1)

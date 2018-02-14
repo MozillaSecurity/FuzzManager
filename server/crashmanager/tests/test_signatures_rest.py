@@ -92,7 +92,7 @@ class RestSignaturesTests(APITestCase, TestCase):
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/')
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'count', 'next', 'previous', 'results'})
         self.assertEqual(resp['count'], 2)
         self.assertEqual(resp['next'], None)
@@ -192,7 +192,7 @@ class RestSignatureTests(APITestCase, TestCase):
         self.client.force_authenticate(user=user)
         resp = self.client.get('/crashmanager/rest/buckets/%d/' % bucket.pk)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
                                             'signature', 'size'})
         self.assertEqual(resp['id'], bucket.pk)

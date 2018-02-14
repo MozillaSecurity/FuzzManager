@@ -28,7 +28,7 @@ testAuthToken = "1d7c831476c010645cf107c1b269366335a50f33"
 haveServer = True
 try:
     requests.get(testServerURL)
-except ConnectionError, e:
+except ConnectionError as e:
     haveServer = False
 
 

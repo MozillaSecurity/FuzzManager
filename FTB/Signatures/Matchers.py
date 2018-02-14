@@ -15,18 +15,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 # Ensure print() compatibility with Python 3
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import numbers
 import re
-import sys
+
+import six
+
 from FTB.Signatures import JSONHelper
-
-
-if sys.version_info.major == 3:
-    unicode_ = str
-else:
-    unicode_ = unicode
 
 
 class StringMatch():
@@ -34,14 +30,14 @@ class StringMatch():
         self.isPCRE = False
         self.compiledValue = None
 
-        if isinstance(obj, unicode_):
-            obj = obj.encode("utf-8")
-
         if isinstance(obj, bytes):
-            self.value = bytes(obj)
+            obj = obj.decode("utf-8")
+
+        if isinstance(obj, six.text_type):
+            self.value = obj
 
             # Support the short form using forward slashes to indicate a PCRE
-            if self.value.startswith(b"/") and self.value.endswith(b"/"):
+            if self.value.startswith("/") and self.value.endswith("/"):
                 self.isPCRE = True
                 self.value = self.value[1:-1]
                 try:
@@ -74,8 +70,8 @@ class StringMatch():
         return self.value
 
     def __repr__(self):
-        if (self.isPCRE):
-            return b'/%s/' % self.value
+        if self.isPCRE:
+            return '/%s/' % self.value
 
         return self.value
 
@@ -88,10 +84,10 @@ class NumberMatch():
     def __init__(self, obj):
         self.matchType = None
 
-        if isinstance(obj, unicode_):
-            obj = obj.encode("utf-8")
-
         if isinstance(obj, bytes):
+            obj = obj.decode("utf-8")
+
+        if isinstance(obj, six.text_type):
             if len(obj) > 0:
                 numberMatchComponents = obj.split(None, 1)
                 numIdx = 0
@@ -100,15 +96,15 @@ class NumberMatch():
                     numIdx = 1
                     matchType = numberMatchComponents[0]
 
-                    if matchType == b"==":
+                    if matchType == "==":
                         pass
-                    elif matchType == b"<":
+                    elif matchType == "<":
                         self.matchType = NumberMatchType.LT
-                    elif matchType == b"<=":
+                    elif matchType == "<=":
                         self.matchType = NumberMatchType.LE
-                    elif matchType == b">":
+                    elif matchType == ">":
                         self.matchType = NumberMatchType.GT
-                    elif matchType == b">=":
+                    elif matchType == ">=":
                         self.matchType = NumberMatchType.GE
                     else:
                         raise RuntimeError("Unknown match operator specified: %s" % matchType)

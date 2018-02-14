@@ -15,7 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
 import unittest
 
-from CovReporter import CovReporter
+from .CovReporter import CovReporter
 
 coverallsData = """
 { "git": { "branch":"master", "head": { "id":"1a0d9545b9805f50a70de703a3c04fc0d22e3839"} },

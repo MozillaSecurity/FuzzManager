@@ -1027,7 +1027,7 @@ class CrashSignatureOutputTest(unittest.TestCase):
         self.assertIsInstance(crashInfo, NoCrashInfo)
 
         # Ensure we match on stdout/err if nothing is specified
-        self.assert_(outputSignature1.matches(crashInfo))
+        assert outputSignature1.matches(crashInfo)
 
         # Don't match stdout if stderr is specified
         self.assertFalse(outputSignature1Neg.matches(crashInfo))
@@ -1038,7 +1038,7 @@ class CrashSignatureOutputTest(unittest.TestCase):
         # Add something the PCRE should match, then retry
         stderr.append("fest")
         crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, config, auxCrashData=gdbOutput)
-        self.assert_(outputSignature2.matches(crashInfo))
+        assert outputSignature2.matches(crashInfo)
 
 
 class CrashSignatureAddressTest(unittest.TestCase):
@@ -1055,7 +1055,7 @@ class CrashSignatureAddressTest(unittest.TestCase):
 
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
 
-        self.assert_(addressSig1.matches(crashInfo1))
+        assert addressSig1.matches(crashInfo1)
         self.assertFalse(addressSig1Neg.matches(crashInfo1))
 
         # For crashInfo3, we don't have a crash address. Ensure we don't match
@@ -1091,13 +1091,13 @@ class CrashSignatureRegisterTest(unittest.TestCase):
         self.assertIsInstance(crashInfo2, GDBCrashInfo)
         self.assertIsInstance(crashInfo3, GDBCrashInfo)
 
-        self.assert_(instructionSig1.matches(crashInfo2))
+        assert instructionSig1.matches(crashInfo2)
         self.assertFalse(instructionSig1Neg.matches(crashInfo2))
 
-        self.assert_(instructionSig2.matches(crashInfo2))
+        assert instructionSig2.matches(crashInfo2)
         self.assertFalse(instructionSig2Neg.matches(crashInfo2))
 
-        self.assert_(instructionSig3.matches(crashInfo2))
+        assert instructionSig3.matches(crashInfo2)
         self.assertFalse(instructionSig3Neg.matches(crashInfo2))
 
         # Crash info3 doesn't have register information, ensure we don't match any
@@ -1128,10 +1128,10 @@ class CrashSignatureStackFrameTest(unittest.TestCase):
 
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
 
-        self.assert_(stackFrameSig1.matches(crashInfo1))
+        assert stackFrameSig1.matches(crashInfo1)
         self.assertFalse(stackFrameSig1Neg.matches(crashInfo1))
 
-        self.assert_(stackFrameSig2.matches(crashInfo1))
+        assert stackFrameSig2.matches(crashInfo1)
         self.assertFalse(stackFrameSig2Neg.matches(crashInfo1))
 
 
@@ -1155,10 +1155,10 @@ class CrashSignatureStackSizeTest(unittest.TestCase):
 
         self.assertIsInstance(crashInfo1, GDBCrashInfo)
 
-        self.assert_(stackSizeSig1.matches(crashInfo1))
+        assert stackSizeSig1.matches(crashInfo1)
         self.assertFalse(stackSizeSig1Neg.matches(crashInfo1))
 
-        self.assert_(stackSizeSig2.matches(crashInfo1))
+        assert stackSizeSig2.matches(crashInfo1)
         self.assertFalse(stackSizeSig2Neg.matches(crashInfo1))
 
 

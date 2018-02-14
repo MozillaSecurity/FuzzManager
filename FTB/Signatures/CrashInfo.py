@@ -25,25 +25,20 @@ import os
 import re
 import sys
 
+import six
+
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
-if sys.version_info.major == 3:
-    unicode_ = str
-else:
-    unicode_ = unicode
-
-
+@six.add_metaclass(ABCMeta)
 class CrashInfo():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
     '''
-    __metaclass__ = ABCMeta
-
     def __init__(self):
         # Store the raw data
         self.rawStdout = []
@@ -134,19 +129,19 @@ class CrashInfo():
         @return: Crash information object
         '''
 
-        assert stdout is None or isinstance(stdout, (list, unicode_, bytes))
-        assert stderr is None or isinstance(stderr, (list, unicode_, bytes))
-        assert auxCrashData is None or isinstance(auxCrashData, (list, unicode_, bytes))
+        assert stdout is None or isinstance(stdout, (list, six.text_type, bytes))
+        assert stderr is None or isinstance(stderr, (list, six.text_type, bytes))
+        assert auxCrashData is None or isinstance(auxCrashData, (list, six.text_type, bytes))
 
         assert isinstance(configuration, ProgramConfiguration)
 
-        if isinstance(stdout, (unicode_, bytes)):
+        if isinstance(stdout, (six.text_type, bytes)):
             stdout = stdout.splitlines()
 
-        if isinstance(stderr, (unicode_, bytes)):
+        if isinstance(stderr, (six.text_type, bytes)):
             stderr = stderr.splitlines()
 
-        if isinstance(auxCrashData, (unicode_, bytes)):
+        if isinstance(auxCrashData, (six.text_type, bytes)):
             auxCrashData = auxCrashData.splitlines()
 
         if cacheObject is not None:
@@ -842,7 +837,7 @@ class GDBCrashInfo(CrashInfo):
         if self.crashAddress is None and self.crashInstruction is not None:
             crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
 
-            if isinstance(crashAddress, (unicode_, bytes)):
+            if isinstance(crashAddress, (six.text_type, bytes)):
                 self.failureReason = crashAddress
                 return
 

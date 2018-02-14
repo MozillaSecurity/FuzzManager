@@ -17,14 +17,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from Queue import Queue
 import threading
+
+from six.moves.queue import queue
 
 
 class StreamCollector(threading.Thread):
     def __init__(self, fd, responseQueue, logResponses=False, maxBacklog=None):
         assert callable(fd.readline)
-        assert isinstance(responseQueue, Queue)
+        assert isinstance(responseQueue, queue)
 
         threading.Thread.__init__(self)
 

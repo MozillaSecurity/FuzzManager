@@ -23,6 +23,9 @@ import os
 import platform
 import sys
 
+import six
+
+
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
 sys.path += [FTB_PATH]
@@ -55,9 +58,8 @@ def signature_checks(f):
     return decorator
 
 
+@six.add_metaclass(ABCMeta)
 class Reporter():
-    __metaclass__ = ABCMeta
-
     def __init__(self, sigCacheDir=None, serverHost=None, serverPort=None,
                  serverProtocol=None, serverAuthToken=None,
                  clientId=None, tool=None):

@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
+import codecs
 import json
 
 from crashmanager.models import Client, Tool
@@ -64,7 +65,7 @@ class Collection(models.Model):
 
     def loadCoverage(self):
         self.coverage.file.open(mode='rb')
-        self.content = json.load(self.coverage.file)
+        self.content = json.load(codecs.getreader('utf-8')(self.coverage.file))
         self.coverage.file.close()
 
     def annotateSource(self, path, coverage):

@@ -417,9 +417,9 @@ class SignatureCreateTest(unittest.TestCase):
         crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2, minimumSupportedVersion=10)
 
         # Check that all generated signatures match their originating crashInfo
-        self.assert_(crashSig1.matches(crashInfo))
-        self.assert_(crashSig2.matches(crashInfo))
-        self.assert_(crashSig3.matches(crashInfo))
+        assert crashSig1.matches(crashInfo)
+        assert crashSig2.matches(crashInfo)
+        assert crashSig3.matches(crashInfo)
 
         # Check that the generated signatures look as expected
         self.assertEqual(json.loads(str(crashSig1)), json.loads(testSignature1))

@@ -9,11 +9,13 @@ from django.db.models.aggregates import Count, Min, Max
 from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+import functools
 import json
 import operator
 from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
+import six
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
@@ -40,7 +42,7 @@ def check_authorized_for_signature(request, signature):
 
         entries = CrashEntry.objects.filter(bucket=signature)
         entries = CrashEntry.deferRawFields(entries)
-        entries = entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        entries = entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
         if not entries:
             raise PermissionDenied({"message": "You don't have permission to access this signature."})
 
@@ -61,7 +63,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return entries.filter(reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        return entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
     elif user.restricted:
         return CrashEntry.objects.none()
 
@@ -1352,7 +1354,7 @@ def json_to_query(json_str):
 
     def get_query_obj(obj, key=None):
 
-        if obj is None or isinstance(obj, (basestring, list, int)):
+        if obj is None or isinstance(obj, (six.text_type, list, int)):
             kwargs = {key: obj}
             qobj = Q(**kwargs)
             return qobj
@@ -1365,8 +1367,7 @@ def json_to_query(json_str):
                 raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]
-        objkeys = obj.keys()
-        objkeys.remove("op")
+        objkeys = [value for value in obj if value != "op"]
 
         if op == 'NOT' and len(objkeys) > 1:
             raise RuntimeError("Attempted to negate multiple objects at once")

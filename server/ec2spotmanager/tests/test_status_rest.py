@@ -41,7 +41,7 @@ class RestStatusTests(APITestCase, TestCase):
         self.client.force_authenticate(user=user)
         resp = self.client.get('/ec2spotmanager/rest/report/')
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {})
 
     def test_report(self):
@@ -51,7 +51,7 @@ class RestStatusTests(APITestCase, TestCase):
         host = self.create_instance('host1')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
         self.assertEqual(resp.status_code, requests.codes['created'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data'})
         host = Instance.objects.get(pk=host.pk)  # re-read
         self.assertEqual(host.status_data, 'data')
@@ -72,13 +72,13 @@ class RestStatusTests(APITestCase, TestCase):
         host2 = self.create_instance('host2')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
         self.assertEqual(resp.status_code, requests.codes['created'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data'})
         host1 = Instance.objects.get(pk=host1.pk)  # re-read
         self.assertEqual(host1.status_data, 'data')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host2', 'status_data': 'data2'})
         self.assertEqual(resp.status_code, requests.codes['created'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data2'})
         host2 = Instance.objects.get(pk=host2.pk)  # re-read
         self.assertEqual(host2.status_data, 'data2')

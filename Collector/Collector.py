@@ -291,7 +291,10 @@ class Collector(Reporter):
 
         '''
         h = hashlib.new('sha1')
-        h.update(str(signature))
+        if str is bytes:
+            h.update(str(signature))
+        else:
+            h.update(str(signature).encode("utf-8"))
         sigfile = os.path.join(self.sigCacheDir, h.hexdigest() + ".signature")
         with open(sigfile, 'w') as f:
             f.write(str(signature))

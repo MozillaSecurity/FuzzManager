@@ -10,7 +10,7 @@ if __name__ == '__main__':
                        "Programming Language :: Python :: 2.7",
                        ],
           description="A fuzzing management tools collection",
-          install_requires=['fasteners>=0.14.1', 'numpy>=1.11.2', 'requests>=2.5.0'],
+          install_requires=['fasteners>=0.14.1', 'numpy>=1.11.2', 'requests>=2.5.0', 'six==1.11.0'],
           keywords="fuzz fuzzing security test testing",
           license="MPL 2.0",
           maintainer="Mozilla Fuzzing Team",

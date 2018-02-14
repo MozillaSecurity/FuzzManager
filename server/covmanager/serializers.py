@@ -78,7 +78,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         coverage = attrs.pop('coverage')['file']
 
         h = hashlib.new('sha1')
-        h.update(repr(coverage))
+        h.update(repr(coverage).encode('utf-8'))
 
         dbobj = CollectionFile()
         dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(coverage))

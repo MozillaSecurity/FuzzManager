@@ -156,7 +156,7 @@ class CreateConfigViewTests(TestCase):
         self.assertEqual(cfg.ec2_security_groups, json.dumps(['group #1']))
         self.assertEqual(cfg.ec2_instance_type, 'machine #1')
         self.assertEqual(cfg.ec2_image_name, 'ami #1')
-        self.assertEqual(cfg.ec2_userdata_file.read(), 'lorem ipsum')
+        self.assertEqual(cfg.ec2_userdata_file.read(), b'lorem ipsum')
         self.assertEqual(cfg.ec2_userdata_macros, json.dumps({'yup': '123', 'nope': '456'}))
         self.assertEqual(cfg.ec2_allowed_regions, json.dumps(['nowhere']))
         self.assertEqual(cfg.ec2_max_price, decimal.Decimal('0.01'))

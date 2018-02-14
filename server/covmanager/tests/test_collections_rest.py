@@ -10,6 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
+import codecs
 import json
 import logging
 
@@ -75,7 +76,7 @@ class RestCollectionsTests(APITestCase, TestCase):
         self.assertEqual(len(result.tools.all()), 1)
         self.assertEqual(result.tools.all()[0].name, 'testtool')
         self.assertEqual(result.revision, 'abc')
-        self.assertEqual(json.load(result.coverage.file), cov)
+        self.assertEqual(json.load(codecs.getreader('utf-8')(result.coverage.file)), cov)
 
     def test_put(self):
         """put should not be allowed"""
@@ -102,7 +103,7 @@ class RestCollectionsTests(APITestCase, TestCase):
         resp = self.client.get('/covmanager/rest/collections/')
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'count', 'previous', 'results', 'next'})
         self.assertEqual(resp['count'], 1)
         self.assertIsNone(resp['previous'])
@@ -176,7 +177,7 @@ class RestCollectionTests(APITestCase, TestCase):
         resp = self.client.get('/covmanager/rest/collections/%d/' % coll.pk)
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'branch', 'repository', 'created', 'description', 'client', 'coverage',
                                             'tools', 'id', 'revision'})
         self.assertEqual(resp['id'], coll.pk)

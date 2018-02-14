@@ -67,7 +67,7 @@ class CrashSignature():
             return CrashSignature(sigFd.read())
 
     def __str__(self):
-        return self.rawSignature
+        return str(self.rawSignature)
 
     def matches(self, crashInfo):
         '''

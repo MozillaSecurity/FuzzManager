@@ -83,5 +83,5 @@ def get_price_median(data):
     sdata = sorted(data)
     n = len(sdata)
     if not n % 2:
-        return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
-    return sdata[n / 2]
+        return (sdata[n // 2] + sdata[n // 2 - 1]) / 2.0
+    return sdata[n // 2]

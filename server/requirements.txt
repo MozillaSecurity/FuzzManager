@@ -7,3 +7,4 @@ fasteners==0.14.1
 laniakea==0.8
 numpy==1.13.3
 requests==2.18.4
+six==1.11.0

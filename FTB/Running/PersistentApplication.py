@@ -23,12 +23,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import Queue
 from abc import ABCMeta
 import os
 import signal
 import subprocess
 import time
+
+import six
+from six.moves import queue
 
 from FTB.Running.StreamCollector import StreamCollector
 from FTB.Running.WaitpidMonitor import WaitpidMonitor
@@ -66,12 +68,11 @@ class PersistentMode:
     NONE, SPFP, SIGSTOP = range(1, 4)
 
 
+@six.add_metaclass(ABCMeta)
 class PersistentApplication():
     '''
     Abstract base class that defines the interface
     '''
-    __metaclass__ = ABCMeta
-
     def __init__(self, binary, args=None, env=None, cwd=None, persistentMode=PersistentMode.NONE,
                  processingTimeout=10, inputFile=None):
         self.binary = binary
@@ -223,7 +224,7 @@ class SimplePersistentApplication(PersistentApplication):
 
         # This queue is used to queue up responses that should be directly processed
         # by this class rather than being logged.
-        self.responseQueue = Queue.Queue()
+        self.responseQueue = queue.queue()
 
         self.outCollector = StreamCollector(self.process.stdout, self.responseQueue, logResponses=False, maxBacklog=256)
         self.errCollector = StreamCollector(self.process.stderr, self.responseQueue, logResponses=False, maxBacklog=256)
@@ -244,7 +245,7 @@ class SimplePersistentApplication(PersistentApplication):
 
             try:
                 response = self.responseQueue.get(block=True, timeout=self.processingTimeout)
-            except Queue.Empty:
+            except queue.Empty:
                 raise RuntimeError("SPFP Error: Selftest failed, no response.")
 
             if response != "PASSED":
@@ -304,7 +305,7 @@ class SimplePersistentApplication(PersistentApplication):
         if self.persistentMode == PersistentMode.SPFP:
             try:
                 response = self.responseQueue.get(block=True, timeout=self.processingTimeout)
-            except Queue.Empty:
+            except queue.Empty:
                 if self.process.poll() is None:
                     # The process is still running, force it to stop and return timeout code
                     self.stop()

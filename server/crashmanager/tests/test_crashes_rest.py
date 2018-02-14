@@ -186,7 +186,7 @@ class RestCrashesTests(APITestCase, TestCase):
                                                      "tool__name__in": ["tool1"]})})
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'count', 'next', 'previous', 'results'})
         self.assertEqual(resp['count'], 1)
         self.assertEqual(resp['next'], None)
@@ -228,7 +228,7 @@ class RestCrashesTests(APITestCase, TestCase):
         resp = self.client.get('/crashmanager/rest/crashes/', {'include_raw': '0'})
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'count', 'next', 'previous', 'results'})
         self.assertEqual(resp['count'], 1)
         self.assertEqual(resp['next'], None)
@@ -314,7 +314,7 @@ class RestCrashTests(APITestCase, TestCase):
         resp = self.client.get('/crashmanager/rest/crashes/%d/' % crash.pk)
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
                                             'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
                                             'testcase', 'testcase_isbinary', 'testcase_quality', 'tool',

@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+from __future__ import print_function
 
 
 def select_better(data, current_price=None, region=None, zone=None, instance_type=None, instance_time=None, indent=1,
@@ -54,7 +55,7 @@ def select_better(data, current_price=None, region=None, zone=None, instance_typ
                         print_indent("Price rejected: %s > %s" % (ret["price"], best_price))
             else:
                 if instance_time is None:
-                    (_, best_price, _) = data[region][zone][instance_type].values()[0]
+                    (_, best_price, _) = list(data[region][zone][instance_type].values())[0]
                 else:
                     for current_time in data[region][zone][instance_type]:
                         if current_time <= instance_time:

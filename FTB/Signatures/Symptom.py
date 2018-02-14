@@ -19,17 +19,19 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 import json
+
+import six
+
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
 
+@six.add_metaclass(ABCMeta)
 class Symptom():
     '''
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
     '''
-    __metaclass__ = ABCMeta
-
     def __init__(self, jsonObj):
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)

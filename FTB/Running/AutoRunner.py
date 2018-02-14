@@ -26,16 +26,17 @@ import signal
 import subprocess
 import sys
 
+import six
+
 from FTB.Signatures.CrashInfo import CrashInfo
 
 
+@six.add_metaclass(ABCMeta)
 class AutoRunner():
     """
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
         self.binary = binary
         self.cwd = cwd

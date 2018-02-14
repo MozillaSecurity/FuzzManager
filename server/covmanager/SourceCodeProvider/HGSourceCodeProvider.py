@@ -13,12 +13,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 # Ensure print() compatibility with Python 3
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import re
 import subprocess
 
-from SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
+from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
 
 
 class HGSourceCodeProvider(SourceCodeProvider):
@@ -33,7 +33,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
             filename = filename[1:]
 
         try:
-            return subprocess.check_output(["hg", "cat", "-r", revision, filename], cwd=self.location)
+            return subprocess.check_output(["hg", "cat", "-r", revision, filename], cwd=self.location).decode('utf-8')
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
@@ -60,7 +60,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
 
         try:
             output = subprocess.check_output(["hg", "log", "-r", revision, "--template", r'{parents}\n', "--debug"],
-                                             cwd=self.location)
+                                             cwd=self.location).decode('utf-8')
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
@@ -83,4 +83,4 @@ class HGSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
-        return output
+        return output.decode('utf-8')

@@ -10,13 +10,13 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def test_bad_args():
-    with pytest.raises(CommandError, match=r"Error: too few arguments"):
+    with pytest.raises(CommandError, match=r"Error: .*? arguments"):
         call_command("setup_repository")
 
-    with pytest.raises(CommandError, match=r"Error: too few arguments"):
+    with pytest.raises(CommandError, match=r"Error: .*? arguments"):
         call_command("setup_repository", "")
 
-    with pytest.raises(CommandError, match=r"Error: too few arguments"):
+    with pytest.raises(CommandError, match=r"Error: .*? arguments"):
         call_command("setup_repository", "", "")
 
     with pytest.raises(CommandError, match=r"Error: invalid repository name"):

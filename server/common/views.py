@@ -1,7 +1,9 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
+import collections
 import json
 from rest_framework import filters
+import six
 
 
 def renderError(request, err):
@@ -66,13 +68,13 @@ def json_to_query(json_str):
     then the operator has no effect.
     """
     try:
-        obj = json.loads(json_str, object_pairs_hook=OrderedDict)  # noqa
+        obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)  # noqa
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 
     def get_query_obj(obj, key=None):
 
-        if obj is None or isinstance(obj, (basestring, list, int)):
+        if obj is None or isinstance(obj, (six.text_type, list, int)):
             kwargs = {key: obj}
             qobj = Q(**kwargs)
             return qobj

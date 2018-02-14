@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import json
 import os
 import re
@@ -14,7 +15,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def test_args():
-    with pytest.raises(CommandError, match=r"Error: too few arguments"):
+    with pytest.raises(CommandError, match=r"Error: .* arguments"):
         call_command("export_signatures")
 
 
@@ -50,7 +51,7 @@ def test_some():
             assert {m.filename for m in members} == expected
             for member in members:
                 with zipf.open(member) as memberf:
-                    contents = memberf.read()
+                    contents = memberf.read().decode('utf-8')
                 m = re.match(r"^(\d+).(metadata|signature)$", member.filename)
                 assert m is not None
                 if m.group(2) == "metadata":

@@ -8,6 +8,8 @@ from django.utils import timezone
 import json
 import re
 
+import six
+
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
@@ -146,8 +148,9 @@ class CrashEntry(models.Model):
             utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
 
             def sanitize_utf8(s):
-                if not isinstance(s, unicode):
-                    s = unicode(s, 'utf-8')
+                if not isinstance(s, six.text_type):
+                    s = six.text_type(s, 'utf-8')
+
                 return utf8_4byte_re.sub(u"\uFFFD", s)
 
             self.rawStdout = sanitize_utf8(self.rawStdout)
@@ -174,7 +177,7 @@ class CrashEntry(models.Model):
         # When we have a crash address, keep the numeric crash address field in
         # sync so we can search easily by crash address including ranges
         if self.crashAddress:
-            self.crashAddressNumeric = long(self.crashAddress, 16)
+            self.crashAddressNumeric = int(self.crashAddress, 16)
 
             # We need to possibly convert the numeric crash address from unsigned
             # to signed in order to store it in the database.

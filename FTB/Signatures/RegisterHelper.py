@@ -33,7 +33,7 @@ def getRegisterPattern():
     '''
         Return a pattern including all register names that are considered valid
     '''
-    return "(" + '|'.join(["%s"] * len(validRegisters.values())) % tuple(
+    return "(" + '|'.join(["%s"] * len(validRegisters)) % tuple(
         ['|'.join(i) for i in validRegisters.values()]) + ")"
 
 

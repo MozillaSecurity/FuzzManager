@@ -14,7 +14,7 @@ from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer
 from crashmanager.models import Tool
 
-from SourceCodeProvider import SourceCodeProvider
+from .SourceCodeProvider import SourceCodeProvider
 
 
 @login_required(login_url='/login/')

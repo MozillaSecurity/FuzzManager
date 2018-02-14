@@ -263,7 +263,7 @@ class RestPoolChartDetailedTests(APITestCase, TestCase):
         resp = self.client.get(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': pool.pk}))
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})
 
 
@@ -319,5 +319,5 @@ class RestPoolChartAccumulatedTests(APITestCase, TestCase):
         resp = self.client.get(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': pool.pk}))
         log.debug(resp)
         self.assertEqual(resp.status_code, requests.codes['ok'])
-        resp = json.loads(resp.content)
+        resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})

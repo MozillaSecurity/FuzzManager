@@ -49,6 +49,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             'platform', 'product', 'product_version', 'os', 'client', 'tool',
             'env', 'args', 'bucket', 'id', 'shortSignature', 'crashAddress',
         )
+        ordering = ['-id']
         read_only_fields = ('bucket', 'id', 'shortSignature', 'crashAddress')
 
     def create(self, attrs):
@@ -91,14 +92,12 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             if testcase_ext is None:
                 raise RuntimeError("Must provide testcase extension when providing testcase")
 
-            if testcase_isbinary:
-                testcase = base64.b64decode(testcase)
-
             h = hashlib.new('sha1')
             if testcase_isbinary:
-                h.update(str(testcase))
+                testcase = base64.b64decode(testcase)
+                h.update(testcase)
             else:
-                h.update(repr(testcase))
+                h.update(repr(testcase).encode("utf-8"))
 
             dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary, size=len(testcase))
             dbobj.test.save("%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase))
@@ -121,6 +120,7 @@ class BucketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bucket
         fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
+        ordering = ['-id']
         read_only_fields = ('id', 'frequent', 'permanent', 'shortDescription', 'signature')
 
     def to_representation(self, obj):

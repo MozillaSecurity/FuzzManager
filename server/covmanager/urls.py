@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 from rest_framework import routers
 
-from covmanager import views
+from . import views
 
 router = routers.DefaultRouter()
 router.register(r'collections', views.CollectionViewSet, base_name='collections')

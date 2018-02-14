@@ -23,9 +23,9 @@ from .common import select_better
 
 
 def run(data, sim_config, main_config):
-    region = data.keys()[0]
-    zone = data[region].keys()[0]
-    instance_type = data[region][zone].keys()[0]
+    region = list(data.keys())[0]
+    zone = list(data[region].keys())[0]
+    instance_type = list(data[region][zone].keys())[0]
 
     if "n" not in sim_config:
         print("Error: Must specify parameter 'n' for best_every_n_hours handler.")

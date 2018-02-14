@@ -13,11 +13,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 # Ensure print() compatibility with Python 3
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import subprocess
 
-from SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
+from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
 
 
 class GITSourceCodeProvider(SourceCodeProvider):
@@ -26,7 +26,8 @@ class GITSourceCodeProvider(SourceCodeProvider):
 
     def getSource(self, filename, revision):
         try:
-            return subprocess.check_output(["git", "show", "%s:%s" % (revision, filename)], cwd=self.location)
+            return subprocess.check_output(["git", "show", "%s:%s" % (revision, filename)],
+                                           cwd=self.location).decode('utf-8')
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
@@ -52,7 +53,7 @@ class GITSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
-        output = output.splitlines()
+        output = output.decode('utf-8').splitlines()
 
         # No parents
         if not output[0]:

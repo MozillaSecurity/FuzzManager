@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 import django
+from six.moves import input
 
 
 def create_fuzzmanager():
@@ -23,15 +24,15 @@ def create_fuzzmanager():
         auth_token = auth_token.strip()
         print('[+] Creating .fuzzmanagerconf')
         home = os.path.expanduser('~')
-        sigdir = raw_input(
+        sigdir = input(
             'Enter the the path to store fuzzmanager signatures. {}/signatures would be a good choice.\n'.format(home))
-        serverhost = raw_input('Enter the IP Address for the fuzzmanager host or to accept 127.0.0.1, press ENTER\n')
+        serverhost = input('Enter the IP Address for the fuzzmanager host or to accept 127.0.0.1, press ENTER\n')
         if not serverhost:
             serverhost = '127.0.0.1'
-        serverport = raw_input('Enter the TCP port for fuzzmanager or to accept 8000, press ENTER\n')
+        serverport = input('Enter the TCP port for fuzzmanager or to accept 8000, press ENTER\n')
         if not serverport:
             serverport = '8000'
-        serverproto = raw_input('Type https to use https protocol or to accept http, press ENTER\n')
+        serverproto = input('Type https to use https protocol or to accept http, press ENTER\n')
         if not serverproto:
             serverproto = 'http'
 
@@ -78,12 +79,12 @@ def main():
         create_fuzzmanager()
 
     while True:
-        username = raw_input('Please enter a user account to create, or ENTER to quit\n')
+        username = input('Please enter a user account to create, or ENTER to quit\n')
         if not username:
             break
-        password = raw_input('Please enter a password for {}\n'.format(username))
-        email = raw_input('Please enter an email address for {}\n'.format(username))
-        su = raw_input('Is {} a super user account? (y/n)'.format(username))
+        password = input('Please enter a password for {}\n'.format(username))
+        email = input('Please enter an email address for {}\n'.format(username))
+        su = input('Is {} a super user account? (y/n)'.format(username))
 
         if su == 'y':
             superuser = True

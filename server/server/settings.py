@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from __future__ import print_function
 import os
 import sys
 from django.conf import global_settings  # noqa
@@ -24,7 +25,7 @@ sys.path += [FTB_PATH]
 SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
     SECRET_KEY = open(SECRET_FILE).read().strip()
-except Exception:
+except IOError:
     try:
         with open(SECRET_FILE, 'w') as f:
             import random
@@ -63,7 +64,7 @@ INSTALLED_APPS = (
 class ExceptionLoggingMiddleware(object):
     def process_exception(self, request, exception):
         import traceback
-        print traceback.format_exc()
+        print(traceback.format_exc())
 
 
 MIDDLEWARE_CLASSES = (
@@ -199,7 +200,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': os.path.join(LOG_DIR, 'ec2spotmanager.log'),
-            'maxBytes': '16777216',
+            'maxBytes': 16777216,
             'formatter': 'simple'
         },
         'mail_admins': {

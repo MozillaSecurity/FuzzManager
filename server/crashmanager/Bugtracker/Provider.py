@@ -17,14 +17,15 @@ from __future__ import print_function
 
 from abc import ABCMeta, abstractmethod
 
+import six
 
+
+@six.add_metaclass(ABCMeta)
 class Provider():
     '''
     Abstract base
     class that defines what interfaces Bug Providers must implement
     '''
-    __metaclass__ = ABCMeta
-
     def __init__(self, pk, hostname):
         self.pk = pk
         self.hostname = hostname
