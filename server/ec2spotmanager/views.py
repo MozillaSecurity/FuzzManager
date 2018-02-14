@@ -1,6 +1,5 @@
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import logout
 from django.core.exceptions import SuspiciousOperation
@@ -9,9 +8,7 @@ from django.db.models.aggregates import Count
 from django.http.response import Http404  # noqa
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
-import errno
 from operator import attrgetter
-import os
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
