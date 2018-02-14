@@ -63,25 +63,6 @@ def pools(request):
     for entry in entries:
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
 
-    # Figure out if our daemons are running
-    def checkDaemon(daemon_name):
-        daemonPidFile = os.path.join(settings.BASE_DIR, "%s.pid" % daemon_name)
-        daemonRunning = False
-        try:
-            with open(daemonPidFile, 'r') as f:
-                daemonRunning = True
-                pid = int(f.read())
-                try:
-                    os.kill(pid, 0)
-                except OSError as e:
-                    if e.errno == errno.ESRCH:
-                        daemonRunning = False
-                    elif e.errno == errno.EPERM:
-                        daemonRunning = True
-        except IOError:
-            pass
-        return daemonRunning
-
     for pool in entries:
         pool.instance_requested_count = Instance.objects.filter(
             pool=pool, status_code=INSTANCE_STATE['requested']).count()
@@ -96,7 +77,6 @@ def pools(request):
     data = {
         'isSearch': isSearch,
         'poollist': entries,
-        'machineDaemonRunning': checkDaemon("monitoring_daemon"),
     }
 
     return render(request, 'pools/index.html', data)
