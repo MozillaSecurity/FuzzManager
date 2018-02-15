@@ -8,6 +8,7 @@ from django.db.models.aggregates import Count
 from django.http.response import Http404  # noqa
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
+import fasteners
 from operator import attrgetter
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
@@ -427,8 +428,19 @@ def deletePool(request, poolid):
                               'Please wait for their termination first.')})
 
     if request.method == 'POST':
-        pool.delete()
+        lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % poolid)
+
+        if not lock.acquire(blocking=False):
+            return render(request, 'pools/error.html', {
+                'error_message': ('That pool is currently being updated. Please try again.')})
+
+        try:
+            pool.delete()
+        finally:
+            lock.release()
+
         return redirect('ec2spotmanager:pools')
+
     elif request.method == 'GET':
         return render(request, 'pools/delete.html', {'entry': pool})
     else:
