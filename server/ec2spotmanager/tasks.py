@@ -4,6 +4,7 @@ import ssl
 import traceback
 import boto.ec2
 import boto.exception
+import fasteners
 from django.utils import timezone
 from laniakea.core.manager import Laniakea
 from laniakea import LaniakeaCommandLine
@@ -22,94 +23,105 @@ SPOTMGR_TAG = "SpotManager"
 def check_instance_pool(pool_id):
     from .models import Instance, InstancePool, INSTANCE_STATE, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 
-    instance_pool = InstancePool.objects.get(pk=pool_id)
+    lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % pool_id)
 
-    criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool=instance_pool, isCritical=True)
-
-    if criticalPoolStatusEntries:
+    if not lock.acquire(blocking=False):
+        logger.warning('[Pool %d] Another check still in progress, exiting.', pool_id)
         return
 
-    if instance_pool.config.isCyclic() or instance_pool.config.getMissingParameters():
-        entry = PoolStatusEntry()
-        entry.pool = instance_pool
-        entry.isCritical = True
-        entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
-        entry.msg = "Configuration error."
-        entry.save()
-        return
+    try:
 
-    config = instance_pool.config.flatten()
+        instance_pool = InstancePool.objects.get(pk=pool_id)
 
-    instances_missing = config.size
-    running_instances = []
+        criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool=instance_pool, isCritical=True)
 
-    _update_pool_instances(instance_pool, config)
+        if criticalPoolStatusEntries:
+            return
 
-    instances = Instance.objects.filter(pool=instance_pool)
+        if instance_pool.config.isCyclic() or instance_pool.config.getMissingParameters():
+            entry = PoolStatusEntry()
+            entry.pool = instance_pool
+            entry.isCritical = True
+            entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
+            entry.msg = "Configuration error."
+            entry.save()
+            return
 
-    for instance in instances:
-        instance_status_code_fixed = False
-        if instance.status_code >= 256:
-            logger.warning("[Pool %d] Instance with EC2 ID %s has weird state code %d, attempting to fix...",
-                           instance_pool.id, instance.ec2_instance_id, instance.status_code)
-            instance.status_code -= 256
-            instance_status_code_fixed = True
+        config = instance_pool.config.flatten()
 
-        if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
-                                    INSTANCE_STATE['requested']]:
-            instances_missing -= 1
-            running_instances.append(instance)
-        elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
-            # The instance is no longer running, delete it from our database
-            logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database.",
-                        instance_pool.id, instance.ec2_instance_id)
-            instance.delete()
+        instances_missing = config.size
+        running_instances = []
+
+        _update_pool_instances(instance_pool, config)
+
+        instances = Instance.objects.filter(pool=instance_pool)
+
+        for instance in instances:
+            instance_status_code_fixed = False
+            if instance.status_code >= 256:
+                logger.warning("[Pool %d] Instance with EC2 ID %s has weird state code %d, attempting to fix...",
+                               instance_pool.id, instance.ec2_instance_id, instance.status_code)
+                instance.status_code -= 256
+                instance_status_code_fixed = True
+
+            if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
+                                        INSTANCE_STATE['requested']]:
+                instances_missing -= 1
+                running_instances.append(instance)
+            elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
+                # The instance is no longer running, delete it from our database
+                logger.info("[Pool %d] Deleting terminated instance with EC2 ID %s from our database.",
+                            instance_pool.id, instance.ec2_instance_id)
+                instance.delete()
+            else:
+                if instance_status_code_fixed:
+                    # Restore original status code for error reporting
+                    instance.status_code += 256
+
+                logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d",
+                             instance_pool.id, instance.ec2_instance_id, instance.status_code)
+                # In some cases, EC2 sends undocumented status codes and we don't know why
+                # For now, reset the status code to 0, consider the instance still present
+                # and hope that with the next update iteration, the problem will be gone.
+                instance.status_code = 0
+                instance.save()
+                instances_missing -= 1
+                running_instances.append(instance)
+
+        # Continue working with the instances we have running
+        instances = running_instances
+
+        if not instance_pool.isEnabled:
+            if running_instances:
+                _terminate_pool_instances(instance_pool, running_instances, config, terminateByPool=True)
+
+            return
+
+        if ((not instance_pool.last_cycled) or
+                instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval)):
+            logger.info("[Pool %d] Needs to be cycled, terminating all instances...", instance_pool.id)
+            instance_pool.last_cycled = timezone.now()
+            _terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
+            instance_pool.save()
+
+            logger.info("[Pool %d] Termination complete.", instance_pool.id)
+
+        if instances_missing > 0:
+            logger.info("[Pool %d] Needs %s more instances, starting...",
+                        instance_pool.id, instances_missing)
+            _start_pool_instances(instance_pool, config, count=instances_missing)
+        elif instances_missing < 0:
+            # Select the oldest instances we have running and terminate
+            # them so we meet the size limitation again.
+            logger.info("[Pool %d] Has %s instances over limit, terminating...",
+                        instance_pool.id, -instances_missing)
+            instances = Instance.objects.filter(pool=instance_pool).order_by('created')[:-instances_missing]
+            _terminate_pool_instances(instance_pool, instances, config)
         else:
-            if instance_status_code_fixed:
-                # Restore original status code for error reporting
-                instance.status_code += 256
+            logger.debug("[Pool %d] Size is ok.", instance_pool.id)
 
-            logger.error("[Pool %d] Instance with EC2 ID %s has unexpected state code %d",
-                         instance_pool.id, instance.ec2_instance_id, instance.status_code)
-            # In some cases, EC2 sends undocumented status codes and we don't know why
-            # For now, reset the status code to 0, consider the instance still present
-            # and hope that with the next update iteration, the problem will be gone.
-            instance.status_code = 0
-            instance.save()
-            instances_missing -= 1
-            running_instances.append(instance)
-
-    # Continue working with the instances we have running
-    instances = running_instances
-
-    if not instance_pool.isEnabled:
-        if running_instances:
-            _terminate_pool_instances(instance_pool, running_instances, config, terminateByPool=True)
-
-        return
-
-    if ((not instance_pool.last_cycled) or
-            instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval)):
-        logger.info("[Pool %d] Needs to be cycled, terminating all instances...", instance_pool.id)
-        instance_pool.last_cycled = timezone.now()
-        _terminate_pool_instances(instance_pool, instances, config, terminateByPool=True)
-        instance_pool.save()
-
-        logger.info("[Pool %d] Termination complete.", instance_pool.id)
-
-    if instances_missing > 0:
-        logger.info("[Pool %d] Needs %s more instances, starting...",
-                    instance_pool.id, instances_missing)
-        _start_pool_instances(instance_pool, config, count=instances_missing)
-    elif instances_missing < 0:
-        # Select the oldest instances we have running and terminate
-        # them so we meet the size limitation again.
-        logger.info("[Pool %d] Has %s instances over limit, terminating...",
-                    instance_pool.id, -instances_missing)
-        instances = Instance.objects.filter(pool=instance_pool).order_by('created')[:-instances_missing]
-        _terminate_pool_instances(instance_pool, instances, config)
-    else:
-        logger.debug("[Pool %d] Size is ok.", instance_pool.id)
+    finally:
+        lock.release()
 
 
 def _get_best_region_zone(config):
@@ -231,8 +243,19 @@ def _start_pool_instances(pool, config, count=1):
         try:
             cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
                             aws_secret_access_key=config.aws_secret_access_key)
+        except ssl.SSLError as msg:
+            logger.warning("[Pool %d] start_pool_instances: Temporary failure in region %s: %s",
+                           pool.id, region, msg)
+            entry = PoolStatusEntry()
+            entry.pool = pool
+            entry.type = POOL_STATUS_ENTRY_TYPE['temporary-failure']
+            entry.msg = "Temporary failure occurred: %s" % msg
+            entry.save()
+
+            return
+
         except Exception as msg:
-            logger.exception("[Pool %d] %s: laniakea failure: %s", pool.id, "start_pool_instances", msg)
+            logger.exception("[Pool %d] start_pool_instances: laniakea failure: %s", pool.id, msg)
 
             # Log this error to the pool status messages
             entry = PoolStatusEntry()
@@ -323,7 +346,7 @@ def _terminate_pool_instances(pool, instances, config, terminateByPool=False):
                     state_code = boto_instance.state_code & 255
                     if not ((boto_instance.id in instance_ids_by_region[region]) or
                             (state_code == INSTANCE_STATE['shutting-down'] or
-                                state_code == INSTANCE_STATE['terminated'])):
+                             state_code == INSTANCE_STATE['terminated'])):
                         logger.error("[Pool %d] Instance with EC2 ID %s (status %d) "
                                      "is not in region list for region %s",
                                      pool.id, boto_instance.id, state_code, region)
@@ -396,7 +419,6 @@ def _update_pool_instances(pool, config):
         try:
             # first check status of pending spot requests
             requested = []
-            expired = []
             for instance_id in instance_ids_by_region[region]:
                 if instances_by_ids[instance_id].status_code == INSTANCE_STATE['requested']:
                     requested.append(instance_id)
@@ -422,12 +444,17 @@ def _update_pool_instances(pool, config):
                         instance_ids_by_region[region].append(result.id)
                         # don't add it to instances_left yet to avoid race with adding tags
 
+                        # Now that we saved the object into our database, mark the instance as updatable
+                        # so our update code can pick it up and update it accordingly when it changes states
+                        result.add_tag(SPOTMGR_TAG + "-Updatable", "1")
+
                         instances_created = True
 
                     # reservation object is returned in case request is closed/cancelled/failed
                     elif isinstance(result, boto.ec2.instance.Reservation):
                         if result.state in {"cancelled", "closed"}:
                             # this is normal, remove from DB and move on
+                            logger.info("[Pool %d] spot request %s is %s", pool.id, req_id, result.state)
                             instances_by_ids[req_id].delete()
                         elif result.state in {"open", "active"}:
                             # this should not happen! warn and leave in DB in case it's fulfilled later
@@ -448,16 +475,6 @@ def _update_pool_instances(pool, config):
 
                             logger.error("[Pool %d] %s", pool.id, msg)
                             instances_by_ids[req_id].delete()
-
-                    # Now that we saved the object into our database, mark the instance as updatable
-                    # so our update code can pick it up and update it accordingly when it changes states
-                    result.add_tag(SPOTMGR_TAG + "-Updatable", "1")
-
-            if expired:
-                logger.info("[Pool %d] %d spot requests timed out, cancelling.", pool.id, len(expired))
-                cluster.cancel_spot_requests(expired)
-                for instance_id in expired:
-                    instances_by_ids[instance_id].delete()
 
             boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool.pk)})
 
