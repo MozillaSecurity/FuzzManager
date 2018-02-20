@@ -8,3 +8,8 @@ laniakea==0.8
 numpy==1.13.3
 requests==2.18.4
 six==1.11.0
+pytest-flake8
+pytest-pylint
+pytest-cov
+pytest-django
+pytest-pythonpath
