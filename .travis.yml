@@ -15,9 +15,9 @@ install:
     - git --version
 before_script:
     - pip install -r server/requirements.txt
-    - pip install --upgrade codecov pytest-flake8 pytest-pylint pytest-cov pytest-django pytest-pythonpath
+    - pip install --upgrade codecov
 script:
-    - python -m pytest --flake8 -v --cov=. --cov-report term-missing
+    - python -m pytest
 after_success:
     - codecov -X gcov
 deploy:
