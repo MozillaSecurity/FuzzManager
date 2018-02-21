@@ -90,6 +90,9 @@ class BugzillaProvider(Provider):
         # Store possible attachment data/flags (e.g. crashdata)
         attachmentData = {}
 
+        # For now, the skip test checkbox isn't part of the template
+        attachmentData['testcase_skip'] = False
+
         # Load metadata that we need for various things
         metadata = {}
         if crashEntry.metadata:
@@ -302,7 +305,7 @@ class BugzillaProvider(Provider):
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
-        if crashEntry.testcase is not None:
+        if crashEntry.testcase is not None and 'testcase_skip' not in request.POST:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()
@@ -363,7 +366,7 @@ class BugzillaProvider(Provider):
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
-        if crashEntry.testcase is not None:
+        if crashEntry.testcase is not None and 'testcase_skip' not in request.POST:
             crashEntry.testcase.test.open(mode='rb')
             data = crashEntry.testcase.test.read()
             crashEntry.testcase.test.close()

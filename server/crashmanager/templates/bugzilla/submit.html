@@ -68,6 +68,10 @@
 		    </div>
 		    <div class="col-md-3">
                         <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+		    </div><br/>
+		    <div class="col-md-3">
+                        <input type="checkbox" id="id_testcase_skip" name="testcase_skip" value="unassigned" {% if attachmentData.testcase_skip %}checked disabled{% endif %}/>
+                        Do not attach a testcase (file bug without test).
 		    </div>
 		    </div>
 		{% else %}
