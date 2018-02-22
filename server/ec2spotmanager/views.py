@@ -47,6 +47,8 @@ def pools(request):
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
         "config__name",
+        "config__name__contains",
+        "isEnabled",
     ]
 
     for key in exactFilterKeys:
