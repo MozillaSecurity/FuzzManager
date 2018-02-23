@@ -253,6 +253,50 @@ class Collector(Reporter):
 
         return (local_filename, resp_json)
 
+    @remote_checks
+    def download_all(self, bucketId):
+        '''
+        Download all testcases for the specified bucketId.
+
+        @type bucketId: int
+        @param bucketId: ID of the requested bucket on the server side
+
+        @rtype: generator
+        @return: generator of filenames where tests were stored.
+        '''
+        params = {
+            "query": json.dumps({
+                "op": "OR",
+                "bucket": bucketId
+            })
+        }
+        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
+
+        while next_url:
+
+            resp_json = self.get(next_url, params=params).json()
+
+            if not isinstance(resp_json, dict):
+                raise RuntimeError("Server sent malformed JSON response: %r" % (resp_json,))
+
+            next_url = resp_json["next"]
+            params = None
+
+            for crash in resp_json["results"]:
+
+                if not crash["testcase"]:
+                    continue
+
+                url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort,
+                                                      crash["testcase"])
+                response = self.get(url, auth='basic')
+
+                local_filename = '%d%s' % (crash["id"], os.path.splitext(crash["testcase"])[1])
+                with open(local_filename, 'wb') as output:
+                    output.write(response.content)
+
+                yield local_filename
+
     def __store_signature_hashed(self, signature):
         '''
         Store a signature, using the sha1 hash hex representation as filename.
@@ -324,6 +368,8 @@ def main(args=None):
                                "and submit it."))
     actions.add_argument("--download", type=int,
                          help="Download the testcase for the specified crash entry", metavar="ID")
+    actions.add_argument("--download-all", type=int,
+                         help="Download all testcases for the specified signature entry", metavar="ID")
     actions.add_argument("--get-clientid", action='store_true', help="Print the client ID used when submitting issues")
 
     # Settings
@@ -531,6 +577,19 @@ def main(args=None):
             print("")
 
         print(retFile)
+        return 0
+
+    if opts.download_all:
+        downloaded = False
+
+        for result in collector.download_all(opts.download_all):
+            downloaded = True
+            print(result)
+
+        if not downloaded:
+            print("Specified signature does not have any testcases", file=sys.stderr)
+            return 1
+
         return 0
 
     if opts.get_clientid:
