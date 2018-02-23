@@ -23,7 +23,6 @@ from __future__ import print_function
 import argparse
 import json
 import os
-import requests
 import sys
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -123,10 +122,7 @@ class CovReporter(Reporter):
         data["description"] = description
         data.update(version)
 
-        response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-        if response.status_code != requests.codes["created"]:
-            raise Reporter.serverError(response)
+        self.post(url, data)
 
     @staticmethod
     def preprocess_coverage_data(coverage):

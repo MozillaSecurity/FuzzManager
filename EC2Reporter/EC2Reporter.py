@@ -21,13 +21,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 import argparse
-from fasteners import InterProcessLock
 import functools
 import os
 import random
-import requests
 import sys
 import time
+
+from fasteners import InterProcessLock
+import requests
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -64,10 +65,7 @@ class EC2Reporter(Reporter):
         data["client"] = self.clientId
         data["status_data"] = text
 
-        response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-        if response.status_code != requests.codes["created"]:
-            raise Reporter.serverError(response)
+        self.post(url, data)
 
     @remote_checks
     def cycle(self, poolid):
@@ -80,10 +78,7 @@ class EC2Reporter(Reporter):
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                                  poolid)
 
-        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
     def disable(self, poolid):
@@ -96,10 +91,7 @@ class EC2Reporter(Reporter):
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost,
                                                                    self.serverPort, poolid)
 
-        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
     def enable(self, poolid):
@@ -112,10 +104,7 @@ class EC2Reporter(Reporter):
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (self.serverProtocol, self.serverHost,
                                                                   self.serverPort, poolid)
 
-        response = requests.post(url, {}, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        self.post(url, {}, expected=requests.codes["ok"])
 
 
 def main(argv=None):
