@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 Reporter -- Abstract base class for all reporters that use FuzzManager's config file
@@ -22,7 +21,9 @@ import functools
 import os
 import platform
 import sys
+import time
 
+import requests
 import six
 
 
@@ -33,9 +34,9 @@ sys.path += [FTB_PATH]
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 
 
-def remote_checks(f):
-    'Decorator to perform error checks before using remote features'
-    @functools.wraps(f)
+def remote_checks(wrapped):
+    '''Decorator to perform error checks before using remote features'''
+    @functools.wraps(wrapped)
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
@@ -44,18 +45,44 @@ def remote_checks(f):
                                "to use remote features.")
         if not self.tool:
             raise RuntimeError("Must specify tool (configuration property: tool) to use remote features.")
-        return f(self, *args, **kwargs)
+        return wrapped(self, *args, **kwargs)
     return decorator
 
 
-def signature_checks(f):
-    'Decorator to perform error checks before using signature features'
-    @functools.wraps(f)
+def signature_checks(wrapped):
+    '''Decorator to perform error checks before using signature features'''
+    @functools.wraps(wrapped)
     def decorator(self, *args, **kwargs):
         if not self.sigCacheDir:
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
-        return f(self, *args, **kwargs)
+        return wrapped(self, *args, **kwargs)
     return decorator
+
+
+def requests_retry(wrapped):
+    '''Wrapper around requests methods that retries up to 2 minutes if it's likely that the response codes indicate a
+    temporary error'''
+    @functools.wraps(wrapped)
+    def wrapper(*args, **kwds):
+        success = kwds.pop("expected")
+        current_timeout = 2
+        while True:
+            response = wrapped(*args, **kwds)
+
+            if response.status_code != success:
+                # Allow for a total sleep time of up to 2 minutes if it's
+                # likely that the response codes indicate a temporary error
+                retry_codes = [500, 502, 503, 504]
+                if response.status_code in retry_codes and current_timeout <= 64:
+                    time.sleep(current_timeout)
+                    current_timeout *= 2
+                    continue
+
+                raise Reporter.serverError(response)
+            else:
+                return response
+        return wrapped(*args, **kwds)
+    return wrapper
 
 
 @six.add_metaclass(ABCMeta)
@@ -88,6 +115,7 @@ class Reporter():
         self.serverAuthToken = serverAuthToken
         self.clientId = clientId
         self.tool = tool
+        self._session = requests.Session()
 
         # Now search for the global configuration file. If it exists, read its contents
         # and set all Collector settings that haven't been explicitely set by the user.
@@ -135,6 +163,45 @@ class Reporter():
 
         if self.serverHost is not None and self.clientId is None:
             self.clientId = platform.node()
+
+    def _inject_auth(self, kwds):
+        '''Filters keyword arguments to requests methods, reinterpreting the 'auth' argument.
+        Accepts 'basic' or 'token' and injects the appropriate headers.'''
+        auth = kwds.pop("auth")
+        if auth == 'token':
+            kwds.setdefault("headers", {}).update({"Authorization": "Token %s" % self.serverAuthToken})
+        elif auth == 'basic':
+            kwds["auth"] = ('fuzzmanager', self.serverAuthToken)
+        else:
+            raise ValueError("unexpected value for 'auth', expecting 'token' or 'basic'")
+
+    def get(self, *args, **kwds):
+        """requests.get, with added support for FuzzManager authentication and retry on 5xx errors.
+
+        @type auth: str
+        @param auth: one of "basic" or "token" (default: token)
+
+        @type expected: int
+        @param expected: HTTP status code for successful response (default: requests.codes["ok"])
+        """
+        kwds.setdefault("auth", "token")
+        kwds.setdefault("expected", requests.codes["ok"])
+        self._inject_auth(kwds)
+        return requests_retry(self._session.get)(*args, **kwds)
+
+    def post(self, *args, **kwds):
+        """requests.post, with added support for FuzzManager authentication and retry on 5xx errors.
+
+        @type auth: str
+        @param auth: one of "basic" or "token" (default: token)
+
+        @type expected: int
+        @param expected: HTTP status code for successful response (default: requests.codes["created"])
+        """
+        kwds.setdefault("auth", "token")
+        kwds.setdefault("expected", requests.codes["created"])
+        self._inject_auth(kwds)
+        return requests_retry(self._session.post)(*args, **kwds)
 
     @staticmethod
     def serverError(response):

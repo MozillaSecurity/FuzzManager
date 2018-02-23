@@ -25,7 +25,6 @@ import base64
 import hashlib
 import json
 import os
-import requests
 import shutil
 import sys
 from tempfile import mkstemp
@@ -59,10 +58,7 @@ class Collector(Reporter):
         url = "%s://%s:%d/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # We need to use basic authentication here because these files are directly served by the HTTP server
-        response = requests.get(url, stream=True, auth=('fuzzmanager', self.serverAuthToken))
-
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        response = self.get(url, stream=True, auth='basic')
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
@@ -159,22 +155,7 @@ class Collector(Reporter):
         if crashInfo.configuration.args:
             data["args"] = json.dumps(crashInfo.configuration.args)
 
-        current_timeout = 2
-        while True:
-            response = requests.post(url, data, headers=dict(Authorization="Token %s" % self.serverAuthToken))
-
-            if response.status_code != requests.codes["created"]:
-                # Allow for a total sleep time of up to 2 minutes if it's
-                # likely that the response codes indicate a temporary error
-                retry_codes = [500, 502, 503, 504]
-                if response.status_code in retry_codes and current_timeout <= 64:
-                    time.sleep(current_timeout)
-                    current_timeout *= 2
-                    continue
-
-                raise Reporter.serverError(response)
-            else:
-                return response.json()
+        return self.post(url, data).json()
 
     @signature_checks
     def search(self, crashInfo):
@@ -253,31 +234,24 @@ class Collector(Reporter):
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                             crashId)
 
-        response = requests.get(url, headers=dict(Authorization="Token %s" % self.serverAuthToken))
+        response = self.get(url)
+        resp_json = response.json()
 
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        if not isinstance(resp_json, dict):
+            raise RuntimeError("Server sent malformed JSON response: %r" % (resp_json,))
 
-        respJson = response.json()
-
-        if not isinstance(respJson, dict):
-            raise RuntimeError("Server sent malformed JSON response: %s" % respJson)
-
-        if not respJson["testcase"]:
+        if not resp_json["testcase"]:
             return None
 
         url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort,
-                                              respJson["testcase"])
-        response = requests.get(url, auth=('fuzzmanager', self.serverAuthToken))
+                                              resp_json["testcase"])
+        response = self.get(url, auth='basic')
 
-        if response.status_code != requests.codes["ok"]:
-            raise Reporter.serverError(response)
+        local_filename = '%d%s' % (resp_json["id"], os.path.splitext(resp_json["testcase"])[1])
+        with open(local_filename, 'wb') as output:
+            output.write(response.content)
 
-        localFile = os.path.basename(respJson["testcase"])
-        with open(localFile, 'wb') as f:
-            f.write(response.content)
-
-        return (localFile, respJson)
+        return (local_filename, resp_json)
 
     def __store_signature_hashed(self, signature):
         '''
