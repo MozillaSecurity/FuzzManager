@@ -53,6 +53,10 @@ class S3Manager():
         self.remote_path_corpus = "%s/corpus/" % self.project_name
         self.remote_path_build = "%s/build.zip" % self.project_name
 
+        # Memorize which files we have uploaded before, so we never attempt to
+        # re-upload them to a different queue.
+        self.uploaded_files = []
+
     def upload_libfuzzer_queue_dir(self, base_dir, corpus_dir, original_corpus):
         '''
         Synchronize the corpus directory of the specified libFuzzer corpus directory
@@ -68,7 +72,10 @@ class S3Manager():
         @type original_corpus: Set
         @param original_corpus: Set of original corpus files to exclude from synchronization
         '''
-        upload_files = [x for x in os.listdir(corpus_dir) if x not in original_corpus]
+        upload_files = [x for x in os.listdir(corpus_dir) if x not in original_corpus and x not in self.uploaded_files]
+
+        # Memorize files selected for upload
+        self.uploaded_files.extend(upload_files)
 
         cmdline_file = os.path.join(base_dir, "cmdline")
 
