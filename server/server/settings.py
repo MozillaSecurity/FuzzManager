@@ -210,6 +210,9 @@ LOGGING = {
         }
     },
     'loggers': {
+        'flake8': {
+            'level': 'WARNING',
+        },
         'ec2spotmanager': {
             'handlers': ['ec2spotmanager_logfile'],
             'propagate': True,
