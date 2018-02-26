@@ -240,7 +240,7 @@ class CrashEntry(models.Model):
         self.cachedCrashInfo = None
         crashInfo = self.getCrashInfo()
         if crashInfo.crashAddress is not None:
-            self.crashAddress = hex(crashInfo.crashAddress)
+            self.crashAddress = '0x%x' % crashInfo.crashAddress
         self.shortSignature = crashInfo.createShortSignature()
 
         # If the entry has a bucket, check if it still fits into
