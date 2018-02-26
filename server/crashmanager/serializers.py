@@ -77,7 +77,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         # Populate certain fields here from the CrashInfo object we just got
         if crashInfo.crashAddress is not None:
-            attrs['crashAddress'] = hex(crashInfo.crashAddress)
+            attrs['crashAddress'] = '0x%x' % crashInfo.crashAddress
         attrs['shortSignature'] = crashInfo.createShortSignature()
 
         # If a testcase is supplied, create a testcase object and store it

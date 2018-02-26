@@ -9,7 +9,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
-
+from __future__ import unicode_literals
 import json
 import logging
 import os.path
@@ -73,7 +73,7 @@ class RestCrashesTests(APITestCase, TestCase):
         data = {
             'rawStdout': 'data on\nstdout',
             'rawStderr': 'data on\nstderr',
-            'rawCrashData': 'some\ncrash\ndata',
+            'rawCrashData': 'some\tcrash\ndata\n',
             'testcase': 'foo();\ntest();',
             'testcase_isbinary': False,
             'testcase_quality': 0,
@@ -91,7 +91,7 @@ class RestCrashesTests(APITestCase, TestCase):
         self.assertEqual(resp.status_code, requests.codes['created'])
         crash = CrashEntry.objects.get()
         for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
-            self.assertEqual(getattr(crash, field), data[field])
+            self.assertEqual(getattr(crash, field), data[field].strip())
         self.assertEqual(os.path.splitext(crash.testcase.test.path)[1].lstrip('.'), data['testcase_ext'])
         with open(crash.testcase.test.path) as fp:
             self.assertEqual(fp.read(), data['testcase'])
@@ -158,6 +158,79 @@ class RestCrashesTests(APITestCase, TestCase):
         for field in ('platform', 'product', 'os', 'client', 'tool'):
             self.assertEqual(getattr(crash, field).name, data[field])
         self.assertEqual(crash.product.version, data['product_version'])
+
+    def test_report_crash_long(self):
+        """test that crash reporting works with fields interpreted as `long` in python 2"""
+        data = {
+            'rawStdout': '',
+            'rawStderr': '',
+            'rawCrashData': r'''GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.5) 7.11.1
+(gdb) backtrace 0
+No stack.
+(gdb) r
+Starting program: /home/ubuntu/shell-cache/js-32-linux-dc70d241f90d/js-32-linux-dc70d241f90d --fuzzing-safe --no-threads --ion-eager bb2608227.js
+Thread 1 "js-32-linux-dc7" received signal SIGSEGV, Segmentation fault.
+0x33674039 in ?? ()
+(gdb) backtrace
+#0  0x33674039 in ?? ()
+#1  0xf6b52820 in ?? ()
+#2  0xf6b52820 in ?? ()
+(gdb) info registers
+eax            0xf7047000	-150704128
+ecx            0xffef	65519
+edx            0xffff8000	-32768
+ebx            0x9837ff4	159612916
+esp            0xffffba74	0xffffba74
+ebp            0xffffba74	0xffffba74
+esi            0xf6b52820	-155899872
+edi            0xf6f896c0	-151480640
+eip            0x33674039	0x33674039
+eflags         0x10283	[ CF SF IF RF ]
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x63	99
+(gdb) print $_siginfo
+$1 = {si_signo = 11, si_errno = 0, si_code = 2, _sigfault = {si_addr = 0xf7057000, _addr_lsb = 0, _addr_bnd = {_lower = 0x0, _upper = 0x0}}}
+(gdb) x/8i $pc
+=> 0x33674039:	mov    %dx,0x10(%eax,%ecx,1)
+   0x3367403e:	pop    %ebp
+   0x3367403f:	pop    %esi
+   0x33674040:	ret    
+   0x33674041:	jmp    0x33674200
+   0x33674046:	sub    $0x4,%esp
+   0x33674049:	call   0x336743f0
+   0x3367404e:	sub    $0x4,%esp
+''',  # noqa
+            'testcase': 'blah',
+            'testcase_isbinary': False,
+            'testcase_quality': 0,
+            'testcase_ext': '',
+            'platform': 'x86_64',
+            'product': 'x',
+            'product_version': '',
+            'os': 'linux',
+            'client': 'x',
+            'tool': 'x'}
+        user = User.objects.get(username='test')
+        self.client.force_authenticate(user=user)
+        resp = self.client.post('/crashmanager/rest/crashes/', data=data)
+        log.debug(resp)
+        assert resp.status_code == requests.codes['created']
+        crash = CrashEntry.objects.get()
+        for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
+            assert getattr(crash, field) == data[field].strip()
+        assert os.path.splitext(crash.testcase.test.path)[1].lstrip('.') == data['testcase_ext']
+        with open(crash.testcase.test.path) as fp:
+            assert fp.read() == data['testcase']
+        assert crash.testcase.isBinary == data['testcase_isbinary']
+        assert crash.testcase.quality == data['testcase_quality']
+        for field in ('platform', 'product', 'os', 'client', 'tool'):
+            assert getattr(crash, field).name == data[field]
+        assert crash.product.version == data['product_version']
+        assert crash.crashAddress == '0xf7056fff'
 
     def test_query_crash(self):
         """test that crashes can be queried"""
