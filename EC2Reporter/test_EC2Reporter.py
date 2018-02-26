@@ -1,12 +1,8 @@
 from __future__ import absolute_import
-import json
 import os
-import platform
 import time
-import zipfile
 
 import pytest
-import requests
 from django.utils import timezone
 from six.moves.urllib.parse import urlsplit
 

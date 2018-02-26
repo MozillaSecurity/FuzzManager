@@ -28,7 +28,6 @@ import os
 import shutil
 import sys
 from tempfile import mkstemp
-import time
 from zipfile import ZipFile
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
