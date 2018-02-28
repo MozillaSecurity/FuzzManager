@@ -119,16 +119,21 @@ def viewPool(request, poolid):
 def viewPoolPrices(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
-    prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key,
-                             config.ec2_instance_type)
+    prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
+                                             config.aws_access_key_id,
+                                             config.aws_secret_access_key,
+                                             instance_type)
+              for instance_type in config.ec2_instance_types}
 
-    zones = []
+    zones = set()
     latest_price_by_zone = {}
 
-    for region in prices:
-        for zone in prices[region]:
-            zones.append(zone)
-            latest_price_by_zone[zone] = prices[region][zone][0]
+    for instance_type in prices:
+        for region in prices[instance_type]:
+            for zone in prices[instance_type][region]:
+                zones.add(zone)
+                latest_price_by_zone[zone] = min(latest_price_by_zone.get(zone, 9999),
+                                                 prices[instance_type][region][zone][0])
 
     prices = []
     for zone in sorted(zones):
@@ -316,11 +321,6 @@ def __handleConfigPOST(request, config):
     else:
         config.ec2_key_name = None
 
-    if request.POST['ec2_instance_type']:
-        config.ec2_instance_type = request.POST['ec2_instance_type']
-    else:
-        config.ec2_instance_type = None
-
     if request.POST['ec2_image_name']:
         config.ec2_image_name = request.POST['ec2_image_name']
     else:
@@ -340,6 +340,11 @@ def __handleConfigPOST(request, config):
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
     else:
         config.ec2_security_groups_list = None
+
+    if request.POST['ec2_instance_types']:
+        config.ec2_instance_types_list = [x.strip() for x in request.POST['ec2_instance_types'].split(',')]
+    else:
+        config.ec2_instance_types_list = None
 
     if request.POST['ec2_userdata_macros']:
         config.ec2_userdata_macros_dict = dict(

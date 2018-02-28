@@ -42,7 +42,7 @@ class PoolConfiguration(models.Model):
     aws_secret_access_key = models.CharField(max_length=255, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
-    ec2_instance_type = models.CharField(max_length=255, blank=True, null=True)
+    ec2_instance_types = models.CharField(max_length=1023, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_userdata_file = models.FileField(storage=OverwritingStorage(
         location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
@@ -60,6 +60,7 @@ class PoolConfiguration(models.Model):
         self.ec2_userdata = None
         self.ec2_security_groups_list = None
         self.ec2_allowed_regions_list = None
+        self.ec2_instance_types_list = None
 
         # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
@@ -76,7 +77,6 @@ class PoolConfiguration(models.Model):
             'cycle_interval',
             'ec2_key_name',
             'ec2_image_name',
-            'ec2_instance_type',
             'ec2_max_price',
             'ec2_userdata',
         ]
@@ -84,6 +84,7 @@ class PoolConfiguration(models.Model):
         self.list_config_fields = [
             'ec2_security_groups',
             'ec2_allowed_regions',
+            'ec2_instance_types',
         ]
 
         self.dict_config_fields = [

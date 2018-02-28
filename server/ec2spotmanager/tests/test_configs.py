@@ -137,7 +137,7 @@ class CreateConfigViewTests(TestCase):
                                                          'aws_secret_access_key': 'n0b0deee',
                                                          'ec2_key_name': 'key #1',
                                                          'ec2_security_groups': 'group #1',
-                                                         'ec2_instance_type': 'machine #1',
+                                                         'ec2_instance_types': 'machine #1',
                                                          'ec2_image_name': 'ami #1',
                                                          'ec2_userdata': 'lorem ipsum',
                                                          'ec2_userdata_macros': 'yup=123,nope=456',
@@ -154,7 +154,7 @@ class CreateConfigViewTests(TestCase):
         self.assertEqual(cfg.aws_secret_access_key, 'n0b0deee')
         self.assertEqual(cfg.ec2_key_name, 'key #1')
         self.assertEqual(cfg.ec2_security_groups, json.dumps(['group #1']))
-        self.assertEqual(cfg.ec2_instance_type, 'machine #1')
+        self.assertEqual(cfg.ec2_instance_types, json.dumps(['machine #1']))
         self.assertEqual(cfg.ec2_image_name, 'ami #1')
         self.assertEqual(cfg.ec2_userdata_file.read(), b'lorem ipsum')
         self.assertEqual(cfg.ec2_userdata_macros, json.dumps({'yup': '123', 'nope': '456'}))
@@ -174,7 +174,7 @@ class CreateConfigViewTests(TestCase):
                                  aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
-                                 ec2_instance_type='machine #1',
+                                 ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
                                  ec2_userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
@@ -220,7 +220,7 @@ class ViewConfigViewTests(TestCase):
                                  aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
-                                 ec2_instance_type='machine #1',
+                                 ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
                                  ec2_userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
@@ -268,7 +268,7 @@ class EditConfigViewTests(TestCase):
                                  aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
-                                 ec2_instance_type='machine #1',
+                                 ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
                                  ec2_userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
