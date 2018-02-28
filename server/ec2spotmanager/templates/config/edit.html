@@ -74,9 +74,9 @@
              value="{{ config.ec2_security_groups_list|listcsv }}">
       <br/>
 
-      <label for="id_ec2_instance_type">EC2 Instance Type</label><br/>
-      <input id="id_ec2_instance_type" class="form-control" name="ec2_instance_type" type="text"
-             value="{{ config.ec2_instance_type|default:"" }}">
+      <label for="id_ec2_instance_types">EC2 Instance Types</label><br/>
+      <input id="id_ec2_instance_types" class="form-control" name="ec2_instance_types" type="text"
+             value="{{ config.ec2_instance_types_list|listcsv }}">
       <br/>
 
       <label for="id_ec2_image_name">EC2 Image Name</label><br/>

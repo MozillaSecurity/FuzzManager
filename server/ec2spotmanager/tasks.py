@@ -125,30 +125,37 @@ def check_instance_pool(pool_id):
 
 
 def _get_best_region_zone(config):
-    prices = get_spot_prices(config.ec2_allowed_regions, config.aws_access_key_id, config.aws_secret_access_key,
-                             config.ec2_instance_type)
+    prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
+                                             config.aws_access_key_id,
+                                             config.aws_secret_access_key,
+                                             config.ec2_instance_types)
+              for instance_type in config.ec2_instance_types}
 
     # Calculate median values for all availability zones and best zone/price
     best_zone = None
     best_region = None
+    best_type = None
     best_median = None
     rejected_prices = {}
-    for region in prices:
-        for zone in prices[region]:
-            # Do not consider a zone/region combination that has a current
-            # price higher than the maximum price we are willing to pay,
-            # even if the median would end up being lower than our maximum.
-            if prices[region][zone][0] > config.ec2_max_price:
-                rejected_prices[zone] = prices[region][zone][0]
-                continue
+    for instance_type in prices:
+        for region in prices[instance_type]:
+            for zone in prices[instance_type][region]:
+                # Do not consider a zone/region combination that has a current
+                # price higher than the maximum price we are willing to pay,
+                # even if the median would end up being lower than our maximum.
+                if prices[instance_type][region][zone][0] > config.ec2_max_price:
+                    rejected_prices[zone] = min(rejected_prices.get(zone, 9999),
+                                                prices[instance_type][region][zone][0])
+                    continue
 
-            median = get_price_median(prices[region][zone])
-            if best_median is None or best_median > median:
-                best_median = median
-                best_zone = zone
-                best_region = region
+                median = get_price_median(prices[instance_type][region][zone])
+                if best_median is None or best_median > median:
+                    best_median = median
+                    best_zone = zone
+                    best_region = region
+                    best_type = instance_type
 
-    return (best_region, best_zone, rejected_prices)
+    return (best_region, best_zone, best_type, rejected_prices)
 
 
 def _create_laniakea_images(config):
@@ -159,7 +166,6 @@ def _create_laniakea_images(config):
     keys = [
         'ec2_key_name',
         'ec2_image_name',
-        'ec2_instance_type',
         'ec2_security_groups',
     ]
 
@@ -180,7 +186,7 @@ def _start_pool_instances(pool, config, count=1):
 
     # Figure out where to put our instances
     try:
-        (region, zone, rejected) = _get_best_region_zone(config)
+        (region, zone, instance_type, rejected) = _get_best_region_zone(config)
     except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error):
         # In case of temporary failures here, we will retry again in the next cycle
         logger.warning("[Pool %d] Failed to acquire spot instance prices: %s.", pool.id, traceback.format_exc())
@@ -213,7 +219,8 @@ def _start_pool_instances(pool, config, count=1):
         if priceLowEntries:
             priceLowEntries.delete()
 
-    logger.debug("[Pool %d] Using region %s with availability zone %s.", pool.id, region, zone)
+    logger.debug("[Pool %d] Using instance type %s in region %s with availability zone %s.",
+                 pool.id, instance_type, region, zone)
 
     try:
         userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata.decode('utf-8'))
@@ -238,6 +245,7 @@ def _start_pool_instances(pool, config, count=1):
         images["default"]['user_data'] = userdata.encode("utf-8")
         images["default"]['placement'] = zone
         images["default"]['count'] = count
+        images["default"]['instance_type'] = instance_type
 
         cluster = Laniakea(images)
         try:
