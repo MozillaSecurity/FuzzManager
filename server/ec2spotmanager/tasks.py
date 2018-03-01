@@ -267,11 +267,11 @@ def _start_pool_instances(pool, config, count=1):
 
             return
 
-        config.ec2_tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
-
         try:
             logger.info("[Pool %d] Creating %d instances...", pool.id, count)
-            for ec2_request in cluster.create_spot_requests(config.ec2_max_price, delete_on_termination=True):
+            for ec2_request in cluster.create_spot_requests(config.ec2_max_price,
+                                                            delete_on_termination=True,
+                                                            timeout=10 * 60):
                 instance = Instance()
                 instance.ec2_instance_id = ec2_request
                 instance.ec2_region = region
@@ -392,9 +392,9 @@ def _update_pool_instances(pool, config):
     debug_not_updatable_continue = set()
     debug_not_in_region = {}
 
-    for instance_id in instances_by_ids:
-        if instance_id:
-            instances_left.append(instances_by_ids[instance_id])
+    for instance in instances_by_ids.values():
+        if instance.status_code != INSTANCE_STATE['requested']:
+            instances_left.append(instance)
 
     # set config to this pool for now in case we set tags on fulfilled spot requests
     config.ec2_tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
@@ -430,6 +430,8 @@ def _update_pool_instances(pool, config):
                     instance = instances_by_ids[req_id]
 
                     if isinstance(result, boto.ec2.instance.Instance):
+                        logger.info("[Pool %d] spot request fulfilled %s -> %s", pool.id, req_id, result.id)
+
                         # spot request has been fulfilled
                         instance.hostname = result.public_dns_name
                         instance.ec2_instance_id = result.id
@@ -450,19 +452,19 @@ def _update_pool_instances(pool, config):
 
                         instances_created = True
 
-                    # reservation object is returned in case request is closed/cancelled/failed
-                    elif isinstance(result, boto.ec2.instance.Reservation):
+                    # request object is returned in case request is closed/cancelled/failed
+                    elif isinstance(result, boto.ec2.spotinstancerequest.SpotInstanceRequest):
                         if result.state in {"cancelled", "closed"}:
                             # this is normal, remove from DB and move on
                             logger.info("[Pool %d] spot request %s is %s", pool.id, req_id, result.state)
                             instances_by_ids[req_id].delete()
                         elif result.state in {"open", "active"}:
                             # this should not happen! warn and leave in DB in case it's fulfilled later
-                            logging.warning("[Pool %d] Request %s is %s and %s.",
-                                            pool.id,
-                                            req_id,
-                                            result.status.code,
-                                            result.state)
+                            logger.warning("[Pool %d] Request %s is %s and %s.",
+                                           pool.id,
+                                           req_id,
+                                           result.status.code,
+                                           result.state)
                         else:  # state=failed
                             msg = "Request %s is %s and %s." % (req_id, result.status.code, result.state)
 
@@ -475,6 +477,12 @@ def _update_pool_instances(pool, config):
 
                             logger.error("[Pool %d] %s", pool.id, msg)
                             instances_by_ids[req_id].delete()
+
+                    elif result is None:
+                        logger.info("[Pool %d] spot request %s is still open", pool.pk, req_id)
+
+                    else:
+                        logger.warning("[Pool %d] spot request %s returned %s", pool.pk, req_id, type(result).__name__)
 
             boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool.pk)})
 
