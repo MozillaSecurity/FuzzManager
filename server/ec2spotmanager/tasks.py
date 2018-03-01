@@ -128,7 +128,7 @@ def _get_best_region_zone(config):
     prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
                                              config.aws_access_key_id,
                                              config.aws_secret_access_key,
-                                             config.ec2_instance_types)
+                                             instance_type)
               for instance_type in config.ec2_instance_types}
 
     # Calculate median values for all availability zones and best zone/price
@@ -154,6 +154,8 @@ def _get_best_region_zone(config):
                     best_zone = zone
                     best_region = region
                     best_type = instance_type
+                    logger.debug("Best price median currently %r in %s/%s (%s)",
+                                 median, best_region, best_zone, best_type)
 
     return (best_region, best_zone, best_type, rejected_prices)
 
