@@ -844,10 +844,6 @@ def main(argv=None):
             if monitor.is_alive():
                 raise RuntimeError("Monitor still alive although it signaled termination.")
 
-            if not monitor.inited:
-                print("Process did not startup correctly, aborting...", file=sys.stderr)
-                return 2
-
             # Monitor is dead, mark it for restarts
             monitors[result] = None
 
@@ -877,6 +873,10 @@ def main(argv=None):
                 collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
                 collector.submit(crashInfo, testcase)
                 print("Successfully submitted crash.", file=sys.stderr)
+
+            if not monitor.inited:
+                print("Process did not startup correctly, aborting...", file=sys.stderr)
+                return 2
 
             if signature_repeat_count >= 10:
                 print("Too many crashes with the same signature, exiting...", file=sys.stderr)
