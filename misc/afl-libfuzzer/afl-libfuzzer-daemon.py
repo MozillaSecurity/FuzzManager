@@ -28,6 +28,7 @@ import argparse
 from fasteners import InterProcessLock
 import os
 import shutil
+from six.moves import queue
 import stat
 import subprocess
 import sys
@@ -43,7 +44,7 @@ except ImportError:
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, process, killOnOOM=True):
+    def __init__(self, process, killOnOOM=True, mid=None, mqueue=None):
         threading.Thread.__init__(self)
 
         self.process = process
@@ -53,6 +54,8 @@ class LibFuzzerMonitor(threading.Thread):
         self.testcase = None
         self.killOnOOM = killOnOOM
         self.inited = False
+        self.mid = mid
+        self.mqueue = mqueue
 
     def run(self):
         while True:
@@ -81,9 +84,15 @@ class LibFuzzerMonitor(threading.Thread):
                 self.process.kill()
 
             # Pass-through output
-            sys.stderr.write(line)
+            if self.mid is not None:
+                sys.stderr.write("[Job %s] %s" % (self.mid, line))
+            else:
+                sys.stderr.write(line)
 
         self.fd.close()
+
+        if self.mqueue is not None:
+            self.mqueue.put(self.mid)
 
     def getASanTrace(self):
         return self.trace
@@ -452,6 +461,8 @@ def main(argv=None):
     libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
     libfGroup.add_argument("--libfuzzer-restarts", dest="libfuzzer_restarts", type=int,
                            help="Maximum number of restarts to do with libFuzzer", metavar="COUNT")
+    libfGroup.add_argument("--libfuzzer-instances", dest="libfuzzer_instances", type=int, default=1,
+                           help="Number of parallel libfuzzer instances to run", metavar="COUNT")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -781,41 +792,58 @@ def main(argv=None):
                 if not os.path.isdir(rarg):
                     print(rarg, file=fd)
 
+        monitors = [None] * opts.libfuzzer_instances
+        monitor_queue = queue.Queue()
+
         while True:
-            if restarts is not None:
-                restarts -= 1
-                if restarts < 0:
-                    break
+            if restarts is not None and restarts < 0 and all(x is None for x in monitors):
+                break
 
-            process = subprocess.Popen(
-                opts.rargs,
-                # stdout=None,
-                stderr=subprocess.PIPE,
-                env=env,
-                universal_newlines=True
-            )
+            # Check if we need to (re)start any monitors
+            for i in range(len(monitors)):
+                if monitors[i] is None:
+                    if restarts is not None:
+                        restarts -= 1
+                        if restarts < 0:
+                            break
 
-            monitor = LibFuzzerMonitor(process)
-            monitor.start()
+                    process = subprocess.Popen(
+                        opts.rargs,
+                        # stdout=None,
+                        stderr=subprocess.PIPE,
+                        env=env,
+                        universal_newlines=True
+                    )
 
-            while True:
-                monitor.join(10)
-                if not monitor.is_alive():
-                    break
+                    monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
+                    monitors[i].start()
 
-                # Only upload new corpus files every 10 minutes
-                if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
-                    s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
-                    last_queue_upload = int(time.time())
+            # Only upload new corpus files every 10 minutes
+            if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
+                s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
+                last_queue_upload = int(time.time())
 
-                    # Pull down queue files from other queues directly into the corpus
-                    s3m.download_libfuzzer_queues(corpus_dir)
+                # Pull down queue files from other queues directly into the corpus
+                s3m.download_libfuzzer_queues(corpus_dir)
+
+            try:
+                result = monitor_queue.get(True, 10)
+            except queue.Empty:
+                continue
+
+            monitor = monitors[result]
+            monitor.join(10)
+            if monitor.is_alive():
+                raise RuntimeError("Monitor still alive although it signaled termination.")
 
             if not monitor.inited:
                 print("Process did not startup correctly, aborting...", file=sys.stderr)
                 return 2
 
-            print("Process terminated, processing results...", file=sys.stderr)
+            # Monitor is dead, mark it for restarts
+            monitors[result] = None
+
+            print("Job %s terminated, processing results..." % result, file=sys.stderr)
 
             trace = monitor.getASanTrace()
             testcase = monitor.getTestcase()
