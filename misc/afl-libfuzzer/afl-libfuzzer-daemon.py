@@ -857,6 +857,10 @@ def main(argv=None):
             if not trace and not testcase:
                 continue
 
+            # Ignore slow units and oom files
+            if testcase.startswith("slow-unit-") or testcase.startswith("oom-"):
+                continue
+
             crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
 
             (sigfile, metadata) = collector.search(crashInfo)
