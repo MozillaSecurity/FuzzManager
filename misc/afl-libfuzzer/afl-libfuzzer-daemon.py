@@ -25,6 +25,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from S3Manager import S3Manager
 
 import argparse
+import collections
 from fasteners import InterProcessLock
 import os
 import shutil
@@ -50,6 +51,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.process = process
         self.fd = process.stderr
         self.trace = []
+        self.stderr = collections.deque([], 128)
         self.inTrace = False
         self.testcase = None
         self.killOnOOM = killOnOOM
@@ -71,6 +73,9 @@ class LibFuzzerMonitor(threading.Thread):
             elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.trace.append(line.rstrip())
                 self.inTrace = True
+
+            if not self.inTrace:
+                self.stderr.append(line)
 
             if not self.inited and line.find("INITED cov") >= 0:
                 self.inited = True
@@ -99,6 +104,9 @@ class LibFuzzerMonitor(threading.Thread):
 
     def getTestcase(self):
         return self.testcase
+
+    def getStderr(self):
+        return list(self.stderr)
 
 
 def command_file_to_list(cmd_file):
@@ -847,12 +855,13 @@ def main(argv=None):
 
             trace = monitor.getASanTrace()
             testcase = monitor.getTestcase()
+            stderr = monitor.getStderr()
 
             # Don't bother sending stuff to the server with neither trace nor testcase
             if not trace and not testcase:
                 continue
 
-            crashInfo = CrashInfo.fromRawCrashData([], [], configuration, auxCrashData=trace)
+            crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
 
             (sigfile, metadata) = collector.search(crashInfo)
 
