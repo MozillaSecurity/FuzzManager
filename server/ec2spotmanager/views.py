@@ -370,6 +370,8 @@ def __handleConfigPOST(request, config):
         if not config.ec2_userdata_file.name:
             config.ec2_userdata_file.save("default.sh", ContentFile(""))
         config.ec2_userdata = request.POST['ec2_userdata']
+        if request.POST.get('ec2_userdata_ff', 'unix') == 'unix':
+            config.ec2_userdata = config.ec2_userdata.replace('\r\n', '\n')
         config.storeTestAndSave()
     else:
         if config.ec2_userdata_file:
@@ -399,7 +401,11 @@ def createConfig(request):
 
         config.deserializeFields()
 
-        data = {'config': config, 'configurations': configurations, 'edit': False, 'clone': clone}
+        data = {'clone': clone,
+                'config': config,
+                'configurations': configurations,
+                'edit': False,
+                'userdata_ff': 'unix'}
         return render(request, 'config/edit.html', data)
     else:
         raise SuspiciousOperation
@@ -414,7 +420,10 @@ def editConfig(request, configid):
         return __handleConfigPOST(request, config)
     elif request.method == 'GET':
         configurations = PoolConfiguration.objects.all()
-        data = {'config': config, 'configurations': configurations, 'edit': True}
+        data = {'config': config,
+                'configurations': configurations,
+                'edit': True,
+                'userdata_ff': 'dos' if (b'\r\n' in (config.ec2_userdata or b'')) else 'unix'}
         return render(request, 'config/edit.html', data)
     else:
         raise SuspiciousOperation
