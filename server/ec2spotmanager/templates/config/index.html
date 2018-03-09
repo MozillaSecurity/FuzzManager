@@ -6,6 +6,11 @@
 <div class="panel panel-default">
 	<div class="panel-heading"><i class="glyphicon glyphicon-scale"></i> Available Pool Configurations</div>
 	<div class="panel-body">
+		<div class="btn-group">
+			<a href="{% url 'ec2spotmanager:configcreate' %}" class="btn btn-default">Create Configuration</a>
+		</div>
+		<br/>
+		<hr/>
 			<ul>
 				{% for root in roots %}
 			  	{% recurseconfig root %}
