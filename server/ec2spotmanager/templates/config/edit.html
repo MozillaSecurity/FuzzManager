@@ -89,6 +89,13 @@
                 spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
       <br/>
 
+      <fieldset class="ec2-radio-group">
+      <legend>EC2 Userdata Script Line Endings</legend>
+      <label><input type="radio" name="ec2_userdata_ff" value="unix"{% if userdata_ff == 'unix' %} checked="checked"{% endif %}> Unix</label>
+      <label><input type="radio" name="ec2_userdata_ff" value="dos"{% if userdata_ff == 'dos' %} checked="checked"{% endif %}> DOS</label>
+      </fieldset>
+      <br/>
+
       <label for="id_ec2_userdata_macros">EC2 Userdata Macros</label><br/>
       <input id="id_ec2_userdata_macros" class="form-control" name="ec2_userdata_macros" type="text"
              value="{{ config.ec2_userdata_macros_dict|dictcsv }}">

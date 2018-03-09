@@ -3,3 +3,23 @@
   height: 500px;
   background: #fcfcfc;
 }
+
+.ec2-radio-group {
+  margin: 0;
+}
+
+.ec2-radio-group > legend {
+  border: 0;
+  margin-bottom: 5px;
+  font-size: 100%;
+  font-weight: bold;
+}
+
+.ec2-radio-group > label {
+  margin: 0 12px;
+  font-weight: normal;
+}
+
+.ec2-radio-group > input {
+  margin: 0;
+}
