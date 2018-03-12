@@ -805,6 +805,7 @@ def main(argv=None):
 
         while True:
             if restarts is not None and restarts < 0 and all(x is None for x in monitors):
+                print("Run completed.", file=sys.stderr)
                 break
 
             # Check if we need to (re)start any monitors
@@ -853,12 +854,16 @@ def main(argv=None):
             testcase = monitor.getTestcase()
             stderr = monitor.getStderr()
 
+            if not monitor.inited and not trace:
+                print("Process did not startup correctly, aborting...", file=sys.stderr)
+                return 2
+
             # Don't bother sending stuff to the server with neither trace nor testcase
             if not trace and not testcase:
                 continue
 
             # Ignore slow units and oom files
-            if testcase.startswith("slow-unit-") or testcase.startswith("oom-"):
+            if testcase is not None and (testcase.startswith("slow-unit-") or testcase.startswith("oom-")):
                 continue
 
             crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
@@ -879,7 +884,7 @@ def main(argv=None):
                 print("Successfully submitted crash.", file=sys.stderr)
 
             if not monitor.inited:
-                print("Process did not startup correctly, aborting...", file=sys.stderr)
+                print("Process crashed at startup, aborting...", file=sys.stderr)
                 return 2
 
             if signature_repeat_count >= 10:
