@@ -796,12 +796,17 @@ class GDBCrashInfo(CrashInfo):
 
                 functionName = None
                 frameIndex = None
+                gdbDebugInfoMismatch = False
 
                 for gdbPattern in gdbFramePatterns:
                     match = re.search(gdbPattern, lastLineBuf)
                     if match is not None:
                         frameIndex = int(match.group(1))
                         functionName = match.group(3)
+
+                        # When GDB runs into unknown types in debug info (e.g. due to version mismatch),
+                        # then it emits an additional signature segment that we need to remove later.
+                        gdbDebugInfoMismatch = ("unknown type in" in lastLineBuf and "CU 0x" in lastLineBuf)
                         break
 
                 if frameIndex is None:
@@ -826,6 +831,10 @@ class GDBCrashInfo(CrashInfo):
                 gdbErrorIdx = functionName.find(" (/build/buildd/gdb")
                 if gdbErrorIdx > 0:
                     functionName = functionName[:gdbErrorIdx]
+
+                if gdbDebugInfoMismatch:
+                    # Remove addtional signature segment
+                    functionName = CrashInfo.sanitizeStackFrame(functionName)
 
                 self.backtrace.append(functionName)
 

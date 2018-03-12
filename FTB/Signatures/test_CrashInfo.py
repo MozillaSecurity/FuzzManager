@@ -519,6 +519,14 @@ rip            0x7ff7f20c1f81   0x7ff7f20c1f81
 => 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       callq  *0xa8(%rax)
 """
 
+gdbRegressionTrace12 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x0000000000bf9000 in js::SavedStacks::insertFrames(JSContext*, js::FrameIter&, JS::MutableHandle<js::SavedFrame*>, mozilla::Variant<JS::AllFrames, JS::MaxFrames, JS::FirstSubsumedFrame>&&) (this=this@entry=0x7fc3c234e100, cx=cx@entry=0x7fc3c2316000, iter=..., frame=..., capture=capture@entry=<unknown type in /home/ubuntu/build/dist/bin/js, CU 0x569a418, DIE 0x58e7398>) at js/src/vm/SavedStacks.cpp:1361
+#1  0x0000000000bf94c6 in js::SavedStacks::saveCurrentStack(JSContext*, JS::MutableHandle<js::SavedFrame*>, mozilla::Variant<JS::AllFrames, JS::MaxFrames, JS::FirstSubsumedFrame>&&) (this=0x7fc3c234e100, cx=cx@entry=0x7fc3c2316000, frame=..., capture=capture@entry=<unknown type in /home/ubuntu/build/dist/bin/js, CU 0x569a418, DIE 0x58e88cf>) at vm/SavedStacks.cpp:1225
+#2  0x00000000009dedfa in JS::CaptureCurrentStack(JSContext*, JS::MutableHandle<JSObject*>, mozilla::Variant<JS::AllFrames, JS::MaxFrames, JS::FirstSubsumedFrame>&&) (cx=0x7fc3c2316000, stackp=..., capture=<unknown type in /home/ubuntu/build/dist/bin/js, CU 0x3d1dbc6, DIE 0x3edf2a4>) at js/src/jsapi.cpp:7755
+#3  0x00000000009deedb in CaptureStack (cx=<optimized out>, stack=...) at js/src/jsexn.cpp:369
+""" # noqa
+
 rustSampleTrace1 = """
 thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976
 stack backtrace:
@@ -998,6 +1006,17 @@ class GDBParserTestCrashAddressRegression11(unittest.TestCase):
         crashInfo11 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace11.splitlines())
         self.assertEqual(crashInfo11.crashInstruction, "callq  *0xa8(%rax)")
         self.assertEqual(crashInfo11.crashAddress, 0x7ff7f2091032)
+
+
+class GDBParserTestCrashAddressRegression12(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo12 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace12.splitlines())
+        self.assertEqual(crashInfo12.backtrace[0], "js::SavedStacks::insertFrames")
+        self.assertEqual(crashInfo12.backtrace[1], "js::SavedStacks::saveCurrentStack")
+        self.assertEqual(crashInfo12.backtrace[2], "JS::CaptureCurrentStack")
+        self.assertEqual(crashInfo12.backtrace[3], "CaptureStack")
 
 
 class CrashSignatureOutputTest(unittest.TestCase):
