@@ -819,6 +819,10 @@ def main(argv=None):
         monitors = [None] * opts.libfuzzer_instances
         monitor_queue = queue.Queue()
 
+        # Keep track how often we crash to abort in certain situations
+        crashes_per_minute_interval = 0
+        crashes_per_minute = 0
+
         while True:
             if restarts is not None and restarts < 0 and all(x is None for x in monitors):
                 print("Run completed.", file=sys.stderr)
@@ -907,8 +911,13 @@ def main(argv=None):
                 print("Process crashed at startup, aborting...", file=sys.stderr)
                 return 2
 
-            if signature_repeat_count >= 10:
-                print("Too many crashes with the same signature, exiting...", file=sys.stderr)
+            if int(time.time()) - crashes_per_minute_interval > 60:
+                crashes_per_minute_interval = int(time.time())
+                crashes_per_minute = 0
+            crashes_per_minute += 1
+
+            if crashes_per_minute >= 10:
+                print("Too many frequent crashes, exiting...", file=sys.stderr)
                 break
 
         return 0
