@@ -44,7 +44,10 @@ try:
 except ImportError:
     haveFFPuppet = False
 
-RE_LIBFUZZER_STATUS = re.compile(r"\s*#\d+\s+(INITED|NEW|RELOAD|pulse)\s+cov:")
+RE_LIBFUZZER_STATUS = re.compile(r"\s*#(\d+)\s+(INITED|NEW|RELOAD|pulse)\s+cov:")
+RE_LIBFUZZER_NEWPC = re.compile(r"\s+NEW_PC:\s+0x")
+RE_LIBFUZZER_EXECS = re.compile(r"\s+exec/s: (\d+)\s+")
+RE_LIBFUZZER_RSS = re.compile(r"\s+rss: (\d+)Mb")
 
 
 class LibFuzzerMonitor(threading.Thread):
@@ -58,9 +61,17 @@ class LibFuzzerMonitor(threading.Thread):
         self.inTrace = False
         self.testcase = None
         self.killOnOOM = killOnOOM
+        self.hadOOM = False
         self.inited = False
         self.mid = mid
         self.mqueue = mqueue
+
+        # Keep some statistics
+        self.execs_done = 0
+        self.execs_per_sec = 0
+        self.rss_mb = 0
+        self.last_new = 0
+        self.last_new_pc = 0
 
     def run(self):
         while True:
@@ -69,7 +80,24 @@ class LibFuzzerMonitor(threading.Thread):
             if not line:
                 break
 
-            if self.inTrace and not RE_LIBFUZZER_STATUS.search(line):
+            status_match = RE_LIBFUZZER_STATUS.search(line)
+
+            if status_match:
+                self.execs_done = int(status_match.group(1))
+
+                if status_match.group(2) == "NEW":
+                    self.last_new = int(time.time())
+
+                exec_match = RE_LIBFUZZER_EXECS.search(line)
+                rss_match = RE_LIBFUZZER_RSS.search(line)
+
+                if exec_match:
+                    self.execs_per_sec = int(exec_match.group(1))
+                if rss_match:
+                    self.rss_mb = int(rss_match.group(1))
+            elif RE_LIBFUZZER_NEWPC.search(line):
+                self.last_new_pc = int(time.time())
+            elif self.inTrace:
                 self.trace.append(line.rstrip())
                 if line.find("==ABORTING") >= 0:
                     self.inTrace = False
@@ -89,6 +117,7 @@ class LibFuzzerMonitor(threading.Thread):
             # libFuzzer sometimes hangs on out-of-memory. Kill it
             # right away if we detect this situation.
             if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
+                self.hadOOM = True
                 self.process.kill()
 
             # Pass-through output
@@ -135,7 +164,44 @@ def command_file_to_list(cmd_file):
     return test_idx, cmdline
 
 
-def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
+def write_stats_file(outfile, fields, stats, warnings):
+    '''
+    Write the given stats data to the specified file
+
+    @type outfile: str
+    @param outfile: Output file for statistics
+
+    @type fields: list
+    @param fields: The list of fields to write out (defines the order as well)
+
+    @type stats: dict
+    @param stats: The dictionary containing the actual data
+
+    @type warnings: list
+    @param warnings: Any textual warnings to write in addition to stats
+    '''
+
+    max_keylen = max([len(x) for x in fields])
+
+    with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
+        for field in fields:
+            if field not in stats:
+                continue
+
+            val = stats[field]
+
+            if isinstance(val, list):
+                val = " ".join(val)
+
+            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+
+        for warning in warnings:
+            f.write(warning)
+
+    return
+
+
+def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     '''
     Generate aggregated statistics from the given base directories
     and write them to the specified output file.
@@ -169,6 +235,13 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
 
     # Which fields should be aggregated by max
     wanted_fields_max = ['last_path']
+
+    # Generate total list of fields to write
+    fields = []
+    fields.extend(wanted_fields_total)
+    fields.extend(wanted_fields_mean)
+    fields.extend(wanted_fields_all)
+    fields.extend(wanted_fields_max)
 
     # Warnings to include
     warnings = list()
@@ -251,30 +324,88 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
         warnings.append("WARNING: Unreported crashes detected (%d)\n" % failed_reports)
 
     # Write out data
+    return write_stats_file(outfile, fields, aggregated_stats, warnings)
+
+
+def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
+    '''
+    Generate aggregated statistics for the given overall libfuzzer stats and the individual monitors.
+    Results are written to the specified output file.
+
+    @type outfile: str
+    @param outfile: Output file for aggregated statistics
+
+    @type stats: dict
+    @param stats: Dictionary containing overall stats
+
+    @type monitors: list
+    @param monitors: A list of LibFuzzerMonitor instances
+
+    @type warnings: list
+    @param warnings: Any textual warnings to write in addition to stats
+    '''
+
+    # Which fields to add
+    wanted_fields_total = [
+        'execs_done',
+        'execs_per_sec',
+        'rss_mb',
+        'corpus_size',
+        'crashes',
+        'timeouts',
+        'ooms'
+    ]
+
+    # Which fields to aggregate by mean
+    wanted_fields_mean = []
+
+    # Which fields should be displayed per fuzzer instance
+    wanted_fields_all = []
+
+    # Which fields should be aggregated by max
+    wanted_fields_max = ['last_new', 'last_new_pc']
+
+    # Generate total list of fields to write
     fields = []
     fields.extend(wanted_fields_total)
     fields.extend(wanted_fields_mean)
     fields.extend(wanted_fields_all)
     fields.extend(wanted_fields_max)
 
-    max_keylen = max([len(x) for x in fields])
+    aggregated_stats = {}
 
-    with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
-        for field in fields:
-            if field not in aggregated_stats:
-                continue
+    for field in wanted_fields_total:
+        if hasattr(monitors[0], field):
+            aggregated_stats[field] = 0
+            for monitor in monitors:
+                aggregated_stats[field] += getattr(monitor, field)
+        else:
+            # Assume global field
+            aggregated_stats[field] = stats[field]
 
-            val = aggregated_stats[field]
+    for field in wanted_fields_mean:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = 0
+        for monitor in monitors:
+            aggregated_stats[field] += getattr(monitor, field)
+        aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
 
-            if isinstance(val, list):
-                val = " ".join(val)
+    for field in wanted_fields_all:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = []
+        for monitor in monitors:
+            aggregated_stats[field].append(getattr(monitor, field))
 
-            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+    for field in wanted_fields_max:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = 0
+        for monitor in monitors:
+            val = getattr(monitor, field)
+            if val > aggregated_stats[field]:
+                aggregated_stats[field] = val
 
-        for warning in warnings:
-            f.write(warning)
-
-    return
+    # Write out data
+    return write_stats_file(outfile, fields, aggregated_stats, warnings)
 
 
 def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
@@ -441,6 +572,8 @@ def main(argv=None):
                            help="Don't submit crash results anywhere (default)")
     mainGroup.add_argument("--debug", dest="debug", action='store_true',
                            help="Shows useful debug information (e.g. disables command output suppression)")
+    mainGroup.add_argument("--stats", dest="stats",
+                           help="Collect aggregated statistics in specified file", metavar="FILE")
 
     s3Group.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                          help="Use S3 to synchronize queues")
@@ -520,7 +653,7 @@ def main(argv=None):
     aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use",
                           metavar="DIR")
     aflGroup.add_argument("--afl-stats", dest="aflstats",
-                          help="Collect aggregated statistics while scanning output directories", metavar="FILE")
+                          help="Deprecated, use --stats instead", metavar="FILE")
     aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
 
     def warn_local():
@@ -536,6 +669,10 @@ def main(argv=None):
         return 2
 
     opts = parser.parse_args(argv)
+
+    if opts.aflstats:
+        print("Error: --afl-stats is deprecated, use --stats instead.", file=sys.stderr)
+        time.sleep(2)
 
     if not opts.libfuzzer and not opts.aflfuzz:
         # For backwards compatibility, --aflfuzz is the default if nothing else is specified.
@@ -823,6 +960,15 @@ def main(argv=None):
         crashes_per_minute_interval = 0
         crashes_per_minute = 0
 
+        # Global stats
+        stats = {
+            "crashes": 0,
+            "crashes_per_minute": 0,
+            "timeouts": 0,
+            "ooms": 0,
+            "corpus_size": len(original_corpus)
+        }
+
         while True:
             if restarts is not None and restarts < 0 and all(x is None for x in monitors):
                 print("Run completed.", file=sys.stderr)
@@ -846,6 +992,10 @@ def main(argv=None):
 
                     monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
                     monitors[i].start()
+
+            if opts.stats:
+                stats["corpus_size"] = len(os.listdir(corpus_dir))
+                write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
 
             # Only upload new corpus files every 10 minutes
             if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
@@ -878,13 +1028,53 @@ def main(argv=None):
                 print("Process did not startup correctly, aborting...", file=sys.stderr)
                 return 2
 
+            # libFuzzer can exit due to OOM with and without a testcase.
+            # The case of having an OOM with a testcase is handled further below.
+            if not testcase and monitor.hadOOM:
+                stats["ooms"] += 1
+                continue
+
             # Don't bother sending stuff to the server with neither trace nor testcase
             if not trace and not testcase:
                 continue
 
             # Ignore slow units and oom files
-            if testcase is not None and (testcase.startswith("slow-unit-") or testcase.startswith("oom-")):
-                continue
+            if testcase is not None:
+                if testcase.startswith("slow-unit-"):
+                    continue
+                if testcase.startswith("oom-"):
+                    stats["ooms"] += 1
+                    continue
+                if testcase.startswith("timeout-"):
+                    stats["timeouts"] += 1
+                    continue
+
+            stats["crashes"] += 1
+
+            if int(time.time()) - crashes_per_minute_interval > 60:
+                crashes_per_minute_interval = int(time.time())
+                crashes_per_minute = 0
+            crashes_per_minute += 1
+            stats["crashes_per_minute"] = crashes_per_minute
+
+            if crashes_per_minute >= 10:
+                print("Too many frequent crashes, exiting...", file=sys.stderr)
+
+                if opts.stats:
+                    # If statistics are reported to EC2SpotManager, this helps us to see
+                    # when fuzzing has become impossible due to excessive crashes.
+                    warning = "Fuzzing terminated due to excessive crashes."
+                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                break
+
+            if not monitor.inited:
+                print("Process crashed at startup, aborting...", file=sys.stderr)
+                if opts.stats:
+                    # If statistics are reported to EC2SpotManager, this helps us to see
+                    # when fuzzing has become impossible due to excessive crashes.
+                    warning = "Fuzzing did not startup correctly."
+                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                return 2
 
             # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
             if not opts.fuzzmanager:
@@ -906,19 +1096,6 @@ def main(argv=None):
                 collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
                 collector.submit(crashInfo, testcase)
                 print("Successfully submitted crash.", file=sys.stderr)
-
-            if not monitor.inited:
-                print("Process crashed at startup, aborting...", file=sys.stderr)
-                return 2
-
-            if int(time.time()) - crashes_per_minute_interval > 60:
-                crashes_per_minute_interval = int(time.time())
-                crashes_per_minute = 0
-            crashes_per_minute += 1
-
-            if crashes_per_minute >= 10:
-                print("Too many frequent crashes, exiting...", file=sys.stderr)
-                break
 
         return 0
 
@@ -1002,8 +1179,8 @@ def main(argv=None):
                         s3m.upload_afl_queue_dir(afl_out_dir, new_cov_only=True)
                     last_queue_upload = int(time.time())
 
-                if opts.aflstats:
-                    write_aggregated_stats(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
+                if opts.stats or opts.aflstats:
+                    write_aggregated_stats_afl(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
 
                 time.sleep(10)
 
