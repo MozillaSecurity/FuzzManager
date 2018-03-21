@@ -434,6 +434,8 @@ def main(argv=None):
     mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
     mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
                            help="Use FuzzManager to submit crash results")
+    mainGroup.add_argument("--local", dest="local", action='store_true',
+                           help="Don't submit crash results anywhere (default)")
     mainGroup.add_argument("--debug", dest="debug", action='store_true',
                            help="Shows useful debug information (e.g. disables command output suppression)")
 
@@ -517,6 +519,14 @@ def main(argv=None):
     aflGroup.add_argument("--afl-stats", dest="aflstats",
                           help="Collect aggregated statistics while scanning output directories", metavar="FILE")
     aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
+
+    def warn_local():
+        if not opts.fuzzmanager and not opts.local:
+            # User didn't specify --fuzzmanager but also didn't specify --local explicitly, so we should warn them
+            # that their crash results won't end up anywhere except on the local machine. This method is called for
+            # AFL and libFuzzer separately whenever it is determined that the user is running fuzzing locally.
+            print("Warning: You are running in local mode, crashes won't be submitted anywhere...", file=sys.stderr)
+            time.sleep(2)
 
     if not argv:
         parser.print_help()
@@ -790,6 +800,9 @@ def main(argv=None):
             print("Error: Failed to find a corpus directory on command line.", file=sys.stderr)
             return 2
 
+        # At this point we know that we will be running libFuzzer locally
+        warn_local()
+
         # Memorize the original corpus, so we can exclude it from uploading later
         original_corpus = set(os.listdir(corpus_dir))
 
@@ -864,6 +877,10 @@ def main(argv=None):
 
             # Ignore slow units and oom files
             if testcase is not None and (testcase.startswith("slow-unit-") or testcase.startswith("oom-")):
+                continue
+
+            # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
+            if not opts.fuzzmanager:
                 continue
 
             crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
@@ -958,6 +975,10 @@ def main(argv=None):
 
         if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
             last_queue_upload = 0
+
+            # If we reach this point, we know that AFL will be running on this machine, so do the local warning check
+            warn_local()
+
             while True:
                 if opts.fuzzmanager:
                     for afl_out_dir in afl_out_dirs:
