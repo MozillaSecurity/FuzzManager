@@ -28,6 +28,7 @@ import argparse
 import collections
 from fasteners import InterProcessLock
 import os
+import re
 import shutil
 from six.moves import queue
 import stat
@@ -42,6 +43,8 @@ try:
     from ffpuppet import FFPuppet
 except ImportError:
     haveFFPuppet = False
+
+RE_LIBFUZZER_STATUS = re.compile(r"\s*#\d+\s+(INITED|NEW|RELOAD|pulse)\s+cov:")
 
 
 class LibFuzzerMonitor(threading.Thread):
@@ -66,7 +69,7 @@ class LibFuzzerMonitor(threading.Thread):
             if not line:
                 break
 
-            if self.inTrace:
+            if self.inTrace and not RE_LIBFUZZER_STATUS.search(line):
                 self.trace.append(line.rstrip())
                 if line.find("==ABORTING") >= 0:
                     self.inTrace = False
