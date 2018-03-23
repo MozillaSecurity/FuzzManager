@@ -34,6 +34,7 @@ from six.moves import queue
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import traceback
@@ -139,6 +140,14 @@ class LibFuzzerMonitor(threading.Thread):
 
     def getStderr(self):
         return list(self.stderr)
+
+    def terminate(self):
+        # Avoid sending anything through the queue when the run() loop exits
+        self.mqueue = None
+
+        # TODO: This might need a timeout/kill logic
+        self.process.terminate()
+        self.process.wait()
 
 
 def command_file_to_list(cmd_file):
@@ -609,6 +618,8 @@ def main(argv=None):
                            help="Maximum number of restarts to do with libFuzzer", metavar="COUNT")
     libfGroup.add_argument("--libfuzzer-instances", dest="libfuzzer_instances", type=int, default=1,
                            help="Number of parallel libfuzzer instances to run", metavar="COUNT")
+    libfGroup.add_argument("--libfuzzer-auto-reduce", dest="libfuzzer_auto_reduce", type=int,
+                           help="Auto-reduce the corpus once it has grown by this percentage", metavar="PERCENT")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -946,6 +957,15 @@ def main(argv=None):
         # Memorize the original corpus, so we can exclude it from uploading later
         original_corpus = set(os.listdir(corpus_dir))
 
+        corpus_auto_reduce_threshold = None
+        corpus_auto_reduce_ratio = None
+        if opts.libfuzzer_auto_reduce is not None:
+            corpus_auto_reduce_ratio = float(opts.libfuzzer_auto_reduce) / float(100)
+            corpus_auto_reduce_threshold = int(len(original_corpus) * (1 + corpus_auto_reduce_ratio))
+            if corpus_auto_reduce_threshold <= len(original_corpus):
+                print("Error: Invalid auto reduce threshold specified.", file=sys.stderr)
+                return 2
+
         # Write a cmdline file, similar to what our AFL fork does
         with open("cmdline", 'w') as fd:
             for rarg in opts.rargs:
@@ -993,8 +1013,58 @@ def main(argv=None):
                     monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
                     monitors[i].start()
 
+            corpus_size = None
+            if corpus_auto_reduce_threshold is not None or opts.stats:
+                # We need the corpus size for stats and the auto reduce feature,
+                # so we cache it here to avoid running listdir multiple times.
+                corpus_size = len(os.listdir(corpus_dir))
+
+            if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
+                print("Preparing automated merge...", file=sys.stderr)
+
+                # Time to Auto-reduce
+                for i in range(len(monitors)):
+                    monitor = monitors[i]
+                    if monitor is not None:
+                        monitor.terminate()
+                        monitor.join(30)
+                        if monitor.is_alive():
+                            raise RuntimeError("Monitor refusing to stop.")
+
+                        # Indicate that this monitor is dead, so it is restarted later on
+                        monitors[i] = None
+
+                cmdline = []
+                cmdline.extend(opts.rargs)
+
+                # Filter all directories on the command line, these are likely corpus dirs
+                cmdline = [x for x in cmdline if not os.path.isdir(x)]
+
+                # Filter out other stuff we don't want for merging
+                cmdline = [x for x in cmdline if not x.startswith("-dict=")]
+
+                new_corpus_dir = tempfile.mkdtemp(prefix="fm-libfuzzer-automerge-")
+                cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
+
+                print("Running automated merge...", file=sys.stderr)
+                with open(os.devnull, 'w') as devnull:
+                    env = os.environ.copy()
+                    env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
+                    if opts.debug:
+                        devnull = None
+                    subprocess.check_call(cmdline, stdout=devnull, env=env)
+
+                shutil.rmtree(corpus_dir)
+                shutil.move(new_corpus_dir, corpus_dir)
+
+                # Update our auto-reduction target
+                corpus_auto_reduce_threshold = int(len(os.listdir(corpus_dir)) * (1 + corpus_auto_reduce_ratio))
+
+                # Continue, our instances will be restarted with the next loop
+                continue
+
             if opts.stats:
-                stats["corpus_size"] = len(os.listdir(corpus_dir))
+                stats["corpus_size"] = corpus_size
                 write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
 
             # Only upload new corpus files every 10 minutes
