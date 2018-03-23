@@ -549,6 +549,21 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     return (ffp, cmd, env)
 
 
+def test_binary_asan(bin_path):
+    process = subprocess.Popen(
+        ["nm", "-g", bin_path],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    (stdout, _) = process.communicate()
+
+    if stdout.find(" __asan_init") >= 0 or stdout.find("__ubsan_default_options") >= 0:
+        return True
+    return False
+
+
 def main(argv=None):
     '''Command line options.'''
 
@@ -904,6 +919,39 @@ def main(argv=None):
         if configuration is None:
             print("Error: Failed to load program configuration based on binary", file=sys.stderr)
             return 2
+
+        # Build our libFuzzer command line. We add certain parameters automatically for convenience.
+        cmdline = []
+        cmdline.extend(opts.rargs)
+        cmdline_add_args = []
+        if test_binary_asan(binary):
+            # With ASan, we always want to disable the internal signal handlers libFuzzer uses.
+            cmdline_add_args.extend([
+                "-handle_segv=0",
+                "-handle_bus=0",
+                "-handle_abrt=0",
+                "-handle_ill=0",
+                "-handle_fpe=0"
+            ])
+        else:
+            # We currently don't support non-ASan binaries because the logic in LibFuzzerMonitor
+            # expects an ASan trace on crash and CrashInfo doesn't parse internal libFuzzer traces.
+            print("Error: This wrapper currently only supports binaries built with AddressSanitizer.", file=sys.stderr)
+            return 2
+
+        for arg in cmdline:
+            if arg.startswith("-jobs=") or arg.startswith("-workers="):
+                print("Error: Using -jobs and -workers is incompatible with this wrapper.", file=sys.stderr)
+                print("       You can use --libfuzzer-instances to run multiple instances instead.", file=sys.stderr)
+                return 2
+
+        # Used by statistics and useful in general
+        cmdline_add_args.append("-print_pcs=1")
+
+        # Append args if they don't exist already
+        for arg in cmdline_add_args:
+            if arg not in cmdline:
+                cmdline.append(arg)
 
         env = {}
         if opts.env:
