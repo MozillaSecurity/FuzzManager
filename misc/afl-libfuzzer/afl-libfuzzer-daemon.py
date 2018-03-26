@@ -1051,7 +1051,7 @@ def main(argv=None):
                             break
 
                     process = subprocess.Popen(
-                        opts.rargs,
+                        cmdline,
                         # stdout=None,
                         stderr=subprocess.PIPE,
                         env=env,
