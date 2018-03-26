@@ -1095,25 +1095,25 @@ def main(argv=None):
                         # Indicate that this monitor is dead, so it is restarted later on
                         monitors[i] = None
 
-                cmdline = []
-                cmdline.extend(opts.rargs)
+                merge_cmdline = []
+                merge_cmdline.extend(cmdline)
 
                 # Filter all directories on the command line, these are likely corpus dirs
-                cmdline = [x for x in cmdline if not os.path.isdir(x)]
+                merge_cmdline = [x for x in merge_cmdline if not os.path.isdir(x)]
 
                 # Filter out other stuff we don't want for merging
-                cmdline = [x for x in cmdline if not x.startswith("-dict=")]
+                merge_cmdline = [x for x in merge_cmdline if not x.startswith("-dict=")]
 
                 new_corpus_dir = tempfile.mkdtemp(prefix="fm-libfuzzer-automerge-")
-                cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
+                merge_cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
 
                 print("Running automated merge...", file=sys.stderr)
                 with open(os.devnull, 'w') as devnull:
                     env = os.environ.copy()
-                    env['LD_LIBRARY_PATH'] = os.path.dirname(cmdline[0])
+                    env['LD_LIBRARY_PATH'] = os.path.dirname(merge_cmdline[0])
                     if opts.debug:
                         devnull = None
-                    subprocess.check_call(cmdline, stdout=devnull, env=env)
+                    subprocess.check_call(merge_cmdline, stdout=devnull, env=env)
 
                 shutil.rmtree(corpus_dir)
                 shutil.move(new_corpus_dir, corpus_dir)
