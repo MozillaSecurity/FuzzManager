@@ -360,6 +360,7 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
         'execs_per_sec',
         'rss_mb',
         'corpus_size',
+        'next_auto_reduce',
         'crashes',
         'timeouts',
         'ooms'
@@ -1126,6 +1127,10 @@ def main(argv=None):
 
             if opts.stats:
                 stats["corpus_size"] = corpus_size
+                stats["next_auto_reduce"] = 0
+                if corpus_auto_reduce_threshold is not None:
+                    stats["next_auto_reduce"] = corpus_auto_reduce_threshold
+
                 write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
 
             # Only upload new corpus files every 10 minutes
