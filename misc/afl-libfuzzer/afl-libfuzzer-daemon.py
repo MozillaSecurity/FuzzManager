@@ -635,6 +635,8 @@ def main(argv=None):
                            help="Number of parallel libfuzzer instances to run", metavar="COUNT")
     libfGroup.add_argument("--libfuzzer-auto-reduce", dest="libfuzzer_auto_reduce", type=int,
                            help="Auto-reduce the corpus once it has grown by this percentage", metavar="PERCENT")
+    libfGroup.add_argument("--libfuzzer-auto-reduce-min", dest="libfuzzer_auto_reduce_min", type=int, default=1000,
+                           help="Minimum corpus size for auto-reduce to apply.", metavar="COUNT")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -1008,8 +1010,19 @@ def main(argv=None):
         corpus_auto_reduce_threshold = None
         corpus_auto_reduce_ratio = None
         if opts.libfuzzer_auto_reduce is not None:
+            if opts.libfuzzer_auto_reduce < 5:
+                print("Error: Auto reduce threshold should at least be 5%.", file=sys.stderr)
+                return 2
+
             corpus_auto_reduce_ratio = float(opts.libfuzzer_auto_reduce) / float(100)
-            corpus_auto_reduce_threshold = int(len(original_corpus) * (1 + corpus_auto_reduce_ratio))
+
+            if len(original_corpus) >= opts.libfuzzer_auto_reduce_min:
+                corpus_auto_reduce_threshold = int(len(original_corpus) * (1 + corpus_auto_reduce_ratio))
+            else:
+                # Corpus is smaller than --libfuzzer-auto-reduce-min specifies, so we calculate
+                # the threshold based on that value in combination with the ratio instead, initially.
+                corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min * (1 + corpus_auto_reduce_ratio))
+
             if corpus_auto_reduce_threshold <= len(original_corpus):
                 print("Error: Invalid auto reduce threshold specified.", file=sys.stderr)
                 return 2
