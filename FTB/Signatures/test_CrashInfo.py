@@ -702,6 +702,7 @@ Direct leak of 232 byte(s) in 1 object(s) allocated from:
     #3 0x7fe6cdf7081f in mozilla::net::nsStandardURL::StartClone() /builds/nsStandardURL.cpp:2356
 """
 
+
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
