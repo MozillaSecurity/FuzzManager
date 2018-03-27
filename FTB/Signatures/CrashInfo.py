@@ -171,6 +171,7 @@ class CrashInfo():
         asanString = "ERROR: AddressSanitizer:"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
+        lsanString = "ERROR: LeakSanitizer:"
         ubsanString = ": runtime error: "
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
         appleString = "Mac OS X"
@@ -192,12 +193,14 @@ class CrashInfo():
             lines.extend(auxCrashData)
         if stderr is not None:
             lines.extend(stderr)
-
         for line in lines:
+
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif asanString in line:
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif lsanString in line:
+                return LSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif appleString in line:
                 return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif cdbString in line:
@@ -629,6 +632,91 @@ class ASanCrashInfo(CrashInfo):
             return "No crash detected"
 
         return "[@ %s]" % self.backtrace[0]
+
+
+class LSanCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout is not None:
+            self.rawStdout.extend(stdout)
+
+        if stderr is not None:
+            self.rawStderr.extend(stderr)
+
+        if crashData is not None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the LSan trace, otherwise use stderr
+        lsanOutput = crashData if crashData else stderr
+        lsanErrorPattern = "ERROR: LeakSanitizer:"
+        lsanPatternSeen = False
+
+        expectedIndex = 0
+        for traceLine in lsanOutput:
+            if not lsanErrorPattern:
+                if lsanErrorPattern in traceLine:
+                    lsanPatternSeen = True
+                continue
+
+            parts = traceLine.strip().split()
+
+            # We only want stack frames
+            if not parts or not parts[0].startswith("#"):
+                continue
+
+            index = int(parts[0][1:])
+
+            if expectedIndex != index:
+                raise RuntimeError("Fatal error parsing LSan trace (Index mismatch, got index %s but expected %s)" %
+                                   (index, expectedIndex))
+
+            component = None
+            if len(parts) > 2:
+                if parts[2] == "in":
+                    component = " ".join(parts[3:-1])
+                else:
+                    # Remove parentheses around component
+                    component = parts[2][1:-1]
+            else:
+                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                component = "<missing>"
+
+            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+            expectedIndex += 1
+
+        if not self.backtrace and lsanPatternSeen:
+            # We've seen the crash address but no frames, so this is likely
+            # a crash on the heap with no symbols available. Add one artificial
+            # frame so it doesn't show up as "No crash detected"
+            self.backtrace.append("??")
+
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+        # Try to find the LSan message on stderr and use that as short signature
+        abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
+
+        # See if we have it in our crash data maybe instead
+        if not abortMsg and self.rawCrashData:
+            abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawCrashData)
+
+        if abortMsg is not None:
+            if isinstance(abortMsg, list):
+                return "LeakSanitizer: %s" % " ".join(abortMsg)
+            return "LeakSanitizer: %s" % abortMsg
+
+        if not self.backtrace:
+            return "No crash detected"
+
+        return "LeakSanitizer: [@ %s]" % self.backtrace[0]
 
 
 class UBSanCrashInfo(CrashInfo):
