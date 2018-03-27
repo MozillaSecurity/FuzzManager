@@ -193,8 +193,8 @@ class CrashInfo():
             lines.extend(auxCrashData)
         if stderr is not None:
             lines.extend(stderr)
-        for line in lines:
 
+        for line in lines:
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif asanString in line:
