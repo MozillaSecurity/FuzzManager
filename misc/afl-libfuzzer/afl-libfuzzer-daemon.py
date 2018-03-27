@@ -375,6 +375,15 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
     # Which fields should be aggregated by max
     wanted_fields_max = ['last_new', 'last_new_pc']
 
+    # This is a list of fields mentioned in one of the lists above already,
+    # that should *additionally* also be aggregated with the global state.
+    # Only supported for total and max aggregation.
+    wanted_fields_global_aggr = [
+        'execs_done',
+        'last_new',
+        'last_new_pc'
+    ]
+
     # Generate total list of fields to write
     fields = []
     fields.extend(wanted_fields_total)
@@ -389,6 +398,8 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
             aggregated_stats[field] = 0
             for monitor in monitors:
                 aggregated_stats[field] += getattr(monitor, field)
+            if field in wanted_fields_global_aggr:
+                aggregated_stats[field] += stats[field]
         else:
             # Assume global field
             aggregated_stats[field] = stats[field]
@@ -413,6 +424,13 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
             val = getattr(monitor, field)
             if val > aggregated_stats[field]:
                 aggregated_stats[field] = val
+        if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
+            aggregated_stats[field] = stats[field]
+
+    for field in wanted_fields_global_aggr:
+        # Write aggregated stats back into the global stats for max fields
+        if field in wanted_fields_max:
+            stats[field] = aggregated_stats[field]
 
     # Write out data
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
@@ -1048,7 +1066,11 @@ def main(argv=None):
             "crashes_per_minute": 0,
             "timeouts": 0,
             "ooms": 0,
-            "corpus_size": len(original_corpus)
+            "corpus_size": len(original_corpus),
+            "execs_done": 0,
+            "last_new": 0,
+            "last_new_pc": 0,
+            "next_auto_reduce": 0
         }
 
         while True:
@@ -1096,6 +1118,10 @@ def main(argv=None):
                         # Indicate that this monitor is dead, so it is restarted later on
                         monitors[i] = None
 
+                        if opts.stats:
+                            # Make sure the execs that this monitor did survive in stats
+                            stats["execs_done"] += monitor.execs_done
+
                 merge_cmdline = []
                 merge_cmdline.extend(cmdline)
 
@@ -1127,7 +1153,6 @@ def main(argv=None):
 
             if opts.stats:
                 stats["corpus_size"] = corpus_size
-                stats["next_auto_reduce"] = 0
                 if corpus_auto_reduce_threshold is not None:
                     stats["next_auto_reduce"] = corpus_auto_reduce_threshold
 
@@ -1153,6 +1178,10 @@ def main(argv=None):
 
             # Monitor is dead, mark it for restarts
             monitors[result] = None
+
+            if opts.stats:
+                # Make sure the execs that this monitor did survive in stats
+                stats["execs_done"] += monitor.execs_done
 
             print("Job %s terminated, processing results..." % result, file=sys.stderr)
 
