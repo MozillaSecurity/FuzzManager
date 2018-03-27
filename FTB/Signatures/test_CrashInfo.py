@@ -690,6 +690,18 @@ Crash|SIGSEGV|0x40|34
 0|2|libxul.so||||0x43ebda
 """
 
+lsanTraceLeakDetected = """
+=================================================================
+==6148==ERROR: LeakSanitizer: detected memory leaks
+
+The 1 top leak(s):
+Direct leak of 232 byte(s) in 1 object(s) allocated from:
+    #0 0x4c1c93 in malloc /builds/asan_malloc_linux.cc:88:3
+    #1 0x4f26fd in moz_xmalloc /builds/mozalloc.cpp:70:17
+    #2 0x7fe6cdf7081f in operator new /builds/mozalloc.h:156:12
+    #3 0x7fe6cdf7081f in mozilla::net::nsStandardURL::StartClone() /builds/nsStandardURL.cpp:2356
+"""
+
 
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
@@ -2674,6 +2686,20 @@ class MinidumpModuleInStackTest(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData([], [], config, minidumpSwrast.splitlines())
         self.assertEqual(crashInfo.backtrace[0], "??")
         self.assertEqual(crashInfo.backtrace[1], "swrast_dri.so+0x470ecc")
+
+
+class LSanParserTestLeakDetected(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, lsanTraceLeakDetected.splitlines())
+        self.assertEqual(crashInfo.createShortSignature(), ("LeakSanitizer: [@ malloc]"))
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "malloc")
+        self.assertEqual(crashInfo.backtrace[1], "moz_xmalloc")
+        self.assertEqual(crashInfo.backtrace[2], "operator new")
+        self.assertEqual(crashInfo.backtrace[3], "mozilla::net::nsStandardURL::StartClone")
+        self.assertIsNone(crashInfo.crashAddress)
 
 
 if __name__ == "__main__":
