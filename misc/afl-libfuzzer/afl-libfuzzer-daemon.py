@@ -50,6 +50,9 @@ RE_LIBFUZZER_NEWPC = re.compile(r"\s+NEW_PC:\s+0x")
 RE_LIBFUZZER_EXECS = re.compile(r"\s+exec/s: (\d+)\s+")
 RE_LIBFUZZER_RSS = re.compile(r"\s+rss: (\d+)Mb")
 
+# Used to set initialized to true, as the INITED message is not present with an empty corpus
+NO_CORPUS_MSG = "INFO: A corpus is not provided, starting from an empty corpus"
+
 
 class LibFuzzerMonitor(threading.Thread):
     def __init__(self, process, killOnOOM=True, mid=None, mqueue=None):
@@ -109,7 +112,7 @@ class LibFuzzerMonitor(threading.Thread):
             if not self.inTrace:
                 self.stderr.append(line)
 
-            if not self.inited and line.find("INITED cov") >= 0:
+            if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
                 self.inited = True
 
             if line.find("Test unit written to ") >= 0:
