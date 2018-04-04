@@ -907,6 +907,10 @@ def main(argv=None):
                     devnull = None
                 subprocess.check_call(cmdline, stdout=devnull, env=env)
 
+        if not os.listdir(updated_tests_dir):
+            print("Error: Merge returned empty result, refusing to upload.")
+            return 2
+
         # replace existing corpus with reduced corpus
         print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
         s3m.upload_corpus(updated_tests_dir, corpus_delete=True)
@@ -1146,6 +1150,10 @@ def main(argv=None):
                     if opts.debug:
                         devnull = None
                     subprocess.check_call(merge_cmdline, stdout=devnull, env=env)
+
+                if not os.listdir(new_corpus_dir):
+                    print("Error: Merge returned empty result, refusing to continue.")
+                    return 2
 
                 shutil.rmtree(corpus_dir)
                 shutil.move(new_corpus_dir, corpus_dir)
