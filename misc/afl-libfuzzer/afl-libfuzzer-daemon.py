@@ -193,7 +193,7 @@ def write_stats_file(outfile, fields, stats, warnings):
     @param warnings: Any textual warnings to write in addition to stats
     '''
 
-    max_keylen = max([len(x) for x in fields])
+    max_keylen = max(len(x) for x in fields)
 
     with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
         for field in fields:
