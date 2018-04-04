@@ -610,12 +610,14 @@ def main(argv=None):
                                         " and parameters related to operating libFuzzer/AFL within AWS and managing"
                                         " build, corpus and progress in S3.")
 
+    fmOrLocalGroup = mainGroup.add_mutually_exclusive_group()
+    fmOrLocalGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
+                                help="Use FuzzManager to submit crash results")
+    fmOrLocalGroup.add_argument("--local", dest="local", action='store_true',
+                                help="Don't submit crash results anywhere (default)")
+
     mainGroup.add_argument("--libfuzzer", dest="libfuzzer", action='store_true', help="Enable libFuzzer mode")
     mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
-    mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
-                           help="Use FuzzManager to submit crash results")
-    mainGroup.add_argument("--local", dest="local", action='store_true',
-                           help="Don't submit crash results anywhere (default)")
     mainGroup.add_argument("--debug", dest="debug", action='store_true',
                            help="Shows useful debug information (e.g. disables command output suppression)")
     mainGroup.add_argument("--stats", dest="stats",
