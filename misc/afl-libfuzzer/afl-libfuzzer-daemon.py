@@ -581,7 +581,7 @@ def test_binary_asan(bin_path):
 
     (stdout, _) = process.communicate()
 
-    if stdout.find(" __asan_init") >= 0 or stdout.find("__ubsan_default_options") >= 0:
+    if stdout.find(b" __asan_init") >= 0 or stdout.find(b"__ubsan_default_options") >= 0:
         return True
     return False
 
