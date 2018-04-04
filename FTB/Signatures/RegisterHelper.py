@@ -20,12 +20,16 @@ x64Registers = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8",
 armRegisters = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
                 "r10", "r11", "r12", "sp", "lr", "pc", "cpsr"]
 
+arm64Registers = ["x" + str(x) for x in range(0, 31)] + ["sp", "pc", "cpsr", "fpcsr", "fpcr"]
+
 x86OnlyRegisters = list(set(x86Registers + x64Registers) - set(armRegisters))
+armOnlyRegisters = list(set(armRegisters + arm64Registers) - set(x86OnlyRegisters))
 
 validRegisters = {
     "X86": x86Registers,
     "X64": x64Registers,
-    "ARM": armRegisters
+    "ARM": armRegisters,
+    "ARM64": arm64Registers
 }
 
 
@@ -101,6 +105,13 @@ def getRegisterValue(register, registerMap):
         if higherRegister in registerMap:
             return registerMap[higherRegister] & 0xFFFFFFFF
 
+    if register.startswith("w"):
+        # In this case, likely the lower 32-bit of a 64-bit ARM64
+        # register are requested, so we rewrite this similarly to x86-64.
+        higherRegister = register.replace("w", "x", 1)
+        if higherRegister in registerMap:
+            return registerMap[higherRegister] & 0xFFFFFFFF
+
     if len(register) == 2:
         # We're either requesting the lower 16 bit of a register (ax),
         # or higher/lower 8 bit of the lower 16 bit register (ah/al).
@@ -147,7 +158,7 @@ def getBitWidth(registerMap):
         @rtype: int
         @return: The bit width
     '''
-    if "rax" in registerMap:
+    if "rax" in registerMap or "x0" in registerMap:
         return 64
 
     return 32
@@ -165,6 +176,22 @@ def isX86Compatible(registerMap):
         @return: True if the architecture is X86 compatible, False otherwise
     '''
     for register in x86OnlyRegisters:
+        if register in registerMap:
+            return True
+    return False
+
+
+def isARMCompatible(registerMap):
+    '''
+        Return true, if the the given registers are either ARM or ARM64.
+
+        @type registerMap: map
+        @param registerMap: Map of register names to value
+
+        @rtype: bool
+        @return: True if the architecture is ARM/ARM64 compatible, False otherwise
+    '''
+    for register in armOnlyRegisters:
         if register in registerMap:
             return True
     return False

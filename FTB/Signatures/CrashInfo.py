@@ -1158,10 +1158,57 @@ class GDBCrashInfo(CrashInfo):
             else:
                 raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" %
                                    crashInstruction)
+        if RegisterHelper.isARMCompatible(registerMap):
+            # Anything that is not explicitly handled now is considered unsupported
+            failureReason = "Unsupported instruction in incomplete ARM/ARM64 support."
+
+            def getARMImmConst(val):
+                val = val.replace("#").strip()
+                if val.startswith("0x"):
+                    return int(val, 16)
+                return int(val)
+
+            def calculateARMDerefOpAddress(derefOp):
+                derefOps = derefOp.split(",")
+
+                if len(derefOps) > 2:
+                    return (None, "More than two deref operands found.")
+
+                offset = 0
+
+                if len(derefOps) == 2:
+                    offset = getARMImmConst(derefOps[1])
+
+                val = RegisterHelper.getRegisterValue(derefOps[0], registerMap)
+
+                # If we don't have the value, return None
+                if val is None:
+                    return (None, "Missing value for register %s " % derefOps[0])
+                else:
+                    if RegisterHelper.getBitWidth(registerMap) == 32:
+                        return (int(int32(uint32(offset)) + int32(uint32(val))), None)
+                    else:
+                        # Assume 64 bit width
+                        return (int(int64(uint64(offset)) + int64(uint64(val))), None)
+
+            if len(parts) == 1:
+                if instruction == ".inst" and parts[0].endswith("; undefined"):
+                    # This is an instruction that the dissassembler can't read, so likely a SIGILL
+                    return RegisterHelper.getInstructionPointer(registerMap)
+            elif len(parts) == 2:
+                if instruction.startswith("ldr") or instruction.startswith("str"):
+                    # Load/Store instruction
+                    match = re.match("^\s*\[(.*)\]$", parts[1])
+                    if match is not None:
+                        (result, reason) = calculateARMDerefOpAddress(match.group(1))
+                        if result is None:
+                            failureReason += " (%s)" % reason
+                        else:
+                            return result
         else:
             failureReason = "Architecture is not supported."
 
-        print("Unable to calculate crash address from instruction: %s " % crashInstruction, file=sys.stderr)
+        print("Unable to calculate crash address from instruction: >%s<" % crashInstruction, file=sys.stderr)
         print("Reason: %s" % failureReason, file=sys.stderr)
         return failureReason
 

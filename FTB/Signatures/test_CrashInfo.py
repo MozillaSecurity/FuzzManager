@@ -230,6 +230,20 @@ rbx            0x1      1
 => 0x812bf19 <js::types::TypeObject::addProperty(JSContext*, jsid, js::types::Property**)+121>: shrb   -0x69(%rdx,%rbx,8)
 """  # noqa
 
+gdbCrashAddress4 = """
+received signal SIGILL, Illegal instruction.
+0x000008ab336edd14 in ?? ()
+#0  0x000008ab336edd14 in ?? ()
+#1  0x0000000000554ac4 in Interpret (cx=0xffffffffcc20, state=...) at js/src/vm/Interpreter.cpp:2037
+x0	0x1	1
+sp	0xffffc780	281474976696192
+pc	0x3ef29d14	20513819893012
+cpsr	0x0	0
+fpcsr	void
+fpcr	0x0	0
+=> 0x8ab336edd14:	.inst	0xffff006c ; undefined
+"""  # noqa
+
 gdbSampleTrace1 = """
 [New Thread 14711]
 [Thread debugging using libthread_db enabled]
@@ -870,10 +884,12 @@ class GDBParserTestCrashAddress(unittest.TestCase):
         crashInfo1 = GDBCrashInfo([], gdbCrashAddress1.splitlines(), config)
         crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines(), config)
         crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
+        crashInfo4 = GDBCrashInfo([], gdbCrashAddress4.splitlines(), config)
 
         self.assertEqual(crashInfo1.crashAddress, 0x1)
-        self.assertEqual(crashInfo2.crashAddress, None)
+        self.assertEqual(crashInfo2.crashAddress, 0x0)
         self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0)
+        self.assertEqual(crashInfo4.crashAddress, 0x3ef29d14)
 
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
