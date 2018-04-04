@@ -1163,7 +1163,7 @@ class GDBCrashInfo(CrashInfo):
             failureReason = "Unsupported instruction in incomplete ARM/ARM64 support."
 
             def getARMImmConst(val):
-                val = val.replace("#").strip()
+                val = val.replace("#", "").strip()
                 if val.startswith("0x"):
                     return int(val, 16)
                 return int(val)
@@ -1191,11 +1191,23 @@ class GDBCrashInfo(CrashInfo):
                         # Assume 64 bit width
                         return (int(int64(uint64(offset)) + int64(uint64(val))), None)
 
+            # ARM assembly has nested comma-separated operands, so we need to merge
+            # those inside  brackets back together before proceeding.
+            for i in range(0, len(parts)):
+                if i >= len(parts):
+                    break
+                if "[" in parts[i] and "]" not in parts[i]:
+                    if i + 1 < len(parts):
+                        if "]" in parts[i + 1] and "[" not in parts[i + 1]:
+                            parts[i] += ", " + parts[i + 1]
+                            del parts[i + 1]
+
             if len(parts) == 1:
                 if instruction == ".inst" and parts[0].endswith("; undefined"):
                     # This is an instruction that the dissassembler can't read, so likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
             elif len(parts) == 2:
+                print(">%s< >%s<" % (instruction, parts))
                 if instruction.startswith("ldr") or instruction.startswith("str"):
                     # Load/Store instruction
                     match = re.match("^\s*\[(.*)\]$", parts[1])

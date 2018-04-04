@@ -244,6 +244,20 @@ fpcr	0x0	0
 => 0x8ab336edd14:	.inst	0xffff006c ; undefined
 """  # noqa
 
+gdbCrashAddress5 = """
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x0000000000b49798 in js::gc::TenuredCell::arena (this=<optimized out>) at /home/ubuntu/mozilla-central/js/src/gc/Cell.h:333
+x0	0x9f3f1da0	281473353457056
+x1	0x1d9540	7696583333184
+x2	0x87afa000	281472958177280
+sp	0xa0065000	281473366511616
+pc	0xb49798 <IsAboutToBeFinalizedInternal<JSObject>(JSObject**)+56>
+cpsr	0x20000000	536870912
+fpcsr	void
+fpcr	0x0	0
+=> 0xb49798 <IsAboutToBeFinalizedInternal<JSObject>(JSObject**)+56>:	ldrb	w2, [x2,#20]
+"""  # noqa
+
 gdbSampleTrace1 = """
 [New Thread 14711]
 [Thread debugging using libthread_db enabled]
@@ -885,11 +899,13 @@ class GDBParserTestCrashAddress(unittest.TestCase):
         crashInfo2 = GDBCrashInfo([], gdbCrashAddress2.splitlines(), config)
         crashInfo3 = GDBCrashInfo([], gdbCrashAddress3.splitlines(), config)
         crashInfo4 = GDBCrashInfo([], gdbCrashAddress4.splitlines(), config)
+        crashInfo5 = GDBCrashInfo([], gdbCrashAddress5.splitlines(), config)
 
         self.assertEqual(crashInfo1.crashAddress, 0x1)
         self.assertEqual(crashInfo2.crashAddress, 0x0)
         self.assertEqual(crashInfo3.crashAddress, 0xffffffffffffffa0)
         self.assertEqual(crashInfo4.crashAddress, 0x3ef29d14)
+        self.assertEqual(crashInfo5.crashAddress, 0x87afa014)
 
 
 class GDBParserTestCrashAddressSimple(unittest.TestCase):
