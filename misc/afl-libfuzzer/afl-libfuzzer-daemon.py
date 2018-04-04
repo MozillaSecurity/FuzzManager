@@ -25,12 +25,16 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from S3Manager import S3Manager
 
 import argparse
+import collections
 from fasteners import InterProcessLock
 import os
+import re
 import shutil
+from six.moves import queue
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import traceback
@@ -41,18 +45,37 @@ try:
 except ImportError:
     haveFFPuppet = False
 
+RE_LIBFUZZER_STATUS = re.compile(r"\s*#(\d+)\s+(INITED|NEW|RELOAD|REDUCE|pulse)\s+cov:")
+RE_LIBFUZZER_NEWPC = re.compile(r"\s+NEW_PC:\s+0x")
+RE_LIBFUZZER_EXECS = re.compile(r"\s+exec/s: (\d+)\s+")
+RE_LIBFUZZER_RSS = re.compile(r"\s+rss: (\d+)Mb")
+
+# Used to set initialized to true, as the INITED message is not present with an empty corpus
+NO_CORPUS_MSG = "INFO: A corpus is not provided, starting from an empty corpus"
+
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, process, killOnOOM=True):
+    def __init__(self, process, killOnOOM=True, mid=None, mqueue=None):
         threading.Thread.__init__(self)
 
         self.process = process
         self.fd = process.stderr
         self.trace = []
+        self.stderr = collections.deque([], 128)
         self.inTrace = False
         self.testcase = None
         self.killOnOOM = killOnOOM
+        self.hadOOM = False
         self.inited = False
+        self.mid = mid
+        self.mqueue = mqueue
+
+        # Keep some statistics
+        self.execs_done = 0
+        self.execs_per_sec = 0
+        self.rss_mb = 0
+        self.last_new = 0
+        self.last_new_pc = 0
 
     def run(self):
         while True:
@@ -61,7 +84,24 @@ class LibFuzzerMonitor(threading.Thread):
             if not line:
                 break
 
-            if self.inTrace:
+            status_match = RE_LIBFUZZER_STATUS.search(line)
+
+            if status_match:
+                self.execs_done = int(status_match.group(1))
+
+                if status_match.group(2) == "NEW":
+                    self.last_new = int(time.time())
+
+                exec_match = RE_LIBFUZZER_EXECS.search(line)
+                rss_match = RE_LIBFUZZER_RSS.search(line)
+
+                if exec_match:
+                    self.execs_per_sec = int(exec_match.group(1))
+                if rss_match:
+                    self.rss_mb = int(rss_match.group(1))
+            elif RE_LIBFUZZER_NEWPC.search(line):
+                self.last_new_pc = int(time.time())
+            elif self.inTrace:
                 self.trace.append(line.rstrip())
                 if line.find("==ABORTING") >= 0:
                     self.inTrace = False
@@ -69,7 +109,10 @@ class LibFuzzerMonitor(threading.Thread):
                 self.trace.append(line.rstrip())
                 self.inTrace = True
 
-            if not self.inited and line.find("INITED cov") >= 0:
+            if not self.inTrace:
+                self.stderr.append(line)
+
+            if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
                 self.inited = True
 
             if line.find("Test unit written to ") >= 0:
@@ -78,18 +121,36 @@ class LibFuzzerMonitor(threading.Thread):
             # libFuzzer sometimes hangs on out-of-memory. Kill it
             # right away if we detect this situation.
             if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
+                self.hadOOM = True
                 self.process.kill()
 
             # Pass-through output
-            sys.stderr.write(line)
+            if self.mid is not None:
+                sys.stderr.write("[Job %s] %s" % (self.mid, line))
+            else:
+                sys.stderr.write(line)
 
         self.fd.close()
+
+        if self.mqueue is not None:
+            self.mqueue.put(self.mid)
 
     def getASanTrace(self):
         return self.trace
 
     def getTestcase(self):
         return self.testcase
+
+    def getStderr(self):
+        return list(self.stderr)
+
+    def terminate(self):
+        # Avoid sending anything through the queue when the run() loop exits
+        self.mqueue = None
+
+        # TODO: This might need a timeout/kill logic
+        self.process.terminate()
+        self.process.wait()
 
 
 def command_file_to_list(cmd_file):
@@ -115,7 +176,44 @@ def command_file_to_list(cmd_file):
     return test_idx, cmdline
 
 
-def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
+def write_stats_file(outfile, fields, stats, warnings):
+    '''
+    Write the given stats data to the specified file
+
+    @type outfile: str
+    @param outfile: Output file for statistics
+
+    @type fields: list
+    @param fields: The list of fields to write out (defines the order as well)
+
+    @type stats: dict
+    @param stats: The dictionary containing the actual data
+
+    @type warnings: list
+    @param warnings: Any textual warnings to write in addition to stats
+    '''
+
+    max_keylen = max(len(x) for x in fields)
+
+    with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
+        for field in fields:
+            if field not in stats:
+                continue
+
+            val = stats[field]
+
+            if isinstance(val, list):
+                val = " ".join(val)
+
+            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+
+        for warning in warnings:
+            f.write(warning)
+
+    return
+
+
+def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     '''
     Generate aggregated statistics from the given base directories
     and write them to the specified output file.
@@ -149,6 +247,13 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
 
     # Which fields should be aggregated by max
     wanted_fields_max = ['last_path']
+
+    # Generate total list of fields to write
+    fields = []
+    fields.extend(wanted_fields_total)
+    fields.extend(wanted_fields_mean)
+    fields.extend(wanted_fields_all)
+    fields.extend(wanted_fields_max)
 
     # Warnings to include
     warnings = list()
@@ -231,30 +336,107 @@ def write_aggregated_stats(base_dirs, outfile, cmdline_path=None):
         warnings.append("WARNING: Unreported crashes detected (%d)\n" % failed_reports)
 
     # Write out data
+    return write_stats_file(outfile, fields, aggregated_stats, warnings)
+
+
+def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
+    '''
+    Generate aggregated statistics for the given overall libfuzzer stats and the individual monitors.
+    Results are written to the specified output file.
+
+    @type outfile: str
+    @param outfile: Output file for aggregated statistics
+
+    @type stats: dict
+    @param stats: Dictionary containing overall stats
+
+    @type monitors: list
+    @param monitors: A list of LibFuzzerMonitor instances
+
+    @type warnings: list
+    @param warnings: Any textual warnings to write in addition to stats
+    '''
+
+    # Which fields to add
+    wanted_fields_total = [
+        'execs_done',
+        'execs_per_sec',
+        'rss_mb',
+        'corpus_size',
+        'next_auto_reduce',
+        'crashes',
+        'timeouts',
+        'ooms'
+    ]
+
+    # Which fields to aggregate by mean
+    wanted_fields_mean = []
+
+    # Which fields should be displayed per fuzzer instance
+    wanted_fields_all = []
+
+    # Which fields should be aggregated by max
+    wanted_fields_max = ['last_new', 'last_new_pc']
+
+    # This is a list of fields mentioned in one of the lists above already,
+    # that should *additionally* also be aggregated with the global state.
+    # Only supported for total and max aggregation.
+    wanted_fields_global_aggr = [
+        'execs_done',
+        'last_new',
+        'last_new_pc'
+    ]
+
+    # Generate total list of fields to write
     fields = []
     fields.extend(wanted_fields_total)
     fields.extend(wanted_fields_mean)
     fields.extend(wanted_fields_all)
     fields.extend(wanted_fields_max)
 
-    max_keylen = max([len(x) for x in fields])
+    aggregated_stats = {}
 
-    with InterProcessLock(outfile + ".lock"), open(outfile, 'w') as f:
-        for field in fields:
-            if field not in aggregated_stats:
-                continue
+    for field in wanted_fields_total:
+        if hasattr(monitors[0], field):
+            aggregated_stats[field] = 0
+            for monitor in monitors:
+                aggregated_stats[field] += getattr(monitor, field)
+            if field in wanted_fields_global_aggr:
+                aggregated_stats[field] += stats[field]
+        else:
+            # Assume global field
+            aggregated_stats[field] = stats[field]
 
-            val = aggregated_stats[field]
+    for field in wanted_fields_mean:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = 0
+        for monitor in monitors:
+            aggregated_stats[field] += getattr(monitor, field)
+        aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
 
-            if isinstance(val, list):
-                val = " ".join(val)
+    for field in wanted_fields_all:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = []
+        for monitor in monitors:
+            aggregated_stats[field].append(getattr(monitor, field))
 
-            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+    for field in wanted_fields_max:
+        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+        aggregated_stats[field] = 0
+        for monitor in monitors:
+            val = getattr(monitor, field)
+            if val > aggregated_stats[field]:
+                aggregated_stats[field] = val
+        if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
+            aggregated_stats[field] = stats[field]
 
-        for warning in warnings:
-            f.write(warning)
+    for field in wanted_fields_global_aggr:
+        # Write aggregated stats back into the global stats for max fields
+        if field in wanted_fields_max:
+            stats[field] = aggregated_stats[field]
 
-    return
+    # Write out data
+    return write_stats_file(outfile, fields, aggregated_stats, warnings)
 
 
 def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
@@ -389,6 +571,21 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     return (ffp, cmd, env)
 
 
+def test_binary_asan(bin_path):
+    process = subprocess.Popen(
+        ["nm", "-g", bin_path],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+
+    (stdout, _) = process.communicate()
+
+    if stdout.find(b" __asan_init") >= 0 or stdout.find(b"__ubsan_default_options") >= 0:
+        return True
+    return False
+
+
 def main(argv=None):
     '''Command line options.'''
 
@@ -413,12 +610,18 @@ def main(argv=None):
                                         " and parameters related to operating libFuzzer/AFL within AWS and managing"
                                         " build, corpus and progress in S3.")
 
+    fmOrLocalGroup = mainGroup.add_mutually_exclusive_group()
+    fmOrLocalGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
+                                help="Use FuzzManager to submit crash results")
+    fmOrLocalGroup.add_argument("--local", dest="local", action='store_true',
+                                help="Don't submit crash results anywhere (default)")
+
     mainGroup.add_argument("--libfuzzer", dest="libfuzzer", action='store_true', help="Enable libFuzzer mode")
     mainGroup.add_argument("--aflfuzz", dest="aflfuzz", action='store_true', help="Enable AFL mode")
-    mainGroup.add_argument("--fuzzmanager", dest="fuzzmanager", action='store_true',
-                           help="Use FuzzManager to submit crash results")
     mainGroup.add_argument("--debug", dest="debug", action='store_true',
                            help="Shows useful debug information (e.g. disables command output suppression)")
+    mainGroup.add_argument("--stats", dest="stats",
+                           help="Collect aggregated statistics in specified file", metavar="FILE")
 
     s3Group.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                          help="Use S3 to synchronize queues")
@@ -452,6 +655,12 @@ def main(argv=None):
     libfGroup.add_argument('--cmd', dest='cmd', action='store_true', help="Command with parameters to run")
     libfGroup.add_argument("--libfuzzer-restarts", dest="libfuzzer_restarts", type=int,
                            help="Maximum number of restarts to do with libFuzzer", metavar="COUNT")
+    libfGroup.add_argument("--libfuzzer-instances", dest="libfuzzer_instances", type=int, default=1,
+                           help="Number of parallel libfuzzer instances to run", metavar="COUNT")
+    libfGroup.add_argument("--libfuzzer-auto-reduce", dest="libfuzzer_auto_reduce", type=int,
+                           help="Auto-reduce the corpus once it has grown by this percentage", metavar="PERCENT")
+    libfGroup.add_argument("--libfuzzer-auto-reduce-min", dest="libfuzzer_auto_reduce_min", type=int, default=1000,
+                           help="Minimum corpus size for auto-reduce to apply.", metavar="COUNT")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -496,14 +705,26 @@ def main(argv=None):
     aflGroup.add_argument("--afl-binary-dir", dest="aflbindir", help="Path to the AFL binary directory to use",
                           metavar="DIR")
     aflGroup.add_argument("--afl-stats", dest="aflstats",
-                          help="Collect aggregated statistics while scanning output directories", metavar="FILE")
+                          help="Deprecated, use --stats instead", metavar="FILE")
     aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
+
+    def warn_local():
+        if not opts.fuzzmanager and not opts.local:
+            # User didn't specify --fuzzmanager but also didn't specify --local explicitly, so we should warn them
+            # that their crash results won't end up anywhere except on the local machine. This method is called for
+            # AFL and libFuzzer separately whenever it is determined that the user is running fuzzing locally.
+            print("Warning: You are running in local mode, crashes won't be submitted anywhere...", file=sys.stderr)
+            time.sleep(2)
 
     if not argv:
         parser.print_help()
         return 2
 
     opts = parser.parse_args(argv)
+
+    if opts.aflstats:
+        print("Error: --afl-stats is deprecated, use --stats instead.", file=sys.stderr)
+        time.sleep(2)
 
     if not opts.libfuzzer and not opts.aflfuzz:
         # For backwards compatibility, --aflfuzz is the default if nothing else is specified.
@@ -686,6 +907,10 @@ def main(argv=None):
                     devnull = None
                 subprocess.check_call(cmdline, stdout=devnull, env=env)
 
+        if not os.listdir(updated_tests_dir):
+            print("Error: Merge returned empty result, refusing to upload.")
+            return 2
+
         # replace existing corpus with reduced corpus
         print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
         s3m.upload_corpus(updated_tests_dir, corpus_delete=True)
@@ -724,6 +949,39 @@ def main(argv=None):
         if configuration is None:
             print("Error: Failed to load program configuration based on binary", file=sys.stderr)
             return 2
+
+        # Build our libFuzzer command line. We add certain parameters automatically for convenience.
+        cmdline = []
+        cmdline.extend(opts.rargs)
+        cmdline_add_args = []
+        if test_binary_asan(binary):
+            # With ASan, we always want to disable the internal signal handlers libFuzzer uses.
+            cmdline_add_args.extend([
+                "-handle_segv=0",
+                "-handle_bus=0",
+                "-handle_abrt=0",
+                "-handle_ill=0",
+                "-handle_fpe=0"
+            ])
+        else:
+            # We currently don't support non-ASan binaries because the logic in LibFuzzerMonitor
+            # expects an ASan trace on crash and CrashInfo doesn't parse internal libFuzzer traces.
+            print("Error: This wrapper currently only supports binaries built with AddressSanitizer.", file=sys.stderr)
+            return 2
+
+        for arg in cmdline:
+            if arg.startswith("-jobs=") or arg.startswith("-workers="):
+                print("Error: Using -jobs and -workers is incompatible with this wrapper.", file=sys.stderr)
+                print("       You can use --libfuzzer-instances to run multiple instances instead.", file=sys.stderr)
+                return 2
+
+        # Used by statistics and useful in general
+        cmdline_add_args.append("-print_pcs=1")
+
+        # Append args if they don't exist already
+        for arg in cmdline_add_args:
+            if arg not in cmdline:
+                cmdline.append(arg)
 
         env = {}
         if opts.env:
@@ -771,8 +1029,31 @@ def main(argv=None):
             print("Error: Failed to find a corpus directory on command line.", file=sys.stderr)
             return 2
 
+        # At this point we know that we will be running libFuzzer locally
+        warn_local()
+
         # Memorize the original corpus, so we can exclude it from uploading later
         original_corpus = set(os.listdir(corpus_dir))
+
+        corpus_auto_reduce_threshold = None
+        corpus_auto_reduce_ratio = None
+        if opts.libfuzzer_auto_reduce is not None:
+            if opts.libfuzzer_auto_reduce < 5:
+                print("Error: Auto reduce threshold should at least be 5%.", file=sys.stderr)
+                return 2
+
+            corpus_auto_reduce_ratio = float(opts.libfuzzer_auto_reduce) / float(100)
+
+            if len(original_corpus) >= opts.libfuzzer_auto_reduce_min:
+                corpus_auto_reduce_threshold = int(len(original_corpus) * (1 + corpus_auto_reduce_ratio))
+            else:
+                # Corpus is smaller than --libfuzzer-auto-reduce-min specifies, so we calculate
+                # the threshold based on that value in combination with the ratio instead, initially.
+                corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min * (1 + corpus_auto_reduce_ratio))
+
+            if corpus_auto_reduce_threshold <= len(original_corpus):
+                print("Error: Invalid auto reduce threshold specified.", file=sys.stderr)
+                return 2
 
         # Write a cmdline file, similar to what our AFL fork does
         with open("cmdline", 'w') as fd:
@@ -781,50 +1062,203 @@ def main(argv=None):
                 if not os.path.isdir(rarg):
                     print(rarg, file=fd)
 
+        monitors = [None] * opts.libfuzzer_instances
+        monitor_queue = queue.Queue()
+
+        # Keep track how often we crash to abort in certain situations
+        crashes_per_minute_interval = 0
+        crashes_per_minute = 0
+
+        # Global stats
+        stats = {
+            "crashes": 0,
+            "crashes_per_minute": 0,
+            "timeouts": 0,
+            "ooms": 0,
+            "corpus_size": len(original_corpus),
+            "execs_done": 0,
+            "last_new": 0,
+            "last_new_pc": 0,
+            "next_auto_reduce": 0
+        }
+
         while True:
-            if restarts is not None:
-                restarts -= 1
-                if restarts < 0:
-                    break
+            if restarts is not None and restarts < 0 and all(x is None for x in monitors):
+                print("Run completed.", file=sys.stderr)
+                break
 
-            process = subprocess.Popen(
-                opts.rargs,
-                # stdout=None,
-                stderr=subprocess.PIPE,
-                env=env,
-                universal_newlines=True
-            )
+            # Check if we need to (re)start any monitors
+            for i in range(len(monitors)):
+                if monitors[i] is None:
+                    if restarts is not None:
+                        restarts -= 1
+                        if restarts < 0:
+                            break
 
-            monitor = LibFuzzerMonitor(process)
-            monitor.start()
+                    process = subprocess.Popen(
+                        cmdline,
+                        # stdout=None,
+                        stderr=subprocess.PIPE,
+                        env=env,
+                        universal_newlines=True
+                    )
 
-            while True:
-                monitor.join(10)
-                if not monitor.is_alive():
-                    break
+                    monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
+                    monitors[i].start()
 
-                # Only upload new corpus files every 10 minutes
-                if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
-                    s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
-                    last_queue_upload = int(time.time())
+            corpus_size = None
+            if corpus_auto_reduce_threshold is not None or opts.stats:
+                # We need the corpus size for stats and the auto reduce feature,
+                # so we cache it here to avoid running listdir multiple times.
+                corpus_size = len(os.listdir(corpus_dir))
 
-                    # Pull down queue files from other queues directly into the corpus
-                    s3m.download_libfuzzer_queues(corpus_dir)
+            if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
+                print("Preparing automated merge...", file=sys.stderr)
 
-            if not monitor.inited:
-                print("Process did not startup correctly, aborting...", file=sys.stderr)
-                return 2
+                # Time to Auto-reduce
+                for i in range(len(monitors)):
+                    monitor = monitors[i]
+                    if monitor is not None:
+                        monitor.terminate()
+                        monitor.join(30)
+                        if monitor.is_alive():
+                            raise RuntimeError("Monitor refusing to stop.")
 
-            print("Process terminated, processing results...", file=sys.stderr)
+                        # Indicate that this monitor is dead, so it is restarted later on
+                        monitors[i] = None
+
+                        if opts.stats:
+                            # Make sure the execs that this monitor did survive in stats
+                            stats["execs_done"] += monitor.execs_done
+
+                merge_cmdline = []
+                merge_cmdline.extend(cmdline)
+
+                # Filter all directories on the command line, these are likely corpus dirs
+                merge_cmdline = [x for x in merge_cmdline if not os.path.isdir(x)]
+
+                # Filter out other stuff we don't want for merging
+                merge_cmdline = [x for x in merge_cmdline if not x.startswith("-dict=")]
+
+                new_corpus_dir = tempfile.mkdtemp(prefix="fm-libfuzzer-automerge-")
+                merge_cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
+
+                print("Running automated merge...", file=sys.stderr)
+                with open(os.devnull, 'w') as devnull:
+                    env = os.environ.copy()
+                    env['LD_LIBRARY_PATH'] = os.path.dirname(merge_cmdline[0])
+                    if opts.debug:
+                        devnull = None
+                    subprocess.check_call(merge_cmdline, stdout=devnull, env=env)
+
+                if not os.listdir(new_corpus_dir):
+                    print("Error: Merge returned empty result, refusing to continue.")
+                    return 2
+
+                shutil.rmtree(corpus_dir)
+                shutil.move(new_corpus_dir, corpus_dir)
+
+                # Update our auto-reduction target
+                corpus_auto_reduce_threshold = int(len(os.listdir(corpus_dir)) * (1 + corpus_auto_reduce_ratio))
+
+                # Continue, our instances will be restarted with the next loop
+                continue
+
+            if opts.stats:
+                stats["corpus_size"] = corpus_size
+                if corpus_auto_reduce_threshold is not None:
+                    stats["next_auto_reduce"] = corpus_auto_reduce_threshold
+
+                write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
+
+            # Only upload new corpus files every 10 minutes
+            if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
+                s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
+                last_queue_upload = int(time.time())
+
+                # Pull down queue files from other queues directly into the corpus
+                s3m.download_libfuzzer_queues(corpus_dir)
+
+            try:
+                result = monitor_queue.get(True, 10)
+            except queue.Empty:
+                continue
+
+            monitor = monitors[result]
+            monitor.join(10)
+            if monitor.is_alive():
+                raise RuntimeError("Monitor still alive although it signaled termination.")
+
+            # Monitor is dead, mark it for restarts
+            monitors[result] = None
+
+            if opts.stats:
+                # Make sure the execs that this monitor did survive in stats
+                stats["execs_done"] += monitor.execs_done
+
+            print("Job %s terminated, processing results..." % result, file=sys.stderr)
 
             trace = monitor.getASanTrace()
             testcase = monitor.getTestcase()
+            stderr = monitor.getStderr()
+
+            if not monitor.inited and not trace:
+                print("Process did not startup correctly, aborting...", file=sys.stderr)
+                return 2
+
+            # libFuzzer can exit due to OOM with and without a testcase.
+            # The case of having an OOM with a testcase is handled further below.
+            if not testcase and monitor.hadOOM:
+                stats["ooms"] += 1
+                continue
 
             # Don't bother sending stuff to the server with neither trace nor testcase
             if not trace and not testcase:
                 continue
 
-            crashInfo = CrashInfo.fromRawCrashData([], [], configuration, auxCrashData=trace)
+            # Ignore slow units and oom files
+            if testcase is not None:
+                if testcase.startswith("slow-unit-"):
+                    continue
+                if testcase.startswith("oom-"):
+                    stats["ooms"] += 1
+                    continue
+                if testcase.startswith("timeout-"):
+                    stats["timeouts"] += 1
+                    continue
+
+            stats["crashes"] += 1
+
+            if int(time.time()) - crashes_per_minute_interval > 60:
+                crashes_per_minute_interval = int(time.time())
+                crashes_per_minute = 0
+            crashes_per_minute += 1
+            stats["crashes_per_minute"] = crashes_per_minute
+
+            if crashes_per_minute >= 10:
+                print("Too many frequent crashes, exiting...", file=sys.stderr)
+
+                if opts.stats:
+                    # If statistics are reported to EC2SpotManager, this helps us to see
+                    # when fuzzing has become impossible due to excessive crashes.
+                    warning = "Fuzzing terminated due to excessive crashes."
+                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                break
+
+            if not monitor.inited:
+                print("Process crashed at startup, aborting...", file=sys.stderr)
+                if opts.stats:
+                    # If statistics are reported to EC2SpotManager, this helps us to see
+                    # when fuzzing has become impossible due to excessive crashes.
+                    warning = "Fuzzing did not startup correctly."
+                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                return 2
+
+            # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
+            if not opts.fuzzmanager:
+                continue
+
+            crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
 
             (sigfile, metadata) = collector.search(crashInfo)
 
@@ -840,10 +1274,6 @@ def main(argv=None):
                 collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
                 collector.submit(crashInfo, testcase)
                 print("Successfully submitted crash.", file=sys.stderr)
-
-            if signature_repeat_count >= 10:
-                print("Too many crashes with the same signature, exiting...", file=sys.stderr)
-                break
 
         return 0
 
@@ -912,6 +1342,10 @@ def main(argv=None):
 
         if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
             last_queue_upload = 0
+
+            # If we reach this point, we know that AFL will be running on this machine, so do the local warning check
+            warn_local()
+
             while True:
                 if opts.fuzzmanager:
                     for afl_out_dir in afl_out_dirs:
@@ -923,8 +1357,8 @@ def main(argv=None):
                         s3m.upload_afl_queue_dir(afl_out_dir, new_cov_only=True)
                     last_queue_upload = int(time.time())
 
-                if opts.aflstats:
-                    write_aggregated_stats(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
+                if opts.stats or opts.aflstats:
+                    write_aggregated_stats_afl(afl_out_dirs, opts.aflstats, cmdline_path=opts.custom_cmdline_file)
 
                 time.sleep(10)
 
