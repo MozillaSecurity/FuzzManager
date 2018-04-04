@@ -22,8 +22,10 @@ after_success:
     - codecov -X gcov
 deploy:
     provider: pypi
-    user: truber
+    distributions: sdist bdist_wheel
+    user: mozillasecurity
     password:
-        secure: Mu/+/+tbRRSNv2vHYrkOtjm9yCQl9luvdR3M7vq4BOEXd1NEZWR/sHpxOnV97QHINpGqQurUkHE8osrUBCXGkid2G/83HCkCmdwJ53PAdR+ddqz3TPeFX4EsW9j0YuiSABp9Em9EJ1LhIbUAo88GfY55xr1jPS0EaNS1bB8L5Yo=
+        secure: P/ws7hKzyRQoH6+wPcTLom4oSlD5iarAS4C9c4JUiWDjM1530/FitJkuiSsKb7x9m2K+pqskc/lI5n45O55HPjNjunieCpNn5n/UxhCLUzp54J6HUltKBrxQO2uZlmdYXlXSw2jaaWezXc3tL6cpi5yNNpGJp9d8SUPyx06eGNU=
     on:
         tags: true
+        python: 2.7
