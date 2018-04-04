@@ -8,7 +8,7 @@ flake8==3.5.0
 laniakea==0.8
 numpy==1.13.3
 pylint==1.8.3
-pytest==3.5.0
+pytest==3.4.2
 requests==2.18.4
 six==1.11.0
 pytest-flake8==1.0.0
