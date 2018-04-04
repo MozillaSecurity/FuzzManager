@@ -45,7 +45,7 @@ try:
 except ImportError:
     haveFFPuppet = False
 
-RE_LIBFUZZER_STATUS = re.compile(r"\s*#(\d+)\s+(INITED|NEW|RELOAD|pulse)\s+cov:")
+RE_LIBFUZZER_STATUS = re.compile(r"\s*#(\d+)\s+(INITED|NEW|RELOAD|REDUCE|pulse)\s+cov:")
 RE_LIBFUZZER_NEWPC = re.compile(r"\s+NEW_PC:\s+0x")
 RE_LIBFUZZER_EXECS = re.compile(r"\s+exec/s: (\d+)\s+")
 RE_LIBFUZZER_RSS = re.compile(r"\s+rss: (\d+)Mb")
