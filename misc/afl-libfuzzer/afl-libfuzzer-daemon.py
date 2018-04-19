@@ -649,6 +649,9 @@ def main(argv=None):
     s3Group.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
     s3Group.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket",
                          metavar="NAME")
+    s3Group.add_argument("--build-project", dest="build_project",
+                         help="If specified, this overrides --project for fetching the build from S3.",
+                         metavar="NAME")
 
     libfGroup.add_argument('--env', dest='env', nargs='+', type=str,
                            help="List of environment variables in the form 'KEY=VALUE'")
@@ -754,7 +757,7 @@ def main(argv=None):
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
 
-        s3m = S3Manager(opts.s3_bucket, opts.project)
+        s3m = S3Manager(opts.s3_bucket, opts.project, opts.build_project)
 
     if opts.s3_queue_status:
         status_data = s3m.get_queue_status()

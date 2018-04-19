@@ -31,7 +31,7 @@ import time
 
 
 class S3Manager():
-    def __init__(self, bucket_name, project_name):
+    def __init__(self, bucket_name, project_name, build_project_name=None):
         '''
         @type bucket_name: String
         @param bucket_name: Name of the S3 bucket to use
@@ -44,6 +44,7 @@ class S3Manager():
         '''
         self.bucket_name = bucket_name
         self.project_name = project_name
+        self.build_project_name = build_project_name
 
         self.connection = S3Connection()
         self.bucket = self.connection.get_bucket(self.bucket_name)
@@ -51,7 +52,11 @@ class S3Manager():
         # Define some path constants that define the folder structure on S3
         self.remote_path_queues = "%s/queues/" % self.project_name
         self.remote_path_corpus = "%s/corpus/" % self.project_name
-        self.remote_path_build = "%s/build.zip" % self.project_name
+
+        if self.build_project_name:
+            self.remote_path_build = "%s/build.zip" % self.build_project_name
+        else:
+            self.remote_path_build = "%s/build.zip" % self.project_name
 
         # Memorize which files we have uploaded before, so we never attempt to
         # re-upload them to a different queue.
