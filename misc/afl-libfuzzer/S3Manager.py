@@ -479,4 +479,8 @@ class S3Manager():
             remote_key = Key(self.bucket)
             remote_key.name = remote_path + os.path.basename(upload_file)
             print("Uploading file %s -> %s" % (upload_file, remote_key.name))
-            remote_key.set_contents_from_filename(upload_file)
+            try:
+                remote_key.set_contents_from_filename(upload_file)
+            except IOError:
+                # Newer libFuzzer can delete files from the corpus if it finds a shorter version in the same run.
+                pass
