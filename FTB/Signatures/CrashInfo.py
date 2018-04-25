@@ -71,7 +71,7 @@ class CrashInfo():
         buf.append("")
 
         if self.crashAddress:
-            buf.append("Crash address: %s" % self.crashAddress)
+            buf.append("Crash address: 0x%x" % self.crashAddress)
 
         if self.crashInstruction:
             buf.append("Crash instruction: %s" % self.crashInstruction)
