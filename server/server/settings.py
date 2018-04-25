@@ -11,12 +11,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from __future__ import print_function
 import os
-import sys
 from django.conf import global_settings  # noqa
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
-sys.path += [FTB_PATH]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
