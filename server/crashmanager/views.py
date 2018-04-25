@@ -868,6 +868,10 @@ def optimizeSignature(request, sigid):
                 if otherBucket.pk == bucket.pk:
                     continue
 
+                if bucket.bug and otherBucket.bug and bucket.bug.pk == otherBucket.bug.pk:
+                    # Allow matches in other buckets if they are both linked to the same bug
+                    continue
+
                 if otherBucket.pk not in firstEntryPerBucketCache:
                     c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
                     c = CrashEntry.deferRawFields(c, requiredOutputs)
