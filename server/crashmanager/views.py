@@ -831,7 +831,7 @@ def optimizeSignature(request, sigid):
 
     # Get all unbucketed entries for that user, respecting the tools filter though
     entries = CrashEntry.objects.filter(bucket=None).order_by('-id').select_related("platform", "product", "os", "tool")
-    entries = filter_crash_entries_by_toolfilter(request, entries)
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
     signature = bucket.getSignature()
     if signature.matchRequiresTest():
