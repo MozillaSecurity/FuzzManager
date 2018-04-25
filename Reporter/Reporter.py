@@ -20,7 +20,6 @@ from abc import ABCMeta
 import functools
 import os
 import platform
-import sys
 import time
 
 import requests
@@ -28,8 +27,6 @@ import six
 
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
-sys.path += [FTB_PATH]
 
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 

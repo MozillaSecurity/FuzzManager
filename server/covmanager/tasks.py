@@ -1,11 +1,9 @@
 from django.conf import settings  # noqa
 import os
-import sys
 
 # Add the server basedir to PYTHONPATH so Celery on the command line
 # can find the Django settings imports and packages properly
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-sys.path += [os.path.abspath(os.path.join(BASE_DIR, ".."))]
 
 from celeryconf import app  # noqa
 
