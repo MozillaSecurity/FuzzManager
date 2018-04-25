@@ -28,6 +28,11 @@ class BugzillaREST():
         self.api_key = api_key
         self.authToken = None
 
+        # If we have no username, no API key but a password, switch API key and password
+        if username is None and api_key is None and password is not None:
+            self.api_key = password
+            self.password = None
+
         # The field to submit authentication information in depends on which
         # method we use (username/password means we need to use token, with
         # API key we can use the api_key field directly).
