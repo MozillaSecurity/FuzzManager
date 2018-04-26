@@ -13,6 +13,7 @@ from __future__ import print_function
 import os
 import sys
 from django.conf import global_settings  # noqa
+from django.urls import reverse
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -71,10 +72,11 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     #'django.contrib.auth.middleware.RemoteUserMiddleware',
+    'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
 )
 
@@ -122,6 +124,16 @@ ROOT_URLCONF = 'server.urls'
 
 WSGI_APPLICATION = 'server.wsgi.application'
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "https://www.mozilla.org/"
+LOGIN_REQUIRED_URLS_EXCEPTIONS = (
+    r'/login/.*',
+    r'/logout/.*',
+    r'/ec2spotmanager/rest/.*',
+    r'/covmanager/rest/.*',
+    r'/crashmanager/rest/.*',
+)
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases

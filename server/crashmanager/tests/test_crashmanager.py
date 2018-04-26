@@ -36,7 +36,7 @@ class CrashManagerTests(TestCase):
         """Logout url actually logs us out"""
         self.client.login(username='test', password='test')
         self.assertEqual(self.client.get(reverse('crashmanager:crashes')).status_code, requests.codes['ok'])
-        response = self.client.get(reverse('crashmanager:logout'))
+        response = self.client.get(reverse('logout'))
         log.debug(response)
         response = self.client.get('/')
         log.debug(response)

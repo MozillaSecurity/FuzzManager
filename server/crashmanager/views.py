@@ -1,7 +1,5 @@
 from collections import OrderedDict
 from datetime import timedelta
-from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F, Q
@@ -100,11 +98,6 @@ def renderError(request, err):
     return render(request, 'error.html', {'error_message': err})
 
 
-def logout_view(request):
-    logout(request)
-    return redirect('crashmanager:index')
-
-
 def paginate_requested_list(request, entries):
     page_size = request.GET.get('page_size')
     if not page_size:
@@ -133,12 +126,10 @@ def paginate_requested_list(request, entries):
     return page_entries
 
 
-@login_required(login_url='/login/')
 def index(request):
     return redirect('crashmanager:crashes')
 
 
-@login_required(login_url='/login/')
 def stats(request):
     lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
@@ -166,12 +157,10 @@ def stats(request):
     return render(request, 'stats.html', {'total_reports_per_hour': len(entries), 'frequentBuckets': frequentBuckets})
 
 
-@login_required(login_url='/login/')
 def settings(request):
     return render(request, 'settings.html')
 
 
-@login_required(login_url='/login/')
 def allSignatures(request):
     entries = Bucket.objects.annotate(size=Count('crashentry'),
                                       quality=Min('crashentry__testcase__quality')).order_by('-id')
@@ -180,7 +169,6 @@ def allSignatures(request):
     return render(request, 'signatures/index.html', {'isAll': True, 'siglist': entries})
 
 
-@login_required(login_url='/login/')
 def watchedSignatures(request):
     # for this user, list watches
     # buckets   sig       new crashes   remove
@@ -218,7 +206,6 @@ def watchedSignatures(request):
     return render(request, 'signatures/watch.html', {'siglist': buckets})
 
 
-@login_required(login_url='/login/')
 def deleteBucketWatch(request, sigid):
     user = User.get_or_create_restricted(request.user)[0]
 
@@ -233,7 +220,6 @@ def deleteBucketWatch(request, sigid):
         raise SuspiciousOperation()
 
 
-@login_required(login_url='/login/')
 def newBucketWatch(request):
     if request.method == 'POST':
         user = User.get_or_create_restricted(request.user)[0]
@@ -250,7 +236,6 @@ def newBucketWatch(request):
     raise SuspiciousOperation()
 
 
-@login_required(login_url='/login/')
 def bucketWatchCrashes(request, sigid):
     user = User.get_or_create_restricted(request.user)[0]
     bucket = get_object_or_404(Bucket, pk=sigid)
@@ -266,7 +251,6 @@ def bucketWatchCrashes(request, sigid):
     return render(request, 'crashes/index.html', data)
 
 
-@login_required(login_url='/login/')
 def signatures(request):
     entries = Bucket.objects.all().order_by('-id')
 
@@ -320,7 +304,6 @@ def signatures(request):
     return render(request, 'signatures/index.html', data)
 
 
-@login_required(login_url='/login/')
 def crashes(request, ignore_toolfilter=False):
     filters = {}
     q = None
@@ -385,7 +368,6 @@ def crashes(request, ignore_toolfilter=False):
     return render(request, 'crashes/index.html', data)
 
 
-@login_required(login_url='/login/')
 def queryCrashes(request):
     query = None
     entries = None
@@ -422,7 +404,6 @@ def queryCrashes(request):
     return render(request, 'crashes/index.html', data)
 
 
-@login_required(login_url='/login/')
 def autoAssignCrashEntries(request):
     entries = CrashEntry.objects.filter(bucket=None).select_related('product', 'platform', 'os', 'testcase')
     buckets = Bucket.objects.all()
@@ -453,7 +434,6 @@ def autoAssignCrashEntries(request):
     return redirect('crashmanager:crashes')
 
 
-@login_required(login_url='/login/')
 def viewCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -465,7 +445,6 @@ def viewCrashEntry(request, crashid):
     return render(request, 'crashes/view.html', {'entry': entry})
 
 
-@login_required(login_url='/login/')
 def editCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -504,7 +483,6 @@ def editCrashEntry(request, crashid):
         return render(request, 'crashes/edit.html', {'entry': entry})
 
 
-@login_required(login_url='/login/')
 def deleteCrashEntry(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -603,7 +581,6 @@ def __handleSignaturePost(request, bucket):
     return render(request, 'signatures/edit.html', data)
 
 
-@login_required(login_url='/login/')
 def newSignature(request):
     if request.method == 'POST':
         # TODO: FIXME: Update bug here as well
@@ -672,7 +649,6 @@ def newSignature(request):
     return render(request, 'signatures/edit.html', data)
 
 
-@login_required(login_url='/login/')
 def deleteSignature(request, sigid):
     bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'))
     if not bucket:
@@ -695,7 +671,6 @@ def deleteSignature(request, sigid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def viewSignature(request, sigid):
     bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),
                                                       quality=Min('crashentry__testcase__quality'))
@@ -721,7 +696,6 @@ def viewSignature(request, sigid):
     return render(request, 'signatures/view.html', {'bucket': bucket, 'latestCrash': latestCrash})
 
 
-@login_required(login_url='/login/')
 def editSignature(request, sigid):
     if request.method == 'POST':
         bucket = get_object_or_404(Bucket, pk=sigid)
@@ -750,7 +724,6 @@ def editSignature(request, sigid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def linkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
@@ -797,7 +770,6 @@ def linkSignature(request, sigid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def unlinkSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
@@ -812,7 +784,6 @@ def unlinkSignature(request, sigid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def trySignature(request, sigid, crashid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
@@ -829,7 +800,6 @@ def trySignature(request, sigid, crashid):
     return render(request, 'signatures/try.html', {'bucket': bucket, 'entry': entry, 'diff': diff})
 
 
-@login_required(login_url='/login/')
 def optimizeSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
@@ -920,7 +890,6 @@ def optimizeSignature(request, sigid):
                                                         'diff': diff, 'matchingEntries': matchingEntries})
 
 
-@login_required(login_url='/login/')
 def findSignatures(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -1015,7 +984,6 @@ def findSignatures(request, crashid):
         return render(request, 'signatures/find.html', {'buckets': similarBuckets, 'crashentry': entry})
 
 
-@login_required(login_url='/login/')
 def createExternalBug(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -1050,7 +1018,6 @@ def createExternalBug(request, crashid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
@@ -1071,7 +1038,6 @@ def createExternalBugComment(request, crashid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def createBugTemplate(request, providerId):
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
@@ -1085,7 +1051,6 @@ def createBugTemplate(request, providerId):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def viewEditBugTemplate(request, providerId, templateId, mode):
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'GET':
@@ -1095,13 +1060,11 @@ def viewEditBugTemplate(request, providerId, templateId, mode):
         return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
 
 
-@login_required(login_url='/login/')
 def viewBugProviders(request):
     providers = BugProvider.objects.annotate(size=Count('bug'))
     return render(request, 'providers/index.html', {'providers': providers})
 
 
-@login_required(login_url='/login/')
 def deleteBugProvider(request, providerId):
     deny_restricted_users(request)
 
@@ -1122,7 +1085,6 @@ def deleteBugProvider(request, providerId):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def viewBugProvider(request, providerId):
     provider = BugProvider.objects.filter(pk=providerId).annotate(size=Count('bug'))
 
@@ -1134,7 +1096,6 @@ def viewBugProvider(request, providerId):
     return render(request, 'providers/view.html', {'provider': provider})
 
 
-@login_required(login_url='/login/')
 def editBugProvider(request, providerId):
     deny_restricted_users(request)
 
@@ -1157,7 +1118,6 @@ def editBugProvider(request, providerId):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def createBugProvider(request):
     deny_restricted_users(request)
 
@@ -1178,7 +1138,6 @@ def createBugProvider(request):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def userSettings(request):
     user = User.get_or_create_restricted(request.user)[0]
 

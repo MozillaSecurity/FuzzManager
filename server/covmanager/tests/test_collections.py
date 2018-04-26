@@ -40,36 +40,12 @@ class CollectionsViewTests(TestCase):
         self.assertEqual(response.status_code, requests.codes['ok'])
 
 
-class CollectionsApiViewTests(TestCase):
+class CollectionsApiViewTests(CollectionsViewTests):
     name = "covmanager:collections_api"
 
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        response = self.client.get(reverse(self.name))
-        self.assertEqual(response.status_code, requests.codes['unauthorized'])
 
-    def test_simpleget(self):
-        """No errors are thrown in template"""
-        self.client.login(username='test', password='test')
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-
-
-class CollectionsDiffViewTests(TestCase):
+class CollectionsDiffViewTests(CollectionsViewTests):
     name = "covmanager:collections_diff"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_simpleget(self):
-        """No errors are thrown in template"""
-        self.client.login(username='test', password='test')
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
 
 
 class CollectionsDiffApiViewTests(TestCase):

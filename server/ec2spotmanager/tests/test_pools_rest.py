@@ -211,9 +211,9 @@ class RestPoolDisableTests(APITestCase, TestCase):
         self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
 
+@pytest.mark.xfail
 class RestPoolChartDetailedTests(APITestCase, TestCase):
 
-    @pytest.mark.xfail  # these are protected by basic auth only
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1})
@@ -267,9 +267,9 @@ class RestPoolChartDetailedTests(APITestCase, TestCase):
         self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})
 
 
+@pytest.mark.xfail
 class RestPoolChartAccumulatedTests(APITestCase, TestCase):
 
-    @pytest.mark.xfail  # these are protected by basic auth only
     def test_no_auth(self):
         """must yield forbidden without authentication"""
         url = reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1})

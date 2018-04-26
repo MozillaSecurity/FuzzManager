@@ -1,7 +1,5 @@
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import logout
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.db.models.aggregates import Count
@@ -11,7 +9,7 @@ from django.utils.timezone import now, timedelta
 import fasteners
 from operator import attrgetter
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -27,17 +25,10 @@ def renderError(request, err):
     return render(request, 'error.html', {'error_message': err})
 
 
-def logout_view(request):
-    logout(request)
-    return redirect('ec2spotmanager:index')
-
-
-@login_required(login_url='/login/')
 def index(request):
     return redirect('ec2spotmanager:pools')
 
 
-@login_required(login_url='/login/')
 def pools(request):
     filters = {}
     isSearch = True
@@ -82,7 +73,6 @@ def pools(request):
     return render(request, 'pools/index.html', data)
 
 
-@login_required(login_url='/login/')
 def viewPool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     instances = Instance.objects.filter(pool=poolid)
@@ -115,7 +105,6 @@ def viewPool(request, poolid):
     return render(request, 'pools/view.html', data)
 
 
-@login_required(login_url='/login/')
 def viewPoolPrices(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
@@ -142,7 +131,6 @@ def viewPoolPrices(request, poolid):
     return render(request, 'pools/prices.html', {'prices': prices})
 
 
-@login_required(login_url='/login/')
 def disablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     instances = Instance.objects.filter(pool=poolid)
@@ -160,7 +148,6 @@ def disablePool(request, poolid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def enablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -192,7 +179,6 @@ def enablePool(request, poolid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def forceCyclePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -211,7 +197,6 @@ def forceCyclePool(request, poolid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def forceCyclePoolsByConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
@@ -243,7 +228,6 @@ def forceCyclePoolsByConfig(request, configid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def createPool(request):
     if request.method == 'POST':
         pool = InstancePool()
@@ -258,7 +242,6 @@ def createPool(request):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def viewConfigs(request):
     configs = PoolConfiguration.objects.all()
     roots = configs.filter(parent=None)
@@ -278,7 +261,6 @@ def viewConfigs(request):
     return render(request, 'config/index.html', data)
 
 
-@login_required(login_url='/login/')
 def viewConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
@@ -382,7 +364,6 @@ def __handleConfigPOST(request, config):
     return redirect('ec2spotmanager:configview', configid=config.pk)
 
 
-@login_required(login_url='/login/')
 def createConfig(request):
     if request.method == 'POST':
         config = PoolConfiguration()
@@ -411,7 +392,6 @@ def createConfig(request):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def editConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
     config.deserializeFields()
@@ -429,7 +409,6 @@ def editConfig(request, configid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def deletePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -463,7 +442,6 @@ def deletePool(request, poolid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def deletePoolMsg(request, msgid):
     entry = get_object_or_404(PoolStatusEntry, pk=msgid)
     if request.method == 'POST':
@@ -475,7 +453,6 @@ def deletePoolMsg(request, msgid):
         raise SuspiciousOperation
 
 
-@login_required(login_url='/login/')
 def deleteConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
@@ -506,6 +483,8 @@ def deleteConfig(request, configid):
 
 
 class UptimeChartViewDetailed(JSONView):
+    authentication_classes = (SessionAuthentication,)  # noqa
+
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
@@ -578,6 +557,8 @@ class UptimeChartViewDetailed(JSONView):
 
 
 class UptimeChartViewAccumulated(JSONView):
+    authentication_classes = (SessionAuthentication,)  # noqa
+
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))

@@ -8,7 +8,6 @@ urlpatterns = [
     url(r'^rest/pool/(?P<poolid>\d+)/cycle/$', views.PoolCycleView.as_view()),
     url(r'^rest/pool/(?P<poolid>\d+)/enable/$', views.PoolEnableView.as_view()),
     url(r'^rest/pool/(?P<poolid>\d+)/disable/$', views.PoolDisableView.as_view()),
-    url(r'^logout/$', views.logout_view, name='logout'),
     url(r'^$', views.index, name='index'),
     url(r'^pools/$', views.pools, name='pools'),
     url(r'^pools/create/$', views.createPool, name='poolcreate'),
