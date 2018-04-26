@@ -55,7 +55,8 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        url = "%s://%s:%d/crashmanager/signatures/download/" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (self.serverProtocol, self.serverHost,
+                                                                     self.serverPort)
 
         response = self.get(url, stream=True)
 
@@ -233,8 +234,8 @@ class Collector(Reporter):
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                             crashId)
 
-        dlurl = "%s://%s:%d/crashmanager/crashes/%s/download/" % (self.serverProtocol, self.serverHost, self.serverPort,
-                                                                  crashId)
+        dlurl = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (self.serverProtocol, self.serverHost,
+                                                                       self.serverPort, crashId)
 
         resp_json = self.get(url).json()
 
@@ -289,8 +290,8 @@ class Collector(Reporter):
                 if not crash["testcase"]:
                     continue
 
-                url = "%s://%s:%d/crashmanager/crashes/%s/download/" % (self.serverProtocol, self.serverHost,
-                                                                        self.serverPort, crash["id"])
+                url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (self.serverProtocol, self.serverHost,
+                                                                             self.serverPort, crash["id"])
                 response = self.get(url)
 
                 if 'content-disposition' not in response.headers:
