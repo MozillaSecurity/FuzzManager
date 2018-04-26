@@ -314,6 +314,7 @@ def test_collector_download(tmpdir, monkeypatch):
 
     class response2_t(object):
         status_code = requests.codes["ok"]
+        headers = {'content-disposition': 'foo'}
         text = 'OK'
         content = b'testcase\xFF'
 
@@ -328,11 +329,9 @@ def test_collector_download(tmpdir, monkeypatch):
         return response1_t()
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
-    def myget2(_session, url, auth=None):
-        assert url == 'gopher://aol.com:70/crashmanager/path/to/testcase.txt'
-        assert len(auth) == 2
-        assert auth[0] == 'fuzzmanager'
-        assert auth[1] == 'token'
+    def myget2(_session, url, headers=None):
+        assert url == 'gopher://aol.com:70/crashmanager/crashes/123/download/'
+        assert headers == {'Authorization': 'Token token'}
         return response2_t()
     monkeypatch.setattr(requests.Session, 'get', myget1)
 

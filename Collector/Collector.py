@@ -25,6 +25,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 from tempfile import mkstemp
@@ -54,10 +55,9 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        url = "%s://%s:%d/crashmanager/files/signatures.zip" % (self.serverProtocol, self.serverHost, self.serverPort)
+        url = "%s://%s:%d/crashmanager/signatures/download/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
-        # We need to use basic authentication here because these files are directly served by the HTTP server
-        response = self.get(url, stream=True, auth='basic')
+        response = self.get(url, stream=True)
 
         (zipFileFd, zipFileName) = mkstemp(prefix="fuzzmanager-signatures")
 
@@ -233,8 +233,10 @@ class Collector(Reporter):
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                             crashId)
 
-        response = self.get(url)
-        resp_json = response.json()
+        dlurl = "%s://%s:%d/crashmanager/crashes/%s/download/" % (self.serverProtocol, self.serverHost, self.serverPort,
+                                                                  crashId)
+
+        resp_json = self.get(url).json()
 
         if not isinstance(resp_json, dict):
             raise RuntimeError("Server sent malformed JSON response: %r" % (resp_json,))
@@ -242,11 +244,12 @@ class Collector(Reporter):
         if not resp_json["testcase"]:
             return None
 
-        url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort,
-                                              resp_json["testcase"])
-        response = self.get(url, auth='basic')
+        response = self.get(dlurl)
 
-        local_filename = '%d%s' % (resp_json["id"], os.path.splitext(resp_json["testcase"])[1])
+        if 'content-disposition' not in response.headers:
+            raise RuntimeError("Server sent malformed response: %r" % (response,))
+
+        local_filename = '%d%s' % (crashId, os.path.splitext(resp_json["testcase"])[1])
         with open(local_filename, 'wb') as output:
             output.write(response.content)
 
@@ -286,9 +289,12 @@ class Collector(Reporter):
                 if not crash["testcase"]:
                     continue
 
-                url = "%s://%s:%d/crashmanager/%s" % (self.serverProtocol, self.serverHost, self.serverPort,
-                                                      crash["testcase"])
-                response = self.get(url, auth='basic')
+                url = "%s://%s:%d/crashmanager/crashes/%s/download/" % (self.serverProtocol, self.serverHost,
+                                                                        self.serverPort, crash["id"])
+                response = self.get(url)
+
+                if 'content-disposition' not in response.headers:
+                    raise RuntimeError("Server sent malformed response: %r" % (response,))
 
                 local_filename = '%d%s' % (crash["id"], os.path.splitext(crash["testcase"])[1])
                 with open(local_filename, 'wb') as output:

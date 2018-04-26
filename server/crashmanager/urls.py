@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^logout/$', views.logout_view, name='logout'),
     url(r'^$', views.index, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
+    url(r'^signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures'),
     url(r'^signatures/all/$', views.allSignatures, name='allsignatures'),
     url(r'^signatures/new/$', views.newSignature, name='signew'),
     url(r'^signatures/(?P<sigid>\d+)/edit/$', views.editSignature, name='sigedit'),
@@ -39,6 +40,7 @@ urlpatterns = [
     url(r'^crashes/(?P<crashid>\d+)/createbug/$', views.createExternalBug, name='createbug'),
     url(r'^crashes/(?P<crashid>\d+)/createbugcomment/$', views.createExternalBugComment, name='createbugcomment'),
     url(r'^crashes/(?P<crashid>\d+)/findsignatures/$', views.findSignatures, name='findsigs'),
+    url(r'^crashes/(?P<crashid>\d+)/download/$', views.TestDownloadView.as_view(), name='download_test'),
     url(r'^bugprovider/$', views.viewBugProviders, name='bugproviders'),
     url(r'^bugprovider/create/$', views.createBugProvider, name='bugprovidercreate'),
     url(r'^bugprovider/(?P<providerId>\d+)/$', views.viewBugProvider, name='bugproviderview'),
@@ -56,9 +58,3 @@ urlpatterns = [
 
     url(r'^rest/', include(router.urls)),
 ]
-
-# This makes Django serve our testcases from the tests/ URL. When hosting this
-# project in production, one should consider serving tests directly through
-# the webserver rather than through Django for performance reasons.
-urlpatterns += [url(r'^tests/(.*)$', serve, name='download',
-                    kwargs={'document_root': os.path.join(settings.BASE_DIR, 'tests')})]

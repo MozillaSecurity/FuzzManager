@@ -6,21 +6,28 @@ from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 import functools
 import json
 import operator
+import os
 from rest_framework import filters, mixins, viewsets
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
+from rest_framework.views import APIView
 import six
+
+from wsgiref.util import FileWrapper
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
+
+from django.conf import settings as django_settings
 
 
 def check_authorized_for_crash_entry(request, entry):
@@ -1390,3 +1397,49 @@ def json_to_query(json_str):
         return qobj
 
     return (obj, get_query_obj(obj))
+
+
+class AbstractDownloadView(APIView):
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    permission_classes = (IsAuthenticated,)
+
+    def response(self, file_path, filename, content_type='application/octet-stream'):
+        if not os.path.exists(file_path):
+            return HttpResponse(status=404)
+
+        test_file = open(file_path, 'rb')
+        response = HttpResponse(FileWrapper(test_file), content_type='application/octet-stream')
+        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        return response
+
+    def get(self):
+        return HttpResponse(status=500)
+
+
+class TestDownloadView(AbstractDownloadView):
+    def get(self, request, crashid):
+        storage_base = getattr(django_settings, 'TEST_STORAGE', None)
+        if not storage_base:
+            # This is a misconfiguration
+            return HttpResponse(status=500)
+
+        entry = get_object_or_404(CrashEntry, pk=crashid)
+
+        if not entry.testcase:
+            return HttpResponse(status=404)
+
+        file_path = os.path.join(storage_base, entry.testcase.test.name)
+        return self.response(file_path, entry.testcase.test.name)
+
+
+class SignaturesDownloadView(AbstractDownloadView):
+    def get(self, request, format=None):
+        storage_base = getattr(django_settings, 'SIGNATURE_STORAGE', None)
+        if not storage_base:
+            # This is a misconfiguration
+            return HttpResponse(status=500)
+
+        filename = "signatures.zip"
+        file_path = os.path.join(storage_base, filename)
+
+        return self.response(file_path, filename)

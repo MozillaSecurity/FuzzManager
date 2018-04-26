@@ -2,11 +2,12 @@ import os
 import shutil
 from tempfile import mkstemp
 
+from django.conf import settings
 from django.core.management import call_command
 
 from celeryconf import app
 
-SIGNATURES_ZIP = os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir, 'files', 'signatures.zip'))
+SIGNATURES_ZIP = os.path.realpath(os.path.join(getattr(settings, 'SIGNATURE_STORAGE', None), 'signatures.zip'))
 
 
 @app.task
