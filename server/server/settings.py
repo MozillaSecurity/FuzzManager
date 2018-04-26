@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 from __future__ import print_function
 import os
 import sys
+import unicodedata
 from django.conf import global_settings  # noqa
 from django.urls import reverse
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -112,13 +113,47 @@ TEMPLATES = [
     },
 ]
 
+# This is code for Mozilla's 2FA using OID. If you have your own OID provider,
+# you can probably use similar code to get 2FA for your FuzzManager instance.
+#
+#from mozilla_django_oidc.auth import OIDCAuthenticationBackend # noqa
+#
+#
+#def generate_username(email):
+#    # Using Python 3 and Django 1.11, usernames can contain alphanumeric
+#    # (ascii and unicode), _, @, +, . and - characters. So we normalize
+#    # it and slice at 150 characters.
+#    return unicodedata.normalize('NFKC', email)[:150]
+#
+#
+# Modify the way we generate our usernames, based on the email address
+#OIDC_USERNAME_ALGO = generate_username
+#
+#
+#OID_ALLOWED_USERS = {
+#    "test@example.com",
+#}
+#
+#
+#class FMOIDCAB(OIDCAuthenticationBackend):
+#    def verify_claims(self, claims):
+#        verified = super(FMOIDCAB, self).verify_claims(claims)
+#
+#        if not verified:
+#            return False
+#
+#        email = claims.get('email', None)
+#        return email in OID_ALLOWED_USERS
+
 # For basic auth, uncomment the following lines and the line
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
 # You still have to configure basic auth through your webserver.
 #
 #AUTHENTICATION_BACKENDS = (
 #    'django.contrib.auth.backends.RemoteUserBackend',
+#    'server.settings.FMOIDCAB',
 #)
+
 
 ROOT_URLCONF = 'server.urls'
 
