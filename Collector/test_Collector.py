@@ -330,7 +330,7 @@ def test_collector_download(tmpdir, monkeypatch):
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
     def myget2(_session, url, headers=None):
-        assert url == 'gopher://aol.com:70/crashmanager/crashes/123/download/'
+        assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/download/'
         assert headers == {'Authorization': 'Token token'}
         return response2_t()
     monkeypatch.setattr(requests.Session, 'get', myget1)
