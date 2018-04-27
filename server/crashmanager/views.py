@@ -28,10 +28,6 @@ from .serializers import InvalidArgumentException, BucketSerializer, CrashEntryS
 from django.conf import settings as django_settings
 
 
-def oidc_login(request):
-    return redirect('oidc_authentication_init')
-
-
 def check_authorized_for_crash_entry(request, entry):
     user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
@@ -128,10 +124,6 @@ def paginate_requested_list(request, entries):
     page_entries.count = paginator.count
 
     return page_entries
-
-
-def index(request):
-    return redirect('crashmanager:crashes')
 
 
 def stats(request):

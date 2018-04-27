@@ -1,10 +1,7 @@
 from django.conf.urls import include, url
-from django.views.static import serve
-import os
 from rest_framework import routers
 
 from crashmanager import views
-from server import settings
 
 
 router = routers.DefaultRouter()
@@ -15,7 +12,7 @@ urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures_rest'),
     url(r'^rest/crashes/(?P<crashid>\d+)/download/$', views.TestDownloadView.as_view(), name='download_test_rest'),
-    url(r'^$', views.index, name='index'),
+    url(r'^$', views.crashes, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
     url(r'^signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures'),
     url(r'^signatures/all/$', views.allSignatures, name='allsignatures'),

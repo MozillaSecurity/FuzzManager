@@ -25,7 +25,6 @@ import base64
 import hashlib
 import json
 import os
-import re
 import shutil
 import sys
 from tempfile import mkstemp

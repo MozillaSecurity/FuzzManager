@@ -12,9 +12,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 from __future__ import print_function
 import os
 import sys
-import unicodedata
 from django.conf import global_settings  # noqa
-from django.urls import reverse
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 FTB_PATH = os.path.abspath(os.path.join(BASE_DIR, ".."))
@@ -58,7 +56,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'chartjs',
-#    'mozilla_django_oidc',
+    #'mozilla_django_oidc',
 )
 
 
@@ -117,6 +115,8 @@ TEMPLATES = [
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,
 # you can probably use similar code to get 2FA for your FuzzManager instance.
+
+USE_OIDC = False
 
 # Modify the way we generate our usernames, based on the email address
 #OIDC_USERNAME_ALGO = 'server.auth.generate_username'
