@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'^signatures/(?P<sigid>\d+)/unlink/$', views.unlinkSignature, name='sigunlink'),
     url(r'^signatures/(?P<sigid>\d+)/try/(?P<crashid>\d+)/$', views.trySignature, name='sigtry'),
     url(r'^signatures/(?P<sigid>\d+)/optimize/$', views.optimizeSignature, name='sigopt'),
+    url(r'^signatures/(?P<sigid>\d+)/preoptimized/$', views.optimizeSignaturePrecomputed, name='sigoptpre'),
     url(r'^signatures/(?P<sigid>\d+)/$', views.viewSignature, name='sigview'),
     url(r'^signatures/(?P<sigid>\d+)/delete/$', views.deleteSignature, name='sigdel'),
     url(r'^signatures/watch/$', views.watchedSignatures, name='sigwatch'),

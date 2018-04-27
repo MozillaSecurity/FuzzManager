@@ -808,87 +808,46 @@ def optimizeSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
 
-    buckets = Bucket.objects.all()
+    # Get all unbucketed entries for that user, respecting the tools filter though
+    entries = CrashEntry.objects.filter(bucket=None).order_by('-id').select_related("platform", "product", "os", "tool")
+    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
+
+    (optimizedSignature, matchingEntries) = bucket.optimizeSignature(entries)
+    diff = None
+    if optimizedSignature:
+        diff = bucket.getSignature().getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
+
+    return render(request, 'signatures/optimize.html', {'bucket': bucket, 'optimizedSignature': optimizedSignature,
+                                                        'diff': diff, 'matchingEntries': matchingEntries})
+
+
+def optimizeSignaturePrecomputed(request, sigid):
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
+
+    if not bucket.optimizedSignature:
+        raise Http404
 
     # Get all unbucketed entries for that user, respecting the tools filter though
     entries = CrashEntry.objects.filter(bucket=None).order_by('-id').select_related("platform", "product", "os", "tool")
     entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
 
-    signature = bucket.getSignature()
-    if signature.matchRequiresTest():
-        entries.select_related("testcase")
-
-    requiredOutputs = signature.getRequiredOutputSources()
+    optimizedSignature = bucket.getOptimizedSignature()
+    requiredOutputs = optimizedSignature.getRequiredOutputSources()
     entries = CrashEntry.deferRawFields(entries, requiredOutputs)
 
-    optimizedSignature = None
+    # Recompute matching entries based on current state
     matchingEntries = []
-
-    # Avoid hitting the database multiple times when looking for the first
-    # entry of a bucket. Keeping these in memory is less expensive.
-    firstEntryPerBucketCache = {}
-
     for entry in entries:
-        entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(),
+        entry.crashInfo = entry.getCrashInfo(attachTestcase=optimizedSignature.matchRequiresTest(),
                                              requiredOutputSources=requiredOutputs)
-
-        # For optimization, disregard any issues that directly match since those could be
-        # incoming new issues and we don't want these to block the optimization.
-        if signature.matches(entry.crashinfo):
-            continue
-
-        optimizedSignature = signature.fit(entry.crashinfo)
-        if optimizedSignature:
-            # We now try to determine how this signature will behave in other buckets
-            # If the signature matches lots of other buckets as well, it is likely too
-            # broad and we should not consider it (or later rate it worse than others).
-            matchesInOtherBuckets = False
-            nonMatchesInOtherBuckets = 0  # noqa
-            otherMatchingBucketIds = []  # noqa
-            for otherBucket in buckets:
-                if otherBucket.pk == bucket.pk:
-                    continue
-
-                if bucket.bug and otherBucket.bug and bucket.bug.pk == otherBucket.bug.pk:
-                    # Allow matches in other buckets if they are both linked to the same bug
-                    continue
-
-                if otherBucket.pk not in firstEntryPerBucketCache:
-                    c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
-                    c = CrashEntry.deferRawFields(c, requiredOutputs)
-                    c = c.first()
-                    firstEntryPerBucketCache[otherBucket.pk] = c
-                    if c:
-                        # Omit testcase for performance reasons for now
-                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False,
-                                                                                  requiredOutputSources=requiredOutputs)
-
-                firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
-                if firstEntryCrashInfo:
-                    # Omit testcase for performance reasons for now
-                    if optimizedSignature.matches(firstEntryCrashInfo):
-                        matchesInOtherBuckets = True
-                        break
-
-            if matchesInOtherBuckets:
-                # Reset, we don't actually have an optimized signature if it's matching
-                # some other bucket as well.
-                optimizedSignature = None
-            else:
-                for otherEntry in entries:
-                    if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False,
-                                                                          requiredOutputSources=requiredOutputs)):
-                        matchingEntries.append(otherEntry)
-
-                # Fallback for when the optimization algorithm failed for some reason
-                if not matchingEntries:
-                    optimizedSignature = None
-
-                break
+        if optimizedSignature.matches(entry.getCrashInfo):
+            matchingEntries.append(entry)
 
     diff = None
-    if optimizedSignature:
-        diff = signature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
+    if matchingEntries:
+        # TODO: Handle this more gracefully
+        diff = optimizedSignature.getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
 
     return render(request, 'signatures/optimize.html', {'bucket': bucket, 'optimizedSignature': optimizedSignature,
                                                         'diff': diff, 'matchingEntries': matchingEntries})

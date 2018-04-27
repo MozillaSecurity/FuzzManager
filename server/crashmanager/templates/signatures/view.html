@@ -54,6 +54,9 @@
         <div class="btn-group">
             <a href="{% url 'crashmanager:crashes' %}?bucket={{ bucket.pk }}&all=1" class="btn btn-default">Associated Crashes</a>
             <a href="{% url 'crashmanager:sigopt' bucket.pk %}" class="btn btn-default">Optimize</a>
+						{% if bucket.optimizedSignature %}
+						<a href="{% url 'crashmanager:sigoptpre' bucket.pk %}" class="btn btn-default">Optimize (Precomputed)</a>
+						{% endif %}
             <a href="{% url 'crashmanager:sigedit' bucket.pk %}" class="btn btn-default">Edit</a>
             <a href="{% url 'crashmanager:sigdel' bucket.pk %}" class="btn btn-danger">Delete</a>
         </div>
