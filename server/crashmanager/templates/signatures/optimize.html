@@ -18,9 +18,9 @@
             <tbody>
 
             {% for prefix, what in diff %}
-            <tr>
-                <td style="border-top-width: 0;">{{ prefix }}</td>
-                <td style="border-top-width: 0;">
+            <tr style="height: 0px; padding: 0px;">
+                <td>{{ prefix }}</td>
+                <td>
                     <pre style="padding: 0; border: 0; margin: 0; overflow: initial; white-space: pre-wrap; word-wrap: normal; word-break: initial; background-color: transparent;" {%if prefix == '-' %}class="text-danger"{%elif prefix == '+'%}class="text-success"{%endif%}>{{ what }}</pre>
                 </td>
                 {% if forloop.counter == 1 %}
