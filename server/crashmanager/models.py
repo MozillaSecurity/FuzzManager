@@ -135,7 +135,7 @@ class Bucket(models.Model):
         # entry of a bucket. Keeping these in memory is less expensive.
         firstEntryPerBucketCache = {}
 
-        for entry in unbucketed_entries:
+        for entry in entries:
             entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(),
                                                  requiredOutputSources=requiredOutputs)
 
@@ -185,8 +185,9 @@ class Bucket(models.Model):
                     optimizedSignature = None
                 else:
                     for otherEntry in entries:
-                        if optimizedSignature.matches(otherEntry.getCrashInfo(attachTestcase=False,
-                                                                              requiredOutputSources=requiredOutputs)):
+                        otherEntry.crashinfo = otherEntry.getCrashInfo(attachTestcase=False,
+                                                                       requiredOutputSources=requiredOutputs)
+                        if optimizedSignature.matches(otherEntry.crashinfo):
                             matchingEntries.append(otherEntry)
 
                     # Fallback for when the optimization algorithm failed for some reason
