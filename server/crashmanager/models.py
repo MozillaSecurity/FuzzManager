@@ -112,7 +112,9 @@ class Bucket(models.Model):
 
         # TODO: We could reset this only when we actually modify the signature,
         # but this would require fetching the old signature from the database again.
-        self.optimizedSignature = None
+        keepOptimized = kwargs.pop('keepOptimized', False)
+        if not keepOptimized:
+            self.optimizedSignature = None
 
         super(Bucket, self).save(*args, **kwargs)
 
