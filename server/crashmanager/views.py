@@ -259,6 +259,7 @@ def signatures(request):
         "bug__externalId",
         "shortDescription__contains",
         "signature__contains",
+        "optimizedSignature__isnull",
     ]
 
     for key in exactFilterKeys:
@@ -831,15 +832,15 @@ def optimizeSignaturePrecomputed(request, sigid):
     # Recompute matching entries based on current state
     matchingEntries = []
     for entry in entries:
-        entry.crashInfo = entry.getCrashInfo(attachTestcase=optimizedSignature.matchRequiresTest(),
+        entry.crashinfo = entry.getCrashInfo(attachTestcase=optimizedSignature.matchRequiresTest(),
                                              requiredOutputSources=requiredOutputs)
-        if optimizedSignature.matches(entry.crashInfo):
+        if optimizedSignature.matches(entry.crashinfo):
             matchingEntries.append(entry)
 
     diff = None
     if matchingEntries:
         # TODO: Handle this more gracefully
-        diff = bucket.getSignature().getSignatureUnifiedDiffTuples(matchingEntries[0].crashInfo)
+        diff = bucket.getSignature().getSignatureUnifiedDiffTuples(matchingEntries[0].crashinfo)
 
     return render(request, 'signatures/optimize.html', {'bucket': bucket, 'optimizedSignature': optimizedSignature,
                                                         'diff': diff, 'matchingEntries': matchingEntries})
