@@ -58,6 +58,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'chartjs',
+#    'mozilla_django_oidc',
 )
 
 
@@ -76,6 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     #'django.contrib.auth.middleware.RemoteUserMiddleware',
+    #'mozilla_django_oidc.middleware.RefreshIDToken',
     'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
@@ -115,35 +117,14 @@ TEMPLATES = [
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,
 # you can probably use similar code to get 2FA for your FuzzManager instance.
-#
-#from mozilla_django_oidc.auth import OIDCAuthenticationBackend # noqa
-#
-#
-#def generate_username(email):
-#    # Using Python 3 and Django 1.11, usernames can contain alphanumeric
-#    # (ascii and unicode), _, @, +, . and - characters. So we normalize
-#    # it and slice at 150 characters.
-#    return unicodedata.normalize('NFKC', email)[:150]
-#
-#
+
 # Modify the way we generate our usernames, based on the email address
-#OIDC_USERNAME_ALGO = generate_username
+#OIDC_USERNAME_ALGO = 'server.auth.generate_username'
 #
 #
 #OID_ALLOWED_USERS = {
 #    "test@example.com",
 #}
-#
-#
-#class FMOIDCAB(OIDCAuthenticationBackend):
-#    def verify_claims(self, claims):
-#        verified = super(FMOIDCAB, self).verify_claims(claims)
-#
-#        if not verified:
-#            return False
-#
-#        email = claims.get('email', None)
-#        return email in OID_ALLOWED_USERS
 
 # For basic auth, uncomment the following lines and the line
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
@@ -165,6 +146,7 @@ LOGOUT_REDIRECT_URL = "https://www.mozilla.org/"
 LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r'/login/.*',
     r'/logout/.*',
+    r'/oidc/.*',
     r'/ec2spotmanager/rest/.*',
     r'/covmanager/rest/.*',
     r'/crashmanager/rest/.*',
