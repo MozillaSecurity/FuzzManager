@@ -841,7 +841,7 @@ def optimizeSignaturePrecomputed(request, sigid):
     for entry in entries:
         entry.crashInfo = entry.getCrashInfo(attachTestcase=optimizedSignature.matchRequiresTest(),
                                              requiredOutputSources=requiredOutputs)
-        if optimizedSignature.matches(entry.getCrashInfo):
+        if optimizedSignature.matches(entry.crashInfo):
             matchingEntries.append(entry)
 
     diff = None
