@@ -119,7 +119,8 @@ class TestCase(DjangoTestCase):
             os.chdir(path)
 
     def create_collection_file(self, data):
-        path = self.mkstemp(prefix="testcov", suffix=".data", dir=os.path.dirname(__file__))
+        location = self.mkdtemp(prefix='testcovfile_', dir=os.path.dirname(__file__))
+        path = self.mkstemp(prefix="testcov", suffix=".data", dir=location)
         with open(path, "w") as fp:
             fp.write(data)
         result = CollectionFile.objects.create(file=File(open(path)))
