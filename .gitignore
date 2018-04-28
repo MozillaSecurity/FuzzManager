@@ -24,3 +24,10 @@
 
 /misc/ec2prices/*.log
 /misc/ec2prices/*/*.pricecache
+
+# Code coverage
+.coverage*
+
+# Linting via pytest
+/.pytest_cache/
+
