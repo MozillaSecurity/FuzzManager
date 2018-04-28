@@ -25,8 +25,6 @@ import json
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from Reporter.Reporter import remote_checks, Reporter  # noqa
 
 __all__ = []

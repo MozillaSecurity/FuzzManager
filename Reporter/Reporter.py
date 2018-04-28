@@ -26,8 +26,6 @@ import requests
 import six
 
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 
 
