@@ -26,8 +26,6 @@ import subprocess
 import sys
 import threading
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from Collector.Collector import Collector  # noqa
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
 from FTB.Signatures.CrashInfo import CrashInfo  # noqa

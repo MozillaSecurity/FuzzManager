@@ -30,8 +30,6 @@ import time
 from fasteners import InterProcessLock
 import requests
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 from Reporter.Reporter import Reporter, remote_checks  # noqa
 

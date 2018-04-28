@@ -30,8 +30,6 @@ import sys
 from tempfile import mkstemp
 from zipfile import ZipFile
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
 from FTB.Running.AutoRunner import AutoRunner  # noqa
 from FTB.Signatures.CrashInfo import CrashInfo  # noqa
