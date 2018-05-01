@@ -249,7 +249,7 @@ class Collector(Reporter):
         if 'content-disposition' not in response.headers:
             raise RuntimeError("Server sent malformed response: %r" % (response,))
 
-        local_filename = '%d%s' % (crashId, os.path.splitext(resp_json["testcase"])[1])
+        local_filename = '%s%s' % (crashId, os.path.splitext(resp_json["testcase"])[1])
         with open(local_filename, 'wb') as output:
             output.write(response.content)
 
