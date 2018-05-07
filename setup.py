@@ -18,4 +18,4 @@ if __name__ == '__main__':
           name='FuzzManager',
           packages=['Collector', 'CovReporter', 'EC2Reporter', 'FTB', 'FTB.Running', 'FTB.Signatures', 'Reporter'],
           url="https://github.com/MozillaSecurity/FuzzManager",
-          version='0.1.3')
+          version='0.2.0')
