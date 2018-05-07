@@ -159,44 +159,35 @@ class Reporter():
         if self.serverHost is not None and self.clientId is None:
             self.clientId = platform.node()
 
-    def _inject_auth(self, kwds):
-        '''Filters keyword arguments to requests methods, reinterpreting the 'auth' argument.
-        Accepts 'basic' or 'token' and injects the appropriate headers.'''
-        auth = kwds.pop("auth")
-        if auth == 'token':
-            kwds.setdefault("headers", {}).update({"Authorization": "Token %s" % self.serverAuthToken})
-        elif auth == 'basic':
-            kwds["auth"] = ('fuzzmanager', self.serverAuthToken)
-        else:
-            raise ValueError("unexpected value for 'auth', expecting 'token' or 'basic'")
-
     def get(self, *args, **kwds):
         """requests.get, with added support for FuzzManager authentication and retry on 5xx errors.
-
-        @type auth: str
-        @param auth: one of "basic" or "token" (default: token)
 
         @type expected: int
         @param expected: HTTP status code for successful response (default: requests.codes["ok"])
         """
-        kwds.setdefault("auth", "token")
         kwds.setdefault("expected", requests.codes["ok"])
-        self._inject_auth(kwds)
+        kwds.setdefault("headers", {}).update({"Authorization": "Token %s" % self.serverAuthToken})
         return requests_retry(self._session.get)(*args, **kwds)
 
     def post(self, *args, **kwds):
         """requests.post, with added support for FuzzManager authentication and retry on 5xx errors.
 
-        @type auth: str
-        @param auth: one of "basic" or "token" (default: token)
+        @type expected: int
+        @param expected: HTTP status code for successful response (default: requests.codes["created"])
+        """
+        kwds.setdefault("expected", requests.codes["created"])
+        kwds.setdefault("headers", {}).update({"Authorization": "Token %s" % self.serverAuthToken})
+        return requests_retry(self._session.post)(*args, **kwds)
+
+    def patch(self, *args, **kwds):
+        """requests.patch, with added support for FuzzManager authentication and retry on 5xx errors.
 
         @type expected: int
         @param expected: HTTP status code for successful response (default: requests.codes["created"])
         """
-        kwds.setdefault("auth", "token")
-        kwds.setdefault("expected", requests.codes["created"])
-        self._inject_auth(kwds)
-        return requests_retry(self._session.post)(*args, **kwds)
+        kwds.setdefault("expected", requests.codes["ok"])
+        kwds.setdefault("headers", {}).update({"Authorization": "Token %s" % self.serverAuthToken})
+        return requests_retry(self._session.patch)(*args, **kwds)
 
     @staticmethod
     def serverError(response):

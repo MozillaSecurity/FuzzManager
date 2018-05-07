@@ -1,9 +1,36 @@
+from django.shortcuts import redirect
+from django.contrib.auth.views import login as django_login
+from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 import collections
+import functools
 import json
 from rest_framework import filters
 import six
+
+from crashmanager.models import User
+
+
+def index(request):
+    return redirect('crashmanager:crashes')
+
+
+def login(request):
+    if settings.USE_OIDC:
+        return redirect('oidc_authentication_init')
+    return django_login(request)
+
+
+def deny_restricted_users(wrapped):
+    @functools.wraps(wrapped)
+    def decorator(request, *args, **kwargs):
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise PermissionDenied({"message": "You don't have permission to access this view."})
+        return wrapped(request, *args, **kwargs)
+    return decorator
 
 
 def renderError(request, err):

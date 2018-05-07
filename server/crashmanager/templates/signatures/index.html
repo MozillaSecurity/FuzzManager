@@ -26,6 +26,7 @@
             <th style="width: 20px;">Bucket Size</th>
             <th style="width: 25px;">Best Test Quality</th>
             <th style="width: 50px;">External Bug</th>
+            <th style="width: 25px;">Pending Optimization</th>
         </tr>
         </thead>
         <tbody>
@@ -40,6 +41,11 @@
                 <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{entry.bug.externalId }}</a>
                 {% else %}
                 <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
+                {% endif %}
+            </td>
+            <td>
+                {% if entry.optimizedSignature %}
+                <a href="{% url 'crashmanager:sigoptpre' entry.pk %}" class="btn btn-default">Yes</a>
                 {% endif %}
             </td>
         </tr>

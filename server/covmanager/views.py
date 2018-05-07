@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,7 +7,7 @@ from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
 
-from common.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
+from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Collection, Repository
 from .serializers import CollectionSerializer, RepositorySerializer
@@ -17,33 +16,27 @@ from crashmanager.models import Tool
 from .SourceCodeProvider import SourceCodeProvider
 
 
-@login_required(login_url='/login/')
 def index(request):
     return redirect('covmanager:collections')
 
 
-@login_required(login_url='/login/')
 def repositories(request):
     repositories = Repository.objects.all()
     return render(request, 'repositories/index.html', {'repositories': repositories})
 
 
-@login_required(login_url='/login/')
 def collections(request):
     return render(request, 'collections/index.html', {})
 
 
-@login_required(login_url='/login/')
 def collections_browse(request, collectionid):
     return render(request, 'collections/browse.html', {'collectionid': collectionid})
 
 
-@login_required(login_url='/login/')
 def collections_diff(request):
     return render(request, 'collections/browse.html', {'diff_api': True})
 
 
-@login_required(login_url='/login/')
 def collections_browse_api(request, collectionid, path):
     collection = get_object_or_404(Collection, pk=collectionid)
 
@@ -64,7 +57,6 @@ def collections_browse_api(request, collectionid, path):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-@login_required(login_url='/login/')
 def collections_diff_api(request, path):
 
     collections = None
@@ -162,12 +154,10 @@ def collections_diff_api(request, path):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-@login_required(login_url='/login/')
 def collections_patch(request):
     return render(request, 'collections/patch.html', {})
 
 
-@login_required(login_url='/login/')
 def collections_patch_api(request, collectionid, patch_revision):
     collection = get_object_or_404(Collection, pk=collectionid)
 
@@ -281,7 +271,6 @@ def collections_patch_api(request, collectionid, patch_revision):
     return HttpResponse(json.dumps(results), content_type='application/json')
 
 
-@login_required(login_url='/login/')
 def repositories_search_api(request):
     results = []
 
@@ -292,7 +281,6 @@ def repositories_search_api(request):
     return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
 
 
-@login_required(login_url='/login/')
 def tools_search_api(request):
     results = []
 

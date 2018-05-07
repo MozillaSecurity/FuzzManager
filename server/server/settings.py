@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'chartjs',
+    #'mozilla_django_oidc',
 )
 
 
@@ -67,10 +68,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     #'django.contrib.auth.middleware.RemoteUserMiddleware',
+    #'mozilla_django_oidc.middleware.RefreshIDToken',
+    'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
 )
 
@@ -106,18 +109,44 @@ TEMPLATES = [
     },
 ]
 
+# This is code for Mozilla's 2FA using OID. If you have your own OID provider,
+# you can probably use similar code to get 2FA for your FuzzManager instance.
+
+USE_OIDC = False
+
+# Modify the way we generate our usernames, based on the email address
+#OIDC_USERNAME_ALGO = 'server.auth.generate_username'
+#
+#
+#OID_ALLOWED_USERS = {
+#    "test@example.com",
+#}
+
 # For basic auth, uncomment the following lines and the line
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
 # You still have to configure basic auth through your webserver.
 #
 #AUTHENTICATION_BACKENDS = (
 #    'django.contrib.auth.backends.RemoteUserBackend',
+#    'server.settings.FMOIDCAB',
 #)
+
 
 ROOT_URLCONF = 'server.urls'
 
 WSGI_APPLICATION = 'server.wsgi.application'
 
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "https://www.mozilla.org/"
+LOGIN_REQUIRED_URLS_EXCEPTIONS = (
+    r'/login/.*',
+    r'/logout/.*',
+    r'/oidc/.*',
+    r'/ec2spotmanager/rest/.*',
+    r'/covmanager/rest/.*',
+    r'/crashmanager/rest/.*',
+)
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
@@ -233,6 +262,9 @@ LOGGING = {
 # be created for storing submitted test files.
 TEST_STORAGE = os.path.join(BASE_DIR)
 USERDATA_STORAGE = os.path.join(BASE_DIR)
+
+# This is the directory where signatures.zip will be stored
+SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 
 # Celery configuration
 # USE_CELERY = True

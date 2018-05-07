@@ -194,12 +194,10 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             raw = fp
 
         # this asserts the expected arguments and returns the open handle to out.zip as 'raw' which is read by refresh()
-        def myget(_session, url, stream=None, auth=None):
-            assert url == 'gopher://aol.com:70/crashmanager/files/signatures.zip'
+        def myget(_session, url, stream=None, headers=None):
+            assert url == 'gopher://aol.com:70/crashmanager/rest/signatures/download/'
             assert stream is True
-            assert len(auth) == 2
-            assert auth[0] == 'fuzzmanager'
-            assert auth[1] == 'token'
+            assert headers == {'Authorization': 'Token token'}
             return response_t()
         monkeypatch.setattr(requests.Session, 'get', myget)
 
@@ -228,7 +226,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
         status_code = requests.codes["not found"]
         text = "Not found"
 
-    def myget(_session, _url, stream=None, auth=None):
+    def myget(_session, _url, stream=None, headers=None):
         return response_t()
     monkeypatch.setattr(requests.Session, 'get', myget)
     with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
@@ -242,7 +240,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             text = "OK"
             raw = fp
 
-        def myget(_session, _url, stream=None, auth=None):
+        def myget(_session, _url, stream=None, headers=None):
             return response_t()
         monkeypatch.setattr(requests.Session, 'get', myget)
         with pytest.raises(zipfile.BadZipfile, match='not a zip file'):
@@ -258,7 +256,7 @@ def test_collector_refresh(tmpdir, monkeypatch, capsys):
             text = "OK"
             raw = fp
 
-        def myget(_session, _url, stream=None, auth=None):
+        def myget(_session, _url, stream=None, headers=None):
             return response_t()
         monkeypatch.setattr(requests.Session, 'get', myget)
         with pytest.raises(RuntimeError, match='Bad CRC'):
@@ -314,6 +312,7 @@ def test_collector_download(tmpdir, monkeypatch):
 
     class response2_t(object):
         status_code = requests.codes["ok"]
+        headers = {'content-disposition': 'foo'}
         text = 'OK'
         content = b'testcase\xFF'
 
@@ -328,11 +327,9 @@ def test_collector_download(tmpdir, monkeypatch):
         return response1_t()
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
-    def myget2(_session, url, auth=None):
-        assert url == 'gopher://aol.com:70/crashmanager/path/to/testcase.txt'
-        assert len(auth) == 2
-        assert auth[0] == 'fuzzmanager'
-        assert auth[1] == 'token'
+    def myget2(_session, url, headers=None):
+        assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/download/'
+        assert headers == {'Authorization': 'Token token'}
         return response2_t()
     monkeypatch.setattr(requests.Session, 'get', myget1)
 

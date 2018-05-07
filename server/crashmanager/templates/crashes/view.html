@@ -94,15 +94,14 @@
             <strong>Testcase</strong>
             {% if entry.testcase.isBinary %}
             <br/>
-            <a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}" class="btn btn-success">Download</a>
             {% else %}
             <pre><code>{{ entry.testcase.content }}</code></pre>
-            <a href="{% url 'crashmanager:download' entry.testcase.test.name|basename %}" class="btn btn-success">Download using Right-click Save Link As...</a>
             {% endif %}
+            <a href="{% url 'crashmanager:download_test' entry.pk %}" class="btn btn-success">Download</a>
         </div>
         <br/>
         {% endif %}
-    
+
         {% if entry.argsList %}
         <div class="field">
             <strong>Command-Line Arguments</strong>
@@ -113,7 +112,7 @@
         </div>
         <br/>
         {% endif %}
-    
+
         {% if entry.envList %}
         <div class="field">
             <strong>Environment</strong>
@@ -125,7 +124,7 @@
         </div>
         <br/>
         {% endif %}
-    
+
         {% if entry.metadataList %}
         <div class="field">
             <strong>Metadata</strong>

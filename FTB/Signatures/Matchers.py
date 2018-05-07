@@ -110,7 +110,9 @@ class NumberMatch():
                         raise RuntimeError("Unknown match operator specified: %s" % matchType)
 
                 try:
-                    self.value = int(numberMatchComponents[numIdx], 16)
+                    value = numberMatchComponents[numIdx]
+                    base = 16 if value.startswith("0x") else 10
+                    self.value = int(numberMatchComponents[numIdx], base)
                 except ValueError:
                     raise RuntimeError("Invalid number specified: %s" % numberMatchComponents[numIdx])
             else:
