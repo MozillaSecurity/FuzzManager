@@ -342,6 +342,11 @@ class StackFramesSymptom(Symptom):
         hasVariableStackLengthQuantifier = '???' in [str(x) for x in newSignatureGuess]
 
         for idx in range(startIdx, len(newSignatureGuess)):
+            if idx > startIdx and (str(newSignatureGuess[idx - 1]) == '?' or str(newSignatureGuess[idx - 1]) == '???'):
+                # Inserting '?' after another '?' or '???' does not make a difference
+                # because it is equivalent to inserting it before that last wildcard itself.
+                continue
+
             newSignatureGuess.insert(idx, singleWildcardMatch)
 
             # Check if we have a match with our modification
