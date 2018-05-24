@@ -1161,8 +1161,15 @@ def main(argv=None):
                 shutil.rmtree(corpus_dir)
                 shutil.move(new_corpus_dir, corpus_dir)
 
+                # Update our corpus size
+                corpus_size = len(os.listdir(corpus_dir))
+
                 # Update our auto-reduction target
-                corpus_auto_reduce_threshold = int(len(os.listdir(corpus_dir)) * (1 + corpus_auto_reduce_ratio))
+                if corpus_size >= opts.libfuzzer_auto_reduce_min:
+                    corpus_auto_reduce_threshold = int(corpus_size * (1 + corpus_auto_reduce_ratio))
+                else:
+                    # Corpus is now smaller than --libfuzzer-auto-reduce-min specifies.
+                    corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min * (1 + corpus_auto_reduce_ratio))
 
                 # Continue, our instances will be restarted with the next loop
                 continue
