@@ -10,8 +10,9 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.Matchers import StringMatch
-from FTB.Signatures.Symptom import StackFramesSymptom
+from FTB.Signatures.Symptom import OutputSymptom, StackFramesSymptom
 
+from FTB.Signatures.test_CrashInfo import tsanSimpleLeakReport, tsanSimpleRaceReport
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -648,6 +649,52 @@ class SignatureStackSizeTest(unittest.TestCase):
         # while the test crash data has 16 frames.
         testSig = CrashSignature(testSignatureStackSize)
         self.assertTrue(testSig.matches(crashInfoPos))
+
+
+class SignatureGenerationTSanLeakTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=tsanSimpleLeakReport.splitlines())
+        testSignature = crashInfo.createCrashSignature()
+
+        self.assertTrue(testSignature.matches(crashInfo))
+
+        found = False
+        for symptom in testSignature.symptoms:
+            if isinstance(symptom, OutputSymptom):
+                self.assertEqual(symptom.src, "crashdata")
+                self.assertEqual(symptom.output.value, "WARNING: ThreadSanitizer: thread leak")
+                found = True
+        self.assertTrue(found, msg="Expected correct OutputSymptom in signature")
+
+
+class SignatureGenerationTSanRaceTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=tsanSimpleRaceReport.splitlines())
+        testSignature = crashInfo.createCrashSignature()
+
+        self.assertTrue(testSignature.matches(crashInfo))
+
+        outputSymptoms = []
+
+        for symptom in testSignature.symptoms:
+            if isinstance(symptom, OutputSymptom):
+                self.assertEqual(symptom.src, "crashdata")
+                outputSymptoms.append(symptom)
+
+        self.assertEqual(len(outputSymptoms), 3)
+
+        for stringMatchVal in [
+            "WARNING: ThreadSanitizer: data race",
+            "Write of size 4 at 0x[0-9a-fA-F]+ by thread T1:",
+            "Previous read of size 4 at 0x[0-9a-fA-F]+ by main thread:"
+        ]:
+            found = False
+            for symptom in outputSymptoms:
+                if symptom.output.value == stringMatchVal:
+                    found = True
+            self.assertTrue(found, msg="Couldn't find OutputSymptom with value '%s'" % stringMatchVal)
 
 
 if __name__ == "__main__":
