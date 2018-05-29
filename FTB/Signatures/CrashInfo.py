@@ -172,6 +172,7 @@ class CrashInfo():
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
+        tsanString = "WARNING: ThreadSanitizer:"
         ubsanString = ": runtime error: "
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
         appleString = "Mac OS X"
@@ -201,6 +202,8 @@ class CrashInfo():
                 return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif lsanString in line:
                 return LSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+            elif tsanString in line:
+                return TSanCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif appleString in line:
                 return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
             elif cdbString in line:
@@ -1556,3 +1559,105 @@ class RustCrashInfo(CrashInfo):
                 inBacktrace = True
                 if frame.group("symbol"):
                     self.backtrace.append(frame.group("symbol"))
+
+
+class TSanCrashInfo(CrashInfo):
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout is not None:
+            self.rawStdout.extend(stdout)
+
+        if stderr is not None:
+            self.rawStderr.extend(stderr)
+
+        if crashData is not None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the ASan trace, otherwise use stderr
+        tsanOutput = crashData if crashData else stderr
+
+        tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s(?:data race|thread leak)\s+\(pid=\d+\)"""  # noqa
+
+        # Cache this for use by createShortSignature
+        self.tsanWarnLine = None
+        self.tsanIndexZero = []
+
+        expectedIndex = 0
+        reportFound = False
+        for traceLine in tsanOutput:
+            if not reportFound:
+                match = re.search(tsanWarningPattern, traceLine)
+                if match is not None:
+                    self.tsanWarnLine = traceLine.strip()
+                    reportFound = True
+                continue
+
+            parts = traceLine.strip().split()
+
+            # We only want stack frames
+            if not parts or not parts[0].startswith("#"):
+                continue
+
+            try:
+                index = int(parts[0][1:])
+            except ValueError:
+                continue
+
+            # We may see multiple traces in TSAN
+            if index == 0:
+                expectedIndex = 0
+
+            if not expectedIndex == index:
+                raise RuntimeError("Fatal error parsing TSan trace (Index mismatch, got index %s but expected %s)" %
+                                   (index, expectedIndex))
+
+            component = None
+            if len(parts) > 2:
+                    # TSan has a different trace style than other sanitizers:
+                    #   TSan uses:
+                    #     #0 function name filename:line:col (bin+0xaddr)
+                    #   ASan uses:
+                    #     #0 0xaddr in function name filename:line
+                    component = " ".join(parts[1:-2])
+            else:
+                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                component = "<missing>"
+
+            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+
+            if index == 0:
+                # Memorize index 0 components for short signature later
+                self.tsanIndexZero.append(self.backtrace[-1])
+
+            expectedIndex += 1
+
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+        if self.tsanWarnLine:
+            msg = re.sub(r"\s*\(pid=\d+\)", "", self.tsanWarnLine)
+            msg = msg.replace("WARNING: ", "")
+
+            if "data race" in msg:
+                if len(self.tsanIndexZero) > 0:
+                    msg += " [@ %s]" % self.tsanIndexZero[0]
+
+                if len(self.tsanIndexZero) > 1:
+                    msg += " vs. [@ %s]" % self.tsanIndexZero[1]
+            elif "thread leak" in msg:
+                if len(self.tsanIndexZero) > 0:
+                    msg += " [@ %s]" % self.tsanIndexZero[0]
+            else:
+                raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)
+
+            return msg
+
+        return "No TSan warning detected"

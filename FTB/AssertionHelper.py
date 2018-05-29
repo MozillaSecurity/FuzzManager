@@ -123,6 +123,7 @@ def getAuxiliaryAbortMessage(output):
     '''
     lastLine = None
     needASanRW = False
+    needTSanRW = False
 
     for line in output:
         # Remove any PID output at the beginning of the line
@@ -143,6 +144,17 @@ def getAuxiliaryAbortMessage(output):
             lastLine = [lastLine]
             lastLine.append(line)
             needASanRW = False
+        elif "WARNING: ThreadSanitizer:" in line:
+            line = re.sub(r"\s*\(pid=\d+\)", "", line)
+            lastLine = line.strip()
+
+            # If we have a data race, then we would like the read/write lines mentioning the threads involved
+            needTSanRW = "data race" in line
+
+            if needTSanRW:
+                lastLine = [lastLine]
+        elif needTSanRW and re.match(r"\s*(?:Read|Write|Previous read|Previous write) of size", line):
+            lastLine.append(line.strip())
         elif "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
             lastLine = line

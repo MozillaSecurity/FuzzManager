@@ -730,6 +730,30 @@ Direct leak of 232 byte(s) in 1 object(s) allocated from:
     #3 0x7fe6cdf7081f in mozilla::net::nsStandardURL::StartClone() /builds/nsStandardURL.cpp:2356
 """
 
+tsanSimpleLeakReport = """
+WARNING: ThreadSanitizer: thread leak (pid=9509)
+  Thread T1 (tid=0, finished) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000001fb33)
+    #1 main thread_leak3.c:10 (exe+0x000000003c7e)
+"""  # noqa
+
+tsanSimpleRaceReport = """
+WARNING: ThreadSanitizer: data race (pid=9337)
+  Write of size 4 at 0x7fe3c3075190 by thread T1:
+    #0 foo1() simple_stack2.cc:9 (exe+0x000000003c9a)
+    #1 bar1() simple_stack2.cc:16 (exe+0x000000003ce4)
+    #2 Thread1(void*) simple_stack2.cc:34 (exe+0x000000003d99)
+
+  Previous read of size 4 at 0x7fe3c3075190 by main thread:
+    #0 foo2() simple_stack2.cc:20 (exe+0x000000003d0c)
+    #1 bar2() simple_stack2.cc:29 (exe+0x000000003d74)
+    #2 main simple_stack2.cc:41 (exe+0x000000003ddb)
+
+  Thread T1 (tid=9338, running) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000000de83)
+    #1 main simple_stack2.cc:40 (exe+0x000000003dd6)
+"""  # noqa
+
 
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
@@ -2732,6 +2756,61 @@ class LSanParserTestLeakDetected(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[2], "operator new")
         self.assertEqual(crashInfo.backtrace[3], "mozilla::net::nsStandardURL::StartClone")
         self.assertIsNone(crashInfo.crashAddress)
+
+
+class TSanParserSimpleLeakTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, tsanSimpleLeakReport.splitlines())
+
+        self.assertEqual(crashInfo.createShortSignature(), ("ThreadSanitizer: thread leak [@ pthread_create]"))
+
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "pthread_create")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+
+        self.assertEqual(crashInfo.crashInstruction, None)
+        self.assertEqual(crashInfo.crashAddress, None)
+
+
+class TSanParserSimpleRaceTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, tsanSimpleRaceReport.splitlines())
+
+        self.assertEqual(crashInfo.createShortSignature(), ("ThreadSanitizer: data race [@ foo1] vs. [@ foo2]"))
+
+        self.assertEqual(len(crashInfo.backtrace), 8)
+        self.assertEqual(crashInfo.backtrace[0], "foo1")
+        self.assertEqual(crashInfo.backtrace[1], "bar1")
+        self.assertEqual(crashInfo.backtrace[2], "Thread1")
+        self.assertEqual(crashInfo.backtrace[3], "foo2")
+        self.assertEqual(crashInfo.backtrace[4], "bar2")
+
+        self.assertEqual(crashInfo.crashInstruction, None)
+        self.assertEqual(crashInfo.crashAddress, None)
+
+
+class TSanParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        with open(os.path.join(CWD, 'tsan-report.txt'), 'r') as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(crashInfo.createShortSignature(), ("ThreadSanitizer: data race "
+                                                            "[@ js::ProtectedData<js::CheckMainThread"
+                                                            "<(js::AllowedHelperThread)0>, unsigned long>::operator++] "
+                                                            "vs. [@ js::gc::GCRuntime::majorGCCount]"))
+
+        self.assertEqual(len(crashInfo.backtrace), 146)
+        self.assertEqual(crashInfo.backtrace[1], "js::gc::GCRuntime::incMajorGcNumber")
+        self.assertEqual(crashInfo.backtrace[5], "js::gc::GCRuntime::gcIfNeededAtAllocation")
+
+        self.assertEqual(crashInfo.crashInstruction, None)
+        self.assertEqual(crashInfo.crashAddress, None)
 
 
 if __name__ == "__main__":
