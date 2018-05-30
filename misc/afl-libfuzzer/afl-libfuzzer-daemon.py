@@ -105,7 +105,7 @@ class LibFuzzerMonitor(threading.Thread):
                 self.trace.append(line.rstrip())
                 if line.find("==ABORTING") >= 0:
                     self.inTrace = False
-            elif line.find("==ERROR: AddressSanitizer") >= 0:
+            elif line.find("==ERROR: AddressSanitizer") >= 0 and line.find(": Thread limit ") < 0:
                 self.trace.append(line.rstrip())
                 self.inTrace = True
 
