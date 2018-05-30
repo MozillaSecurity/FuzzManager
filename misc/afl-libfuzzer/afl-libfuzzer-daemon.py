@@ -66,6 +66,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.testcase = None
         self.killOnOOM = killOnOOM
         self.hadOOM = False
+        self.hitThreadLimit = False
         self.inited = False
         self.mid = mid
         self.mqueue = mqueue
@@ -78,6 +79,9 @@ class LibFuzzerMonitor(threading.Thread):
         self.last_new_pc = 0
 
     def run(self):
+        assert(not self.hitThreadLimit)
+        assert(not self.hadOOM)
+
         while True:
             line = self.fd.readline(4096)
 
@@ -105,9 +109,11 @@ class LibFuzzerMonitor(threading.Thread):
                 self.trace.append(line.rstrip())
                 if line.find("==ABORTING") >= 0:
                     self.inTrace = False
-            elif line.find("==ERROR: AddressSanitizer") >= 0 and line.find(": Thread limit ") < 0:
+            elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.trace.append(line.rstrip())
                 self.inTrace = True
+            elif line.find("==AddressSanitizer: Thread limit") >= 0:
+                self.hitThreadLimit = True
 
             if not self.inTrace:
                 self.stderr.append(line)
@@ -134,6 +140,15 @@ class LibFuzzerMonitor(threading.Thread):
 
         if self.mqueue is not None:
             self.mqueue.put(self.mid)
+
+        if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
+            # If we hit ASan's global thread limit, ignore the error and remove
+            # the resulting testcase, as it won't be useful anyway.
+            # Not that this thread limit is not a concurrent thread limit, but
+            # a limit imposed on the number of threads ever started during the lifetime
+            # of the process.
+            os.remove(self.testcase)
+            self.testcase = None
 
     def getASanTrace(self):
         return self.trace
