@@ -111,7 +111,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 
 class BucketSerializer(serializers.ModelSerializer):
-    bug = serializers.CharField(source='bug.externalId')
+    bug = serializers.CharField(source='bug.externalId', default=None)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True)
