@@ -609,6 +609,12 @@ def newSignature(request):
 
             if 'stackframes' in request.GET:
                 maxStackFrames = int(request.GET['stackframes'])
+            elif set(crashInfo.backtrace) & {
+                    "std::panicking::rust_panic",
+                    "std::panicking::rust_panic_with_hook",
+            }:
+                # rust panic adds 5-6 frames of noise at the top of the stack
+                maxStackFrames += 6
 
             if 'forcecrashaddress' in request.GET:
                 forceCrashAddress = bool(int(request.GET['forcecrashaddress']))
