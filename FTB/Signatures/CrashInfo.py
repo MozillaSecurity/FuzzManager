@@ -195,21 +195,29 @@ class CrashInfo():
         if stderr is not None:
             lines.extend(stderr)
 
+        result = None
         for line in lines:
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
-                return UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif asanString in line:
-                return ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif lsanString in line:
-                return LSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = LSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif tsanString in line:
-                return TSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = TSanCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif appleString in line:
-                return AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif cdbString in line:
-                return CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif gdbString in line or gdbCoreString in line:
-                return GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             elif not rustFirstDetected and rustFirstString in line:
                 rustFirstDetected = True
                 minidumpFirstDetected = False
@@ -222,7 +230,8 @@ class CrashInfo():
                 rustFirstDetected = False
                 minidumpFirstDetected = True
             elif minidumpFirstDetected and minidumpSecondString in line:
-                return MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
+                result = MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             else:
                 rustFirstDetected = False
                 minidumpFirstDetected = False
@@ -230,7 +239,14 @@ class CrashInfo():
         # Default fallback to be used if there is neither ASan nor GDB output.
         # This is still useful in case there is no crash but we want to match
         # e.g. stdout/stderr output with signatures.
-        return weakResult or NoCrashInfo(stdout, stderr, configuration, auxCrashData)
+        if result is None:
+            result = weakResult or NoCrashInfo(stdout, stderr, configuration, auxCrashData)
+
+        # Rust symbols have a source hash appended to them. Strip this off regardless of the
+        # CrashInfo type
+        result.backtrace = [re.sub(r"::h[0-9a-f]{16}$", "", frame) for frame in result.backtrace]
+
+        return result
 
     def createShortSignature(self):
         '''
