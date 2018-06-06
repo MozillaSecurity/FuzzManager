@@ -71,7 +71,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     #'django.contrib.auth.middleware.RemoteUserMiddleware',
-    #'mozilla_django_oidc.middleware.RefreshIDToken',
+    #'mozilla_django_oidc.middleware.SessionRefresh',
     'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
@@ -183,7 +183,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-
+STATIC_ROOT = '/path/to/static/'
 STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
@@ -212,7 +212,7 @@ LOGGING = {
             'format': '[%(asctime)s] [%(levelname)s] [%(module)s] [%(process)d] ]%(thread)d]: %(message)s'
         },
         'simple': {
-            'format': '[%(asctime)s] [%(levelname)s] [%(module)s]: %(message)s'
+            'format': '[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s'
         },
     },
     'handlers': {
@@ -237,6 +237,16 @@ LOGGING = {
     'loggers': {
         'flake8': {
             'level': 'WARNING',
+        },
+        'boto': {
+            'handlers': ['ec2spotmanager_logfile'],
+            'propagate': True,
+            'level': 'WARNING',
+        },
+        'laniakea': {
+            'handlers': ['ec2spotmanager_logfile'],
+            'propagate': True,
+            'level': 'INFO',
         },
         'ec2spotmanager': {
             'handlers': ['ec2spotmanager_logfile'],

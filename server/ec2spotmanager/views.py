@@ -439,7 +439,7 @@ def deletePool(request, poolid):
                               'Please wait for their termination first.')})
 
     if request.method == 'POST':
-        lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % poolid)
+        lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%s.lck' % poolid)
 
         if not lock.acquire(blocking=False):
             return render(request, 'pools/error.html', {

@@ -221,8 +221,8 @@ def _start_pool_instances(pool, config, count=1):
         if priceLowEntries:
             priceLowEntries.delete()
 
-    logger.debug("[Pool %d] Using instance type %s in region %s with availability zone %s.",
-                 pool.id, instance_type, region, zone)
+    logger.info("[Pool %d] Using instance type %s in region %s with availability zone %s.",
+                pool.id, instance_type, region, zone)
 
     try:
         userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata.decode('utf-8'))
@@ -544,7 +544,8 @@ def _update_pool_instances(pool, config):
                     continue
 
                 instance = instances_by_ids[boto_instance.id]
-                instances_left.remove(instance)
+                if instance in instances_left:
+                    instances_left.remove(instance)
 
                 # Check the status code and update if necessary
                 if instance.status_code != state_code:
