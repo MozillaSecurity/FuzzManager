@@ -33,12 +33,23 @@ class TestCase(DjangoTestCase):
     def setUpClass(cls):
         """Common setup tasks for all server unittests"""
         super(DjangoTestCase, cls).setUpClass()
-        User.objects.create_user('test', 'test@mozilla.com', 'test')
+
+        def create_user(username, email="test@mozilla.com", password="test", restricted=False):
+            user = User.objects.create_user(username, email, password)
+            (user, created) = cmUser.get_or_create_restricted(user)
+            user.restricted = restricted
+            user.save()
+            return user
+
+        # Create one unrestricted and one restricted test user
+        create_user("test")
+        create_user("test-restricted", restricted=True)
 
     @classmethod
     def tearDownClass(cls):
         """Common teardown tasks for all server unittests"""
         User.objects.get(username='test').delete()
+        User.objects.get(username='test-restricted').delete()
         super(DjangoTestCase, cls).tearDownClass()
 
     @staticmethod
