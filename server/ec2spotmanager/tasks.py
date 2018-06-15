@@ -230,6 +230,7 @@ def _start_pool_instances(pool, config, count=1):
         # Copy the userdata_macros and populate with internal variables
         ec2_userdata_macros = dict(config.ec2_userdata_macros)
         ec2_userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+        ec2_userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
 
         userdata = LaniakeaCommandLine.handle_tags(userdata, ec2_userdata_macros)
         if not userdata:
