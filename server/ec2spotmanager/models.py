@@ -32,12 +32,21 @@ class OverwritingStorage(FileSystemStorage):
             os.remove(os.path.join(getattr(settings, 'USERDATA_STORAGE', None), name))
         return name
 
-
 class PoolConfiguration(models.Model):
-    parent = models.ForeignKey("self", blank=True, null=True)
+    parent = models.ForeignKey('self', blank=True, null=True, related_name='%(class)s_parent')
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
+
+    @property
+    def provider(self):
+        if hasattr(self, 'ec2poolconfiguration'):
+            return self.ec2poolconfiguration
+        if hasattr(self, 'azurepoolconfiguration'):
+            return self.azurepoolconfiguration
+        raise NotImplementedError()
+
+class Ec2PoolConfiguration(PoolConfiguration):
     aws_access_key_id = models.CharField(max_length=255, blank=True, null=True)
     aws_secret_access_key = models.CharField(max_length=255, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
@@ -97,7 +106,7 @@ class PoolConfiguration(models.Model):
         # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
 
-        super(PoolConfiguration, self).__init__(*args, **kwargs)
+        super(Ec2PoolConfiguration, self).__init__(*args, **kwargs)
 
     def flatten(self):
         if self.isCyclic():
@@ -119,7 +128,7 @@ class PoolConfiguration(models.Model):
         # If we are not the top-most confifugration, recursively call flatten
         # and proceed with the configuration provided by our parent.
         if self.parent is not None:
-            flat_parent_config = self.parent.flatten()
+            flat_parent_config = self.parent.provider.flatten()
 
         for config_field in self.config_fields:
             if getattr(self, config_field) is not None:
@@ -136,6 +145,7 @@ class PoolConfiguration(models.Model):
             obj = getattr(self, obj_field)
             if obj:
                 flat_parent_config[field].extend(obj)
+        flat_parent_config.ec2poolconfiguration = True
 
         return flat_parent_config
 
@@ -157,7 +167,7 @@ class PoolConfiguration(models.Model):
             else:
                 setattr(self, field, None)
 
-        super(PoolConfiguration, self).save(*args, **kwargs)
+        super(Ec2PoolConfiguration, self).save(*args, **kwargs)
 
     def deserializeFields(self):
         for field in self.dict_config_fields:
@@ -218,7 +228,7 @@ class PoolConfiguration(models.Model):
         return missing_fields
 
 
-@receiver(models.signals.post_delete, sender=PoolConfiguration)
+@receiver(models.signals.post_delete, sender=Ec2PoolConfiguration)
 def deletePoolConfigurationFiles(sender, instance, **kwargs):
     if instance.ec2_userdata:
         filename = instance.file.path
@@ -231,7 +241,7 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
 
 
 class InstancePool(models.Model):
-    config = models.ForeignKey(PoolConfiguration)
+    config = models.ForeignKey(Ec2PoolConfiguration)
     isEnabled = models.BooleanField(default=False)
     last_cycled = models.DateTimeField(blank=True, null=True)
 

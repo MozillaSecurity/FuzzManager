@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ec2spotmanager.common.prices import get_spot_prices
-from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance, \
+from ec2spotmanager.models import InstancePool, PoolConfiguration, Ec2PoolConfiguration, Instance, \
     INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
 from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from ec2spotmanager.serializers import MachineStatusSerializer
@@ -242,20 +242,21 @@ def forceCyclePoolsByConfig(request, configid):
 def createPool(request):
     if request.method == 'POST':
         pool = InstancePool()
-        config = get_object_or_404(PoolConfiguration, pk=int(request.POST['config']))
+        config = get_object_or_404(Ec2PoolConfiguration, pk=int(request.POST['config']))
         pool.config = config
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
-        configurations = PoolConfiguration.objects.all()
+        configurations = Ec2PoolConfiguration.objects.all()
         return render(request, 'pools/create.html', {'configurations': configurations})
     else:
         raise SuspiciousOperation
 
 
 @deny_restricted_users
-def viewConfigs(request):
+def viewEc2Configs(request):
     configs = PoolConfiguration.objects.all()
+
     roots = configs.filter(parent=None)
 
     def add_children(node):
@@ -274,20 +275,20 @@ def viewConfigs(request):
 
 
 @deny_restricted_users
-def viewConfig(request, configid):
-    config = get_object_or_404(PoolConfiguration, pk=configid)
+def viewEc2Config(request, configid):
+    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
 
     data = {'config': config}
 
     return render(request, 'config/view.html', data)
 
 
-def __handleConfigPOST(request, config):
+def __handleEc2ConfigPOST(request, config):
     if int(request.POST['parent']) < 0:
         config.parent = None
     else:
         # TODO: Cyclic config check
-        config.parent = get_object_or_404(PoolConfiguration, pk=int(request.POST['parent']))
+        config.parent = get_object_or_404(Ec2PoolConfiguration, pk=int(request.POST['parent']))
 
     config.name = request.POST['name']
 
@@ -378,20 +379,20 @@ def __handleConfigPOST(request, config):
 
 
 @deny_restricted_users
-def createConfig(request):
+def createEc2Config(request):
     if request.method == 'POST':
-        config = PoolConfiguration()
-        return __handleConfigPOST(request, config)
+        config = Ec2PoolConfiguration()
+        return __handleEc2ConfigPOST(request, config)
     elif request.method == 'GET':
-        configurations = PoolConfiguration.objects.all()
+        configurations = Ec2PoolConfiguration.objects.all()
 
         if "clone" in request.GET:
-            config = get_object_or_404(PoolConfiguration, pk=int(request.GET["clone"]))
+            config = get_object_or_404(Ec2PoolConfiguration, pk=int(request.GET["clone"]))
             config.name = "%s (Cloned)" % config.name
             config.pk = None
             clone = True
         else:
-            config = PoolConfiguration()
+            config = Ec2PoolConfiguration()
             clone = False
 
         config.deserializeFields()
@@ -407,14 +408,14 @@ def createConfig(request):
 
 
 @deny_restricted_users
-def editConfig(request, configid):
-    config = get_object_or_404(PoolConfiguration, pk=configid)
+def editEc2Config(request, configid):
+    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
     config.deserializeFields()
 
     if request.method == 'POST':
-        return __handleConfigPOST(request, config)
+        return __handleEc2ConfigPOST(request, config)
     elif request.method == 'GET':
-        configurations = PoolConfiguration.objects.all()
+        configurations = Ec2PoolConfiguration.objects.all()
         data = {'config': config,
                 'configurations': configurations,
                 'edit': True,
@@ -471,8 +472,8 @@ def deletePoolMsg(request, msgid):
 
 
 @deny_restricted_users
-def deleteConfig(request, configid):
-    config = get_object_or_404(PoolConfiguration, pk=configid)
+def deleteEc2Config(request, configid):
+    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
 
     pools = InstancePool.objects.filter(config=config)
     for pool in pools:
