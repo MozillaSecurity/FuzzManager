@@ -47,6 +47,7 @@ exampleTestCase = b'''function init() {
 }
 eval("init()");'''
 
+pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = 'server.tests'
 
 

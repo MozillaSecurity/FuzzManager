@@ -11,6 +11,7 @@ from ec2spotmanager.models import Instance, InstancePool
 from ec2spotmanager.tests import TestCase as utils
 
 
+pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = 'server.tests'
 
 
