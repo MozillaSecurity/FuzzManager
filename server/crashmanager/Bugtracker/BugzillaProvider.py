@@ -148,6 +148,7 @@ class BugzillaProvider(Provider):
         sdata['product'] = crashEntry.product.name
         sdata['os'] = crashEntry.os.name
         sdata['platform'] = crashEntry.platform.name
+        sdata['client'] = crashEntry.client.name
 
         sdata['args'] = ""
         if crashEntry.args:
@@ -171,7 +172,8 @@ class BugzillaProvider(Provider):
             template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
 
         # Process all support variables in our bug description and comment field
-        for field in ["summary", "testcase", "crashdata", "shortsig", "product", "version", "args", "os", "platform"]:
+        for field in ["summary", "testcase", "crashdata", "shortsig", "product", "version", "args", "os", "platform",
+                      "client"]:
             template["description"] = template["description"].replace('%%%s%%' % field, sdata[field])
             template["comment"] = template["comment"].replace('%%%s%%' % field, sdata[field])
 
