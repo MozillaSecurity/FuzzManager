@@ -228,14 +228,6 @@ LOGGING = {
             'maxBytes': 16777216,
             'formatter': 'simple'
         },
-       'django_logfile': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'django.log'),
-            'maxBytes': 104857600,
-            'backupCount': 5,
-            'formatter': 'simple'
-        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -260,11 +252,6 @@ LOGGING = {
             'handlers': ['ec2spotmanager_logfile'],
             'propagate': True,
             'level': 'INFO',
-        },
-        'django': {
-            'handlers': ['django_logfile'],
-            'propagate': True,
-            'level': 'DEBUG',
         },
     },
 }
