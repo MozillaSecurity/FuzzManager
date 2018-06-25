@@ -1,13 +1,14 @@
 from django.conf.urls import include, url
 from rest_framework import routers
-
-from crashmanager import views
+from . import views
 
 
 router = routers.DefaultRouter()
 router.register(r'crashes', views.CrashEntryViewSet, basename='crashes')
 router.register(r'buckets', views.BucketViewSet, basename='buckets')
 
+
+app_name = 'crashmanager'
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures_rest'),

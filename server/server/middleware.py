@@ -10,11 +10,20 @@ from crashmanager.models import User
 from .auth import CheckAppPermission
 
 
-# This tiny middleware module allows us to see exceptions on stderr
-# when running a Django instance with runserver.py
 class ExceptionLoggingMiddleware(object):
+    """
+    This tiny middleware module allows us to see exceptions on stderr
+    when running a Django instance with runserver.py
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
     def process_exception(self, request, exception):
         print(traceback.format_exc())
+        return None
 
 
 class RequireLoginMiddleware(object):
@@ -33,8 +42,12 @@ class RequireLoginMiddleware(object):
     """
     # Based on snippet from https://stackoverflow.com/a/46976284
     # Docstring and original idea from https://stackoverflow.com/a/2164224
-    def __init__(self):
+    def __init__(self, get_response):
+        self.get_response = get_response
         self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
+
+    def __call__(self, request):
+        return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         # No need to process URLs if user already logged in
@@ -51,8 +64,12 @@ class RequireLoginMiddleware(object):
 
 class CheckAppPermissionsMiddleware(object):
 
-    def __init__(self):
+    def __init__(self, get_response):
+        self.get_response = get_response
         self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
+
+    def __call__(self, request):
+        return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         # Get the app name

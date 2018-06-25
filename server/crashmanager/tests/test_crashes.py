@@ -13,7 +13,7 @@ import json
 import logging
 import pytest
 import requests
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from crashmanager.models import CrashEntry
 from . import assert_contains, assert_not_contains
 

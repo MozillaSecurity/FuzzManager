@@ -12,7 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import logging
 import requests
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import pytest
 
 

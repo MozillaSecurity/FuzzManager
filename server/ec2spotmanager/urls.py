@@ -1,12 +1,13 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-
-from ec2spotmanager import views
+from . import views
 
 
 router = routers.DefaultRouter()
 router.register(r'configurations', views.PoolConfigurationViewSet, basename='configurations')
 
+
+app_name = 'ec2spotmanager'
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/report/$', views.MachineStatusViewSet.as_view()),

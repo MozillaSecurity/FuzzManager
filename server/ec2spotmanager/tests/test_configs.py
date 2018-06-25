@@ -14,7 +14,7 @@ import decimal
 import json
 import logging
 import requests
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import pytest
 from ec2spotmanager.models import PoolConfiguration
 from . import assert_contains, create_config

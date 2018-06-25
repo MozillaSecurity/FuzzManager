@@ -13,7 +13,7 @@ import datetime
 import logging
 import pytest
 import requests
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from . import assert_contains
 
 

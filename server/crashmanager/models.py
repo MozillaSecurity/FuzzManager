@@ -420,7 +420,7 @@ class User(models.Model):
             ("view_ec2spotmanager", "Can see EC2SpotManager app"),
         )
 
-    user = models.OneToOneField(DjangoUser)
+    user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
     defaultTemplateId = models.IntegerField(default=0)
