@@ -138,9 +138,6 @@ class LibFuzzerMonitor(threading.Thread):
 
         self.fd.close()
 
-        if self.mqueue is not None:
-            self.mqueue.put(self.mid)
-
         if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
             # If we hit ASan's global thread limit, ignore the error and remove
             # the resulting testcase, as it won't be useful anyway.
@@ -149,6 +146,9 @@ class LibFuzzerMonitor(threading.Thread):
             # of the process.
             os.remove(self.testcase)
             self.testcase = None
+
+        if self.mqueue is not None:
+            self.mqueue.put(self.mid)
 
     def getASanTrace(self):
         return self.trace
