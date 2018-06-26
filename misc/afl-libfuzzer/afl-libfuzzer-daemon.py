@@ -78,77 +78,83 @@ class LibFuzzerMonitor(threading.Thread):
         self.last_new = 0
         self.last_new_pc = 0
 
+        # Store potential exceptions
+        self.exc = None
+
     def run(self):
         assert(not self.hitThreadLimit)
         assert(not self.hadOOM)
 
-        while True:
-            line = self.fd.readline(4096)
+        try:
+            while True:
+                line = self.fd.readline(4096)
 
-            if not line:
-                break
+                if not line:
+                    break
 
-            status_match = RE_LIBFUZZER_STATUS.search(line)
+                status_match = RE_LIBFUZZER_STATUS.search(line)
 
-            if status_match:
-                self.execs_done = int(status_match.group(1))
+                if status_match:
+                    self.execs_done = int(status_match.group(1))
 
-                if status_match.group(2) == "NEW":
-                    self.last_new = int(time.time())
+                    if status_match.group(2) == "NEW":
+                        self.last_new = int(time.time())
 
-                exec_match = RE_LIBFUZZER_EXECS.search(line)
-                rss_match = RE_LIBFUZZER_RSS.search(line)
+                    exec_match = RE_LIBFUZZER_EXECS.search(line)
+                    rss_match = RE_LIBFUZZER_RSS.search(line)
 
-                if exec_match:
-                    self.execs_per_sec = int(exec_match.group(1))
-                if rss_match:
-                    self.rss_mb = int(rss_match.group(1))
-            elif RE_LIBFUZZER_NEWPC.search(line):
-                self.last_new_pc = int(time.time())
-            elif self.inTrace:
-                self.trace.append(line.rstrip())
-                if line.find("==ABORTING") >= 0:
-                    self.inTrace = False
-            elif line.find("==ERROR: AddressSanitizer") >= 0:
-                self.trace.append(line.rstrip())
-                self.inTrace = True
-            elif line.find("==AddressSanitizer: Thread limit") >= 0:
-                self.hitThreadLimit = True
+                    if exec_match:
+                        self.execs_per_sec = int(exec_match.group(1))
+                    if rss_match:
+                        self.rss_mb = int(rss_match.group(1))
+                elif RE_LIBFUZZER_NEWPC.search(line):
+                    self.last_new_pc = int(time.time())
+                elif self.inTrace:
+                    self.trace.append(line.rstrip())
+                    if line.find("==ABORTING") >= 0:
+                        self.inTrace = False
+                elif line.find("==ERROR: AddressSanitizer") >= 0:
+                    self.trace.append(line.rstrip())
+                    self.inTrace = True
+                elif line.find("==AddressSanitizer: Thread limit") >= 0:
+                    self.hitThreadLimit = True
 
-            if not self.inTrace:
-                self.stderr.append(line)
+                if not self.inTrace:
+                    self.stderr.append(line)
 
-            if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
-                self.inited = True
+                if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
+                    self.inited = True
 
-            if line.find("Test unit written to ") >= 0:
-                self.testcase = line.split()[-1]
+                if line.find("Test unit written to ") >= 0:
+                    self.testcase = line.split()[-1]
 
-            # libFuzzer sometimes hangs on out-of-memory. Kill it
-            # right away if we detect this situation.
-            if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
-                self.hadOOM = True
-                self.process.kill()
+                # libFuzzer sometimes hangs on out-of-memory. Kill it
+                # right away if we detect this situation.
+                if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
+                    self.hadOOM = True
+                    self.process.kill()
 
-            # Pass-through output
-            if self.mid is not None:
-                sys.stderr.write("[Job %s] %s" % (self.mid, line))
-            else:
-                sys.stderr.write(line)
+                # Pass-through output
+                if self.mid is not None:
+                    sys.stderr.write("[Job %s] %s" % (self.mid, line))
+                else:
+                    sys.stderr.write(line)
 
-        self.fd.close()
+            self.fd.close()
 
-        if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
-            # If we hit ASan's global thread limit, ignore the error and remove
-            # the resulting testcase, as it won't be useful anyway.
-            # Not that this thread limit is not a concurrent thread limit, but
-            # a limit imposed on the number of threads ever started during the lifetime
-            # of the process.
-            os.remove(self.testcase)
-            self.testcase = None
-
-        if self.mqueue is not None:
-            self.mqueue.put(self.mid)
+            if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
+                # If we hit ASan's global thread limit, ignore the error and remove
+                # the resulting testcase, as it won't be useful anyway.
+                # Not that this thread limit is not a concurrent thread limit, but
+                # a limit imposed on the number of threads ever started during the lifetime
+                # of the process.
+                os.remove(self.testcase)
+                self.testcase = None
+        except Exception as e:
+            self.exc = e
+        finally:
+            if self.mqueue is not None:
+                self.mqueue.put(self.mid)
 
     def getASanTrace(self):
         return self.trace
@@ -1229,10 +1235,14 @@ def main(argv=None):
                 monitor = monitors[result]
                 monitor.join(20)
                 if monitor.is_alive():
-                    raise RuntimeError("Monitor still alive although it signaled termination.")
+                    raise RuntimeError("Monitor %s still alive although it signaled termination." % result)
 
                 # Monitor is dead, mark it for restarts
                 monitors[result] = None
+
+                if monitor.exc is not None:
+                    # If the monitor had an exception, re-raise it here
+                    raise monitor.exc
 
                 if opts.stats:
                     # Make sure the execs that this monitor did survive in stats
