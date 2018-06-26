@@ -276,6 +276,9 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 # This is the directory where signatures.zip will be stored
 SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 
+# Redis configuration
+# USE_REDIS = True
+
 # Celery configuration
 # USE_CELERY = True
 # CELERY_ACCEPT_CONTENT = ['json']

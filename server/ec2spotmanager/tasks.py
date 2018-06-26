@@ -5,12 +5,18 @@ import traceback
 import boto.ec2
 import boto.exception
 import fasteners
+from django.conf import settings
 from django.utils import timezone
 from laniakea.core.manager import Laniakea
 from laniakea import LaniakeaCommandLine
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_spot_prices, get_price_median
+
+
+USE_REDIS = getattr(settings, 'USE_REDIS', False)
+if USE_REDIS:
+    import redis
 
 
 logger = logging.getLogger("ec2spotmanager")
@@ -131,6 +137,10 @@ def _get_best_region_zone(config):
                                              instance_type)
               for instance_type in config.ec2_instance_types}
 
+    if USE_REDIS:
+        # look for blacklisted zone/type
+        cache = redis.StrictRedis()
+
     # Calculate median values for all availability zones and best zone/price
     best_zone = None
     best_region = None
@@ -140,6 +150,11 @@ def _get_best_region_zone(config):
     for instance_type in prices:
         for region in prices[instance_type]:
             for zone in prices[instance_type][region]:
+                # zone+type is blacklisted because a previous spot request timed-out
+                if USE_REDIS and cache.get("%s/%s" % (zone, instance_type)) is not None:
+                    logger.debug("%s/%s is blacklisted", zone, instance_type)
+                    continue
+
                 # Do not consider a zone/region combination that has a current
                 # price higher than the maximum price we are willing to pay,
                 # even if the median would end up being lower than our maximum.
@@ -250,10 +265,24 @@ def _start_pool_instances(pool, config, count=1):
         images["default"]['count'] = count
         images["default"]['instance_type'] = instance_type
 
-        cluster = Laniakea(images)
+        cluster = Laniakea(None)
         try:
             cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
                             aws_secret_access_key=config.aws_secret_access_key)
+            # resolve AMI manually for caching
+            ami = None
+            if USE_REDIS:
+                # look for blacklisted zone/type
+                cache = redis.StrictRedis()
+                ami_cache_key = "%s/%s" % (region, images["default"]["image_name"])
+                ami = cache.get(ami_cache_key)
+            if ami is None:
+                ami = cluster.resolve_image_name(images["default"]["image_name"])
+                if USE_REDIS:
+                    cache.set(ami_cache_key, ami, ex=24 * 3600)
+            images['default']['image_id'] = ami
+            images['default'].pop('image_name')
+            cluster.images = images
         except ssl.SSLError as msg:
             logger.warning("[Pool %d] start_pool_instances: Temporary failure in region %s: %s",
                            pool.id, region, msg)
@@ -466,9 +495,16 @@ def _update_pool_instances(pool, config):
                     # request object is returned in case request is closed/cancelled/failed
                     elif isinstance(result, boto.ec2.spotinstancerequest.SpotInstanceRequest):
                         if result.state in {"cancelled", "closed"}:
-                            # this is normal, remove from DB and move on
+                            # request was not fulfilled for some reason.. blacklist this type/zone for a while
                             logger.info("[Pool %d] spot request %s is %s", pool.id, req_id, result.state)
-                            instances_by_ids[req_id].delete()
+                            inst = instances_by_ids[req_id]
+                            if USE_REDIS:
+                                cache = redis.StrictRedis()
+                                key = "%s/%s" % (inst.ec2_zone, result.launch_specification.instance_type)
+                                cache.set(key, "", ex=12 * 3600)
+                                logger.warning("Blacklisted %s for 12h", key)
+                            inst.delete()
+
                         elif result.state in {"open", "active"}:
                             # this should not happen! warn and leave in DB in case it's fulfilled later
                             logger.warning("[Pool %d] Request %s is %s and %s.",
