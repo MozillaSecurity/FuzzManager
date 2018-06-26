@@ -419,44 +419,48 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
 
     aggregated_stats = {}
 
-    for field in wanted_fields_total:
-        if hasattr(monitors[0], field):
+    # In certain cases, e.g. when exiting, one or more monitors can be down.
+    monitors = [monitor for monitor in monitors if monitor is not None]
+
+    if monitors:
+        for field in wanted_fields_total:
+            if hasattr(monitors[0], field):
+                aggregated_stats[field] = 0
+                for monitor in monitors:
+                    aggregated_stats[field] += getattr(monitor, field)
+                if field in wanted_fields_global_aggr:
+                    aggregated_stats[field] += stats[field]
+            else:
+                # Assume global field
+                aggregated_stats[field] = stats[field]
+
+        for field in wanted_fields_mean:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
             aggregated_stats[field] = 0
             for monitor in monitors:
                 aggregated_stats[field] += getattr(monitor, field)
-            if field in wanted_fields_global_aggr:
-                aggregated_stats[field] += stats[field]
-        else:
-            # Assume global field
-            aggregated_stats[field] = stats[field]
+            aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
 
-    for field in wanted_fields_mean:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = 0
-        for monitor in monitors:
-            aggregated_stats[field] += getattr(monitor, field)
-        aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
+        for field in wanted_fields_all:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            aggregated_stats[field] = []
+            for monitor in monitors:
+                aggregated_stats[field].append(getattr(monitor, field))
 
-    for field in wanted_fields_all:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = []
-        for monitor in monitors:
-            aggregated_stats[field].append(getattr(monitor, field))
+        for field in wanted_fields_max:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            aggregated_stats[field] = 0
+            for monitor in monitors:
+                val = getattr(monitor, field)
+                if val > aggregated_stats[field]:
+                    aggregated_stats[field] = val
+            if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
+                aggregated_stats[field] = stats[field]
 
-    for field in wanted_fields_max:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = 0
-        for monitor in monitors:
-            val = getattr(monitor, field)
-            if val > aggregated_stats[field]:
-                aggregated_stats[field] = val
-        if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
-            aggregated_stats[field] = stats[field]
-
-    for field in wanted_fields_global_aggr:
-        # Write aggregated stats back into the global stats for max fields
-        if field in wanted_fields_max:
-            stats[field] = aggregated_stats[field]
+        for field in wanted_fields_global_aggr:
+            # Write aggregated stats back into the global stats for max fields
+            if field in wanted_fields_max:
+                stats[field] = aggregated_stats[field]
 
     # Write out data
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
