@@ -162,10 +162,18 @@ class LibFuzzerMonitor(threading.Thread):
     def terminate(self):
         # Avoid sending anything through the queue when the run() loop exits
         self.mqueue = None
-
-        # TODO: This might need a timeout/kill logic
         self.process.terminate()
-        self.process.wait()
+
+        # Emulate a wait() with timeout through poll and sleep
+        (maxSleepTime, pollInterval) = (10, 0.2)
+        while self.process.poll() is None and maxSleepTime > 0:
+            maxSleepTime -= pollInterval
+            time.sleep(pollInterval)
+
+        # Process is still alive, kill it and wait
+        if self.process.poll() is None:
+            self.process.kill()
+            self.process.wait()
 
 
 def command_file_to_list(cmd_file):
