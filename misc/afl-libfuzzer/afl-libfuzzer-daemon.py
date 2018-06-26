@@ -1227,7 +1227,7 @@ def main(argv=None):
                     continue
 
                 monitor = monitors[result]
-                monitor.join(10)
+                monitor.join(20)
                 if monitor.is_alive():
                     raise RuntimeError("Monitor still alive although it signaled termination.")
 
