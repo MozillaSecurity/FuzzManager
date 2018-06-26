@@ -80,6 +80,8 @@ thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
   left: `Inline`,
  right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8"""
 
+mozCrashWithPath = "Hit MOZ_CRASH(/builds/worker/workspace/build/src/media/libopus/celt/celt_decoder.c:125 assertion failed: st->start < st->end) at nil:16"  # noqa
+
 
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
@@ -119,6 +121,23 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
+
+
+class AssertionHelperTestMozCrashWithPath(unittest.TestCase):
+    def runTest(self):
+        err = mozCrashWithPath.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = ("Hit MOZ_CRASH\\(([a-zA-Z]:)?/.+/celt_decoder\\.c(:[0-9]+)+ assertion failed: "
+                       "st\\->start < st\\->end\\) at nil(:[0-9]+)+")
+
+        self.assertEqual(sanitizedMsg, expectedMsg)
+
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
+
 
 class AssertionHelperTestJSSelfHosted(unittest.TestCase):
     def runTest(self):
@@ -129,6 +148,9 @@ class AssertionHelperTestJSSelfHosted(unittest.TestCase):
                        'non\\-canonical BestAvailableLocale locale"')
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
 
 
 class AssertionHelperTestV8Abort(unittest.TestCase):
@@ -148,16 +170,23 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
         self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
         self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
 
+        # Ensure the sanitized messages can be compiled as regex without errors
+        re.compile(sanitizedMsgs[0])
+        re.compile(sanitizedMsgs[1])
+
 
 class AssertionHelperTestChakraAssert(unittest.TestCase):
     def runTest(self):
         err = chakraAssert.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = ('ASSERTION [0-9]{2,}: \\\\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) '
+        expectedMsg = ('ASSERTION [0-9]{2,}: \\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) '
                        'scope\\->HasInnerScopeIndex\\(\\)')
 
         self.assertEqual(sanitizedMsg, expectedMsg)
+
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
 
 
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
@@ -184,6 +213,9 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
         # We currently don't support backward slashes, but if we add support, uncomment this test
         # self.assertTrue(re.match(expectedMsg, assertionMsg2))
 
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg1)
+
 
 class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
     def runTest(self):
@@ -197,6 +229,10 @@ class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+        # Ensure the sanitized messages can be compiled as regex without errors
+        re.compile(sanitizedMsg[0])
+        re.compile(sanitizedMsg[1])
+
 
 class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
     def runTest(self):
@@ -207,6 +243,9 @@ class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
 
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
+
 
 class AssertionHelperTestRustPanic(unittest.TestCase):
     def test_01(self):
@@ -216,6 +255,9 @@ class AssertionHelperTestRustPanic(unittest.TestCase):
                        r"([a-zA-Z]:)?/.+/wrapper\.rs(:[0-9]+)+")
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
+
     def test_02(self):
         err = rustPanic2.splitlines()
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -223,12 +265,20 @@ class AssertionHelperTestRustPanic(unittest.TestCase):
                        r"([a-zA-Z]:)?/.+/option\.rs(:[0-9]+)+")
         self.assertEqual(sanitizedMsg, expectedMsg)
 
+        # Ensure the sanitized message can be compiled as regex without errors
+        re.compile(sanitizedMsg)
+
     def test_03(self):
         err = rustPanic3.splitlines()
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         self.assertEqual(len(sanitizedMsg), 3)
         self.assertEqual(sanitizedMsg[0], r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`")
         self.assertEqual(sanitizedMsg[-1], r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+")
+
+        # Ensure the sanitized messages can be compiled as regex without errors
+        re.compile(sanitizedMsg[0])
+        re.compile(sanitizedMsg[1])
+        re.compile(sanitizedMsg[2])
 
 
 if __name__ == "__main__":
