@@ -38,6 +38,12 @@ class PoolConfiguration(models.Model):
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
 
+    def __init__(self, *args, **kwargs):
+        self.config_fields = [
+            'size',
+            'cycle_interval',
+        ]
+
     @property
     def provider(self):
         if hasattr(self, 'ec2poolconfiguration'):
@@ -45,13 +51,30 @@ class PoolConfiguration(models.Model):
         raise NotImplementedError()
 
     def flatten(self):
-        self.config_fields = [
-            'size',
-            'cycle_interval',
-        ]
+        if self.isCyclic():
+            raise RuntimeError("Attempted to flatten a cyclic configuration")
 
-        return self.config_fields
+        if self.parent is not None:
+            flat_parent_config = self.parent.flatten()
+        else:
+            # Start with an empty configuration
+            flat_parent_config = FlatObject()
 
+        for config_field in self.config_fields:
+            if getattr(self, config_field) is not None:
+                flat_parent_config[config_field] = getattr(self, config_field)
+
+        return flat_parent_config
+
+    def isCyclic(self):
+        if not self.parent:
+            return False
+        tortoise = self
+        hare = self.parent
+        while tortoise != hare and hare.parent and hare.parent.parent:
+            tortoise = tortoise.parent
+            hare = hare.parent.parent
+        return tortoise == hare
 
 
 class EC2PoolConfiguration(PoolConfiguration):
@@ -87,8 +110,6 @@ class EC2PoolConfiguration(PoolConfiguration):
         #
         # The fields which are dictionaries/lists get special treatment
         # because they should behave in an additive manner.
-        self.base_fields = PoolConfiguration.flatten(self)
-        
         self.config_fields = [
             'aws_access_key_id',
             'aws_secret_access_key',
@@ -122,25 +143,25 @@ class EC2PoolConfiguration(PoolConfiguration):
 
         self.deserializeFields()
 
-        # Start with an empty configuration
-        flat_parent_config = FlatObject({})
-
-        # Dictionaries and lists should be explicitely initialized empty
-        # so they can be updated/extended by the child configurations
-        for field in self.dict_config_fields:
-            flat_parent_config[field] = {}
-
-        for field in self.list_config_fields:
-            flat_parent_config[field] = []
-
-        # If we are not the top-most confifugration, recursively call flatten
+        # If we are not the top-most configuration, recursively call flatten
         # and proceed with the configuration provided by our parent.
         if self.parent is not None:
             flat_parent_config = self.parent.provider.flatten()
-        
-        for base_field in self.base_fields:
-            if getattr(self, base_field) is not None:
-                flat_parent_config[base_field] = getattr(self, base_field)
+
+        else:
+            # Start with an empty configuration
+            flat_parent_config = FlatObject()
+
+            # Dictionaries and lists should be explicitly initialized empty
+            # so they can be updated/extended by the child configurations
+            for field in self.dict_config_fields:
+                flat_parent_config[field] = {}
+
+            for field in self.list_config_fields:
+                flat_parent_config[field] = []
+
+        # Include flattened fields from super class
+        flat_parent_config.update(super(EC2PoolConfiguration, self).flatten())
 
         for config_field in self.config_fields:
             if getattr(self, config_field) is not None:
@@ -157,37 +178,11 @@ class EC2PoolConfiguration(PoolConfiguration):
             obj = getattr(self, obj_field)
             if obj:
                 flat_parent_config[field].extend(obj)
+
+        # set ec2poolconfiguration so the caller can determine type
         flat_parent_config.ec2poolconfiguration = True
 
         return flat_parent_config
-
-    def isCyclic(self):
-        if not self.parent:
-            return False
-        tortoise = self
-        hare = self.parent
-        while(tortoise != hare and hare.parent and hare.parent.parent):
-            tortoise = tortoise.parent
-            hare = hare.parent.parent
-        return tortoise == hare
-    
-    def deserializeFields(self):
-        for field in self.dict_config_fields:
-            obj_field = "%s_dict" % field
-            sobj = getattr(self, field)
-            if sobj:
-                setattr(self, obj_field, json.loads(sobj))
-
-        for field in self.list_config_fields:
-            obj_field = "%s_list" % field
-            sobj = getattr(self, field)
-            if sobj:
-                setattr(self, obj_field, json.loads(sobj))
-
-        if self.ec2_userdata_file:
-            self.ec2_userdata_file.open(mode='rb')
-            self.ec2_userdata = self.ec2_userdata_file.read()
-            self.ec2_userdata_file.close()
 
     def save(self, *args, **kwargs):
         # Reserialize data, then call regular save method
@@ -208,6 +203,24 @@ class EC2PoolConfiguration(PoolConfiguration):
                 setattr(self, field, None)
 
         super(EC2PoolConfiguration, self).save(*args, **kwargs)
+
+    def deserializeFields(self):
+        for field in self.dict_config_fields:
+            obj_field = "%s_dict" % field
+            sobj = getattr(self, field)
+            if sobj:
+                setattr(self, obj_field, json.loads(sobj))
+
+        for field in self.list_config_fields:
+            obj_field = "%s_list" % field
+            sobj = getattr(self, field)
+            if sobj:
+                setattr(self, obj_field, json.loads(sobj))
+
+        if self.ec2_userdata_file:
+            self.ec2_userdata_file.open(mode='rb')
+            self.ec2_userdata = self.ec2_userdata_file.read()
+            self.ec2_userdata_file.close()
 
     def storeTestAndSave(self):
         if self.ec2_userdata:
