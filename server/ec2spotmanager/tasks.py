@@ -190,7 +190,7 @@ def _start_pool_instances(pool, config, count=1):
     
     if config.ec2poolconfiguration:
         images = _create_laniakea_images(config)
-
+        
         # Figure out where to put our instances
         try:
             (region, zone, instance_type, rejected) = _get_best_region_zone(config)
@@ -199,6 +199,38 @@ def _start_pool_instances(pool, config, count=1):
             logger.warning("[Pool %d] Failed to acquire spot instance prices: %s.", pool.id, traceback.format_exc())
             return
         except RuntimeError:
+    priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
+
+    if not region:
+        logger.warning("[Pool %d] No allowed region was cheap enough to spawn instances.", pool.id)
+
+        if not priceLowEntries:
+            entry = PoolStatusEntry()
+            entry.pool = pool
+            entry.type = POOL_STATUS_ENTRY_TYPE['price-too-low']
+            entry.msg = "No allowed region was cheap enough to spawn instances."
+            for zone in rejected:
+                entry.msg += "\n%s at %s" % (zone, rejected[zone])
+            entry.save()
+        return
+    else:
+        if priceLowEntries:
+            priceLowEntries.delete()
+
+    logger.info("[Pool %d] Using instance type %s in region %s with availability zone %s.",
+                pool.id, instance_type, region, zone)
+
+    try:
+        userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata.decode('utf-8'))
+
+        # Copy the userdata_macros and populate with internal variables
+        ec2_userdata_macros = dict(config.ec2_userdata_macros)
+        ec2_userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+        ec2_userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
+
+        userdata = LaniakeaCommandLine.handle_tags(userdata, ec2_userdata_macros)
+        if not userdata:
+
             logger.error("[Pool %d] Failed to compile userdata.", pool.id)
             entry = PoolStatusEntry()
             entry.type = EC2_POOL_STATUS_ENTRY_TYPE['config-error']

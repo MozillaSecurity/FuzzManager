@@ -78,77 +78,83 @@ class LibFuzzerMonitor(threading.Thread):
         self.last_new = 0
         self.last_new_pc = 0
 
+        # Store potential exceptions
+        self.exc = None
+
     def run(self):
         assert(not self.hitThreadLimit)
         assert(not self.hadOOM)
 
-        while True:
-            line = self.fd.readline(4096)
+        try:
+            while True:
+                line = self.fd.readline(4096)
 
-            if not line:
-                break
+                if not line:
+                    break
 
-            status_match = RE_LIBFUZZER_STATUS.search(line)
+                status_match = RE_LIBFUZZER_STATUS.search(line)
 
-            if status_match:
-                self.execs_done = int(status_match.group(1))
+                if status_match:
+                    self.execs_done = int(status_match.group(1))
 
-                if status_match.group(2) == "NEW":
-                    self.last_new = int(time.time())
+                    if status_match.group(2) == "NEW":
+                        self.last_new = int(time.time())
 
-                exec_match = RE_LIBFUZZER_EXECS.search(line)
-                rss_match = RE_LIBFUZZER_RSS.search(line)
+                    exec_match = RE_LIBFUZZER_EXECS.search(line)
+                    rss_match = RE_LIBFUZZER_RSS.search(line)
 
-                if exec_match:
-                    self.execs_per_sec = int(exec_match.group(1))
-                if rss_match:
-                    self.rss_mb = int(rss_match.group(1))
-            elif RE_LIBFUZZER_NEWPC.search(line):
-                self.last_new_pc = int(time.time())
-            elif self.inTrace:
-                self.trace.append(line.rstrip())
-                if line.find("==ABORTING") >= 0:
-                    self.inTrace = False
-            elif line.find("==ERROR: AddressSanitizer") >= 0:
-                self.trace.append(line.rstrip())
-                self.inTrace = True
-            elif line.find("==AddressSanitizer: Thread limit") >= 0:
-                self.hitThreadLimit = True
+                    if exec_match:
+                        self.execs_per_sec = int(exec_match.group(1))
+                    if rss_match:
+                        self.rss_mb = int(rss_match.group(1))
+                elif RE_LIBFUZZER_NEWPC.search(line):
+                    self.last_new_pc = int(time.time())
+                elif self.inTrace:
+                    self.trace.append(line.rstrip())
+                    if line.find("==ABORTING") >= 0:
+                        self.inTrace = False
+                elif line.find("==ERROR: AddressSanitizer") >= 0:
+                    self.trace.append(line.rstrip())
+                    self.inTrace = True
+                elif line.find("==AddressSanitizer: Thread limit") >= 0:
+                    self.hitThreadLimit = True
 
-            if not self.inTrace:
-                self.stderr.append(line)
+                if not self.inTrace:
+                    self.stderr.append(line)
 
-            if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
-                self.inited = True
+                if not self.inited and (line.find("INITED cov") >= 0 or line.find(NO_CORPUS_MSG) >= 0):
+                    self.inited = True
 
-            if line.find("Test unit written to ") >= 0:
-                self.testcase = line.split()[-1]
+                if line.find("Test unit written to ") >= 0:
+                    self.testcase = line.split()[-1]
 
-            # libFuzzer sometimes hangs on out-of-memory. Kill it
-            # right away if we detect this situation.
-            if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
-                self.hadOOM = True
-                self.process.kill()
+                # libFuzzer sometimes hangs on out-of-memory. Kill it
+                # right away if we detect this situation.
+                if self.killOnOOM and line.find("ERROR: libFuzzer: out-of-memory") >= 0:
+                    self.hadOOM = True
+                    self.process.kill()
 
-            # Pass-through output
-            if self.mid is not None:
-                sys.stderr.write("[Job %s] %s" % (self.mid, line))
-            else:
-                sys.stderr.write(line)
+                # Pass-through output
+                if self.mid is not None:
+                    sys.stderr.write("[Job %s] %s" % (self.mid, line))
+                else:
+                    sys.stderr.write(line)
 
-        self.fd.close()
+            self.fd.close()
 
-        if self.mqueue is not None:
-            self.mqueue.put(self.mid)
-
-        if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
-            # If we hit ASan's global thread limit, ignore the error and remove
-            # the resulting testcase, as it won't be useful anyway.
-            # Not that this thread limit is not a concurrent thread limit, but
-            # a limit imposed on the number of threads ever started during the lifetime
-            # of the process.
-            os.remove(self.testcase)
-            self.testcase = None
+            if self.hitThreadLimit and self.testcase and os.path.exists(self.testcase):
+                # If we hit ASan's global thread limit, ignore the error and remove
+                # the resulting testcase, as it won't be useful anyway.
+                # Not that this thread limit is not a concurrent thread limit, but
+                # a limit imposed on the number of threads ever started during the lifetime
+                # of the process.
+                os.remove(self.testcase)
+                self.testcase = None
+        except Exception as e:
+            self.exc = e
+        finally:
+            if self.mqueue is not None:
+                self.mqueue.put(self.mid)
 
     def getASanTrace(self):
         return self.trace
@@ -162,10 +168,18 @@ class LibFuzzerMonitor(threading.Thread):
     def terminate(self):
         # Avoid sending anything through the queue when the run() loop exits
         self.mqueue = None
-
-        # TODO: This might need a timeout/kill logic
         self.process.terminate()
-        self.process.wait()
+
+        # Emulate a wait() with timeout through poll and sleep
+        (maxSleepTime, pollInterval) = (10, 0.2)
+        while self.process.poll() is None and maxSleepTime > 0:
+            maxSleepTime -= pollInterval
+            time.sleep(pollInterval)
+
+        # Process is still alive, kill it and wait
+        if self.process.poll() is None:
+            self.process.kill()
+            self.process.wait()
 
 
 def command_file_to_list(cmd_file):
@@ -411,44 +425,48 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
 
     aggregated_stats = {}
 
-    for field in wanted_fields_total:
-        if hasattr(monitors[0], field):
+    # In certain cases, e.g. when exiting, one or more monitors can be down.
+    monitors = [monitor for monitor in monitors if monitor is not None]
+
+    if monitors:
+        for field in wanted_fields_total:
+            if hasattr(monitors[0], field):
+                aggregated_stats[field] = 0
+                for monitor in monitors:
+                    aggregated_stats[field] += getattr(monitor, field)
+                if field in wanted_fields_global_aggr:
+                    aggregated_stats[field] += stats[field]
+            else:
+                # Assume global field
+                aggregated_stats[field] = stats[field]
+
+        for field in wanted_fields_mean:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
             aggregated_stats[field] = 0
             for monitor in monitors:
                 aggregated_stats[field] += getattr(monitor, field)
-            if field in wanted_fields_global_aggr:
-                aggregated_stats[field] += stats[field]
-        else:
-            # Assume global field
-            aggregated_stats[field] = stats[field]
+            aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
 
-    for field in wanted_fields_mean:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = 0
-        for monitor in monitors:
-            aggregated_stats[field] += getattr(monitor, field)
-        aggregated_stats[field] = float(aggregated_stats[field]) / float(len(monitors))
+        for field in wanted_fields_all:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            aggregated_stats[field] = []
+            for monitor in monitors:
+                aggregated_stats[field].append(getattr(monitor, field))
 
-    for field in wanted_fields_all:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = []
-        for monitor in monitors:
-            aggregated_stats[field].append(getattr(monitor, field))
+        for field in wanted_fields_max:
+            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            aggregated_stats[field] = 0
+            for monitor in monitors:
+                val = getattr(monitor, field)
+                if val > aggregated_stats[field]:
+                    aggregated_stats[field] = val
+            if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
+                aggregated_stats[field] = stats[field]
 
-    for field in wanted_fields_max:
-        assert hasattr(monitors[0], field), "Field %s not in monitor" % field
-        aggregated_stats[field] = 0
-        for monitor in monitors:
-            val = getattr(monitor, field)
-            if val > aggregated_stats[field]:
-                aggregated_stats[field] = val
-        if field in wanted_fields_global_aggr and stats[field] > aggregated_stats[field]:
-            aggregated_stats[field] = stats[field]
-
-    for field in wanted_fields_global_aggr:
-        # Write aggregated stats back into the global stats for max fields
-        if field in wanted_fields_max:
-            stats[field] = aggregated_stats[field]
+        for field in wanted_fields_global_aggr:
+            # Write aggregated stats back into the global stats for max fields
+            if field in wanted_fields_max:
+                stats[field] = aggregated_stats[field]
 
     # Write out data
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
@@ -667,6 +685,9 @@ def main(argv=None):
     s3Group.add_argument("--build-project", dest="build_project",
                          help="If specified, this overrides --project for fetching the build from S3.",
                          metavar="NAME")
+    s3Group.add_argument("--build-zip-name", dest="build_zip_name", default="build.zip",
+                         help="Override default build.zip name when working with S3 builds.",
+                         metavar="NAME")
 
     libfGroup.add_argument('--env', dest='env', nargs='+', type=str,
                            help="List of environment variables in the form 'KEY=VALUE'")
@@ -772,7 +793,7 @@ def main(argv=None):
             print("Error: Must specify both --s3-bucket and --project for S3 actions", file=sys.stderr)
             return 2
 
-        s3m = S3Manager(opts.s3_bucket, opts.project, opts.build_project)
+        s3m = S3Manager(opts.s3_bucket, opts.project, opts.build_project, opts.build_zip_name)
 
     if opts.s3_queue_status:
         status_data = s3m.get_queue_status()
@@ -1100,205 +1121,223 @@ def main(argv=None):
             "next_auto_reduce": 0
         }
 
-        while True:
-            if restarts is not None and restarts < 0 and all(x is None for x in monitors):
-                print("Run completed.", file=sys.stderr)
-                break
+        try:
+            while True:
+                if restarts is not None and restarts < 0 and all(x is None for x in monitors):
+                    print("Run completed.", file=sys.stderr)
+                    break
 
-            # Check if we need to (re)start any monitors
-            for i in range(len(monitors)):
-                if monitors[i] is None:
-                    if restarts is not None:
-                        restarts -= 1
-                        if restarts < 0:
-                            break
-
-                    process = subprocess.Popen(
-                        cmdline,
-                        # stdout=None,
-                        stderr=subprocess.PIPE,
-                        env=env,
-                        universal_newlines=True
-                    )
-
-                    monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
-                    monitors[i].start()
-
-            corpus_size = None
-            if corpus_auto_reduce_threshold is not None or opts.stats:
-                # We need the corpus size for stats and the auto reduce feature,
-                # so we cache it here to avoid running listdir multiple times.
-                corpus_size = len(os.listdir(corpus_dir))
-
-            if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
-                print("Preparing automated merge...", file=sys.stderr)
-
-                # Time to Auto-reduce
+                # Check if we need to (re)start any monitors
                 for i in range(len(monitors)):
-                    monitor = monitors[i]
-                    if monitor is not None:
-                        monitor.terminate()
-                        monitor.join(30)
-                        if monitor.is_alive():
-                            raise RuntimeError("Monitor refusing to stop.")
+                    if monitors[i] is None:
+                        if restarts is not None:
+                            restarts -= 1
+                            if restarts < 0:
+                                break
 
-                        # Indicate that this monitor is dead, so it is restarted later on
-                        monitors[i] = None
+                        process = subprocess.Popen(
+                            cmdline,
+                            # stdout=None,
+                            stderr=subprocess.PIPE,
+                            env=env,
+                            universal_newlines=True
+                        )
 
-                        if opts.stats:
-                            # Make sure the execs that this monitor did survive in stats
-                            stats["execs_done"] += monitor.execs_done
+                        monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
+                        monitors[i].start()
 
-                merge_cmdline = []
-                merge_cmdline.extend(cmdline)
+                corpus_size = None
+                if corpus_auto_reduce_threshold is not None or opts.stats:
+                    # We need the corpus size for stats and the auto reduce feature,
+                    # so we cache it here to avoid running listdir multiple times.
+                    corpus_size = len(os.listdir(corpus_dir))
 
-                # Filter all directories on the command line, these are likely corpus dirs
-                merge_cmdline = [x for x in merge_cmdline if not os.path.isdir(x)]
+                if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
+                    print("Preparing automated merge...", file=sys.stderr)
 
-                # Filter out other stuff we don't want for merging
-                merge_cmdline = [x for x in merge_cmdline if not x.startswith("-dict=")]
+                    # Time to Auto-reduce
+                    for i in range(len(monitors)):
+                        monitor = monitors[i]
+                        if monitor is not None:
+                            monitor.terminate()
+                            monitor.join(30)
+                            if monitor.is_alive():
+                                raise RuntimeError("Monitor refusing to stop.")
 
-                new_corpus_dir = tempfile.mkdtemp(prefix="fm-libfuzzer-automerge-")
-                merge_cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
+                            # Indicate that this monitor is dead, so it is restarted later on
+                            monitors[i] = None
 
-                print("Running automated merge...", file=sys.stderr)
-                with open(os.devnull, 'w') as devnull:
-                    env = os.environ.copy()
-                    env['LD_LIBRARY_PATH'] = os.path.dirname(merge_cmdline[0])
-                    if opts.debug:
-                        devnull = None
-                    subprocess.check_call(merge_cmdline, stdout=devnull, env=env)
+                            if opts.stats:
+                                # Make sure the execs that this monitor did survive in stats
+                                stats["execs_done"] += monitor.execs_done
 
-                if not os.listdir(new_corpus_dir):
-                    print("Error: Merge returned empty result, refusing to continue.")
+                    merge_cmdline = []
+                    merge_cmdline.extend(cmdline)
+
+                    # Filter all directories on the command line, these are likely corpus dirs
+                    merge_cmdline = [x for x in merge_cmdline if not os.path.isdir(x)]
+
+                    # Filter out other stuff we don't want for merging
+                    merge_cmdline = [x for x in merge_cmdline if not x.startswith("-dict=")]
+
+                    new_corpus_dir = tempfile.mkdtemp(prefix="fm-libfuzzer-automerge-")
+                    merge_cmdline.extend(["-merge=1", new_corpus_dir, corpus_dir])
+
+                    print("Running automated merge...", file=sys.stderr)
+                    with open(os.devnull, 'w') as devnull:
+                        env = os.environ.copy()
+                        env['LD_LIBRARY_PATH'] = os.path.dirname(merge_cmdline[0])
+                        if opts.debug:
+                            devnull = None
+                        subprocess.check_call(merge_cmdline, stdout=devnull, env=env)
+
+                    if not os.listdir(new_corpus_dir):
+                        print("Error: Merge returned empty result, refusing to continue.")
+                        return 2
+
+                    shutil.rmtree(corpus_dir)
+                    shutil.move(new_corpus_dir, corpus_dir)
+
+                    # Update our corpus size
+                    corpus_size = len(os.listdir(corpus_dir))
+
+                    # Update our auto-reduction target
+                    if corpus_size >= opts.libfuzzer_auto_reduce_min:
+                        corpus_auto_reduce_threshold = int(corpus_size * (1 + corpus_auto_reduce_ratio))
+                    else:
+                        # Corpus is now smaller than --libfuzzer-auto-reduce-min specifies.
+                        corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min *
+                                                           (1 + corpus_auto_reduce_ratio))
+
+                    # Continue, our instances will be restarted with the next loop
+                    continue
+
+                if opts.stats:
+                    stats["corpus_size"] = corpus_size
+                    if corpus_auto_reduce_threshold is not None:
+                        stats["next_auto_reduce"] = corpus_auto_reduce_threshold
+
+                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
+
+                # Only upload new corpus files every 10 minutes
+                if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
+                    s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
+                    last_queue_upload = int(time.time())
+
+                    # Pull down queue files from other queues directly into the corpus
+                    s3m.download_libfuzzer_queues(corpus_dir)
+
+                try:
+                    result = monitor_queue.get(True, 10)
+                except queue.Empty:
+                    continue
+
+                monitor = monitors[result]
+                monitor.join(20)
+                if monitor.is_alive():
+                    raise RuntimeError("Monitor %s still alive although it signaled termination." % result)
+
+                # Monitor is dead, mark it for restarts
+                monitors[result] = None
+
+                if monitor.exc is not None:
+                    # If the monitor had an exception, re-raise it here
+                    raise monitor.exc
+
+                if opts.stats:
+                    # Make sure the execs that this monitor did survive in stats
+                    stats["execs_done"] += monitor.execs_done
+
+                print("Job %s terminated, processing results..." % result, file=sys.stderr)
+
+                trace = monitor.getASanTrace()
+                testcase = monitor.getTestcase()
+                stderr = monitor.getStderr()
+
+                if not monitor.inited and not trace:
+                    print("Process did not startup correctly, aborting...", file=sys.stderr)
                     return 2
 
-                shutil.rmtree(corpus_dir)
-                shutil.move(new_corpus_dir, corpus_dir)
-
-                # Update our corpus size
-                corpus_size = len(os.listdir(corpus_dir))
-
-                # Update our auto-reduction target
-                if corpus_size >= opts.libfuzzer_auto_reduce_min:
-                    corpus_auto_reduce_threshold = int(corpus_size * (1 + corpus_auto_reduce_ratio))
-                else:
-                    # Corpus is now smaller than --libfuzzer-auto-reduce-min specifies.
-                    corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min * (1 + corpus_auto_reduce_ratio))
-
-                # Continue, our instances will be restarted with the next loop
-                continue
-
-            if opts.stats:
-                stats["corpus_size"] = corpus_size
-                if corpus_auto_reduce_threshold is not None:
-                    stats["next_auto_reduce"] = corpus_auto_reduce_threshold
-
-                write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
-
-            # Only upload new corpus files every 10 minutes
-            if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
-                s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
-                last_queue_upload = int(time.time())
-
-                # Pull down queue files from other queues directly into the corpus
-                s3m.download_libfuzzer_queues(corpus_dir)
-
-            try:
-                result = monitor_queue.get(True, 10)
-            except queue.Empty:
-                continue
-
-            monitor = monitors[result]
-            monitor.join(10)
-            if monitor.is_alive():
-                raise RuntimeError("Monitor still alive although it signaled termination.")
-
-            # Monitor is dead, mark it for restarts
-            monitors[result] = None
-
-            if opts.stats:
-                # Make sure the execs that this monitor did survive in stats
-                stats["execs_done"] += monitor.execs_done
-
-            print("Job %s terminated, processing results..." % result, file=sys.stderr)
-
-            trace = monitor.getASanTrace()
-            testcase = monitor.getTestcase()
-            stderr = monitor.getStderr()
-
-            if not monitor.inited and not trace:
-                print("Process did not startup correctly, aborting...", file=sys.stderr)
-                return 2
-
-            # libFuzzer can exit due to OOM with and without a testcase.
-            # The case of having an OOM with a testcase is handled further below.
-            if not testcase and monitor.hadOOM:
-                stats["ooms"] += 1
-                continue
-
-            # Don't bother sending stuff to the server with neither trace nor testcase
-            if not trace and not testcase:
-                continue
-
-            # Ignore slow units and oom files
-            if testcase is not None:
-                if testcase.startswith("slow-unit-"):
-                    continue
-                if testcase.startswith("oom-"):
+                # libFuzzer can exit due to OOM with and without a testcase.
+                # The case of having an OOM with a testcase is handled further below.
+                if not testcase and monitor.hadOOM:
                     stats["ooms"] += 1
                     continue
-                if testcase.startswith("timeout-"):
-                    stats["timeouts"] += 1
+
+                # Don't bother sending stuff to the server with neither trace nor testcase
+                if not trace and not testcase:
                     continue
 
-            stats["crashes"] += 1
+                # Ignore slow units and oom files
+                if testcase is not None:
+                    if testcase.startswith("slow-unit-"):
+                        continue
+                    if testcase.startswith("oom-"):
+                        stats["ooms"] += 1
+                        continue
+                    if testcase.startswith("timeout-"):
+                        stats["timeouts"] += 1
+                        continue
 
-            if int(time.time()) - crashes_per_minute_interval > 60:
-                crashes_per_minute_interval = int(time.time())
-                crashes_per_minute = 0
-            crashes_per_minute += 1
-            stats["crashes_per_minute"] = crashes_per_minute
+                stats["crashes"] += 1
 
-            if crashes_per_minute >= 10:
-                print("Too many frequent crashes, exiting...", file=sys.stderr)
+                if int(time.time()) - crashes_per_minute_interval > 60:
+                    crashes_per_minute_interval = int(time.time())
+                    crashes_per_minute = 0
+                crashes_per_minute += 1
+                stats["crashes_per_minute"] = crashes_per_minute
 
-                if opts.stats:
-                    # If statistics are reported to EC2SpotManager, this helps us to see
-                    # when fuzzing has become impossible due to excessive crashes.
-                    warning = "Fuzzing terminated due to excessive crashes."
-                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
-                break
+                if crashes_per_minute >= 10:
+                    print("Too many frequent crashes, exiting...", file=sys.stderr)
 
-            if not monitor.inited:
-                print("Process crashed at startup, aborting...", file=sys.stderr)
-                if opts.stats:
-                    # If statistics are reported to EC2SpotManager, this helps us to see
-                    # when fuzzing has become impossible due to excessive crashes.
-                    warning = "Fuzzing did not startup correctly."
-                    write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
-                return 2
+                    if opts.stats:
+                        # If statistics are reported to EC2SpotManager, this helps us to see
+                        # when fuzzing has become impossible due to excessive crashes.
+                        warning = "Fuzzing terminated due to excessive crashes."
+                        write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                    break
 
-            # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
-            if not opts.fuzzmanager:
-                continue
+                if not monitor.inited:
+                    print("Process crashed at startup, aborting...", file=sys.stderr)
+                    if opts.stats:
+                        # If statistics are reported to EC2SpotManager, this helps us to see
+                        # when fuzzing has become impossible due to excessive crashes.
+                        warning = "Fuzzing did not startup correctly."
+                        write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
+                    return 2
 
-            crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
+                # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
+                if not opts.fuzzmanager:
+                    continue
 
-            (sigfile, metadata) = collector.search(crashInfo)
+                crashInfo = CrashInfo.fromRawCrashData([], stderr, configuration, auxCrashData=trace)
 
-            if sigfile is not None:
-                if last_signature == sigfile:
-                    signature_repeat_count += 1
+                (sigfile, metadata) = collector.search(crashInfo)
+
+                if sigfile is not None:
+                    if last_signature == sigfile:
+                        signature_repeat_count += 1
+                    else:
+                        last_signature = sigfile
+                        signature_repeat_count = 0
+
+                    print("Crash matches signature %s, not submitting..." % sigfile, file=sys.stderr)
                 else:
-                    last_signature = sigfile
-                    signature_repeat_count = 0
-
-                print("Crash matches signature %s, not submitting..." % sigfile, file=sys.stderr)
-            else:
-                collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
-                collector.submit(crashInfo, testcase)
-                print("Successfully submitted crash.", file=sys.stderr)
+                    collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
+                    collector.submit(crashInfo, testcase)
+                    print("Successfully submitted crash.", file=sys.stderr)
+        finally:
+            try:
+                # Before doing anything, try to shutdown our monitors
+                for i in range(len(monitors)):
+                    if monitors[i] is not None:
+                        monitor = monitors[i]
+                        monitor.terminate()
+                        monitor.join(10)
+            finally:
+                if sys.exc_info()[0] is not None:
+                    # We caught an exception, print it now when all our monitors are down
+                    traceback.print_exc()
 
         return 0
 

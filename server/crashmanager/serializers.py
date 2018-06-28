@@ -22,7 +22,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     # create these instances first and issue multiple requests in total.
     platform = serializers.CharField(source='platform.name', max_length=63)
     product = serializers.CharField(source='product.name', max_length=63)
-    product_version = serializers.CharField(source='product.version', max_length=63, required=False, allow_blank=True)
+    product_version = serializers.CharField(source='product.version', max_length=127, required=False, allow_blank=True)
     os = serializers.CharField(source='os.name', max_length=63)
     client = serializers.CharField(source='client.name', max_length=255)
     tool = serializers.CharField(source='tool.name', max_length=63)

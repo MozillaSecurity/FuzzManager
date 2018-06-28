@@ -1189,10 +1189,16 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
     serializer_class = CrashEntrySerializer
     filter_backends = [JsonQueryFilterBackend]
 
+    def retrieve(self, request, *args, **kwargs):
+        deny_restricted_users(request)
+        return super(CrashEntryViewSet, self).retrieve(request, *args, **kwargs)
+
     def list(self, request, *args, **kwargs):
         """
         Based on ListModelMixin.list()
         """
+        deny_restricted_users(request)
+
         queryset = self.filter_queryset(self.get_queryset())
 
         include_raw = request.query_params.get('include_raw', '1')
@@ -1217,6 +1223,8 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         """
         Update individual crash fields.
         """
+        deny_restricted_users(request)
+
         allowed_fields = {"testcase_quality"}
         try:
             obj = CrashEntry.objects.get(pk=pk)
@@ -1253,6 +1261,14 @@ class BucketViewSet(mixins.ListModelMixin,
     queryset = Bucket.objects.all().select_related('bug')
     serializer_class = BucketSerializer
     filter_backends = [BucketAnnotateFilterBackend, JsonQueryFilterBackend]
+
+    def retrieve(self, request, *args, **kwargs):
+        deny_restricted_users(request)
+        return super(BucketViewSet, self).retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        deny_restricted_users(request)
+        return super(BucketViewSet, self).list(request, *args, **kwargs)
 
 
 def json_to_query(json_str):
@@ -1345,6 +1361,7 @@ class TestDownloadView(AbstractDownloadView):
             return HttpResponse(status=500)
 
         entry = get_object_or_404(CrashEntry, pk=crashid)
+        check_authorized_for_crash_entry(request, entry)
 
         if not entry.testcase:
             return HttpResponse(status=404)
@@ -1355,6 +1372,8 @@ class TestDownloadView(AbstractDownloadView):
 
 class SignaturesDownloadView(AbstractDownloadView):
     def get(self, request, format=None):
+        deny_restricted_users(request)
+
         storage_base = getattr(django_settings, 'SIGNATURE_STORAGE', None)
         if not storage_base:
             # This is a misconfiguration
