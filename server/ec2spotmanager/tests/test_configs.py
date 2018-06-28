@@ -18,7 +18,7 @@ import requests
 from django.core.urlresolvers import reverse
 
 from . import TestCase
-from ..models import PoolConfiguration
+from ..models import PoolConfiguration, EC2PoolConfiguration
 
 
 log = logging.getLogger("fm.ec2spotmanager.tests.configs")  # pylint: disable=invalid-name
@@ -109,7 +109,7 @@ class CreateConfigViewTests(TestCase):
 
     def test_no_login(self):
         """Request without login hits the login redirect"""
-        path = reverse(self.name)
+        path = reverse(self.name, kwargs={'provider': 'ec2'})
         response = self.client.get(path)
         log.debug(response)
         self.assertRedirects(response, '/login/?next=' + path)
@@ -117,7 +117,7 @@ class CreateConfigViewTests(TestCase):
     def test_create_form(self):
         """Config creation form should be shown"""
         self.client.login(username='test', password='test')
-        response = self.client.get(reverse(self.name))
+        response = self.client.get(reverse(self.name, kwargs={'provider': 'ec2'}) )
         log.debug(response)
         self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Create Configuration")
@@ -129,7 +129,8 @@ class CreateConfigViewTests(TestCase):
     def test_create(self):
         """Config created via form should be added to db"""
         self.client.login(username='test', password='test')
-        response = self.client.post(reverse(self.name), {'parent': '-1',
+        response = self.client.post(reverse(self.name, kwargs={'provider': 'ec2'}),
+                                                        {'parent': '-1',
                                                          'name': 'config #1',
                                                          'size': '1',
                                                          'cycle_interval': '1',  # activate tsmith mode
@@ -146,7 +147,7 @@ class CreateConfigViewTests(TestCase):
                                                          'ec2_tags': 'good=true, bad=false',
                                                          'ec2_raw_config': 'hello=world'})
         log.debug(response)
-        cfg = PoolConfiguration.objects.get(name='config #1')
+        cfg = EC2PoolConfiguration.objects.get(name='config #1')
         self.assertIsNone(cfg.parent)
         self.assertEqual(cfg.size, 1)
         self.assertEqual(cfg.cycle_interval, 1)
@@ -181,7 +182,7 @@ class CreateConfigViewTests(TestCase):
                                  ec2_max_price='0.01',
                                  ec2_tags={'good': 'true', 'bad': 'false'},
                                  ec2_raw_config={'hello': 'world'})
-        response = self.client.get(reverse(self.name), {'clone': cfg.pk})
+        response = self.client.get(reverse(self.name, kwargs={'provider': 'ec2'}),  {'clone': cfg.pk})
         log.debug(response)
         self.assertEqual(response.status_code, requests.codes['ok'])
         self.assertContains(response, "Clone Configuration")

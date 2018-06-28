@@ -15,7 +15,7 @@ import logging
 from django.contrib.auth.models import User
 from django.test import TestCase as DjangoTestCase
 
-from ..models import Instance, InstancePool, PoolConfiguration, PoolStatusEntry
+from ..models import Instance, EC2Instance, InstancePool, PoolConfiguration, EC2PoolConfiguration, PoolStatusEntry
 
 
 log = logging.getLogger("fm.ec2spotmanager.tests")  # pylint: disable=invalid-name
@@ -41,7 +41,7 @@ class TestCase(DjangoTestCase):
                       aws_secret_access_key=None, ec2_key_name=None, ec2_security_groups=None, ec2_instance_types=None,
                       ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
                       ec2_max_price=None, ec2_tags=None, ec2_raw_config=None):
-        result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
+        result = EC2PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
                                                   aws_access_key_id=aws_access_key_id,
                                                   aws_secret_access_key=aws_secret_access_key,
                                                   ec2_key_name=ec2_key_name,
@@ -83,7 +83,7 @@ class TestCase(DjangoTestCase):
                         ec2_instance_id=None,
                         ec2_region="",
                         ec2_zone=""):
-        result = Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
+        result = EC2Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
                                          ec2_instance_id=ec2_instance_id, ec2_region=ec2_region, ec2_zone=ec2_zone)
         log.debug("Created Instance pk=%d", result.pk)
         return result

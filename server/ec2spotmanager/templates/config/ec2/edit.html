@@ -1,0 +1,121 @@
+{% load extratags %}
+
+  <div class="panel panel-info">
+    <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i>
+      {% if edit %}
+        Edit Configuration
+      {% elif clone %}
+        Clone Configuration
+      {% else %}
+        Create Configuration
+      {% endif %}
+    </div>
+    <div class="panel-body">
+      {% if error_message %}
+        <div class="alert alert-warning" role="alert">{{ error_message }}</div>
+      {% endif %}
+
+      {% if config.pk != None %}
+        <form action="{% url 'ec2spotmanager:configedit' config.pk %}" method="post">
+      {% else %}
+        <form action="{% url 'ec2spotmanager:configcreate' 'ec2'%}" method="post">
+      {% endif %}
+      {% csrf_token %}
+
+      <label for="id_parent">Parent Configuration: </label>
+      <select id="id_parent" name="parent">
+        <option value="-1">None</option>
+        {% for c in configurations %}
+          <option value="{{ c.pk }}"
+                  {% if c.pk == config.parent.pk %}selected="selected" {% endif %}>{{ c.name }}
+          </option>
+        {% endfor %}
+      </select>
+      <br/>
+      <br/>
+
+      <label for="id_name">Name</label><br/>
+      <input id="id_name" class="form-control" name="name" type="text" value="{{ config.name|default:"" }}">
+      <br/>
+
+      <label for="id_size">Size</label><br/>
+      <input id="id_size" class="form-control" name="size" type="text" value="{{ config.size|default:"" }}">
+      <br/>
+
+      <label for="id_cycle_interval">Cycle Interval</label><br/>
+      <input id="id_cycle_interval" class="form-control" name="cycle_interval" type="text"
+             value="{{ config.cycle_interval|default:"" }}">
+      <br/>
+
+      <label for="id_aws_access_key_id">AWS Access Key ID</label><br/>
+      <input id="id_aws_access_key_id" class="form-control" name="aws_access_key_id" type="text"
+             value="{{ config.aws_access_key_id|default:"" }}">
+      <br/>
+
+      <label for="id_aws_secret_access_key">AWS Secret Access Key</label><br/>
+      <input id="id_aws_secret_access_key" class="form-control" name="aws_secret_access_key" type="text"
+             value="{{ config.aws_secret_access_key|default:"" }}">
+      <br/>
+
+      <label for="id_ec2_key_name">EC2 Key Name</label><br/>
+      <input id="id_ec2_key_name" class="form-control" name="ec2_key_name" type="text"
+             value="{{ config.ec2_key_name|default:"" }}">
+      <br/>
+
+      <label for="id_ec2_security_groups">EC2 Security Groups</label><br/>
+      <input id="id_ec2_security_groups" class="form-control" name="ec2_security_groups" type="text"
+             value="{{ config.ec2_security_groups_list|listcsv }}">
+      <br/>
+
+      <label for="id_ec2_instance_types">EC2 Instance Types</label><br/>
+      <input id="id_ec2_instance_types" class="form-control" name="ec2_instance_types" type="text"
+             value="{{ config.ec2_instance_types_list|listcsv }}">
+      <br/>
+
+      <label for="id_ec2_image_name">EC2 Image Name</label><br/>
+      <input id="id_ec2_image_name" class="form-control" name="ec2_image_name" type="text"
+             value="{{ config.ec2_image_name|default:"" }}">
+      <br/>
+
+      <label for="id_ec2_userdata">EC2 Userdata Script</label><br/>
+      <textarea id="id_ec2_userdata" class="form-control" name="ec2_userdata"
+                spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
+      <br/>
+
+      <fieldset class="ec2-radio-group">
+      <legend>EC2 Userdata Script Line Endings</legend>
+      <label><input type="radio" name="ec2_userdata_ff" value="unix"{% if userdata_ff == 'unix' %} checked="checked"{% endif %}> Unix</label>
+      <label><input type="radio" name="ec2_userdata_ff" value="dos"{% if userdata_ff == 'dos' %} checked="checked"{% endif %}> DOS</label>
+      </fieldset>
+      <br/>
+
+      <label for="id_ec2_userdata_macros">EC2 Userdata Macros</label><br/>
+      <input id="id_ec2_userdata_macros" class="form-control" name="ec2_userdata_macros" type="text"
+             value="{{ config.ec2_userdata_macros_dict|dictcsv }}">
+      <br/>
+
+      <label for="id_ec2_allowed_regions">EC2 Allowed Regions</label><br/>
+      <input id="id_ec2_allowed_regions" class="form-control" name="ec2_allowed_regions" type="text"
+             value="{{ config.ec2_allowed_regions_list|listcsv }}">
+      <br/>
+
+      <label for="id_ec2_max_price">EC2 Maximum Price</label><br/>
+      <input id="id_ec2_max_price" class="form-control" name="ec2_max_price" type="text"
+             value="{{ config.ec2_max_price|default:"" }}">
+      <br/>
+
+      <label for="id_ec2_tags">EC2 Additional Tags</label><br/>
+      <input id="id_ec2_tags" class="form-control" name="ec2_tags" type="text"
+             value="{{ config.ec2_tags_dict|dictcsv }}">
+      <br/>
+
+      <label for="id_ec2_raw_config">Additional Raw Configuration</label><br/>
+      <input id="id_ec2_raw_config" class="form-control" name="ec2_raw_config" type="text"
+             value="{{ config.ec2_raw_config_dict|dictcsv }}">
+      <br/>
+
+      <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
+      </form>
+    </div>
+  </div>
+

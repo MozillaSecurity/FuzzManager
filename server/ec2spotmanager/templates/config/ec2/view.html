@@ -1,0 +1,33 @@
+<div class="panel panel-default">
+	<div class="panel-heading"><i class="glyphicon glyphicon-scale"></i> Instance Pools</div>
+	<div class="panel-body">
+			<a href="{% url 'ec2spotmanager:configcreate' 'ec2' %}?clone={{ config.pk }}" class="btn btn-default">Clone</a>
+			<a href="{% url 'ec2spotmanager:configedit' config.pk %}" class="btn btn-default">Edit</a>
+			<a href="{% url 'ec2spotmanager:configdel' config.pk %}" class="btn btn-danger">Delete</a>
+			<a href="{% url 'ec2spotmanager:configcycle' config.pk %}" class="btn btn-danger">Cycle pools using this configuration</a>
+	</div>
+	<table class="table table-condensed table-hover table-bordered">
+		<tr><td>Name</td><td>{{ config.name }}</td></tr>
+		<tr><td>Parent</td><td>
+			{% if config.parent %}
+				<a href="{% url 'ec2spotmanager:configview' config.parent.pk %}">{{ config.parent.name }}</a>
+				{% else %}
+				None
+			{% endif %}
+		</td></tr>
+		<tr><td>Size</td><td>{% if config.size %} {{ config.size }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>Cycle Interval</td><td>{% if config.cycle_interval %} {{ config.cycle_interval }} seconds {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>AWS Access Key</td><td>{% if config.provider.aws_access_key_id %} {{ config.provider.aws_access_key_id }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>AWS Secret Access Key</td><td>{% if config.provider.aws_secret_access_key %} {{ config.provider.aws_secret_access_key }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Key Name</td><td>{% if config.provider.ec2_key_name %} {{ config.provider.ec2_key_name }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Security Groups</td><td>{% if config.provider.ec2_security_groups %} {{ config.provider.ec2_security_groups }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Instance Types</td><td>{% if config.provider.ec2_instance_types %} {{ config.provider.ec2_instance_types }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Image Name</td><td>{% if config.provider.ec2_image_name %} {{ config.provider.ec2_image_name }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Userdata File</td><td>{% if config.provider.ec2_userdata_file %} {{ config.provider.ec2_userdata_file }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Userdata Macros</td><td>{% if config.provider.ec2_userdata_macros %} {{ config.provider.ec2_userdata_macros }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Allowed Regions</td><td>{% if config.provider.ec2_allowed_regions %} {{ config.provider.ec2_allowed_regions }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Maximum Price</td><td>{% if config.provider.ec2_max_price %} {{ config.provider.ec2_max_price }} USD {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Additional Tags</td><td>{% if config.provider.ec2_tags %} {{ config.provider.ec2_tags }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Additional Raw Configuration</td><td>{% if config.provider.ec2_raw_config %} {{ config.provider.ec2_raw_config }} {% else %} Not specified {% endif %}</td></tr>
+	</table>
+</div>

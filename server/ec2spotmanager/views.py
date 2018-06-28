@@ -15,8 +15,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ec2spotmanager.common.prices import get_spot_prices
-from ec2spotmanager.models import InstancePool, PoolConfiguration, Ec2PoolConfiguration, Instance, \
-    INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
+from ec2spotmanager.models import InstancePool, EC2Instance, PoolConfiguration, EC2PoolConfiguration, Instance, \
+    EC2_INSTANCE_STATE_CODE, EC2_INSTANCE_STATE, PoolStatusEntry
 from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from ec2spotmanager.serializers import MachineStatusSerializer
 
@@ -59,9 +59,9 @@ def pools(request):
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
 
     for pool in entries:
-        pool.instance_requested_count = Instance.objects.filter(
-            pool=pool, status_code=INSTANCE_STATE['requested']).count()
-        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
+        pool.instance_requested_count = EC2Instance.objects.filter(
+            pool=pool, status_code=EC2_INSTANCE_STATE['requested']).count()
+        pool.instance_running_count = EC2Instance.objects.filter(pool=pool, status_code=EC2_INSTANCE_STATE['running']).count()
         if pool.size == pool.instance_running_count:
             pool.size_label = 'success'
         elif pool.size == 0:
@@ -83,12 +83,12 @@ def viewPool(request, poolid):
     instances = Instance.objects.filter(pool=poolid)
 
     for instance in instances:
-        if instance.status_code in INSTANCE_STATE_CODE:
-            instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
+        if instance.provider.status_code in EC2_INSTANCE_STATE_CODE:
+            instance.provider.status_code_text = EC2_INSTANCE_STATE_CODE[instance.provider.status_code]
         else:
-            instance.status_code_text = "Unknown (%s)" % instance.status_code
+            instance.provider.status_code_text = "Unknown (%s)" % instance.provider.status_code
 
-    cyclic = pool.config.isCyclic()
+    cyclic = pool.config.provider.isCyclic()
 
     last_config = pool.config
     last_config.children = []
@@ -102,7 +102,7 @@ def viewPool(request, poolid):
     missing = None
     if not cyclic:
         # Figure out if any parameters are missing
-        missing = pool.config.getMissingParameters()
+        missing = pool.config.provider.getMissingParameters()
 
     data = {'pool': pool, 'parent_config': parent_config, 'instances': instances, 'config_params_missing': missing,
             'config_cyclic': cyclic}
@@ -113,7 +113,7 @@ def viewPool(request, poolid):
 @deny_restricted_users
 def viewPoolPrices(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
-    config = pool.config.flatten()
+    config = pool.config.provider.flatten()
     prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
                                              config.aws_access_key_id,
                                              config.aws_secret_access_key,
@@ -163,15 +163,15 @@ def enablePool(request, poolid):
     # or if the configuration is cyclic, even though the link
     # to this function should not be reachable in the UI at
     # this point already.
-    cyclic = pool.config.isCyclic()
+    cyclic = pool.config.provider.isCyclic()
     if cyclic:
         return render(request, 'pools/error.html', {'error_message': 'Pool configuration is cyclic.'})
 
-    missing = pool.config.getMissingParameters()
+    missing = pool.config.provider.getMissingParameters()
     if missing:
         return render(request, 'pools/error.html', {'error_message': 'Pool is missing configuration parameters.'})
 
-    size = pool.config.flatten().size
+    size = pool.config.provider.flatten().size
 
     if pool.isEnabled:
         return render(request, 'pools/error.html', {'error_message': 'That pool is already enabled.'})
@@ -194,7 +194,7 @@ def forceCyclePool(request, poolid):
     if not pool.isEnabled:
         return render(request, 'pools/error.html', {'error_message': 'Pool is disabled.'})
 
-    size = pool.config.flatten().size
+    size = pool.config.provider.flatten().size
 
     if request.method == 'POST':
         pool.last_cycled = None
@@ -242,19 +242,19 @@ def forceCyclePoolsByConfig(request, configid):
 def createPool(request):
     if request.method == 'POST':
         pool = InstancePool()
-        config = get_object_or_404(Ec2PoolConfiguration, pk=int(request.POST['config']))
+        config = get_object_or_404(PoolConfiguration, pk=int(request.POST['config']))
         pool.config = config
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
-        configurations = Ec2PoolConfiguration.objects.all()
+        configurations = PoolConfiguration.objects.all()
         return render(request, 'pools/create.html', {'configurations': configurations})
     else:
         raise SuspiciousOperation
 
 
 @deny_restricted_users
-def viewEc2Configs(request):
+def viewConfigs(request):
     configs = PoolConfiguration.objects.all()
 
     roots = configs.filter(parent=None)
@@ -275,20 +275,20 @@ def viewEc2Configs(request):
 
 
 @deny_restricted_users
-def viewEc2Config(request, configid):
-    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
+def viewConfig(request, configid):
+    config = get_object_or_404(PoolConfiguration, pk=configid)
 
     data = {'config': config}
 
     return render(request, 'config/view.html', data)
 
 
-def __handleEc2ConfigPOST(request, config):
+def __handleEC2ConfigPOST(request, config):
     if int(request.POST['parent']) < 0:
         config.parent = None
     else:
         # TODO: Cyclic config check
-        config.parent = get_object_or_404(Ec2PoolConfiguration, pk=int(request.POST['parent']))
+        config.parent = get_object_or_404(EC2PoolConfiguration, pk=int(request.POST['parent']))
 
     config.name = request.POST['name']
 
@@ -379,25 +379,28 @@ def __handleEc2ConfigPOST(request, config):
 
 
 @deny_restricted_users
-def createEc2Config(request):
+def createConfig(request, provider):
     if request.method == 'POST':
-        config = Ec2PoolConfiguration()
-        return __handleEc2ConfigPOST(request, config)
+        if provider == 'ec2':
+            config = EC2PoolConfiguration()
+            return __handleEC2ConfigPOST(request, config)
     elif request.method == 'GET':
-        configurations = Ec2PoolConfiguration.objects.all()
-
+        configurations = PoolConfiguration.objects.all()
         if "clone" in request.GET:
-            config = get_object_or_404(Ec2PoolConfiguration, pk=int(request.GET["clone"]))
+            if provider == 'ec2':
+                config = get_object_or_404(EC2PoolConfiguration, pk=int(request.GET["clone"]))
             config.name = "%s (Cloned)" % config.name
             config.pk = None
             clone = True
         else:
-            config = Ec2PoolConfiguration()
+            if provider == 'ec2':
+                config = EC2PoolConfiguration()
             clone = False
 
         config.deserializeFields()
 
-        data = {'clone': clone,
+        data = {'provider': provider,
+                'clone': clone,
                 'config': config,
                 'configurations': configurations,
                 'edit': False,
@@ -408,18 +411,19 @@ def createEc2Config(request):
 
 
 @deny_restricted_users
-def editEc2Config(request, configid):
-    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
+def editConfig(request, configid):
+    config = (get_object_or_404(PoolConfiguration, pk=configid)).provider
     config.deserializeFields()
 
     if request.method == 'POST':
-        return __handleEc2ConfigPOST(request, config)
+        if config.ec2poolconfiguration:
+            return __handleEC2ConfigPOST(request, config)
     elif request.method == 'GET':
-        configurations = Ec2PoolConfiguration.objects.all()
+        configurations = PoolConfiguration.objects.all()
         data = {'config': config,
                 'configurations': configurations,
                 'edit': True,
-                'userdata_ff': 'dos' if (b'\r\n' in (config.ec2_userdata or b'')) else 'unix'}
+                'userdata_ff': 'dos' if (b'\r\n' in (config.provider.ec2_userdata or b'')) else 'unix'}
         return render(request, 'config/edit.html', data)
     else:
         raise SuspiciousOperation
@@ -472,8 +476,8 @@ def deletePoolMsg(request, msgid):
 
 
 @deny_restricted_users
-def deleteEc2Config(request, configid):
-    config = get_object_or_404(Ec2PoolConfiguration, pk=configid)
+def deleteConfig(request, configid):
+    config = get_object_or_404(PoolConfiguration, pk=configid)
 
     pools = InstancePool.objects.filter(config=config)
     for pool in pools:
@@ -507,7 +511,7 @@ class UptimeChartViewDetailed(JSONView):
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
-        pool.flat_config = pool.config.flatten()
+        pool.flat_config = pool.config.provider.flatten()
 
         latest = now() - timedelta(hours=24)
         entries = PoolUptimeDetailedEntry.objects.filter(pool=pool, created__gt=latest).order_by('created')
@@ -581,7 +585,7 @@ class UptimeChartViewAccumulated(JSONView):
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
-        pool.flat_config = pool.config.flatten()
+        pool.flat_config = pool.config.provider.flatten()
 
         latest = now() - timedelta(days=30)  # TODO: Use settings instead of hardcoding
         entries = PoolUptimeAccumulatedEntry.objects.filter(pool=pool, created__gt=latest).order_by('created')
@@ -664,6 +668,8 @@ class MachineStatusViewSet(APIView):
             return Response({"error": '"client" is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         instance = get_object_or_404(Instance, hostname=request.data['client'])
+        instance = instance.provider
+
         serializer = MachineStatusSerializer(instance=instance, partial=True, data=request.data)
         if serializer.is_valid():
             serializer.save()

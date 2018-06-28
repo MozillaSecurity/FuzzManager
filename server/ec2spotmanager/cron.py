@@ -12,7 +12,7 @@ STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statist
 
 @app.task
 def update_stats():
-    from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance, INSTANCE_STATE
+    from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance, EC2Instance, EC2_INSTANCE_STATE
 
     instance_pools = InstancePool.objects.all()
 
@@ -34,10 +34,10 @@ def update_stats():
             current_delta_entry = PoolUptimeDetailedEntry()
             current_delta_entry.pool = pool
 
-        current_delta_entry.target = pool.config.flatten().size
+        current_delta_entry.target = pool.config.provider.flatten().size
 
-        actual = Instance.objects.filter(pool=pool).filter(Q(status_code=INSTANCE_STATE['pending']) |
-                                                           Q(status_code=INSTANCE_STATE['running'])).count()
+        actual = EC2Instance.objects.filter(pool=pool).filter(Q(status_code=EC2_INSTANCE_STATE['pending']) |
+                                                           Q(status_code=EC2_INSTANCE_STATE['running'])).count()
         if current_delta_entry.actual is None or actual < current_delta_entry.actual:
             current_delta_entry.actual = actual
 
