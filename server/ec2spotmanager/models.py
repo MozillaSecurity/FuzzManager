@@ -43,6 +43,7 @@ class PoolConfiguration(models.Model):
             'size',
             'cycle_interval',
         ]
+        super(PoolConfiguration, self).__init__(*args, **kwargs)
 
     @property
     def provider(self):
@@ -75,7 +76,7 @@ class PoolConfiguration(models.Model):
             tortoise = tortoise.parent
             hare = hare.parent.parent
         return tortoise == hare
-
+    
 
 class EC2PoolConfiguration(PoolConfiguration):
     aws_access_key_id = models.CharField(max_length=255, blank=True, null=True)
@@ -93,6 +94,7 @@ class EC2PoolConfiguration(PoolConfiguration):
     ec2_raw_config = models.CharField(max_length=4095, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
+        super(EC2PoolConfiguration, self).__init__(*args, **kwargs)
         # These variables can hold temporarily deserialized data
         self.ec2_tags_dict = None
         self.ec2_raw_config_dict = None
@@ -135,7 +137,6 @@ class EC2PoolConfiguration(PoolConfiguration):
         # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
 
-        super(EC2PoolConfiguration, self).__init__(*args, **kwargs)
 
     def flatten(self):
         if self.isCyclic():
