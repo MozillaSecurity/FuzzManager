@@ -166,6 +166,8 @@ class LibFuzzerMonitor(threading.Thread):
         return list(self.stderr)
 
     def terminate(self):
+        print("[Job %s] Received terminate request..." % self.mid, file=sys.stderr)
+
         # Avoid sending anything through the queue when the run() loop exits
         self.mqueue = None
         self.process.terminate()
@@ -1159,6 +1161,7 @@ def main(argv=None):
                     for i in range(len(monitors)):
                         monitor = monitors[i]
                         if monitor is not None:
+                            print("Asking monitor %s to terminate..." % i, file=sys.stderr)
                             monitor.terminate()
                             monitor.join(30)
                             if monitor.is_alive():
