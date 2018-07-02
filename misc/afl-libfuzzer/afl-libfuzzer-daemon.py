@@ -1174,6 +1174,12 @@ def main(argv=None):
                                 # Make sure the execs that this monitor did survive in stats
                                 stats["execs_done"] += monitor.execs_done
 
+                    # All monitors are assumed to be dead now, clear the monitor queue in case
+                    # it has remaining ids from monitors that terminated on their own before
+                    # we terminated them.
+                    while not monitor_queue.empty():
+                        monitor_queue.get_nowait()
+
                     merge_cmdline = []
                     merge_cmdline.extend(cmdline)
 
