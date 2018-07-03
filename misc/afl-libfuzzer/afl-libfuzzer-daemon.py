@@ -1123,6 +1123,9 @@ def main(argv=None):
             "next_auto_reduce": 0
         }
 
+        # Memorize if we just did a corpus reduction, for S3 sync
+        corpus_reduction_done = False
+
         try:
             while True:
                 if restarts is not None and restarts < 0 and all(x is None for x in monitors):
@@ -1218,6 +1221,8 @@ def main(argv=None):
                         corpus_auto_reduce_threshold = int(opts.libfuzzer_auto_reduce_min *
                                                            (1 + corpus_auto_reduce_ratio))
 
+                    corpus_reduction_done = True
+
                     # Continue, our instances will be restarted with the next loop
                     continue
 
@@ -1228,13 +1233,15 @@ def main(argv=None):
 
                     write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [])
 
-                # Only upload new corpus files every 10 minutes
-                if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 600:
+                # Only upload new corpus files every 2 hours or after corpus reduction
+                if opts.s3_queue_upload and (corpus_reduction_done or last_queue_upload < int(time.time()) - 7200):
                     s3m.upload_libfuzzer_queue_dir(base_dir, corpus_dir, original_corpus)
-                    last_queue_upload = int(time.time())
 
                     # Pull down queue files from other queues directly into the corpus
                     s3m.download_libfuzzer_queues(corpus_dir)
+
+                    last_queue_upload = int(time.time())
+                    corpus_reduction_done = False
 
                 try:
                     result = monitor_queue.get(True, 10)
