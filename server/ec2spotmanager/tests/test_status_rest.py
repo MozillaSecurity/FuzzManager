@@ -18,7 +18,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase
 
 from . import TestCase
-from ..models import Instance
+from ..models import Instance, EC2Instance
 
 
 log = logging.getLogger("fm.ec2spotmanager.tests.status.rest")  # pylint: disable=invalid-name
@@ -53,11 +53,11 @@ class RestStatusTests(APITestCase, TestCase):
         self.assertEqual(resp.status_code, requests.codes['created'])
         resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data'})
-        host = Instance.objects.get(pk=host.pk)  # re-read
+        host = EC2Instance.objects.get(pk=host.pk)  # re-read
         self.assertEqual(host.status_data, 'data')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host1'})
         self.assertEqual(resp.status_code, requests.codes['created'])
-        host = Instance.objects.get(pk=host.pk)  # re-read
+        host = EC2Instance.objects.get(pk=host.pk)  # re-read
         self.assertIsNone(host.status_data)
         resp = self.client.post('/ec2spotmanager/rest/report/')
         self.assertEqual(resp.status_code, requests.codes['bad_request'])
@@ -74,15 +74,15 @@ class RestStatusTests(APITestCase, TestCase):
         self.assertEqual(resp.status_code, requests.codes['created'])
         resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data'})
-        host1 = Instance.objects.get(pk=host1.pk)  # re-read
+        host1 = EC2Instance.objects.get(pk=host1.pk)  # re-read
         self.assertEqual(host1.status_data, 'data')
         resp = self.client.post('/ec2spotmanager/rest/report/', {'client': 'host2', 'status_data': 'data2'})
         self.assertEqual(resp.status_code, requests.codes['created'])
         resp = json.loads(resp.content.decode('utf-8'))
         self.assertEqual(resp, {'status_data': 'data2'})
-        host2 = Instance.objects.get(pk=host2.pk)  # re-read
+        host2 = EC2Instance.objects.get(pk=host2.pk)  # re-read
         self.assertEqual(host2.status_data, 'data2')
-        host1 = Instance.objects.get(pk=host1.pk)  # re-read
+        host1 = EC2Instance.objects.get(pk=host1.pk)  # re-read
         self.assertEqual(host1.status_data, 'data')
 
     def test_put(self):
