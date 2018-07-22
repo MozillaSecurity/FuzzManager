@@ -41,7 +41,7 @@ class Collection(models.Model):
     branch = models.CharField(max_length=255, blank=True)
     tools = models.ManyToManyField(Tool)
     client = models.ForeignKey(Client)
-    coverage = models.ForeignKey(CollectionFile)
+    coverage = models.ForeignKey(CollectionFile, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob

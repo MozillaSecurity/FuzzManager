@@ -40,6 +40,13 @@ def collections_diff(request):
 def collections_browse_api(request, collectionid, path):
     collection = get_object_or_404(Collection, pk=collectionid)
 
+    if not collection.coverage:
+        return HttpResponse(
+            content=json.dumps({"message": "The requested collection is currently being created."}),
+            content_type='application/json',
+            status=204
+        )
+
     coverage = collection.subset(path)
 
     if not coverage:
@@ -81,6 +88,13 @@ def collections_diff_api(request, path):
     tooltipdata = []
 
     for collection in collections:
+        if not collection.coverage:
+            return HttpResponse(
+                content=json.dumps({"error": "One of the specified collections is not ready yet."}),
+                content_type='application/json',
+                status=400
+            )
+
         coverage = collection.subset(path)
 
         if "children" in coverage:
@@ -160,6 +174,13 @@ def collections_patch(request):
 
 def collections_patch_api(request, collectionid, patch_revision):
     collection = get_object_or_404(Collection, pk=collectionid)
+
+    if not collection.coverage:
+        return HttpResponse(
+            content=json.dumps({"error": "Specified collection is not ready yet."}),
+            content_type='application/json',
+            status=400
+        )
 
     prepatch = "prepatch" in request.GET
 
