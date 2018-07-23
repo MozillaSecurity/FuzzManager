@@ -48,6 +48,7 @@
 		<div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
 		<div class="panel-body">
 			<button @click="navigate('diff')" class="btn btn-default">View Differences</button>
+			<button @click="aggregate()" class="btn btn-default">Aggregate</button>
 			<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>
 		</div>
 	  </div>
@@ -84,6 +85,7 @@ let URLS = {
 	collections_api: '{% url 'covmanager:collections_api' %}',
 	diff: '{% url 'covmanager:collections_diff' %}',
 	patch: '{% url 'covmanager:collections_patch' %}',
+	aggregate: '{% url 'covmanager:collections_aggregate_api' %}',
 	repository_search : '{% url 'covmanager:repositories_search_api' %}',
 	tools_search : '{% url 'covmanager:tools_search_api' %}',
 }
@@ -233,6 +235,62 @@ let covmanager = new Vue({
 			this.suggestions[key].enabled = false
 			this.suggestions[key].value = []
 			this.search[key].value = val
+		},
+		aggregate: function() {
+			let ids = []
+			for (let i = 0; i < this.ordered_collections.length; ++i) {
+				ids.push(this.ordered_collections[i].id)
+			}
+
+			if (ids) {
+				sweetAlert({
+				  title: "Create Collection Aggregation",
+				  text: 'Enter optional new description for result collection',
+				  type: 'input',
+				  showCancelButton: true,
+				  animation: "slide-from-top"
+				}, function(description){
+					if (description === false) {
+						/* User pressed cancel button */
+						return;
+					}
+
+					// Call API, get new collection id back, then navigate to it
+					this.loading = true
+
+					let data = {
+						'ids': ids.join(",")
+					}
+					if (description) {
+						data['description'] = description
+					}
+
+					fetch(URLS.aggregate, {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {
+		            "Content-Type": "application/json; charset=utf-8",
+								"X-Requested-With": "XMLHttpRequest"
+		        },
+		        body: JSON.stringify(data),
+				  })
+					.then(response => {
+						this.loading = false
+						if (response.ok) {
+							return response.json()
+						}
+						sweetAlert('Oops', E_SERVER_ERROR, 'error')
+					})
+					.then(json => {
+						let newid = json["newid"]
+						if (newid) {
+							window.open(json["newid"] + "/browse", '_self');
+						} else {
+							sweetAlert('Oops', E_SERVER_ERROR, 'error')
+						}
+					})
+				})
+			}
 		}
   }
 })
