@@ -33,16 +33,6 @@ __version__ = 0.1
 __date__ = '2017-07-10'
 __updated__ = '2017-07-10'
 
-# These variables are mainly for debugging purposes. We count the number
-# of warnings we encounter during merging, which are mostly due to
-# bugs in GCOV. These statistics can be included in the report description
-# to track the status of these bugs.
-stats = {
-    'null_coverable_count': 0,
-    'length_mismatch_count': 0,
-    'coverable_mismatch_count': 0
-}
-
 
 class CovReporter(Reporter):
     def __init__(self, serverHost=None, serverPort=None,
@@ -80,7 +70,7 @@ class CovReporter(Reporter):
         self.repository = repository
 
     @remote_checks
-    def submit(self, coverage, preprocessed=False, version=None, description=""):
+    def submit(self, coverage, preprocessed=False, version=None, description="", stats=None):
         '''
         Send coverage data to server.
 
@@ -97,7 +87,10 @@ class CovReporter(Reporter):
                         information from the coverage data itself.
 
         @type description: string
-        @param description: Optional descripton for this coverage data
+        @param description: Optional description for this coverage data
+
+        @type stats: dict
+        @param stats: An optional stats object as returned by create_combined_coverage
         '''
         url = "%s://%s:%s/covmanager/rest/collections/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
@@ -110,11 +103,18 @@ class CovReporter(Reporter):
             # format unless the data has already been preprocessed before.
             coverage = CovReporter.preprocess_coverage_data(coverage)
 
-        if len(description) > 0:
-            description += " "
-        description += "(dv1:%s,%s,%s)" % (
-            stats['null_coverable_count'], stats['length_mismatch_count'], stats['coverable_mismatch_count']
-        )
+        if stats is not None:
+            # These variables are mainly for debugging purposes. We count the number
+            # of warnings we encounter during merging, which are mostly due to
+            # bugs in GCOV. These statistics are included in the report description
+            # to track the status of these bugs.
+            if len(description) > 0:
+                description += " "
+            description += "(dv1:%s,%s,%s)" % (
+                stats['null_coverable_count'],
+                stats['length_mismatch_count'],
+                stats['coverable_mismatch_count']
+            )
 
         # Serialize our coverage information
         data = {}
@@ -222,12 +222,12 @@ class CovReporter(Reporter):
         @type coverage_files: list
         @param coverage_files: List of filenames containing coverage data
 
-        @return Dictionary with combined coverage data and version information
-        @rtype tuple(dict,dict)
+        @return Dictionary with combined coverage data, version information and debug statistics
+        @rtype tuple(dict,dict,dict)
         '''
-        global stats
         ret = None
         version = None
+        stats = None
 
         for coverage_file in coverage_files:
             with open(coverage_file) as f:
@@ -241,9 +241,15 @@ class CovReporter(Reporter):
                 if ret is None:
                     ret = coverage
                 else:
-                    stats = CoverageHelper.merge_coverage_data(ret, coverage)
+                    merge_stats = CoverageHelper.merge_coverage_data(ret, coverage)
+                    if stats is None:
+                        stats = merge_stats
+                    else:
+                        for k in merge_stats:
+                            if k in stats:
+                                stats[k] += merge_stats[k]
 
-        return (ret, version)
+        return (ret, version, stats)
 
 
 def main(argv=None):
@@ -302,7 +308,7 @@ def main(argv=None):
                 return 2
 
             (coverage, version, stats) = CovReporter.create_combined_coverage(opts.rargs)
-            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description)
+            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description, stats=stats)
 
     return 0
 
