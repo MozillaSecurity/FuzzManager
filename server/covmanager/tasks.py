@@ -52,7 +52,7 @@ def aggregate_coverage_data(pk, pks):
     # Save the new coverage blob to disk and database
     newCoverage = json.dumps(newCoverage, separators=(',', ':'))
     h = hashlib.new('sha1')
-    h.update(repr(newCoverage).encode('utf-8'))
+    h.update(newCoverage.encode('utf-8'))
     dbobj = CollectionFile()
     dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(newCoverage))
     dbobj.save()
