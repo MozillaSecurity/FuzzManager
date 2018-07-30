@@ -25,17 +25,13 @@ import json
 import os
 import sys
 
+from FTB import CoverageHelper
 from Reporter.Reporter import remote_checks, Reporter  # noqa
 
 __all__ = []
 __version__ = 0.1
 __date__ = '2017-07-10'
 __updated__ = '2017-07-10'
-
-# Debugging variables to keep track of GCOV errors
-null_coverable_count = 0
-length_mismatch_count = 0
-coverable_mismatch_count = 0
 
 
 class CovReporter(Reporter):
@@ -74,7 +70,7 @@ class CovReporter(Reporter):
         self.repository = repository
 
     @remote_checks
-    def submit(self, coverage, preprocessed=False, version=None, description=""):
+    def submit(self, coverage, preprocessed=False, version=None, description="", stats=None):
         '''
         Send coverage data to server.
 
@@ -91,7 +87,10 @@ class CovReporter(Reporter):
                         information from the coverage data itself.
 
         @type description: string
-        @param description: Optional descripton for this coverage data
+        @param description: Optional description for this coverage data
+
+        @type stats: dict
+        @param stats: An optional stats object as returned by create_combined_coverage
         '''
         url = "%s://%s:%s/covmanager/rest/collections/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
@@ -104,9 +103,18 @@ class CovReporter(Reporter):
             # format unless the data has already been preprocessed before.
             coverage = CovReporter.preprocess_coverage_data(coverage)
 
-        if len(description) > 0:
-            description += " "
-        description += "(dv1:%s,%s,%s)" % (null_coverable_count, length_mismatch_count, coverable_mismatch_count)
+        if stats is not None:
+            # These variables are mainly for debugging purposes. We count the number
+            # of warnings we encounter during merging, which are mostly due to
+            # bugs in GCOV. These statistics are included in the report description
+            # to track the status of these bugs.
+            if len(description) > 0:
+                description += " "
+            description += "(dv1:%s,%s,%s)" % (
+                stats['null_coverable_count'],
+                stats['length_mismatch_count'],
+                stats['coverable_mismatch_count']
+            )
 
         # Serialize our coverage information
         data = {}
@@ -171,7 +179,7 @@ class CovReporter(Reporter):
         # Now we need to calculate the coverage summaries (lines total and covered)
         # for each subtree in the tree. We can do this easily by using a recursive
         # definition.
-        CovReporter.__calculate_summary_fields(ret)
+        CoverageHelper.calculate_summary_fields(ret)
 
         return ret
 
@@ -214,12 +222,12 @@ class CovReporter(Reporter):
         @type coverage_files: list
         @param coverage_files: List of filenames containing coverage data
 
-        @return Dictionary with combined coverage data and version information
-        @rtype tuple(dict,dict)
+        @return Dictionary with combined coverage data, version information and debug statistics
+        @rtype tuple(dict,dict,dict)
         '''
-
         ret = None
         version = None
+        stats = None
 
         for coverage_file in coverage_files:
             with open(coverage_file) as f:
@@ -233,117 +241,15 @@ class CovReporter(Reporter):
                 if ret is None:
                     ret = coverage
                 else:
-                    CovReporter.__merge_coverage_data(ret, coverage)
-
-        return (ret, version)
-
-    @staticmethod
-    def __merge_coverage_data(r, s):
-        def merge_recursive(r, s):
-            # These globals are mainly for debugging purposes. We count the number
-            # of warnings we encounter during merging, which are mostly due to
-            # bugs in GCOV. These statistics can be included in the report description
-            # to track the status of these bugs.
-            global null_coverable_count
-            global length_mismatch_count
-            global coverable_mismatch_count
-
-            assert(r['name'] == s['name'])
-
-            if "children" in s:
-                for child in s['children']:
-                    if child in r['children']:
-                        # Slow path, child is in both data blobs,
-                        # perform recursive merge.
-                        merge_recursive(r['children'][child], s['children'][child])
+                    merge_stats = CoverageHelper.merge_coverage_data(ret, coverage)
+                    if stats is None:
+                        stats = merge_stats
                     else:
-                        # Fast path, subtree only in merge source
-                        r['children'][child] = s['children'][child]
-            else:
-                rc = r['coverage']
-                sc = s['coverage']
+                        for k in merge_stats:
+                            if k in stats:
+                                stats[k] += merge_stats[k]
 
-                # GCOV bug, if the file has 0% coverage, then all of the file
-                # is reported as not coverable. If s has that property, we simply
-                # ignore it. If r has that property, we replace it by s.
-                if sc.count(-1) == len(sc):
-                    if rc.count(-1) != len(rc):
-                        print("Warning: File %s reports no coverable lines" % r['name'])
-                        null_coverable_count += 1
-                    return
-
-                if rc.count(-1) == len(rc):
-                    if sc.count(-1) != len(sc):
-                        print("Warning: File %s reports no coverable lines" % r['name'])
-                        null_coverable_count += 1
-
-                    r['coverage'] = sc
-                    return
-
-                # GCOV has mismatches on headers sometimes, ignore these, we
-                # cannot fix this in any reasonable way.
-                if len(rc) != len(sc):
-                    print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
-                    length_mismatch_count += 1
-                    return
-
-                # Disable the assertion for now
-                #assert(len(r['coverage']) == len(s['coverage']))
-
-                for idx in range(0, len(rc)):
-                    if sc[idx] < 0:
-                        # Verify that coverable vs. not coverable matches
-                        # Unfortunately, GCOV again messes this up for headers sometimes
-                        if rc[idx] >= 0:
-                            print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
-                                  (r['name'], idx, rc[idx], sc[idx]))
-                            coverable_mismatch_count += 1
-
-                        # Disable the assertion for now
-                        #assert(r['coverage'][idx] < 0)
-                    elif rc[idx] < 0 and sc[idx] >= 0:
-                        rc[idx] = sc[idx]
-                    else:
-                        rc[idx] += sc[idx]
-
-        # Merge recursively
-        merge_recursive(r, s)
-
-        # Recursively re-calculate all summary fields
-        CovReporter.__calculate_summary_fields(r)
-
-    @staticmethod
-    def __calculate_summary_fields(node, name=None):
-        node["name"] = name
-        node["linesTotal"] = 0
-        node["linesCovered"] = 0
-
-        if "children" in node:
-            # This node has subtrees, recurse on them
-            for child_name in node["children"]:
-                child = node["children"][child_name]
-                CovReporter.__calculate_summary_fields(child, child_name)
-                node["linesTotal"] += child["linesTotal"]
-                node["linesCovered"] += child["linesCovered"]
-        else:
-            # This is a leaf, calculate linesTotal and linesCovered from
-            # actual coverage data.
-            coverage = node["coverage"]
-
-            for line in coverage:
-                if line >= 0:
-                    node["linesTotal"] += 1
-                    if line > 0:
-                        node["linesCovered"] += 1
-
-        # Calculate two more values based on total/covered because we need
-        # them in the UI later anyway and can save some time by doing it here.
-        node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
-
-        if node["linesTotal"] > 0:
-            node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
-        else:
-            node["coveragePercent"] = 0.0
+        return (ret, version, stats)
 
 
 def main(argv=None):
@@ -401,8 +307,8 @@ def main(argv=None):
                 print("Error: Must specify at least one file with --multi-submit", file=sys.stderr)
                 return 2
 
-            (coverage, version) = CovReporter.create_combined_coverage(opts.rargs)
-            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description)
+            (coverage, version, stats) = CovReporter.create_combined_coverage(opts.rargs)
+            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description, stats=stats)
 
     return 0
 

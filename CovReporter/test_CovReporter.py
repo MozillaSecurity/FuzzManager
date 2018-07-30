@@ -13,7 +13,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import json
+import os
 import unittest
+import tempfile
 
 from .CovReporter import CovReporter
 
@@ -116,12 +118,26 @@ class TestCovReporterPreprocessData(unittest.TestCase):
 
 class TestCovReporterMergeData(unittest.TestCase):
     def runTest(self):
-        result = CovReporter.preprocess_coverage_data(coverallsData)
-        result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
+        #result = CovReporter.preprocess_coverage_data(coverallsData)
+        #result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
 
-        # Directly call the private static method for merge testing because
-        # the public method works on files.
-        CovReporter._CovReporter__merge_coverage_data(result, result2)
+        (cov_file1_fd, cov_file1) = tempfile.mkstemp(suffix='.cov', prefix='tmpTestCovReporter')
+        (cov_file2_fd, cov_file2) = tempfile.mkstemp(suffix='.cov', prefix='tmpTestCovReporter')
+
+        try:
+            with os.fdopen(cov_file1_fd, 'w') as f:
+                json.dump(coverallsData, f)
+
+            with os.fdopen(cov_file2_fd, 'w') as f:
+                json.dump(coverallsAddData, f)
+
+            (result, version, stats) = CovReporter.create_combined_coverage([cov_file1, cov_file2])
+        finally:
+            os.remove(cov_file1)
+            os.remove(cov_file2)
+
+        self.assertEqual(version['revision'], "1a0d9545b9805f50a70de703a3c04fc0d22e3839")
+        self.assertEqual(version['branch'], "master")
 
         children = "children"
         coverage = "coverage"

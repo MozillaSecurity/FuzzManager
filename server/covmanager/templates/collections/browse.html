@@ -6,9 +6,15 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+  <div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
     <template v-if="loading">
-      <div class="loader"></div>
+      <div class="loader">
+      </div>
+      <template v-if="loading_incomplete">
+        <div class="loader-msg">
+          <span>The requested collection is being processed by the server, please wait...</span>
+        </div>
+      </template>
     </template>
     <template v-else-if="source">
       <table class="table table-coverage">
@@ -155,6 +161,7 @@ let covmanager = new Vue({
     reverse: false,
     show_top_nav: false,
     loading: false,
+    loading_incomplete: false,
     last_line_clicked: null,
     line_click_timer: null
   },
@@ -236,12 +243,20 @@ let covmanager = new Vue({
         credentials: 'same-origin'
       }).then(response => {
         if (response.ok) {
+          if (response.status == 204) {
+            // Collection is still being processed, retry in a few
+            setTimeout(this.fetch, 1000)
+            this.loading_incomplete = true
+            return;
+          }
           return response.json()
         }
         sweetAlert('Oops', E_SERVER_ERROR, 'error')
         this.loading = false
         window.history.back()
       }).then(json => {
+        if (!json) { return; }
+
         this.coverage = json["coverage"]
         if ("source" in this.coverage) {
           this.source = this.coverage["source"].split('\n')
@@ -308,6 +323,7 @@ let covmanager = new Vue({
         }
 
         this.loading = false
+        this.loading_incomplete = false
 
         // If we have a path, then we need to show the top navigation link
         this.show_top_nav = !!this.path
