@@ -350,6 +350,8 @@ def collections_aggregate_api(request):
                 status=400
             )
 
+    provider = collections[0].repository.getInstance()
+
     # Basic aggregation checks: Repository, revision and branch must match
     for collection in collections[1:]:
         if collection.repository != collections[0].repository:
@@ -359,7 +361,7 @@ def collections_aggregate_api(request):
                 status=400
             )
 
-        if collection.revision != collections[0].revision:
+        if not provider.checkRevisionsEquivalent(collection.revision, collections[0].revision):
             return HttpResponse(
                 content=json.dumps({"error": "Specified collections are based on different revisions."}),
                 content_type='application/json',
@@ -396,6 +398,10 @@ def collections_aggregate_api(request):
         # If we are aggregating descriptions, store it for later
         if descriptions:
             descriptions.append(collection.description)
+
+        # Prefer long revision hashes over short
+        if len(collection.revision) > len(mergedCollection.revision):
+            mergedCollection.revision = collection.revision
 
     if descriptions:
         mergedCollection.description = " | ".join(descriptions)

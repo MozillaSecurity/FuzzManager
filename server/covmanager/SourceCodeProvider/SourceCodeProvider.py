@@ -106,6 +106,22 @@ class SourceCodeProvider():
         """
         return
 
+    @abstractmethod
+    def checkRevisionsEquivalent(self, revisionA, revisionB):
+        """
+        Check if the given revisions are considered to be equivalent.
+
+        @ptype revisionA: string
+        @param revisionA: The first revision to compare.
+
+        @ptype revisionB: string
+        @param revisionB: The second revision to compare.
+
+        @rtype bool
+        @return True, if the revisions are equivalent, False otherwise.
+        """
+        return
+
 
 class Utils():
 

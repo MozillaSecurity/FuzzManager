@@ -64,3 +64,8 @@ class GITSourceCodeProvider(SourceCodeProvider):
     def getUnifiedDiff(self, revision):
         # TODO: Implement this method for GIT
         pass
+
+    def checkRevisionsEquivalent(self, revisionA, revisionB):
+        # We do not implement any kind of revision equivalence
+        # for GIT other than equality.
+        return revisionA == revisionB

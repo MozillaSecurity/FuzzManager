@@ -101,5 +101,32 @@ class TestHGDiff(unittest.TestCase):
         print(Utils.getDiffLocations(diff))
 
 
+class TestHGRevisionEquivalence(unittest.TestCase):
+    def runTest(self):
+        provider = HGSourceCodeProvider("")
+
+        # Simple equality for short and long revision formats
+        self.assertTrue(provider.checkRevisionsEquivalent("c179ace9e260", "c179ace9e260"))
+        self.assertTrue(provider.checkRevisionsEquivalent(
+            "c179ace9e260adbabd17426750b5a62403691624",
+            "c179ace9e260adbabd17426750b5a62403691624"
+        ))
+
+        # Equivalence of long and short format
+        self.assertTrue(provider.checkRevisionsEquivalent("c179ace9e260", "c179ace9e260adbabd17426750b5a62403691624"))
+        self.assertTrue(provider.checkRevisionsEquivalent("c179ace9e260adbabd17426750b5a62403691624", "c179ace9e260"))
+
+        # Negative tests
+        self.assertFalse(provider.checkRevisionsEquivalent("", "c179ace9e260"))
+        self.assertFalse(provider.checkRevisionsEquivalent("c179ace9e260", ""))
+        self.assertFalse(provider.checkRevisionsEquivalent("7a6e60cac455", "c179ace9e260"))
+        self.assertFalse(provider.checkRevisionsEquivalent("7a6e60cac455", "c179ace9e260adbabd17426750b5a62403691624"))
+        self.assertFalse(provider.checkRevisionsEquivalent("c179ace9e260adbabd17426750b5a62403691624", "7a6e60cac455"))
+        self.assertFalse(provider.checkRevisionsEquivalent(
+            "c3abaa766d52f438219920d37461b341321d4fef",
+            "c179ace9e260adbabd17426750b5a62403691624"
+        ))
+
+
 if __name__ == "__main__":
     unittest.main()

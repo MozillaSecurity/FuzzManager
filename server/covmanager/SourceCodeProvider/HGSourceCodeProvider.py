@@ -84,3 +84,18 @@ class HGSourceCodeProvider(SourceCodeProvider):
             raise UnknownRevisionException
 
         return output.decode('utf-8')
+
+    def checkRevisionsEquivalent(self, revisionA, revisionB):
+        # Check if revisions are equal
+        if revisionA == revisionB:
+            return True
+
+        # If one of the revisions is in short notation and the other is in long,
+        # consider them equivalent if the start of the long notation equals the short.
+        if len(revisionA) == 12 and len(revisionB) == 40:
+            return revisionB.startswith(revisionA)
+
+        if len(revisionA) == 40 and len(revisionB) == 12:
+            return revisionA.startswith(revisionB)
+
+        return False
