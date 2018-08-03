@@ -73,18 +73,25 @@ def merge_coverage_data(r, s):
             #assert(len(r['coverage']) == len(s['coverage']))
 
             for idx in range(0, len(rc)):
-                if sc[idx] < 0:
-                    # Verify that coverable vs. not coverable matches
-                    # Unfortunately, GCOV again messes this up for headers sometimes
-                    if rc[idx] >= 0:
-                        print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
-                              (r['name'], idx, rc[idx], sc[idx]))
-                        stats['coverable_mismatch_count'] += 1
+                # There are multiple situations where coverage reports might disagree
+                # about which lines are coverable and which are not. Sometimes, GCOV
+                # reports this wrong in headers, but it can also happen when mixing
+                # Clang and GCOV reports. Clang seems to consider more lines as coverable
+                # than GCOV.
+                #
+                # As a short-term solution we will always treat a location as *not* coverable
+                # if any of the reports says it is not coverable. We will still record these
+                # mismatches so we can track them and confirm them going down once we fix the
+                # various root causes for this behavior.
+                if (sc[idx] < 0 and rc[idx] >= 0) or (rc[idx] < 0 and sc[idx] >= 0):
+                    print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
+                          (r['name'], idx, rc[idx], sc[idx]))
+                    stats['coverable_mismatch_count'] += 1
 
-                    # Disable the assertion for now
-                    #assert(r['coverage'][idx] < 0)
-                elif rc[idx] < 0 and sc[idx] >= 0:
+                if sc[idx] < 0 and rc[idx] >= 0:
                     rc[idx] = sc[idx]
+                elif rc[idx] < 0 and sc[idx] >= 0:
+                    pass
                 else:
                     rc[idx] += sc[idx]
 
