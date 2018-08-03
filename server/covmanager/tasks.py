@@ -43,11 +43,20 @@ def aggregate_coverage_data(pk, pks):
     first_collection = collections[0]
     first_collection.loadCoverage()
     newCoverage = first_collection.content
+    total_stats = None
+
     for collection in collections[1:]:
         # Load coverage, perform the merge, then release reference to the JSON blob again
         collection.loadCoverage()
-        CoverageHelper.merge_coverage_data(newCoverage, collection.content)
+        stats = CoverageHelper.merge_coverage_data(newCoverage, collection.content)
         collection.content = None
+
+        # Merge stats appropriately
+        if total_stats is None:
+            total_stats = stats
+        else:
+            for x in total_stats:
+                total_stats[x] += stats[x]
 
     # Save the new coverage blob to disk and database
     newCoverage = json.dumps(newCoverage, separators=(',', ':'))
@@ -56,6 +65,10 @@ def aggregate_coverage_data(pk, pks):
     dbobj = CollectionFile()
     dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(newCoverage))
     dbobj.save()
+
+    mergedCollection.description += " (NC %s, LM %s, CM %s)" % (stats['null_coverable_count'],
+                                                                stats['length_mismatch_count'],
+                                                                stats['coverable_mismatch_count'])
 
     # Save the collection
     mergedCollection.coverage = dbobj
