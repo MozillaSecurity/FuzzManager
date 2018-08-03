@@ -217,8 +217,8 @@ let covmanager = new Vue({
     navigate: function (dst) {
       let ids = []
 
-      if (selected_collections.length > 0) {
-        ids = selected_collections;
+      if (this.selected_collections.length > 0) {
+        ids = this.selected_collections;
       } else {
         for (let i = 0; i < this.ordered_collections.length; ++i) {
           ids.push(this.ordered_collections[i].id)
@@ -260,8 +260,8 @@ let covmanager = new Vue({
     aggregate: function() {
       let ids = []
 
-      if (selected_collections.length > 0) {
-        ids = selected_collections;
+      if (this.selected_collections.length > 0) {
+        ids = this.selected_collections;
       } else {
         for (let i = 0; i < this.ordered_collections.length; ++i) {
           ids.push(this.ordered_collections[i].id)
