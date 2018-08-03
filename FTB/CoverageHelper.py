@@ -92,7 +92,7 @@ def merge_coverage_data(r, s):
                     rc[idx] = sc[idx]
                 elif rc[idx] < 0 and sc[idx] >= 0:
                     pass
-                else:
+                elif rc[idx] >= 0 and sc[idx] >= 0:
                     rc[idx] += sc[idx]
 
     # Merge recursively
