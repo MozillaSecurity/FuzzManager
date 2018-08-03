@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^collections/aggregate/api/', views.collections_aggregate_api, name="collections_aggregate_api"),
     url(r'^collections/diff/$', views.collections_diff, name="collections_diff"),
     url(r'^collections/diff/api/(?P<path>.*)', views.collections_diff_api, name="collections_diff_api"),
+    url(r'^collections/(?P<collectionid>\d+)/download/$', views.collections_download, name="collections_download"),
     url(r'^collections/patch/$', views.collections_patch, name="collections_patch"),
     url(r'^collections/patch/api/(?P<collectionid>\d+)/(?P<patch_revision>.+)', views.collections_patch_api,
         name="collections_patch_api"),

@@ -8,6 +8,7 @@ import os
 from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
+from wsgiref.util import FileWrapper
 
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
@@ -38,6 +39,22 @@ def collections_browse(request, collectionid):
 
 def collections_diff(request):
     return render(request, 'collections/browse.html', {'diff_api': True})
+
+
+def collections_download(request, collectionid):
+    collection = get_object_or_404(Collection, pk=collectionid)
+
+    if not collection.coverage:
+        return HttpResponse(
+            content=json.dumps({"message": "The requested collection is currently being created."}),
+            content_type='application/json',
+            status=204
+        )
+
+    cov_file = open(collection.coverage.file.path, 'rb')
+    response = HttpResponse(FileWrapper(cov_file), content_type='application/octet-stream')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(collection.coverage.file.path)
+    return response
 
 
 def collections_browse_api(request, collectionid, path):
