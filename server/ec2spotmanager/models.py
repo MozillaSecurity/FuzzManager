@@ -38,8 +38,6 @@ class PoolConfiguration(models.Model):
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
-    aws_access_key_id = models.CharField(max_length=255, blank=True, null=True)
-    aws_secret_access_key = models.CharField(max_length=255, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_types = models.CharField(max_length=1023, blank=True, null=True)
@@ -72,8 +70,6 @@ class PoolConfiguration(models.Model):
         # because they should behave in an additive manner.
         self.config_fields = [
             'size',
-            'aws_access_key_id',
-            'aws_secret_access_key',
             'cycle_interval',
             'ec2_key_name',
             'ec2_image_name',

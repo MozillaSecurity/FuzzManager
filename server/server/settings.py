@@ -261,6 +261,12 @@ LOGGING = {
 # behave as if we were using HTTPs.
 #SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# EC2Spotmanager configuration
+# If access keys are None, boto will look for global credentials (~/.aws/credentials or IAM role)
+#
+AWS_ACCESS_KEY_ID = None
+AWS_SECRET_ACCESS_KEY = None
+
 # Crashmanager configuration
 #
 #BUGZILLA_USERNAME = "example@example.com"

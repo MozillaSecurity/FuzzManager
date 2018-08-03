@@ -37,13 +37,10 @@ class TestCase(DjangoTestCase):
         super(DjangoTestCase, cls).tearDownClass()
 
     @staticmethod
-    def create_config(name, parent=None, size=None, cycle_interval=None, aws_access_key_id=None,
-                      aws_secret_access_key=None, ec2_key_name=None, ec2_security_groups=None, ec2_instance_types=None,
-                      ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
+    def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_name=None, ec2_security_groups=None,
+                      ec2_instance_types=None, ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
                       ec2_max_price=None, ec2_tags=None, ec2_raw_config=None):
         result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
-                                                  aws_access_key_id=aws_access_key_id,
-                                                  aws_secret_access_key=aws_secret_access_key,
                                                   ec2_key_name=ec2_key_name,
                                                   ec2_image_name=ec2_image_name,
                                                   ec2_max_price=ec2_max_price)

@@ -114,8 +114,6 @@ class PoolPricesViewTests(TestCase):
     def test_simpleget(self):
         """No errors are thrown in template"""
         cfg = self.create_config(name='config #1',
-                                 aws_access_key_id='xyz',
-                                 aws_secret_access_key='xyz',
                                  ec2_instance_types=['c4.2xlarge'])
         pool = self.create_pool(config=cfg)
         self.client.login(username='test', password='test')

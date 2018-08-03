@@ -20,8 +20,6 @@
 		</td></tr>
 		<tr><td>Size</td><td>{% if config.size %} {{ config.size }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>Cycle Interval</td><td>{% if config.cycle_interval %} {{ config.cycle_interval }} seconds {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>AWS Access Key</td><td>{% if config.aws_access_key_id %} {{ config.aws_access_key_id }} {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>AWS Secret Access Key</td><td>{% if config.aws_secret_access_key %} {{ config.aws_secret_access_key }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>EC2 Key Name</td><td>{% if config.ec2_key_name %} {{ config.ec2_key_name }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>EC2 Security Groups</td><td>{% if config.ec2_security_groups %} {{ config.ec2_security_groups }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>EC2 Instance Types</td><td>{% if config.ec2_instance_types %} {{ config.ec2_instance_types }} {% else %} Not specified {% endif %}</td></tr>

@@ -1,5 +1,6 @@
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
+from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.db.models.aggregates import Count
@@ -115,8 +116,8 @@ def viewPoolPrices(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
     prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
-                                             config.aws_access_key_id,
-                                             config.aws_secret_access_key,
+                                             getattr(settings, 'AWS_ACCESS_KEY_ID', None),
+                                             getattr(settings, 'AWS_SECRET_ACCESS_KEY', None),
                                              instance_type)
               for instance_type in config.ec2_instance_types}
 
@@ -300,16 +301,6 @@ def __handleConfigPOST(request, config):
         config.cycle_interval = int(request.POST['cycle_interval'])
     else:
         config.cycle_interval = None
-
-    if request.POST['aws_access_key_id']:
-        config.aws_access_key_id = request.POST['aws_access_key_id']
-    else:
-        config.aws_access_key_id = None
-
-    if request.POST['aws_secret_access_key']:
-        config.aws_secret_access_key = request.POST['aws_secret_access_key']
-    else:
-        config.aws_secret_access_key = None
 
     if request.POST['ec2_key_name']:
         config.ec2_key_name = request.POST['ec2_key_name']

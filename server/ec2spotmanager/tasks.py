@@ -132,8 +132,8 @@ def check_instance_pool(pool_id):
 
 def _get_best_region_zone(config):
     prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
-                                             config.aws_access_key_id,
-                                             config.aws_secret_access_key,
+                                             settings.AWS_ACCESS_KEY_ID,
+                                             settings.AWS_SECRET_ACCESS_KEY,
                                              instance_type)
               for instance_type in config.ec2_instance_types}
 
@@ -267,8 +267,8 @@ def _start_pool_instances(pool, config, count=1):
 
         cluster = Laniakea(None)
         try:
-            cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
-                            aws_secret_access_key=config.aws_secret_access_key)
+            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
             # resolve AMI manually for caching
             ami = None
             if USE_REDIS:
@@ -361,8 +361,8 @@ def _terminate_pool_instances(pool, instances, config, terminateByPool=False):
     for region in instance_ids_by_region:
         cluster = Laniakea(None)
         try:
-            cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
-                            aws_secret_access_key=config.aws_secret_access_key)
+            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
         except Exception as msg:
             # Log this error to the pool status messages
             entry = PoolStatusEntry()
@@ -442,8 +442,8 @@ def _update_pool_instances(pool, config):
     for region in instance_ids_by_region:
         cluster = Laniakea(None)
         try:
-            cluster.connect(region=region, aws_access_key_id=config.aws_access_key_id,
-                            aws_secret_access_key=config.aws_secret_access_key)
+            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
         except Exception as msg:
             # Log this error to the pool status messages
             entry = PoolStatusEntry()

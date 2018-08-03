@@ -124,7 +124,6 @@ class CreateConfigViewTests(TestCase):
         self.assertContains(response, 'name="name"')
         self.assertContains(response, 'name="size"')
         self.assertContains(response, 'name="cycle_interval"')
-        self.assertContains(response, 'name="aws_access_key_id"')
 
     def test_create(self):
         """Config created via form should be added to db"""
@@ -133,8 +132,6 @@ class CreateConfigViewTests(TestCase):
                                                          'name': 'config #1',
                                                          'size': '1',
                                                          'cycle_interval': '1',  # activate tsmith mode
-                                                         'aws_access_key_id': 'deadbeef',
-                                                         'aws_secret_access_key': 'n0b0deee',
                                                          'ec2_key_name': 'key #1',
                                                          'ec2_security_groups': 'group #1',
                                                          'ec2_instance_types': 'machine #1',
@@ -150,8 +147,6 @@ class CreateConfigViewTests(TestCase):
         self.assertIsNone(cfg.parent)
         self.assertEqual(cfg.size, 1)
         self.assertEqual(cfg.cycle_interval, 1)
-        self.assertEqual(cfg.aws_access_key_id, 'deadbeef')
-        self.assertEqual(cfg.aws_secret_access_key, 'n0b0deee')
         self.assertEqual(cfg.ec2_key_name, 'key #1')
         self.assertEqual(cfg.ec2_security_groups, json.dumps(['group #1']))
         self.assertEqual(cfg.ec2_instance_types, json.dumps(['machine #1']))
@@ -170,8 +165,6 @@ class CreateConfigViewTests(TestCase):
         cfg = self.create_config(name='config #1',
                                  size=1234567,
                                  cycle_interval=7654321,
-                                 aws_access_key_id='deadbeef',
-                                 aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
@@ -188,8 +181,6 @@ class CreateConfigViewTests(TestCase):
         self.assertContains(response, 'config #1 (Cloned)')
         self.assertContains(response, '1234567')
         self.assertContains(response, '7654321')
-        self.assertContains(response, 'deadbeef')
-        self.assertContains(response, 'n0b0deee')
         self.assertContains(response, 'key #1')
         self.assertContains(response, 'group #1')
         self.assertContains(response, 'machine #1')
@@ -216,8 +207,6 @@ class ViewConfigViewTests(TestCase):
         cfg = self.create_config(name='config #1',
                                  size=1234567,
                                  cycle_interval=7654321,
-                                 aws_access_key_id='deadbeef',
-                                 aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
@@ -234,8 +223,6 @@ class ViewConfigViewTests(TestCase):
         self.assertContains(response, 'config #1')
         self.assertContains(response, '1234567')
         self.assertContains(response, '7654321')
-        self.assertContains(response, 'deadbeef')
-        self.assertContains(response, 'n0b0deee')
         self.assertContains(response, 'key #1')
         self.assertContains(response, 'group #1')
         self.assertContains(response, 'machine #1')
@@ -264,8 +251,6 @@ class EditConfigViewTests(TestCase):
         cfg = self.create_config(name='config #1',
                                  size=1234567,
                                  cycle_interval=7654321,
-                                 aws_access_key_id='deadbeef',
-                                 aws_secret_access_key='n0b0deee',
                                  ec2_key_name='key #1',
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
@@ -283,8 +268,6 @@ class EditConfigViewTests(TestCase):
         self.assertContains(response, 'config #1')
         self.assertContains(response, '1234567')
         self.assertContains(response, '7654321')
-        self.assertContains(response, 'deadbeef')
-        self.assertContains(response, 'n0b0deee')
         self.assertContains(response, 'key #1')
         self.assertContains(response, 'group #1')
         self.assertContains(response, 'machine #1')
