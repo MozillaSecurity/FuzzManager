@@ -82,6 +82,14 @@
 }
 
 /*
+ * Collection browser
+ */
+
+.collection-selected {
+  background: rgba(240, 130, 15, 0.3);
+}
+
+/*
  * Spinner
  */
 
