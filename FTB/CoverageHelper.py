@@ -88,6 +88,8 @@ def merge_coverage_data(r, s):
                           (r['name'], idx, rc[idx], sc[idx]))
                     stats['coverable_mismatch_count'] += 1
 
+                    # Explicitly mark as not coverable
+                    rc[idx] = -1
                 if sc[idx] < 0 and rc[idx] >= 0:
                     rc[idx] = sc[idx]
                 elif rc[idx] < 0 and sc[idx] >= 0:
