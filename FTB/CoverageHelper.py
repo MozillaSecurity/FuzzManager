@@ -62,17 +62,18 @@ def merge_coverage_data(r, s):
                 r['coverage'] = sc
                 return
 
-            # GCOV has mismatches on headers sometimes, ignore these, we
-            # cannot fix this in any reasonable way.
+            # grcov does not always output the correct length for files when they end in non-coverable lines.
+            # We record this, then ignore the excess lines.
             if len(rc) != len(sc):
                 print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
                 stats['length_mismatch_count'] += 1
-                return
 
             # Disable the assertion for now
             #assert(len(r['coverage']) == len(s['coverage']))
 
-            for idx in range(0, len(rc)):
+            minlen = min(len(rc), len(sc))
+
+            for idx in range(0, minlen):
                 # There are multiple situations where coverage reports might disagree
                 # about which lines are coverable and which are not. Sometimes, GCOV
                 # reports this wrong in headers, but it can also happen when mixing
