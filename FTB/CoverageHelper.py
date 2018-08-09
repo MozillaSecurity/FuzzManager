@@ -50,13 +50,13 @@ def merge_coverage_data(r, s):
             # ignore it. If r has that property, we replace it by s.
             if sc.count(-1) == len(sc):
                 if rc.count(-1) != len(rc):
-                    print("Warning: File %s reports no coverable lines" % r['name'])
+                    #print("Warning: File %s reports no coverable lines" % r['name'])
                     stats['null_coverable_count'] += 1
                 return
 
             if rc.count(-1) == len(rc):
                 if sc.count(-1) != len(sc):
-                    print("Warning: File %s reports no coverable lines" % r['name'])
+                    #print("Warning: File %s reports no coverable lines" % r['name'])
                     stats['null_coverable_count'] += 1
 
                 r['coverage'] = sc
@@ -65,7 +65,7 @@ def merge_coverage_data(r, s):
             # grcov does not always output the correct length for files when they end in non-coverable lines.
             # We record this, then ignore the excess lines.
             if len(rc) != len(sc):
-                print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
+                #print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
                 stats['length_mismatch_count'] += 1
 
             # Disable the assertion for now
@@ -85,8 +85,8 @@ def merge_coverage_data(r, s):
                 # mismatches so we can track them and confirm them going down once we fix the
                 # various root causes for this behavior.
                 if (sc[idx] < 0 and rc[idx] >= 0) or (rc[idx] < 0 and sc[idx] >= 0):
-                    print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
-                          (r['name'], idx, rc[idx], sc[idx]))
+                    #print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
+                    #      (r['name'], idx, rc[idx], sc[idx]))
                     stats['coverable_mismatch_count'] += 1
 
                     # Explicitly mark as not coverable
