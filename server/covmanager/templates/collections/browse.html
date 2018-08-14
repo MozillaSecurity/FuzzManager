@@ -6,145 +6,198 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-  <div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
-    <template v-if="loading">
-      <div class="loader">
-      </div>
-      <template v-if="loading_incomplete">
-        <div class="loader-msg">
-          <span>The requested collection is being processed by the server, please wait...</span>
+  <div class="panel-heading">
+    <div>
+      <i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser
+
+      <div class="pull-right" style="position: relative; top: 50%; transform: translateY(-25%);">
+          <i class="glyphicon glyphicon-filter"></i> Report Configuration
+          <b-button @click="show_modal()" :size="'sm'" :variant="'secondary'">!{ rc_name }!</b-button>
         </div>
-      </template>
-    </template>
-    <template v-else-if="source">
-      <table class="table table-coverage">
-        <tbody>
-          <tr v-for="(line, line_nr) in source">
-            <td :id="line_nr" :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]" @click="line_click_handler(line_nr)">
-              !{ line_nr }!
-            </td>
-            <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
-              <span class="label label-success" v-if="cov_hits(line_nr)"> <!-- FIXME -->
-                !{ cov_hits(line_nr) | formatNumber }!
-              </span>
-            </td>
-            <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
-              <div v-html="highlight_code(line)">
-                !{ highlight_code(line) }!
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </template>
-    <template v-else>
-      <div v-show="search">
-        <input type="text" ref="search" class="form-control" v-model="search"/>
+    </div>
+  </div>
+
+  <!--- Modal Component -->
+  <div class="modal modal-mask" role="document" style="display: block" v-if="modal.show">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Select a Report Configuration</h5>
+          <!-- Todo: This must be naturally on the same line. -->
+          <div class="pull-right" style="transform: translateY(-100%);">
+            <button type="button" class="close" @click="modal.show = false" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body" style="margin: 0 auto; width: 50%;">
+          <div v-for="entry in rc_list" :key="entry.id">
+          <b-button :size="'sm'" :variant="'secondary'" @click="set_rc(entry.id)" style="width: 200px;">!{ entry.description }!</b-button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" @click="modal.show = false">Close</button>
+        </div>
       </div>
-      <line-chart v-if="chartdata"></line-chart>
-      <table class="table table-condensed table-hover table-db">
-        <thead>
-          <tr>
-            <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
-            <th @click="sortBy('linesTotal')" :class="{ active: sortKey == 'linesTotal' }">
-              <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
-                <i class="glyphicon glyphicon-menu-hamburger"></i>
-              </span>
-            </th>
-            <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
-            <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
-            <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
-            <th v-if="chartdata" @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">Coverage Difference</th>
-            <th v-if="chartdata" @click="sortBy('delta_linesCovered')" :class="{ active: sortKey == 'delta_linesCovered' }">Lines Covered &Delta;</th>
-            <th v-if="chartdata" @click="sortBy('delta_linesTotal')" :class="{ active: sortKey == 'delta_linesTotal' }">Total Lines &Delta;</th>
-          </tr>
-          <tr v-if="show_top_nav">
-            <td @click="navigate_top">
-              <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
-            </td>
-        </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(value, path) in ordered_collection">
-            <td @click="navigate(value)">
-              <i :class="['glyphicon', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name }!</span>
-            </td>
-            <td>!{ value.linesTotal | formatNumber }!</td>
-            <td>!{ value.linesCovered | formatNumber }!</td>
-            <td>!{ value.linesMissed | formatNumber }!</td>
-            <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
-            <td v-if="chartdata" class="text-right" :style="cov_pct_style(value.delta_coveragePercent)">!{ value.delta_coveragePercent }! %</td>
-            <td v-if="chartdata" class="text-right">!{ value.delta_linesCovered }!</td>
-            <td v-if="chartdata" class="text-right">!{ value.delta_linesTotal }!</td>
-          </tr>
-        </tbody>
-        <tfoot class="table-coverage-foot" v-show="!search">
-          <tr>
-            <td><strong>Summary</strong></td>
-            <td>!{ coverage.linesTotal | formatNumber }!</td>
-            <td>!{ coverage.linesCovered | formatNumber }!</td>
-            <td>!{ coverage.linesMissed | formatNumber }!</td>
-            <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
-            <td v-if="chartdata" class="text-right" :style="cov_pct_style(coverage.delta_coveragePercent)">!{ coverage.delta_coveragePercent }! %</td>
-            <td v-if="chartdata" class="text-right">!{ coverage.delta_linesCovered }!</td>
-            <td v-if="chartdata" class="text-right">!{ coverage.delta_linesTotal }!</td>
-          </tr>
-      </tfoot>
-      </table>
+    </div>
+  </div>
+  <!-- End of Modal Component -->
+
+  <template v-if="loading">
+    <div class="loader">
+    </div>
+    <template v-if="loading_incomplete">
+      <div class="loader-msg">
+        <span>The requested collection is being processed by the server, please wait...</span>
+      </div>
     </template>
+  </template>
+  <template v-else-if="source">
+    <table class="table table-coverage">
+      <tbody>
+        <tr v-for="(line, line_nr) in source">
+          <td :id="line_nr"
+              :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]"
+              @click="line_click_handler(line_nr)">
+            !{ line_nr }!
+          </td>
+          <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
+            <span class="label label-success" v-if="cov_hits(line_nr)">
+              <!-- FIXME -->
+              !{ cov_hits(line_nr) | formatNumber }!
+            </span>
+          </td>
+          <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
+            <div v-html="highlight_code(line)">
+              !{ highlight_code(line) }!
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </template>
+  <template v-else>
+    <div v-show="search">
+      <input type="text" ref="search" class="form-control" v-model="search" />
+    </div>
+    <line-chart v-if="chartdata"></line-chart>
+    <table class="table table-condensed table-hover table-db">
+      <thead>
+        <tr>
+          <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
+          <th @click="sortBy('linesTotal')" :class="{ active: sortKey == 'linesTotal' }">
+            <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
+              <i class="glyphicon glyphicon-menu-hamburger"></i>
+            </span>
+          </th>
+          <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
+          <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
+          <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
+          <th @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">
+            Coverage Difference</th>
+          <th @click="sortBy('delta_linesCovered')" :class="{ active: sortKey == 'delta_linesCovered' }">
+            Lines Covered &Delta;</th>
+          <th @click="sortBy('delta_linesTotal')" :class="{ active: sortKey == 'delta_linesTotal' }">
+            Total Lines &Delta;</th>
+        </tr>
+        <tr v-if="show_top_nav">
+          <td @click="navigate_top">
+            <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(value, path) in ordered_collection">
+          <td @click="navigate(value)">
+            <i :class="['glyphicon', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name
+              }!</span>
+          </td>
+          <td>!{ value.linesTotal | formatNumber }!</td>
+          <td>!{ value.linesCovered | formatNumber }!</td>
+          <td>!{ value.linesMissed | formatNumber }!</td>
+          <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
+          <td v-if="chartdata" class="text-right" :style="cov_pct_style(value.delta_coveragePercent)">!{ value.delta_coveragePercent
+            }! %</td>
+          <td v-if="chartdata" class="text-right">!{ value.delta_linesCovered }!</td>
+          <td v-if="chartdata" class="text-right">!{ value.delta_linesTotal }!</td>
+        </tr>
+      </tbody>
+      <tfoot class="table-coverage-foot" v-show="!search">
+        <tr>
+          <td><strong>Summary</strong></td>
+          <td>!{ coverage.linesTotal | formatNumber }!</td>
+          <td>!{ coverage.linesCovered | formatNumber }!</td>
+          <td>!{ coverage.linesMissed | formatNumber }!</td>
+          <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
+          <td v-if="chartdata" class="text-right" :style="cov_pct_style(coverage.delta_coveragePercent)">!{ coverage.delta_coveragePercent
+            }! %</td>
+          <td v-if="chartdata" class="text-right">!{ coverage.delta_linesCovered }!</td>
+          <td v-if="chartdata" class="text-right">!{ coverage.delta_linesTotal }!</td>
+        </tr>
+      </tfoot>
+    </table>
+  </template>
 </div>
 
 <script>
+/* Django */
 {% if diff_api %}
 let APIURL = '{% url 'covmanager:collections_diff_api' "" %}'
-let GETPARAMS = 'ids={{ ids|join:"," }}';
+let GETPARAMS = 'ids={{ ids|join:"," }}'
 {% else %}
 let APIURL = '{% url 'covmanager:collections_browse_api' collectionid "" %}'
-let GETPARAMS = null;
+let GETPARAMS = null
 {% endif %}
+
+const URLS = {
+  rc: '{% url 'covmanager:reportconfigurations_list_api' %}'
+}
+/* End of Django */
 
 Vue.component('line-chart', {
   extends: VueChartJs.Line,
-  mounted () {
+  mounted() {
     this.renderChart({
       labels: covmanager.chartdata.labels,
       datasets: covmanager.chartdata.datasets
     },
-    {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        yAxes: [{
-            position: "left", "id": "y-axis-0",
+      {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          yAxes: [{
+            position: 'left',
+            id: 'y-axis-0',
             ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
-            gridLines: { display: true },
+            gridLines: { display: true }
           },
           {
-            position: "right", "id": "y-axis-1",
+            position: 'right',
+            id: 'y-axis-1',
             ticks: { beginAtZero: true },
-            gridLines: { display: false },
+            gridLines: { display: false }
           },
-        ],
-        xAxes: [{
-          gridLines: {
-            display: false
-          }
-        }]
-      },
-      tooltips: {
-        callbacks: {
-          beforeLabel: function(item, chart) {
-            return covmanager.chartdata.datasets[item.datasetIndex].created[item.index];
-          },
-          afterLabel: function(item, chart) {
-            if (item.index > 0) {
-              let dataset = covmanager.chartdata.datasets[item.datasetIndex];
-              return "\u0394 to last: " + dataset.deltas[item.index - 1] + " " + dataset.unit;
+          ],
+          xAxes: [{
+            gridLines: {
+              display: false
+            }
+          }]
+        },
+        tooltips: {
+          callbacks: {
+            beforeLabel: function (item, chart) {
+              return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]
+            },
+            afterLabel: function (item, chart) {
+              if (item.index > 0) {
+                let dataset = covmanager.chartdata.datasets[item.datasetIndex]
+                return `\u0394 to last: ${dataset.deltas[item.index - 1]} ${dataset.unit}`
+              }
             }
           }
         }
-      }
-    })
+      })
   }
 })
 
@@ -153,46 +206,77 @@ let pmanager = new HashParamManager()
 let covmanager = new Vue({
   el: '#main',
   data: {
-    path: pmanager.get_value("p", ""),
+    path: pmanager.get_value('p', ''),
     line: null,
     highlight_lines: { previous: [], current: [] },
     coverage: [],
     source: null,
     chartdata: null,
-    search: "",
-    sortKey: "",
+    search: '',
+    sortKey: '',
     reverse: false,
     show_top_nav: false,
     loading: false,
     loading_incomplete: false,
     last_line_clicked: null,
-    line_click_timer: null
+    line_click_timer: null,
+    rc_dropdown: false,
+    rc_name: 'None',
+    rc_id: null,
+    rc_list: [],
+    modal: {
+      show: false,
+    },
+    storage_support: false,
   },
   created: function () {
     window.addEventListener('keydown', this.keydown)
-    window.addEventListener('keyup',   this.keyup)
+    window.addEventListener('keyup', this.keyup)
+
+    // Check if local storage is available
+    this.storage_support = this.test_storage_rc()
+
+    this.rc_id = pmanager.get_value('rc', '')
+    if (this.storage_support && this.rc_id === '') {
+      this.rc_id = window.localStorage.getItem('covmanager_default_rc')
+
+      // If we fetched a default rc value from local storage, then we
+      // should always adjust the hash to match that, so the URL can be copied.
+      if (this.rc_id != null) {
+        pmanager.update_value('rc', this.rc_id)
+        pmanager.update_hash()
+      }
+    }
+
+    // Get the list of report configurations once at startup and cache it,
+    // as it is unlikely to change while we are browsing the collection.
+    this.get_rc_list().then(() => { this.update_rc_name() })
     this.fetch()
   },
   watch: {
     path: 'fetch',
     line: 'scroll_to_line',
-    highlight_lines: 'change_highlighted_lines'
+    highlight_lines: 'change_highlighted_lines',
+    rc_id: function() {
+      this.update_rc_name()
+      this.fetch()
+    },
   },
-  updated: function() {
+  updated: function () {
     // Once we updated the data, check for a line parameter and update the line
     // field accordingly if the value has changed. Updating the field will
     // trigger the scrolling function.
-    this.line = pmanager.get_value("s")
+    this.line = pmanager.get_value('s')
 
     // Also check if we are supposed to highlight any lines.
-    let hl = pmanager.get_value("hl", "")
-    if (hl != "") {
+    let hl = pmanager.get_value('hl', '')
+    if (hl != '') {
       // We always store the current and the previous highlight state when
       // changing/updating it to ensure that we can undo the previous highlight
       // without iterating or re-rendering all lines.
       this.highlight_lines = {
         previous: this.highlight_lines.current,
-        current: hl.split(",")
+        current: hl.split(',')
       }
     }
   },
@@ -205,20 +289,20 @@ let covmanager = new Vue({
   },
   computed: {
     current_path: function () {
-      return this.path.split("/")
+      return this.path.split('/')
     },
     filtered_children: function () {
-      let result = {},
-          path,
-          children = this.coverage.children
+      let result = {}
+      let path
+      let children = this.coverage.children
 
       if (!this.search) {
         return children
       }
 
       for (path in children) {
-        if (children.hasOwnProperty(path) && path.indexOf(this.search) !== -1) {
-            result[path] = children[path]
+        if (children.hasOwnProperty(path) && path.indexOf(this.search) != -1) {
+          result[path] = children[path]
         }
       }
 
@@ -229,28 +313,39 @@ let covmanager = new Vue({
     }
   },
   methods: {
-    apiurl: function() {
-      let url = APIURL + this.path;
+    apiurl: function () {
+      let url = APIURL + this.path
 
-      let ids = pmanager.get_value("ids")
+      let query_params = []
+
+      let ids = pmanager.get_value('ids')
       if (ids) {
-        url += "?ids=" + ids
+        query_params.push(`ids=${ids}`)
       }
 
-      return url;
+      let rc = pmanager.get_value('rc')
+      if (rc) {
+        query_params.push(`rc=${rc}`)
+      }
+
+      if (query_params.length > 0) {
+        url += '?' + query_params.join('&')
+      }
+
+      return url
     },
-    fetch: _.throttle (function () {
+    fetch: _.throttle(function () {
       this.loading = true
       fetch(this.apiurl(), {
         method: 'GET',
         credentials: 'same-origin'
       }).then(response => {
         if (response.ok) {
-          if (response.status == 204) {
+          if (response.status === 204) {
             // Collection is still being processed, retry in a few
             setTimeout(this.fetch, 1000)
             this.loading_incomplete = true
-            return;
+            return
           }
           return response.json()
         }
@@ -258,19 +353,21 @@ let covmanager = new Vue({
         this.loading = false
         window.history.back()
       }).then(json => {
-        if (!json) { return; }
+        if (!json) {
+          return
+        }
 
-        this.coverage = json["coverage"]
-        if ("source" in this.coverage) {
-          this.source = this.coverage["source"].split('\n')
+        this.coverage = json['coverage']
+        if ('source' in this.coverage) {
+          this.source = this.coverage['source'].split('\n')
         } else {
           this.source = null
         }
 
-        if ("ttdata" in json) {
+        if ('ttdata' in json) {
           this.chartdata = {}
-          this.chartdata["labels"] = []
-          this.chartdata["datasets"] = [
+          this.chartdata['labels'] = []
+          this.chartdata['datasets'] = [
             {
               label: 'Total Coverage (%)',
               borderColor: '#f87979',
@@ -281,7 +378,7 @@ let covmanager = new Vue({
               data: [],
               deltas: [],
               created: [],
-              unit: '%',
+              unit: '%'
             },
             {
               label: 'Lines not covered',
@@ -293,7 +390,7 @@ let covmanager = new Vue({
               data: [],
               deltas: [],
               created: [],
-              unit: 'lines',
+              unit: 'lines'
             },
             {
               label: 'Total lines (coverable)',
@@ -305,22 +402,22 @@ let covmanager = new Vue({
               data: [],
               deltas: [],
               created: [],
-              unit: 'lines',
-            },
-          ];
+              unit: 'lines'
+            }
+          ]
 
-          for (let i = 0; i < json["ttdata"].length; ++i) {
-            this.chartdata["labels"].push(this.wrap_text(json["ttdata"][i]["label"], 10));
+          for (let i = 0; i < json['ttdata'].length; ++i) {
+            this.chartdata['labels'].push(this.wrap_text(json['ttdata'][i]['label'], 10))
 
-            this.chartdata["datasets"][0]["data"].push(json["ttdata"][i]["coveragePercent"]);
-            this.chartdata["datasets"][1]["data"].push(json["ttdata"][i]["linesMissed"]);
-            this.chartdata["datasets"][2]["data"].push(json["ttdata"][i]["linesTotal"]);
+            this.chartdata['datasets'][0]['data'].push(json['ttdata'][i]['coveragePercent'])
+            this.chartdata['datasets'][1]['data'].push(json['ttdata'][i]['linesMissed'])
+            this.chartdata['datasets'][2]['data'].push(json['ttdata'][i]['linesTotal'])
 
-            this.chartdata["datasets"][0]["created"].push(json["ttdata"][i]["created"]);
+            this.chartdata['datasets'][0]['created'].push(json['ttdata'][i]['created'])
             if (i > 0) {
-              this.chartdata["datasets"][0]["deltas"].push(json["ttdata"][i]["delta_coveragePercent"]);
-              this.chartdata["datasets"][1]["deltas"].push(json["ttdata"][i]["delta_linesMissed"]);
-              this.chartdata["datasets"][2]["deltas"].push(json["ttdata"][i]["delta_linesTotal"]);
+              this.chartdata['datasets'][0]['deltas'].push(json['ttdata'][i]['delta_coveragePercent'])
+              this.chartdata['datasets'][1]['deltas'].push(json['ttdata'][i]['delta_linesMissed'])
+              this.chartdata['datasets'][2]['deltas'].push(json['ttdata'][i]['delta_linesTotal'])
             }
           }
         }
@@ -332,17 +429,17 @@ let covmanager = new Vue({
         this.show_top_nav = !!this.path
 
         // Start with an empty search after fetching new data
-        this.search = ""
+        this.search = ''
       })
     }, 500),
     navigate: function (value) {
-      if (this.chartdata && !("children" in value)) {
+      if (this.chartdata && !('children' in value)) {
         // Block navigating to files if we are in diff mode
         return
       }
 
       let location = value.name
-      pmanager.update_value("p", this.path + (this.coverage.children[location]["children"] ? location + '/' : location))
+      pmanager.update_value('p', this.path + (this.coverage.children[location]['children'] ? location + '/' : location))
       pmanager.update_hash()
     },
     sortBy: function (sortKey) {
@@ -350,24 +447,89 @@ let covmanager = new Vue({
       this.sortKey = sortKey
     },
     navigate_top: function () {
-      let path_components = this.path.split("/")
+      let path_components = this.path.split('/')
 
       // Pop one non-empty component or stop when list is empty.
-      while (path_components && !path_components.pop()) {}
+      while (path_components && !path_components.pop()) { }
 
-      pmanager.update_value("p", path_components.join("/") + "/")
+      pmanager.update_value('p', path_components.join('/') + '/')
       pmanager.update_hash()
+    },
+    get_rc_list: function () {
+      return fetch(`${URLS['rc']}?__exclude=directives`, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.rc_list = json['results']
+
+        this.rc_list.sort(function(a, b) {
+          let da = a.description.toLowerCase()
+          let db = b.description.toLowerCase()
+          if (da < db)
+              return -1
+          if (da > db)
+              return 1
+          return 0
+        })
+      })
+    },
+    show_modal: function () {
+      this.modal.show = true
+      //$("#ddown").get(0).show()
+      //this.$refs.ddown.show()
+    },
+    set_rc: function (id) {
+      this.modal.show = false
+      pmanager.update_value('rc', id)
+      pmanager.update_hash()
+
+      if (this.storage_support) {
+        window.localStorage.setItem("covmanager_default_rc", id)
+      }
+    },
+    test_storage_rc: function() {
+      try {
+          localStorage.setItem("covmanager_storage_test", "test");
+          localStorage.removeItem("covmanager_storage_test");
+      } catch(e) {
+          return false;
+      }
+      return true;
+    },
+    update_rc_name: function () {
+      for (let rc of this.rc_list) {
+        if (rc['id'] == this.rc_id) {
+          this.rc_name = rc['description']
+          return
+        }
+      }
+      this.rc_name = 'N/A'
+
+      if (rc['id'] && this.rc_list.length > 0) {
+        // Apparently there is an rc id set, but it is not in our list.
+        // This could mean that we have a delected rc id at hand, which
+        // might even be stored in local storage. Hence we should invalidate
+        // at least local storage.
+        if (this.storage_support) {
+          window.localStorage.removeItem("covmanager_default_rc")
+        }
+      }
     },
     cov_pct_style: function (pct) { // Todo: Add to a CSS class.
       let status_color
-      if (pct == 100.00) {
+      if (pct === 100.00) {
         status_color = '#edfde7'
       } else if (pct >= 80.00) {
         status_color = '#fafde8'
       } else {
         status_color = '#fbece9'
       }
-      return 'background: linear-gradient(90deg, ' + status_color + ' ' + pct + '%, white ' + pct + '%)'
+      return `background: linear-gradient(90deg, ${status_color} ${pct}%, white ${pct}%)`
     },
     cov_hits: function (i) {
       return this.coverage.coverage[i] > 0 ? this.coverage.coverage[i] : ''
@@ -375,69 +537,68 @@ let covmanager = new Vue({
     add_coverage_status_class: function (i) {
       let classArray = this.class ? this.class.split(' ') : []
       if (this.coverage.coverage[i] > 0) {           // Line is covered.
-        classArray.push("cov-status-covered")
+        classArray.push('cov-status-covered')
       }
-      else if (this.coverage.coverage[i] === 0) {    // Line is coverable but was not covered.
-        classArray.push("cov-status-non-coverable")
+      else if (this.coverage.coverage[i] == 0) {    // Line is coverable but was not covered.
+        classArray.push('cov-status-non-coverable')
       } else {                                       // Line is not coverable.
       }
       return classArray
     },
     add_path_class: function (value) {
       let classArray = this.class ? this.class.split(' ') : []
-      if ("children" in value) {
-        classArray.push("glyphicon-folder-close")
+      if ('children' in value) {
+        classArray.push('glyphicon-folder-close')
       } else {
-        classArray.push("glyphicon-file")
+        classArray.push('glyphicon-file')
       }
       return classArray
     },
     get_span_path_class: function (value) {
-      // If we are in diff mode (we have chart data), then we don't want to
-      // show file paths as clickable.
-      if (!this.chartdata || "children" in value) {
-        return "path"
+      // If we are in diff mode (we have chart data), then we don't want to show file paths as clickable.
+      if (!this.chartdata || 'children' in value) {
+        return 'path'
       }
-      return ""
+      return ''
     },
     highlight_code: function (code) {
       return Prism.highlight(code, Prism.languages.cpp)
     },
-    wrap_text: function(text, maxlen) {
-      textParts = text.split(' ');
-      result = [];
-      lastIdx = -1;
+    wrap_text: function (text, maxlen) {
+      textParts = text.split(' ')
+      result = []
+      lastIdx = -1
       for (let i = 0; i < textParts.length; ++i) {
         if (lastIdx >= 0 && result[lastIdx].length + textParts[i].length + 1 <= maxlen) {
-          result[lastIdx] += ' ' + textParts[i];
+          result[lastIdx] += ' ' + textParts[i]
         } else {
-          result.push(textParts[i]);
-          lastIdx++;
+          result.push(textParts[i])
+          lastIdx++
         }
       }
-      return result;
+      return result
     },
-    scroll_to_line: function() {
+    scroll_to_line: function () {
       if (this.line != null) {
-        let target = $("#" + this.line)
+        let target = $('#' + this.line)
         if (target) {
-          let target_offset = target.offset().top;
-          let height = target.height();
-          let window_height = $(window).height();
-          let offset;
+          let target_offset = target.offset().top
+          let height = target.height()
+          let window_height = $(window).height()
+          let offset
 
           if (height < window_height) {
-            offset = target_offset - ((window_height / 2) - (height / 2));
+            offset = target_offset - ((window_height / 2) - (height / 2))
           } else {
-            offset = target_offset;
+            offset = target_offset
           }
-          $('html, body').animate({ scrollTop : offset }, 700);
+          $('html, body').animate({ scrollTop: offset }, 700)
         }
       } else {
-        window.scroll(0,0)
+        window.scroll(0, 0)
       }
     },
-    change_highlighted_lines: function() {
+    change_highlighted_lines: function () {
       function toggle(line, state) {
         let lines = []
         if (line.indexOf('-') > 0) {
@@ -446,14 +607,14 @@ let covmanager = new Vue({
             lines.push(i)
           }
         } else {
-          lines = [ line ]
+          lines = [line]
         }
 
         for (let i = 0; i < lines.length; ++i) {
-          if (lines[i] != "") {
-            let target = $("#" + lines[i])
+          if (lines[i] != '') {
+            let target = $('#' + lines[i])
             if (target)
-              target.toggleClass("cov-line-highlighted", state)
+              target.toggleClass('cov-line-highlighted', state)
           }
         }
       }
@@ -466,41 +627,41 @@ let covmanager = new Vue({
         toggle(this.highlight_lines.current[i], true)
       }
     },
-    line_click_handler: function(line) {
+    line_click_handler: function (line) {
       // Handling click and double click on the same element as different events
       // without overlapping them is not possible. We therefore need to emulate
       // double click handling ourselves by using a timer.
-      var self = this
+      let self = this
       if (self.last_line_clicked == line) {
         clearTimeout(self.line_click_timer)
         self.last_line_clicked = null
         self.toggle_highlight_line(line)
       } else {
         self.last_line_clicked = line
-        self.line_click_timer = setTimeout(function() {
+        self.line_click_timer = setTimeout(function () {
           self.last_line_clicked = null
           self.set_scroll_line(line)
-        }, 300);
+        }, 300)
       }
     },
-    set_scroll_line: function(line) {
-      pmanager.update_value("s", line)
+    set_scroll_line: function (line) {
+      pmanager.update_value('s', line)
       pmanager.update_hash()
     },
-    toggle_highlight_line: function(line) {
+    toggle_highlight_line: function (line) {
       // This method is a bit lenghty because we need to first destructure the
       // existing parameters in the URL, then toggle, then restructure them
       // to update the hash. Updating the hash also updates the internal
       // properties of the model and does the actual highlight.
 
       // Get the current hl parameters from hash
-      let hl = pmanager.get_value("hl", "")
+      let hl = pmanager.get_value('hl', '')
 
       // Transform these into a set of lines highlighted
       let lines = {}
       let hl_parts = []
-      if (hl != "") {
-        hl_parts = hl.split(",")
+      if (hl != '') {
+        hl_parts = hl.split(',')
       }
       hl_parts.forEach(function (hl_part) {
         if (hl_part.indexOf('-') > 0) {
@@ -524,40 +685,51 @@ let covmanager = new Vue({
       let sorted_lines = Object.keys(lines).sort((a, b) => a - b)
       let new_hl_parts = []
 
-      let range_start = -1;
-      let last_line = -1;
+      let range_start = -1
+      let last_line = -1
 
       // The next loop has a lookahead of 1 to build ranges. By adding one
       // dummy element at the end, we can avoid some code duplication here
       // and the function properly finishes the last line/range.
       sorted_lines.push(-1)
-      sorted_lines.forEach(function(sorted_line) {
-          if (last_line >= 0) {
-            if (last_line != sorted_line - 1) {
-              if (range_start == last_line) {
-                /* Single line to add */
-                new_hl_parts.push(last_line)
-              } else {
-                /* Add a range from range_start to last_line */
-                new_hl_parts.push(range_start + "-" + last_line)
-              }
-              range_start = sorted_line
+      sorted_lines.forEach(function (sorted_line) {
+        if (last_line >= 0) {
+          if (last_line != sorted_line - 1) {
+            if (range_start === last_line) {
+              /* Single line to add */
+              new_hl_parts.push(last_line)
+            } else {
+              /* Add a range from range_start to last_line */
+              new_hl_parts.push(range_start + '-' + last_line)
             }
-          } else {
             range_start = sorted_line
           }
-          last_line = sorted_line
+        } else {
+          range_start = sorted_line
+        }
+        last_line = sorted_line
       })
 
-      pmanager.update_value("hl", new_hl_parts.join(","))
+      pmanager.update_value('hl', new_hl_parts.join(','))
       pmanager.update_hash()
     },
     keydown: function (e) {
       if (!e) {
         e = window.event
       }
+
+      // Ignore the keypress if any of these modifiers are active
+      if (event.getModifierState("Fn") ||
+          event.getModifierState("OS") ||
+          event.getModifierState("Win") ||
+          event.getModifierState("Control") ||
+          event.getModifierState("Alt") ||
+          event.getModifierState("Meta")) {
+        return;
+      }
+
       if (!e.metaKey) {
-        if(e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
+        if (e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
           if (!this.search) {
             let str = String.fromCharCode(e.keyCode)
             if (!e.shiftKey) {
@@ -567,7 +739,7 @@ let covmanager = new Vue({
           } else {
             this.$refs.search.focus()
           }
-        } else if (e.keyCode == 13) {
+        } else if (e.keyCode === 13) {
           // ENTER was pressed, navigate
           let target = Object.keys(this.filtered_children)[0]
           if (target) {
@@ -583,9 +755,9 @@ let covmanager = new Vue({
         e = window.event
       }
       if (!e.metaKey) {
-        if (this.search && e.keyCode == 27) {
+        if (this.search && e.keyCode === 27) {
           // ESC was pressed, clear search.
-          this.search = ""
+          this.search = ''
         }
       }
     }
@@ -593,16 +765,23 @@ let covmanager = new Vue({
 })
 
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
-window.onhashchange = function() {
+window.onhashchange = function () {
   pmanager.update_state()
 
-  let new_path = pmanager.get_value("p", "")
-  let new_line = pmanager.get_value("s", null)
+  let new_rc = pmanager.get_value('rc', '')
+  if (covmanager.rc_id != new_rc) {
+    // If the report configuration id has changed, update it in the model.
+    // This will also trigger an update for the displayed name.
+    covmanager.rc_id = new_rc
+  }
+
+  let new_path = pmanager.get_value('p', '')
+  let new_line = pmanager.get_value('s', null)
 
   let new_hl_lines = []
-  let hl = pmanager.get_value("hl", "")
-  if (hl != "") {
-    new_hl_lines = hl.split(",")
+  let hl = pmanager.get_value('hl', '')
+  if (hl != '') {
+    new_hl_lines = hl.split(',')
   }
 
   // Prevent reloads when the path hasn't changed
@@ -625,5 +804,4 @@ window.onhashchange = function() {
   }
 }
 </script>
-
 {% endblock body_content %}

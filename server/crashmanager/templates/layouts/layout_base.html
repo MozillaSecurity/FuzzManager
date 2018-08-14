@@ -14,6 +14,7 @@
 	{% block css %}
   <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans:400,600,700'>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.css">
   <link rel='stylesheet' href='//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css'>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism.css">
   <link rel="stylesheet" href="/static/css/default.css">
@@ -23,10 +24,14 @@
 	{% block js %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
-  <script src="https://unpkg.com/vue-chartjs@2.6.0/dist/vue-chartjs.full.min.js"></script>
 	<script src="{{STATIC_URL}}js/params.js"/></script>
+	<script src="{{STATIC_URL}}js/cookie-csrf.js"/></script>
+	<script src="{{STATIC_URL}}js/vuejs-slider.js"/></script>
+	<script src="{{STATIC_URL}}js/vue-chartjs.full.min.js"></script>
+	<script src="{{STATIC_URL}}js/d3.v4.min.js"/></script>
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.common.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-clike.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-c.min.js"></script>
@@ -36,7 +41,12 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
 	{% block js.shared %}{% endblock js.shared %}
 	{% block js.custom %}{% endblock js.custom %}
-	{% endblock js%}
+    {% endblock js%}
+    {% if debug %}
+    <script>
+        Vue.options.debug = true
+    </script>
+    {% endif %}
     <script>
         $(function(){
             $('[data-toggle="popover"]').popover({trigger: 'hover','placement': 'top'});
@@ -46,9 +56,7 @@
         });
 
         Vue.options.delimiters = ['!{', '}!']
-        Vue.options.debug = false
         Vue.options.productionTip = false
-
 
         let E_SERVER_ERROR = 'Error while communicating with the server.'
 

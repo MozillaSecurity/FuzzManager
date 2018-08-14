@@ -3,6 +3,7 @@ from django.core.files.base import ContentFile
 
 from celeryconf import app  # noqa
 
+import copy
 import hashlib
 import json
 
@@ -74,4 +75,65 @@ def aggregate_coverage_data(pk, pks):
     mergedCollection.coverage = dbobj
     mergedCollection.save()
 
+    return
+
+
+@app.task
+def calculate_report_summary(pk):
+    from covmanager.models import ReportConfiguration, ReportSummary
+    summary = ReportSummary.objects.get(pk=pk)
+
+    # Load coverage data
+    collection = summary.collection
+    collection.loadCoverage()
+
+    rcs = ReportConfiguration.objects.filter(public=True, repository=collection.repository)
+
+    data = None
+    waiting = {}
+    arrived = {}
+
+    for rc in rcs:
+        coverage = copy.deepcopy(collection.content)
+        rc.apply(coverage)
+        if "children" in coverage:
+            del coverage["children"]
+
+        coverage["name"] = rc.description
+        coverage["id"] = rc.pk
+
+        if rc.logical_parent:
+            # We have a parent, check if we already processed it
+            if rc.logical_parent.pk in arrived:
+                # Short path, parent is already there, we can link directly
+                if "children" not in arrived[rc.logical_parent.pk]:
+                    arrived[rc.logical_parent.pk]["children"] = []
+                arrived[rc.logical_parent.pk]["children"].append(coverage)
+            else:
+                # Parent hasn't been processed yet, so we have to wait for it
+                if rc.logical_parent.pk not in waiting:
+                    waiting[rc.logical_parent.pk] = []
+                waiting[rc.logical_parent.pk].append(coverage)
+        elif not data:
+            # This is the root
+            data = coverage
+        else:
+            summary.cached_result = json.dumps({"error": "There are multiple root reports configured."})
+            summary.save()
+            return
+
+        # Now check if anyone was waiting for us
+        if rc.pk in waiting:
+            coverage["children"] = waiting[rc.pk]
+            del waiting[rc.pk]
+
+        # We have arrived
+        arrived[rc.pk] = coverage
+
+    if waiting:
+        # We shouldn't have orphaned reports
+        data["warning"] = "There are orphaned reports that won't be displayed."
+
+    summary.cached_result = json.dumps(data)
+    summary.save()
     return

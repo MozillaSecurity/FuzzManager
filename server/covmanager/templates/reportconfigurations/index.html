@@ -1,0 +1,296 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block css.custom %}
+  <link rel="stylesheet" href="/static/css/covmanager.css">
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+  <!-- Panel Header -->
+  <div class="panel-heading">
+    <i class="glyphicon glyphicon-hdd"></i> Report Configurations
+  </div>
+  <!-- Panel Body -->
+  <div class="panel-body">
+    <!-- Button: Create -->
+    <button @click="rc_dialog()" class="btn btn-default">Create new Report Configuration</button>
+    <!-- Input: Search -->
+    <div v-show="search">
+      <input type="text" ref="search" class="form-control" v-model="search" />
+    </div>
+    <!--- Modal Component -->
+    <div class="modal modal-mask" role="document" style="display: block" v-if="modal.show">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">!{ modal.title }!</h5>
+            <!-- Todo: This must be naturally on the same line. -->
+            <div class="pull-right" style="transform: translateY(-100%);">
+            <button type="button" class="close" @click="rc_close()" data-dismiss="modal">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="form-group">
+                <label class="col-form-label">Logical Parent:</label>
+                <input type="text" class="form-control" v-model="modal.rc.logical_parent" />
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Description:</label>
+                <input type="text" class="form-control" v-model="modal.rc.description" />
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Repository:</label>
+                <input type="text" class="form-control" v-model="modal.rc.repository" />
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Directives:</label>
+                <textarea rows="10" class="form-control" v-model="modal.rc.directives"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="col-form-label">Public</label>
+                <input type="checkbox" class="form-control" v-model="modal.rc.public" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" @click="modal_ok">Ok</button>
+            <button type="button" class="btn btn-danger" @click="rc_close()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End of Modal Component -->
+  </div>
+  <!-- End of Panel Body -->
+  <!-- Report Configuration Table -->
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th @click="sortBy('id')" :class="{ active: sortKey == 'id' }" style="width: 25px;">ID</th>
+        <th @click="sortBy('description')" :class="{ active: sortKey == 'description' }" style="width: 100px;">Description</th>
+        <th @click="sortBy('logical_parent')" :class="{ active: sortKey == 'logical_parent' }" style="width: 25px;">Logical Parent</th>
+        <th @click="sortBy('repository')" :class="{ active: sortKey == 'repository' }" style="width: 50px;">Repository</th>
+        <th style="width: 100px;">Directives</th>
+        <th @click="sortBy('public')" :class="{ active: sortKey == 'public' }" style="width: 25px;">Public</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="rc in ordered_rc_list" :id="rc.id" @click="rc_dialog(rc)">
+        <td>!{ rc.id }!</td>
+        <td>!{ rc.description }!</td>
+        <td>!{ rc.logical_parent }!</td>
+        <td>!{ rc.repository }!</td>
+        <td>
+          <pre>!{ rc.directives }!</pre>
+        </td>
+        <td>!{ rc.public }!</td>
+      </tr>
+    </tbody>
+  </table>
+  <!-- End of Report Configuration Table -->
+</div>
+
+<script>
+/* Django */
+const URLS = {
+  repository_search : '{% url 'covmanager:repositories_search_api' %}',
+  rc_list : '{% url 'covmanager:reportconfigurations_list_api' %}',
+  rc_create : '{% url 'covmanager:reportconfigurations_create_api' %}'
+}
+/* End of Django */
+
+let pmanager = new HashParamManager()
+
+let covmanager = new Vue({
+  el: '#main',
+  data: {
+    csrftoken: "",
+    rc_list: null,
+    sortKey: "",
+    reverse: false,
+    search: "",
+    showModal: false,
+    modal: {
+      show: false,
+      title: '',
+      rc: null
+    },
+  },
+  created: function () {
+    window.addEventListener('keydown', this.keydown)
+    window.addEventListener('keyup', this.keyup)
+
+    this.csrftoken = getCSRFToken()
+    this.fetch()
+  },
+  watch: {
+    search: function () {
+      return this.fetch()
+    }
+  },
+  filters: {
+    formatDate: function (datetime) {
+      return formatClientTimestamp(datetime)
+    },
+  },
+  computed: {
+    ordered_rc_list: function () {
+      return _.orderBy(this.rc_list, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    },
+  },
+  methods: {
+    apiurl: function () {
+      let url = URLS.rc_list
+
+      if (this.search) {
+        url += `?q=${this.search}`
+      }
+
+      return url
+    },
+    fetch: _.throttle(function () {
+      this.loading = true
+      fetch(this.apiurl(), {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
+      }).then(json => {
+        this.rc_list = json['results']
+        this.loading = false
+      })
+    }, 500),
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
+    rc_dialog: function (rc) {
+      const title = ' Report Configuration'
+
+      if (rc) {
+        this.modal.title = `Edit ${title}`
+        this.modal.rc = rc
+      } else {
+        this.modal.title = `Create ${title}`
+        this.modal.rc = {}
+      }
+
+      this.modal.show = true
+    },
+    rc_close: function () {
+      this.modal.show = false
+    },
+    rc_click_handler: function (rc) {
+      return this.rc_dialog(rc)
+    },
+    keydown: function (e) {
+      if (this.modal.show) {
+        return
+      }
+
+      if (!e) {
+        e = window.event
+      }
+
+      // Ignore the keypress if any of these modifiers are active
+      if (event.getModifierState("Fn") ||
+          event.getModifierState("OS") ||
+          event.getModifierState("Win") ||
+          event.getModifierState("Control") ||
+          event.getModifierState("Alt") ||
+          event.getModifierState("Meta")) {
+        return;
+      }
+
+      if (!e.metaKey) {
+        if (e.keyCode >= 65 && e.keyCode <= 90 || e.keyCode >= 48 && e.keyCode <= 57) {
+          if (!this.search) {
+            let str = String.fromCharCode(e.keyCode)
+            if (!e.shiftKey) {
+              str = str.toLowerCase()
+            }
+            this.search = str
+          } else {
+            this.$refs.search.focus()
+          }
+        } else if (e.keyCode === 13) {
+          // ENTER was pressed, edit
+          let target = Object.keys(this.ordered_rc_list)[0]
+          if (target) {
+            this.rc_click_handle(this.ordered_rc_list[target])
+          }
+        }
+      }
+    },
+    keyup: function (e) {
+      if (this.modal.show) {
+        return
+      }
+
+      // We use the |keyup| event instead of |keydown| here in order to not collide with Vue's internal updating of
+      // the search model on input events.
+      if (!e) {
+        e = window.event
+      }
+      if (!e.metaKey) {
+        if (this.search && e.keyCode === 27) {
+          // ESC was pressed, clear search.
+          this.search = ''
+        }
+      }
+    },
+    modal_ok: function () {
+      let url = URLS.rc_create
+      if (this.modal.rc['id']) {
+        url = `${URLS.rc_list}update/${this.modal.rc['id']}/`
+      }
+
+      this.modal_submit(url, this.modal.rc).then(() => {
+        this.modal.show = false
+      })
+    },
+    modal_submit: function (url, data) {
+      let self = this
+
+      return fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': this.csrftoken
+          },
+          body: JSON.stringify(data),
+        })
+        .then(response => {
+          this.loading = false
+          if (response.ok) {
+            return response.json()
+          }
+          sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        })
+        .then(() => {
+          self.fetch()
+        })
+    },
+  }
+})
+
+// This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
+window.onhashchange = function () {
+  pmanager.update_state()
+
+  const new_search = pmanager.get_value('q', '')
+  if (covmanager.search != new_search) {
+    covmanager.search = new_search
+  }
+}
+</script>
+{% endblock body_content %}

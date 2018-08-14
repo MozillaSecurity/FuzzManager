@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from crashmanager.models import Client, Tool
-from .models import Collection, CollectionFile, Repository
+from .models import Collection, CollectionFile, Repository, ReportConfiguration
 
 
 class InvalidArgumentException(APIException):
@@ -94,3 +94,59 @@ class RepositorySerializer(serializers.ModelSerializer):
         model = Repository
         fields = ('name',)
         read_only_fields = ('name',)
+
+
+class ReportConfigurationSerializer(serializers.ModelSerializer):
+    repository = serializers.CharField(source='repository.name', max_length=255)
+
+    class Meta:
+        model = ReportConfiguration
+        fields = (
+            'repository', 'description', 'directives', 'public', 'id', 'logical_parent'
+        )
+        read_only_fields = ('id', 'created')
+
+    def __init__(self, *args, **kwargs):
+        super(ReportConfigurationSerializer, self).__init__(*args, **kwargs)
+
+        request = self.context.get("request")
+        if request and hasattr(request, "GET"):
+            exclude_fields = request.GET.get("__exclude", None)
+            if exclude_fields:
+                exclude_fields = exclude_fields.split(',')
+
+        if exclude_fields:
+            for field in exclude_fields:
+                self.fields.pop(field)
+
+    def handle_repository(self, attrs):
+        '''
+        When creating or updating a ReportConfiguration instance, we need to unflatten
+        the foreign relationship to the repository and validate that it exists.
+        '''
+        repository = attrs.pop('repository')['name']
+
+        # Check the the specified repository exists
+        repository = Repository.objects.filter(name=repository)
+        if not repository:
+            raise InvalidArgumentException("Invalid repository specified")
+
+        # Also check that there is not more than one repository with the
+        # specified name. If there is, then this is a configuration issue,
+        # but instead of silently using the wrong repository, let's error out.
+        if len(repository) > 1:
+            raise InvalidArgumentException("Ambiguous repository specified")
+
+        attrs['repository'] = repository[0]
+
+    def update(self, instance, attrs):
+        self.handle_repository(attrs)
+
+        # Update our ReportConfiguration instance
+        return super(ReportConfigurationSerializer, self).update(instance, attrs)
+
+    def create(self, attrs):
+        self.handle_repository(attrs)
+
+        # Create our ReportConfiguration instance
+        return super(ReportConfigurationSerializer, self).create(attrs)
