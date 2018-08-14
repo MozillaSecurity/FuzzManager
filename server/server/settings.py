@@ -45,6 +45,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'livesync',
     'django.contrib.staticfiles',
     'ec2spotmanager',
     'crashmanager',
@@ -75,6 +76,7 @@ MIDDLEWARE_CLASSES = (
     'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'server.settings.ExceptionLoggingMiddleware',
+    'livesync.core.middleware.DjangoLiveSyncMiddleware',
 )
 
 

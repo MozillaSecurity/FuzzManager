@@ -1,4 +1,5 @@
 from django.core.exceptions import SuspiciousOperation
+from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,9 +13,9 @@ from wsgiref.util import FileWrapper
 
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
-from .models import Collection, Repository
-from .serializers import CollectionSerializer, RepositorySerializer
-from .tasks import aggregate_coverage_data
+from .models import Collection, Repository, ReportConfiguration, ReportSummary
+from .serializers import CollectionSerializer, RepositorySerializer, ReportConfigurationSerializer
+from .tasks import aggregate_coverage_data, calculate_report_summary
 from crashmanager.models import Tool
 
 from .SourceCodeProvider import SourceCodeProvider
@@ -29,6 +30,10 @@ def repositories(request):
     return render(request, 'repositories/index.html', {'repositories': repositories})
 
 
+def reportconfigurations(request):
+    return render(request, 'reportconfigurations/index.html', {})
+
+
 def collections(request):
     return render(request, 'collections/index.html', {})
 
@@ -39,6 +44,10 @@ def collections_browse(request, collectionid):
 
 def collections_diff(request):
     return render(request, 'collections/browse.html', {'diff_api': True})
+
+
+def collections_reportsummary(request, collectionid):
+    return render(request, 'reportconfigurations/summary.html', {'collectionid': collectionid})
 
 
 def collections_download(request, collectionid):
@@ -67,7 +76,11 @@ def collections_browse_api(request, collectionid, path):
             status=204
         )
 
-    coverage = collection.subset(path)
+    report_configuration = None
+    if "rc" in request.GET:
+        report_configuration = get_object_or_404(ReportConfiguration, pk=request.GET["rc"])
+
+    coverage = collection.subset(path, report_configuration)
 
     if not coverage:
         raise Http404("Path not found.")
@@ -312,6 +325,44 @@ def collections_patch_api(request, collectionid, patch_revision):
     return HttpResponse(json.dumps(results), content_type='application/json')
 
 
+def collections_reportsummary_api(request, collectionid):
+    collection = get_object_or_404(Collection, pk=collectionid)
+
+    if not collection.coverage:
+        return HttpResponse(
+            content=json.dumps({"error": "Specified collection is not ready yet."}),
+            content_type='application/json',
+            status=400
+        )
+
+    task_scheduled = False
+
+    if not hasattr(collection, 'reportsummary'):
+        summary = ReportSummary(collection=collection, cached_result=None)
+        summary.save()
+        calculate_report_summary.delay(summary.pk)
+        task_scheduled = True
+    else:
+        summary = collection.reportsummary
+
+    if request.method == 'POST':
+        # This is a refresh request
+        if not task_scheduled:
+            summary.cached_result = None
+            summary.save()
+            calculate_report_summary.delay(summary.pk)
+        return HttpResponse(content=json.dumps({"msg": "Success"}))
+
+    if not summary.cached_result:
+        return HttpResponse(
+            content=json.dumps({"message": "The requested collection is currently being created."}),
+            content_type='application/json',
+            status=204
+        )
+
+    return HttpResponse(summary.cached_result, content_type='application/json')
+
+
 def repositories_search_api(request):
     results = []
 
@@ -508,3 +559,40 @@ class RepositoryViewSet(mixins.ListModelMixin,
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
     filter_backends = [JsonQueryFilterBackend]
+
+
+class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts broad filtering by q parameter to search multiple fields
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        # Return early on empty queryset
+        if not queryset:
+            return queryset
+
+        q = request.query_params.get("q", None)
+        if q:
+            queryset = queryset.filter(
+                Q(description__contains=q) |
+                Q(repository__name__contains=q) |
+                Q(directives__contains=q)
+            )
+
+        return queryset.order_by('-pk')
+
+
+class ReportConfigurationViewSet(mixins.CreateModelMixin,
+                                 mixins.UpdateModelMixin,
+                                 mixins.ListModelMixin,
+                                 mixins.RetrieveModelMixin,
+                                 viewsets.GenericViewSet):
+    """
+    API endpoint that allows adding/updating/viewing Report Configurations
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = ReportConfiguration.objects.all()
+    serializer_class = ReportConfigurationSerializer
+    filter_backends = [JsonQueryFilterBackend, SimpleQueryFilterBackend, ReportConfigurationFilterBackend]

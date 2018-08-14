@@ -6,6 +6,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'collections', views.CollectionViewSet, base_name='collections')
 router.register(r'repositories', views.RepositoryViewSet, base_name='repositories')
+router.register(r'reportconfigurations', views.ReportConfigurationViewSet, base_name='reportconfigurations')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
@@ -24,6 +25,18 @@ urlpatterns = [
     url(r'^collections/(?P<collectionid>\d+)/browse/$', views.collections_browse, name="collections_browse"),
     url(r'^collections/(?P<collectionid>\d+)/browse/api/(?P<path>.*)', views.collections_browse_api,
         name="collections_browse_api"),
+    url(r'^collections/(?P<collectionid>\d+)/summary/$', views.collections_reportsummary,
+        name="collections_reportsummary"),
+    url(r'^collections/(?P<collectionid>\d+)/summary/api/', views.collections_reportsummary_api,
+        name="collections_reportsummary_api"),
+    url(r'^reportconfigurations/$', views.reportconfigurations, name="reportconfigurations"),
+    url(r'^reportconfigurations/api/$', views.ReportConfigurationViewSet.as_view({'get': 'list'}),
+        name="reportconfigurations_list_api"),
+    url(r'^reportconfigurations/api/create/$', views.ReportConfigurationViewSet.as_view({'post': 'create'}),
+        name="reportconfigurations_create_api"),
+    url(r'^reportconfigurations/api/update/(?P<pk>\d+)/$',
+        views.ReportConfigurationViewSet.as_view({'post': 'partial_update'}),
+        name="reportconfigurations_update_api"),
     url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),
     url(r'^rest/', include(router.urls)),
 ]

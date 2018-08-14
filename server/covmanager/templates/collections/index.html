@@ -54,6 +54,7 @@
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
       <button @click="aggregate()" class="btn btn-default">Aggregate</button>
       <button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>
+      <button @click="summary()" class="btn btn-default">Report Summary</button>
     </div>
     </div>
 
@@ -317,6 +318,20 @@ let covmanager = new Vue({
           })
         })
       }
+    },
+    summary: function() {
+      let target_collection = null
+
+      if (this.selected_collections.length == 1) {
+        target_collection = this.selected_collections[0]
+      } else if (this.collections.length == 1) {
+        target_collection = this.collections[0].pk
+      } else {
+        sweetAlert('Error', "Function requires exactly one collection to be selected.", 'error')
+        return
+      }
+
+      window.open(`${target_collection}/summary/`, '_blank').focus()
     },
     collection_click_handler: function(id) {
       var self = this
