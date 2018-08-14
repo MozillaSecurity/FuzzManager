@@ -1,3 +1,4 @@
+# coding: utf-8
 '''
 Created on Oct 9, 2014
 
@@ -695,6 +696,14 @@ class SignatureGenerationTSanRaceTest(unittest.TestCase):
                 if symptom.output.value == stringMatchVal:
                     found = True
             self.assertTrue(found, msg="Couldn't find OutputSymptom with value '%s'" % stringMatchVal)
+
+
+class SignatureMatchWithUnicode(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration('test', 'x86-64', 'linux')
+        crashInfo = CrashInfo.fromRawCrashData(["(Â«f => (generator.throw(f))Â», Â«undefinedÂ»)"], [], config)
+        testSignature = CrashSignature('{"symptoms": [{"src": "stdout", "type": "output", "value": "x"}]}')
+        self.assertFalse(testSignature.matches(crashInfo))
 
 
 if __name__ == "__main__":
