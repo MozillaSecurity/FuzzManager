@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 Prices -- Various methods for accessing price history on EC2
@@ -15,7 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import datetime
 
-import boto.ec2
+import botocore
+import boto3
 from django.utils import timezone
 
 
@@ -26,55 +26,63 @@ zone_blacklist = ["us-east-1a", "us-east-1f"]
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
-def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_type):
+def get_spot_price_per_region(region_name, aws_key_id, aws_secret_key, instance_types=None):
     '''Gets spot prices of the specified region and instance type'''
+    prices = {}  # {instance-type: region: {az: [prices]}}}
+
     now = timezone.now()
-    start = now - datetime.timedelta(hours=6)
-    region = boto.ec2.connect_to_region(region_name,
-                                        aws_access_key_id=aws_key_id,
-                                        aws_secret_access_key=aws_secret_key
-                                        )
 
-    if not region:
-        raise RuntimeError("Invalid region: %s" % region_name)
+    # TODO: Make configurable
+    spot_history_args = {
+        'Filters': [{'Name': 'product-description', 'Values': ['Linux/UNIX']}],
+        'StartTime': now - datetime.timedelta(hours=6)
+    }
+    if instance_types is not None:
+        spot_history_args['InstanceTypes'] = instance_types
 
-    r = region.get_spot_price_history(start_time=start.isoformat(),
-                                      instance_type=instance_type,
-                                      product_description="Linux/UNIX"
-                                      )  # TODO: Make configurable
-    return r
+    cli = boto3.client('ec2', region_name=region_name, aws_access_key_id=aws_key_id,
+                       aws_secret_access_key=aws_secret_key)
+    paginator = cli.get_paginator('describe_spot_price_history')
+    try:
+        for result in paginator.paginate(**spot_history_args):
+            for price in result['SpotPriceHistory']:
+                if price['AvailabilityZone'] in zone_blacklist:
+                    continue
+                (prices
+                 .setdefault(price['InstanceType'], {})
+                 .setdefault(region_name, {})
+                 .setdefault(price['AvailabilityZone'], [])
+                 .append(float(price['SpotPrice'])))
+    except botocore.exceptions.EndpointConnectionError as exc:
+        raise RuntimeError("Boto connection error: %s" % (exc,))
+
+    return prices
 
 
-def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_type, use_multiprocess=False):
+def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_types=None, use_multiprocess=False):
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
 
-    results = []
-    for region in regions:
+    try:
+        results = []
+        for region in regions:
+            if use_multiprocess:
+                results.append(pool.apply_async(get_spot_price_per_region, [region, aws_key_id, aws_secret_key, instance_types]))
+            else:
+                results.append(get_spot_price_per_region(region, aws_key_id, aws_secret_key, instance_types))
+
+        prices = {}
+        for result in results:
+            if use_multiprocess:
+                result = result.get()
+            for instance_type in result:
+                prices.setdefault(instance_type, {})
+                prices[instance_type].update(result[instance_type])
+    finally:
         if use_multiprocess:
-            f = pool.apply_async(get_spot_price_per_region, [region, aws_key_id, aws_secret_key, instance_type])
-        else:
-            f = get_spot_price_per_region(region, aws_key_id, aws_secret_key, instance_type)
-        results.append(f)
-
-    prices = {}
-    for result in results:
-        if use_multiprocess:
-            result = result.get()
-        for entry in result:
-            if entry.region.name not in prices:
-                prices[entry.region.name] = {}
-
-            zone = entry.availability_zone
-
-            if zone in zone_blacklist:
-                continue
-
-            if zone not in prices[entry.region.name]:
-                prices[entry.region.name][zone] = []
-
-            prices[entry.region.name][zone].append(entry.price)
+            pool.close()
+            pool.join()
 
     return prices
 

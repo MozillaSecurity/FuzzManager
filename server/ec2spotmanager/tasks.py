@@ -1,3 +1,4 @@
+import json
 import logging
 import socket
 import ssl
@@ -12,7 +13,7 @@ from laniakea.core.manager import Laniakea
 from laniakea import LaniakeaCommandLine
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
-from .common.prices import get_spot_prices, get_price_median
+from .common.prices import get_price_median
 
 
 logger = logging.getLogger("ec2spotmanager")
@@ -127,12 +128,6 @@ def check_instance_pool(pool_id):
 
 
 def _get_best_region_zone(config):
-    prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
-                                             settings.AWS_ACCESS_KEY_ID,
-                                             settings.AWS_SECRET_ACCESS_KEY,
-                                             instance_type)
-              for instance_type in config.ec2_instance_types}
-
     cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
     # Calculate median values for all availability zones and best zone/price
@@ -141,9 +136,17 @@ def _get_best_region_zone(config):
     best_type = None
     best_median = None
     rejected_prices = {}
-    for instance_type in prices:
-        for region in prices[instance_type]:
-            for zone in prices[instance_type][region]:
+    allowed_regions = set(config.ec2_allowed_regions)  # cache this as a set to make membership test faster in the loop
+    for instance_type in config.ec2_instance_types:
+        prices = cache.get("ec2spot:price:" + instance_type)
+        if prices is None:
+            logger.warning("No price data for %s?", instance_type)
+            continue
+        prices = json.loads(prices)
+        for region in prices:
+            if region not in allowed_regions:
+                continue
+            for zone in prices[region]:
                 # look for blacklisted zone/type
                 # zone+type is blacklisted because a previous spot request timed-out
                 if cache.get("ec2spot:blacklist:%s:%s" % (zone, instance_type)) is not None:
@@ -153,12 +156,12 @@ def _get_best_region_zone(config):
                 # Do not consider a zone/region combination that has a current
                 # price higher than the maximum price we are willing to pay,
                 # even if the median would end up being lower than our maximum.
-                if prices[instance_type][region][zone][0] > config.ec2_max_price:
+                if prices[region][zone][0] > config.ec2_max_price:
                     rejected_prices[zone] = min(rejected_prices.get(zone, 9999),
-                                                prices[instance_type][region][zone][0])
+                                                prices[region][zone][0])
                     continue
 
-                median = get_price_median(prices[instance_type][region][zone])
+                median = get_price_median(prices[region][zone])
                 if best_median is None or best_median > median:
                     best_median = median
                     best_zone = zone

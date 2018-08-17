@@ -1,3 +1,4 @@
+import json
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.http.response import Http404  # noqa
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import fasteners
+import redis
 from operator import attrgetter
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
@@ -15,7 +17,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ec2spotmanager.common.prices import get_spot_prices
 from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance, \
     INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
 from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
@@ -113,23 +114,27 @@ def viewPool(request, poolid):
 
 @deny_restricted_users
 def viewPoolPrices(request, poolid):
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
-    prices = {instance_type: get_spot_prices(config.ec2_allowed_regions,
-                                             getattr(settings, 'AWS_ACCESS_KEY_ID', None),
-                                             getattr(settings, 'AWS_SECRET_ACCESS_KEY', None),
-                                             instance_type)
-              for instance_type in config.ec2_instance_types}
 
+    allowed_regions = set(config.ec2_allowed_regions)
     zones = set()
     latest_price_by_zone = {}
 
-    for instance_type in prices:
-        for region in prices[instance_type]:
-            for zone in prices[instance_type][region]:
+    for instance_type in config.ec2_instance_types:
+        prices = cache.get('ec2spot:price:' + instance_type)
+        if prices is None:
+            continue
+        prices = json.loads(prices)
+        for region in prices:
+            if region not in allowed_regions:
+                continue
+            for zone in prices[region]:
                 zones.add(zone)
                 latest_price_by_zone[zone] = min(latest_price_by_zone.get(zone, 9999),
-                                                 prices[instance_type][region][zone][0])
+                                                 prices[region][zone][0])
 
     prices = []
     for zone in sorted(zones):

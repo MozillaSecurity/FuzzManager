@@ -1,9 +1,13 @@
 import datetime
+import json
 
+import redis
+from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
 
 from celeryconf import app
+
 
 STATS_DELTA_SECS = 60 * 15  # 30 minutes
 STATS_TOTAL_DETAILED = 24  # How many hours the detailed statistics should include
@@ -99,3 +103,32 @@ def check_instance_pools():
     from .tasks import check_instance_pool
     for instance_pool in InstancePool.objects.all():
         check_instance_pool.delay(instance_pool.id)
+
+
+@app.task
+def update_spot_prices():
+    """Periodically refresh spot price history and store it in redis to be consumed when spot instances are created.
+
+    Prices are stored in redis, with keys like:
+        'ec2spot:price:{instance-type}'
+    and values as JSON objects {region: {az: [prices]}} like:
+        '{"us-east-1": {"us-east-1a": [0.08000, ...]}}'
+    """
+    from .common.ec2 import REGIONS
+    from .common.prices import get_spot_prices
+
+    now = timezone.now()
+    expires = now + datetime.timedelta(hours=3)  # how long this data is valid (if not replaced)
+
+    prices = get_spot_prices(REGIONS,
+                             getattr(settings, 'AWS_ACCESS_KEY_ID', None),
+                             getattr(settings, 'AWS_SECRET_ACCESS_KEY', None))
+
+    # use pipeline() so everything is in 1 transaction
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB).pipeline()
+    for instance_type in prices:
+        key = 'ec2spot:price:' + instance_type
+        cache.delete(key)
+        cache.set(key, json.dumps(prices[instance_type]))
+        cache.expireat(key, expires)
+    cache.execute()  # commit to redis
