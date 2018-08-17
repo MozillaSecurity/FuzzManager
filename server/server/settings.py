@@ -283,7 +283,9 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 
 # Redis configuration
-# USE_REDIS = True
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
 
 # Celery configuration
 # USE_CELERY = True

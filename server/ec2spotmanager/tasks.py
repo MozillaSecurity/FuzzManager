@@ -5,6 +5,7 @@ import traceback
 import boto.ec2
 import boto.exception
 import fasteners
+import redis
 from django.conf import settings
 from django.utils import timezone
 from laniakea.core.manager import Laniakea
@@ -12,11 +13,6 @@ from laniakea import LaniakeaCommandLine
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_spot_prices, get_price_median
-
-
-USE_REDIS = getattr(settings, 'USE_REDIS', False)
-if USE_REDIS:
-    import redis
 
 
 logger = logging.getLogger("ec2spotmanager")
@@ -137,9 +133,7 @@ def _get_best_region_zone(config):
                                              instance_type)
               for instance_type in config.ec2_instance_types}
 
-    if USE_REDIS:
-        # look for blacklisted zone/type
-        cache = redis.StrictRedis()
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
     # Calculate median values for all availability zones and best zone/price
     best_zone = None
@@ -150,8 +144,9 @@ def _get_best_region_zone(config):
     for instance_type in prices:
         for region in prices[instance_type]:
             for zone in prices[instance_type][region]:
+                # look for blacklisted zone/type
                 # zone+type is blacklisted because a previous spot request timed-out
-                if USE_REDIS and cache.get("%s/%s" % (zone, instance_type)) is not None:
+                if cache.get("ec2spot:blacklist:%s:%s" % (zone, instance_type)) is not None:
                     logger.debug("%s/%s is blacklisted", zone, instance_type)
                     continue
 
@@ -199,6 +194,9 @@ def _create_laniakea_images(config):
 def _start_pool_instances(pool, config, count=1):
     """ Start an instance with the given configuration """
     from .models import Instance, INSTANCE_STATE, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+
     images = _create_laniakea_images(config)
 
     # Figure out where to put our instances
@@ -269,17 +267,14 @@ def _start_pool_instances(pool, config, count=1):
         try:
             cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-            # resolve AMI manually for caching
+            # resolve AMI manually so we can cache it (marketplace lookups can be slow)
             ami = None
-            if USE_REDIS:
-                # look for blacklisted zone/type
-                cache = redis.StrictRedis()
-                ami_cache_key = "%s/%s" % (region, images["default"]["image_name"])
-                ami = cache.get(ami_cache_key)
+            # look for cached AMI by name in this region
+            ami_cache_key = "ec2spot:ami:%s:%s" % (region, images["default"]["image_name"])
+            ami = cache.get(ami_cache_key)
             if ami is None:
                 ami = cluster.resolve_image_name(images["default"]["image_name"])
-                if USE_REDIS:
-                    cache.set(ami_cache_key, ami, ex=24 * 3600)
+                cache.set(ami_cache_key, ami, ex=24 * 3600)
             images['default']['image_id'] = ami
             images['default'].pop('image_name')
             cluster.images = images
@@ -422,6 +417,9 @@ def _get_instances_by_ids(instances):
 def _update_pool_instances(pool, config):
     """Check the state of the instances in a pool and update it in the database"""
     from .models import Instance, INSTANCE_STATE, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+
     instances = Instance.objects.filter(pool=pool)
     instance_ids_by_region = _get_instance_ids_by_region(instances)
     instances_by_ids = _get_instances_by_ids(instances)
@@ -498,11 +496,9 @@ def _update_pool_instances(pool, config):
                             # request was not fulfilled for some reason.. blacklist this type/zone for a while
                             logger.info("[Pool %d] spot request %s is %s", pool.id, req_id, result.state)
                             inst = instances_by_ids[req_id]
-                            if USE_REDIS:
-                                cache = redis.StrictRedis()
-                                key = "%s/%s" % (inst.ec2_zone, result.launch_specification.instance_type)
-                                cache.set(key, "", ex=12 * 3600)
-                                logger.warning("Blacklisted %s for 12h", key)
+                            key = "ec2spot:blacklist:%s:%s" % (inst.ec2_zone, result.launch_specification.instance_type)
+                            cache.set(key, "", ex=12 * 3600)
+                            logger.warning("Blacklisted %s for 12h", key)
                             inst.delete()
 
                         elif result.state in {"open", "active"}:

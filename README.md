@@ -68,7 +68,7 @@ requires the full repository to be checked out, not just the server directory.
 
 Server dependencies are listed in `server/requirements.txt`. You can use pip to install
 these dependencies using `pip install -r server/requirements.txt` and/or you can
-use your distribution's package management to fulfill them.
+use your distribution's package management to fulfill them. A redis server is also required.
 
 You can set the server up just like any other Django project. The Django
 configuration file is found at `server/server/settings.py`. The default will
