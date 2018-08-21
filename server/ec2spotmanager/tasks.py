@@ -9,8 +9,8 @@ import fasteners
 import redis
 from django.conf import settings
 from django.utils import timezone
-from laniakea.core.manager import Laniakea
-from laniakea import LaniakeaCommandLine
+from laniakea.core.providers.ec2 import EC2Manager
+from laniakea.core.userdata import UserData
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_price_median
@@ -241,14 +241,14 @@ def _start_pool_instances(pool, config, count=1):
                 pool.id, instance_type, region, zone)
 
     try:
-        userdata = LaniakeaCommandLine.handle_import_tags(config.ec2_userdata.decode('utf-8'))
+        userdata = config.ec2_userdata.decode('utf-8')
 
         # Copy the userdata_macros and populate with internal variables
         ec2_userdata_macros = dict(config.ec2_userdata_macros)
         ec2_userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
         ec2_userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
 
-        userdata = LaniakeaCommandLine.handle_tags(userdata, ec2_userdata_macros)
+        userdata = UserData.handle_tags(userdata, ec2_userdata_macros)
         if not userdata:
             logger.error("[Pool %d] Failed to compile userdata.", pool.id)
 
@@ -266,7 +266,7 @@ def _start_pool_instances(pool, config, count=1):
         images["default"]['count'] = count
         images["default"]['instance_type'] = instance_type
 
-        cluster = Laniakea(None)
+        cluster = EC2Manager(None)
         try:
             cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
@@ -357,7 +357,7 @@ def _terminate_pool_instances(pool, instances, config, terminateByPool=False):
     instance_ids_by_region = _get_instance_ids_by_region(instances)
 
     for region in instance_ids_by_region:
-        cluster = Laniakea(None)
+        cluster = EC2Manager(None)
         try:
             cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
@@ -441,7 +441,7 @@ def _update_pool_instances(pool, config):
     config.ec2_tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
 
     for region in instance_ids_by_region:
-        cluster = Laniakea(None)
+        cluster = EC2Manager(None)
         try:
             cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
