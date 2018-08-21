@@ -11,7 +11,7 @@
 			<strong>Instance Pool Name: </strong>{{ pool.config.name|escape }}
 		</div>
 		<div class="field">
-			<strong>{{ instanceCount }} instances will be restarted.</strong>
+			<strong>{{ pool.instance_running_count }} instances will be restarted.</strong>
 		</div>
 		<input type="submit" value="Force Cycle" />
 		</form>

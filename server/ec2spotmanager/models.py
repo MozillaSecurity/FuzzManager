@@ -241,6 +241,7 @@ class Instance(models.Model):
     ec2_instance_id = models.CharField(max_length=255, blank=True, null=True)
     ec2_region = models.CharField(max_length=255)
     ec2_zone = models.CharField(max_length=255)
+    size = models.IntegerField(default=1)
 
 
 class InstanceStatusEntry(models.Model):

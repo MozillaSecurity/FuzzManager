@@ -13,6 +13,7 @@ from laniakea.core.providers.ec2 import EC2Manager
 from laniakea.core.userdata import UserData
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
+from .common.ec2 import CORES_PER_INSTANCE
 from .common.prices import get_price_median
 
 
@@ -52,7 +53,7 @@ def check_instance_pool(pool_id):
 
         config = instance_pool.config.flatten()
 
-        instances_missing = config.size
+        instance_cores_missing = config.size
         running_instances = []
 
         _update_pool_instances(instance_pool, config)
@@ -69,7 +70,7 @@ def check_instance_pool(pool_id):
 
             if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
                                         INSTANCE_STATE['requested']]:
-                instances_missing -= 1
+                instance_cores_missing -= instance.size
                 running_instances.append(instance)
             elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
                 # The instance is no longer running, delete it from our database
@@ -88,7 +89,7 @@ def check_instance_pool(pool_id):
                 # and hope that with the next update iteration, the problem will be gone.
                 instance.status_code = 0
                 instance.save()
-                instances_missing -= 1
+                instance_cores_missing -= instance.size
                 running_instances.append(instance)
 
         # Continue working with the instances we have running
@@ -109,17 +110,28 @@ def check_instance_pool(pool_id):
 
             logger.info("[Pool %d] Termination complete.", instance_pool.id)
 
-        if instances_missing > 0:
-            logger.info("[Pool %d] Needs %s more instances, starting...",
-                        instance_pool.id, instances_missing)
-            _start_pool_instances(instance_pool, config, count=instances_missing)
-        elif instances_missing < 0:
+        if instance_cores_missing > 0:
+            logger.info("[Pool %d] Needs %s more instance cores, starting...",
+                        instance_pool.id, instance_cores_missing)
+            _start_pool_instances(instance_pool, config, count=instance_cores_missing)
+        elif instance_cores_missing < 0:
             # Select the oldest instances we have running and terminate
             # them so we meet the size limitation again.
-            logger.info("[Pool %d] Has %s instances over limit, terminating...",
-                        instance_pool.id, -instances_missing)
-            instances = Instance.objects.filter(pool=instance_pool).order_by('created')[:-instances_missing]
-            _terminate_pool_instances(instance_pool, instances, config)
+            instances = []
+            for instance in Instance.objects.filter(pool=instance_pool).order_by('created'):
+                if instance_cores_missing + instance.size > 0:
+                    # If this instance would leave us short of cores, let it run. Otherwise
+                    # the pool size may oscillate.
+                    continue
+                instances.append(instance)
+                instance_cores_missing += instance.size
+                if instance_cores_missing == 0:
+                    break
+            if instances:
+                instance_cores_missing = sum(instance.count for instance in instances)
+                logger.info("[Pool %d] Has %d instance cores over limit in %d instances, terminating...",
+                            instance_pool.id, instance_cores_missing, len(instances))
+                _terminate_pool_instances(instance_pool, instances, config)
         else:
             logger.debug("[Pool %d] Size is ok.", instance_pool.id)
 
@@ -138,30 +150,33 @@ def _get_best_region_zone(config):
     rejected_prices = {}
     allowed_regions = set(config.ec2_allowed_regions)  # cache this as a set to make membership test faster in the loop
     for instance_type in config.ec2_instance_types:
-        prices = cache.get("ec2spot:price:" + instance_type)
-        if prices is None:
+        data = cache.get("ec2spot:price:" + instance_type)
+        if data is None:
             logger.warning("No price data for %s?", instance_type)
             continue
-        prices = json.loads(prices)
-        for region in prices:
+        data = json.loads(data)
+        for region in data:
             if region not in allowed_regions:
                 continue
-            for zone in prices[region]:
+            for zone in data[region]:
                 # look for blacklisted zone/type
                 # zone+type is blacklisted because a previous spot request timed-out
                 if cache.get("ec2spot:blacklist:%s:%s" % (zone, instance_type)) is not None:
                     logger.debug("%s/%s is blacklisted", zone, instance_type)
                     continue
 
+                # calculate price per core
+                prices = [price / CORES_PER_INSTANCE[instance_type] for price in data[region][zone]]
+
                 # Do not consider a zone/region combination that has a current
                 # price higher than the maximum price we are willing to pay,
                 # even if the median would end up being lower than our maximum.
-                if prices[region][zone][0] > config.ec2_max_price:
+                if prices[0] > config.ec2_max_price:
                     rejected_prices[zone] = min(rejected_prices.get(zone, 9999),
-                                                prices[region][zone][0])
+                                                prices[0])
                     continue
 
-                median = get_price_median(prices[region][zone])
+                median = get_price_median(prices)
                 if best_median is None or best_median > median:
                     best_median = median
                     best_zone = zone
@@ -202,6 +217,23 @@ def _start_pool_instances(pool, config, count=1):
 
     images = _create_laniakea_images(config)
 
+    # Filter machine sizes that would put us over the number of cores required. If all do, then choose the smallest.
+    smallest = []
+    smallest_size = None
+    acceptable_types = []
+    for instance_type in list(config.ec2_instance_types):
+        instance_size = CORES_PER_INSTANCE[instance_type]
+        if instance_size <= count:
+            acceptable_types.append(instance_type)
+        # keep track of all instance types with the least number of cores for this config
+        if not smallest or instance_size < smallest_size:
+            smallest_size = instance_size
+            smallest = [instance_type]
+        elif instance_size == smallest_size:
+            smallest.append(instance_type)
+    # replace the allowed instance types with those that are <= count, or the smallest if none are
+    config.ec2_instance_types = acceptable_types or smallest
+
     # Figure out where to put our instances
     try:
         (region, zone, instance_type, rejected) = _get_best_region_zone(config)
@@ -218,6 +250,22 @@ def _start_pool_instances(pool, config, count=1):
         entry.msg = "Configuration error: %s" % traceback.format_exc()
         entry.save()
         return
+
+    # convert count from cores to instances
+    #
+    # if we have chosen the smallest possible instance that will put us over the requested core count,
+    #   we will only be spawning 1 instance
+    #
+    # otherwise there may be a remainder if this is not an even division. let that be handled in the next tick
+    #   so that the next smallest instance will be considered
+    #
+    # eg. need 12 cores, and allow instances sizes of 4 and 8 cores,
+    #     8-core instance costs $0.24 ($0.03/core)
+    #     4-core instance costs $0.16 ($0.04/core)
+    #
+    #     -> we will only request 1x 8-core instance this time around, leaving the required count at 4
+    #     -> next time around, we will request 1x 4-core instance
+    count = max(1, count // CORES_PER_INSTANCE[instance_type])
 
     priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 
@@ -306,8 +354,9 @@ def _start_pool_instances(pool, config, count=1):
             return
 
         try:
-            logger.info("[Pool %d] Creating %d instances...", pool.id, count)
-            for ec2_request in cluster.create_spot_requests(config.ec2_max_price,
+            logger.info("[Pool %d] Creating %dx %s instances... (%d cores total)", pool.id, count, instance_type,
+                        count * CORES_PER_INSTANCE[instance_type])
+            for ec2_request in cluster.create_spot_requests(config.ec2_max_price * CORES_PER_INSTANCE[instance_type],
                                                             delete_on_termination=True,
                                                             timeout=10 * 60):
                 instance = Instance()
@@ -316,6 +365,7 @@ def _start_pool_instances(pool, config, count=1):
                 instance.ec2_zone = zone
                 instance.status_code = INSTANCE_STATE["requested"]
                 instance.pool = pool
+                instance.size = CORES_PER_INSTANCE[instance_type]
                 instance.save()
 
         except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:

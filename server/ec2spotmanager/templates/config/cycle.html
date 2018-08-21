@@ -11,7 +11,7 @@
 		{% for pool in pools %}
 		<input type="hidden" name="poolids" value="{{ pool.pk }}" />
 		<div class="field">
-			<strong>Instance Pool Name: </strong>{{ pool.config.name|escape }} (<strong>{{ pool.size }} instances affected.</strong>)
+			<strong>Instance Pool Name: </strong>{{ pool.config.name|escape }} (<strong>{{ pool.instance_running_count }} instances affected.</strong>)
 		</div>
 		{% endfor %}
 

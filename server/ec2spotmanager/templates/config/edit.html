@@ -45,7 +45,7 @@
       <input id="id_name" class="form-control" name="name" type="text" value="{{ config.name|default:"" }}">
       <br/>
 
-      <label for="id_size">Size</label><br/>
+      <label for="id_size">Size (cores)</label><br/>
       <input id="id_size" class="form-control" name="size" type="text" value="{{ config.size|default:"" }}">
       <br/>
 
@@ -96,7 +96,7 @@
              value="{{ config.ec2_allowed_regions_list|listcsv }}">
       <br/>
 
-      <label for="id_ec2_max_price">EC2 Maximum Price</label><br/>
+      <label for="id_ec2_max_price">EC2 Maximum Price (per core)</label><br/>
       <input id="id_ec2_max_price" class="form-control" name="ec2_max_price" type="text"
              value="{{ config.ec2_max_price|default:"" }}">
       <br/>

@@ -17,10 +17,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ec2spotmanager.models import InstancePool, PoolConfiguration, Instance, \
+from .models import InstancePool, PoolConfiguration, Instance, \
     INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
-from ec2spotmanager.models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
-from ec2spotmanager.serializers import MachineStatusSerializer
+from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
+from .serializers import MachineStatusSerializer
+from .common.ec2 import CORES_PER_INSTANCE
 
 from server.views import deny_restricted_users
 
@@ -61,10 +62,11 @@ def pools(request):
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
 
     for pool in entries:
-        pool.instance_requested_count = Instance.objects.filter(
-            pool=pool, status_code=INSTANCE_STATE['requested']).count()
-        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
-        if pool.size == pool.instance_running_count:
+        pool.instance_requested_count = sum(instance.size for instance in Instance.objects.filter(
+            pool=pool, status_code=INSTANCE_STATE['requested']))
+        pool.instance_running_count = sum(instance.size for instance in Instance.objects.filter(
+            pool=pool, status_code=INSTANCE_STATE['running']))
+        if pool.size <= pool.instance_running_count:
             pool.size_label = 'success'
         elif pool.size == 0:
             pool.size_label = 'danger'
@@ -134,7 +136,7 @@ def viewPoolPrices(request, poolid):
             for zone in prices[region]:
                 zones.add(zone)
                 latest_price_by_zone[zone] = min(latest_price_by_zone.get(zone, 9999),
-                                                 prices[region][zone][0])
+                                                 prices[region][zone][0] / CORES_PER_INSTANCE[instance_type])
 
     prices = []
     for zone in sorted(zones):
@@ -146,7 +148,6 @@ def viewPoolPrices(request, poolid):
 @deny_restricted_users
 def disablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
-    instances = Instance.objects.filter(pool=poolid)
 
     if not pool.isEnabled:
         return render(request, 'pools/error.html', {'error_message': 'That pool is already disabled.'})
@@ -156,7 +157,8 @@ def disablePool(request, poolid):
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
-        return render(request, 'pools/disable.html', {'pool': pool, 'instanceCount': len(instances)})
+        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
+        return render(request, 'pools/disable.html', {'pool': pool})
     else:
         raise SuspiciousOperation
 
@@ -177,8 +179,6 @@ def enablePool(request, poolid):
     if missing:
         return render(request, 'pools/error.html', {'error_message': 'Pool is missing configuration parameters.'})
 
-    size = pool.config.flatten().size
-
     if pool.isEnabled:
         return render(request, 'pools/error.html', {'error_message': 'That pool is already enabled.'})
 
@@ -188,7 +188,7 @@ def enablePool(request, poolid):
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
-        return render(request, 'pools/enable.html', {'pool': pool, 'instanceCount': size})
+        return render(request, 'pools/enable.html', {'pool': pool, 'coreCount': pool.config.flatten().size})
     else:
         raise SuspiciousOperation
 
@@ -200,14 +200,13 @@ def forceCyclePool(request, poolid):
     if not pool.isEnabled:
         return render(request, 'pools/error.html', {'error_message': 'Pool is disabled.'})
 
-    size = pool.config.flatten().size
-
     if request.method == 'POST':
         pool.last_cycled = None
         pool.save()
         return redirect('ec2spotmanager:poolview', poolid=pool.pk)
     elif request.method == 'GET':
-        return render(request, 'pools/cycle.html', {'pool': pool, 'instanceCount': size})
+        pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']).count()
+        return render(request, 'pools/cycle.html', {'pool': pool})
     else:
         raise SuspiciousOperation
 
@@ -225,20 +224,21 @@ def forceCyclePoolsByConfig(request, configid):
 
         return config_pks
 
-    # Recursively enumerate all configurations directly or indirectly depending on this one
-    config_pks = recurse_get_dependent_configurations(config)
-
-    # Get all pools depending on our configurations
-    pools = InstancePool.objects.filter(config__pk__in=config_pks, isEnabled=True)
-
-    for pool in pools:
-        pool.size = pool.config.flatten().size
-
     if request.method == 'POST':
         pool_pks = request.POST.getlist('poolids')
         InstancePool.objects.filter(pk__in=pool_pks, isEnabled=True).update(last_cycled=None)
         return redirect('ec2spotmanager:pools')
     elif request.method == 'GET':
+        # Recursively enumerate all configurations directly or indirectly depending on this one
+        config_pks = recurse_get_dependent_configurations(config)
+
+        # Get all pools depending on our configurations
+        pools = InstancePool.objects.filter(config__pk__in=config_pks, isEnabled=True)
+
+        for pool in pools:
+            pool.instance_running_count = Instance.objects.filter(pool=pool, status_code=INSTANCE_STATE['running']) \
+                .count()
+
         return render(request, 'config/cycle.html', {'config': config, 'pools': pools})
     else:
         raise SuspiciousOperation
