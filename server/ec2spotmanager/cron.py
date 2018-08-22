@@ -114,13 +114,18 @@ def update_spot_prices():
     and values as JSON objects {region: {az: [prices]}} like:
         '{"us-east-1": {"us-east-1a": [0.08000, ...]}}'
     """
-    from .common.ec2 import REGIONS
     from .common.prices import get_spot_prices
+    from .models import PoolConfiguration
+
+    regions = set()
+    for cfg in PoolConfiguration.objects.all():
+        if cfg.ec2_allowed_regions:
+            regions |= set(json.loads(cfg.ec2_allowed_regions))
 
     now = timezone.now()
     expires = now + datetime.timedelta(hours=3)  # how long this data is valid (if not replaced)
 
-    prices = get_spot_prices(REGIONS,
+    prices = get_spot_prices(regions,
                              getattr(settings, 'AWS_ACCESS_KEY_ID', None),
                              getattr(settings, 'AWS_SECRET_ACCESS_KEY', None))
 
