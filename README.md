@@ -68,7 +68,9 @@ requires the full repository to be checked out, not just the server directory.
 
 Server dependencies are listed in `server/requirements.txt`. You can use pip to install
 these dependencies using `pip install -r server/requirements.txt` and/or you can
-use your distribution's package management to fulfill them. A redis server is also required.
+use your distribution's package management to fulfill them. A [Redis](https://redis.io/)
+server is also required for EC2SpotManager, and can be installed on a Debian-based Linux
+with: `sudo apt-get install redis-server`.
 
 You can set the server up just like any other Django project. The Django
 configuration file is found at `server/server/settings.py`. The default will
