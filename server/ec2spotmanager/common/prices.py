@@ -67,10 +67,11 @@ def get_spot_prices(regions, aws_key_id, aws_secret_key, instance_types=None, us
     try:
         results = []
         for region in regions:
+            args = [region, aws_key_id, aws_secret_key, instance_types]
             if use_multiprocess:
-                results.append(pool.apply_async(get_spot_price_per_region, [region, aws_key_id, aws_secret_key, instance_types]))
+                results.append(pool.apply_async(get_spot_price_per_region, args))
             else:
-                results.append(get_spot_price_per_region(region, aws_key_id, aws_secret_key, instance_types))
+                results.append(get_spot_price_per_region(*args))
 
         prices = {}
         for result in results:
