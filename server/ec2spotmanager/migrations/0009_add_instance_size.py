@@ -79,7 +79,8 @@ def instance_count_to_cores(apps, schema_editor):
 
     # now update the instance size to match configurations
     for instance in Instance.objects.all():
-        size = _calculate_core_count(instance_types_by_poolconfig(instance.pool.config), "[Instance %d]" % (instance.pk,))
+        size = _calculate_core_count(instance_types_by_poolconfig(instance.pool.config),
+                                     "[Instance %d]" % (instance.pk,))
         # It shouldn't normally be possible for the size to be None, since this instance was created from the assigned
         # PoolConfiguration. It could happen though, if the server is migrated immediately  after the user removed a
         # running instance type from the list.
@@ -102,5 +103,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RunPython(
             code=instance_count_to_cores,
+            reverse_code=migrations.RunPython.noop,  # only reversible to support testing
         ),
     ]
