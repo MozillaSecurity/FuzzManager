@@ -128,7 +128,7 @@ def check_instance_pool(pool_id):
                 if instance_cores_missing == 0:
                     break
             if instances:
-                instance_cores_missing = sum(instance.count for instance in instances)
+                instance_cores_missing = sum(instance.size for instance in instances)
                 logger.info("[Pool %d] Has %d instance cores over limit in %d instances, terminating...",
                             instance_pool.id, instance_cores_missing, len(instances))
                 _terminate_pool_instances(instance_pool, instances, config)
