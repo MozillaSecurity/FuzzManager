@@ -49,19 +49,19 @@ def instance_count_to_cores(apps, schema_editor):
         args = {field_name + "__isnull": False}
         for cfg in PoolConfiguration.objects.filter(**args):
             # for each price/count, which configs does it apply to
-            to_search = set(cfg.pk)
+            to_search = {cfg.pk}
             affected = set()
             while to_search:
                 cur = PoolConfiguration.objects.get(pk=to_search.pop())
                 affected.add(cur.pk)
-                for child in cur.poolconfiguration_set:
+                for child in cur.poolconfiguration_set.all():
                     if getattr(child, field_name) is None:
                         to_search.add(child.pk)
 
             # for each config that a price/count affects, which instance types could be scheduled
             instance_types = set()
-            for cfg in affected:
-                instance_types |= instance_types_by_poolconfig(cfg)
+            for affected_pk in affected:
+                instance_types |= instance_types_by_poolconfig(PoolConfiguration.objects.get(pk=affected_pk))
 
             size = _calculate_core_count(instance_types, "[PoolConfig %d, %s]" % (cfg.pk, field_name))
             if size is not None:
@@ -69,17 +69,17 @@ def instance_count_to_cores(apps, schema_editor):
 
     # update price
     for cfg, factor in _get_fields_to_update("ec2_max_price"):
-        cfg.ec2_max_price /= factor
+        cfg.ec2_max_price = float(cfg.ec2_max_price) / factor
         cfg.save()
 
     # update size
     for cfg, factor in _get_fields_to_update("size"):
-        cfg.ec2_size = int(math.ceil(cfg.ec2_size * factor))
+        cfg.size = int(math.ceil(cfg.size * factor))
         cfg.save()
 
     # now update the instance size to match configurations
     for instance in Instance.objects.all():
-        size = _calculate_core_count(instance_types_by_poolconfig(instance.config), "[Instance %d]" % (instance.pk,))
+        size = _calculate_core_count(instance_types_by_poolconfig(instance.pool.config), "[Instance %d]" % (instance.pk,))
         # It shouldn't normally be possible for the size to be None, since this instance was created from the assigned
         # PoolConfiguration. It could happen though, if the server is migrated immediately  after the user removed a
         # running instance type from the list.
