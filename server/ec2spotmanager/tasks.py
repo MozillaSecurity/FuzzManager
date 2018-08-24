@@ -251,22 +251,6 @@ def _start_pool_instances(pool, config, count=1):
         entry.save()
         return
 
-    # convert count from cores to instances
-    #
-    # if we have chosen the smallest possible instance that will put us over the requested core count,
-    #   we will only be spawning 1 instance
-    #
-    # otherwise there may be a remainder if this is not an even division. let that be handled in the next tick
-    #   so that the next smallest instance will be considered
-    #
-    # eg. need 12 cores, and allow instances sizes of 4 and 8 cores,
-    #     8-core instance costs $0.24 ($0.03/core)
-    #     4-core instance costs $0.16 ($0.04/core)
-    #
-    #     -> we will only request 1x 8-core instance this time around, leaving the required count at 4
-    #     -> next time around, we will request 1x 4-core instance
-    count = max(1, count // CORES_PER_INSTANCE[instance_type])
-
     priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 
     if not region:
@@ -284,6 +268,22 @@ def _start_pool_instances(pool, config, count=1):
     else:
         if priceLowEntries:
             priceLowEntries.delete()
+
+    # convert count from cores to instances
+    #
+    # if we have chosen the smallest possible instance that will put us over the requested core count,
+    #   we will only be spawning 1 instance
+    #
+    # otherwise there may be a remainder if this is not an even division. let that be handled in the next tick
+    #   so that the next smallest instance will be considered
+    #
+    # eg. need 12 cores, and allow instances sizes of 4 and 8 cores,
+    #     8-core instance costs $0.24 ($0.03/core)
+    #     4-core instance costs $0.16 ($0.04/core)
+    #
+    #     -> we will only request 1x 8-core instance this time around, leaving the required count at 4
+    #     -> next time around, we will request 1x 4-core instance
+    count = max(1, count // CORES_PER_INSTANCE[instance_type])
 
     logger.info("[Pool %d] Using instance type %s in region %s with availability zone %s.",
                 pool.id, instance_type, region, zone)
