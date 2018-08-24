@@ -134,6 +134,6 @@ def update_spot_prices():
     for instance_type in prices:
         key = 'ec2spot:price:' + instance_type
         cache.delete(key)
-        cache.set(key, json.dumps(prices[instance_type]))
+        cache.set(key, json.dumps(prices[instance_type], separators=(',', ':')))
         cache.expireat(key, expires)
     cache.execute()  # commit to redis

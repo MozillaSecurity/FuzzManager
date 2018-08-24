@@ -141,7 +141,7 @@ class PoolConfiguration(models.Model):
             obj_field = "%s_dict" % field
             obj = getattr(self, obj_field)
             if obj:
-                setattr(self, field, json.dumps(obj))
+                setattr(self, field, json.dumps(obj, separators=(',', ':')))
             else:
                 setattr(self, field, None)
 
@@ -149,7 +149,7 @@ class PoolConfiguration(models.Model):
             obj_field = "%s_list" % field
             obj = getattr(self, obj_field)
             if obj:
-                setattr(self, field, json.dumps(obj))
+                setattr(self, field, json.dumps(obj, separators=(',', ':')))
             else:
                 setattr(self, field, None)
 
