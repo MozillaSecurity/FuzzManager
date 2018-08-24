@@ -40,7 +40,7 @@ class PoolConfiguration(models.Model):
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
-    ec2_instance_types = models.CharField(max_length=1023, blank=True, null=True)
+    ec2_instance_types = models.CharField(max_length=4095, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_userdata_file = models.FileField(storage=OverwritingStorage(
         location=getattr(settings, 'USERDATA_STORAGE', None)), upload_to=get_storage_path, blank=True, null=True)
