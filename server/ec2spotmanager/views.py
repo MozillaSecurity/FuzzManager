@@ -40,7 +40,7 @@ def pools(request):
     filters = {}
     isSearch = True
 
-    entries = InstancePool.objects.annotate(size=Count('instance')).order_by('-id')
+    entries = InstancePool.objects.annotate(size=Count('instance')).order_by('config__name')
 
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
