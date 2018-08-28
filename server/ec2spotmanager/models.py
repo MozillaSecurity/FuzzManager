@@ -145,7 +145,7 @@ class PoolConfiguration(models.Model):
             elif obj and override:
                 flat_parent_config[field] = obj
             elif override:
-                flat_parent_config[field] = {}
+                flat_parent_config[field] = []
 
         return flat_parent_config
 
