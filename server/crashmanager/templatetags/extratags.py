@@ -1,3 +1,4 @@
+import json
 import os
 from django import template
 
@@ -33,14 +34,14 @@ def listcsv(value):
 @register.filter
 def dictcsv(value):
     if value:
-        return ", ".join(["%s=%s" % x for x in value.items()])
+        return ", ".join("%s=%s" % x for x in value.items())
     else:
         return ""
 
 
 @register.filter
-def toolcsv(value):
+def jsonparse(value):
     if value:
-        return ", ".join([x.name for x in value.all()])
+        return json.loads(value)
     else:
         return ""
