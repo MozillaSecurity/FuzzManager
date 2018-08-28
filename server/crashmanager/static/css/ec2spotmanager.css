@@ -23,3 +23,7 @@
 .ec2-radio-group > input {
   margin: 0;
 }
+
+label.no-bold {
+  font-weight: normal;
+}

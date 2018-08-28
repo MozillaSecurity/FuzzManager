@@ -283,9 +283,9 @@ def viewConfigs(request):
 def viewConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
-    data = {'config': config}
+    config.deserializeFields()
 
-    return render(request, 'config/view.html', data)
+    return render(request, 'config/view.html', {'config': config})
 
 
 def __handleConfigPOST(request, config):
@@ -326,33 +326,39 @@ def __handleConfigPOST(request, config):
         config.ec2_allowed_regions_list = [x.strip() for x in request.POST['ec2_allowed_regions'].split(',')]
     else:
         config.ec2_allowed_regions_list = None
+    config.ec2_allowed_regions_override = request.POST.get('ec2_allowed_regions_override', 'off') == 'on'
 
     if request.POST['ec2_security_groups']:
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
     else:
         config.ec2_security_groups_list = None
+    config.ec2_security_groups_override = request.POST.get('ec2_security_groups_override', 'off') == 'on'
 
     if request.POST['ec2_instance_types']:
         config.ec2_instance_types_list = [x.strip() for x in request.POST['ec2_instance_types'].split(',')]
     else:
         config.ec2_instance_types_list = None
+    config.ec2_instance_types_override = request.POST.get('ec2_instance_types_override', 'off') == 'on'
 
     if request.POST['ec2_userdata_macros']:
         config.ec2_userdata_macros_dict = dict(
             y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')])
     else:
         config.ec2_userdata_macros_dict = None
+    config.ec2_userdata_macros_override = request.POST.get('ec2_userdata_macros_override', 'off') == 'on'
 
     if request.POST['ec2_tags']:
         config.ec2_tags_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')])
     else:
         config.ec2_tags_dict = None
+    config.ec2_tags_override = request.POST.get('ec2_tags_override', 'off') == 'on'
 
     if request.POST['ec2_raw_config']:
         config.ec2_raw_config_dict = dict(
             y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_raw_config'].split(',')])
     else:
         config.ec2_raw_config_dict = None
+    config.ec2_raw_config_override = request.POST.get('ec2_raw_config_override', 'off') == 'on'
 
     # Ensure we have a primary key before attempting to store files
     config.save()

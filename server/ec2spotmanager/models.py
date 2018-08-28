@@ -53,12 +53,18 @@ class PoolConfiguration(models.Model):
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
         self.ec2_tags_dict = None
+        self.ec2_tags_override = None
         self.ec2_raw_config_dict = None
+        self.ec2_raw_config_override = None
         self.ec2_userdata_macros_dict = None
+        self.ec2_userdata_macros_override = None
         self.ec2_userdata = None
         self.ec2_security_groups_list = None
+        self.ec2_security_groups_override = None
         self.ec2_allowed_regions_list = None
+        self.ec2_allowed_regions_override = None
         self.ec2_instance_types_list = None
+        self.ec2_instance_types_override = None
 
         # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
@@ -122,51 +128,67 @@ class PoolConfiguration(models.Model):
                 flat_parent_config[config_field] = getattr(self, config_field)
 
         for field in self.dict_config_fields:
-            obj_field = "%s_dict" % field
-            obj = getattr(self, obj_field)
-            if obj:
+            obj = getattr(self, field + "_dict")
+            override = getattr(self, field + "_override")
+            if obj and not override:
                 flat_parent_config[field].update(obj)
+            elif obj and override:
+                flat_parent_config[field] = obj
+            elif override:
+                flat_parent_config[field] = {}
 
         for field in self.list_config_fields:
-            obj_field = "%s_list" % field
-            obj = getattr(self, obj_field)
-            if obj:
+            obj = getattr(self, field + "_list")
+            override = getattr(self, field + "_override")
+            if obj and not override:
                 flat_parent_config[field].extend(obj)
+            elif obj and override:
+                flat_parent_config[field] = obj
+            elif override:
+                flat_parent_config[field] = {}
 
         return flat_parent_config
 
     def save(self, *args, **kwargs):
         # Reserialize data, then call regular save method
         for field in self.dict_config_fields:
-            obj_field = "%s_dict" % field
-            obj = getattr(self, obj_field)
+            obj = getattr(self, field + "_dict")
+            override = getattr(self, field + "_override")
             if obj:
-                setattr(self, field, json.dumps(obj, separators=(',', ':')))
+                value = json.dumps(obj, separators=(',', ':'))
             else:
-                setattr(self, field, None)
+                value = ''
+            if override:
+                value = '!' + value
+            setattr(self, field, value)
 
         for field in self.list_config_fields:
-            obj_field = "%s_list" % field
-            obj = getattr(self, obj_field)
+            obj = getattr(self, field + "_list")
+            override = getattr(self, field + "_override")
             if obj:
-                setattr(self, field, json.dumps(obj, separators=(',', ':')))
+                value = json.dumps(obj, separators=(',', ':'))
             else:
-                setattr(self, field, None)
+                value = ''
+            if override:
+                value = '!' + value
+            setattr(self, field, value)
 
         super(PoolConfiguration, self).save(*args, **kwargs)
 
     def deserializeFields(self):
         for field in self.dict_config_fields:
-            obj_field = "%s_dict" % field
-            sobj = getattr(self, field)
+            sobj = getattr(self, field) or ''
+            setattr(self, field + '_override', sobj.startswith('!'))
+            sobj = sobj.lstrip('!')
             if sobj:
-                setattr(self, obj_field, json.loads(sobj))
+                setattr(self, field + '_dict', json.loads(sobj))
 
         for field in self.list_config_fields:
-            obj_field = "%s_list" % field
-            sobj = getattr(self, field)
+            sobj = getattr(self, field) or ''
+            setattr(self, field + '_override', sobj.startswith('!'))
+            sobj = sobj.lstrip('!')
             if sobj:
-                setattr(self, obj_field, json.loads(sobj))
+                setattr(self, field + '_list', json.loads(sobj))
 
         if self.ec2_userdata_file:
             self.ec2_userdata_file.open(mode='rb')
