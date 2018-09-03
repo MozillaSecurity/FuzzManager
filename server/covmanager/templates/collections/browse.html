@@ -93,11 +93,11 @@
           <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
           <th @click="sortBy('linesMissed')" :class="{ active: sortKey == 'linesMissed' }">Lines Missed</th>
           <th @click="sortBy('coveragePercent')" :class="{ active: sortKey == 'coveragePercent' }">Coverage</th>
-          <th @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">
+          <th v-if="chartdata" @click="sortBy('delta_coveragePercent')" :class="{ active: sortKey == 'delta_coveragePercent' }">
             Coverage Difference</th>
-          <th @click="sortBy('delta_linesCovered')" :class="{ active: sortKey == 'delta_linesCovered' }">
+          <th v-if="chartdata" @click="sortBy('delta_linesCovered')" :class="{ active: sortKey == 'delta_linesCovered' }">
             Lines Covered &Delta;</th>
-          <th @click="sortBy('delta_linesTotal')" :class="{ active: sortKey == 'delta_linesTotal' }">
+          <th v-if="chartdata" @click="sortBy('delta_linesTotal')" :class="{ active: sortKey == 'delta_linesTotal' }">
             Total Lines &Delta;</th>
         </tr>
         <tr v-if="show_top_nav">
