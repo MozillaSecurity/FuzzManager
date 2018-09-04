@@ -18,9 +18,7 @@ function HashParamManager() {
 
   instance.update_hash = function() {
     let query = instance.get_query()
-    if (query) {
-      window.location.hash = query
-    }
+    window.location.hash = query
   }
 
   instance.get_value = function(k, dv) {

@@ -36,6 +36,7 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-danger" @click="clear_rc()">Clear Current Report Configuration</button>
           <button type="button" class="btn btn-danger" @click="modal.show = false">Close</button>
         </div>
       </div>
@@ -492,6 +493,17 @@ let covmanager = new Vue({
         window.localStorage.setItem("covmanager_default_rc", id)
       }
     },
+    clear_rc: function () {
+      this.modal.show = false
+
+      pmanager.update_value('rc', "")
+      pmanager.update_hash()
+      this.rc_id = ""
+
+      if (this.storage_support) {
+        window.localStorage.removeItem("covmanager_default_rc")
+      }
+    },
     test_storage_rc: function() {
       try {
           localStorage.setItem("covmanager_storage_test", "test");
@@ -510,7 +522,7 @@ let covmanager = new Vue({
       }
       this.rc_name = 'N/A'
 
-      if (rc['id'] && this.rc_list.length > 0) {
+      if (this.rc_id && this.rc_list.length > 0) {
         // Apparently there is an rc id set, but it is not in our list.
         // This could mean that we have a delected rc id at hand, which
         // might even be stored in local storage. Hence we should invalidate
