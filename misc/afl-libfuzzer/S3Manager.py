@@ -59,9 +59,10 @@ class S3Manager():
         else:
             self.remote_path_build = "%s/%s" % (self.project_name, self.zip_name)
 
-        # Memorize which files we have uploaded before, so we never attempt to
-        # re-upload them to a different queue.
-        self.uploaded_files = []
+        # Memorize which files we have uploaded/downloaded before, so we never attempt to
+        # re-upload them to a different queue or re-download them after a local merge.
+        self.uploaded_files = set()
+        self.downloaded_files = set()
 
     def upload_libfuzzer_queue_dir(self, base_dir, corpus_dir, original_corpus):
         '''
@@ -81,7 +82,7 @@ class S3Manager():
         upload_files = [x for x in os.listdir(corpus_dir) if x not in original_corpus and x not in self.uploaded_files]
 
         # Memorize files selected for upload
-        self.uploaded_files.extend(upload_files)
+        self.uploaded_files.update(upload_files)
 
         cmdline_file = os.path.join(base_dir, "cmdline")
 
@@ -112,13 +113,21 @@ class S3Manager():
                 # If the file is in a queue marked as closed, ignore it
                 continue
 
-            dest_file = os.path.join(corpus_dir, os.path.basename(remote_key.name))
+            basename = os.path.basename(remote_key.name)
+
+            if basename in self.downloaded_files:
+                # If we ever downloaded this file before, ignore it
+                continue
+
+            dest_file = os.path.join(corpus_dir, basename)
             if os.path.exists(dest_file):
                 # If the file already exists locally, ignore it
                 continue
 
             print("Syncing from queue %s: %s" % (queue_name, filename))
             remote_key.get_contents_to_filename(dest_file)
+
+            self.downloaded_files.add(basename)
 
     def upload_afl_queue_dir(self, base_dir, new_cov_only=True):
         '''
