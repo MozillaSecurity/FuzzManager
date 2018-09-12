@@ -115,7 +115,7 @@ class S3Manager():
 
             basename = os.path.basename(remote_key.name)
 
-            if basename in self.downloaded_files:
+            if basename in self.downloaded_files or basename in self.uploaded_files:
                 # If we ever downloaded this file before, ignore it
                 continue
 
