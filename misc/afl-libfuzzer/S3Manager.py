@@ -20,6 +20,10 @@ from __future__ import print_function
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from boto.utils import parse_ts as boto_parse_ts
+
+from tempfile import mkstemp
+from zipfile import ZipFile, ZIP_DEFLATED
+
 import hashlib
 import os
 import platform
@@ -53,6 +57,7 @@ class S3Manager():
         # Define some path constants that define the folder structure on S3
         self.remote_path_queues = "%s/queues/" % self.project_name
         self.remote_path_corpus = "%s/corpus/" % self.project_name
+        self.remote_path_corpus_bundle = "%s/corpus.zip" % self.project_name
 
         if self.build_project_name:
             self.remote_path_build = "%s/%s" % (self.build_project_name, self.zip_name)
@@ -378,6 +383,27 @@ class S3Manager():
         if not os.path.exists(corpus_dir):
             os.mkdir(corpus_dir)
 
+        if not random_subset_size:
+            # If we are not instructed to download only a sample of the corpus,
+            # we can try and look for a corpus bundle (zip file) for faster download.
+            (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
+            try:
+                remote_key = Key(self.bucket)
+                remote_key.name = self.remote_path_corpus_bundle
+                if remote_key.exists():
+                    print("Found corpus bundle, downloading...")
+                    remote_key.get_contents_to_filename(zip_dest)
+
+                    with ZipFile(zip_dest, "r") as zip_file:
+                        if zip_file.testzip():
+                            # Warn, but don't throw, we can try to download the corpus directly
+                            print("Bad CRC for downloaded zipfile %s" % zip_dest, file=sys.stderr)
+                        else:
+                            zip_file.extractall(corpus_dir)
+                            return
+            finally:
+                os.remove(zip_dest)
+
         remote_keys = list(self.bucket.list(self.remote_path_corpus))
 
         if random_subset_size and len(remote_keys) > random_subset_size:
@@ -405,6 +431,18 @@ class S3Manager():
         if not test_files:
             print("Error: Corpus is empty, refusing upload.", file=sys.stderr)
             return
+
+        # Make a zip bundle and upload it
+        (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
+        zip_file = ZipFile(zip_dest, 'w', ZIP_DEFLATED)
+        for test_file in test_files:
+            zip_file.write(os.path.join(corpus_dir, test_file), arcname=test_file)
+        zip_file.close()
+        remote_key = Key(self.bucket)
+        remote_key.name = self.remote_path_corpus_bundle
+        print("Uploading file %s -> %s" % (zip_dest, remote_key.name))
+        remote_key.set_contents_from_filename(zip_dest)
+        os.remove(zip_dest)
 
         remote_path = self.remote_path_corpus
         remote_files = [key.name.replace(remote_path, "", 1) for key in list(self.bucket.list(remote_path))]
