@@ -386,12 +386,13 @@ class S3Manager():
         if not random_subset_size:
             # If we are not instructed to download only a sample of the corpus,
             # we can try and look for a corpus bundle (zip file) for faster download.
-            (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
-            try:
-                remote_key = Key(self.bucket)
-                remote_key.name = self.remote_path_corpus_bundle
-                if remote_key.exists():
-                    print("Found corpus bundle, downloading...")
+            remote_key = Key(self.bucket)
+            remote_key.name = self.remote_path_corpus_bundle
+            if remote_key.exists():
+                (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
+                print("Found corpus bundle, downloading...")
+
+                try:
                     remote_key.get_contents_to_filename(zip_dest)
 
                     with ZipFile(zip_dest, "r") as zip_file:
@@ -401,8 +402,8 @@ class S3Manager():
                         else:
                             zip_file.extractall(corpus_dir)
                             return
-            finally:
-                os.remove(zip_dest)
+                finally:
+                    os.remove(zip_dest)
 
         remote_keys = list(self.bucket.list(self.remote_path_corpus))
 
