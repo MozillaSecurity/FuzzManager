@@ -684,6 +684,9 @@ def main(argv=None):
     s3Group.add_argument("--s3-bucket", dest="s3_bucket", help="Name of the S3 bucket to use", metavar="NAME")
     s3Group.add_argument("--project", dest="project", help="Name of the subfolder/project inside the S3 bucket",
                          metavar="NAME")
+    s3Group.add_argument("--build", dest="build",
+                         help="Local build directory to use during corpus refresh instead of downloading.",
+                         metavar="DIR")
     s3Group.add_argument("--build-project", dest="build_project",
                          help="If specified, this overrides --project for fetching the build from S3.",
                          metavar="NAME")
@@ -863,8 +866,13 @@ def main(argv=None):
             print("Error: Failed to download a cmdline file from queue directories.", file=sys.stderr)
             return 2
 
-        print("Downloading build")
-        s3m.download_build(os.path.join(opts.s3_corpus_refresh, "build"))
+        build_path = os.path.join(opts.s3_corpus_refresh, "build")
+
+        if opts.build:
+            build_path = opts.build
+        else:
+            print("Downloading build")
+            s3m.download_build(build_path)
 
         with open(os.path.join(opts.s3_corpus_refresh, "cmdline"), 'r') as cmdline_file:
             cmdline = cmdline_file.read().splitlines()
@@ -875,7 +883,7 @@ def main(argv=None):
         # Try locating our binary in the build we just unpacked
         binary_search_result = [os.path.join(dirpath, filename)
                                 for dirpath, dirnames, filenames in
-                                os.walk(os.path.join(opts.s3_corpus_refresh, "build"))
+                                os.walk(build_path)
                                 for filename in filenames
                                 if (filename == binary_name and
                                 (stat.S_IXUSR & os.stat(os.path.join(dirpath, filename))[stat.ST_MODE]))]
