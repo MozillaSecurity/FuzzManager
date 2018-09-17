@@ -948,6 +948,10 @@ def main(argv=None):
             # Filter out any -dict arguments that we don't need anyway for merging
             cmdline = [x for x in cmdline if not x.startswith("-dict=")]
 
+            # Filter out any -max_len arguments because the length should only be
+            # enforced by the instance(s) doing the actual testing.
+            cmdline = [x for x in cmdline if not x.startswith("-max_len=")]
+
             print("Running libFuzzer merge")
             with open(os.devnull, 'w') as devnull:
                 env = os.environ.copy()
