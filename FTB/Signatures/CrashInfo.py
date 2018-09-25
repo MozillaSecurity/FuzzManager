@@ -1177,6 +1177,7 @@ class GDBCrashInfo(CrashInfo):
             else:
                 raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" %
                                    crashInstruction)
+
         if RegisterHelper.isARMCompatible(registerMap):
             # Anything that is not explicitly handled now is considered unsupported
             failureReason = "Unsupported instruction in incomplete ARM/ARM64 support."
@@ -1226,7 +1227,6 @@ class GDBCrashInfo(CrashInfo):
                     # This is an instruction that the dissassembler can't read, so likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
             elif len(parts) == 2:
-                print(">%s< >%s<" % (instruction, parts))
                 if instruction.startswith("ldr") or instruction.startswith("str"):
                     # Load/Store instruction
                     match = re.match("^\s*\[(.*)\]$", parts[1])

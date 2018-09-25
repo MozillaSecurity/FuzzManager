@@ -22,8 +22,8 @@ armRegisters = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
 
 arm64Registers = ["x" + str(x) for x in range(0, 31)] + ["sp", "pc", "cpsr", "fpcsr", "fpcr"]
 
-x86OnlyRegisters = list(set(x86Registers + x64Registers) - set(armRegisters))
-armOnlyRegisters = list(set(armRegisters + arm64Registers) - set(x86OnlyRegisters))
+x86OnlyRegisters = list(set(x86Registers + x64Registers) - set(armRegisters + arm64Registers))
+armOnlyRegisters = list(set(armRegisters + arm64Registers) - set(x86Registers + x64Registers))
 
 validRegisters = {
     "X86": x86Registers,
