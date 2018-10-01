@@ -109,6 +109,10 @@ def collections_diff_api(request, path):
     if len(collections) < 2:
         raise Http404("Need at least two collections")
 
+    report_configuration = None
+    if "rc" in request.GET:
+        report_configuration = get_object_or_404(ReportConfiguration, pk=request.GET["rc"])
+
     # coverage = collection.subset(path)
 
     # if "children" in coverage:
@@ -128,7 +132,7 @@ def collections_diff_api(request, path):
                 status=400
             )
 
-        coverage = collection.subset(path)
+        coverage = collection.subset(path, report_configuration)
 
         if "children" in coverage:
             Collection.remove_childrens_children(coverage)
