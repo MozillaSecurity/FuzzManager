@@ -1062,14 +1062,13 @@ class GDBCrashInfo(CrashInfo):
 
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
-                if re.match("(push|pop)(l|w|q)?$", instruction):
-                    return RegisterHelper.getStackPointer(registerMap)
-                elif re.match("callq?$", instruction):
-                    # call is quite special because it performs a push first but then can
-                    # also perform a memory dereference. We don't know for sure which of
-                    # the two operations fail if we detect a deref in the instruction,
-                    # but for now we assume that the deref fails and the stack pointer
-                    # is ok.
+                if re.match("(push|pop|call)(l|w|q)?$", instruction):
+                    # push/pop/call are quite special because they can perform an optional
+                    # memory dereference before touching the stack. We don't know for sure
+                    # which of the two operations fail if we detect a deref in the instruction,
+                    # but for now we assume that the deref fails and the stack pointer is ok.
+                    #
+                    # TODO: Fix this properly by including readability information in GDB output
                     if isDerefOp(parts[0]):
                         (val, failed) = calculateDerefOpAddress(parts[0])
                         if failed:
@@ -1077,7 +1076,7 @@ class GDBCrashInfo(CrashInfo):
                         else:
                             return val
                     else:
-                        # No deref, so the push must be failing
+                        # No deref, so the stack access must be failing
                         return RegisterHelper.getStackPointer(registerMap)
                 else:
                     if isDerefOp(parts[0]):

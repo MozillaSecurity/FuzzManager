@@ -555,6 +555,30 @@ Program terminated with signal SIGSEGV, Segmentation fault.
 #3  0x00000000009deedb in CaptureStack (cx=<optimized out>, stack=...) at js/src/jsexn.cpp:369
 """ # noqa
 
+gdbRegressionTrace13 = """
+received signal SIGSEGV, Segmentation fault.
+0x56df6483 in JSScript::global (this=0xe5e5e5e5) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/JSScript-inl.h:149
+#0  0x56df6483 in JSScript::global (this=0xe5e5e5e5) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/JSScript-inl.h:149
+#1  js::AbstractFramePtr::global (this=0xffffc0bc) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/Stack-inl.h:747
+#2  js::Debugger::forEachDebuggerFrame<js::Debugger::inFrameMaps(js::AbstractFramePtr)::<lambda(js::DebuggerFrame*)> >(js::AbstractFramePtr, js::Debugger::<lambda(js::DebuggerFrame*)>) (frame=..., fn=..., fn@entry=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/Debugger.cpp:2815
+#3  0x56df67d0 in js::Debugger::inFrameMaps (frame=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/Debugger.cpp:7164
+#4  0x56b1f31a in js::jit::HandleExceptionIon (overrecursed=0xffffc19b, rfe=0xffffc4b8, frame=..., cx=0xf6e1b800) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/JitFrames.cpp:215
+#5  js::jit::HandleException (rfe=<optimized out>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/JitFrames.cpp:710
+#6  0xee21eaa3 in ?? ()
+Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+eax	0xe5e5e5e5	-437918235
+ebx	0xec5fd970	-329262736
+ecx	0x3	3
+edx	0xffffc0bc	-16196
+esi	0xf6e1b800	-152979456
+edi	0x578beff4	1468788724
+ebp	0xffffc0f8	4294951160
+esp	0xffffc084	4294951044
+eip	0x56df6483 <js::Debugger::forEachDebuggerFrame<js::Debugger::inFrameMaps(js::AbstractFramePtr)::<lambda(js::DebuggerFrame*)> >(js::AbstractFramePtr, js::Debugger::<lambda(js::DebuggerFrame*)>)+67>
+=> 0x56df6483 <js::Debugger::forEachDebuggerFrame<js::Debugger::inFrameMaps(js::AbstractFramePtr)::<lambda(js::DebuggerFrame*)> >(js::AbstractFramePtr, js::Debugger::<lambda(js::DebuggerFrame*)>)+67>:	pushl  0x10(%eax)
+   0x56df6486 <js::Debugger::forEachDebuggerFrame<js::Debugger::inFrameMaps(js::AbstractFramePtr)::<lambda(js::DebuggerFrame*)> >(js::AbstractFramePtr, js::Debugger::<lambda(js::DebuggerFrame*)>)+70>:	call   0x568893f0 <JS::Realm::maybeGlobal() const>
+""" # noqa
+
 rustSampleTrace1 = """
 thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976
 stack backtrace:
@@ -1085,6 +1109,20 @@ class GDBParserTestCrashAddressRegression12(unittest.TestCase):
         self.assertEqual(crashInfo12.backtrace[1], "js::SavedStacks::saveCurrentStack")
         self.assertEqual(crashInfo12.backtrace[2], "JS::CaptureCurrentStack")
         self.assertEqual(crashInfo12.backtrace[3], "CaptureStack")
+
+
+class GDBParserTestCrashAddressRegression13(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86", "linux")
+
+        crashInfo13 = CrashInfo.fromRawCrashData([], [], config, gdbRegressionTrace13.splitlines())
+        self.assertEqual(crashInfo13.backtrace[0], "JSScript::global")
+        self.assertEqual(crashInfo13.backtrace[1], "js::AbstractFramePtr::global")
+        self.assertEqual(crashInfo13.backtrace[5], "js::jit::HandleException")
+        self.assertEqual(crashInfo13.backtrace[6], "??")
+
+        self.assertEqual(crashInfo13.crashInstruction, "pushl  0x10(%eax)")
+        self.assertEqual(crashInfo13.crashAddress, 0xe5e5e5f5)
 
 
 class CrashSignatureOutputTest(unittest.TestCase):
