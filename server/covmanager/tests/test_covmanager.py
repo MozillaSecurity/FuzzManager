@@ -27,4 +27,10 @@ class CovManagerTests(TestCase):
         self.client.login(username='test', password='test')
         self.assertRedirects(self.client.get(reverse('covmanager:index')), reverse('covmanager:collections'))
 
+    def test_noperm(self):
+        """Request without permission results in 404"""
+        self.client.login(username='test-noperm', password='test')
+        resp = self.client.get(reverse('covmanager:index'))
+        assert resp.status_code == 404
+
 #url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),

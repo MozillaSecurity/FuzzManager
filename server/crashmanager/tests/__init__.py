@@ -12,9 +12,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import logging
 
-from django.contrib.auth.models import User
+from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User, Permission
 from django.core.files.base import ContentFile
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 from django.test import TestCase as DjangoTestCase
+import pytest
 
 from ..models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, Client, CrashEntry, OS, Platform, \
     Product, TestCase as cmTestCase, Tool, User as cmUser
@@ -34,8 +39,13 @@ class TestCase(DjangoTestCase):
         """Common setup tasks for all server unittests"""
         super(DjangoTestCase, cls).setUpClass()
 
-        def create_user(username, email="test@mozilla.com", password="test", restricted=False):
+        def create_user(username, email="test@mozilla.com", password="test", restricted=False, has_permission=True):
             user = User.objects.create_user(username, email, password)
+            user.user_permissions.clear()
+            if has_permission:
+                content_type = ContentType.objects.get_for_model(cmUser)
+                perm = Permission.objects.get(content_type=content_type, codename='view_crashmanager')
+                user.user_permissions.add(perm)
             (user, created) = cmUser.get_or_create_restricted(user)
             user.restricted = restricted
             user.save()
@@ -44,12 +54,14 @@ class TestCase(DjangoTestCase):
         # Create one unrestricted and one restricted test user
         create_user("test")
         create_user("test-restricted", restricted=True)
+        create_user("test-noperm", has_permission=False)
 
     @classmethod
     def tearDownClass(cls):
         """Common teardown tasks for all server unittests"""
         User.objects.get(username='test').delete()
         User.objects.get(username='test-restricted').delete()
+        User.objects.get(username='test-noperm').delete()
         super(DjangoTestCase, cls).tearDownClass()
 
     @staticmethod
@@ -219,3 +231,51 @@ class TestCase(DjangoTestCase):
         result = BucketWatch.objects.create(bucket=bucket, user=cmuser, lastCrash=crash)
         log.debug("Created BucketWatch pk=%d", result.pk)
         return result
+
+
+@pytest.fixture
+def migration_hook(request):
+    '''
+    Pause migration at the migration named in @pytest.mark.migrate_from('0001-initial-migration')
+
+    The migration_hook param will be a callable to then trigger the migration named in:
+        @pytest.mark.migrate_from('0002-migrate-things')
+
+    migration_hook also has an 'apps' attribute which is used to lookup models in the current migration state
+
+    eg.
+        MyModel = migration_hook.apps.get_model('myapp', 'MyModel')
+
+    based on: https://www.caktusgroup.com/blog/2016/02/02/writing-unit-tests-django-migrations/
+    '''
+    assert 'migrate_from' in request.keywords, 'must mark the migration to stop at with @pytest.mark.migrate_from()'
+    assert len(request.keywords['migrate_from'].args) == 1, 'migrate_from mark expects 1 arg'
+    assert not request.keywords['migrate_from'].kwargs, 'migrate_from mark takes no keywords'
+    assert 'migrate_to' in request.keywords, 'must mark the migration to hook with @pytest.mark.migrate_to()'
+    assert len(request.keywords['migrate_to'].args) == 1, 'migrate_to mark expects 1 arg'
+    assert not request.keywords['migrate_to'].kwargs, 'migrate_to mark takes no keywords'
+
+    app = apps.get_containing_app_config(request.module.__name__).name
+
+    migrate_from = [(app, request.keywords['migrate_from'].args[0])]
+    migrate_to = [(app, request.keywords['migrate_to'].args[0])]
+
+    class migration_hook_result(object):
+
+        def __init__(self, _from, _to):
+            self._to = _to
+            executor = MigrationExecutor(connection)
+            self.apps = executor.loader.project_state(_from).apps
+
+            # Reverse to the original migration
+            executor.migrate(_from)
+
+        def __call__(self):
+            # Run the migration to test
+            executor = MigrationExecutor(connection)
+            executor.loader.build_graph()  # reload.
+            executor.migrate(self._to)
+
+            self.apps = executor.loader.project_state(self._to).apps
+
+    yield migration_hook_result(migrate_from, migrate_to)

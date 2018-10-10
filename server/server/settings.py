@@ -57,14 +57,6 @@ INSTALLED_APPS = (
 )
 
 
-# This tiny middleware module allows us to see exceptions on stderr
-# when running a Django instance with runserver.py
-class ExceptionLoggingMiddleware(object):
-    def process_exception(self, request, exception):
-        import traceback
-        print(traceback.format_exc())
-
-
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -75,7 +67,8 @@ MIDDLEWARE_CLASSES = (
     #'mozilla_django_oidc.middleware.SessionRefresh',
     'server.middleware.RequireLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'server.settings.ExceptionLoggingMiddleware',
+    'server.middleware.ExceptionLoggingMiddleware',
+    'server.middleware.CheckAppPermissionsMiddleware',
     'livesync.core.middleware.DjangoLiveSyncMiddleware',
 )
 
@@ -149,6 +142,11 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r'/covmanager/rest/.*',
     r'/crashmanager/rest/.*',
 )
+
+# permissions given to new users by default
+DEFAULT_PERMISSIONS = [
+    'crashmanager.models.User:view_covmanager'
+]
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases

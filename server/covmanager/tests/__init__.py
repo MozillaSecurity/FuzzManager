@@ -16,12 +16,13 @@ import shutil
 import subprocess
 import tempfile
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.test import TestCase as DjangoTestCase
 import pytest
 
-from crashmanager.models import Client, Tool
+from crashmanager.models import Client, Tool, User as cmUser
 from ..models import Collection, CollectionFile, Repository
 
 
@@ -63,12 +64,19 @@ class TestCase(DjangoTestCase):
     def setUpClass(cls):
         """Common setup tasks for all server unittests"""
         super(DjangoTestCase, cls).setUpClass()
-        User.objects.create_user('test', 'test@mozilla.com', 'test')
+        user = User.objects.create_user('test', 'test@mozilla.com', 'test')
+        user.user_permissions.clear()
+        content_type = ContentType.objects.get_for_model(cmUser)
+        perm = Permission.objects.get(content_type=content_type, codename='view_covmanager')
+        user.user_permissions.add(perm)
+        user = User.objects.create_user('test-noperm', 'test@mozilla.com', 'test')
+        user.user_permissions.clear()
 
     @classmethod
     def tearDownClass(cls):
         """Common teardown tasks for all server unittests"""
         User.objects.get(username='test').delete()
+        User.objects.get(username='test-noperm').delete()
         super(DjangoTestCase, cls).tearDownClass()
 
     def mkdtemp(self, *args, **kwds):

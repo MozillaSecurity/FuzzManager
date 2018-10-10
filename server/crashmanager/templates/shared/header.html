@@ -13,9 +13,15 @@
                     </button>
                     <a id="drop1" class="dropdown-toggle navbar-brand" data-toggle="dropdown" href="#menu">FuzzManager</a>
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+                        {% if perms.crashmanager.view_crashmanager %}
                         <li><a href="/crashmanager"><i class="glyphicon glyphicon-alert"> </i> CrashManager</a></li>
+                        {% endif %}
+                        {% if perms.crashmanager.view_ec2spotmanager %}
                         <li><a href="/ec2spotmanager"><i class="glyphicon glyphicon-scale"></i> EC2SpotManager</a></li>
+                        {% endif %}
+                        {% if perms.crashmanager.view_covmanager %}
                         <li><a href="/covmanager"><i class="glyphicon glyphicon-stats"></i> CovManager</a></li>
+                        {% endif %}
                     </ul>
                 </li>
             </ul>
@@ -37,6 +43,7 @@
 	        {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
+                {% if perms.crashmanager.view_crashmanager %}
                 <li>
                     <form class="navbar-form navbar-right" role="search" id="simple_search" method="get" action="{% url 'crashmanager:crashes' %}">
                         <div class="form-group has-feedback">
@@ -45,6 +52,7 @@
                         </div>
                     </form>
                 </li>
+                {% endif %}
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">
                         <i class="glyphicon glyphicon-user"></i>
@@ -59,7 +67,9 @@
                             {% endif %}
                         </li>
                         <li class="divider" role="presentation"></li>
+                        {% if perms.crashmanager.view_crashmanager %}
                         <li><a href="{% url 'crashmanager:usersettings' %}"><i class="glyphicon glyphicon-cog"></i> Settings</a></li>
+                        {% endif %}
                         <li><a href="#"><i class="glyphicon glyphicon-envelope"></i> Contact</a></li>
                     </ul>
                 </li>

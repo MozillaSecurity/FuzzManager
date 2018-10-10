@@ -1,11 +1,13 @@
 from django.conf import settings
-from django.contrib.auth.models import User as DjangoUser
+from django.contrib.auth.models import User as DjangoUser, Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import json
+import logging
 import re
 
 import six
@@ -407,6 +409,13 @@ class BugzillaTemplate(models.Model):
 
 
 class User(models.Model):
+    class Meta:
+        permissions = (
+            ("view_crashmanager", "Can see CrashManager app"),
+            ("view_covmanager", "Can see CovManager app"),
+            ("view_ec2spotmanager", "Can see EC2SpotManager app"),
+        )
+
     user = models.OneToOneField(DjangoUser)
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
@@ -423,6 +432,20 @@ class User(models.Model):
             user.restricted = True
             user.save()
         return (user, created)
+
+
+@receiver(post_save, sender=DjangoUser)
+def add_default_perms(sender, instance, created, **kwargs):
+    if created:
+        log = logging.getLogger('crashmanager')
+        for perm in getattr(settings, 'DEFAULT_PERMISSIONS', []):
+            model, perm = perm.split(':', 1)
+            module, model = model.rsplit('.', 1)
+            module = __import__(module, globals(), locals(), [model], 0)  # from module import model
+            content_type = ContentType.objects.get_for_model(getattr(module, model))
+            perm = Permission.objects.get(content_type=content_type, codename=perm)
+            instance.user_permissions.add(perm)
+            log.info('user %s added permission %s:%s', instance.username, model, perm)
 
 
 class BucketWatch(models.Model):

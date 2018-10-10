@@ -13,11 +13,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import logging
 
 from django.apps import apps
-from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User, Permission
 from django.db.migrations.executor import MigrationExecutor
 from django.db import connection
 from django.test import TestCase as DjangoTestCase
 
+from crashmanager.models import User as CMUser
 from ..models import Instance, InstancePool, PoolConfiguration, PoolStatusEntry
 
 
@@ -31,12 +33,19 @@ class TestCase(DjangoTestCase):
     def setUpClass(cls):
         """Common setup tasks for all server unittests"""
         super(DjangoTestCase, cls).setUpClass()
-        User.objects.create_user('test', 'test@mozilla.com', 'test')
+        user = User.objects.create_user('test', 'test@mozilla.com', 'test')
+        user.user_permissions.clear()
+        content_type = ContentType.objects.get_for_model(CMUser)
+        perm = Permission.objects.get(content_type=content_type, codename='view_ec2spotmanager')
+        user.user_permissions.add(perm)
+        user = User.objects.create_user('test-noperm', 'test@mozilla.com', 'test')
+        user.user_permissions.clear()
 
     @classmethod
     def tearDownClass(cls):
         """Common teardown tasks for all server unittests"""
         User.objects.get(username='test').delete()
+        User.objects.get(username='test-noperm').delete()
         super(DjangoTestCase, cls).tearDownClass()
 
     @staticmethod

@@ -1,11 +1,19 @@
-"""
-Based on snippet from https://stackoverflow.com/a/46976284
-Docstring and original idea from https://stackoverflow.com/a/2164224
-"""
+from __future__ import print_function
 import re
+import traceback
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
+
+from crashmanager.models import User
+
+
+# This tiny middleware module allows us to see exceptions on stderr
+# when running a Django instance with runserver.py
+class ExceptionLoggingMiddleware(object):
+    def process_exception(self, request, exception):
+        print(traceback.format_exc())
 
 
 class RequireLoginMiddleware(object):
@@ -22,6 +30,8 @@ class RequireLoginMiddleware(object):
     LOGIN_REQUIRED_URLS_EXCEPTIONS is, conversely, where you explicitly
     define any exceptions (like login and logout URLs).
     """
+    # Based on snippet from https://stackoverflow.com/a/46976284
+    # Docstring and original idea from https://stackoverflow.com/a/2164224
     def __init__(self):
         self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
 
@@ -36,3 +46,27 @@ class RequireLoginMiddleware(object):
 
         # Non-matching requests are returned wrapped with the login_required decorator
         return login_required(view_func)(request, *view_args, **view_kwargs)
+
+
+class CheckAppPermissionsMiddleware(object):
+
+    def __init__(self):
+        self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # Get the app name
+        app = view_func.__module__.split('.', 1)[0]
+
+        if app == 'server':
+            return None
+
+        # If no login is required for this path, we can't check permissions
+        if self.exceptions.match(request.path):
+            return None
+
+        user = User.get_or_create_restricted(request.user)[0]
+
+        if not user.user.has_perm('crashmanager.view_' + app):
+            raise Http404
+
+        return None
