@@ -120,7 +120,8 @@ def update_spot_prices():
     regions = set()
     for cfg in PoolConfiguration.objects.all():
         if cfg.ec2_allowed_regions:
-            regions |= set(json.loads(cfg.ec2_allowed_regions))
+            allowed_regions = cfg.ec2_allowed_regions.lstrip('!')
+            regions |= set(json.loads(allowed_regions))
 
     now = timezone.now()
     expires = now + datetime.timedelta(hours=3)  # how long this data is valid (if not replaced)
