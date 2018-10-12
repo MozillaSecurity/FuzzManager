@@ -30,7 +30,6 @@ PROVIDERS = ['EC2Spot']
 class CloudProvider():
     '''
     Abstract base class that defines what interfaces Cloud Providers must implement
-
     '''
     @abstractmethod
     def terminate_instances(self, instances_ids_by_region):
@@ -40,7 +39,8 @@ class CloudProvider():
         @ptype instances_ids_by_region: dictionary
         @param instances_ids_by_region: keys are regions and values are instances.
 
-        @rtype none
+        @rtype: none
+        @return: none
         '''
         return
 
@@ -50,8 +50,7 @@ class CloudProvider():
         Start instances using specified configuration.
 
         @ptype config: FlatObject
-        @param config: a flattened config. We use this for any
-        cloud provider specific fields needed to create an instance
+        @param config: flattened config. We use this for any cloud provider specific fields needed to create an instance
 
         @ptype region: string
         @param region: region where instances are to be started
@@ -71,10 +70,9 @@ class CloudProvider():
         @ptype count: int
         @param count: number of instances to start
 
-        @rtype requested_instances: list
-        @return requested_instances: list of request ids given to us by the cloud provider. this can be
-        the instance ID if the provider does not use different IDs for instances and requests.
-
+        @rtype: list
+        @return: Request IDs given to us by the cloud provider. This can be the instance ID if the provider
+                 does not use different IDs for instances and requests.
         '''
         return
 
@@ -96,14 +94,13 @@ class CloudProvider():
         @param region: the region the instances are in
 
         @ptype instances: list
-        @param isntances: list of instance request ids
+        @param isntances: instance request IDs
 
         @ptype tags: dictionary
-        @param tags: dictionary of instance tags.
+        @param tags: instance tags.
 
-        @rtype tuple
-        @return tuple containing successful requests and failed requests.
-
+        @rtype: tuple
+        @return: tuple containing 2 dicts: successful request IDs and failed request IDs.
         '''
         return
 
@@ -120,10 +117,8 @@ class CloudProvider():
         @ptype region: string
         @param region: region where instances are located
 
-        @rtype instance_states: dictionary
-        @return running instances and their states. State must
-        comply with INSTANCE_STATE defined in CloudProvider
-
+        @rtype: dictionary
+        @return: running instances and their states. State must comply with INSTANCE_STATE defined in CloudProvider
         '''
         return
 
@@ -138,9 +133,8 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: flattened config
 
-        @rtype image_id: string
-        @return image_id: cloud provider ID for image
-
+        @rtype: string
+        @return: cloud provider ID for image
         '''
         return
 
@@ -150,9 +144,8 @@ class CloudProvider():
         '''
         returns ditionary of instance types and their number of cores
 
-        @rtype cores_per_instance: dictionary
-        @return cores_per_instance: instance types and how many cores per instance type
-
+        @rtype: dictionary
+        @return: instance types and how many cores per instance type
         '''
         return
 
@@ -165,9 +158,8 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: pulling regions from config
 
-        @rtype allowed_regions: list
-        @return allowed_regions: regions pulled from config
-
+        @rtype: list
+        @return: regions pulled from config
         '''
         return
 
@@ -180,9 +172,8 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: pulling image name from config
 
-        @rtype image_name: string
-        @return image_name: cloud specific image name from config
-
+        @rtype: string
+        @return: cloud specific image name from config
         '''
         return
 
@@ -195,9 +186,8 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: pulling instance types from config
 
-        @rtype instance_types: list
-        @return instance_types: list of cloud specific instance_types from config
-
+        @rtype: list
+        @return: list of cloud specific instance_types from config
         '''
         return
 
@@ -210,9 +200,8 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: pulling max_price from config
 
-        @rtype max_price: float
-        @return max_price cloud specific max_price
-
+        @rtype: float
+        @return: cloud specific max_price
         '''
         return
 
@@ -225,22 +214,10 @@ class CloudProvider():
         @ptype config: FlatObject
         @param config: pulling tags field
 
-        @rtype tags: dictionary
-        @return tags: cloud specific tags field
-
+        @rtype: dictionary
+        @return: cloud specific tags field
         '''
         return
-
-    @staticmethod
-    @abstractmethod
-    def uses_zones():
-        '''
-        Returns whether cloud provider requires zones or not
-
-        @rtype bool
-        @return True if provider uses zones
-
-        '''
 
     @staticmethod
     @abstractmethod
@@ -248,9 +225,8 @@ class CloudProvider():
         '''
         used to return name of cloud provider
 
-        @rtype name: string
-        @return name: string representation of the cloud provider
-
+        @rtype: string
+        @return: string representation of the cloud provider
         '''
         return
 
@@ -267,7 +243,6 @@ class CloudProvider():
 
         @rtype: bool
         @return: True if any cloud specific fields in config
-
         '''
         return
 
@@ -284,18 +259,15 @@ class CloudProvider():
         @ptype instance_types: list
         @param instance_types: list of instance_types
 
-        @rtype prices: dictionary
-        @return prices: dictionary of prices as specified above.
-
+        @rtype: dictionary
+        @return: dictionary of prices as specified above.
         '''
         return
 
     @staticmethod
     def get_instance(provider):
         '''
-
-        This is a method that is used to instanitate the provider class.
-
+        This is a method that is used to instantiate the provider class.
         '''
         classname = provider + 'CloudProvider'
         providerModule = __import__('ec2spotmanager.CloudProvider.%s' % classname, fromlist=[classname])

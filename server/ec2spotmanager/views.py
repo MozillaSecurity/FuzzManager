@@ -114,7 +114,7 @@ def viewPool(request, poolid):
 @deny_restricted_users
 def viewPoolPrices(request, poolid):
     cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
-    cloud_provider = CloudProvider.getInstance(PROVIDERS[0])
+    cloud_provider = CloudProvider.get_instance(PROVIDERS[0])
 
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()

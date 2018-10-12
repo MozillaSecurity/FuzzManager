@@ -34,31 +34,31 @@ class PoolConfiguration(models.Model):
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
-    ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
-    ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
-    userdata_file = models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
-                                     upload_to=get_storage_path, blank=True, null=True)
-    userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_types = models.CharField(max_length=4095, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
+    userdata_file = models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
+                                     upload_to=get_storage_path, blank=True, null=True)
+    userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
+    ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
+    ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
+    ec2_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_raw_config = models.CharField(max_length=4095, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
         self.ec2_tags_dict = None
         self.ec2_tags_override = None
+        self.ec2_raw_config_dict = None
+        self.ec2_raw_config_override = None
         self.userdata_macros_dict = None
         self.userdata_macros_override = None
         self.userdata = None
-        self.ec2_allowed_regions_list = None
-        self.ec2_allowed_regions_override = None
-        self.ec2_raw_config_dict = None
-        self.ec2_raw_config_override = None
         self.ec2_security_groups_list = None
         self.ec2_security_groups_override = None
+        self.ec2_allowed_regions_list = None
+        self.ec2_allowed_regions_override = None
         self.ec2_instance_types_list = None
         self.ec2_instance_types_override = None
 
@@ -73,22 +73,22 @@ class PoolConfiguration(models.Model):
         self.config_fields = [
             'size',
             'cycle_interval',
-            'ec2_max_price',
-            'userdata',
             'ec2_key_name',
             'ec2_image_name',
+            'ec2_max_price',
+            'userdata',
         ]
 
         self.list_config_fields = [
             'ec2_security_groups',
+            'ec2_allowed_regions',
             'ec2_instance_types',
-            'ec2_allowed_regions'
         ]
 
         self.dict_config_fields = [
             'ec2_tags',
-            'userdata_macros',
             'ec2_raw_config',
+            'userdata_macros',
         ]
 
         # For performance reasons we do not deserialize these fields
@@ -223,7 +223,7 @@ class PoolConfiguration(models.Model):
             if field not in flat_config or not flat_config[field]:
                 missing_fields.append(field)
 
-        # Most dicts/lists are optional except for the allowed_regions
+        # Most dicts/lists are optional except for the ec2_allowed_regions
         # field. Without that, we obviously cannot spawn any instances, so
         # we should report this field if it's missing or empty.
         if not flat_config.ec2_allowed_regions:
@@ -254,12 +254,12 @@ class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
     pool = models.ForeignKey(InstancePool, blank=True, null=True)
     hostname = models.CharField(max_length=255, blank=True, null=True)
-    size = models.IntegerField(default=1)
     status_code = models.IntegerField()
     status_data = models.CharField(max_length=4095, blank=True, null=True)
     instance_id = models.CharField(max_length=255, blank=True, null=True)
     region = models.CharField(max_length=255)
     zone = models.CharField(max_length=255)
+    size = models.IntegerField(default=1)
 
 
 class InstanceStatusEntry(models.Model):

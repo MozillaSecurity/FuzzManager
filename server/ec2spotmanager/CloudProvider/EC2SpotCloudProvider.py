@@ -55,8 +55,6 @@ class EC2SpotCloudProvider(CloudProvider):
         self.logger.info("Using instance type %s in region %s with availability zone %s.",
                          instance_type, region, zone)
         try:
-            userdata = userdata.decode('utf-8')
-
             images["default"]['user_data'] = userdata.encode("utf-8")
             images["default"]['placement'] = zone
             images["default"]['count'] = count
@@ -216,18 +214,14 @@ class EC2SpotCloudProvider(CloudProvider):
         return config.ec2_tags
 
     @staticmethod
-    def uses_zones():
-        return True
-
-    @staticmethod
     def get_name():
         return 'EC2Spot'
 
     @staticmethod
     def config_supported(config):
-        fields = ['ec2_allowed_regions', 'ec2_max_price', 'ec2_key_name', 'ec2_tags', 'ec2_security_groups',
-                  'ec2_instance_types', 'ec2_raw_config', 'ec2_image_name']
-        return any(key in config for key in fields)
+        fields = ['ec2_allowed_regions', 'ec2_max_price', 'ec2_key_name', 'ec2_security_groups',
+                  'ec2_instance_types', 'ec2_image_name']
+        return all(config[key] for key in fields)
 
     def get_prices_per_region(self, region_name, instance_types=None):
         '''Gets spot prices of the specified region and instance type'''

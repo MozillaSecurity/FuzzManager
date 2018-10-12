@@ -5,6 +5,8 @@ from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
 from celeryconf import app
+from .common.prices import get_prices
+from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
 
 
 STATS_DELTA_SECS = 60 * 15  # 30 minutes
@@ -15,7 +17,6 @@ STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statist
 @app.task
 def update_stats():
     from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance
-    from .CloudProvider.CloudProvider import INSTANCE_STATE
 
     instance_pools = InstancePool.objects.all()
 
@@ -106,10 +107,6 @@ def check_instance_pools():
 
 @app.task
 def update_prices():
-    from .models import PoolConfiguration
-    from .common.prices import get_prices
-    from .CloudProvider.CloudProvider import PROVIDERS, CloudProvider
-
     """Periodically refresh spot price history and store it in redis to be consumed when spot instances are created.
 
     Prices are stored in redis, with keys like:
@@ -117,9 +114,10 @@ def update_prices():
     and values as JSON objects {region: {az: [prices]}} like:
         '{"us-east-1": {"us-east-1a": [0.08000, ...]}}'
     """
+    from .models import PoolConfiguration
 
-    regions = set()
     for provider in PROVIDERS:
+        regions = set()
         cloud_provider = CloudProvider.get_instance(provider)
         for cfg in PoolConfiguration.objects.all():
             config = cfg.flatten()
@@ -127,6 +125,8 @@ def update_prices():
                 allowed_regions = cloud_provider.get_allowed_regions(config)
                 if allowed_regions:
                     regions |= set(allowed_regions)
+        if not regions:
+            continue
         prices = get_prices(regions, cloud_provider)
         now = timezone.now()
         expires = now + datetime.timedelta(hours=12)  # how long this data is valid (if not replaced)
