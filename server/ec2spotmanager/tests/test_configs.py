@@ -128,31 +128,33 @@ class CreateConfigViewTests(TestCase):
     def test_create(self):
         """Config created via form should be added to db"""
         self.client.login(username='test', password='test')
-        response = self.client.post(reverse(self.name), {'parent': '-1',
-                                                         'name': 'config #1',
-                                                         'size': '1',
-                                                         'cycle_interval': '1',  # activate tsmith mode
-                                                         'ec2_key_name': 'key #1',
-                                                         'ec2_security_groups': 'group #1',
-                                                         'ec2_instance_types': 'machine #1',
-                                                         'ec2_image_name': 'ami #1',
-                                                         'ec2_userdata': 'lorem ipsum',
-                                                         'ec2_userdata_macros': 'yup=123,nope=456',
-                                                         'ec2_allowed_regions': 'nowhere',
-                                                         'ec2_max_price': '0.01',
-                                                         'ec2_tags': 'good=true, bad=false',
-                                                         'ec2_raw_config': 'hello=world'})
+        response = self.client.post(reverse(self.name),
+                                    {'parent': '-1',
+                                        'name': 'config #1',
+                                        'size': '1',
+                                        'cycle_interval': '1',  # activate tsmith mode
+                                        'ec2_key_name': 'key #1',
+                                        'ec2_security_groups': 'group #1',
+                                        'ec2_instance_types': 'machine #1',
+                                        'ec2_image_name': 'ami #1',
+                                        'userdata': 'lorem ipsum',
+                                        'userdata_macros': 'yup=123,nope=456',
+                                        'ec2_allowed_regions': 'nowhere',
+                                        'ec2_max_price': '0.01',
+                                        'ec2_tags': 'good=true, bad=false',
+                                        'ec2_raw_config': 'hello=world'})
         log.debug(response)
         cfg = PoolConfiguration.objects.get(name='config #1')
         self.assertIsNone(cfg.parent)
         self.assertEqual(cfg.size, 1)
         self.assertEqual(cfg.cycle_interval, 1)
+
         self.assertEqual(cfg.ec2_key_name, 'key #1')
         self.assertEqual(json.loads(cfg.ec2_security_groups), ['group #1'])
         self.assertEqual(json.loads(cfg.ec2_instance_types), ['machine #1'])
         self.assertEqual(cfg.ec2_image_name, 'ami #1')
-        self.assertEqual(cfg.ec2_userdata_file.read(), b'lorem ipsum')
-        self.assertEqual(json.loads(cfg.ec2_userdata_macros), {'yup': '123', 'nope': '456'})
+        self.assertEqual(cfg.userdata_file.read(), b'lorem ipsum')
+        self.assertEqual(json.loads(cfg.userdata_macros), {'yup': '123', 'nope': '456'})
         self.assertEqual(json.loads(cfg.ec2_allowed_regions), ['nowhere'])
         self.assertEqual(cfg.ec2_max_price, decimal.Decimal('0.01'))
         self.assertEqual(json.loads(cfg.ec2_tags), {'good': 'true', 'bad': 'false'})
@@ -169,7 +171,7 @@ class CreateConfigViewTests(TestCase):
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
-                                 ec2_userdata_macros={'yup': '123', 'nope': '456'},
+                                 userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
                                  ec2_max_price='0.01',
                                  ec2_tags={'good': 'true', 'bad': 'false'},
@@ -211,7 +213,7 @@ class ViewConfigViewTests(TestCase):
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
-                                 ec2_userdata_macros={'yup': '123', 'nope': '456'},
+                                 userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
                                  ec2_max_price='0.01',
                                  ec2_tags={'good': 'true', 'bad': 'false'},
@@ -255,7 +257,7 @@ class EditConfigViewTests(TestCase):
                                  ec2_security_groups=['group #1'],
                                  ec2_instance_types=['machine #1'],
                                  ec2_image_name='ami #1',
-                                 ec2_userdata_macros={'yup': '123', 'nope': '456'},
+                                 userdata_macros={'yup': '123', 'nope': '456'},
                                  ec2_allowed_regions=['nowhere'],
                                  ec2_max_price='0.01',
                                  ec2_tags={'good': 'true', 'bad': 'false'},

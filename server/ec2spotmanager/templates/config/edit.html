@@ -80,9 +80,9 @@
              value="{{ config.ec2_image_name|default:"" }}">
       <br/>
 
-      <label for="id_ec2_userdata">EC2 Userdata Script</label><br/>
-      <textarea id="id_ec2_userdata" class="form-control" name="ec2_userdata"
-                spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
+      <label for="id_userdata">EC2 Userdata Script</label><br/>
+      <textarea id="id_userdata" class="form-control" name="userdata"
+                spellcheck='false'>{{ config.userdata|default:"" }}</textarea>
       <br/>
 
       <fieldset class="ec2-radio-group">
@@ -92,12 +92,12 @@
       </fieldset>
       <br/>
 
-      <label for="id_ec2_userdata_macros">EC2 Userdata Macros</label><br/>
-      <input id="id_ec2_userdata_macros" class="form-control" name="ec2_userdata_macros" type="text"
-             value="{{ config.ec2_userdata_macros_dict|dictcsv }}">
-      <input id="id_ec2_userdata_macros_override" name="ec2_userdata_macros_override" type="checkbox"
-             {% if config.ec2_userdata_macros_override %}checked{% endif %} title="Overwrite parent config">
-      <label class="no-bold" for="id_ec2_userdata_macros_override">Overwrite parent config</label>
+      <label for="id_userdata_macros">EC2 Userdata Macros</label><br/>
+      <input id="id_userdata_macros" class="form-control" name="userdata_macros" type="text"
+             value="{{ config.userdata_macros_dict|dictcsv }}">
+      <input id="id_userdata_macros_override" name="userdata_macros_override" type="checkbox"
+             {% if config.userdata_macros_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_userdata_macros_override">Overwrite parent config</label>
       <br/>
 
       <label for="id_ec2_allowed_regions">EC2 Allowed Regions</label><br/>
@@ -121,7 +121,7 @@
       <label class="no-bold" for="id_ec2_tags_override">Overwrite parent config</label>
       <br/>
 
-      <label for="id_ec2_raw_config">Additional Raw Configuration</label><br/>
+      <label for="id_ec2_raw_config">Additional EC2 Raw Configuration</label><br/>
       <input id="id_ec2_raw_config" class="form-control" name="ec2_raw_config" type="text"
              value="{{ config.ec2_raw_config_dict|dictcsv }}">
       <input id="id_ec2_raw_config_override" name="ec2_raw_config_override" type="checkbox"

@@ -92,21 +92,21 @@
 		<thead>
 			<tr>
 				<th style="width: 80px;">Created</th>
-				<th style="width: 40px;">EC2 Instance ID</th>
+				<th style="width: 40px;">Instance ID</th>
 				<th style="width: 100px;">Hostname</th>
 				<th style="width: 50px;">Status Code</th>
 				<th style="width: 150px;">Status Data</th>
-				<th style="width: 100px;">EC2 Region/Zone</th>
+				<th style="width: 100px;">Region/Zone</th>
 			</tr>
 		</thead>
 		<tbody>
 		  {% for instance in instances %}<tr class="{% cycle 'odd' 'even' %}">
  			<td>{{ instance.created|date:"r" }}<br/>{{ instance.created|date_ago }}</td>
-			<td>{{ instance.ec2_instance_id|escape }}</td>
+			<td>{{ instance.instance_id|escape }}</td>
 			<td>{{ instance.hostname|escape }}</td>
 			<td>{{ instance.status_code|escape }} - {{ instance.status_code_text }}</td>
 			<td>{% if instance.status_data %}<pre>{{ instance.status_data|escape }}</pre>{% else %}N/A{% endif %}</td>
-			<td>{{ instance.ec2_region|escape }} / {{ instance.ec2_zone|escape }}</td>
+			<td>{{ instance.region|escape }} / {{ instance.zone|escape }}</td>
 			</tr>{% endfor %}
 		</tbody>
 	</table>

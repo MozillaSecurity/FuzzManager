@@ -26,8 +26,8 @@
 		<tr><td>EC2 Security Groups</td><td>{% if config.ec2_security_groups_list %} {{ config.ec2_security_groups_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_security_groups_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Instance Types</td><td>{% if config.ec2_instance_types_list %} {{ config.ec2_instance_types_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_instance_types_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Image Name</td><td>{% if config.ec2_image_name %} {{ config.ec2_image_name }} {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>EC2 Userdata File</td><td>{% if config.ec2_userdata_file %} {{ config.ec2_userdata_file }} {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>EC2 Userdata Macros</td><td>{% if config.ec2_userdata_macros_dict %} {{ config.ec2_userdata_macros_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.ec2_userdata_macros_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>Userdata File</td><td>{% if config.userdata_file %} {{ config.userdata_file }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>Userdata Macros</td><td>{% if config.userdata_macros_dict %} {{ config.userdata_macros_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.userdata_macros_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Allowed Regions</td><td>{% if config.ec2_allowed_regions_list %} {{ config.ec2_allowed_regions_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_allowed_regions_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Maximum Price (per core)</td><td>{% if config.ec2_max_price %} {{ config.ec2_max_price }} USD {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>EC2 Additional Tags</td><td>{% if config.ec2_tags_dict %} {{ config.ec2_tags_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.ec2_tags_override %} (overwrite parent) {% endif %}</td></tr>

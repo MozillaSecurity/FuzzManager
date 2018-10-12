@@ -1,4 +1,5 @@
 import json
+from operator import attrgetter
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
 from django.conf import settings
@@ -10,20 +11,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import fasteners
 import redis
-from operator import attrgetter
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .models import InstancePool, PoolConfiguration, Instance, \
-    INSTANCE_STATE_CODE, INSTANCE_STATE, PoolStatusEntry
+from server.views import deny_restricted_users
+from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry
 from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from .serializers import MachineStatusSerializer
-from .common.ec2 import CORES_PER_INSTANCE
-
-from server.views import deny_restricted_users
+from .CloudProvider.CloudProvider import INSTANCE_STATE, INSTANCE_STATE_CODE, PROVIDERS, CloudProvider
 
 
 def renderError(request, err):
@@ -117,16 +114,17 @@ def viewPool(request, poolid):
 @deny_restricted_users
 def viewPoolPrices(request, poolid):
     cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    cloud_provider = CloudProvider.getInstance(PROVIDERS[0])
 
     pool = get_object_or_404(InstancePool, pk=poolid)
     config = pool.config.flatten()
-
-    allowed_regions = set(config.ec2_allowed_regions)
+    cores_per_instance = cloud_provider.get_cores_per_instance()
+    allowed_regions = set(cloud_provider.get_allowed_regions(config))
     zones = set()
     latest_price_by_zone = {}
 
-    for instance_type in config.ec2_instance_types:
-        prices = cache.get('ec2spot:price:' + instance_type)
+    for instance_type in cloud_provider.get_instance_types(config):
+        prices = cache.get('%s:price:%s' % (cloud_provider.get_name(), instance_type))
         if prices is None:
             continue
         prices = json.loads(prices)
@@ -136,7 +134,7 @@ def viewPoolPrices(request, poolid):
             for zone in prices[region]:
                 zones.add(zone)
                 latest_price_by_zone[zone] = min(latest_price_by_zone.get(zone, 9999),
-                                                 prices[region][zone][0] / CORES_PER_INSTANCE[instance_type])
+                                                 prices[region][zone][0] / cores_per_instance[instance_type])
 
     prices = []
     for zone in sorted(zones):
@@ -325,8 +323,8 @@ def __handleConfigPOST(request, config):
     if request.POST['ec2_allowed_regions']:
         config.ec2_allowed_regions_list = [x.strip() for x in request.POST['ec2_allowed_regions'].split(',')]
     else:
-        config.ec2_allowed_regions_list = None
-    config.ec2_allowed_regions_override = request.POST.get('ec2_allowed_regions_override', 'off') == 'on'
+        config.allowed_regions_list = None
+    config.allowed_regions_override = request.POST.get('allowed_regions_override', 'off') == 'on'
 
     if request.POST['ec2_security_groups']:
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
@@ -340,16 +338,17 @@ def __handleConfigPOST(request, config):
         config.ec2_instance_types_list = None
     config.ec2_instance_types_override = request.POST.get('ec2_instance_types_override', 'off') == 'on'
 
-    if request.POST['ec2_userdata_macros']:
-        config.ec2_userdata_macros_dict = dict(
-            y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_userdata_macros'].split(',')])
+    if request.POST['userdata_macros']:
+        config.userdata_macros_dict = dict(
+            y.split('=', 1) for y in [x.strip() for x in request.POST['userdata_macros'].split(',')])
     else:
-        config.ec2_userdata_macros_dict = None
-    config.ec2_userdata_macros_override = request.POST.get('ec2_userdata_macros_override', 'off') == 'on'
+        config.userdata_macros_dict = None
+    config.userdata_macros_override = request.POST.get('userdata_macros_override', 'off') == 'on'
 
     if request.POST['ec2_tags']:
         config.ec2_tags_dict = dict(y.split('=', 1) for y in [x.strip() for x in request.POST['ec2_tags'].split(',')])
     else:
+
         config.ec2_tags_dict = None
     config.ec2_tags_override = request.POST.get('ec2_tags_override', 'off') == 'on'
 
@@ -363,17 +362,17 @@ def __handleConfigPOST(request, config):
     # Ensure we have a primary key before attempting to store files
     config.save()
 
-    if request.POST['ec2_userdata']:
-        if not config.ec2_userdata_file.name:
-            config.ec2_userdata_file.save("default.sh", ContentFile(""))
-        config.ec2_userdata = request.POST['ec2_userdata']
-        if request.POST.get('ec2_userdata_ff', 'unix') == 'unix':
-            config.ec2_userdata = config.ec2_userdata.replace('\r\n', '\n')
+    if request.POST['userdata']:
+        if not config.userdata_file.name:
+            config.userdata_file.save("default.sh", ContentFile(""))
+        config.userdata = request.POST['userdata']
+        if request.POST.get('userdata_ff', 'unix') == 'unix':
+            config.userdata = config.userdata.replace('\r\n', '\n')
         config.storeTestAndSave()
     else:
-        if config.ec2_userdata_file:
-            # Forcing test saving with ec2_userdata unset will clean the file
-            config.ec2_userdata = None
+        if config.userdata_file:
+            # Forcing test saving with userdata unset will clean the file
+            config.userdata = None
             config.storeTestAndSave()
 
     return redirect('ec2spotmanager:configview', configid=config.pk)
@@ -420,7 +419,7 @@ def editConfig(request, configid):
         data = {'config': config,
                 'configurations': configurations,
                 'edit': True,
-                'userdata_ff': 'dos' if (b'\r\n' in (config.ec2_userdata or b'')) else 'unix'}
+                'userdata_ff': 'dos' if (b'\r\n' in (config.userdata or b'')) else 'unix'}
         return render(request, 'config/edit.html', data)
     else:
         raise SuspiciousOperation

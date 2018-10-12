@@ -41,7 +41,7 @@ class TestCase(DjangoTestCase):
 
     @staticmethod
     def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_name=None, ec2_security_groups=None,
-                      ec2_instance_types=None, ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
+                      ec2_instance_types=None, ec2_image_name=None, userdata_macros=None, ec2_allowed_regions=None,
                       ec2_max_price=None, ec2_tags=None, ec2_raw_config=None):
         result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
                                                   ec2_key_name=ec2_key_name,
@@ -53,8 +53,8 @@ class TestCase(DjangoTestCase):
             result.ec2_instance_types_list = ec2_instance_types
         if ec2_allowed_regions is not None:
             result.ec2_allowed_regions_list = ec2_allowed_regions
-        if ec2_userdata_macros is not None:
-            result.ec2_userdata_macros_dict = ec2_userdata_macros
+        if userdata_macros is not None:
+            result.userdata_macros_dict = userdata_macros
         if ec2_tags is not None:
             result.ec2_tags_dict = ec2_tags
         if ec2_raw_config is not None:
@@ -84,7 +84,7 @@ class TestCase(DjangoTestCase):
                         ec2_region="",
                         ec2_zone=""):
         result = Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
-                                         ec2_instance_id=ec2_instance_id, ec2_region=ec2_region, ec2_zone=ec2_zone)
+                                         instance_id=ec2_instance_id, region=ec2_region, zone=ec2_zone)
         log.debug("Created Instance pk=%d", result.pk)
         return result
 

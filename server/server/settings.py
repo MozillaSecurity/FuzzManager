@@ -321,7 +321,7 @@ REDIS_DB = 0
 #         'schedule': 60,
 #     },
 #     'Cache EC2 spot market pricing in Redis': {
-#         'task': 'ec2spotmanager.cron.update_spot_prices',
+#         'task': 'ec2spotmanager.cron.update_prices',
 #         'schedule': 15 * 60,
 #     },
 # }
