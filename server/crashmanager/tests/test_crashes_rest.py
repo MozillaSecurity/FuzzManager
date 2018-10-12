@@ -36,6 +36,17 @@ class RestCrashesTests(APITestCase, TestCase):
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        url = '/crashmanager/rest/crashes/'
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+
     def test_auth(self):
         """test that authenticated requests work"""
         user = User.objects.get(username='test')
@@ -347,6 +358,17 @@ class RestCrashTests(APITestCase, TestCase):
         self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
+
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = '/crashmanager/rest/crashes/1/'
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
 
     def test_auth(self):
         """test that authenticated requests work"""

@@ -35,6 +35,17 @@ class RestStatusTests(APITestCase, TestCase):
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = '/ec2spotmanager/rest/report/'
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+
     def test_get(self):
         """get always returns an empty object"""
         user = User.objects.get(username='test')

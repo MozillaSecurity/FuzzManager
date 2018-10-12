@@ -38,6 +38,17 @@ class RestPoolCycleTests(APITestCase, TestCase):
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = '/ec2spotmanager/rest/pool/1/cycle/'
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
@@ -100,6 +111,17 @@ class RestPoolEnableTests(APITestCase, TestCase):
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = '/ec2spotmanager/rest/pool/1/enable/'
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
@@ -160,6 +182,17 @@ class RestPoolDisableTests(APITestCase, TestCase):
         self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
+
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = '/ec2spotmanager/rest/pool/1/disable/'
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
 
     def test_patch(self):
         """patch should not be allowed"""
@@ -223,6 +256,17 @@ class RestPoolChartDetailedTests(APITestCase, TestCase):
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1})
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+
     def test_patch(self):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
@@ -278,6 +322,17 @@ class RestPoolChartAccumulatedTests(APITestCase, TestCase):
         self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
         self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
+
+    def test_no_perm(self):
+        """must yield forbidden without permission"""
+        user = User.objects.get(username='test-noperm')
+        self.client.force_authenticate(user=user)
+        url = reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1})
+        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
+        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
 
     def test_patch(self):
         """patch should not be allowed"""

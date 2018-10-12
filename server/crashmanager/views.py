@@ -12,7 +12,6 @@ import json
 import operator
 import os
 from rest_framework import filters, mixins, viewsets
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,6 +23,7 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
+from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
 
@@ -1338,7 +1338,7 @@ def json_to_query(json_str):
 
 class AbstractDownloadView(APIView):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (CheckAppPermission,)
 
     def response(self, file_path, filename, content_type='application/octet-stream'):
         if not os.path.exists(file_path):

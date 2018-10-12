@@ -13,9 +13,9 @@ import fasteners
 import redis
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from server.auth import CheckAppPermission
 from server.views import deny_restricted_users
 from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry
 from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
@@ -673,7 +673,7 @@ class MachineStatusViewSet(APIView):
 
 class PoolCycleView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
         pool = get_object_or_404(InstancePool, pk=poolid)
@@ -689,7 +689,7 @@ class PoolCycleView(APIView):
 
 class PoolEnableView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
         pool = get_object_or_404(InstancePool, pk=poolid)
@@ -706,7 +706,7 @@ class PoolEnableView(APIView):
 
 class PoolDisableView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
         pool = get_object_or_404(InstancePool, pk=poolid)

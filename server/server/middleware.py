@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
 from crashmanager.models import User
+from .auth import CheckAppPermission
 
 
 # This tiny middleware module allows us to see exceptions on stderr
@@ -64,9 +65,9 @@ class CheckAppPermissionsMiddleware(object):
         if self.exceptions.match(request.path):
             return None
 
-        user = User.get_or_create_restricted(request.user)[0]
+        User.get_or_create_restricted(request.user)  # create a CrashManager user if needed to apply defaults
 
-        if not user.user.has_perm('crashmanager.view_' + app):
+        if not CheckAppPermission().has_permission(request, view_func):
             raise Http404
 
         return None
