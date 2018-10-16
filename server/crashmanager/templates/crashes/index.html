@@ -111,11 +111,13 @@
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&platform__name={{ entry.platform.name|urlencode }}">{{ entry.platform.name|escape }}</a></td>
 	<td><a title="Add to search" href="{{request.path}}?{{request.GET.urlencode}}&os__name={{ entry.os.name|urlencode }}">
 		{% if entry.os.name|escape == 'linux' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/linux.png"/>
+			<img width="16px" height="16px" alt="Linux" src="{{STATIC_URL}}img/os/linux.png"/>
 		{% elif entry.os.name|escape == 'macosx' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/macosx.png"/>
+			<img width="16px" height="16px" alt="MacOS" src="{{STATIC_URL}}img/os/macosx.png"/>
 		{% elif entry.os.name|escape == 'windows' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/windows.png"/>
+			<img width="16px" height="16px" alt="Windows" src="{{STATIC_URL}}img/os/windows.png"/>
+		{% elif entry.os.name|escape == 'android' %}
+			<img width="16px" height="16px" alt="Android" src="{{STATIC_URL}}img/os/android.png"/>
 		{% else %}
 			{{ entry.os.name|escape }}
 		{% endif %}

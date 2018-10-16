@@ -35,11 +35,13 @@
 	<td>{{ entry.platform.name|escape }}</td>
 	<td>
 		{% if entry.os.name|escape == 'linux' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/linux.png"/>
+			<img width="16px" height="16px" alt="Linux" src="{{STATIC_URL}}img/os/linux.png"/>
 		{% elif entry.os.name|escape == 'macosx' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/macosx.png"/>
+			<img width="16px" height="16px" alt="MacOS" src="{{STATIC_URL}}img/os/macosx.png"/>
 		{% elif entry.os.name|escape == 'windows' %}
-			<img width="16px" height="16px" src="{{STATIC_URL}}img/os/windows.png"/>
+			<img width="16px" height="16px" alt="Windows" src="{{STATIC_URL}}img/os/windows.png"/>
+		{% elif entry.os.name|escape == 'android' %}
+			<img width="16px" height="16px" alt="Android" src="{{STATIC_URL}}img/os/android.png"/>
 		{% else %}
 			{{ entry.os.name|escape }}
 		{% endif %}
