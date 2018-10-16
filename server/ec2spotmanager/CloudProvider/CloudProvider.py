@@ -26,6 +26,24 @@ INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.items())
 PROVIDERS = ['EC2Spot']
 
 
+class CloudProviderError(Exception):
+    TYPE = 'unclassified'
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return '%s: %s (%s)' % (type(self).__name__, self.message, self.TYPE)
+
+
+class CloudProviderTemporaryFailure(CloudProviderError):
+    TYPE = 'temporary-failure'
+
+
+class CloudProviderInstanceCountError(CloudProviderError):
+    TYPE = 'max-spot-instance-count-exceeded'
+
+
 @six.add_metaclass(ABCMeta)
 class CloudProvider():
     '''

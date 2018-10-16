@@ -5,7 +5,6 @@ from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
 from celeryconf import app
-from .common.prices import get_prices
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
 
 
@@ -127,7 +126,13 @@ def update_prices():
                     regions |= set(allowed_regions)
         if not regions:
             continue
-        prices = get_prices(regions, cloud_provider)
+
+        prices = {}
+        for region in regions:
+            for instance_type, price_data in cloud_provider.get_prices_per_region(region).items():
+                prices.setdefault(instance_type, {})
+                prices[instance_type].update(price_data)
+
         now = timezone.now()
         expires = now + datetime.timedelta(hours=12)  # how long this data is valid (if not replaced)
         # use pipeline() so everything is in 1 transaction per provider.

@@ -1,7 +1,8 @@
-import ssl
-import socket
-import logging
 import datetime
+import functools
+import logging
+import socket
+import ssl
 import botocore
 import boto3
 import boto.ec2
@@ -9,112 +10,102 @@ import boto.exception
 from django.utils import timezone
 from django.conf import settings
 from laniakea.core.providers.ec2 import EC2Manager
-from .CloudProvider import CloudProvider, INSTANCE_STATE
+from .CloudProvider import (CloudProvider, CloudProviderTemporaryFailure, CloudProviderInstanceCountError,
+                            CloudProviderError, INSTANCE_STATE)
 from ..tasks import SPOTMGR_TAG
 from ..common.ec2 import CORES_PER_INSTANCE
+
+
+def wrap_provider_errors(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(*args, **kwds):
+        try:
+            return wrapped(*args, **kwds)
+        except (ssl.SSLError, socket.error) as exc:
+            raise CloudProviderTemporaryFailure('%s: %s' % (wrapped.__name__, exc))
+        except CloudProviderError:
+            raise
+        except Exception as exc:
+            raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, exc))
+
+    return wrapper
 
 
 class EC2SpotCloudProvider(CloudProvider):
     def __init__(self):
         self.logger = logging.getLogger("ec2spotmanager")
 
+    @wrap_provider_errors
     def terminate_instances(self, instances_ids_by_region):
-
-        for region in instances_ids_by_region:
+        for region, instance_ids in instances_ids_by_region.items():
             cluster = EC2Manager(None)
-            try:
-                cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-            except Exception as msg:
-                raise Exception({"type": "unclassified", "data": msg})
+            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
-            try:
-                self.logger.info("Terminating %s instances in region %s",
-                                 len(instances_ids_by_region[region]), region)
-                boto_instances = cluster.find(instance_ids=instances_ids_by_region[region])
-                # Data consistency checks
-                for boto_instance in boto_instances:
-                    # state_code is a 16-bit value where the high byte is
-                    # an opaque internal value and should be ignored.
-                    state_code = boto_instance.state_code & 255
-                    if not ((boto_instance.id in instances_ids_by_region[region]) or
-                            (state_code == INSTANCE_STATE['shutting-down'] or
-                             state_code == INSTANCE_STATE['terminated'])):
-                        self.logger.error("Instance with EC2 ID %s (status %d) "
-                                          "is not in region list for region %s",
-                                          boto_instance.id, state_code, region)
+            self.logger.info("Terminating %s instances in region %s", len(instance_ids), region)
+            boto_instances = cluster.find(instance_ids=instance_ids)
+            # Data consistency checks
+            for boto_instance in boto_instances:
+                # state_code is a 16-bit value where the high byte is
+                # an opaque internal value and should be ignored.
+                state_code = boto_instance.state_code & 255
+                if not ((boto_instance.id in instance_ids) or
+                        (state_code == INSTANCE_STATE['shutting-down'] or
+                         state_code == INSTANCE_STATE['terminated'])):
+                    self.logger.error("Instance with EC2 ID %s (status %d) is not in region list for region %s",
+                                      boto_instance.id, state_code, region)
 
-                    cluster.terminate(boto_instances)
-            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
-                self.logger.exception("terminate_instances: boto failure: %s", msg)
-                return
+                cluster.terminate(boto_instances)
 
+    @wrap_provider_errors
     def start_instances(self, config, region, zone, userdata, image, instance_type, count=1):
         images = self._create_laniakea_images(config)
 
         self.logger.info("Using instance type %s in region %s with availability zone %s.",
                          instance_type, region, zone)
+        images["default"]['user_data'] = userdata.encode("utf-8")
+        images["default"]['placement'] = zone
+        images["default"]['count'] = count
+        images["default"]['instance_type'] = instance_type
+
+        cluster = EC2Manager(None)
+        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+
+        images['default']['image_id'] = image
+        images['default'].pop('image_name')
+        cluster.images = images
+
         try:
-            images["default"]['user_data'] = userdata.encode("utf-8")
-            images["default"]['placement'] = zone
-            images["default"]['count'] = count
-            images["default"]['instance_type'] = instance_type
+            instances = []
+            self.logger.info("Creating %dx %s instances... (%d cores total)", count,
+                             instance_type, count * CORES_PER_INSTANCE[instance_type])
+            for ec2_request in cluster.create_spot_requests(config.ec2_max_price *
+                                                            CORES_PER_INSTANCE[instance_type],
+                                                            delete_on_termination=True,
+                                                            timeout=10 * 60):
+                instances.append(ec2_request)
 
-            cluster = EC2Manager(None)
-            try:
-                cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            return instances
 
-                images['default']['image_id'] = image
-                images['default'].pop('image_name')
-                cluster.images = images
-            except ssl.SSLError as msg:
-                self.logger.warning("start_instances: Temporary failure in region %s: %s", region, msg)
-                raise Exception({"type": "temporary-failure", "data": "Temporary failure occured: %s" % str(msg)})
+        except (boto.exception.EC2ResponseError, boto.exception.BotoServerError) as msg:
+            if "MaxSpotInstanceCountExceeded" in str(msg):
+                self.logger.warning("start_instances: Maximum instance count exceeded for region %s",
+                                    region)
+                raise CloudProviderInstanceCountError(
+                    "Auto-selected region exceeded its maximum spot instance count.")
+            elif "Service Unavailable" in str(msg):
+                raise CloudProviderTemporaryFailure("start_instances in region %s: %s" % (region, msg))
+            raise
 
-            except Exception as msg:
-                self.logger.exception("start_instances: laniakea failure: %s", msg)
-                raise Exception({"type": "unclassified", "data": str(msg)})
-
-            try:
-                instances = []
-                self.logger.info("Creating %dx %s instances... (%d cores total)", count,
-                                 instance_type, count * CORES_PER_INSTANCE[instance_type])
-                for ec2_request in cluster.create_spot_requests(config.ec2_max_price *
-                                                                CORES_PER_INSTANCE[instance_type],
-                                                                delete_on_termination=True,
-                                                                timeout=10 * 60):
-                    instances.append(ec2_request)
-
-                return instances
-
-            except (boto.exception.EC2ResponseError, boto.exception.BotoServerError, ssl.SSLError, socket.error) as msg:
-                if "MaxSpotInstanceCountExceeded" in str(msg):
-                    self.logger.warning("start_instances: Maximum instance count exceeded for region %s",
-                                        region)
-                    raise Exception({"type": "max-spot-instance-count-exceeded",
-                                     "data": "Auto-selected region exceeded its maximum spot instance count."})
-                elif "Service Unavailable" in str(msg):
-                    self.logger.warning("start_instances: Temporary failure in region %s: %s",
-                                        region, msg)
-                    raise Exception({"type": "temporary-failure", "data": "Temporary failure occurred: %s" % str(msg)})
-                else:
-                    self.logger.exception("start_instances: boto failure: %s", msg)
-                    raise Exception({"type": "unclassified", "data": "Unclassified error occurred: %s" % str(msg)})
-        except Exception as msg:
-            self.logger.exception("start_instances: unhandled failure: %s", msg)
-            raise Exception({"type": "unclassified", "data": "Unclassified error occurred: %s" % str(msg)})
-
+    @wrap_provider_errors
     def check_instances_requests(self, region, instances, tags):
         successful_requests = {}
         failed_requests = {}
 
         cluster = EC2Manager(None)
-        try:
-            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-        except Exception as msg:
-            raise Exception({'type': 'unclassified', 'data': msg})
+        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         results = cluster.check_spot_requests(instances, tags)
 
@@ -159,15 +150,13 @@ class EC2SpotCloudProvider(CloudProvider):
 
         return (successful_requests, failed_requests)
 
+    @wrap_provider_errors
     def check_instances_state(self, pool_id, region):
 
         instance_states = {}
         cluster = EC2Manager(None)
-        try:
-            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-        except Exception as msg:
-            raise Exception({'type': 'unclassified', 'data': msg})
+        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
         boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
 
@@ -179,15 +168,13 @@ class EC2SpotCloudProvider(CloudProvider):
 
         return instance_states
 
+    @wrap_provider_errors
     def get_image(self, region, config):
         cluster = EC2Manager(None)
-        try:
-            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-            ami = cluster.resolve_image_name(config.ec2_image_name)
-            return ami
-        except ssl.SSLError as msg:
-            raise Exception({'type': 'temporary-failure', 'data': 'Temporary failure occured: %s' % msg})
+        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+        ami = cluster.resolve_image_name(config.ec2_image_name)
+        return ami
 
     @staticmethod
     def get_cores_per_instance():
@@ -223,6 +210,7 @@ class EC2SpotCloudProvider(CloudProvider):
                   'ec2_instance_types', 'ec2_image_name']
         return all(config[key] for key in fields)
 
+    @wrap_provider_errors
     def get_prices_per_region(self, region_name, instance_types=None):
         '''Gets spot prices of the specified region and instance type'''
         prices = {}  # {instance-type: region: {az: [prices]}}}

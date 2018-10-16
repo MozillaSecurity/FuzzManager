@@ -8,7 +8,7 @@ from laniakea.core.userdata import UserData
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_price_median
-from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
+from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider, CloudProviderError
 
 
 logger = logging.getLogger("ec2spotmanager")
@@ -23,14 +23,13 @@ def check_instance_pool(pool_id):
 
     lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % pool_id)
 
+    instance_pool = InstancePool.objects.get(pk=pool_id)
+
     if not lock.acquire(blocking=False):
         logger.warning('[Pool %d] Another check still in progress, exiting.', pool_id)
         return
 
     try:
-
-        instance_pool = InstancePool.objects.get(pk=pool_id)
-
         criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool=instance_pool, isCritical=True)
 
         if criticalPoolStatusEntries:
@@ -112,6 +111,11 @@ def check_instance_pool(pool_id):
                 _terminate_pool_instances(instance_pool, instances)
         else:
             logger.debug("[Pool %d] Size is ok.", instance_pool.id)
+
+    except CloudProviderError as err:
+        _update_pool_status(instance_pool, err.TYPE, err.message)
+    except Exception as msg:
+        _update_pool_status(instance_pool, 'unclassified', str(msg))
 
     finally:
         lock.release()
@@ -257,8 +261,10 @@ def _start_pool_instances(pool, config, count=1):
             instance.size = cores_per_instance[instance_type]
             instance.save()
 
+    except CloudProviderError as err:
+        _update_pool_status(pool, err.TYPE, err.message)
     except Exception as msg:
-        _update_pool_status(pool, {'type': 'unclassified', 'data': msg})
+        _update_pool_status(pool, 'unclassified', str(msg))
 
 
 def _setup_userdata(config, pool):
@@ -273,7 +279,7 @@ def _setup_userdata(config, pool):
 
     if not userdata:
         logger.error("[Pool %d] Failed to compile userdata.", pool.id)
-        raise Exception({"type": "unclassified", "data": "Configuration error: Failed to compile userdata"})
+        raise Exception("Configuration error: Failed to compile userdata")
 
     return userdata
 
@@ -284,8 +290,10 @@ def _terminate_pool_instances(running_instances, instance_pool):
     instance_ids = _get_instance_ids_by_region(running_instances)
     try:
         cloud_provider.terminate_instances(instance_ids)
+    except CloudProviderError as err:
+        _update_pool_status(instance_pool, err.TYPE, err.message)
     except Exception as msg:
-        _update_pool_status(instance_pool, {'type': 'unclassified', 'data': msg})
+        _update_pool_status(instance_pool, 'unclassified', str(msg))
 
 
 def _get_instance_ids_by_region(instances):
@@ -306,12 +314,12 @@ def _get_instances_by_ids(instances):
     return instances_by_ids
 
 
-def _update_pool_status(pool, msg):
+def _update_pool_status(pool, type_, message):
     from .models import PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
     entry = PoolStatusEntry()
-    entry.type = POOL_STATUS_ENTRY_TYPE[msg['type']]
+    entry.type = POOL_STATUS_ENTRY_TYPE[type_]
     entry.pool = pool
-    entry.msg = str(msg['data'])
+    entry.msg = message
     entry.isCritical = True
     entry.save()
 
@@ -381,7 +389,7 @@ def _update_pool_instances(pool, config):
                         logger.warning("Blacklisted %s for 12h", key)
                         inst.delete()
                     elif failed_requests[req_id]['action'] == 'disable_pool':
-                        _update_pool_status(pool, {'type': 'unclassifed', 'data': 'request failed'})
+                        _update_pool_status(pool, 'unclassifed', 'request failed')
 
             cloud_instances = cloud_provider.check_instances_state(pool.pk, region)
 
@@ -437,8 +445,12 @@ def _update_pool_instances(pool, config):
                     instance.status_code = cloud_instances[cloud_instance]['status']
                     instance.save()
 
+        except CloudProviderError as err:
+            _update_pool_status(pool, err.TYPE, err.message)
+            return
         except Exception as msg:
-            _update_pool_status(pool, {'type': 'unclassified', 'data': msg})
+            _update_pool_status(pool, 'unclassified', str(msg))
+            return
 
     for instance in instances_left:
         reasons = []
