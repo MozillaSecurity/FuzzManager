@@ -208,7 +208,7 @@ class EC2SpotCloudProvider(CloudProvider):
     def config_supported(config):
         fields = ['ec2_allowed_regions', 'ec2_max_price', 'ec2_key_name', 'ec2_security_groups',
                   'ec2_instance_types', 'ec2_image_name']
-        return all(config[key] for key in fields)
+        return all(config.get(key) for key in fields)
 
     @wrap_provider_errors
     def get_prices_per_region(self, region_name, instance_types=None):
