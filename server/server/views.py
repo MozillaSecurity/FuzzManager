@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
+from django.urls import resolve, reverse
 import collections
 import functools
 import json
@@ -27,7 +28,8 @@ def index(request):
 
 def login(request):
     if settings.USE_OIDC:
-        return redirect('oidc_authentication_init')
+        auth_view = resolve(reverse('oidc_authentication_init')).func
+        return auth_view(request)
     return django_login(request)
 
 
