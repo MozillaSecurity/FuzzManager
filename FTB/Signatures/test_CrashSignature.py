@@ -441,6 +441,9 @@ testSignatureStackSize = '''{"symptoms": [
 ]}
 '''
 
+testAssertionPathFwSlashes = 'Assertion failure: false, at /srv/repos/mozilla-central/js/src/vm/SelfHosting.cpp:362'
+testAssertionPathBwSlashes = r'Assertion failure: false, at c:\srv\repos\mozilla-central\js\src\vm\SelfHosting.cpp:362'
+
 
 class SignatureCreateTest(unittest.TestCase):
     def runTest(self):
@@ -614,7 +617,7 @@ class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
         testSig = crashInfoPos.createCrashSignature()
 
         self.assertIn("/ERROR: AddressSanitizer", str(testSig))
-        self.assertIn("negative\\\\-size\\\\-param", str(testSig))
+        self.assertIn("negative-size-param", str(testSig))
         self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
 
 
@@ -637,7 +640,7 @@ class SignatureAsanAccessViolationTest(unittest.TestCase):
         testSig = crashInfoPos.createCrashSignature()
 
         self.assertIn("/ERROR: AddressSanitizer", str(testSig))
-        self.assertIn("access\\\\-violation", str(testSig))
+        self.assertIn("access-violation", str(testSig))
         self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
 
 
@@ -704,6 +707,32 @@ class SignatureMatchWithUnicode(unittest.TestCase):
         crashInfo = CrashInfo.fromRawCrashData(["(Â«f => (generator.throw(f))Â», Â«undefinedÂ»)"], [], config)
         testSignature = CrashSignature('{"symptoms": [{"src": "stdout", "type": "output", "value": "x"}]}')
         self.assertFalse(testSignature.matches(crashInfo))
+
+
+class SignatureMatchAssertionSlashes(unittest.TestCase):
+    def runTest(self):
+        # test that a forward slash assertion signature matches a backwards slash crash, but only on windows
+        cfg_linux = ProgramConfiguration('test', 'x86-64', 'linux')
+        cfg_windows = ProgramConfiguration('test', 'x86-64', 'windows')
+
+        fs_lines = testAssertionPathFwSlashes.splitlines()
+        bs_lines = testAssertionPathBwSlashes.splitlines()
+
+        # native paths on linux use forward slash
+        fs_linux = CrashInfo.fromRawCrashData([], [], cfg_linux, auxCrashData=fs_lines)
+        # backward slash path on linux -- this is invalid and should never happen
+        bs_linux = CrashInfo.fromRawCrashData([], [], cfg_linux, auxCrashData=bs_lines)
+        # forward slashes on windows are valid, and this does happen
+        fs_windows = CrashInfo.fromRawCrashData([], [], cfg_windows, auxCrashData=fs_lines)
+        # native paths on windows use backslash
+        bs_windows = CrashInfo.fromRawCrashData([], [], cfg_windows, auxCrashData=bs_lines)
+
+        sig = fs_linux.createCrashSignature()
+
+        assert sig.matches(fs_linux)
+        assert not sig.matches(bs_linux)  # this is invalid and should not match
+        assert sig.matches(fs_windows)
+        assert sig.matches(bs_windows)
 
 
 if __name__ == "__main__":

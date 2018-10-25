@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import re
 import unittest
+import six
 from FTB import AssertionHelper
 
 asanFFAbort = """Hit MOZ_CRASH() at /srv/repos/browser/mozilla-central/memory/mozalloc/mozalloc_abort.cpp:30
@@ -83,32 +84,49 @@ thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
 mozCrashWithPath = "Hit MOZ_CRASH(/builds/worker/workspace/build/src/media/libopus/celt/celt_decoder.c:125 assertion failed: st->start < st->end) at nil:16"  # noqa
 
 
+def _check_regex_matches(error_lines, sanitized_message):
+    if isinstance(sanitized_message, (six.text_type, bytes)):
+        sanitized_message = [sanitized_message]
+    else:
+        sanitized_message = list(sanitized_message)
+
+    # Ensure regex matches original message
+    for line in error_lines:
+        for idx, pattern in enumerate(sanitized_message):
+            if re.search(pattern, line) is not None:
+                sanitized_message.pop(idx)
+                break
+        if not sanitized_message:
+            return
+    raise AssertionError("sanitized message did not match input: %r" % (sanitized_message,))
+
+
 class AssertionHelperTestASanFFAbort(unittest.TestCase):
     def runTest(self):
         err = asanFFAbort.splitlines()
 
-        self.assertEqual(AssertionHelper.getAssertion(err), None)
-        self.assertEqual(AssertionHelper.getAuxiliaryAbortMessage(err), None)
+        assert AssertionHelper.getAssertion(err) is None
+        assert AssertionHelper.getAuxiliaryAbortMessage(err) is None
 
 
 class AssertionHelperTestASanNegativeSize(unittest.TestCase):
     def runTest(self):
         err = asanNegativeSize.splitlines()
 
-        self.assertEqual(AssertionHelper.getAssertion(err), None)
+        assert AssertionHelper.getAssertion(err) is None
         assertMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
-        expectedAssertMsg = r"ERROR: AddressSanitizer: negative\-size\-param: \(size=\-[0-9]{2,}\)"
-        self.assertEqual(assertMsg, expectedAssertMsg)
+        expectedAssertMsg = r"ERROR: AddressSanitizer: negative-size-param: \(size=-[0-9]{2,}\)"
+        assert assertMsg == expectedAssertMsg
 
 
 class AssertionHelperTestASanStackOverflow(unittest.TestCase):
     def runTest(self):
         err = asanStackOverflow.splitlines()
 
-        self.assertEqual(AssertionHelper.getAssertion(err), None)
+        assert AssertionHelper.getAssertion(err) is None
         assertMsg = AssertionHelper.getAuxiliaryAbortMessage(err)
         expectedAssertMsg = "ERROR: AddressSanitizer: stack-overflow"
-        self.assertEqual(assertMsg, expectedAssertMsg)
+        assert assertMsg == expectedAssertMsg
 
 
 class AssertionHelperTestMozCrash(unittest.TestCase):
@@ -116,13 +134,11 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
         err = jsshellMozCrash.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = ("Hit MOZ_CRASH\\(named lambda static scopes should have been skipped\\) at "
-                       "([a-zA-Z]:)?/.+/ScopeObject\\.cpp(:[0-9]+)+")
+        expectedMsg = (r"Hit MOZ_CRASH\(named lambda static scopes should have been skipped\) at "
+                       r"([a-zA-Z]:)?/.+/ScopeObject\.cpp(:[0-9]+)+")
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestMozCrashWithPath(unittest.TestCase):
@@ -130,13 +146,11 @@ class AssertionHelperTestMozCrashWithPath(unittest.TestCase):
         err = mozCrashWithPath.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = ("Hit MOZ_CRASH\\(([a-zA-Z]:)?/.+/celt_decoder\\.c(:[0-9]+)+ assertion failed: "
-                       "st\\->start < st\\->end\\) at nil(:[0-9]+)+")
+        expectedMsg = (r"Hit MOZ_CRASH\(([a-zA-Z]:)?/.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
+                       r"st->start < st->end\) at nil(:[0-9]+)+")
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestJSSelfHosted(unittest.TestCase):
@@ -144,13 +158,11 @@ class AssertionHelperTestJSSelfHosted(unittest.TestCase):
         err = jsSelfHostedAssert.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = ('Self\\-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\\.js(:[0-9]+)+: '
-                       'non\\-canonical BestAvailableLocale locale"')
+        expectedMsg = (r'Self-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\.js(:[0-9]+)+: '
+                       r'non-canonical BestAvailableLocale locale"')
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestV8Abort(unittest.TestCase):
@@ -158,21 +170,17 @@ class AssertionHelperTestV8Abort(unittest.TestCase):
         err = v8Abort.splitlines()
 
         sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        self.assertTrue(isinstance(sanitizedMsgs, list))
-        self.assertEqual(len(sanitizedMsgs), 2)
+        assert isinstance(sanitizedMsgs, list)
+        assert len(sanitizedMsgs) == 2
 
         expectedMsgs = [
-            "# Fatal error in \\.\\./src/compiler\\.cc, line [0-9]+",
-            ("# Check failed: !feedback_vector_\\->metadata\\(\\)\\->SpecDiffersFrom\\( "
-             "literal\\(\\)\\->feedback_vector_spec\\(\\)\\)\\.")
+            r"# Fatal error in \.\./src/compiler\.cc, line [0-9]+",
+            (r"# Check failed: !feedback_vector_->metadata\(\)->SpecDiffersFrom\( "
+             r"literal\(\)->feedback_vector_spec\(\)\)\.")
         ]
 
-        self.assertEqual(sanitizedMsgs[0], expectedMsgs[0])
-        self.assertEqual(sanitizedMsgs[1], expectedMsgs[1])
-
-        # Ensure the sanitized messages can be compiled as regex without errors
-        re.compile(sanitizedMsgs[0])
-        re.compile(sanitizedMsgs[1])
+        assert sanitizedMsgs == expectedMsgs
+        _check_regex_matches(err, sanitizedMsgs)
 
 
 class AssertionHelperTestChakraAssert(unittest.TestCase):
@@ -180,41 +188,34 @@ class AssertionHelperTestChakraAssert(unittest.TestCase):
         err = chakraAssert.splitlines()
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        expectedMsg = ('ASSERTION [0-9]{2,}: \\(([a-zA-Z]:)?/.+/ByteCodeEmitter\\.cpp, line [0-9]+\\) '
-                       'scope\\->HasInnerScopeIndex\\(\\)')
+        expectedMsg = (r'ASSERTION [0-9]{2,}: \(([a-zA-Z]:)?/.+/ByteCodeEmitter\.cpp, line [0-9]+\) '
+                       r'scope->HasInnerScopeIndex\(\)')
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
     def runTest(self):
         err1 = windowsPathAssertFwdSlashes.splitlines()
-        # err2 = windowsPathAssertBwSlashes.splitlines()
+        err2 = windowsPathAssertBwSlashes.splitlines()
 
         assertionMsg1 = AssertionHelper.getAssertion(err1)
-        # assertionMsg2 = AssertionHelper.getAssertion(err2)
+        assertionMsg2 = AssertionHelper.getAssertion(err2)
 
         sanitizedMsg1 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg1)
-        # sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
+        sanitizedMsg2 = AssertionHelper.getSanitizedAssertionPattern(assertionMsg2)
 
-        expectedMsg = ("Assertion failure: block\\->graph\\(\\)\\.osrBlock\\(\\), at "
-                       "([a-zA-Z]:)?/.+/Lowering\\.cpp(:[0-9]+)+")
+        expectedMsg = (r"Assertion failure: block->graph\(\)\.osrBlock\(\), at "
+                       r"([a-zA-Z]:)?/.+/Lowering\.cpp(:[0-9]+)+")
 
-        self.assertEqual(sanitizedMsg1, expectedMsg)
+        assert sanitizedMsg1 == expectedMsg
 
-        # We currently don't support backward slashes, but if we add support, uncomment this test
-        # self.assertEqual(sanitizedMsg2, expectedMsg)
+        # We currently don't support path sanitizing of backward slashes, but if we add support, uncomment this test
+        #assert sanitizedMsg2 == expectedMsg
 
-        self.assertTrue(re.match(expectedMsg, assertionMsg1))
-
-        # We currently don't support backward slashes, but if we add support, uncomment this test
-        # self.assertTrue(re.match(expectedMsg, assertionMsg2))
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg1)
+        _check_regex_matches(err1, sanitizedMsg1)
+        _check_regex_matches(err2, sanitizedMsg2)
 
 
 class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
@@ -223,15 +224,12 @@ class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):
 
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
         expectedMsg = [
-            "ERROR: AddressSanitizer: heap\\-buffer\\-overflow",
-            "READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \\(MediaPlayback #1\\)"
+            r"ERROR: AddressSanitizer: heap-buffer-overflow",
+            r"READ of size 8 at 0x[0-9a-fA-F]+ thread T[0-9]{2,} \(MediaPlayback #1\)"
         ]
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized messages can be compiled as regex without errors
-        re.compile(sanitizedMsg[0])
-        re.compile(sanitizedMsg[1])
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
@@ -241,10 +239,8 @@ class AssertionHelperTestCPPUnhandledException(unittest.TestCase):
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = "terminate called after throwing an instance of 'std::regex_error'"
 
-        self.assertEqual(sanitizedMsg, expectedMsg)
-
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
 
 class AssertionHelperTestRustPanic(unittest.TestCase):
@@ -253,32 +249,27 @@ class AssertionHelperTestRustPanic(unittest.TestCase):
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = (r"thread 'StyleThread#[0-9]+' panicked at 'assertion failed: self\.get_data\(\)\.is_some\(\)', "
                        r"([a-zA-Z]:)?/.+/wrapper\.rs(:[0-9]+)+")
-        self.assertEqual(sanitizedMsg, expectedMsg)
 
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
     def test_02(self):
         err = rustPanic2.splitlines()
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = (r"thread 'RenderBackend' panicked at 'called `Option::unwrap\(\)` on a `None` value', "
                        r"([a-zA-Z]:)?/.+/option\.rs(:[0-9]+)+")
-        self.assertEqual(sanitizedMsg, expectedMsg)
 
-        # Ensure the sanitized message can be compiled as regex without errors
-        re.compile(sanitizedMsg)
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
     def test_03(self):
         err = rustPanic3.splitlines()
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
-        self.assertEqual(len(sanitizedMsg), 3)
-        self.assertEqual(sanitizedMsg[0], r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`")
-        self.assertEqual(sanitizedMsg[-1], r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+")
 
-        # Ensure the sanitized messages can be compiled as regex without errors
-        re.compile(sanitizedMsg[0])
-        re.compile(sanitizedMsg[1])
-        re.compile(sanitizedMsg[2])
+        assert len(sanitizedMsg) == 3
+        assert sanitizedMsg[0] == r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`"
+        assert sanitizedMsg[-1] == r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+"
+        _check_regex_matches(err, sanitizedMsg)
 
 
 if __name__ == "__main__":

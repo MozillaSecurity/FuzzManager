@@ -23,7 +23,7 @@ from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom,
     OutputSymptom
 
 
-class CrashSignature():
+class CrashSignature(object):
     def __init__(self, rawSignature):
         '''
         Constructor

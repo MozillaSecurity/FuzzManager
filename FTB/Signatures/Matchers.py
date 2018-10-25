@@ -17,6 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function, unicode_literals
 
+from abc import ABCMeta, abstractmethod
 import numbers
 import re
 
@@ -25,10 +26,20 @@ import six
 from FTB.Signatures import JSONHelper
 
 
-class StringMatch():
+@six.add_metaclass(ABCMeta)
+class Match(object):
+
+    @abstractmethod
+    def matches(self, value):
+        pass
+
+
+class StringMatch(Match):
+
     def __init__(self, obj):
         self.isPCRE = False
         self.compiledValue = None
+        self.patternContainsSlash = False
 
         if isinstance(obj, bytes):
             obj = obj.decode("utf-8")
@@ -40,6 +51,7 @@ class StringMatch():
             if self.value.startswith("/") and self.value.endswith("/"):
                 self.isPCRE = True
                 self.value = self.value[1:-1]
+                self.patternContainsSlash = "/" in self.value
                 try:
                     self.compiledValue = re.compile(self.value)
                 except re.error as e:
@@ -60,16 +72,22 @@ class StringMatch():
                 else:
                     raise RuntimeError("Unknown match operator specified: %s" % matchType)
 
-    def matches(self, val):
-        if isinstance(val, bytes):
+    def matches(self, value, windowsSlashWorkaround=False):
+        if isinstance(value, bytes):
             # If the input is not already unicode, try to interpret it as UTF-8
             # If there are errors, replace them with U+FFFD so we neither raise nor false positive.
-            val = val.decode("utf-8", errors="replace")
+            value = value.decode("utf-8", errors="replace")
 
         if self.isPCRE:
-            return self.compiledValue.search(val) is not None
+            if self.compiledValue.search(value) is not None:
+                return True
+            elif windowsSlashWorkaround and self.patternContainsSlash:
+                # NB this will fail if the pattern is supposed to match a backslash and a windows-style path
+                #    in the same line
+                return self.compiledValue.search(value.replace("\\", "/")) is not None
+            return False
         else:
-            return self.value in val
+            return self.value in value
 
     def __str__(self):
         return self.value
@@ -81,11 +99,12 @@ class StringMatch():
         return self.value
 
 
-class NumberMatchType:
+class NumberMatchType(object):
     GE, GT, LE, LT = range(4)
 
 
-class NumberMatch():
+class NumberMatch(Match):
+
     def __init__(self, obj):
         self.matchType = None
 

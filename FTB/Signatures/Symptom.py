@@ -27,7 +27,7 @@ from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
 
 @six.add_metaclass(ABCMeta)
-class Symptom():
+class Symptom(object):
     '''
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
@@ -124,8 +124,9 @@ class OutputSymptom(Symptom):
         else:
             checkedOutput = crashInfo.rawCrashData
 
+        windowsSlashWorkaround = crashInfo.configuration.os == "windows"
         for line in reversed(checkedOutput):
-            if self.output.matches(line):
+            if self.output.matches(line, windowsSlashWorkaround=windowsSlashWorkaround):
                 return True
 
         return False

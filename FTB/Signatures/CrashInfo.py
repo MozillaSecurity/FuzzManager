@@ -34,7 +34,7 @@ from FTB.Signatures.CrashSignature import CrashSignature
 
 
 @six.add_metaclass(ABCMeta)
-class CrashInfo():
+class CrashInfo(object):
     '''
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.

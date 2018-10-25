@@ -247,7 +247,7 @@ def escapePattern(msg):
 
     escapedStr = msg
 
-    activeChars = ["\\", "[", "]", "{", "}", "(", ")", "*", "+", "-", "?", "^", "$", ".", "|"]
+    activeChars = ["\\", "[", "]", "{", "}", "(", ")", "*", "+", "?", "^", "$", ".", "|"]
 
     for activeChar in activeChars:
         escapedStr = escapedStr.replace(activeChar, "\\" + activeChar)
