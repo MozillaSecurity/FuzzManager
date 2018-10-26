@@ -727,12 +727,19 @@ class SignatureMatchAssertionSlashes(unittest.TestCase):
         # native paths on windows use backslash
         bs_windows = CrashInfo.fromRawCrashData([], [], cfg_windows, auxCrashData=bs_lines)
 
-        sig = fs_linux.createCrashSignature()
+        # test that signature generated from linux assertion matches both
+        linux_sig = fs_linux.createCrashSignature()
+        assert linux_sig.matches(fs_linux)
+        assert not linux_sig.matches(bs_linux)  # this is invalid and should not match
+        assert linux_sig.matches(fs_windows)
+        assert linux_sig.matches(bs_windows)
 
-        assert sig.matches(fs_linux)
-        assert not sig.matches(bs_linux)  # this is invalid and should not match
-        assert sig.matches(fs_windows)
-        assert sig.matches(bs_windows)
+        # test that signature generated from windows assertion matches both
+        windows_sig = bs_windows.createCrashSignature()
+        assert windows_sig.matches(fs_linux)
+        assert not windows_sig.matches(bs_linux)  # this is invalid and should not match
+        assert windows_sig.matches(fs_windows)
+        assert windows_sig.matches(bs_windows)
 
 
 if __name__ == "__main__":

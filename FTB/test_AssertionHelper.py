@@ -210,12 +210,16 @@ class AssertionHelperTestWindowsPathSanitizing(unittest.TestCase):
                        r"([a-zA-Z]:)?/.+/Lowering\.cpp(:[0-9]+)+")
 
         assert sanitizedMsg1 == expectedMsg
-
-        # We currently don't support path sanitizing of backward slashes, but if we add support, uncomment this test
-        #assert sanitizedMsg2 == expectedMsg
-
+        assert sanitizedMsg2 == expectedMsg
         _check_regex_matches(err1, sanitizedMsg1)
-        _check_regex_matches(err2, sanitizedMsg2)
+
+        # Backslash support is two-part:
+        # 1. generate unix-style path patterns for windows paths (will not match using regex directly)
+        # 2. modify StringMatch to replace backslash with forward slash for matching (so unix patterns will match
+        #    windows paths)
+        #
+        # That means a test for this can't work at this level
+        #_check_regex_matches(err2, sanitizedMsg2)
 
 
 class AssertionHelperTestAuxiliaryAbortASan(unittest.TestCase):

@@ -187,7 +187,24 @@ def getSanitizedAssertionPattern(msgs):
     sanitizedMsgs = []
 
     for msg in msgs:
-        sanitizedMsg = escapePattern(msg)
+        # remember the position of all backslashes in the input
+        bsPositions = []
+        for chunk in msg.split("\\"):
+            if not bsPositions:
+                bsPositions.append(len(chunk))
+            else:
+                bsPositions.append(len(chunk) + bsPositions[-1] + 1)
+        bsPositions.pop()  # msg.split(x) will return `# of matches(x) + 1` values: the last one is invalid
+
+        # replace backslashes with forward slashes for now so we can process paths consistently
+        # any backslashes not matched in a path pattern will be restored later
+        sanitizedMsg = escapePattern(msg.replace("\\", "/"))
+
+        # correct bsPositions for escaped characters
+        idx = 0
+        for chunk in sanitizedMsg.split("\\"):
+            idx += len(chunk) + 1
+            bsPositions = [bs + 1 if bs > idx else bs for bs in bsPositions]
 
         replacementPatterns = []
 
@@ -219,7 +236,38 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append("[0-9]{2,}")
 
         for replacementPattern in replacementPatterns:
-            sanitizedMsg = re.sub(replacementPattern, replacementPattern, sanitizedMsg)
+            def _handleMatch(match):
+                start = match.start(0)
+                end = match.end(0)
+                lengthDiff = len(replacementPattern) - len(match.group(0))
+
+                # we can't replace bsPositions with list comprehensions because we're in a nested scope
+                # iterate by index and modify it instead
+                idx = 0
+                while idx < len(bsPositions):
+                    if bsPositions[idx] < start:
+                        # no change for backslashes before the start of this match
+                        idx += 1
+                    elif bsPositions[idx] < end:
+                        # the backslash is covered by this match, remove it
+                        bsPositions.pop(idx)
+                    else:
+                        # the backslash is after the match, shift it by the length difference
+                        bsPositions[idx] += lengthDiff
+                        idx += 1
+
+                return replacementPattern
+
+            sanitizedMsg = re.sub(replacementPattern, _handleMatch, sanitizedMsg)
+
+        # backslashes were replaced with / for unified path handling
+        # (and because backslash is the escape character, which makes pattern matching otherwise impossible)
+        # if they were not used in a path pattern, restore them now
+        # in other words, add back the windows bs
+        while bsPositions:
+            bsPos = bsPositions.pop()
+            # escape it now too, since it would have gone through escapePattern above
+            sanitizedMsg = sanitizedMsg[:bsPos] + "\\\\" + sanitizedMsg[bsPos + 1:]
 
         # Some implementations wrap the path into parentheses. We cannot add this to
         # replacementPatterns because it would double-escape the leading parenthesis.
