@@ -19,7 +19,7 @@ SPOTMGR_TAG = "SpotManager"
 
 @app.task
 def check_instance_pool(pool_id):
-    from .models import Instance, InstancePool, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+    from .models import Instance, InstancePool, PoolStatusEntry
 
     lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % pool_id)
 
@@ -36,12 +36,7 @@ def check_instance_pool(pool_id):
             return
 
         if instance_pool.config.isCyclic() or instance_pool.config.getMissingParameters():
-            entry = PoolStatusEntry()
-            entry.pool = instance_pool
-            entry.isCritical = True
-            entry.type = POOL_STATUS_ENTRY_TYPE['config-error']
-            entry.msg = "Configuration error."
-            entry.save()
+            _update_pool_status(instance_pool, "config-error", "Configuration error.")
             return
 
         config = instance_pool.config.flatten()
@@ -207,13 +202,10 @@ def _start_pool_instances(pool, config, count=1):
             logger.warning("[Pool %d] No allowed region was cheap enough to spawn instances.", pool.id)
 
             if not priceLowEntries:
-                entry = PoolStatusEntry()
-                entry.pool = pool
-                entry.type = POOL_STATUS_ENTRY_TYPE['price-too-low']
-                entry.msg = "No allowed regions was cheap enough to spawn instances."
+                msg = "No allowed regions was cheap enough to spawn instances."
                 for zone in rejected_prices:
-                    entry.msg += "\n%s at %s" % (zone, rejected_prices[zone])
-                entry.save()
+                    msg += "\n%s at %s" % (zone, rejected_prices[zone])
+                _update_pool_status(pool, 'price-too-low', msg)
             return
 
         elif priceLowEntries:
@@ -239,7 +231,20 @@ def _start_pool_instances(pool, config, count=1):
         #     -> next time around, we will request 1x 4-core instance
         count = max(1, count // cores_per_instance[instance_type])
 
-        userdata = _setup_userdata(config, pool)
+        # setup userdata
+        userdata = config.userdata.decode('utf-8')
+
+        # Copy the userdata_macros and populate with internal variables
+        userdata_macros = dict(config.userdata_macros)
+        userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+        userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
+
+        userdata = UserData.handle_tags(userdata, userdata_macros)
+
+        if not userdata:
+            logger.error("[Pool %d] Failed to compile userdata.", pool.id)
+            _update_pool_status(pool, "config-error", "Configuration error: Failed to compile userdata")
+            return
 
         image_key = "%s:image:%s:%s" % (cloud_provider.get_name(), region, image_name)
         image = cache.get(image_key)
@@ -265,23 +270,6 @@ def _start_pool_instances(pool, config, count=1):
         _update_pool_status(pool, err.TYPE, err.message)
     except Exception as msg:
         _update_pool_status(pool, 'unclassified', str(msg))
-
-
-def _setup_userdata(config, pool):
-    userdata = config.userdata.decode('utf-8')
-
-    # Copy the userdata_macros and populate with internal variables
-    userdata_macros = dict(config.userdata_macros)
-    userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
-    userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
-
-    userdata = UserData.handle_tags(userdata, userdata_macros)
-
-    if not userdata:
-        logger.error("[Pool %d] Failed to compile userdata.", pool.id)
-        raise Exception("Configuration error: Failed to compile userdata")
-
-    return userdata
 
 
 def _terminate_pool_instances(running_instances, instance_pool):
@@ -316,11 +304,14 @@ def _get_instances_by_ids(instances):
 
 def _update_pool_status(pool, type_, message):
     from .models import PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+
+    is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}
+
     entry = PoolStatusEntry()
     entry.type = POOL_STATUS_ENTRY_TYPE[type_]
     entry.pool = pool
     entry.msg = message
-    entry.isCritical = True
+    entry.isCritical = is_critical
     entry.save()
 
 

@@ -3,6 +3,7 @@ import functools
 import logging
 import socket
 import ssl
+import traceback
 import botocore
 import boto3
 import boto.ec2
@@ -22,11 +23,14 @@ def wrap_provider_errors(wrapped):
         try:
             return wrapped(*args, **kwds)
         except (ssl.SSLError, socket.error) as exc:
+            logging.getLogger("ec2spotmanager").exception("")
             raise CloudProviderTemporaryFailure('%s: %s' % (wrapped.__name__, exc))
         except CloudProviderError:
+            logging.getLogger("ec2spotmanager").exception("")
             raise
         except Exception as exc:
-            raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, exc))
+            logging.getLogger("ec2spotmanager").exception("")
+            raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, traceback.format_exc()))
 
     return wrapper
 
