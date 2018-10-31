@@ -52,13 +52,23 @@ class CloudProvider():
     @abstractmethod
     def terminate_instances(self, instances_ids_by_region):
         '''
-        Take a list of instances and stop them in the cloud provider.
+        Take a list of running instances and stop them in the cloud provider.
 
         @ptype instances_ids_by_region: dictionary
         @param instances_ids_by_region: keys are regions and values are instances.
 
         @rtype: none
         @return: none
+        '''
+        return
+
+    @abstractmethod
+    def cancel_requests(self, requested_instances_by_region):
+        '''
+        Cancel requests that have not become running instances.
+
+        @ptype requested_instances_region: dictionary
+        @param requested_instances_region: keys are regions and values are request ids.
         '''
         return
 

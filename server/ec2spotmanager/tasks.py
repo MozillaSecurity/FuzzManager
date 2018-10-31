@@ -103,7 +103,7 @@ def check_instance_pool(pool_id):
                 instance_cores_missing = sum(instance.size for instance in instances)
                 logger.info("[Pool %d] Has %d instance cores over limit in %d instances, terminating...",
                             instance_pool.id, instance_cores_missing, len(instances))
-                _terminate_pool_instances(instance_pool, instances)
+                _terminate_pool_instances(instances, instance_pool)
         else:
             logger.debug("[Pool %d] Size is ok.", instance_pool.id)
 
@@ -272,16 +272,37 @@ def _start_pool_instances(pool, config, count=1):
         _update_pool_status(pool, 'unclassified', str(msg))
 
 
-def _terminate_pool_instances(running_instances, instance_pool):
+def _terminate_pool_instances(instances, instance_pool):
     """ Terminate an instance with the given configuration """
+
+    requested_instances = []
+    running_instances = []
+
+    for instance in instances:
+        if instance.status_code == INSTANCE_STATE['requested']:
+            requested_instances.append(instance)
+        else:
+            running_instances.append(instance)
+
     cloud_provider = CloudProvider.get_instance(PROVIDERS[0])  # TODO: support multiple providers
-    instance_ids = _get_instance_ids_by_region(running_instances)
-    try:
-        cloud_provider.terminate_instances(instance_ids)
-    except CloudProviderError as err:
-        _update_pool_status(instance_pool, err.TYPE, err.message)
-    except Exception as msg:
-        _update_pool_status(instance_pool, 'unclassified', str(msg))
+
+    if running_instances:
+        running_instance_ids_by_region = _get_instance_ids_by_region(running_instances)
+        try:
+            cloud_provider.terminate_instances(running_instance_ids_by_region)
+        except CloudProviderError as err:
+            _update_pool_status(instance_pool, err.TYPE, err.message)
+        except Exception as msg:
+            _update_pool_status(instance_pool, 'unclassified', str(msg))
+
+    if requested_instances:
+        requested_instance_ids_by_region = _get_instance_ids_by_region(requested_instances)
+        try:
+            cloud_provider.cancel_requests(requested_instance_ids_by_region)
+        except CloudProviderError as err:
+            _update_pool_status(instance_pool, err.TYPE, err.message)
+        except Exception as msg:
+            _update_pool_status(instance_pool, 'unclassified', str(msg))
 
 
 def _get_instance_ids_by_region(instances):
