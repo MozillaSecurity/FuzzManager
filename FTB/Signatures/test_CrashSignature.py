@@ -220,6 +220,18 @@ SUMMARY: AddressSanitizer: stack-overflow dom/base/nsLineBreaker.cpp in nsLineBr
 ==18896==ABORTING
 """  # noqa
 
+testAsanFailedAlloc = """
+==18847==ERROR: AddressSanitizer failed to allocate 0x6003a000 (1610850304) bytes of LargeMmapAllocator (error code: 12)
+==18847==Process memory map follows:
+  0x08048000-0x081d7000 /foo/bar
+  0xffb00000-0xffb21000 [stack]
+==18847==End of process memory map.
+==18847==AddressSanitizer CHECK failed: /build/llvm-toolchain-4.0-euGZ6h/llvm-toolchain-4.0-4.0/projects/compiler-rt/lib/sanitizer_common/sanitizer_common.cc:120 "((0 && "unable to mmap")) != (0)" (0x0, 0x0)
+    #0 0x8127526 in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (build/dump_video+0x8127526)
+    #1 0x814262b in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (build/dump_video+0x814262b)
+    #2 0x8131f9a in __sanitizer::ReportMmapFailureAndDie(unsigned long, char const*, char const*, int, bool) (build/dump_video+0x8131f9a)
+"""  # noqa
+
 testSignature1 = '''{"symptoms": [
     {
     "functionName": "GetObjectAllocKindForCopy",
@@ -653,6 +665,17 @@ class SignatureStackSizeTest(unittest.TestCase):
         # while the test crash data has 16 frames.
         testSig = CrashSignature(testSignatureStackSize)
         self.assertTrue(testSig.matches(crashInfoPos))
+
+
+class SignatureAsanFailedAllocTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanFailedAlloc.splitlines())
+
+        testSig = crashInfoPos.createCrashSignature()
+        self.assertIn("/AddressSanitizer failed to allocate", str(testSig))
+        self.assertTrue(testSig.matches(crashInfoPos))
+        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
 
 
 class SignatureGenerationTSanLeakTest(unittest.TestCase):

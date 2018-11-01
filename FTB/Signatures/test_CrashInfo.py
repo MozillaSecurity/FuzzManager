@@ -160,6 +160,27 @@ asanTraceMemcpyOverlap = """
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
 """  # noqa
 
+asanTraceFailedAlloc = """
+==18847==ERROR: AddressSanitizer failed to allocate 0x6003a000 (1610850304) bytes of LargeMmapAllocator (error code: 12)
+==18847==Process memory map follows:
+  0x08048000-0x081d7000 /foo/bar
+  0xffb00000-0xffb21000 [stack]
+==18847==End of process memory map.
+==18847==AddressSanitizer CHECK failed: /build/llvm-toolchain-4.0-euGZ6h/llvm-toolchain-4.0-4.0/projects/compiler-rt/lib/sanitizer_common/sanitizer_common.cc:120 "((0 && "unable to mmap")) != (0)" (0x0, 0x0)
+    #0 0x8127526 in __asan::AsanCheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (build/dump_video+0x8127526)
+    #1 0x814262b in __sanitizer::CheckFailed(char const*, int, char const*, unsigned long long, unsigned long long) (build/dump_video+0x814262b)
+    #2 0x8131f9a in __sanitizer::ReportMmapFailureAndDie(unsigned long, char const*, char const*, int, bool) (build/dump_video+0x8131f9a)
+    #3 0x813b0ef in __sanitizer::MmapOrDie(unsigned long, char const*, bool) (build/dump_video+0x813b0ef)
+    #4 0x8069ec9 in __asan::Allocator::Allocate(unsigned long, unsigned long, __sanitizer::BufferedStackTrace*, __asan::AllocType, bool) (build/dump_video+0x8069ec9)
+    #5 0x80657f6 in __asan::asan_malloc(unsigned long, __sanitizer::BufferedStackTrace*) (build/dump_video+0x80657f6)
+    #6 0x811c181 in __interceptor_malloc (build/dump_video+0x811c181)
+    #7 0x817999f in oc_state_frarray_init lib/state.c:506:24
+    #8 0x817999f in oc_state_init lib/state.c:735
+    #9 0x815ab3c in oc_dec_init lib/decode.c:374:7
+    #10 0xf74f5636 in __libc_start_main (/lib32/libc.so.6+0x18636)
+    #11 0x80609b7 in _start (build/dump_video+0x80609b7)
+"""  # noqa
+
 asanMultiTrace = """
 =================================================================
 ==8746==ERROR: AddressSanitizer: SEGV on unknown address 0x7f637b59cffc (pc 0x7f63fd5c11af bp 0x7f63a0702090 sp 0x7f63a0701f40 T35)
@@ -810,6 +831,23 @@ class ASanParserTestCrash(unittest.TestCase):
         self.assertEqual(crashInfo.registers["pc"], 0x0810845f)
         self.assertEqual(crashInfo.registers["sp"], 0xffc57860)
         self.assertEqual(crashInfo.registers["bp"], 0xffc57f18)
+
+
+class ASanParserTestFailedAlloc(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+
+        crashInfo = ASanCrashInfo([], asanTraceFailedAlloc.splitlines(), config)
+        self.assertEqual(len(crashInfo.backtrace), 12)
+        self.assertEqual(crashInfo.backtrace[0], "__asan::AsanCheckFailed")
+        self.assertEqual(crashInfo.backtrace[7], "oc_state_frarray_init")
+
+        self.assertIsNone(crashInfo.crashAddress)
+        self.assertFalse(crashInfo.registers)
+
+        self.assertEqual(("AddressSanitizer failed to allocate 0x6003a000 (1610850304) bytes of "
+                          "LargeMmapAllocator (error code: 12) [@ __asan::AsanCheckFailed]"),
+                         crashInfo.createShortSignature())
 
 
 class ASanParserTestHeapCrash(unittest.TestCase):

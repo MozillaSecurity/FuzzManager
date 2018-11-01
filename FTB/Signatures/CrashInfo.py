@@ -168,7 +168,7 @@ class CrashInfo(object):
         # some results are weak, meaning any other CrashInfo detected after it will take precedence
         weakResult = None
 
-        asanString = "ERROR: AddressSanitizer:"
+        asanString = "ERROR: AddressSanitizer"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
@@ -523,10 +523,11 @@ class ASanCrashInfo(CrashInfo):
         asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
-                                   \sAddressSanitizer:.*\s
+                                   \sAddressSanitizer.*\s
                                      (?:on\saddress             # The most common format, used for all overflows
                                        |on\sunknown\saddress    # Used in case of a SIGSEGV
                                        |double-free\son         # Used in case of a double-free
+                                       |failed\sto\sallocate\s0x[0-9a-f]+\s
                                        |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
@@ -630,7 +631,7 @@ class ASanCrashInfo(CrashInfo):
 
             # Strip various forms of special thread information and messages
             asanMsg = re.sub(" in thread T.+", "", asanMsg)
-            asanMsg = re.sub(" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
+            asanMsg = re.sub(r" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
             asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
                              "overlap", asanMsg)
 
