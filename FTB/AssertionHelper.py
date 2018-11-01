@@ -130,7 +130,9 @@ def getAuxiliaryAbortMessage(output):
         line = re.sub("^\\[\\d+\\]\\s+", "", line, count=1)
 
         if "ERROR: AddressSanitizer" in line:
-            if "SEGV on unknown address" not in line:
+            if "failed to allocate" in line:
+                lastLine = line.split(": ", 1)[-1].strip()
+            elif "SEGV on unknown address" not in line:
                 # Strip address, registers and PID prefix
                 line = re.sub(r"on address 0x[0-9a-f]+", "", line)
                 line = re.sub(r"(at |\()pc 0x[0-9a-f]+", "", line)

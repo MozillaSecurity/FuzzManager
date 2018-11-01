@@ -168,7 +168,7 @@ class CrashInfo(object):
         # some results are weak, meaning any other CrashInfo detected after it will take precedence
         weakResult = None
 
-        asanString = "ERROR: AddressSanitizer:"
+        asanString = "ERROR: AddressSanitizer"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
@@ -631,7 +631,7 @@ class ASanCrashInfo(CrashInfo):
 
             # Strip various forms of special thread information and messages
             asanMsg = re.sub(" in thread T.+", "", asanMsg)
-            asanMsg = re.sub(" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
+            asanMsg = re.sub(r" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
             asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
                              "overlap", asanMsg)
 
