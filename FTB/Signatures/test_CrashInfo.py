@@ -763,6 +763,17 @@ Crash|SIGSEGV|0x40|34
 0|2|libxul.so||||0x43ebda
 """
 
+minidumpMacOS = """
+OS|Mac OS X|10.13.6 17G3025
+CPU|amd64|family 6 model 23 stepping 10|2
+GPU|||
+Crash|EXC_BAD_ACCESS / KERN_INVALID_ADDRESS|0x0|0
+0|0|XUL|nsIFrame::UpdateOverflow()|hg:hg.mozilla.org/mozilla-central:layout/generic/nsFrame.cpp:957a743c4ca2907d8e357fce43fbcd9f619f1122|7601|0x0
+0|1|XUL|mozilla::OverflowChangedTracker::Flush()|hg:hg.mozilla.org/mozilla-central:layout/base/OverflowChangedTracker.h:957a743c4ca2907d8e357fce43fbcd9f619f1122|111|0x8
+0|2|XUL|mozilla::RestyleManager::DoProcessPendingRestyles(mozilla::ServoTraversalFlags)|hg:hg.mozilla.org/mozilla-central:layout/base/RestyleManager.h:957a743c4ca2907d8e357fce43fbcd9f619f1122|224|0x5
+0|3|XUL|mozilla::PresShell::DoFlushPendingNotifications(mozilla::ChangesToFlush)|hg:hg.mozilla.org/mozilla-central:layout/base/RestyleManager.cpp:957a743c4ca2907d8e357fce43fbcd9f619f1122|3133|0xa
+"""  # noqa
+
 lsanTraceLeakDetected = """
 =================================================================
 ==6148==ERROR: LeakSanitizer: detected memory leaks
@@ -1367,6 +1378,19 @@ class MinidumpSelectorTest(unittest.TestCase):
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, crashData)
         self.assertEqual(crashInfo.crashAddress, 0x3e800006acb)
+
+
+class MinidumpFromMacOSTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "macosx")
+
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, minidumpMacOS.splitlines())
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "nsIFrame::UpdateOverflow")
+        self.assertEqual(crashInfo.backtrace[1], "mozilla::OverflowChangedTracker::Flush")
+        self.assertEqual(crashInfo.backtrace[2], "mozilla::RestyleManager::DoProcessPendingRestyles")
+        self.assertEqual(crashInfo.backtrace[3], "mozilla::PresShell::DoFlushPendingNotifications")
+        self.assertEqual(crashInfo.crashAddress, 0)
 
 
 class AppleParserTestCrash(unittest.TestCase):

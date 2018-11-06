@@ -209,7 +209,7 @@ class CrashInfo(object):
             elif tsanString in line:
                 result = TSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif appleString in line:
+            elif appleString in line and not line.startswith(minidumpFirstString):
                 result = AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif cdbString in line:
