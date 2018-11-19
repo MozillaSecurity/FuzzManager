@@ -37,7 +37,7 @@ deploy:
     distributions: sdist bdist_wheel
     user: mozillasecurity
     password:
-        secure: P/ws7hKzyRQoH6+wPcTLom4oSlD5iarAS4C9c4JUiWDjM1530/FitJkuiSsKb7x9m2K+pqskc/lI5n45O55HPjNjunieCpNn5n/UxhCLUzp54J6HUltKBrxQO2uZlmdYXlXSw2jaaWezXc3tL6cpi5yNNpGJp9d8SUPyx06eGNU=
+        secure: IUdzz9q5UgZ8kk2NQjMcmDerAt+RCbaV3+3oYxvvzxsh2lfNjFSnuqL2Nl/jN+1hI/qH2iKNOZUvzZegUP3CACC0ZW0MXs46XJUbzprBubvfUS1YlvAkLPGvjXlJrcxIIiLNicdSoqOALSg1OUM18DbIVUaL4RZm2qBltMXcELo=
     on:
         tags: true
         python: 2.7
