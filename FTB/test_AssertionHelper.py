@@ -88,7 +88,8 @@ Hit MOZ_CRASH(good message) at /builds/worker/workspace/build/src/gfx/webrender/
 #01: ???[/home/ubuntu/firefox/libxul.so +0x46d7415]
 Hit MOZ_CRASH(Aborting on channel error.) at /builds/worker/workspace/build/src/ipc/glue/MessageChannel.cpp:2658
 #01: ???[/home/ubuntu/firefox/libxul.so +0x10ead39]
-"""
+"""  # noqa
+
 
 def _check_regex_matches(error_lines, sanitized_message):
     if isinstance(sanitized_message, (six.text_type, bytes)):
