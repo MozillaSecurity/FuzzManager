@@ -480,7 +480,7 @@ class CrashInfo(object):
                 frame = frame[:idx]
 
         if "lambda" in frame:
-            frame = re.sub("<lambda at .+?:\d+:\d+>", "", frame)
+            frame = re.sub("<lambda at .+?:\\d+:\\d+>", "", frame)
 
         return frame
 
@@ -1044,7 +1044,7 @@ class GDBCrashInfo(CrashInfo):
             return "(" in op and ")" in op
 
         def calculateDerefOpAddress(derefOp):
-            match = re.match("\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
+            match = re.match("\\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match is not None:
                 offset = 0
                 if len(match.group(1)):
@@ -1232,7 +1232,7 @@ class GDBCrashInfo(CrashInfo):
             elif len(parts) == 2:
                 if instruction.startswith("ldr") or instruction.startswith("str"):
                     # Load/Store instruction
-                    match = re.match("^\s*\[(.*)\]$", parts[1])
+                    match = re.match("^\\s*\\[(.*)\\]$", parts[1])
                     if match is not None:
                         (result, reason) = calculateARMDerefOpAddress(match.group(1))
                         if result is None:
