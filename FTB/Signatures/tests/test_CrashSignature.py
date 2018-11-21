@@ -317,7 +317,7 @@ testSignature4 = '''{"symptoms": [
     "type": "testcase",
     "value": {
       "matchType": "pcre",
-      "value": "SIMD\\\.float\\\d+x"
+      "value": "SIMD\\\\.float\\\\d+x"
     }
   }
 ]}
