@@ -302,9 +302,10 @@ def escapePattern(msg):
 
     escapedStr = msg
 
-    activeChars = ["\\", "[", "]", "{", "}", "(", ")", "*", "+", "?", "^", "$", ".", "|"]
+    activeChars = ("\\", "[", "]", "{", "}", "(", ")", "*", "+", "?", "^", "$", ".", "|")
 
     for activeChar in activeChars:
-        escapedStr = escapedStr.replace(activeChar, "\\" + activeChar)
+        if activeChar in escapedStr:
+            escapedStr = escapedStr.replace(activeChar, "\\" + activeChar)
 
     return escapedStr
