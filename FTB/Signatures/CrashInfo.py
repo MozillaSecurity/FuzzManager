@@ -1666,13 +1666,12 @@ class TSanCrashInfo(CrashInfo):
             msg = msg.replace("WARNING: ", "")
 
             if "data race" in msg:
-                if self.tsanIndexZero > 0:
+                if self.tsanIndexZero:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
-
-                if len(self.tsanIndexZero) > 1:
-                    msg += " vs. [@ %s]" % self.tsanIndexZero[1]
+                    if len(self.tsanIndexZero) > 1:
+                        msg += " vs. [@ %s]" % self.tsanIndexZero[1]
             elif "thread leak" in msg:
-                if self.tsanIndexZero > 0:
+                if self.tsanIndexZero:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
             else:
                 raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)
