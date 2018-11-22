@@ -269,7 +269,7 @@ class CrashInfo(object):
             else:
                 return abortMsg
 
-        if not len(self.backtrace):
+        if not self.backtrace:
             return "No crash detected"
 
         return "[@ %s]" % self.backtrace[0]
@@ -638,7 +638,7 @@ class ASanCrashInfo(CrashInfo):
             asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
                              "overlap", asanMsg)
 
-            if len(self.backtrace):
+            if self.backtrace:
                 asanMsg += " [@ %s]" % self.backtrace[0]
             if rwMsg:
                 # Strip address and thread
@@ -647,7 +647,7 @@ class ASanCrashInfo(CrashInfo):
 
             return asanMsg
 
-        if not len(self.backtrace):
+        if not self.backtrace:
             if self.crashAddress is not None:
                 # We seem to have a crash but no backtrace, so let it show up as a crash with no symbols
                 return "[@ ??]"
@@ -876,7 +876,7 @@ class GDBCrashInfo(CrashInfo):
                 print(lastLineBuf, file=sys.stderr)
                 raise RuntimeError("Fatal error parsing GDB trace")
 
-            if not len(lastLineBuf):
+            if not lastLineBuf:
                 match = re.search(gdbRegisterPattern, traceLine)
                 if match is not None:
                     pastFrames = True
@@ -899,7 +899,7 @@ class GDBCrashInfo(CrashInfo):
                                 self.crashInstruction = self.crashInstruction.replace(match.group(1), "")
 
             if not pastFrames:
-                if not len(lastLineBuf) and re.match("\\s*#\\d+.+", traceLine) is None:
+                if not lastLineBuf and re.match("\\s*#\\d+.+", traceLine) is None:
                     # Skip additional lines
                     continue
 
@@ -986,7 +986,7 @@ class GDBCrashInfo(CrashInfo):
         On error, a string containing the failure message is returned instead.
         '''
 
-        if (len(crashInstruction) == 0):
+        if not crashInstruction:
             # GDB shows us no instruction, so the memory at the instruction
             # pointer address must be inaccessible and we should assume
             # that this caused our crash.
@@ -1047,7 +1047,7 @@ class GDBCrashInfo(CrashInfo):
             match = re.match("\\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match is not None:
                 offset = 0
-                if len(match.group(1)):
+                if match.group(1):
                     offset = int(match.group(1), 16)
 
                 val = RegisterHelper.getRegisterValue(match.group(2), registerMap)
@@ -1252,7 +1252,7 @@ class GDBCrashInfo(CrashInfo):
         match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
         if match is not None:
             offset = 0
-            if len(match.group(1)) > 0:
+            if match.group(1):
                 offset = int(match.group(1), 16)
 
             regA = RegisterHelper.getRegisterValue(match.group(2), registerMap)
@@ -1307,13 +1307,13 @@ class MinidumpCrashInfo(CrashInfo):
                 if traceLine.startswith("%s|" % crashThread):
                     components = traceLine.split("|")
 
-                    if not len(components[3]):
+                    if not components[3]:
                         # If we have no symbols, but we have a library/component, using that allows
                         # us to match on the libary name in the stack which is helpful for crashes
                         # in low level libraries.
-                        if len(components[2]):
+                        if components[2]:
                             frame = components[2]
-                            if len(components) >= 7 and len(components[6]):
+                            if len(components) >= 7 and components[6]:
                                 frame = "%s+%s" % (frame, components[6])
                             self.backtrace.append(CrashInfo.sanitizeStackFrame(frame))
                         else:
@@ -1666,13 +1666,13 @@ class TSanCrashInfo(CrashInfo):
             msg = msg.replace("WARNING: ", "")
 
             if "data race" in msg:
-                if len(self.tsanIndexZero) > 0:
+                if self.tsanIndexZero > 0:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
 
                 if len(self.tsanIndexZero) > 1:
                     msg += " vs. [@ %s]" % self.tsanIndexZero[1]
             elif "thread leak" in msg:
-                if len(self.tsanIndexZero) > 0:
+                if self.tsanIndexZero > 0:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
             else:
                 raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)

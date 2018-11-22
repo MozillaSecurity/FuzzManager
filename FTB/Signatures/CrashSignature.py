@@ -48,7 +48,7 @@ class CrashSignature(object):
         # Get the symptoms objects (mandatory)
         if "symptoms" in obj:
             symptoms = JSONHelper.getArrayChecked(obj, "symptoms", True)
-            if len(symptoms) == 0:
+            if not symptoms:
                 raise RuntimeError("Signature must have at least one symptom.")
 
             for rawSymptomsObj in symptoms:
