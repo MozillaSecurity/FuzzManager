@@ -83,6 +83,13 @@ thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
 
 mozCrashWithPath = "Hit MOZ_CRASH(/builds/worker/workspace/build/src/media/libopus/celt/celt_decoder.c:125 assertion failed: st->start < st->end) at nil:16"  # noqa
 
+multiMozCrash = """
+Hit MOZ_CRASH(good message) at /builds/worker/workspace/build/src/gfx/webrender/src/spatial_node.rs:428
+#01: ???[/home/ubuntu/firefox/libxul.so +0x46d7415]
+Hit MOZ_CRASH(Aborting on channel error.) at /builds/worker/workspace/build/src/ipc/glue/MessageChannel.cpp:2658
+#01: ???[/home/ubuntu/firefox/libxul.so +0x10ead39]
+"""  # noqa
+
 
 def _check_regex_matches(error_lines, sanitized_message):
     if isinstance(sanitized_message, (six.text_type, bytes)):
@@ -136,7 +143,6 @@ class AssertionHelperTestMozCrash(unittest.TestCase):
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = (r"Hit MOZ_CRASH\(named lambda static scopes should have been skipped\) at "
                        r"([a-zA-Z]:)?/.+/ScopeObject\.cpp(:[0-9]+)+")
-
         assert sanitizedMsg == expectedMsg
         _check_regex_matches(err, sanitizedMsg)
 
@@ -148,7 +154,17 @@ class AssertionHelperTestMozCrashWithPath(unittest.TestCase):
         sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
         expectedMsg = (r"Hit MOZ_CRASH\(([a-zA-Z]:)?/.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
                        r"st->start < st->end\) at nil(:[0-9]+)+")
+        assert sanitizedMsg == expectedMsg
+        _check_regex_matches(err, sanitizedMsg)
 
+
+class AssertionHelperTestMultiMozCrash(unittest.TestCase):
+    def runTest(self):
+        err = multiMozCrash.splitlines()
+
+        sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+        expectedMsg = (r"Hit MOZ_CRASH\(good message\) at "
+                       r"([a-zA-Z]:)?/.+/spatial_node\.rs(:[0-9]+)+")
         assert sanitizedMsg == expectedMsg
         _check_regex_matches(err, sanitizedMsg)
 

@@ -41,6 +41,9 @@ def getAssertion(output):
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
 
+    # Used to only accept the initial MOZ_CRASH() line
+    haveMozCrashLine = False
+
     # The self-hosted JS asserts are followed by an additional regular
     # JS assertion which we need to ignore in that case
     haveSelfHostedJSAssert = False
@@ -95,7 +98,9 @@ def getAssertion(output):
             haveFatalAssertion = True
         elif not haveFatalAssertion and "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line):
             # MOZ_CRASH line, but with a message (we should only look at these)
-            lastLine = line
+            if not haveMozCrashLine:
+                lastLine = line
+                haveMozCrashLine = True
         elif "Self-hosted JavaScript assertion info" in line:
             lastLine = line
             haveSelfHostedJSAssert = True
