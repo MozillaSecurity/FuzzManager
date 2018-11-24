@@ -28,7 +28,7 @@ def wrap_provider_errors(wrapped):
         except CloudProviderError:
             logging.getLogger("ec2spotmanager").exception("")
             raise
-        except Exception as exc:
+        except Exception:
             logging.getLogger("ec2spotmanager").exception("")
             raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, traceback.format_exc()))
 
