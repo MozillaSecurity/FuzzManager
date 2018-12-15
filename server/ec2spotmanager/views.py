@@ -323,8 +323,8 @@ def __handleConfigPOST(request, config):
     if request.POST['ec2_allowed_regions']:
         config.ec2_allowed_regions_list = [x.strip() for x in request.POST['ec2_allowed_regions'].split(',')]
     else:
-        config.allowed_regions_list = None
-    config.allowed_regions_override = request.POST.get('allowed_regions_override', 'off') == 'on'
+        config.ec2_allowed_regions_list = None
+    config.ec2_allowed_regions_override = request.POST.get('ec2_allowed_regions_override', 'off') == 'on'
 
     if request.POST['ec2_security_groups']:
         config.ec2_security_groups_list = [x.strip() for x in request.POST['ec2_security_groups'].split(',')]
