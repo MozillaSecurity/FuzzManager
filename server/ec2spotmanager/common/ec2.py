@@ -7,6 +7,11 @@ InstanceType = collections.namedtuple("InstanceType", ("api_name", "vCPUs"))
 
 
 INSTANCE_TYPES = (
+    InstanceType("a1.medium", 1),
+    InstanceType("a1.large", 2),
+    InstanceType("a1.xlarge", 4),
+    InstanceType("a1.2xlarge", 8),
+    InstanceType("a1.4xlarge", 16),
     InstanceType("c1.medium", 2),
     InstanceType("c1.xlarge", 8),
     InstanceType("c3.2xlarge", 8),
