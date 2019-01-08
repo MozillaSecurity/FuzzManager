@@ -11,7 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import fasteners
 import redis
-from rest_framework import status
+from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,7 +19,7 @@ from server.auth import CheckAppPermission
 from server.views import deny_restricted_users
 from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry
 from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
-from .serializers import MachineStatusSerializer
+from .serializers import MachineStatusSerializer, PoolConfigurationSerializer
 from .CloudProvider.CloudProvider import INSTANCE_STATE, INSTANCE_STATE_CODE, PROVIDERS, CloudProvider
 
 
@@ -669,6 +669,28 @@ class MachineStatusViewSet(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PoolConfigurationViewSet(mixins.RetrieveModelMixin,
+                               mixins.ListModelMixin,
+                               viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing PoolConfigurations
+    """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (CheckAppPermission,)
+    queryset = PoolConfiguration.objects.all()  # noqa
+    serializer_class = PoolConfigurationSerializer
+
+    def retrieve(self, request, *args, **kwds):
+        flatten = request.query_params.get('flatten', '0')
+        try:
+            flatten = int(flatten)
+            assert flatten in {0, 1}
+        except (AssertionError, ValueError):
+            raise serializers.ValidationError('flatten must be 0 or 1')
+        serializer = self.get_serializer(self.get_object(), flatten=bool(flatten))
+        return Response(serializer.data)
 
 
 class PoolCycleView(APIView):

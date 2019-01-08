@@ -1,6 +1,11 @@
 from django.conf.urls import url, include
+from rest_framework import routers
 
 from ec2spotmanager import views
+
+
+router = routers.DefaultRouter()
+router.register(r'configurations', views.PoolConfigurationViewSet, base_name='configurations')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
@@ -28,4 +33,6 @@ urlpatterns = [
         name='line_chart_json_detailed'),
     url(r'^pools/(?P<poolid>\d+)/chart_json_accumulated/$', views.UptimeChartViewAccumulated.as_view(),
         name='line_chart_json_accumulated'),
+
+    url(r'^rest/', include(router.urls)),
 ]
