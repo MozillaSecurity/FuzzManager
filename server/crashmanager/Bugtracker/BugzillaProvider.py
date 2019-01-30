@@ -172,10 +172,14 @@ class BugzillaProvider(Provider):
             template["platform"] = crashEntry.platform.name.replace('-', '_').replace('arm', 'ARM')
 
         # Process all support variables in our bug description and comment field
-        for field in ["summary", "testcase", "crashdata", "shortsig", "product", "version", "args", "os", "platform",
-                      "client"]:
+        for field in ["summary", "shortsig", "product", "version", "args", "os", "platform", "client"]:
             template["description"] = template["description"].replace('%%%s%%' % field, sdata[field])
             template["comment"] = template["comment"].replace('%%%s%%' % field, sdata[field])
+
+        # Testcase and Crashdata need special handling when being inlined, due to potential markdown formatting
+        for field in ["testcase", "crashdata"]:
+            mdata = "\n".join(["    %s" % x for x in sdata[field].splitlines()])
+            template["comment"] = template["comment"].replace('%%%s%%' % field, mdata)
 
         # Also process all metadata variables in our bug description and comment field
         def substituteMetadata(source, metadata):
