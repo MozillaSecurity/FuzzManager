@@ -179,6 +179,7 @@ class BugzillaProvider(Provider):
         # Testcase and Crashdata need special handling when being inlined, due to potential markdown formatting
         for field in ["testcase", "crashdata"]:
             mdata = "\n".join(["    %s" % x for x in sdata[field].splitlines()])
+            template["description"] = template["description"].replace('%%%s%%' % field, mdata)
             template["comment"] = template["comment"].replace('%%%s%%' % field, mdata)
 
         # Also process all metadata variables in our bug description and comment field
