@@ -746,6 +746,8 @@ def main(argv=None):
                            help="Auto-reduce the corpus once it has grown by this percentage", metavar="PERCENT")
     libfGroup.add_argument("--libfuzzer-auto-reduce-min", dest="libfuzzer_auto_reduce_min", type=int, default=1000,
                            help="Minimum corpus size for auto-reduce to apply.", metavar="COUNT")
+    libfGroup.add_argument("--libfuzzer-startup-reduce", dest="libfuzzer_startup_reduce", action='store_true',
+                           help="Reduce corpus once at startup.")
     libfGroup.add_argument("--pcintersectlog", dest="pcintersectlog",
                            help="Collect intersection of NEW_PCs between runs in specified file", metavar="FILE")
 
@@ -1195,23 +1197,24 @@ def main(argv=None):
                     break
 
                 # Check if we need to (re)start any monitors
-                for i in range(len(monitors)):
-                    if monitors[i] is None:
-                        if restarts is not None:
-                            restarts -= 1
-                            if restarts < 0:
-                                break
+                if not opts.libfuzzer_startup_reduce:
+                    for i in range(len(monitors)):
+                        if monitors[i] is None:
+                            if restarts is not None:
+                                restarts -= 1
+                                if restarts < 0:
+                                    break
 
-                        process = subprocess.Popen(
-                            cmdline,
-                            # stdout=None,
-                            stderr=subprocess.PIPE,
-                            env=env,
-                            universal_newlines=True
-                        )
+                            process = subprocess.Popen(
+                                cmdline,
+                                # stdout=None,
+                                stderr=subprocess.PIPE,
+                                env=env,
+                                universal_newlines=True
+                            )
 
-                        monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue)
-                        monitors[i].start()
+                            monitors[i] = LibFuzzerMonitor(process, mid=i, mqueue=monitor_queue, pcqueue=pc_queue)
+                            monitors[i].start()
 
                 corpus_size = None
                 if corpus_auto_reduce_threshold is not None or opts.stats:
@@ -1219,7 +1222,8 @@ def main(argv=None):
                     # so we cache it here to avoid running listdir multiple times.
                     corpus_size = len(os.listdir(corpus_dir))
 
-                if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
+                if opts.libfuzzer_startup_reduce or (corpus_auto_reduce_threshold is not None and
+                                                     corpus_size >= corpus_auto_reduce_threshold):
                     print("Preparing automated merge...", file=sys.stderr)
 
                     # Time to Auto-reduce
@@ -1246,7 +1250,7 @@ def main(argv=None):
                         monitor_queue.get_nowait()
 
                     # Notify the PC monitor that we are doing a merge now
-                    if pc_queue is not None:
+                    if pc_queue is not None and not opts.libfuzzer_startup_reduce:
                         pc_queue.put(None)
 
                     merge_cmdline = []
@@ -1288,6 +1292,7 @@ def main(argv=None):
                                                            (1 + corpus_auto_reduce_ratio))
 
                     corpus_reduction_done = True
+                    opts.libfuzzer_startup_reduce = False
 
                     # Continue, our instances will be restarted with the next loop
                     continue
