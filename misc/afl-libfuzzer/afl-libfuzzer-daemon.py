@@ -1166,6 +1166,7 @@ def main(argv=None):
         monitors = [None] * opts.libfuzzer_instances
         monitor_queue = queue.Queue()
         pc_queue = None
+        pc_monitor = None
 
         if opts.pcintersectlog:
             pc_queue = queue.Queue()
