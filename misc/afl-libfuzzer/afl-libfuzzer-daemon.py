@@ -196,6 +196,7 @@ class PCIntersectMonitor(threading.Thread):
         self.cpcdata = set()
         self.init_done = False
         self.shutdown = False
+        self.cnt = 0
 
     def run(self):
         while not self.shutdown:
@@ -210,9 +211,10 @@ class PCIntersectMonitor(threading.Thread):
                 else:
                     self.pcdata &= self.cpcdata
                     self.cpcdata = set()
-                    with open(self.pcfile, mode="w") as fd:
+                    with open("%s.%s" % (self.pcfile, self.cnt), mode="w") as fd:
                         for pc in self.pcdata:
                             fd.write(pc)
+                    self.cnt += 1
             elif " in " in pc:
                 pc = pc.split(" in ", 2)[1]
                 if self.init_done:
