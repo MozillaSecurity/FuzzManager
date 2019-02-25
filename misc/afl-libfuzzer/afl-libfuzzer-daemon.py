@@ -220,7 +220,7 @@ class PCIntersectMonitor(threading.Thread):
                 else:
                     self.pcdata.add(pc)
 
-    def shutdown(self):
+    def terminate(self):
         self.shutdown = True
         self.pcqueue.put(None)
 
