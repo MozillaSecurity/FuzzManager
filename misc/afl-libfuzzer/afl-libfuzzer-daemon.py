@@ -55,7 +55,7 @@ NO_CORPUS_MSG = "INFO: A corpus is not provided, starting from an empty corpus"
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, process, killOnOOM=True, mid=None, mqueue=None):
+    def __init__(self, process, killOnOOM=True, mid=None, mqueue=None, pcqueue=None):
         threading.Thread.__init__(self)
 
         self.process = process
@@ -70,6 +70,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.inited = False
         self.mid = mid
         self.mqueue = mqueue
+        self.pcqueue = pcqueue
 
         # Keep some statistics
         self.execs_done = 0
@@ -109,6 +110,8 @@ class LibFuzzerMonitor(threading.Thread):
                         self.rss_mb = int(rss_match.group(1))
                 elif RE_LIBFUZZER_NEWPC.search(line):
                     self.last_new_pc = int(time.time())
+                    if self.pcqueue is not None:
+                        self.pcqueue.put(line)
                 elif self.inTrace:
                     self.trace.append(line.rstrip())
                     if line.find("==ABORTING") >= 0:
@@ -182,6 +185,44 @@ class LibFuzzerMonitor(threading.Thread):
         if self.process.poll() is None:
             self.process.kill()
             self.process.wait()
+
+
+class PCIntersectMonitor(threading.Thread):
+    def __init__(self, pcqueue, pcfile):
+        threading.Thread.__init__(self)
+        self.pcqueue = pcqueue
+        self.pcfile = pcfile
+        self.pcdata = set()
+        self.cpcdata = set()
+        self.init_done = False
+        self.shutdown = False
+
+    def run(self):
+        while not self.shutdown:
+            pc = self.pcqueue.get(True)
+
+            if self.shutdown:
+                break
+
+            if pc is None:
+                if not self.init_done:
+                    self.init_done = True
+                else:
+                    self.pcdata &= self.cpcdata
+                    self.cpcdata = set()
+                    with open(self.pcfile, mode="w") as fd:
+                        for pc in self.pcdata:
+                            fd.write(pc)
+            elif " in " in pc:
+                pc = pc.split(" in ", 2)[1]
+                if self.init_done:
+                    self.cpcdata.add(pc)
+                else:
+                    self.pcdata.add(pc)
+
+    def shutdown(self):
+        self.shutdown = True
+        self.pcqueue.put(None)
 
 
 def command_file_to_list(cmd_file):
@@ -705,6 +746,8 @@ def main(argv=None):
                            help="Auto-reduce the corpus once it has grown by this percentage", metavar="PERCENT")
     libfGroup.add_argument("--libfuzzer-auto-reduce-min", dest="libfuzzer_auto_reduce_min", type=int, default=1000,
                            help="Minimum corpus size for auto-reduce to apply.", metavar="COUNT")
+    libfGroup.add_argument("--pcintersectlog", dest="pcintersectlog",
+                           help="Collect intersection of NEW_PCs between runs in specified file", metavar="FILE")
 
     fmGroup.add_argument("--custom-cmdline-file", dest="custom_cmdline_file", help="Path to custom cmdline file",
                          metavar="FILE")
@@ -1118,6 +1161,12 @@ def main(argv=None):
 
         monitors = [None] * opts.libfuzzer_instances
         monitor_queue = queue.Queue()
+        pc_queue = None
+
+        if opts.pcintersectlog:
+            pc_queue = queue.Queue()
+            pc_monitor = PCIntersectMonitor(pc_queue, opts.pcintersectlog)
+            pc_monitor.start()
 
         # Keep track how often we crash to abort in certain situations
         crashes_per_minute_interval = 0
@@ -1195,6 +1244,10 @@ def main(argv=None):
                     # we terminated them.
                     while not monitor_queue.empty():
                         monitor_queue.get_nowait()
+
+                    # Notify the PC monitor that we are doing a merge now
+                    if pc_queue is not None:
+                        pc_queue.put(None)
 
                     merge_cmdline = []
                     merge_cmdline.extend(cmdline)
@@ -1363,6 +1416,9 @@ def main(argv=None):
                         monitor = monitors[i]
                         monitor.terminate()
                         monitor.join(10)
+                if pc_monitor is not None:
+                    pc_monitor.terminate()
+                    pc_monitor.join(10)
             finally:
                 if sys.exc_info()[0] is not None:
                     # We caught an exception, print it now when all our monitors are down
