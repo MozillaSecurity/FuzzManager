@@ -810,6 +810,19 @@ WARNING: ThreadSanitizer: data race (pid=9337)
     #1 main simple_stack2.cc:40 (exe+0x000000003dd6)
 """  # noqa
 
+valgrindCJMReport = """
+==123== Thread 11 blah #1:
+==123== Conditional jump or move depends on uninitialised value(s)
+==123==    at 0x5A7C18: PyObject_Free (blah.c:123)
+==123==    by 0x56D9E8: ??? (in /usr/bin/python3.6)
+==123==    by 0x574D35: PyDict_SetDefault (in /usr/bin/python3.6)
+==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
+==123==  Uninitialised value was created by a heap allocation
+==123==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==123==    by 0x637823: ??? (in /usr/bin/python3.6)
+==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
+==123== 
+"""  # noqa
 
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
@@ -2909,6 +2922,22 @@ class TSanParserTest(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[1], "js::gc::GCRuntime::incMajorGcNumber")
         self.assertEqual(crashInfo.backtrace[5], "js::gc::GCRuntime::gcIfNeededAtAllocation")
 
+        self.assertEqual(crashInfo.crashInstruction, None)
+        self.assertEqual(crashInfo.crashAddress, None)
+
+
+class ValgrindCJMParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindCJMReport.splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Conditional jump or move depends on uninitialised value [@ PyObject_Free]")
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "PyObject_Free")
+        self.assertEqual(crashInfo.backtrace[1], "/usr/bin/python3.6")
+        self.assertEqual(crashInfo.backtrace[3], "main")
         self.assertEqual(crashInfo.crashInstruction, None)
         self.assertEqual(crashInfo.crashAddress, None)
 
