@@ -177,6 +177,7 @@ class CrashInfo(object):
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
         appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
+
         # Use two strings for detecting rust backtraces to avoid false positives
         rustFirstString = "panicked at"
         rustSecondString = "stack backtrace:"
@@ -233,6 +234,7 @@ class CrashInfo(object):
                 break
             elif line.startswith("==") and re.match(ValgrindCrashInfo.MSG_REGEX, line):
                 result = ValgrindCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             else:
                 rustFirstDetected = False
                 minidumpFirstDetected = False
