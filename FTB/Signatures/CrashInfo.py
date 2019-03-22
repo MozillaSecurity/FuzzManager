@@ -1685,9 +1685,13 @@ class TSanCrashInfo(CrashInfo):
 class ValgrindCrashInfo(CrashInfo):
     MSG_REGEX = re.compile(r"""
         ==\d+==\s+(?P<msg>
-        (Process\sterminating\swith\sdefault\saction.+)|
+        (\d+(,\d+)*\sbytes\sin\s\d+(,\d+)*\sblocks\sare\s\w+\slost)|
+        (Argument\s'\w+'\sof\sfunction\smalloc.+)|
         (Invalid\s\w+\sof\ssize.+)|
         ((Invalid|Mismatched)\sfree\(\).+)|
+        (Process\sterminating\swith\sdefault\saction.+)|
+        (Source\sand\sdestination\soverlap)|
+        (Syscall\sparam.+)|
         (.+?uninitialised\svalue.+)
         )""", re.VERBOSE)
 

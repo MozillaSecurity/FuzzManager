@@ -810,49 +810,6 @@ WARNING: ThreadSanitizer: data race (pid=9337)
     #1 main simple_stack2.cc:40 (exe+0x000000003dd6)
 """  # noqa
 
-valgrindCJMReport = """
-==123== Thread 11 blah #1:
-==123== Conditional jump or move depends on uninitialised value(s)
-==123==    at 0x5A7C18: PyObject_Free (blah.c:123)
-==123==    by 0x56D9E8: ??? (in /usr/bin/python3.6)
-==123==    by 0x574D35: PyDict_SetDefault (in /usr/bin/python3.6)
-==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
-==123==  Uninitialised value was created by a heap allocation
-==123==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
-==123==    by 0x637823: ??? (in /usr/bin/python3.6)
-==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
-==123== 
-"""  # noqa
-
-valgrindIRReport = """
-==111== Invalid read of size 4
-==111==    at 0x33296345CA: blah_func (in /foo/bar/test.so)
-==111==    by 0x52ADD7B: main (test.cpp:123)
-==111==  Address 0xbadf00d is 24 bytes inside a block of size 28 free'd
-==111==    at 0x4A05743: operator delete(void*) (vg_replace_malloc.c:346)
-==111==    by 0x52D590B: asdf() (foo.cpp:325)
-"""  # noqa
-
-valgrindUUVReport = """
-==222== Use of uninitialised value of size 8
-==222==    by 0x11C92A94: foo<123>::Init() (bar.cpp:929)
-==222==    by 0x11C63345: bar::func<bar::Init()::$_0, Promise<type1, type2, true> >::Run() (file.cpp:432)
-==222==    by 0xFD534FC: non-virtual thunk to Run() (file.cpp:0)
-==222==  Uninitialised value was created by a heap allocation
-==222==    at 0x4C32373: memalign (vg_replace_malloc.c:908)
-==222==    by 0x4C32476: posix_memalign (vg_replace_malloc.c:1072)
-"""  # noqa
-
-valgrindIFReport = """
-==333== Invalid free() / delete / delete[] / realloc()
-==333==    at 0x124455: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==333==    by 0xAD3452: main (main.c:123)
-==333==  Address 0x43f2931 is 9 bytes inside a block of size 18 free'd
-==333==    at 0x4C2B326: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
-==333==    by 0xAD3452: main (main.c:123)
-==333== 
-"""  # noqa
-
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -2958,7 +2915,8 @@ class TSanParserTest(unittest.TestCase):
 class ValgrindCJMParserTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindCJMReport.splitlines())
+        with open(os.path.join(CWD, "resources", "valgrind-cjm-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
         self.assertEqual(
             crashInfo.createShortSignature(),
@@ -2970,11 +2928,26 @@ class ValgrindCJMParserTest(unittest.TestCase):
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertIsNone(crashInfo.crashAddress)
 
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-cjm-02.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
-class ValgrindIRParserTest(unittest.TestCase):
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Conditional jump or move depends on uninitialised value(s) [@ strlen]")
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "strlen")
+        self.assertEqual(crashInfo.backtrace[1], "puts")
+        self.assertEqual(crashInfo.backtrace[3], "(below main)")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindIRWParserTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindIRReport.splitlines())
+        with open(os.path.join(CWD, "resources", "valgrind-ir-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
         self.assertEqual(
             crashInfo.createShortSignature(),
@@ -2983,13 +2956,27 @@ class ValgrindIRParserTest(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "blah_func")
         self.assertEqual(crashInfo.backtrace[1], "main")
         self.assertIsNone(crashInfo.crashInstruction)
-        self.assertEqual(crashInfo.crashAddress, 195948557)
+        self.assertEqual(crashInfo.crashAddress, 0xbadf00d)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-iw-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid write of size 8 [@ memcpy]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "memcpy")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x41414141)
 
 
 class ValgrindUUVParserTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindUUVReport.splitlines())
+        with open(os.path.join(CWD, "resources", "valgrind-uuv-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
         self.assertEqual(
             crashInfo.createShortSignature(),
@@ -3005,7 +2992,8 @@ class ValgrindUUVParserTest(unittest.TestCase):
 class ValgrindIFParserTest(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindIFReport.splitlines())
+        with open(os.path.join(CWD, "resources", "valgrind-if-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
         self.assertEqual(
             crashInfo.createShortSignature(),
@@ -3014,7 +3002,113 @@ class ValgrindIFParserTest(unittest.TestCase):
         self.assertEqual(crashInfo.backtrace[0], "free")
         self.assertEqual(crashInfo.backtrace[1], "main")
         self.assertIsNone(crashInfo.crashInstruction)
-        self.assertEqual(crashInfo.crashAddress, 71248177)
+        self.assertEqual(crashInfo.crashAddress, 0x43f2931)
+
+
+class ValgrindSDOParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-sdo-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Source and destination overlap [@ memcpy]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "memcpy")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindSCParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-sc-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Syscall param write(buf) points to uninitialised byte(s) [@ write]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "write")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x522e040)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-sc-02.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Syscall param socketcall.sendto(msg) points to uninitialised byte(s) [@ send]")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "send")
+        self.assertEqual(crashInfo.backtrace[2], "start_thread")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x5e7b6b4)
+
+
+class ValgrindNMParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-nm-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Argument 'size' of function malloc has a fishy (possibly negative) value: -1 [@ malloc]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "malloc")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindPTParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-pt-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Process terminating with default action of signal 11 (SIGSEGV) [@ strlen]")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "strlen")
+        self.assertEqual(crashInfo.backtrace[2], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindLeakParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-leak-01.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: 102,400 bytes in 1,024 blocks are definitely lost [@ malloc]")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "malloc")
+        self.assertEqual(crashInfo.backtrace[2], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-leak-02.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: 16 bytes in 1 blocks are possibly lost [@ malloc]")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "malloc")
+        self.assertEqual(crashInfo.backtrace[2], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
 
 
 if __name__ == "__main__":

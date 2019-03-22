@@ -1,0 +1,10 @@
+==111== Syscall param write(buf) points to uninitialised byte(s)
+==111==    at 0x4F4D154: write (write.c:27)
+==111==    by 0x1086B5: main (in a.out)
+==111==  Address 0x522e040 is 0 bytes inside a block of size 10 alloc'd
+==111==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==111==    by 0x10869B: main (in a.out)
+==111==  Uninitialised value was created by a heap allocation
+==111==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==111==    by 0x10869B: main (in a.out)
+==111== 

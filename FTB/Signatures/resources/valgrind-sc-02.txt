@@ -1,0 +1,8 @@
+==222== Syscall param socketcall.sendto(msg) points to uninitialised byte(s)
+==222==    at 0x57835DC: send (send.c:33)
+==222==    by 0x405244: test (test.c:154)
+==222==    by 0x5A54E99: start_thread (pthread_create.c:308)
+==222==  Address 0x5e7b6b4 is 20 bytes inside a block of size 24 alloc'd
+==222==    at 0x4C2B6CD: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==222==    by 0x5A54E99: start_thread (pthread_create.c:308)
+==222==

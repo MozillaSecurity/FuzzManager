@@ -1,0 +1,7 @@
+==222== Use of uninitialised value of size 8
+==222==    by 0x11C92A94: foo<123>::Init() (bar.cpp:929)
+==222==    by 0x11C63345: bar::func<bar::Init()::$_0, Promise<type1, type2, true> >::Run() (file.cpp:432)
+==222==    by 0xFD534FC: non-virtual thunk to Run() (file.cpp:0)
+==222==  Uninitialised value was created by a heap allocation
+==222==    at 0x4C32373: memalign (vg_replace_malloc.c:908)
+==222==    by 0x4C32476: posix_memalign (vg_replace_malloc.c:1072)

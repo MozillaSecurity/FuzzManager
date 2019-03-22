@@ -1,0 +1,4 @@
+==333== Argument 'size' of function malloc has a fishy (possibly negative) value: -1
+==333==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==333==    by 0x10869D: main (free.c:6)
+==333== 
