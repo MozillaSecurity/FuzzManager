@@ -1685,10 +1685,10 @@ class TSanCrashInfo(CrashInfo):
 class ValgrindCrashInfo(CrashInfo):
     MSG_REGEX = re.compile(r"""
         ==\d+==\s+(?P<msg>
-        (Process\sterminating\swith\sdefault\saction)|
-        (Invalid\.+of\ssize)|
-        (Invalid\sfree\(\))|
-        (.+?uninitialised\svalue)
+        (Process\sterminating\swith\sdefault\saction.+)|
+        (Invalid\s\w+\sof\ssize.+)|
+        ((Invalid|Mismatched)\sfree\(\).+)|
+        (.+?uninitialised\svalue.+)
         )""", re.VERBOSE)
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -1712,15 +1712,23 @@ class ValgrindCrashInfo(CrashInfo):
         vgdOutput = crashData if crashData else stderr
         stackPattern = re.compile(r"""
             ^==\d+==\s+(at|by)\s+            # find beginning of line
-            0x[0-9A-F]+\:\s+                 # address
-            (?P<func>.+?)\s+                 # function name
-            \((in\s+)?(?P<file>.+?)(:.+)?\)  # file name
+            0x[0-9A-Fa-f]+\:\s+              # address
+            (?P<func>.+)\s+                  # function name
+            \((in\s+)?(?P<file>.+?)(:.+?)?\) # file name
             """, re.VERBOSE)
 
         for traceLine in vgdOutput:
+            if not traceLine.startswith("=="):
+                # skip unrelated noise
+                continue
             lineInfo = re.match(stackPattern, traceLine)
             if lineInfo is None:
                 if self.backtrace:
+                    # at this point we should have the full trace
+                    # check if address info is available
+                    addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
+                    if addr:
+                        self.crashAddress = int(addr.group("addr"), 16)
                     # done parsing
                     break
                 # continue search for the beginning of the stack trace

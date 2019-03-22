@@ -824,6 +824,35 @@ valgrindCJMReport = """
 ==123== 
 """  # noqa
 
+valgrindIRReport = """
+==111== Invalid read of size 4
+==111==    at 0x33296345CA: blah_func (in /foo/bar/test.so)
+==111==    by 0x52ADD7B: main (test.cpp:123)
+==111==  Address 0xbadf00d is 24 bytes inside a block of size 28 free'd
+==111==    at 0x4A05743: operator delete(void*) (vg_replace_malloc.c:346)
+==111==    by 0x52D590B: asdf() (foo.cpp:325)
+"""  # noqa
+
+valgrindUUVReport = """
+==222== Use of uninitialised value of size 8
+==222==    by 0x11C92A94: foo<123>::Init() (bar.cpp:929)
+==222==    by 0x11C63345: bar::func<bar::Init()::$_0, Promise<type1, type2, true> >::Run() (file.cpp:432)
+==222==    by 0xFD534FC: non-virtual thunk to Run() (file.cpp:0)
+==222==  Uninitialised value was created by a heap allocation
+==222==    at 0x4C32373: memalign (vg_replace_malloc.c:908)
+==222==    by 0x4C32476: posix_memalign (vg_replace_malloc.c:1072)
+"""  # noqa
+
+valgrindIFReport = """
+==333== Invalid free() / delete / delete[] / realloc()
+==333==    at 0x124455: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==333==    by 0xAD3452: main (main.c:123)
+==333==  Address 0x43f2931 is 9 bytes inside a block of size 18 free'd
+==333==    at 0x4C2B326: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==333==    by 0xAD3452: main (main.c:123)
+==333== 
+"""  # noqa
+
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
@@ -2933,13 +2962,59 @@ class ValgrindCJMParserTest(unittest.TestCase):
 
         self.assertEqual(
             crashInfo.createShortSignature(),
-            "Valgrind: Conditional jump or move depends on uninitialised value [@ PyObject_Free]")
+            "Valgrind: Conditional jump or move depends on uninitialised value(s) [@ PyObject_Free]")
         self.assertEqual(len(crashInfo.backtrace), 4)
         self.assertEqual(crashInfo.backtrace[0], "PyObject_Free")
         self.assertEqual(crashInfo.backtrace[1], "/usr/bin/python3.6")
         self.assertEqual(crashInfo.backtrace[3], "main")
-        self.assertEqual(crashInfo.crashInstruction, None)
-        self.assertEqual(crashInfo.crashAddress, None)
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindIRParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindIRReport.splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid read of size 4 [@ blah_func]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "blah_func")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 195948557)
+
+
+class ValgrindUUVParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindUUVReport.splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Use of uninitialised value of size 8 [@ foo<123>::Init]")
+        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(crashInfo.backtrace[0], "foo<123>::Init")
+        self.assertEqual(crashInfo.backtrace[1], "bar::func<bar::Init()::$_0, Promise<type1, type2, true> >::Run")
+        self.assertEqual(crashInfo.backtrace[2], "non-virtual thunk to Run")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertIsNone(crashInfo.crashAddress)
+
+
+class ValgrindIFParserTest(unittest.TestCase):
+    def runTest(self):
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, valgrindIFReport.splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid free() / delete / delete[] / realloc() [@ free]")
+        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(crashInfo.backtrace[0], "free")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 71248177)
 
 
 if __name__ == "__main__":
