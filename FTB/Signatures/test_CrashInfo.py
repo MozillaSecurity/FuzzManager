@@ -810,6 +810,7 @@ WARNING: ThreadSanitizer: data race (pid=9337)
     #1 main simple_stack2.cc:40 (exe+0x000000003dd6)
 """  # noqa
 
+
 class ASanParserTestAccessViolation(unittest.TestCase):
     def runTest(self):
         config = ProgramConfiguration("test", "x86-64", "windows")
