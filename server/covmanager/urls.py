@@ -29,6 +29,8 @@ urlpatterns = [
         name="collections_reportsummary"),
     url(r'^collections/(?P<collectionid>\d+)/summary/api/', views.collections_reportsummary_api,
         name="collections_reportsummary_api"),
+    url(r'^collections/(?P<collectionid>\d+)/summary/htmlexport/$', views.collections_reportsummary_html_list,
+        name="collections_reportsummary_html_list"),
     url(r'^reportconfigurations/$', views.reportconfigurations, name="reportconfigurations"),
     url(r'^reportconfigurations/api/$', views.ReportConfigurationViewSet.as_view({'get': 'list'}),
         name="reportconfigurations_list_api"),

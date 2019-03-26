@@ -50,6 +50,35 @@ def collections_reportsummary(request, collectionid):
     return render(request, 'reportconfigurations/summary.html', {'collectionid': collectionid})
 
 
+def collections_reportsummary_html_list(request, collectionid):
+    collection = get_object_or_404(Collection, pk=collectionid)
+
+    if not collection.coverage:
+        return HttpResponse(
+            content=json.dumps({"error": "Specified collection is not ready yet."}),
+            content_type='application/json',
+            status=400
+        )
+
+    if not hasattr(collection, 'reportsummary'):
+        return HttpResponse(
+            content=json.dumps({"message": "The requested collection has no report summary."}),
+            content_type='application/json',
+            status=400
+        )
+
+    if not collection.reportsummary.cached_result:
+        return HttpResponse(
+            content=json.dumps({"message": "The requested collection is currently being created."}),
+            content_type='application/json',
+            status=204
+        )
+
+    root = json.loads(collection.reportsummary.cached_result)
+
+    return render(request, 'reportconfigurations/summary_html_list.html', {'root': root})
+
+
 def collections_download(request, collectionid):
     collection = get_object_or_404(Collection, pk=collectionid)
 
