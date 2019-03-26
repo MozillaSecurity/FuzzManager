@@ -12,8 +12,8 @@ class RecurseReportSummaryTree(template.Node):
     def _render_node(self, context, node):
         context.push()
         context['node'] = node
-        children = [self._render_node(context, x) for x in node.children]
-        if node.children:
+        if "children" in node:
+            children = [self._render_node(context, x) for x in node["children"]]
             context['children'] = mark_safe(''.join(children))
         rendered = self.template_nodes.render(context)
         context.pop()
