@@ -1751,7 +1751,6 @@ class ValgrindCrashInfo(CrashInfo):
                     # done parsing
                     break
 
-
     def createShortSignature(self):
         '''
         @rtype: String

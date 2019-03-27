@@ -2963,6 +2963,18 @@ class ValgrindIRWParserTest(unittest.TestCase):
         self.assertEqual(crashInfo.crashAddress, 0xbadf00d)
 
         config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-ir-02.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid read of size 4 [@ main]")
+        self.assertEqual(len(crashInfo.backtrace), 1)
+        self.assertEqual(crashInfo.backtrace[0], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x5204068)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
         with open(os.path.join(CWD, "resources", "valgrind-iw-01.txt"), "r") as f:
             crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
