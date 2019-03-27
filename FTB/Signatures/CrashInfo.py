@@ -1687,12 +1687,12 @@ class ValgrindCrashInfo(CrashInfo):
         ==\d+==\s+(?P<msg>
         (\d+(,\d+)*\sbytes\sin\s\d+(,\d+)*\sblocks\sare\s\w+\slost)|
         (Argument\s'\w+'\sof\sfunction\smalloc.+)|
+        ((Conditional|Use)\s.+?uninitialised\svalue.+)|
         (Invalid\s\w+\sof\ssize.+)|
         ((Invalid|Mismatched)\sfree\(\).+)|
         (Process\sterminating\swith\sdefault\saction.+)|
         (Source\sand\sdestination\soverlap)|
-        (Syscall\sparam.+)|
-        (.+?uninitialised\svalue.+)
+        (Syscall\sparam.+)
         )""", re.VERBOSE)
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
@@ -1715,7 +1715,7 @@ class ValgrindCrashInfo(CrashInfo):
         # If crashData is given, use that to find the Valgrind trace, otherwise use stderr
         vgdOutput = crashData if crashData else stderr
         stackPattern = re.compile(r"""
-            ^==\d+==\s+(at|by)\s+            # find beginning of line
+            ^==\d+==\s+(at|by)\s+            # beginning of entry
             0x[0-9A-Fa-f]+\:\s+              # address
             (?P<func>.+)\s+                  # function name
             \((in\s+)?(?P<file>.+?)(:.+?)?\) # file name
@@ -1736,7 +1736,7 @@ class ValgrindCrashInfo(CrashInfo):
             lineInfo = re.match(stackPattern, traceLine)
             if lineInfo is not None:
                 lineFunc = lineInfo.group("func")
-                # if function name is not available used the file name instead
+                # if function name is not available use the file name instead
                 if lineFunc == "???":
                     lineFunc = lineInfo.group("file")
                 self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
