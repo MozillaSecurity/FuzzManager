@@ -224,7 +224,7 @@ class SimplePersistentApplication(PersistentApplication):
 
         # This queue is used to queue up responses that should be directly processed
         # by this class rather than being logged.
-        self.responseQueue = queue.queue()
+        self.responseQueue = queue.Queue()
 
         self.outCollector = StreamCollector(self.process.stdout, self.responseQueue, logResponses=False, maxBacklog=256)
         self.errCollector = StreamCollector(self.process.stderr, self.responseQueue, logResponses=False, maxBacklog=256)

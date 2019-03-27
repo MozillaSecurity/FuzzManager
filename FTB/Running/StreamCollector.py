@@ -19,13 +19,13 @@ from __future__ import print_function
 
 import threading
 
-from six.moves.queue import queue
+from six.moves import queue
 
 
 class StreamCollector(threading.Thread):
     def __init__(self, fd, responseQueue, logResponses=False, maxBacklog=None):
         assert callable(fd.readline)
-        assert isinstance(responseQueue, queue)
+        assert isinstance(responseQueue, queue.Queue)
 
         threading.Thread.__init__(self)
 

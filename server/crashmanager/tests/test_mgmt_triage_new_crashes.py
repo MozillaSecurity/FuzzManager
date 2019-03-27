@@ -1,12 +1,21 @@
+# coding: utf-8
+'''Tests for CrashManager triage_new_crashes management command
+
+@author:     Jesse Schwartzentruber (:truber)
+
+@license:
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+'''
 import json
-
-import pytest
 from django.core.management import call_command, CommandError
-
+import pytest
 from crashmanager.models import Bucket, Client, CrashEntry, OS, Platform, Product, Tool
 
 
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
 def test_args():

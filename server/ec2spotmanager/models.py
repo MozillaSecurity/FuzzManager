@@ -30,7 +30,7 @@ class OverwritingStorage(FileSystemStorage):
 
 
 class PoolConfiguration(models.Model):
-    parent = models.ForeignKey('self', blank=True, null=True)
+    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.deletion.CASCADE)
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
@@ -245,14 +245,14 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
 
 
 class InstancePool(models.Model):
-    config = models.ForeignKey(PoolConfiguration)
+    config = models.ForeignKey(PoolConfiguration, on_delete=models.deletion.CASCADE)
     isEnabled = models.BooleanField(default=False)
     last_cycled = models.DateTimeField(blank=True, null=True)
 
 
 class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    pool = models.ForeignKey(InstancePool, blank=True, null=True)
+    pool = models.ForeignKey(InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE)
     hostname = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.IntegerField()
     status_data = models.CharField(max_length=4095, blank=True, null=True)
@@ -263,14 +263,14 @@ class Instance(models.Model):
 
 
 class InstanceStatusEntry(models.Model):
-    instance = models.ForeignKey(Instance)
+    instance = models.ForeignKey(Instance, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
 
 
 class PoolStatusEntry(models.Model):
-    pool = models.ForeignKey(InstancePool)
+    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     type = models.IntegerField()
     msg = models.CharField(max_length=4095)
@@ -278,14 +278,14 @@ class PoolStatusEntry(models.Model):
 
 
 class PoolUptimeDetailedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool)
+    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     target = models.IntegerField()
     actual = models.IntegerField()
 
 
 class PoolUptimeAccumulatedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool)
+    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     accumulated_count = models.IntegerField(default=0)
     uptime_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)

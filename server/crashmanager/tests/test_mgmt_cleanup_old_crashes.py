@@ -1,13 +1,22 @@
-from datetime import timedelta
+# coding: utf-8
+'''Tests for CrashManager cleanup_old_crashes management command
 
+@author:     Jesse Schwartzentruber (:truber)
+
+@license:
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+'''
+from datetime import timedelta
 import pytest
 from django.core.management import call_command, CommandError
 from django.utils import timezone
-
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, Product, Tool
 
 
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
 def _crashentry_create(**kwds):

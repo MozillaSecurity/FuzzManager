@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('lastCrash', models.IntegerField(default=0)),
-                ('bucket', models.ForeignKey(to='crashmanager.Bucket')),
-                ('user', models.ForeignKey(to='crashmanager.User')),
+                ('bucket', models.ForeignKey(to='crashmanager.Bucket', on_delete=models.deletion.CASCADE)),
+                ('user', models.ForeignKey(to='crashmanager.User', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },

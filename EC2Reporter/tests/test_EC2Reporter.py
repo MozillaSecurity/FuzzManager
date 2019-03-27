@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-import os
-import time
 
 import pytest
 from django.utils import timezone
@@ -8,7 +6,12 @@ from six.moves.urllib.parse import urlsplit
 
 from EC2Reporter.EC2Reporter import EC2Reporter, main
 from ec2spotmanager.models import Instance, InstancePool
-from ec2spotmanager.tests import TestCase as utils
+from ec2spotmanager.tests import create_config, create_instance, create_pool
+
+try:
+    from unittest.mock import Mock, patch
+except ImportError:
+    from mock import Mock, patch
 
 
 pytestmark = pytest.mark.django_db(transaction=True)
@@ -23,17 +26,20 @@ def test_ec2reporter_help(capsys):
     assert err.startswith('usage: ')
 
 
-def test_ec2reporter_report(live_server, tmpdir, fm_user, monkeypatch):
+@patch('os.path.expanduser')
+@patch('time.sleep', new=Mock())
+def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
     '''Test report submission'''
-    monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
-    monkeypatch.setattr(time, 'sleep', lambda t: None)
+    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
     # create an instance
-    host = utils.create_instance('host1')
+    host = create_instance('host1')
 
     # create a reporter
     url = urlsplit(live_server.url)
-    reporter = EC2Reporter(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
+    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path.mkdir()
+    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
                            serverHost=url.hostname,
                            serverPort=url.port,
                            serverProtocol=url.scheme,
@@ -48,7 +54,7 @@ def test_ec2reporter_report(live_server, tmpdir, fm_user, monkeypatch):
     host = Instance.objects.get(pk=host.pk)  # re-read
     assert host.status_data is None
 
-    reporter = EC2Reporter(sigCacheDir=tmpdir.join('sigcache').strpath,
+    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
                            serverHost=url.hostname,
                            serverPort=url.port,
                            serverProtocol=url.scheme,
@@ -59,17 +65,20 @@ def test_ec2reporter_report(live_server, tmpdir, fm_user, monkeypatch):
         reporter.report('data')
 
 
-def test_ec2reporter_xable(live_server, tmpdir, fm_user, monkeypatch):
+@patch('os.path.expanduser')
+@patch('time.sleep', new=Mock())
+def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     '''Test EC2Reporter enable/disable'''
-    monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
-    monkeypatch.setattr(time, 'sleep', lambda t: None)
+    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
-    config = utils.create_config('testconfig')
-    pool = utils.create_pool(config)
+    config = create_config('testconfig')
+    pool = create_pool(config)
 
     # create a reporter
     url = urlsplit(live_server.url)
-    reporter = EC2Reporter(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
+    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path.mkdir()
+    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
                            serverHost=url.hostname,
                            serverPort=url.port,
                            serverProtocol=url.scheme,
@@ -95,17 +104,20 @@ def test_ec2reporter_xable(live_server, tmpdir, fm_user, monkeypatch):
     assert not pool.isEnabled
 
 
-def test_ec2reporter_cycle(live_server, tmpdir, fm_user, monkeypatch):
+@patch('os.path.expanduser')
+@patch('time.sleep', new=Mock())
+def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
     """Test EC2Reporter cycle"""
-    monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
-    monkeypatch.setattr(time, 'sleep', lambda t: None)
+    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
-    config = utils.create_config('testconfig')
-    pool = utils.create_pool(config, last_cycled=timezone.now())
+    config = create_config('testconfig')
+    pool = create_pool(config, last_cycled=timezone.now())
 
     # create a reporter
     url = urlsplit(live_server.url)
-    reporter = EC2Reporter(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
+    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path.mkdir()
+    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
                            serverHost=url.hostname,
                            serverPort=url.port,
                            serverProtocol=url.scheme,

@@ -1,3 +1,4 @@
+# coding: utf-8
 '''
 Tests
 
@@ -11,11 +12,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 import json
 import os
 import platform
-import time
 import zipfile
 
 import pytest
@@ -26,6 +26,12 @@ from Collector.Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from crashmanager.models import CrashEntry
+
+try:
+    from unittest.mock import Mock, patch
+except ImportError:
+    from mock import Mock, patch
+
 
 asanTraceCrash = '''ASAN:SIGSEGV
 =================================================================
@@ -48,7 +54,7 @@ exampleTestCase = b'''function init() {
 eval("init()");'''
 
 pytestmark = pytest.mark.django_db(transaction=True)
-pytest_plugins = 'server.tests'
+pytest_plugins = ('server.tests',)
 
 
 def test_collector_help(capsys):
@@ -59,28 +65,31 @@ def test_collector_help(capsys):
     assert err.startswith('usage: ')
 
 
-def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
+@patch('os.path.expanduser')
+@patch('time.sleep', new=Mock())
+def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     '''Test crash submission'''
-    monkeypatch.setattr(os.path, 'expanduser', lambda path: tmpdir.strpath)  # ensure fuzzmanager config is not used
-    monkeypatch.setattr(time, 'sleep', lambda t: None)
+    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
     # create a collector
     url = urlsplit(live_server.url)
-    collector = Collector(sigCacheDir=tmpdir.mkdir('sigcache').strpath,
+    (tmp_path / "sigcache").mkdir()
+    collector = Collector(sigCacheDir=str(tmp_path / 'sigcache'),
                           serverHost=url.hostname,
                           serverPort=url.port,
                           serverProtocol=url.scheme,
                           serverAuthToken=fm_user.token,
                           clientId='test-fuzzer1',
                           tool='test-tool')
-    testcase_path = tmpdir.mkdir('testcase').join('testcase.js').strpath
-    with open(testcase_path, 'wb') as testcase_fp:
+    (tmp_path / "testcase").mkdir()
+    testcase_path = tmp_path / 'testcase' / 'testcase.js'
+    with testcase_path.open('wb') as testcase_fp:
         testcase_fp.write(exampleTestCase)
     config = ProgramConfiguration('mozilla-central', 'x86-64', 'linux', version='ba0bc4f26681')
     crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)
 
     # submit a crash to test server using collector
-    result = collector.submit(crashInfo, testcase_path)
+    result = collector.submit(crashInfo, str(testcase_path))
 
     # see that the issue was created in the server
     entry = CrashEntry.objects.get(pk=result['id'])
@@ -103,7 +112,7 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
     assert entry.args == ''
 
     # create a test config
-    with open(tmpdir.join('.fuzzmanagerconf').strpath, 'w') as fp:
+    with (tmp_path / ".fuzzmanagerconf").open("w") as fp:
         fp.write('[Main]\n')
         fp.write('serverhost = %s\n' % url.hostname)
         fp.write('serverport = %d\n' % url.port)
@@ -111,17 +120,17 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
         fp.write('serverauthtoken = %s\n' % fm_user.token)
 
     # try a binary testcase via cmd line
-    testcase_path = tmpdir.join('testcase.bin').strpath
-    with open(testcase_path, 'wb') as testcase_fp:
+    testcase_path = tmp_path / 'testcase.bin'
+    with testcase_path.open('wb') as testcase_fp:
         testcase_fp.write(b'\0')
-    stdout = tmpdir.join('stdout.txt').strpath
-    with open(stdout, 'w') as fp:
+    stdout_path = tmp_path / 'stdout.txt'
+    with stdout_path.open('w') as fp:
         fp.write('stdout data')
-    stderr = tmpdir.join('stderr.txt').strpath
-    with open(stderr, 'w') as fp:
+    stderr_path = tmp_path / 'stderr.txt'
+    with stderr_path.open('w') as fp:
         fp.write('stderr data')
-    crashdata = tmpdir.join('crashdata.txt').strpath
-    with open(crashdata, 'w') as fp:
+    crashdata_path = tmp_path / 'crashdata.txt'
+    with crashdata_path.open('w') as fp:
         fp.write(asanTraceCrash)
     result = main([
         '--submit',
@@ -133,11 +142,11 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
         '--env', 'PATH=/home/ken', 'LD_PRELOAD=hack.so',
         '--metadata', 'var1=val1', 'var2=val2',
         '--args', './myprog',
-        '--testcase', testcase_path,
+        '--testcase', str(testcase_path),
         '--testcasequality', '5',
-        '--stdout', stdout,
-        '--stderr', stderr,
-        '--crashdata', crashdata,
+        '--stdout', str(stdout_path),
+        '--stderr', str(stderr_path),
+        '--crashdata', str(crashdata_path),
     ])
     assert result == 0
     entry = CrashEntry.objects.get(pk__gt=entry.id)  # newer than the last result, will fail if the test db is active
@@ -162,121 +171,110 @@ def test_collector_submit(live_server, tmpdir, fm_user, monkeypatch):
     class response_t(object):
         status_code = 500
         text = "Error"
+    collector._session.post = lambda *_, **__: response_t()
 
-    def mypost(_session, _url, _data, headers=None):
-        return response_t()
-    monkeypatch.setattr(time, 'sleep', lambda t: None)
-    monkeypatch.setattr(requests.Session, 'post', mypost)
     with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
-        collector.submit(crashInfo, testcase_path)
+        collector.submit(crashInfo, str(testcase_path))
 
 
-def test_collector_refresh(tmpdir, monkeypatch, capsys):
+def test_collector_refresh(capsys, tmp_path):
     '''Test signature downloads'''
     # create a test signature zip
-    test2 = tmpdir.join('test2.signature').strpath
-    with open(test2, 'w') as fp:
+    test2_path = tmp_path / 'test2.signature'
+    with test2_path.open('w') as fp:
         fp.write('test2')
-    with zipfile.ZipFile(tmpdir.join('out.zip').strpath, 'w') as zf:
-        zf.write(test2, 'test2.signature')
+    outzip_path = tmp_path / "out.zip"
+    with zipfile.ZipFile(str(outzip_path), 'w') as zf:
+        zf.write(str(test2_path), 'test2.signature')
 
     # create an old signature
-    tmpdir.mkdir('sigs')
-    with open(tmpdir.join('sigs', 'test1.signature').strpath, 'w'):
-        pass
-    with open(tmpdir.join('sigs', 'other.txt').strpath, 'w'):
-        pass
-    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test1.signature', 'other.txt'}
+    sigs_path = tmp_path / 'sigs'
+    sigs_path.mkdir()
+    (sigs_path / 'test1.signature').touch()
+    (sigs_path / 'other.txt').touch()
+    assert {f.name for f in sigs_path.iterdir()} == {'test1.signature', 'other.txt'}
 
-    with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
+    with outzip_path.open('rb') as fp:
         class response_t(object):
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
 
         # this asserts the expected arguments and returns the open handle to out.zip as 'raw' which is read by refresh()
-        def myget(_session, url, stream=None, headers=None):
+        def myget(url, stream=None, headers=None):
             assert url == 'gopher://aol.com:70/crashmanager/rest/signatures/download/'
             assert stream is True
             assert headers == {'Authorization': 'Token token'}
             return response_t()
-        monkeypatch.setattr(requests.Session, 'get', myget)
 
         # create Collector
-        collector = Collector(sigCacheDir=tmpdir.join('sigs').strpath,
+        collector = Collector(sigCacheDir=str(sigs_path),
                               serverHost='aol.com',
                               serverPort=70,
                               serverProtocol='gopher',
                               serverAuthToken='token',
                               clientId='test-fuzzer1',
                               tool='test-tool')
+        collector._session.get = myget
 
         # call refresh
         collector.refresh()
 
     # check that it worked
-    assert {f.basename for f in tmpdir.join('sigs').listdir()} == {'test2.signature', 'other.txt'}
-    with open(tmpdir.join('sigs', 'test2.signature').strpath) as fp:
-        assert fp.read() == 'test2'
+    assert {f.name for f in sigs_path.iterdir()} == {'test2.signature', 'other.txt'}
+    assert (sigs_path / 'test2.signature').read_text() == 'test2'
     assert 'other.txt' in capsys.readouterr()[1]  # should have had a warning about unrecognized file
 
     # check that 404 raises
-    monkeypatch.undo()
 
     class response_t(object):  # noqa
         status_code = requests.codes["not found"]
         text = "Not found"
+    collector._session.get = lambda *_, **__: response_t()
 
-    def myget(_session, _url, stream=None, headers=None):
-        return response_t()
-    monkeypatch.setattr(requests.Session, 'get', myget)
     with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
         collector.refresh()
 
     # check that bad zips raise errors
-    monkeypatch.undo()
-    with open(tmpdir.join('sigs', 'other.txt').strpath, 'rb') as fp:
+    with (sigs_path / 'other.txt').open('rb') as fp:
         class response_t(object):  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
+        collector._session.get = lambda *_, **__: response_t()
 
-        def myget(_session, _url, stream=None, headers=None):
-            return response_t()
-        monkeypatch.setattr(requests.Session, 'get', myget)
         with pytest.raises(zipfile.BadZipfile, match='not a zip file'):
             collector.refresh()
-    monkeypatch.undo()
-    with open(tmpdir.join('out.zip').strpath, 'r+b') as fp:
+
+    with outzip_path.open('r+b') as fp:
         # corrupt the CRC field for the signature file in the zip
         fp.seek(0x42)
         fp.write(b'\xFF')
-    with open(tmpdir.join('out.zip').strpath, 'rb') as fp:
+    with outzip_path.open('rb') as fp:
         class response_t(object):  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
+        collector._session.get = lambda *_, **__: response_t()
 
-        def myget(_session, _url, stream=None, headers=None):
-            return response_t()
-        monkeypatch.setattr(requests.Session, 'get', myget)
         with pytest.raises(RuntimeError, match='Bad CRC'):
             collector.refresh()
 
 
-def test_collector_generate_search(tmpdir):
+def test_collector_generate_search(tmp_path):
     '''Test sigcache generation and search'''
     # create a cache dir
-    cache_dir = tmpdir.mkdir('sigcache').strpath
+    cache_dir = tmp_path / 'sigcache'
+    cache_dir.mkdir()
 
     # create a collector
-    collector = Collector(sigCacheDir=cache_dir)
+    collector = Collector(sigCacheDir=str(cache_dir))
 
     # generate a signature from the crash data
     config = ProgramConfiguration('mozilla-central', 'x86-64', 'linux', version='ba0bc4f26681')
     crashInfo = CrashInfo.fromRawCrashData([], asanTraceCrash.splitlines(), config)
     sig = collector.generate(crashInfo, False, False, 8)
-    assert {f.strpath for f in tmpdir.join('sigcache').listdir()} == {sig}
+    assert {str(f) for f in cache_dir.iterdir()} == {sig}
 
     # search the sigcache and see that it matches the original
     sigMatch, meta = collector.search(crashInfo)
@@ -302,8 +300,15 @@ def test_collector_generate_search(tmpdir):
     assert result is None
 
 
-def test_collector_download(tmpdir, monkeypatch):
+def test_collector_download(tmp_path, monkeypatch):
     '''Test testcase downloads'''
+    # create Collector
+    collector = Collector(serverHost='aol.com',
+                          serverPort=70,
+                          serverProtocol='gopher',
+                          serverAuthToken='token',
+                          tool='test-tool')
+
     class response1_t(object):
         status_code = requests.codes["ok"]
         text = 'OK'
@@ -318,34 +323,26 @@ def test_collector_download(tmpdir, monkeypatch):
         content = b'testcase\xFF'
 
     # myget1 mocks requests.get to return the rest response to the crashentry get
-    def myget1(_session, url, headers=None):
+    def myget1(url, headers=None):
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/'
         assert headers == {'Authorization': 'Token token'}
 
-        monkeypatch.undo()
-        monkeypatch.chdir(tmpdir)  # download writes to cwd, so make that tmpdir
-        monkeypatch.setattr(requests.Session, 'get', myget2)
+        monkeypatch.chdir(tmp_path)  # download writes to cwd, so make that tmp
+        collector._session.get = myget2
         return response1_t()
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
-    def myget2(_session, url, headers=None):
+    def myget2(url, headers=None):
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/download/'
         assert headers == {'Authorization': 'Token token'}
         return response2_t()
-    monkeypatch.setattr(requests.Session, 'get', myget1)
-
-    # create Collector
-    collector = Collector(serverHost='aol.com',
-                          serverPort=70,
-                          serverProtocol='gopher',
-                          serverAuthToken='token',
-                          tool='test-tool')
+    collector._session.get = myget1
 
     # call refresh
     collector.download(123)
 
     # check that it worked
-    assert {f.basename for f in tmpdir.listdir()} == {'123.txt'}
+    assert {f.name for f in tmp_path.iterdir()} == {'123.txt'}
     with open('123.txt', 'rb') as fp:
         assert fp.read() == response2_t.content
 
@@ -353,8 +350,7 @@ def test_collector_download(tmpdir, monkeypatch):
     class response2_t(object):
         status_code = 404
         text = 'Not found'
-    monkeypatch.undo()
-    monkeypatch.setattr(requests.Session, 'get', myget1)
+    collector._session.get = myget1
     with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
         collector.download(123)
 
@@ -365,8 +361,7 @@ def test_collector_download(tmpdir, monkeypatch):
 
         def json(self):
             return {'testcase': ''}
-    monkeypatch.undo()
-    monkeypatch.setattr(requests.Session, 'get', myget1)
+    collector._session.get = myget1
     result = collector.download(123)
     assert result is None
 
@@ -377,8 +372,7 @@ def test_collector_download(tmpdir, monkeypatch):
 
         def json(self):
             return []
-    monkeypatch.undo()
-    monkeypatch.setattr(requests.Session, 'get', myget1)
+    collector._session.get = myget1
     with pytest.raises(RuntimeError, match='malformed JSON'):
         collector.download(123)
 
@@ -386,7 +380,6 @@ def test_collector_download(tmpdir, monkeypatch):
     class response1_t(object):  # noqa
         status_code = 404
         text = 'Not found'
-    monkeypatch.undo()
-    monkeypatch.setattr(requests.Session, 'get', myget1)
+    collector._session.get = myget1
     with pytest.raises(RuntimeError, match='Server unexpectedly responded'):
         collector.download(123)

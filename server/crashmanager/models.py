@@ -88,12 +88,12 @@ class BugProvider(models.Model):
 
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)
-    externalType = models.ForeignKey(BugProvider)
+    externalType = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
     closed = models.DateTimeField(blank=True, null=True)
 
 
 class Bucket(models.Model):
-    bug = models.ForeignKey(Bug, blank=True, null=True)
+    bug = models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE)
     signature = models.TextField()
     optimizedSignature = models.TextField(blank=True, null=True)
     shortDescription = models.CharField(max_length=1023, blank=True)
@@ -203,13 +203,13 @@ class Bucket(models.Model):
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    tool = models.ForeignKey(Tool)
-    platform = models.ForeignKey(Platform)
-    product = models.ForeignKey(Product)
-    os = models.ForeignKey(OS)
-    testcase = models.ForeignKey(TestCase, blank=True, null=True)
-    client = models.ForeignKey(Client)
-    bucket = models.ForeignKey(Bucket, blank=True, null=True)
+    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
+    platform = models.ForeignKey(Platform, on_delete=models.deletion.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.deletion.CASCADE)
+    os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
+    testcase = models.ForeignKey(TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
+    bucket = models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE)
     rawStdout = models.TextField(blank=True)
     rawStderr = models.TextField(blank=True)
     rawCrashData = models.TextField(blank=True)
@@ -449,8 +449,8 @@ def add_default_perms(sender, instance, created, **kwargs):
 
 
 class BucketWatch(models.Model):
-    user = models.ForeignKey(User)
-    bucket = models.ForeignKey(Bucket)
+    user = models.ForeignKey(User, on_delete=models.deletion.CASCADE)
+    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
     # This is the primary key of last crash marked viewed by the user
     # Store as an integer to prevent problems if the particular crash
     # is deleted later. We only care about its place in the ordering.

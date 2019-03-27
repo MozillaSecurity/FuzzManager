@@ -60,7 +60,8 @@ class Migration(migrations.Migration):
                 ('ec2_max_price', models.DecimalField(null=True, max_digits=12, decimal_places=6, blank=True)),
                 ('ec2_tags', models.CharField(max_length=1023, null=True, blank=True)),
                 ('ec2_raw_config', models.CharField(max_length=4095, null=True, blank=True)),
-                ('parent', models.ForeignKey(blank=True, to='ec2spotmanager.PoolConfiguration', null=True)),
+                ('parent', models.ForeignKey(blank=True, to='ec2spotmanager.PoolConfiguration', null=True,
+                                             on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
@@ -69,13 +70,14 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instancepool',
             name='config',
-            field=models.ForeignKey(to='ec2spotmanager.PoolConfiguration'),
+            field=models.ForeignKey(to='ec2spotmanager.PoolConfiguration', on_delete=models.deletion.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='instance',
             name='pool',
-            field=models.ForeignKey(blank=True, to='ec2spotmanager.InstancePool', null=True),
+            field=models.ForeignKey(blank=True, to='ec2spotmanager.InstancePool', null=True,
+                                    on_delete=models.deletion.CASCADE),
             preserve_default=True,
         ),
     ]

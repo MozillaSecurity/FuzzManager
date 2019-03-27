@@ -1,3 +1,4 @@
+# coding: utf-8
 '''
 Tests for Pools rest api.
 
@@ -9,370 +10,393 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
-
 import json
 import logging
-
 import pytest
 import requests
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import timezone
-from rest_framework.test import APITestCase  # APIRequestFactory
-
-from . import TestCase
-from ..models import InstancePool
+from ec2spotmanager.models import InstancePool
+from . import create_config, create_pool
 
 
-log = logging.getLogger("fm.ec2spotmanager.tests.pools.rest")  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.pools.rest")  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")  # pylint: disable=invalid-name
 
 
-class RestPoolCycleTests(APITestCase, TestCase):
-
-    def test_no_auth(self):
-        """must yield forbidden without authentication"""
-        url = '/ec2spotmanager/rest/pool/1/cycle/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
-
-    def test_no_perm(self):
-        """must yield forbidden without permission"""
-        user = User.objects.get(username='test-noperm')
-        self.client.force_authenticate(user=user)
-        url = '/ec2spotmanager/rest/pool/1/cycle/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
-
-    def test_patch(self):
-        """patch should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.patch('/ec2spotmanager/rest/pool/1/cycle/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_post(self):
-        """post should reset last_cycled"""
-        config = self.create_config('testconfig')
-        pool = self.create_pool(config, last_cycled=timezone.now())
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/cycle/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['not_acceptable'])
-        pool.isEnabled = True
-        pool.save()
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/cycle/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['ok'])
-        pool = InstancePool.objects.get(pk=pool.pk)
-        self.assertTrue(pool.isEnabled)
-        self.assertIsNone(pool.last_cycled)
-
-    def test_put(self):
-        """put should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.put('/ec2spotmanager/rest/pool/1/cycle/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_delete(self):
-        """delete should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.delete('/ec2spotmanager/rest/pool/1/cycle/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_get(self):
-        """get should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.get('/ec2spotmanager/rest/pool/1/cycle/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+def test_rest_pool_cycle_no_auth(api_client):
+    """must yield forbidden without authentication"""
+    url = '/ec2spotmanager/rest/pool/1/cycle/'
+    assert api_client.get(url).status_code == requests.codes['unauthorized']
+    assert api_client.post(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.put(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.patch(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.delete(url, {}).status_code == requests.codes['unauthorized']
 
 
-class RestPoolEnableTests(APITestCase, TestCase):
-
-    def test_no_auth(self):
-        """must yield forbidden without authentication"""
-        url = '/ec2spotmanager/rest/pool/1/enable/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
-
-    def test_no_perm(self):
-        """must yield forbidden without permission"""
-        user = User.objects.get(username='test-noperm')
-        self.client.force_authenticate(user=user)
-        url = '/ec2spotmanager/rest/pool/1/enable/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
-
-    def test_patch(self):
-        """patch should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.patch('/ec2spotmanager/rest/pool/1/enable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_post(self):
-        """post should flip isEnabled"""
-        config = self.create_config('testconfig')
-        pool = self.create_pool(config)
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/enable/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['ok'])
-        pool = InstancePool.objects.get(pk=pool.pk)
-        self.assertTrue(pool.isEnabled)
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/enable/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['not_acceptable'])
-        pool = InstancePool.objects.get(pk=pool.pk)
-        self.assertTrue(pool.isEnabled)
-
-    def test_put(self):
-        """put should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.put('/ec2spotmanager/rest/pool/1/enable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_delete(self):
-        """delete should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.delete('/ec2spotmanager/rest/pool/1/enable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
-
-    def test_get(self):
-        """get should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.get('/ec2spotmanager/rest/pool/1/enable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+def test_rest_pool_cycle_no_perm(api_client):
+    """must yield forbidden without permission"""
+    user = User.objects.get(username='test-noperm')
+    api_client.force_authenticate(user=user)
+    url = '/ec2spotmanager/rest/pool/1/cycle/'
+    assert api_client.get(url).status_code == requests.codes['forbidden']
+    assert api_client.post(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.put(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.patch(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.delete(url, {}).status_code == requests.codes['forbidden']
 
 
-class RestPoolDisableTests(APITestCase, TestCase):
+def test_rest_pool_cycle_patch(api_client):
+    """patch should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.patch('/ec2spotmanager/rest/pool/1/cycle/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_no_auth(self):
-        """must yield forbidden without authentication"""
-        url = '/ec2spotmanager/rest/pool/1/disable/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
 
-    def test_no_perm(self):
-        """must yield forbidden without permission"""
-        user = User.objects.get(username='test-noperm')
-        self.client.force_authenticate(user=user)
-        url = '/ec2spotmanager/rest/pool/1/disable/'
-        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+def test_rest_pool_cycle_post(api_client):
+    """post should reset last_cycled"""
+    config = create_config('testconfig')
+    pool = create_pool(config, last_cycled=timezone.now())
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/cycle/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['not_acceptable']
+    pool.isEnabled = True
+    pool.save()
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/cycle/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    pool = InstancePool.objects.get(pk=pool.pk)
+    assert pool.isEnabled
+    assert pool.last_cycled is None
 
-    def test_patch(self):
-        """patch should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.patch('/ec2spotmanager/rest/pool/1/disable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
-    def test_post(self):
-        """post should flip isEnabled"""
-        config = self.create_config('testconfig')
-        pool = self.create_pool(config, enabled=True)
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/disable/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['ok'])
-        pool = InstancePool.objects.get(pk=pool.pk)
-        self.assertFalse(pool.isEnabled)
-        resp = self.client.post('/ec2spotmanager/rest/pool/%d/disable/' % pool.pk)
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['not_acceptable'])
-        pool = InstancePool.objects.get(pk=pool.pk)
-        self.assertFalse(pool.isEnabled)
+def test_rest_pool_cycle_put(api_client):
+    """put should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.put('/ec2spotmanager/rest/pool/1/cycle/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_put(self):
-        """put should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.put('/ec2spotmanager/rest/pool/1/disable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
 
-    def test_delete(self):
-        """delete should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.delete('/ec2spotmanager/rest/pool/1/disable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+def test_rest_pool_cycle_delete(api_client):
+    """delete should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.delete('/ec2spotmanager/rest/pool/1/cycle/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_get(self):
-        """get should not be allowed"""
-        user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.get('/ec2spotmanager/rest/pool/1/disable/')
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+
+def test_rest_pool_cycle_get(api_client):
+    """get should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.get('/ec2spotmanager/rest/pool/1/cycle/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_enable_no_auth(api_client):
+    """must yield forbidden without authentication"""
+    url = '/ec2spotmanager/rest/pool/1/enable/'
+    assert api_client.get(url).status_code == requests.codes['unauthorized']
+    assert api_client.post(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.put(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.patch(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.delete(url, {}).status_code == requests.codes['unauthorized']
+
+
+def test_rest_pool_enable_no_perm(api_client):
+    """must yield forbidden without permission"""
+    user = User.objects.get(username='test-noperm')
+    api_client.force_authenticate(user=user)
+    url = '/ec2spotmanager/rest/pool/1/enable/'
+    assert api_client.get(url).status_code == requests.codes['forbidden']
+    assert api_client.post(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.put(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.patch(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.delete(url, {}).status_code == requests.codes['forbidden']
+
+
+def test_rest_pool_enable_patch(api_client):
+    """patch should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.patch('/ec2spotmanager/rest/pool/1/enable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_enable_post(api_client):
+    """post should flip isEnabled"""
+    config = create_config('testconfig')
+    pool = create_pool(config)
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/enable/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    pool = InstancePool.objects.get(pk=pool.pk)
+    assert pool.isEnabled
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/enable/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['not_acceptable']
+    pool = InstancePool.objects.get(pk=pool.pk)
+    assert pool.isEnabled
+
+
+def test_rest_pool_enable_put(api_client):
+    """put should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.put('/ec2spotmanager/rest/pool/1/enable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_enable_delete(api_client):
+    """delete should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.delete('/ec2spotmanager/rest/pool/1/enable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_enable_get(api_client):
+    """get should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.get('/ec2spotmanager/rest/pool/1/enable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_disable_no_auth(api_client):
+    """must yield forbidden without authentication"""
+    url = '/ec2spotmanager/rest/pool/1/disable/'
+    assert api_client.get(url).status_code == requests.codes['unauthorized']
+    assert api_client.post(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.put(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.patch(url, {}).status_code == requests.codes['unauthorized']
+    assert api_client.delete(url, {}).status_code == requests.codes['unauthorized']
+
+
+def test_rest_pool_disable_no_perm(api_client):
+    """must yield forbidden without permission"""
+    user = User.objects.get(username='test-noperm')
+    api_client.force_authenticate(user=user)
+    url = '/ec2spotmanager/rest/pool/1/disable/'
+    assert api_client.get(url).status_code == requests.codes['forbidden']
+    assert api_client.post(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.put(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.patch(url, {}).status_code == requests.codes['forbidden']
+    assert api_client.delete(url, {}).status_code == requests.codes['forbidden']
+
+
+def test_rest_pool_disable_patch(api_client):
+    """patch should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.patch('/ec2spotmanager/rest/pool/1/disable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_disable_post(api_client):
+    """post should flip isEnabled"""
+    config = create_config('testconfig')
+    pool = create_pool(config, enabled=True)
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/disable/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    pool = InstancePool.objects.get(pk=pool.pk)
+    assert not pool.isEnabled
+    resp = api_client.post('/ec2spotmanager/rest/pool/%d/disable/' % pool.pk)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['not_acceptable']
+    pool = InstancePool.objects.get(pk=pool.pk)
+    assert not pool.isEnabled
+
+
+def test_rest_pool_disable_put(api_client):
+    """put should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.put('/ec2spotmanager/rest/pool/1/disable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_disable_delete(api_client):
+    """delete should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.delete('/ec2spotmanager/rest/pool/1/disable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
+
+
+def test_rest_pool_disable_get(api_client):
+    """get should not be allowed"""
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.get('/ec2spotmanager/rest/pool/1/disable/')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['method_not_allowed']
 
 
 @pytest.mark.xfail
-class RestPoolChartDetailedTests(APITestCase, TestCase):
+class TestRestPoolChartDetailed(object):
 
-    def test_no_auth(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_no_auth(api_client):
         """must yield forbidden without authentication"""
         url = reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1})
-        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
+        assert api_client.get(url).status_code == requests.codes['unauthorized']
+        assert api_client.post(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.put(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.patch(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.delete(url, {}).status_code == requests.codes['unauthorized']
 
-    def test_no_perm(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_no_perm(api_client):
         """must yield forbidden without permission"""
         user = User.objects.get(username='test-noperm')
-        self.client.force_authenticate(user=user)
+        api_client.force_authenticate(user=user)
         url = reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1})
-        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+        assert api_client.get(url).status_code == requests.codes['forbidden']
+        assert api_client.post(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.put(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.patch(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.delete(url, {}).status_code == requests.codes['forbidden']
 
-    def test_patch(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_patch(api_client):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.patch(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.patch(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_post(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_post(api_client):
         """post should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.post(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.post(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_put(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_put(api_client):
         """put should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.put(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.put(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_delete(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_delete(api_client):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.delete(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.delete(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_get(self):
+    @staticmethod
+    def test_rest_pool_chart_detailed_get(api_client):
         """get should not be allowed"""
-        pool = self.create_pool(self.create_config('testconfig', size=1))
+        pool = create_pool(create_config('testconfig', size=1))
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.get(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': pool.pk}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['ok'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.get(reverse('ec2spotmanager:line_chart_json_detailed', kwargs={'poolid': pool.pk}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['ok']
         resp = json.loads(resp.content.decode('utf-8'))
-        self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})
+        assert set(resp.keys()), {'poolid', 'labels', 'datasets', 'options' == 'view'}
 
 
 @pytest.mark.xfail
-class RestPoolChartAccumulatedTests(APITestCase, TestCase):
+class TestRestPoolChartAccumulated(object):
 
-    def test_no_auth(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_no_auth(api_client):
         """must yield forbidden without authentication"""
         url = reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1})
-        self.assertEqual(self.client.get(url).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['unauthorized'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['unauthorized'])
+        assert api_client.get(url).status_code == requests.codes['unauthorized']
+        assert api_client.post(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.put(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.patch(url, {}).status_code == requests.codes['unauthorized']
+        assert api_client.delete(url, {}).status_code == requests.codes['unauthorized']
 
-    def test_no_perm(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_no_perm(api_client):
         """must yield forbidden without permission"""
         user = User.objects.get(username='test-noperm')
-        self.client.force_authenticate(user=user)
+        api_client.force_authenticate(user=user)
         url = reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1})
-        self.assertEqual(self.client.get(url).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.post(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.put(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.patch(url, {}).status_code, requests.codes['forbidden'])
-        self.assertEqual(self.client.delete(url, {}).status_code, requests.codes['forbidden'])
+        assert api_client.get(url).status_code == requests.codes['forbidden']
+        assert api_client.post(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.put(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.patch(url, {}).status_code == requests.codes['forbidden']
+        assert api_client.delete(url, {}).status_code == requests.codes['forbidden']
 
-    def test_patch(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_patch(api_client):
         """patch should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.patch(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.patch(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_post(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_post(api_client):
         """post should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.post(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.post(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_put(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_put(api_client):
         """put should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.put(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.put(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_delete(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_delete(api_client):
         """delete should not be allowed"""
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.delete(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['method_not_allowed'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.delete(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': 1}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['method_not_allowed']
 
-    def test_get(self):
+    @staticmethod
+    def test_rest_pool_chart_accumulated_get(api_client):
         """get should be allowed"""
-        pool = self.create_pool(self.create_config('testconfig'))
+        pool = create_pool(create_config('testconfig'))
         user = User.objects.get(username='test')
-        self.client.force_authenticate(user=user)
-        resp = self.client.get(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': pool.pk}))
-        log.debug(resp)
-        self.assertEqual(resp.status_code, requests.codes['ok'])
+        api_client.force_authenticate(user=user)
+        resp = api_client.get(reverse('ec2spotmanager:line_chart_json_accumulated', kwargs={'poolid': pool.pk}))
+        LOG.debug(resp)
+        assert resp.status_code == requests.codes['ok']
         resp = json.loads(resp.content.decode('utf-8'))
-        self.assertEqual(set(resp.keys()), {'poolid', 'labels', 'datasets', 'options', 'view'})
+        assert set(resp.keys()), {'poolid', 'labels', 'datasets', 'options' == 'view'}

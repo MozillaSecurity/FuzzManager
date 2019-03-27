@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(max_length=1023, blank=True)),
                 ('revision', models.CharField(max_length=255)),
                 ('branch', models.CharField(max_length=255, blank=True)),
-                ('client', models.ForeignKey(to='crashmanager.Client')),
+                ('client', models.ForeignKey(to='crashmanager.Client', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
@@ -54,13 +54,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='collection',
             name='coverage',
-            field=models.ForeignKey(to='covmanager.CollectionFile'),
+            field=models.ForeignKey(to='covmanager.CollectionFile', on_delete=models.deletion.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='collection',
             name='repository',
-            field=models.ForeignKey(to='covmanager.Repository'),
+            field=models.ForeignKey(to='covmanager.Repository', on_delete=models.deletion.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(

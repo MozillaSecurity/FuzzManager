@@ -1,3 +1,4 @@
+# coding: utf-8
 '''
 Tests
 
@@ -12,7 +13,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 import json
-import unittest
 from FTB import CoverageHelper
 
 
@@ -147,107 +147,98 @@ covdata = r"""
 """  # noqa
 
 
-class TestCoverageHelperFlattenNames(unittest.TestCase):
-    def runTest(self):
-        node = json.loads(covdata)
-        result = CoverageHelper.get_flattened_names(node, prefix="")
+def test_CoverageHelperFlattenNames():
+    node = json.loads(covdata)
+    result = CoverageHelper.get_flattened_names(node, prefix="")
 
-        expected_names = [
-            'topdir1',
-            'topdir1/subdir2',
-            'topdir1/subdir2/file3.c',
-            'topdir1/subdir1/file2.c',
-            'topdir1/subdir1',
-            'topdir1/subdir1/file1.c',
-            'topdir2',
-            'topdir2/subdir1',
-            'topdir2/subdir1/file1.c'
-        ]
+    expected_names = [
+        'topdir1',
+        'topdir1/subdir2',
+        'topdir1/subdir2/file3.c',
+        'topdir1/subdir1/file2.c',
+        'topdir1/subdir1',
+        'topdir1/subdir1/file1.c',
+        'topdir2',
+        'topdir2/subdir1',
+        'topdir2/subdir1/file1.c'
+    ]
 
-        self.assertEqual(result, set(expected_names))
-
-
-class TestCoverageHelperApplyDirectivesMixed(unittest.TestCase):
-    def runTest(self):
-        node = json.loads(covdata)
-
-        # Check that mixed directives work properly (exclude multiple paths, include some back)
-        directives = ["-:topdir1/subdir1/**",
-                      "+:topdir1/subdir?/file1.c",
-                      "+:topdir1/subdir?/file3.c",
-                      "-:topdir1/subdir2/**"]
-
-        CoverageHelper.apply_include_exclude_directives(node, directives)
-
-        result = CoverageHelper.get_flattened_names(node, prefix="")
-
-        expected_names = [
-            'topdir1',
-            'topdir1/subdir1/file1.c',
-            'topdir1/subdir1',
-            'topdir2',
-            'topdir2/subdir1',
-            'topdir2/subdir1/file1.c'
-        ]
-
-        self.assertEqual(result, set(expected_names))
+    assert result == set(expected_names)
 
 
-class TestCoverageHelperApplyDirectivesPrune(unittest.TestCase):
-    def runTest(self):
-        node = json.loads(covdata)
+def test_CoverageHelperApplyDirectivesMixed():
+    node = json.loads(covdata)
 
-        # Check that any empty childs are pruned (empty childs are not useful)
-        directives = ["-:topdir1/subdir1/**", "-:topdir1/subdir2/**"]
+    # Check that mixed directives work properly (exclude multiple paths, include some back)
+    directives = ["-:topdir1/subdir1/**",
+                  "+:topdir1/subdir?/file1.c",
+                  "+:topdir1/subdir?/file3.c",
+                  "-:topdir1/subdir2/**"]
 
-        CoverageHelper.apply_include_exclude_directives(node, directives)
+    CoverageHelper.apply_include_exclude_directives(node, directives)
 
-        result = CoverageHelper.get_flattened_names(node, prefix="")
+    result = CoverageHelper.get_flattened_names(node, prefix="")
 
-        expected_names = [
-            'topdir2',
-            'topdir2/subdir1',
-            'topdir2/subdir1/file1.c'
-        ]
+    expected_names = [
+        'topdir1',
+        'topdir1/subdir1/file1.c',
+        'topdir1/subdir1',
+        'topdir2',
+        'topdir2/subdir1',
+        'topdir2/subdir1/file1.c'
+    ]
 
-        self.assertEqual(result, set(expected_names))
-
-
-class TestCoverageHelperApplyDirectivesExcludeAll(unittest.TestCase):
-    def runTest(self):
-        node = json.loads(covdata)
-
-        # Check that excluding all paths works (specialized case)
-        directives = ["-:**", "+:topdir2/subdir1/**"]
-
-        CoverageHelper.apply_include_exclude_directives(node, directives)
-
-        result = CoverageHelper.get_flattened_names(node, prefix="")
-
-        expected_names = [
-            'topdir2',
-            'topdir2/subdir1',
-            'topdir2/subdir1/file1.c'
-        ]
-
-        self.assertEqual(result, set(expected_names))
+    assert result == set(expected_names)
 
 
-class TestCoverageHelperApplyDirectivesMakeEmpty(unittest.TestCase):
-    def runTest(self):
-        node = json.loads(covdata)
+def test_CoverageHelperApplyDirectivesPrune():
+    node = json.loads(covdata)
 
-        # Check that making the set entirely empty doesn't crash things (tsmith mode)
-        directives = ["-:**"]
+    # Check that any empty childs are pruned (empty childs are not useful)
+    directives = ["-:topdir1/subdir1/**", "-:topdir1/subdir2/**"]
 
-        CoverageHelper.apply_include_exclude_directives(node, directives)
+    CoverageHelper.apply_include_exclude_directives(node, directives)
 
-        result = CoverageHelper.get_flattened_names(node, prefix="")
+    result = CoverageHelper.get_flattened_names(node, prefix="")
 
-        expected_names = []
+    expected_names = [
+        'topdir2',
+        'topdir2/subdir1',
+        'topdir2/subdir1/file1.c'
+    ]
 
-        self.assertEqual(result, set(expected_names))
+    assert result == set(expected_names)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_CoverageHelperApplyDirectivesExcludeAll():
+    node = json.loads(covdata)
+
+    # Check that excluding all paths works (specialized case)
+    directives = ["-:**", "+:topdir2/subdir1/**"]
+
+    CoverageHelper.apply_include_exclude_directives(node, directives)
+
+    result = CoverageHelper.get_flattened_names(node, prefix="")
+
+    expected_names = [
+        'topdir2',
+        'topdir2/subdir1',
+        'topdir2/subdir1/file1.c'
+    ]
+
+    assert result == set(expected_names)
+
+
+def test_CoverageHelperApplyDirectivesMakeEmpty():
+    node = json.loads(covdata)
+
+    # Check that making the set entirely empty doesn't crash things (tsmith mode)
+    directives = ["-:**"]
+
+    CoverageHelper.apply_include_exclude_directives(node, directives)
+
+    result = CoverageHelper.get_flattened_names(node, prefix="")
+
+    expected_names = []
+
+    assert result == set(expected_names)

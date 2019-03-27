@@ -1,5 +1,5 @@
-'''
-Tests for Crashes view.
+# coding: utf-8
+'''Tests for Crashes view.
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -9,160 +9,160 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
-
 import json
 import logging
-
+import pytest
 import requests
 from django.core.urlresolvers import reverse
-
-from . import TestCase
-from ..models import CrashEntry
-
-
-log = logging.getLogger("fm.crashmanager.tests.crashes")  # pylint: disable=invalid-name
+from crashmanager.models import CrashEntry
+from . import assert_contains, assert_not_contains
 
 
-class CrashesViewTests(TestCase):
-    name = "crashmanager:crashes"
-    entries_fmt = "There are %d unbucketed entries in the database."
+LOG = logging.getLogger("fm.crashmanager.tests.crashes")
+CRASHES_VIEW_FMT = "There are %d unbucketed entries in the database."
+ALL_CRASHES_VIEW_FMT = "Displaying all %d entries in database."
+pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
 
-    def test_no_crashes(self):
+# pylint: disable=no-self-use
+@pytest.mark.parametrize(("name", "entries_fmt"),
+                         [("crashmanager:crashes", CRASHES_VIEW_FMT),
+                          ("crashmanager:allcrashes", ALL_CRASHES_VIEW_FMT)])
+class TestCrashesViews(object):
+    """Common crashes tests"""
+
+    def test_no_crashes(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """If no crashes in db, an appropriate message is shown."""
-        self.client.login(username='test', password='test')
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
+        client.login(username='test', password='test')
+        response = client.get(reverse(name))
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 0)  # 0 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertContains(response, self.entries_fmt % 0)
+        assert not crashlist  # 0 crashes
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert_contains(response, entries_fmt % 0)
 
-    def test_with_crash(self):
+    def test_with_crash(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Insert one crash and check that it is shown ok."""
-        self.client.login(username='test', password='test')
-        crash = self.create_crash(shortSignature="crash #1")
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "crash #1")
+        client.login(username='test', password='test')
+        crash = cm.create_crash(shortSignature="crash #1")
+        response = client.get(reverse(name))
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
+        assert_contains(response, "crash #1")
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 1)  # 1 crash
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(crashlist[0], crash)  # same crash we created
-        self.assertContains(response, self.entries_fmt % 1)
+        assert len(crashlist) == 1  # 1 crash
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert crashlist[0] == crash  # same crash we created
+        assert_contains(response, entries_fmt % 1)
 
-    def test_with_crashes(self):
+    def test_with_crashes(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Insert two crashes and check that they are shown ok."""
-        self.client.login(username='test', password='test')
-        crash1 = self.create_crash(shortSignature="crash #1")
-        crash2 = self.create_crash(shortSignature="crash #2")
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "crash #1")
-        self.assertContains(response, "crash #2")
+        client.login(username='test', password='test')
+        crash1 = cm.create_crash(shortSignature="crash #1")
+        crash2 = cm.create_crash(shortSignature="crash #2")
+        response = client.get(reverse(name))
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
+        assert_contains(response, "crash #1")
+        assert_contains(response, "crash #2")
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 2)  # 2 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(set(crashlist), {crash1, crash2})  # same crashes we created
-        self.assertContains(response, self.entries_fmt % 2)
+        assert len(crashlist) == 2  # 2 crashes
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert set(crashlist) == {crash1, crash2}  # same crashes we created
+        assert_contains(response, entries_fmt % 2)
 
-    def test_with_pagination(self):
+    def test_with_pagination(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Insert more than the page limit and check that they are paginated ok."""
-        self.client.login(username='test', password='test')
-        crashes = [self.create_crash(shortSignature="crash #1"),
-                   self.create_crash(shortSignature="crash #2"),
-                   self.create_crash(shortSignature="crash #3")]
+        client.login(username='test', password='test')
+        crashes = [cm.create_crash(shortSignature="crash #1"),
+                   cm.create_crash(shortSignature="crash #2"),
+                   cm.create_crash(shortSignature="crash #3")]
 
-        def check_page(page, exp_page, crash):
-            response = self.client.get(reverse(self.name), {'page': page, 'page_size': 1})
-            log.debug(response)
-            self.assertEqual(response.status_code, requests.codes['ok'])
-            self.assertContains(response, crash.shortSignature)
+        def _check_page(page, exp_page, crash):
+            response = client.get(reverse(name), {'page': page, 'page_size': 1})
+            LOG.debug(response)
+            assert response.status_code == requests.codes['ok']
+            assert_contains(response, crash.shortSignature)
             crashlist = response.context['crashlist']
-            self.assertEqual(crashlist.number, exp_page)  # page num
-            self.assertEqual(crashlist.paginator.num_pages, len(crashes))  # n pages total
-            self.assertEqual(len(crashlist), 1)  # 1 crash/page
-            self.assertEqual(crashlist[0], crash)  # same crash we created
-            self.assertContains(response, self.entries_fmt % len(crashes))
+            assert crashlist.number == exp_page  # page num
+            assert crashlist.paginator.num_pages == len(crashes)  # n pages total
+            assert len(crashlist) == 1  # 1 crash/page
+            assert crashlist[0] == crash  # same crash we created
+            assert_contains(response, entries_fmt % len(crashes))
 
         for page, crash in enumerate(reversed(crashes)):
-            check_page(page + 1, page + 1, crash)
+            _check_page(page + 1, page + 1, crash)
         # check invalid page params
-        check_page(len(crashes) + 1, len(crashes), crashes[0])  # out of range will return last page
-        check_page(-1, len(crashes), crashes[0])  # out of range will return last page
-        check_page("blah", 1, crashes[-1])  # non-integer will return first page
+        _check_page(len(crashes) + 1, len(crashes), crashes[0])  # out of range will return last page
+        _check_page(-1, len(crashes), crashes[0])  # out of range will return last page
+        _check_page("blah", 1, crashes[-1])  # non-integer will return first page
 
-    def test_no_unbucketed(self):
+    def test_no_unbucketed(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Insert one crash and bucket it, and see that no entries are shown."""
-        self.client.login(username='test', password='test')
-        bucket = self.create_bucket(shortDescription="bucket #1")
-        self.create_crash(shortSignature="crash #1", bucket=bucket)
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
+        client.login(username='test', password='test')
+        bucket = cm.create_bucket(shortDescription="bucket #1")
+        cm.create_crash(shortSignature="crash #1", bucket=bucket)
+        response = client.get(reverse(name))
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 0)  # 0 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertContains(response, self.entries_fmt % 0)
+        assert not crashlist  # 0 crashes
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert_contains(response, entries_fmt % 0)
 
-    def test_bucketed(self):
+    def test_bucketed(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Insert two crashes and bucket one, see that unbucketed is shown."""
-        self.client.login(username='test', password='test')
-        bucket = self.create_bucket(shortDescription="bucket #1")
-        self.create_crash(shortSignature="crash #1", bucket=bucket)
-        crash = self.create_crash(shortSignature="crash #2")
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
+        client.login(username='test', password='test')
+        bucket = cm.create_bucket(shortDescription="bucket #1")
+        cm.create_crash(shortSignature="crash #1", bucket=bucket)
+        crash = cm.create_crash(shortSignature="crash #2")
+        response = client.get(reverse(name))
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 1)  # 1 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(crashlist[0], crash)  # same crash we created
-        self.assertContains(response, self.entries_fmt % 1)
+        assert len(crashlist) == 1  # 1 crashes
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert crashlist[0] == crash  # same crash we created
+        assert_contains(response, entries_fmt % 1)
 
-    def test_bucketed_all_param(self):
+    def test_bucketed_all_param(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Check that all param shows bucketed crashes."""
-        self.client.login(username='test', password='test')
-        bucket = self.create_bucket(shortDescription="bucket #1")
-        crashes = [self.create_crash(shortSignature="crash #1", bucket=bucket),
-                   self.create_crash(shortSignature="crash #2", bucket=bucket)]
-        response = self.client.get(reverse(self.name), {'all': 1})
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
+        client.login(username='test', password='test')
+        bucket = cm.create_bucket(shortDescription="bucket #1")
+        crashes = [cm.create_crash(shortSignature="crash #1", bucket=bucket),
+                   cm.create_crash(shortSignature="crash #2", bucket=bucket)]
+        response = client.get(reverse(name), {'all': 1})
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 2)  # 2 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
-        self.assertContains(response, self.entries_fmt % 2)  # XXX: this message is wrong
+        assert len(crashlist) == 2  # 2 crashes
+        assert crashlist.number == 1  # 1st page
+        assert crashlist.paginator.num_pages == 1  # 1 page total
+        assert set(crashlist) == set(crashes)  # same crashes we created
+        # XXX: this message is wrong
+        assert_contains(response, entries_fmt % 2)
 
-    def test_filters(self):
+    def test_filters(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
         """Check that filter params are respected."""
-        self.client.login(username='test', password='test')
-        buckets = [self.create_bucket(shortDescription="bucket #1"),
+        client.login(username='test', password='test')
+        buckets = [cm.create_bucket(shortDescription="bucket #1"),
                    None]
         testcases = [None,
-                     self.create_testcase("test.txt", quality=3)]
-        crashes = [self.create_crash(shortSignature="crash #%d" % (i + 1),
-                                     client="client #%d" % (i + 1),
-                                     os="os #%d" % (i + 1),
-                                     product="product #%d" % (i + 1),
-                                     platform="platform #%d" % (i + 1),
-                                     tool="tool #%d" % (i + 1),
-                                     bucket=buckets[i],
-                                     testcase=testcases[i])
+                     cm.create_testcase("test.txt", quality=3)]
+        crashes = [cm.create_crash(shortSignature="crash #%d" % (i + 1),
+                                   client="client #%d" % (i + 1),
+                                   os="os #%d" % (i + 1),
+                                   product="product #%d" % (i + 1),
+                                   platform="platform #%d" % (i + 1),
+                                   tool="tool #%d" % (i + 1),
+                                   bucket=buckets[i],
+                                   testcase=testcases[i])
                    for i in range(2)]
 
         for params, exp_crashes in (({'all': 1, 'bucket': buckets[0].pk}, {crashes[0]}),
@@ -175,191 +175,152 @@ class CrashesViewTests(TestCase):
                                     ({'testcase__quality': 3}, {crashes[1]}),
                                     ({'tool__name': 'tool #2'}, {crashes[1]}),
                                     ({'tool__name__contains': '#2'}, {crashes[1]})):
-            log.debug('requesting with %r', params)
-            log.debug('expecting: %r', exp_crashes)
-            response = self.client.get(reverse(self.name), params)
-            log.debug(response)
-            self.assertEqual(response.status_code, requests.codes['ok'])
+            LOG.debug('requesting with %r', params)
+            LOG.debug('expecting: %r', exp_crashes)
+            response = client.get(reverse(name), params)
+            LOG.debug(response)
+            assert response.status_code == requests.codes['ok']
             crashlist = response.context['crashlist']
-            self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
-            self.assertEqual(crashlist.number, 1)  # 1st page
-            self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-            self.assertEqual(set(crashlist), exp_crashes)  # expected crashes
-            self.assertContains(response, "Your search matched %d entries in database." % len(exp_crashes))
+            assert len(crashlist) == len(exp_crashes)  # num crashes
+            assert crashlist.number == 1  # 1st page
+            assert crashlist.paginator.num_pages == 1  # 1 page total
+            assert set(crashlist) == exp_crashes  # expected crashes
+            # pylint: disable=superfluous-parens
+            assert_contains(response, ("Your search matched %d entries in database." % len(exp_crashes)))
 
-    def test_toolfilter(self):
-        """Create a toolfilter and see that it is respected."""
-        self.client.login(username='test', password='test')
-        crashes = (self.create_crash(shortSignature="crash #1", tool="tool #1"),
-                   self.create_crash(shortSignature="crash #2", tool="tool #2"))
-        self.create_toolfilter("tool #1")
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "crash #1")
+
+@pytest.mark.parametrize(("name", "kwargs"),
+                         [("crashmanager:crashes", {}),
+                          ("crashmanager:allcrashes", {}),
+                          ("crashmanager:autoassign", {}),
+                          ("crashmanager:crashdel", {'crashid': 0}),
+                          ("crashmanager:crashedit", {'crashid': 0}),
+                          ("crashmanager:crashview", {'crashid': 0}),
+                          ("crashmanager:querycrashes", {})])
+def test_crashes_no_login(client, name, kwargs):
+    """Request without login hits the login redirect"""
+    path = reverse(name, kwargs=kwargs)
+    resp = client.get(path)
+    assert resp.status_code == requests.codes['found']
+    assert resp.url == '/login/?next=' + path
+
+
+def test_crashes_toolfilter(client, cm):  # pylint: disable=invalid-name
+    """Create a toolfilter and see that it is respected."""
+    client.login(username='test', password='test')
+    crashes = (cm.create_crash(shortSignature="crash #1", tool="tool #1"),
+               cm.create_crash(shortSignature="crash #2", tool="tool #2"))
+    cm.create_toolfilter("tool #1")
+    response = client.get(reverse("crashmanager:crashes"))
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+    assert_contains(response, "crash #1")
+    crashlist = response.context['crashlist']
+    assert len(crashlist) == 1  # 1 crash
+    assert crashlist.number == 1  # 1st page
+    assert crashlist.paginator.num_pages == 1  # 1 page total
+    assert set(crashlist) == {crashes[0]}  # same crashes we created
+    assert_contains(response, CRASHES_VIEW_FMT % 1)
+
+
+def test_all_crashes_toolfilter(client, cm):  # pylint: disable=invalid-name
+    """Check that crashes/all/ view disregards toolfilter."""
+    client.login(username='test', password='test')
+    crashes = (cm.create_crash(shortSignature="crash #1", tool="tool #1"),
+               cm.create_crash(shortSignature="crash #2", tool="tool #2"))
+    cm.create_toolfilter("tool #1")
+    response = client.get(reverse("crashmanager:allcrashes"))
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+    assert_contains(response, "crash #1")
+    assert_contains(response, "crash #2")
+    crashlist = response.context['crashlist']
+    assert len(crashlist) == 2  # 2 crashes
+    assert crashlist.number == 1  # 1st page
+    assert crashlist.paginator.num_pages == 1  # 1 page total
+    assert set(crashlist) == set(crashes)  # same crashes we created
+    assert_contains(response, ALL_CRASHES_VIEW_FMT % 2)
+
+
+def test_auto_assign_crashes(client, cm):  # pylint: disable=invalid-name
+    """Create crashes and a signature that would match it and see that autoassign buckets it"""
+    client.login(username='test', password='test')
+    crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig)
+    crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+    assert crash.bucket is None
+    resp = client.get(reverse("crashmanager:autoassign"))
+    assert resp.status_code == requests.codes['found']
+    assert resp.url == reverse('crashmanager:crashes')
+    crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+    assert crash.bucket == bucket
+
+
+@pytest.mark.parametrize("name",
+                         ["crashmanager:crashdel",
+                          "crashmanager:crashedit",
+                          "crashmanager:crashview"])
+def test_crash_simple_get(client, cm, name):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    client.login(username='test', password='test')
+    crash = cm.create_crash()
+    response = client.get(reverse(name, kwargs={"crashid": crash.pk}))
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+
+
+def test_query_crashes(client, cm):  # pylint: disable=invalid-name
+    """Crash list queries"""
+    client.login(username='test', password='test')
+    buckets = [cm.create_bucket(shortDescription="bucket #1"), None]
+    testcases = [None, cm.create_testcase("test.txt", quality=3)]
+    crashes = [cm.create_crash(shortSignature="crash #%d" % (i + 1),
+                               client="client #%d" % (i + 1),
+                               os="os #%d" % (i + 1),
+                               product="product #%d" % (i + 1),
+                               platform="platform #%d" % (i + 1),
+                               tool="tool #%d" % (i + 1),
+                               bucket=buckets[i],
+                               testcase=testcases[i])
+               for i in range(2)]
+    response = client.get(reverse("crashmanager:querycrashes"))
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+    assert_contains(response, "Search Query")
+    assert_not_contains(response, "Invalid query")
+    response = client.get(reverse("crashmanager:querycrashes"), {"query": "badjson"})
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+    assert_contains(response, "Invalid query")
+    response = client.post(reverse("crashmanager:querycrashes"), {"query": "badjson"})
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+    assert_contains(response, "Invalid query")
+    for params, exp_crashes in (({'op': 'OR', 'bucket': buckets[0].pk}, {crashes[0]}),
+                                ({'op': 'OR', 'client__name': 'client #2'}, {crashes[1]}),
+                                ({'op': 'OR', 'client__name__contains': '#2'}, {crashes[1]}),
+                                ({'op': 'OR', 'client__name__contains': 'client'}, set(crashes)),
+                                ({'op': 'OR', 'os__name': 'os #2'}, {crashes[1]}),
+                                ({'op': 'NOT', 'os__name': 'os #2'}, {crashes[0]}),
+                                ({'op': 'OR', 'product__name': 'product #2'}, {crashes[1]}),
+                                ({'op': 'OR', 'platform__name': 'platform #2'}, {crashes[1]}),
+                                ({'op': 'OR', 'testcase__quality': 3}, {crashes[1]}),
+                                ({'op': 'OR', 'tool__name': 'tool #2'}, {crashes[1]}),
+                                ({'op': 'OR', 'tool__name__contains': '#2'}, {crashes[1]})):
+        LOG.debug('requesting with %r', params)
+        LOG.debug('expecting: %r', exp_crashes)
+        response = client.get(reverse("crashmanager:querycrashes"), {'query': json.dumps(params)})
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
         crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 1)  # 1 crash
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(set(crashlist), {crashes[0]})  # same crashes we created
-        self.assertContains(response, self.entries_fmt % 1)
-
-
-class AllCrashesViewTests(CrashesViewTests):
-    name = "crashmanager:allcrashes"
-    entries_fmt = "Displaying all %d entries in database."
-
-    def test_toolfilter(self):
-        """Check that crashes/all/ view disregards toolfilter."""
-        self.client.login(username='test', password='test')
-        crashes = (self.create_crash(shortSignature="crash #1", tool="tool #1"),
-                   self.create_crash(shortSignature="crash #2", tool="tool #2"))
-        self.create_toolfilter("tool #1")
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "crash #1")
-        self.assertContains(response, "crash #2")
-        crashlist = response.context['crashlist']
-        self.assertEqual(len(crashlist), 2)  # 2 crashes
-        self.assertEqual(crashlist.number, 1)  # 1st page
-        self.assertEqual(crashlist.paginator.num_pages, 1)  # 1 page total
-        self.assertEqual(set(crashlist), set(crashes))  # same crashes we created
-        self.assertContains(response, self.entries_fmt % 2)
-
-
-class AutoAssignCrashesTests(TestCase):
-    name = "crashmanager:autoassign"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_autoassign(self):
-        """Create crashes and a signature that would match it and see that autoassign buckets it"""
-        self.client.login(username='test', password='test')
-        crash = self.create_crash(shortSignature='crash #1', stderr="blah")
-        sig = json.dumps({
-            'symptoms': [
-                {"src": "stderr",
-                 "type": "output",
-                 "value": "/^blah/"}
-            ]
-        })
-        bucket = self.create_bucket(shortDescription='bucket #1', signature=sig)
-        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        self.assertIsNone(crash.bucket)
-        self.assertRedirects(self.client.get(reverse(self.name)), reverse('crashmanager:crashes'))
-        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        self.assertEqual(crash.bucket, bucket)
-
-
-class CrashDeleteTests(TestCase):
-    name = "crashmanager:crashdel"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name, kwargs={'crashid': 0})
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_simpleget(self):
-        """No errors are thrown in template"""
-        self.client.login(username='test', password='test')
-        crash = self.create_crash()
-        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-
-
-class CrashEditTests(TestCase):
-    name = "crashmanager:crashedit"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name, kwargs={'crashid': 0})
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_simpleget(self):
-        """No errors are thrown in template"""
-        self.client.login(username='test', password='test')
-        crash = self.create_crash()
-        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-
-
-class CrashViewTests(TestCase):
-    name = "crashmanager:crashview"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name, kwargs={'crashid': 0})
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_simpleget(self):
-        """No errors are thrown in template"""
-        self.client.login(username='test', password='test')
-        crash = self.create_crash()
-        response = self.client.get(reverse(self.name, kwargs={"crashid": crash.pk}))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-
-
-class QueryCrashesTests(TestCase):
-    name = "crashmanager:querycrashes"
-
-    def test_no_login(self):
-        """Request without login hits the login redirect"""
-        path = reverse(self.name)
-        self.assertRedirects(self.client.get(path), '/login/?next=' + path)
-
-    def test_query(self):
-        """Crash list queries"""
-        self.client.login(username='test', password='test')
-        buckets = [self.create_bucket(shortDescription="bucket #1"),
-                   None]
-        testcases = [None,
-                     self.create_testcase("test.txt", quality=3)]
-        crashes = [self.create_crash(shortSignature="crash #%d" % (i + 1),
-                                     client="client #%d" % (i + 1),
-                                     os="os #%d" % (i + 1),
-                                     product="product #%d" % (i + 1),
-                                     platform="platform #%d" % (i + 1),
-                                     tool="tool #%d" % (i + 1),
-                                     bucket=buckets[i],
-                                     testcase=testcases[i])
-                   for i in range(2)]
-        response = self.client.get(reverse(self.name))
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "Search Query")
-        self.assertNotContains(response, "Invalid query")
-        response = self.client.get(reverse(self.name), {"query": "badjson"})
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "Invalid query")
-        response = self.client.post(reverse(self.name), {"query": "badjson"})
-        log.debug(response)
-        self.assertEqual(response.status_code, requests.codes['ok'])
-        self.assertContains(response, "Invalid query")
-        for params, exp_crashes in (({'op': 'OR', 'bucket': buckets[0].pk}, {crashes[0]}),
-                                    ({'op': 'OR', 'client__name': 'client #2'}, {crashes[1]}),
-                                    ({'op': 'OR', 'client__name__contains': '#2'}, {crashes[1]}),
-                                    ({'op': 'OR', 'client__name__contains': 'client'}, set(crashes)),
-                                    ({'op': 'OR', 'os__name': 'os #2'}, {crashes[1]}),
-                                    ({'op': 'NOT', 'os__name': 'os #2'}, {crashes[0]}),
-                                    ({'op': 'OR', 'product__name': 'product #2'}, {crashes[1]}),
-                                    ({'op': 'OR', 'platform__name': 'platform #2'}, {crashes[1]}),
-                                    ({'op': 'OR', 'testcase__quality': 3}, {crashes[1]}),
-                                    ({'op': 'OR', 'tool__name': 'tool #2'}, {crashes[1]}),
-                                    ({'op': 'OR', 'tool__name__contains': '#2'}, {crashes[1]})):
-            log.debug('requesting with %r', params)
-            log.debug('expecting: %r', exp_crashes)
-            response = self.client.get(reverse(self.name), {'query': json.dumps(params)})
-            log.debug(response)
-            self.assertEqual(response.status_code, requests.codes['ok'])
-            crashlist = response.context['crashlist']
-            self.assertEqual(len(crashlist), len(exp_crashes))  # num crashes
-            self.assertEqual(set(crashlist), exp_crashes)  # expected crashes
-            self.assertContains(response, "Your search matched %d entries in database." % len(exp_crashes))
+        assert len(crashlist) == len(exp_crashes)  # num crashes
+        assert set(crashlist) == exp_crashes  # expected crashes
+        # pylint: disable=superfluous-parens
+        assert_contains(response, ("Your search matched %d entries in database." % len(exp_crashes)))

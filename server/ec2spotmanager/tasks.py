@@ -35,8 +35,13 @@ def check_instance_pool(pool_id):
         if criticalPoolStatusEntries:
             return
 
-        if instance_pool.config.isCyclic() or instance_pool.config.getMissingParameters():
-            _update_pool_status(instance_pool, "config-error", "Configuration error.")
+        if instance_pool.config.isCyclic():
+            _update_pool_status(instance_pool, "config-error", "Configuration error (cyclic).")
+            return
+
+        missing = instance_pool.config.getMissingParameters()
+        if missing:
+            _update_pool_status(instance_pool, "config-error", "Configuration error (missing: %r)." % (missing,))
             return
 
         config = instance_pool.config.flatten()
@@ -444,7 +449,8 @@ def _update_pool_instances(pool, config):
                                          pool.id, cloud_instance)
 
                             # Terminate at this point, we run in an inconsistent state
-                            assert False
+                            raise RuntimeError("Database and cloud provider are inconsistent")
+
                     debug_not_in_region[cloud_instance] = cloud_instances[cloud_instance]['status']
                     continue
 
@@ -458,9 +464,11 @@ def _update_pool_instances(pool, config):
                     instance.save()
 
         except CloudProviderError as err:
+            logger.exception("[Pool %d] cloud provider raised", pool.id)
             _update_pool_status(pool, err.TYPE, err.message)
             return
         except Exception as msg:
+            logger.exception("[Pool %d] update_pool_instances raised", pool.id)
             _update_pool_status(pool, 'unclassified', str(msg))
             return
 

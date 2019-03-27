@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('msg', models.CharField(max_length=4095)),
-                ('instance', models.ForeignKey(to='ec2spotmanager.Instance')),
+                ('instance', models.ForeignKey(to='ec2spotmanager.Instance', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('msg', models.CharField(max_length=4095)),
-                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool')),
+                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },

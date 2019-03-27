@@ -1,9 +1,19 @@
+# coding: utf-8
+'''Tests for crashmanager migrations
+
+@author:     Jesse Schwartzentruber (:truber)
+
+@license:
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+'''
 import pytest
 from django.contrib.auth.models import User
-from . import migration_hook  # noqa
 
 
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
 @pytest.mark.migrate_from('0019_bucket_optimizedsignature')  # noqa

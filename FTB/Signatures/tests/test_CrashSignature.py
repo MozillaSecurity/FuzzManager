@@ -5,7 +5,7 @@ Created on Oct 9, 2014
 @author: decoder
 '''
 import json
-import unittest
+import os
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
@@ -13,7 +13,8 @@ from FTB.Signatures.CrashSignature import CrashSignature
 from FTB.Signatures.Matchers import StringMatch
 from FTB.Signatures.Symptom import OutputSymptom, StackFramesSymptom
 
-from FTB.Signatures.test_CrashInfo import tsanSimpleLeakReport, tsanSimpleRaceReport
+CWD = os.path.dirname(os.path.realpath(__file__))
+
 
 testTrace1 = """Program received signal SIGSEGV, Segmentation fault.
 GetObjectAllocKindForCopy (obj=0x7ffff54001b0, nursery=...) at /srv/repos/mozilla-central/js/src/gc/Nursery.cpp:369
@@ -457,8 +458,7 @@ testAssertionPathFwSlashes = 'Assertion failure: false, at /srv/repos/mozilla-ce
 testAssertionPathBwSlashes = r'Assertion failure: false, at c:\srv\repos\mozilla-central\js\src\vm\SelfHosting.cpp:362'
 
 
-class SignatureCreateTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureCreateTest():
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -472,16 +472,15 @@ class SignatureCreateTest(unittest.TestCase):
         assert crashSig3.matches(crashInfo)
 
         # Check that the generated signatures look as expected
-        self.assertEqual(json.loads(str(crashSig1)), json.loads(testSignature1))
-        self.assertEqual(json.loads(str(crashSig2)), json.loads(testSignature2))
+        assert json.loads(str(crashSig1)) == json.loads(testSignature1)
+        assert json.loads(str(crashSig2)) == json.loads(testSignature2)
 
         #  The third crashInfo misses 2 frames from the top 4 frames, so it will
         #  also include the crash address, even though we did not request it.
-        self.assertEqual(json.loads(str(crashSig3)), json.loads(testSignature3))
+        assert json.loads(str(crashSig3)) == json.loads(testSignature3)
 
 
-class SignatureTestCaseMatchTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureTestCaseMatchTest():
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -491,28 +490,27 @@ class SignatureTestCaseMatchTest(unittest.TestCase):
         testSig5 = CrashSignature(testSignature5)
         testSig6 = CrashSignature(testSignature6)
 
-        self.assertFalse(testSig3.matchRequiresTest())
-        self.assertTrue(testSig4.matchRequiresTest())
-        self.assertTrue(testSig5.matchRequiresTest())
+        assert not testSig3.matchRequiresTest()
+        assert testSig4.matchRequiresTest()
+        assert testSig5.matchRequiresTest()
 
         # Must not match without testcase provided
-        self.assertFalse(testSig4.matches(crashInfo))
-        self.assertFalse(testSig5.matches(crashInfo))
-        self.assertFalse(testSig6.matches(crashInfo))
+        assert not testSig4.matches(crashInfo)
+        assert not testSig5.matches(crashInfo)
+        assert not testSig6.matches(crashInfo)
 
         # Attach testcase
         crashInfo.testcase = testCase1
 
         # Must match with testcase provided
-        self.assertTrue(testSig4.matches(crashInfo))
-        self.assertTrue(testSig5.matches(crashInfo))
+        assert testSig4.matches(crashInfo)
+        assert testSig5.matches(crashInfo)
 
         # This one does not match at all
-        self.assertFalse(testSig6.matches(crashInfo))
+        assert not testSig6.matches(crashInfo)
 
 
-class SignatureStackFramesTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesTest():
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -523,18 +521,17 @@ class SignatureStackFramesTest(unittest.TestCase):
         testSig4 = CrashSignature(testSignatureStackFrames4)
         testSig5 = CrashSignature(testSignatureStackFrames5)
 
-        self.assertTrue(testSig1.matches(crashInfo))
-        self.assertTrue(testSig2.matches(crashInfo))
-        self.assertTrue(testSig3.matches(crashInfo))
-        self.assertTrue(testSig4.matches(crashInfo))
-        self.assertFalse(testSig5.matches(crashInfo))
+        assert testSig1.matches(crashInfo)
+        assert testSig2.matches(crashInfo)
+        assert testSig3.matches(crashInfo)
+        assert testSig4.matches(crashInfo)
+        assert not testSig5.matches(crashInfo)
 
 
-class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesAlgorithmsTest():
         # Do some direct matcher tests on edge cases
-        self.assertTrue(StackFramesSymptom._match([], [StringMatch('???')]))
-        self.assertFalse(StackFramesSymptom._match([], [StringMatch('???'), StringMatch('a')]))
+        assert StackFramesSymptom._match([], [StringMatch('???')])
+        assert not StackFramesSymptom._match([], [StringMatch('???'), StringMatch('a')])
 
         # Test the diff algorithm, test array contains:
         # stack, signature, expected distance, proposed signature
@@ -551,12 +548,11 @@ class SignatureStackFramesAlgorithmsTest(unittest.TestCase):
             for maxDepth in (expectedDepth, 3):
                 (actualDepth, actualSig) = StackFramesSymptom._diff(stack,
                                                                     [StringMatch(x) for x in rawSig], 0, 1, maxDepth)
-                self.assertEqual(expectedDepth, actualDepth)
-                self.assertEqual(expectedSig, [str(x) for x in actualSig])
+                assert expectedDepth == actualDepth
+                assert expectedSig == [str(x) for x in actualSig]
 
 
-class SignaturePCREShortTest(unittest.TestCase):
-    def runTest(self):
+def test_SignaturePCREShortTest():
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -564,12 +560,11 @@ class SignaturePCREShortTest(unittest.TestCase):
         testSig1 = CrashSignature(testSignaturePCREShort1)
         testSig2 = CrashSignature(testSignaturePCREShort2)
 
-        self.assertTrue(testSig1.matches(crashInfo))
-        self.assertFalse(testSig2.matches(crashInfo))
+        assert testSig1.matches(crashInfo)
+        assert not testSig2.matches(crashInfo)
 
 
-class SignatureStackFramesWildcardTailTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesWildcardTailTest():
         config = ProgramConfiguration("test", "x86", "linux")
 
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace2.splitlines())
@@ -578,13 +573,12 @@ class SignatureStackFramesWildcardTailTest(unittest.TestCase):
 
         # Ensure that the last frame with a symbol is at the right place and there is nothing else,
         # espcially no wildcard, following afterwards.
-        self.assertTrue(isinstance(testSig.symptoms[0], StackFramesSymptom))
-        self.assertEqual(str(testSig.symptoms[0].functionNames[6]), "js::jit::CheckOverRecursedWithExtra")
-        self.assertEqual(len(testSig.symptoms[0].functionNames), 7)
+        assert isinstance(testSig.symptoms[0], StackFramesSymptom)
+        assert str(testSig.symptoms[0].functionNames[6]) == "js::jit::CheckOverRecursedWithExtra"
+        assert len(testSig.symptoms[0].functionNames) == 7
 
 
-class SignatureStackFramesRegressionTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesRegressionTest():
         config = ProgramConfiguration("test", "x86", "linux")
         crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
                                                   auxCrashData=testTraceHeapWithCrashAddress.splitlines())
@@ -593,12 +587,11 @@ class SignatureStackFramesRegressionTest(unittest.TestCase):
 
         testSigEmptyCrashAddress = CrashSignature(testSignatureEmptyCrashAddress)
 
-        self.assertTrue(testSigEmptyCrashAddress.matches(crashInfoPos))
-        self.assertFalse(testSigEmptyCrashAddress.matches(crashInfoNeg))
+        assert testSigEmptyCrashAddress.matches(crashInfoPos)
+        assert not testSigEmptyCrashAddress.matches(crashInfoNeg)
 
 
-class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesAuxMessagesTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxMessage.splitlines())
         crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
@@ -609,108 +602,103 @@ class SignatureStackFramesAuxMessagesTest(unittest.TestCase):
 
         # Check that the first crash signature has ASan symptoms but
         # the second does not because it has a program abort message
-        self.assertIn("/ERROR: AddressSanitizer", str(crashSignaturePos))
-        self.assertIn("/READ of size", str(crashSignaturePos))
-        self.assertNotIn("/ERROR: AddressSanitizer", str(crashSignatureNeg))
-        self.assertNotIn("/READ of size", str(crashSignatureNeg))
+        assert "/ERROR: AddressSanitizer" in str(crashSignaturePos)
+        assert "/READ of size" in str(crashSignaturePos)
+        assert "/ERROR: AddressSanitizer" not in str(crashSignatureNeg)
+        assert "/READ of size" not in str(crashSignatureNeg)
 
         # Check matches appropriately
-        self.assertTrue(crashSignaturePos.matches(crashInfoPos))
-        self.assertTrue(crashSignaturePos.matches(crashInfoNeg))
-        self.assertFalse(crashSignatureNeg.matches(crashInfoPos))
-        self.assertTrue(crashSignatureNeg.matches(crashInfoNeg))
+        assert crashSignaturePos.matches(crashInfoPos)
+        assert crashSignaturePos.matches(crashInfoNeg)
+        assert not crashSignatureNeg.matches(crashInfoPos)
+        assert crashSignatureNeg.matches(crashInfoNeg)
 
 
-class SignatureStackFramesNegativeSizeParamTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackFramesNegativeSizeParamTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceNegativeSizeParam.splitlines())
 
         testSig = crashInfoPos.createCrashSignature()
 
-        self.assertIn("/ERROR: AddressSanitizer", str(testSig))
-        self.assertIn("negative-size-param", str(testSig))
-        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+        assert "/ERROR: AddressSanitizer" in str(testSig)
+        assert "negative-size-param" in str(testSig)
+        assert isinstance(testSig.symptoms[1], StackFramesSymptom)
 
 
-class SignatureAsanStackOverflowTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureAsanStackOverflowTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanStackOverflow.splitlines())
 
         testSig = crashInfoPos.createCrashSignature()
 
         # Check matches appropriately
-        self.assertTrue(testSig.matches(crashInfoPos))
+        assert testSig.matches(crashInfoPos)
 
 
-class SignatureAsanAccessViolationTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureAsanAccessViolationTest():
         config = ProgramConfiguration("test", "x86-64", "windows")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanAccessViolation.splitlines())
 
         testSig = crashInfoPos.createCrashSignature()
 
-        self.assertIn("/ERROR: AddressSanitizer", str(testSig))
-        self.assertIn("access-violation", str(testSig))
-        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+        assert "/ERROR: AddressSanitizer" in str(testSig)
+        assert "access-violation" in str(testSig)
+        assert isinstance(testSig.symptoms[1], StackFramesSymptom)
 
 
-class SignatureStackSizeTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureStackSizeTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanLongTrace.splitlines())
 
         # The test signature uses > 15 which was previously interpreted as 0x15
         # while the test crash data has 16 frames.
         testSig = CrashSignature(testSignatureStackSize)
-        self.assertTrue(testSig.matches(crashInfoPos))
+        assert testSig.matches(crashInfoPos)
 
 
-class SignatureAsanFailedAllocTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureAsanFailedAllocTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
         crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanFailedAlloc.splitlines())
 
         testSig = crashInfoPos.createCrashSignature()
-        self.assertIn("/AddressSanitizer failed to allocate", str(testSig))
-        self.assertTrue(testSig.matches(crashInfoPos))
-        self.assertTrue(isinstance(testSig.symptoms[1], StackFramesSymptom))
+        assert "/AddressSanitizer failed to allocate" in str(testSig)
+        assert testSig.matches(crashInfoPos)
+        assert isinstance(testSig.symptoms[1], StackFramesSymptom)
 
 
-class SignatureGenerationTSanLeakTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureGenerationTSanLeakTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=tsanSimpleLeakReport.splitlines())
+        with open(os.path.join(CWD, 'resources', 'tsan-simple-leak-report.txt'), 'r') as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
         testSignature = crashInfo.createCrashSignature()
 
-        self.assertTrue(testSignature.matches(crashInfo))
+        assert testSignature.matches(crashInfo)
 
         found = False
         for symptom in testSignature.symptoms:
             if isinstance(symptom, OutputSymptom):
-                self.assertEqual(symptom.src, "crashdata")
-                self.assertEqual(symptom.output.value, "WARNING: ThreadSanitizer: thread leak")
+                assert symptom.src == "crashdata"
+                assert symptom.output.value == "WARNING: ThreadSanitizer: thread leak"
                 found = True
-        self.assertTrue(found, msg="Expected correct OutputSymptom in signature")
+        assert found, "Expected correct OutputSymptom in signature"
 
 
-class SignatureGenerationTSanRaceTest(unittest.TestCase):
-    def runTest(self):
+def test_SignatureGenerationTSanRaceTest():
         config = ProgramConfiguration("test", "x86-64", "linux")
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=tsanSimpleRaceReport.splitlines())
+        with open(os.path.join(CWD, 'resources', 'tsan-simple-race-report.txt'), 'r') as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
         testSignature = crashInfo.createCrashSignature()
 
-        self.assertTrue(testSignature.matches(crashInfo))
+        assert testSignature.matches(crashInfo)
 
         outputSymptoms = []
 
         for symptom in testSignature.symptoms:
             if isinstance(symptom, OutputSymptom):
-                self.assertEqual(symptom.src, "crashdata")
+                assert symptom.src == "crashdata"
                 outputSymptoms.append(symptom)
 
-        self.assertEqual(len(outputSymptoms), 3)
+        assert len(outputSymptoms) == 3
 
         for stringMatchVal in [
             "WARNING: ThreadSanitizer: data race",
@@ -721,19 +709,17 @@ class SignatureGenerationTSanRaceTest(unittest.TestCase):
             for symptom in outputSymptoms:
                 if symptom.output.value == stringMatchVal:
                     found = True
-            self.assertTrue(found, msg="Couldn't find OutputSymptom with value '%s'" % stringMatchVal)
+            assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
 
 
-class SignatureMatchWithUnicode(unittest.TestCase):
-    def runTest(self):
+def test_SignatureMatchWithUnicode():
         config = ProgramConfiguration('test', 'x86-64', 'linux')
         crashInfo = CrashInfo.fromRawCrashData(["(Â«f => (generator.throw(f))Â», Â«undefinedÂ»)"], [], config)
         testSignature = CrashSignature('{"symptoms": [{"src": "stdout", "type": "output", "value": "x"}]}')
-        self.assertFalse(testSignature.matches(crashInfo))
+        assert not testSignature.matches(crashInfo)
 
 
-class SignatureMatchAssertionSlashes(unittest.TestCase):
-    def runTest(self):
+def test_SignatureMatchAssertionSlashes():
         # test that a forward slash assertion signature matches a backwards slash crash, but only on windows
         cfg_linux = ProgramConfiguration('test', 'x86-64', 'linux')
         cfg_windows = ProgramConfiguration('test', 'x86-64', 'windows')
@@ -763,8 +749,3 @@ class SignatureMatchAssertionSlashes(unittest.TestCase):
         assert not windows_sig.matches(bs_linux)  # this is invalid and should not match
         assert windows_sig.matches(fs_windows)
         assert windows_sig.matches(bs_windows)
-
-
-if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.testName']
-    unittest.main()

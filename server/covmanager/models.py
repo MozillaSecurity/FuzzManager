@@ -37,12 +37,12 @@ class CollectionFile(models.Model):
 class Collection(models.Model):
     created = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=1023, blank=True)
-    repository = models.ForeignKey(Repository)
+    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
     revision = models.CharField(max_length=255, blank=False)
     branch = models.CharField(max_length=255, blank=True)
     tools = models.ManyToManyField(Tool)
-    client = models.ForeignKey(Client)
-    coverage = models.ForeignKey(CollectionFile, blank=True, null=True)
+    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
+    coverage = models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE)
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
@@ -190,10 +190,10 @@ if getattr(settings, 'USE_CELERY', None):
 
 class ReportConfiguration(models.Model):
     description = models.CharField(max_length=1023, blank=True)
-    repository = models.ForeignKey(Repository)
+    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
     directives = models.TextField()
     public = models.BooleanField(blank=False, default=False)
-    logical_parent = models.ForeignKey("self", blank=True, null=True)
+    logical_parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.deletion.CASCADE)
 
     def apply(self, collection):
         CoverageHelper.apply_include_exclude_directives(collection, self.directives.splitlines())

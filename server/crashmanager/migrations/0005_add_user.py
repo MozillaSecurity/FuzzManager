@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('defaultTemplateId', models.IntegerField(default=0)),
                 ('defaultToolsFilter', models.ManyToManyField(to='crashmanager.Tool')),
-                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(to=settings.AUTH_USER_MODEL, on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='crashentry',
             name='tool',
-            field=models.ForeignKey(default=1, to='crashmanager.Tool'),
+            field=models.ForeignKey(default=1, to='crashmanager.Tool', on_delete=models.deletion.CASCADE),
             preserve_default=False,
         ),
     ]

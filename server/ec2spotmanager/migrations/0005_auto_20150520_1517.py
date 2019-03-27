@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('accumulated_count', models.IntegerField(default=0)),
                 ('uptime_percentage', models.DecimalField(null=True, max_digits=5, decimal_places=2, blank=True)),
-                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool')),
+                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
                 ('target', models.IntegerField()),
                 ('actual', models.IntegerField()),
-                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool')),
+                ('pool', models.ForeignKey(to='ec2spotmanager.InstancePool', on_delete=models.deletion.CASCADE)),
             ],
             options={
             },
