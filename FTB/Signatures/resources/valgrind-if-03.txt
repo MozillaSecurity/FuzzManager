@@ -1,0 +1,26 @@
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+
+== not valgrind log stuff
+...
+==321== This line looks interesting but should be ignored...
+...
+==321== Invalid free() / delete / delete[] / realloc()
+...other junk...
+==321==    at 0x4C2ECF0: free (vg_replace_malloc.c:530)
+
+==321==    by 0x400541: main (test.c:5)
+..
+==321==  Address 0xbadf00d is not stack'd, malloc'd or (recently) free'd
+==321== 
+==321== ...
+...
+
+==321== Invalid read of size 4
+==321==    at 0x4C2ECF0: test (test.c:530)
+==321==    by 0x4C2ECF0: test (test.c:530)
+==321== 

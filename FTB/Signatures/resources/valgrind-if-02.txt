@@ -1,0 +1,24 @@
+==123== Memcheck, a memory error detector
+==123== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==123== Using Valgrind-3.14.0.GIT and LibVEX; rerun with -h for copyright info
+==123== Command: ./a.out
+==123== 
+==123== Invalid free() / delete / delete[] / realloc()
+==123==    at 0x4C2ECF0: free (vg_replace_malloc.c:530)
+==123==    by 0x400593: main (test.c:6)
+==123==  Address 0x5204040 is 0 bytes inside a block of size 100 free'd
+==123==    at 0x4C2ECF0: free (vg_replace_malloc.c:530)
+==123==    by 0x400587: main (test.c:5)
+==123==  Block was alloc'd at
+==123==    at 0x4C2DBF6: malloc (vg_replace_malloc.c:299)
+==123==    by 0x400577: main (test.c:4)
+==123== 
+==123== 
+==123== HEAP SUMMARY:
+==123==     in use at exit: 0 bytes in 0 blocks
+==123==   total heap usage: 1 allocs, 2 frees, 100 bytes allocated
+==123== 
+==123== All heap blocks were freed -- no leaks are possible
+==123== 
+==123== For counts of detected and suppressed errors, rerun with: -v
+==123== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

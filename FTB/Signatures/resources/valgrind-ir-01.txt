@@ -1,0 +1,6 @@
+==111== Invalid read of size 4
+==111==    at 0x33296345CA: blah_func (in /foo/bar/test.so)
+==111==    by 0x52ADD7B: main (test.cpp:123)
+==111==  Address 0xbadf00d is 24 bytes inside a block of size 28 free'd
+==111==    at 0x4A05743: operator delete(void*) (vg_replace_malloc.c:346)
+==111==    by 0x52D590B: asdf() (foo.cpp:325)

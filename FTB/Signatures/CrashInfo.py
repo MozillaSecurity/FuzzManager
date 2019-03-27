@@ -232,6 +232,9 @@ class CrashInfo(object):
             elif minidumpFirstDetected and minidumpSecondString in line:
                 result = MinidumpCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
+            elif line.startswith("==") and re.match(ValgrindCrashInfo.MSG_REGEX, line):
+                result = ValgrindCrashInfo(stdout, stderr, configuration, auxCrashData)
+                break
             else:
                 rustFirstDetected = False
                 minidumpFirstDetected = False
@@ -1677,3 +1680,91 @@ class TSanCrashInfo(CrashInfo):
             return msg
 
         return "No TSan warning detected"
+
+
+class ValgrindCrashInfo(CrashInfo):
+    MSG_REGEX = re.compile(r"""
+        ==\d+==\s+(?P<msg>
+        (\d+(,\d+)*\sbytes\sin\s\d+(,\d+)*\sblocks\sare\s\w+\slost)|
+        (Argument\s'\w+'\sof\sfunction\smalloc.+)|
+        ((Conditional|Use)\s.+?uninitialised\svalue.+)|
+        (Invalid\s\w+\sof\ssize.+)|
+        ((Invalid|Mismatched)\sfree\(\).+)|
+        (Process\sterminating\swith\sdefault\saction.+)|
+        (Source\sand\sdestination\soverlap)|
+        (Syscall\sparam.+)
+        )""", re.VERBOSE)
+
+    def __init__(self, stdout, stderr, configuration, crashData=None):
+        '''
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
+        '''
+        CrashInfo.__init__(self)
+
+        if stdout is not None:
+            self.rawStdout.extend(stdout)
+
+        if stderr is not None:
+            self.rawStderr.extend(stderr)
+
+        if crashData is not None:
+            self.rawCrashData.extend(crashData)
+
+        self.configuration = configuration
+
+        # If crashData is given, use that to find the Valgrind trace, otherwise use stderr
+        vgdOutput = crashData if crashData else stderr
+        stackPattern = re.compile(r"""
+            ^==\d+==\s+(at|by)\s+            # beginning of entry
+            0x[0-9A-Fa-f]+\:\s+              # address
+            (?P<func>.+)\s+                  # function name
+            \((in\s+)?(?P<file>.+?)(:.+?)?\) # file name
+            """, re.VERBOSE)
+
+        foundStart = False
+        for traceLine in vgdOutput:
+            if not traceLine.startswith("=="):
+                # skip unrelated noise
+                continue
+            elif not foundStart:
+                if re.match(self.MSG_REGEX, traceLine) is not None:
+                    # skip other lines that are not part of a recognized trace
+                    foundStart = True
+                # continue search for the beginning of the stack trace
+                continue
+
+            lineInfo = re.match(stackPattern, traceLine)
+            if lineInfo is not None:
+                lineFunc = lineInfo.group("func")
+                # if function name is not available use the file name instead
+                if lineFunc == "???":
+                    lineFunc = lineInfo.group("file")
+                self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
+
+            elif self.backtrace:
+                # check if address info is available
+                addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
+                if addr:
+                    self.crashAddress = int(addr.group("addr"), 16)
+                # look for '==PID== \n' to indicate the end of a trace
+                if re.match(r"^==\d+==\s+$", traceLine) is not None:
+                    # done parsing
+                    break
+
+    def createShortSignature(self):
+        '''
+        @rtype: String
+        @return: A string representing this crash (short signature)
+        '''
+
+        logData = self.rawCrashData if self.rawCrashData else self.rawStderr
+        for line in logData:
+            m = re.match(ValgrindCrashInfo.MSG_REGEX, line)
+            if m and m.group("msg"):
+                if self.backtrace:
+                    return "Valgrind: %s [@ %s]" % (m.group("msg"), self.backtrace[0])
+                return "Valgrind: %s" % m.group("msg")
+
+        if not self.backtrace:
+            return "No crash detected"
+        return "Valgrind: [@ %s]" % self.backtrace[0]

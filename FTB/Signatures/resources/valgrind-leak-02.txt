@@ -1,0 +1,4 @@
+==444== 16 bytes in 1 blocks are possibly lost in loss record 30 of 844
+==444==    at 0x4A05E1C: malloc (vg_replace_malloc.c:195)
+==444==    by 0x6525BE: test (in main)
+==444==    by 0x63C579: main (in main)

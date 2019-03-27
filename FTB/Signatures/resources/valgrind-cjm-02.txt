@@ -1,0 +1,89 @@
+==23845== Memcheck, a memory error detector
+==23845== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==23845== Using Valgrind-3.15.0.GIT-2cfe32ab11-20190318 and LibVEX; rerun with -h for copyright info
+==23845== Command: ./a.out
+==23845== Parent PID: 4587
+==23845== 
+--23845-- 
+--23845-- Valgrind options:
+--23845--    -v
+--23845--    --track-origins=yes
+--23845--    --log-file=out.log.txt
+--23845-- Contents of /proc/version:
+--23845--   Linux version 4.15.0-46-generic (buildd@lgw01-amd64-038) (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3)) #49-Ubuntu SMP Wed Feb 6 09:33:07 UTC 2019
+--23845-- 
+--23845-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-ssse3-avx-avx2-bmi-f16c-rdrand
+--23845-- Page sizes: currently 4096, max supported 4096
+--23845-- Valgrind library directory: /usr/local/lib/valgrind
+--23845-- Reading syms from /home/user/a.out
+--23845--    object doesn't have a symbol table
+--23845-- Reading syms from /lib/x86_64-linux-gnu/ld-2.27.so
+--23845--   Considering /lib/x86_64-linux-gnu/ld-2.27.so ..
+--23845--   .. CRC mismatch (computed 1b7c895e wanted 2943108a)
+--23845--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/ld-2.27.so ..
+--23845--   .. CRC is valid
+--23845-- Reading syms from /usr/local/lib/valgrind/memcheck-amd64-linux
+--23845--    object doesn't have a dynamic symbol table
+--23845-- Scheduler: using generic scheduler lock implementation.
+--23845-- Reading suppressions file: /usr/local/lib/valgrind/default.supp
+==23845== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-23845-by-user-on-???
+==23845== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-23845-by-user-on-???
+==23845== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-23845-by-user-on-???
+==23845== 
+==23845== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==23845== don't want to do, unless you know exactly what you're doing,
+==23845== or are doing some strange experiment):
+==23845==   /usr/local/lib/valgrind/../../bin/vgdb --pid=23845 ...command...
+==23845== 
+==23845== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==23845==   /path/to/gdb ./a.out
+==23845== and then give GDB the following command
+==23845==   target remote | /usr/local/lib/valgrind/../../bin/vgdb --pid=23845
+==23845== --pid is optional if only one valgrind process is running
+==23845== 
+--23845-- REDIR: 0x401f2f0 (ld-linux-x86-64.so.2:strlen) redirected to 0x580dcbc2 (vgPlain_amd64_linux_REDIR_FOR_strlen)
+--23845-- REDIR: 0x401f0d0 (ld-linux-x86-64.so.2:index) redirected to 0x580dcbdc (vgPlain_amd64_linux_REDIR_FOR_index)
+--23845-- Reading syms from /usr/local/lib/valgrind/vgpreload_core-amd64-linux.so
+--23845-- Reading syms from /usr/local/lib/valgrind/vgpreload_memcheck-amd64-linux.so
+==23845== WARNING: new redirection conflicts with existing -- ignoring it
+--23845--     old: 0x0401f2f0 (strlen              ) R-> (0000.0) 0x580dcbc2 vgPlain_amd64_linux_REDIR_FOR_strlen
+--23845--     new: 0x0401f2f0 (strlen              ) R-> (2007.0) 0x04c33280 strlen
+--23845-- REDIR: 0x401d360 (ld-linux-x86-64.so.2:strcmp) redirected to 0x4c343b0 (strcmp)
+--23845-- REDIR: 0x401f830 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4c380e0 (mempcpy)
+--23845-- Reading syms from /lib/x86_64-linux-gnu/libc-2.27.so
+--23845--   Considering /lib/x86_64-linux-gnu/libc-2.27.so ..
+--23845--   .. CRC mismatch (computed b1c74187 wanted 042cc048)
+--23845--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/libc-2.27.so ..
+--23845--   .. CRC is valid
+--23845-- REDIR: 0x4edbc70 (libc.so.6:memmove) redirected to 0x4a2a6de (_vgnU_ifunc_wrapper)
+--23845-- REDIR: 0x4fcb590 (libc.so.6:__strlen_avx2) redirected to 0x4c331c0 (strlen)
+==23845== Conditional jump or move depends on uninitialised value(s)
+==23845==    at 0x4C331D8: strlen (vg_replace_strmem.c:461)
+==23845==    by 0x4EBD9D1: puts (ioputs.c:35)
+==23845==    by 0x1085D1: ??? (in /home/user/a.out)
+==23845==    by 0x4E5EB96: (below main) (libc-start.c:310)
+==23845==  Uninitialised value was created by a stack allocation
+==23845==    at 0x1085A0: ??? (in /home/user/a.out)
+==23845== 
+--23845-- REDIR: 0x4ed4070 (libc.so.6:malloc) redirected to 0x4c2fd8d (malloc)
+--23845-- REDIR: 0x4fcbab0 (libc.so.6:__mempcpy_avx_unaligned_erms) redirected to 0x4c37d20 (mempcpy)
+--23845-- REDIR: 0x4ed4950 (libc.so.6:free) redirected to 0x4c30f3a (free)
+==23845== 
+==23845== HEAP SUMMARY:
+==23845==     in use at exit: 0 bytes in 0 blocks
+==23845==   total heap usage: 1 allocs, 1 frees, 1,024 bytes allocated
+==23845== 
+==23845== All heap blocks were freed -- no leaks are possible
+==23845== 
+==23845== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+==23845== 
+==23845== 1 errors in context 1 of 1:
+==23845== Conditional jump or move depends on uninitialised value(s)
+==23845==    at 0x4C331D8: strlen (vg_replace_strmem.c:461)
+==23845==    by 0x4EBD9D1: puts (ioputs.c:35)
+==23845==    by 0x1085D1: ??? (in /home/user/a.out)
+==23845==    by 0x4E5EB96: (below main) (libc-start.c:310)
+==23845==  Uninitialised value was created by a stack allocation
+==23845==    at 0x1085A0: ??? (in /home/user/a.out)
+==23845== 
+==23845== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
