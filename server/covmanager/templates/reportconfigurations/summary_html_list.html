@@ -1,6 +1,6 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% load recursetags %}
+{% load recurseroot %}
 
 {% block body_content %}
 <div class="panel panel-default">
@@ -9,7 +9,7 @@
 			<ul>
 			  	{% recurseroot root %}
 			  	  <li>
-				    {{ node.name }}: {{ node.coveragePercent }} %
+				    <a href="{% url 'covmanager:collections_browse' root.cid %}#rc={{ node.id }}">{{ node.name }}</a>: {{ node.coveragePercent }} %
 				    {% if node.children %}
 				 	    <ul>{{ children }}</ul>
 				    {% endif %}

@@ -75,6 +75,7 @@ def collections_reportsummary_html_list(request, collectionid):
         )
 
     root = json.loads(collection.reportsummary.cached_result)
+    root["cid"] = collectionid
 
     return render(request, 'reportconfigurations/summary_html_list.html', {'root': root})
 
