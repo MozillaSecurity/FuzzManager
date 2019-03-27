@@ -2922,10 +2922,11 @@ class ValgrindCJMParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Conditional jump or move depends on uninitialised value(s) [@ PyObject_Free]")
-        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(len(crashInfo.backtrace), 7)
         self.assertEqual(crashInfo.backtrace[0], "PyObject_Free")
         self.assertEqual(crashInfo.backtrace[1], "/usr/bin/python3.6")
         self.assertEqual(crashInfo.backtrace[3], "main")
+        self.assertEqual(crashInfo.backtrace[-1], "main")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertIsNone(crashInfo.crashAddress)
 
@@ -2936,10 +2937,11 @@ class ValgrindCJMParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Conditional jump or move depends on uninitialised value(s) [@ strlen]")
-        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(len(crashInfo.backtrace), 5)
         self.assertEqual(crashInfo.backtrace[0], "strlen")
         self.assertEqual(crashInfo.backtrace[1], "puts")
         self.assertEqual(crashInfo.backtrace[3], "(below main)")
+        self.assertEqual(crashInfo.backtrace[4], "/home/user/a.out")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertIsNone(crashInfo.crashAddress)
 
@@ -2953,9 +2955,10 @@ class ValgrindIRWParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Invalid read of size 4 [@ blah_func]")
-        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(len(crashInfo.backtrace), 4)
         self.assertEqual(crashInfo.backtrace[0], "blah_func")
         self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertEqual(crashInfo.backtrace[-1], "asdf")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertEqual(crashInfo.crashAddress, 0xbadf00d)
 
@@ -2982,10 +2985,11 @@ class ValgrindUUVParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Use of uninitialised value of size 8 [@ foo<123>::Init]")
-        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(len(crashInfo.backtrace), 5)
         self.assertEqual(crashInfo.backtrace[0], "foo<123>::Init")
         self.assertEqual(crashInfo.backtrace[1], "bar::func<bar::Init()::$_0, Promise<type1, type2, true> >::Run")
         self.assertEqual(crashInfo.backtrace[2], "non-virtual thunk to Run")
+        self.assertEqual(crashInfo.backtrace[-1], "posix_memalign")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertIsNone(crashInfo.crashAddress)
 
@@ -2999,11 +3003,39 @@ class ValgrindIFParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Invalid free() / delete / delete[] / realloc() [@ free]")
+        self.assertEqual(len(crashInfo.backtrace), 4)
+        self.assertEqual(crashInfo.backtrace[0], "free")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertEqual(crashInfo.backtrace[-1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x43f2931)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-if-02.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid free() / delete / delete[] / realloc() [@ free]")
+        self.assertEqual(len(crashInfo.backtrace), 6)
+        self.assertEqual(crashInfo.backtrace[0], "free")
+        self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertEqual(crashInfo.backtrace[-1], "main")
+        self.assertIsNone(crashInfo.crashInstruction)
+        self.assertEqual(crashInfo.crashAddress, 0x5204040)
+
+        config = ProgramConfiguration("test", "x86-64", "linux")
+        with open(os.path.join(CWD, "resources", "valgrind-if-03.txt"), "r") as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+        self.assertEqual(
+            crashInfo.createShortSignature(),
+            "Valgrind: Invalid free() / delete / delete[] / realloc() [@ free]")
         self.assertEqual(len(crashInfo.backtrace), 2)
         self.assertEqual(crashInfo.backtrace[0], "free")
         self.assertEqual(crashInfo.backtrace[1], "main")
         self.assertIsNone(crashInfo.crashInstruction)
-        self.assertEqual(crashInfo.crashAddress, 0x43f2931)
+        self.assertEqual(crashInfo.crashAddress, 0xbadf00d)
 
 
 class ValgrindSDOParserTest(unittest.TestCase):
@@ -3031,9 +3063,10 @@ class ValgrindSCParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Syscall param write(buf) points to uninitialised byte(s) [@ write]")
-        self.assertEqual(len(crashInfo.backtrace), 2)
+        self.assertEqual(len(crashInfo.backtrace), 6)
         self.assertEqual(crashInfo.backtrace[0], "write")
         self.assertEqual(crashInfo.backtrace[1], "main")
+        self.assertEqual(crashInfo.backtrace[-1], "main")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertEqual(crashInfo.crashAddress, 0x522e040)
 
@@ -3044,9 +3077,10 @@ class ValgrindSCParserTest(unittest.TestCase):
         self.assertEqual(
             crashInfo.createShortSignature(),
             "Valgrind: Syscall param socketcall.sendto(msg) points to uninitialised byte(s) [@ send]")
-        self.assertEqual(len(crashInfo.backtrace), 3)
+        self.assertEqual(len(crashInfo.backtrace), 5)
         self.assertEqual(crashInfo.backtrace[0], "send")
         self.assertEqual(crashInfo.backtrace[2], "start_thread")
+        self.assertEqual(crashInfo.backtrace[-1], "start_thread")
         self.assertIsNone(crashInfo.crashInstruction)
         self.assertEqual(crashInfo.crashAddress, 0x5e7b6b4)
 

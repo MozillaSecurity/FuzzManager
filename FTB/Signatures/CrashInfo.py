@@ -1721,29 +1721,36 @@ class ValgrindCrashInfo(CrashInfo):
             \((in\s+)?(?P<file>.+?)(:.+?)?\) # file name
             """, re.VERBOSE)
 
+        foundStart = False
         for traceLine in vgdOutput:
             if not traceLine.startswith("=="):
                 # skip unrelated noise
                 continue
-            lineInfo = re.match(stackPattern, traceLine)
-            if lineInfo is None:
-                if self.backtrace:
-                    # at this point we should have the full trace
-                    # check if address info is available
-                    addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
-                    if addr:
-                        self.crashAddress = int(addr.group("addr"), 16)
-                    # done parsing
-                    break
+            elif not foundStart:
+                if re.match(self.MSG_REGEX, traceLine) is not None:
+                    # skip other lines that are not part of a recognized trace
+                    foundStart = True
                 # continue search for the beginning of the stack trace
                 continue
 
-            lineFunc = lineInfo.group("func")
-            # if function name is not available used the file name instead
-            if lineFunc == "???":
-                lineFunc = lineInfo.group("file")
+            lineInfo = re.match(stackPattern, traceLine)
+            if lineInfo is not None:
+                lineFunc = lineInfo.group("func")
+                # if function name is not available used the file name instead
+                if lineFunc == "???":
+                    lineFunc = lineInfo.group("file")
+                self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
 
-            self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
+            elif self.backtrace:
+                # check if address info is available
+                addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
+                if addr:
+                    self.crashAddress = int(addr.group("addr"), 16)
+                # look for '==PID== \n' to indicate the end of a trace
+                if re.match(r"^==\d+==\s+$", traceLine) is not None:
+                    # done parsing
+                    break
+
 
     def createShortSignature(self):
         '''
