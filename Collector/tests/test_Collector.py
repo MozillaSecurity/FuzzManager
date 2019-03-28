@@ -327,7 +327,7 @@ def test_collector_download(tmp_path, monkeypatch):
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/'
         assert headers == {'Authorization': 'Token token'}
 
-        monkeypatch.chdir(tmp_path)  # download writes to cwd, so make that tmp
+        monkeypatch.chdir(str(tmp_path))  # download writes to cwd, so make that tmp
         collector._session.get = myget2
         return response1_t()
 
