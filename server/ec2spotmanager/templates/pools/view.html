@@ -36,6 +36,7 @@
 		}
             });
         </script>
+        <br/>
 
 		<div class="btn-group">
 			{% if pool.isEnabled %}
@@ -71,7 +72,32 @@
 		{% endif %}
 		</div>
 
-		<br/>
+		<hr/>
+
+		<div>
+			<strong>Pool Status:</strong>
+		{% if pool.msgs %}
+			{% for msg in pool.msgs %}
+			<div>
+				<div style="float:left; width:25px; overflow:hidden;">
+				<a href="{% url 'ec2spotmanager:poolmsgdel_from_pool' msg.pk %}">[x]</a>
+				</div>
+				<div>
+				{% if msg.isCritical %}
+				<span class="label label-danger">{{ msg.msg|linebreaksbr }}</span>
+				{% else %}
+				<span class="label label-warning">{{ msg.msg|linebreaksbr }}</span>
+				{% endif %}
+				</div>
+			</div>
+			{% endfor %}
+		{% elif not pool.isEnabled %}
+			<span class="label label-warning">Disabled</span>
+		{% else %}
+			<span class="label label-success">Healthy</span>
+		{% endif %}
+		<div>
+
 		<hr/>
 
 		<div>

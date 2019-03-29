@@ -100,6 +100,8 @@ def viewPool(request, poolid):
 
     parent_config = last_config
 
+    pool.msgs = PoolStatusEntry.objects.filter(pool=pool).order_by('-created')
+
     missing = None
     if not cyclic:
         # Figure out if any parameters are missing
@@ -460,13 +462,19 @@ def deletePool(request, poolid):
 
 
 @deny_restricted_users
-def deletePoolMsg(request, msgid):
+def deletePoolMsg(request, msgid, from_pool='0'):
     entry = get_object_or_404(PoolStatusEntry, pk=msgid)
     if request.method == 'POST':
+        from_pool = int(request.POST['from_pool'])
+        pool = entry.pool
         entry.delete()
-        return redirect('ec2spotmanager:pools')
+        if from_pool:
+            return redirect('ec2spotmanager:poolview', poolid=pool.pk)
+        else:
+            return redirect('ec2spotmanager:pools')
     elif request.method == 'GET':
-        return render(request, 'pools/messages/delete.html', {'entry': entry})
+        return render(request, 'pools/messages/delete.html', {'entry': entry,
+                                                              'from_pool': '1' if from_pool else '0'})
     else:
         raise SuspiciousOperation
 
