@@ -264,22 +264,31 @@ let covmanager = new Vue({
     },
   },
   updated: function () {
-    // Once we updated the data, check for a line parameter and update the line
-    // field accordingly if the value has changed. Updating the field will
-    // trigger the scrolling function.
-    this.line = pmanager.get_value('s')
-
-    // Also check if we are supposed to highlight any lines.
-    let hl = pmanager.get_value('hl', '')
-    if (hl != '') {
-      // We always store the current and the previous highlight state when
-      // changing/updating it to ensure that we can undo the previous highlight
-      // without iterating or re-rendering all lines.
-      this.highlight_lines = {
-        previous: this.highlight_lines.current,
-        current: hl.split(',')
+    let self = this
+    this.$nextTick(function () {
+      // Once we updated the data, check for a line parameter and update the line
+      // field accordingly if the value has changed. Updating the field will
+      // trigger the scrolling function.
+      let new_line = pmanager.get_value('s')
+      if (self.line != new_line) {
+        self.line = new_line
+      } else {
+        // Force scroll update, as we have re-rendered the DOM
+        self.scroll_to_line()
       }
-    }
+
+      // Also check if we are supposed to highlight any lines.
+      let hl = pmanager.get_value('hl', '')
+      if (hl != '') {
+        // We always store the current and the previous highlight state when
+        // changing/updating it to ensure that we can undo the previous highlight
+        // without iterating or re-rendering all lines.
+        self.highlight_lines = {
+          previous: self.highlight_lines.current,
+          current: hl.split(',')
+        }
+      }
+    })
   },
   filters: {
     formatNumber: function (v) {
@@ -593,7 +602,7 @@ let covmanager = new Vue({
     scroll_to_line: function () {
       if (this.line != null) {
         let target = $('#' + this.line)
-        if (target) {
+        if (target.length) {
           let target_offset = target.offset().top
           let height = target.height()
           let window_height = $(window).height()
