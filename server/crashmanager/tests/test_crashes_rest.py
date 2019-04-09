@@ -18,6 +18,11 @@ import requests
 from django.contrib.auth.models import User
 from crashmanager.models import CrashEntry, TestCase as cmTestCase
 
+try:
+    from unittest.mock import Mock, patch
+except ImportError:
+    from mock import Mock, patch
+
 
 LOG = logging.getLogger("fm.crashmanager.tests.crashes.rest")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
@@ -539,3 +544,28 @@ def test_rest_crash_update_restricted(api_client, cm):
         resp = api_client.patch('/crashmanager/rest/crashes/%d/' % crash.pk, {field: ""})
         LOG.debug(resp)
         assert resp.status_code == requests.codes['forbidden']
+
+
+@patch('crashmanager.models.CrashEntry.save', new=Mock(side_effect=RuntimeError("crashentry failing intentionally")))
+def test_rest_crashes_report_bad_crash_removes_testcase(api_client):
+    """test that reporting a bad crash doesn't leave an orphaned testcase"""
+    data = {
+        'rawStdout': 'data on\nstdout',
+        'rawStderr': 'data on\nstderr',
+        'rawCrashData': 'some\tcrash\ndata\n',
+        'testcase': 'foo();\ntest();',
+        'testcase_isbinary': False,
+        'testcase_quality': 0,
+        'testcase_ext': 'js',
+        'platform': 'x86',
+        'product': 'mozilla-central',
+        'product_version': 'badf00d',
+        'os': 'linux',
+        'client': 'client1',
+        'tool': 'tool1'}
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    with pytest.raises(RuntimeError):
+        api_client.post('/crashmanager/rest/crashes/', data=data)
+    assert not CrashEntry.objects.exists()
+    assert not cmTestCase.objects.exists()

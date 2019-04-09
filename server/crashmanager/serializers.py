@@ -106,8 +106,13 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         else:
             attrs['testcase'] = None
 
-        # Create our CrashEntry instance
-        return super(CrashEntrySerializer, self).create(attrs)
+        try:
+            # Create our CrashEntry instance
+            return super(CrashEntrySerializer, self).create(attrs)
+        except:  # noqa
+            if attrs['testcase'] is not None:
+                attrs['testcase'].delete()
+            raise
 
 
 class BucketSerializer(serializers.ModelSerializer):
