@@ -364,15 +364,19 @@ class CrashEntry(models.Model):
         return queryset
 
 
-# This post_delete handler ensures that the corresponding testcase
+# These post_delete handlers ensure that the corresponding testcase
 # is also deleted when the CrashEntry is gone. It also explicitely
 # deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=CrashEntry)
 def CrashEntry_delete(sender, instance, **kwargs):
     if instance.testcase:
-        if instance.testcase.test:
-            instance.testcase.test.delete(False)
         instance.testcase.delete(False)
+
+
+@receiver(post_delete, sender=TestCase)
+def TestCase_delete(sender, instance, **kwargs):
+    if instance.test:
+        instance.test.delete(False)
 
 
 # post_save handler for celery integration

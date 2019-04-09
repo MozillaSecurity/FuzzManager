@@ -324,3 +324,28 @@ def test_query_crashes(client, cm):  # pylint: disable=invalid-name
         assert set(crashlist) == exp_crashes  # expected crashes
         # pylint: disable=superfluous-parens
         assert_contains(response, ("Your search matched %d entries in database." % len(exp_crashes)))
+
+
+def test_delete_testcase(cm):
+    """Testcases should be delete when TestCase object is removed"""
+    testcase = cm.create_testcase("test.txt", "hello world")
+    test_file = testcase.test.name
+    storage = testcase.test.storage
+    assert storage.exists(test_file)
+    testcase.delete()
+    if storage.exists(test_file):
+        storage.delete(test_file)
+        raise AssertionError("file should have been deleted with TestCase: %r" % (test_file,))
+
+
+def test_delete_testcase_crash(cm):
+    """Testcases should be delete when CrashInfo object is removed"""
+    testcase = cm.create_testcase("test.txt", "hello world")
+    test_file = testcase.test.name
+    storage = testcase.test.storage
+    assert storage.exists(test_file)
+    crash = cm.create_crash(testcase=testcase)
+    crash.delete()
+    if storage.exists(test_file):
+        storage.delete(test_file)
+        raise AssertionError("file should have been deleted with CrashInfo: %r" % (test_file,))
