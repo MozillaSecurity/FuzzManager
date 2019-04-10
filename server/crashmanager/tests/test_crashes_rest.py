@@ -569,3 +569,28 @@ def test_rest_crashes_report_bad_crash_removes_testcase(api_client):
         api_client.post('/crashmanager/rest/crashes/', data=data)
     assert not CrashEntry.objects.exists()
     assert not cmTestCase.objects.exists()
+
+
+def test_rest_crashes_report_crash_long_sig(api_client):
+    """test that crash reporting works with no testcase"""
+    data = {
+        'rawStdout': 'data on\nstdout',
+        'rawStderr': 'data on\nstderr',
+        'rawCrashData': 'Assertion failure: ' + ('A' * 4096),
+        'platform': 'x86',
+        'product': 'mozilla-central',
+        'product_version': 'badf00d',
+        'os': 'linux',
+        'client': 'client1',
+        'tool': 'tool1'}
+    user = User.objects.get(username='test')
+    api_client.force_authenticate(user=user)
+    resp = api_client.post('/crashmanager/rest/crashes/', data=data)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['created']
+    crash = CrashEntry.objects.get()
+    for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
+        assert getattr(crash, field) == data[field]
+    assert crash.testcase is None
+    expected = ('Assertion failure: ' + ('A' * 4096))[:CrashEntry._meta.get_field('shortSignature').max_length]
+    assert crash.shortSignature == expected

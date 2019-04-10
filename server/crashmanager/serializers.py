@@ -79,6 +79,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         if crashInfo.crashAddress is not None:
             attrs['crashAddress'] = '0x%x' % crashInfo.crashAddress
         attrs['shortSignature'] = crashInfo.createShortSignature()
+        attrs['shortSignature'] = attrs['shortSignature'][:CrashEntry._meta.get_field('shortSignature').max_length]
 
         # If a testcase is supplied, create a testcase object and store it
         if 'test' in attrs['testcase']:
