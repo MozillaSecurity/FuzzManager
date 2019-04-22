@@ -143,7 +143,7 @@ def getAuxiliaryAbortMessage(output):
                 line = re.sub(r"(at |\()pc 0x[0-9a-f]+", "", line)
                 line = re.sub(r"bp 0x[0-9a-f]+", "", line)
                 line = re.sub(r"sp 0x[0-9a-f]+", "", line)
-                line = re.sub(r"T[0-9]+\)", "", line)
+                line = re.sub(r"(?<!thread\s)T[0-9]+\)", "", line)
                 line = re.sub(r"^[0-9=]+", "", line)
                 lastLine = line.strip()
                 needASanRW = True

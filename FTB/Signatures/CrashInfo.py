@@ -534,7 +534,8 @@ class ASanCrashInfo(CrashInfo):
                                        |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
-                                       |memcpy-param-overlap:\smemory\sranges\s\[) # Bad memcpy
+                                       |memcpy-param-overlap:\smemory\sranges\s\[  # Bad memcpy
+                                       |requested\sallocation\ssize\s0x[0-9a-f]+\s)
                                    (\s*0x([0-9a-f]+))?"""  # noqa
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
 
@@ -637,6 +638,8 @@ class ASanCrashInfo(CrashInfo):
             asanMsg = re.sub(r" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
             asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
                              "overlap", asanMsg)
+            asanMsg = re.sub(r"0x[0-9a-f]+\s\(0x[0-9a-f]+\safter\sadjustments.+?\)\s", "", asanMsg)
+            asanMsg = re.sub(r"\s\(thread\sT.+\)", "", asanMsg)
 
             if self.backtrace:
                 asanMsg += " [@ %s]" % self.backtrace[0]

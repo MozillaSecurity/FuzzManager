@@ -181,6 +181,11 @@ asanTraceFailedAlloc = """
     #11 0x80609b7 in _start (build/dump_video+0x80609b7)
 """  # noqa
 
+asanTraceAllocSize = """
+==11096==ERROR: AddressSanitizer: requested allocation size 0x7ff9cdc82cb0 (0x7ff9cdc83cb0 after adjustments for alignment, red zones etc.) exceeds maximum supported size of 0x10000000000 (thread T0)
+    #0 0x7ffa032145d0 in malloc Z:\\compiler-rt\\lib\\asan\\asan_malloc_win.cc:69
+"""  # noqa
+
 asanMultiTrace = """
 =================================================================
 ==8746==ERROR: AddressSanitizer: SEGV on unknown address 0x7f637b59cffc (pc 0x7f63fd5c11af bp 0x7f63a0702090 sp 0x7f63a0701f40 T35)
@@ -831,6 +836,21 @@ def test_ASanParserTestFailedAlloc():
 
     assert (("AddressSanitizer failed to allocate 0x6003a000 (1610850304) bytes of "
              "LargeMmapAllocator (error code: 12) [@ __asan::AsanCheckFailed]") ==
+            crashInfo.createShortSignature())
+
+
+def test_ASanParserTestAllocSize():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceAllocSize.splitlines(), config)
+    assert len(crashInfo.backtrace) == 1
+    assert crashInfo.backtrace[0] == "malloc"
+
+    assert crashInfo.crashAddress is None
+    assert not crashInfo.registers
+
+    assert (("AddressSanitizer: requested allocation size exceeds maximum"
+             " supported size of 0x10000000000 [@ malloc]") ==
             crashInfo.createShortSignature())
 
 
