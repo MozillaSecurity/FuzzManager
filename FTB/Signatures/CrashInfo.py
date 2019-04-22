@@ -534,7 +534,7 @@ class ASanCrashInfo(CrashInfo):
                                        |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
                                        |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
-                                       |memcpy-param-overlap:\smemory\sranges\s\[  # Bad memcpy
+                                       |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
                                        |requested\sallocation\ssize\s0x[0-9a-f]+\s)
                                    (\s*0x([0-9a-f]+))?"""  # noqa
         asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"

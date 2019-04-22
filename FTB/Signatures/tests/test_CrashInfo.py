@@ -154,7 +154,7 @@ SUMMARY: AddressSanitizer: SEGV /builds/slave/m-cen-l64-asan-d-0000000000000/bui
 ==17560==ABORTING
 """  # noqa
 
-asanTraceMemcpyOverlap = """
+asanTraceParamOverlap = """
 ==4782==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x7f47486b18f8,0x7f47486b3904) and [0x7f47486b1800, 0x7f47486b380c) overlap
     #0 0x49b496 in __asan_memcpy /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:393:3
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
@@ -920,11 +920,11 @@ def test_ASanDetectionTest():
     assert isinstance(crashInfo2, ASanCrashInfo)
 
 
-def test_ASanParserTestMemcpyOverlap():
+def test_ASanParserTestParamOverlap():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
-    crashInfo = ASanCrashInfo([], asanTraceMemcpyOverlap.splitlines(), config)
-    assert crashInfo.crashAddress == 0x7f47486b18f8
+    crashInfo = ASanCrashInfo([], asanTraceParamOverlap.splitlines(), config)
+    assert crashInfo.crashAddress is None
     assert len(crashInfo.backtrace) == 2
     assert crashInfo.backtrace[0] == "__asan_memcpy"
     assert crashInfo.backtrace[1] == "S32_Opaque_BlitRow32"
