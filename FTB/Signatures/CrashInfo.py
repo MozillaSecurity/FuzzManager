@@ -639,7 +639,6 @@ class ASanCrashInfo(CrashInfo):
             asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap",
                              "overlap", asanMsg)
             asanMsg = re.sub(r"0x[0-9a-f]+\s\(0x[0-9a-f]+\safter\sadjustments.+?\)\s", "", asanMsg)
-            asanMsg = re.sub(r"\s\(thread\sT.+\)", "", asanMsg)
 
             if self.backtrace:
                 asanMsg += " [@ %s]" % self.backtrace[0]
