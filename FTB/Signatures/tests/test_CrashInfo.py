@@ -855,7 +855,7 @@ def test_ASanParserTestAllocSize():
     assert not crashInfo.registers
 
     assert (("AddressSanitizer: requested allocation size exceeds maximum"
-             " supported size of 0x10000000000 [@ malloc]") ==
+             " supported size [@ malloc]") ==
             crashInfo.createShortSignature())
 
 
