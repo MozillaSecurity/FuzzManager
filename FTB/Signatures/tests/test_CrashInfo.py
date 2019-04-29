@@ -154,10 +154,15 @@ SUMMARY: AddressSanitizer: SEGV /builds/slave/m-cen-l64-asan-d-0000000000000/bui
 ==17560==ABORTING
 """  # noqa
 
-asanTraceMemcpyOverlap = """
+asanTraceMemcpyParamOverlap = """
 ==4782==ERROR: AddressSanitizer: memcpy-param-overlap: memory ranges [0x7f47486b18f8,0x7f47486b3904) and [0x7f47486b1800, 0x7f47486b380c) overlap
     #0 0x49b496 in __asan_memcpy /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:393:3
     #1 0x7f47a81e9260 in S32_Opaque_BlitRow32(unsigned int*, unsigned int const*, int, unsigned int) /home/worker/workspace/build/src/gfx/skia/skia/src/core/SkBlitRow_D32.cpp:20:5
+"""  # noqa
+
+asanTraceStrcatParamOverlap = """
+==12266==ERROR: AddressSanitizer: strcat-param-overlap: memory ranges [0x6210001a0541,0x6210001a054f) and [0x6210001a054c, 0x6210001a0556) overlap
+    #0 0x7f5c2db40c40 in __interceptor_strcat /build/gcc/src/gcc/libsanitizer/asan/asan_interceptors.cc:349
 """  # noqa
 
 asanTraceFailedAlloc = """
@@ -179,6 +184,11 @@ asanTraceFailedAlloc = """
     #9 0x815ab3c in oc_dec_init lib/decode.c:374:7
     #10 0xf74f5636 in __libc_start_main (/lib32/libc.so.6+0x18636)
     #11 0x80609b7 in _start (build/dump_video+0x80609b7)
+"""  # noqa
+
+asanTraceAllocSize = """
+==11096==ERROR: AddressSanitizer: requested allocation size 0x7ff9cdc82cb0 (0x7ff9cdc83cb0 after adjustments for alignment, red zones etc.) exceeds maximum supported size of 0x10000000000 (thread T0)
+    #0 0x7ffa032145d0 in malloc Z:\\compiler-rt\\lib\\asan\\asan_malloc_win.cc:69
 """  # noqa
 
 asanMultiTrace = """
@@ -834,6 +844,21 @@ def test_ASanParserTestFailedAlloc():
             crashInfo.createShortSignature())
 
 
+def test_ASanParserTestAllocSize():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceAllocSize.splitlines(), config)
+    assert len(crashInfo.backtrace) == 1
+    assert crashInfo.backtrace[0] == "malloc"
+
+    assert crashInfo.crashAddress is None
+    assert not crashInfo.registers
+
+    assert (("AddressSanitizer: requested allocation size exceeds maximum"
+             " supported size [@ malloc]") ==
+            crashInfo.createShortSignature())
+
+
 def test_ASanParserTestHeapCrash():
     config = ProgramConfiguration("test", "x86", "linux")
 
@@ -900,15 +925,22 @@ def test_ASanDetectionTest():
     assert isinstance(crashInfo2, ASanCrashInfo)
 
 
-def test_ASanParserTestMemcpyOverlap():
+def test_ASanParserTestParamOverlap():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
-    crashInfo = ASanCrashInfo([], asanTraceMemcpyOverlap.splitlines(), config)
-    assert crashInfo.crashAddress == 0x7f47486b18f8
+    crashInfo = ASanCrashInfo([], asanTraceMemcpyParamOverlap.splitlines(), config)
+    assert crashInfo.crashAddress is None
     assert len(crashInfo.backtrace) == 2
     assert crashInfo.backtrace[0] == "__asan_memcpy"
     assert crashInfo.backtrace[1] == "S32_Opaque_BlitRow32"
     assert ("AddressSanitizer: memcpy-param-overlap: memory ranges overlap [@ __asan_memcpy]" ==
+            crashInfo.createShortSignature())
+
+    crashInfo = ASanCrashInfo([], asanTraceStrcatParamOverlap.splitlines(), config)
+    assert crashInfo.crashAddress is None
+    assert len(crashInfo.backtrace) == 1
+    assert crashInfo.backtrace[0] == "__interceptor_strcat"
+    assert ("AddressSanitizer: strcat-param-overlap: memory ranges overlap [@ __interceptor_strcat]" ==
             crashInfo.createShortSignature())
 
 
