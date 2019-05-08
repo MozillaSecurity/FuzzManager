@@ -2,6 +2,7 @@ from django.conf import settings  # noqa
 from django.core.files.base import ContentFile
 
 from celeryconf import app  # noqa
+from . import cron  # noqa ensure cron tasks get registered
 
 import copy
 import hashlib
