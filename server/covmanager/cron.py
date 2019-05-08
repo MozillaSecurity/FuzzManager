@@ -6,10 +6,6 @@ from dateutil.relativedelta import relativedelta, MO
 from django.conf import settings
 from django.db.models import Q
 
-from crashmanager.models import Client
-from .models import Collection, Repository
-from .tasks import aggregate_coverage_data
-
 logger = logging.getLogger("covmanager")
 
 
@@ -25,6 +21,10 @@ logger = logging.getLogger("covmanager")
 
 
 def create_weekly_report_mc(revision):
+    from crashmanager.models import Client
+    from .models import Collection, Repository
+    from .tasks import aggregate_coverage_data
+
     # Some of our builds (e.g. JS shell) use the HG short revision format
     # to submit their coverage while the server provides the full revision.
     short_revision = revision[:12]
