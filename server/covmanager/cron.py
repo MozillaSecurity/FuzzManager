@@ -73,4 +73,4 @@ def create_current_weekly_report_mc():
         return
 
     revision = response.text.rstrip()
-    return create_weekly_report_mc(revision)
+    create_weekly_report_mc(revision)
