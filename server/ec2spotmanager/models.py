@@ -260,6 +260,7 @@ class Instance(models.Model):
     region = models.CharField(max_length=255)
     zone = models.CharField(max_length=255)
     size = models.IntegerField(default=1)
+    provider = models.CharField(max_length=255)
 
 
 class InstanceStatusEntry(models.Model):
@@ -271,6 +272,14 @@ class InstanceStatusEntry(models.Model):
 
 class PoolStatusEntry(models.Model):
     pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    created = models.DateTimeField(default=timezone.now)
+    type = models.IntegerField()
+    msg = models.CharField(max_length=4095)
+    isCritical = models.BooleanField(default=False)
+
+
+class ProviderStatusEntry(models.Model):
+    provider = models.CharField(max_length=255)
     created = models.DateTimeField(default=timezone.now)
     type = models.IntegerField()
     msg = models.CharField(max_length=4095)

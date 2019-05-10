@@ -1,0 +1,20 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block body_content %}
+<div class="panel">
+	<div class="body notitle">
+		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+		<form action="{% url 'ec2spotmanager:providermsgdel' entry.pk %}" method="post">
+		{% csrf_token %}
+		<p><strong>Are you sure that you want to delete this provider status message?</strong></p>
+		<div class="field">
+			<strong>Provider: </strong>{{ entry.provider }}
+		</div>
+		<div class="field">
+			<strong>Message: </strong>{{ entry.msg|escape }}
+		</div>
+		<input type="submit" value="Delete" />
+		</form>
+        </div>
+</div>
+{% endblock body_content %}

@@ -33,7 +33,7 @@
                 <td>{{ pool.config.name }}</td>
 		<td><span class="label label-{{ pool.size_label }}">{{ pool.size }}</span> ({{ pool.instance_running_count }} / {{ pool.instance_requested_count }})</td>
 		<td>
-			{% if pool.msgs %}
+			{% if pool.msgs or provider_msgs %}
 				{% for msg in pool.msgs %}
 				<div>
 					<div style="float:left; width:25px; overflow:hidden;">
@@ -47,7 +47,25 @@
 					{% endif %}
 					</div>
 				</div>
-            	    		{% endfor %}
+				{% endfor %}
+				{% for provider, msgs in provider_msgs.items %}
+					{% if pool.pk in provider_pools.provider %}
+						{% for msg in msgs %}
+				<div>
+					<div style="float:left; width:25px; overflow:hidden;">
+					<a href="{% url 'ec2spotmanager:providermsgdel' msg.pk %}">[x]</a>
+					</div>
+					<div style="overflow:hidden;">
+					{% if msg.isCritical %}
+					<span class="label label-danger">{{ provider }}: {{ msg.msg|linebreaksbr }}</span>
+					{% else %}
+					<span class="label label-warning">{{ provider }}: {{ msg.msg|linebreaksbr }}</span>
+					{% endif %}
+					</div>
+				</div>
+						{% endfor %}
+					{% endif %}
+				{% endfor %}
 			{% elif not pool.isEnabled %}
 				<span class="label label-warning">Disabled</span>
 			{% else %}

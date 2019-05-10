@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^rest/pool/(?P<poolid>\d+)/enable/$', views.PoolEnableView.as_view()),
     url(r'^rest/pool/(?P<poolid>\d+)/disable/$', views.PoolDisableView.as_view()),
     url(r'^$', views.index, name='index'),
+    url(r'^providers/messages/(?P<msgid>\d+)/delete/$', views.deleteProviderMsg, name='providermsgdel'),
     url(r'^pools/$', views.pools, name='pools'),
     url(r'^pools/create/$', views.createPool, name='poolcreate'),
     url(r'^pools/(?P<poolid>\d+)/$', views.viewPool, name='poolview'),

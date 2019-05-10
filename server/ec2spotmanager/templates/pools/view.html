@@ -76,7 +76,7 @@
 
 		<div>
 			<strong>Pool Status:</strong>
-		{% if pool.msgs %}
+		{% if pool.msgs or provider_msgs %}
 			{% for msg in pool.msgs %}
 			<div>
 				<div style="float:left; width:25px; overflow:hidden;">
@@ -90,6 +90,22 @@
 				{% endif %}
 				</div>
 			</div>
+			{% endfor %}
+			{% for provider, msgs in provider_msgs.items %}
+				{% for msg in msgs %}
+			<div>
+				<div style="float:left; width:25px; overflow:hidden;">
+				<a href="{% url 'ec2spotmanager:providermsgdel' msg.pk %}">[x]</a>
+				</div>
+				<div>
+				{% if msg.isCritical %}
+				<span class="label label-danger">{{ provider }}: {{ msg.msg|linebreaksbr }}</span>
+				{% else %}
+				<span class="label label-warning">{{ provider }}: {{ msg.msg|linebreaksbr }}</span>
+				{% endif %}
+				</div>
+			</div>
+				{% endfor %}
 			{% endfor %}
 		{% elif not pool.isEnabled %}
 			<span class="label label-warning">Disabled</span>
