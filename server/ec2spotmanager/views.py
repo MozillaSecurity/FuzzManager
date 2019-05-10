@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from server.auth import CheckAppPermission
 from server.views import deny_restricted_users
-from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry
+from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry, ProviderStatusEntry
 from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from .serializers import MachineStatusSerializer, PoolConfigurationSerializer
 from .CloudProvider.CloudProvider import INSTANCE_STATE, INSTANCE_STATE_CODE, PROVIDERS, CloudProvider
@@ -58,6 +58,21 @@ def pools(request):
     for entry in entries:
         entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
 
+    provider_msgs = {}
+    for msg in ProviderStatusEntry.objects.all().order_by('-created'):
+        provider_msgs.setdefault(msg.provider, []).append(msg)
+
+    provider_pools = {}
+    for pool in entries:
+        flattened_config = pool.config.flatten()
+        for provider in provider_msgs:
+            provider_pools.setdefault(provider, set())
+            cloud_provider = CloudProvider.get_instance(provider)
+            if cloud_provider.config_supported(flattened_config):
+                provider_pools[provider].add(pool.pk)
+            elif Instance.objects.filter(pool=pool, provider=provider).exists():
+                provider_pools[provider].add(pool.pk)
+
     for pool in entries:
         pool.instance_requested_count = sum(instance.size for instance in Instance.objects.filter(
             pool=pool, status_code=INSTANCE_STATE['requested']))
@@ -73,6 +88,8 @@ def pools(request):
     data = {
         'isSearch': isSearch,
         'poollist': entries,
+        'provider_msgs': provider_msgs,
+        'provider_pools': provider_pools,
     }
 
     return render(request, 'pools/index.html', data)
@@ -102,13 +119,29 @@ def viewPool(request, poolid):
 
     pool.msgs = PoolStatusEntry.objects.filter(pool=pool).order_by('-created')
 
+    provider_msgs = {}
+    relevant_providers = {}
+    for msg in ProviderStatusEntry.objects.all().order_by('-created'):
+        # a status provider is relevant to this pool if it is supported by the config,
+        # or has currently running instances with this provider
+        if msg.provider not in relevant_providers:
+            cloud_provider = CloudProvider.get_instance(msg.provider)
+            if cloud_provider.config_supported(pool.config.flatten()):
+                relevant_providers[msg.provider] = True
+            elif Instance.objects.filter(pool=pool, provider=status.provider).exists():
+                relevant_providers[msg.provider] = True
+            else:
+                relevant_providers[msg.provider] = False
+        if relevant_providers[msg.provider]:
+            provider_msgs.setdefault(msg.provider, []).append(msg)
+
     missing = None
     if not cyclic:
         # Figure out if any parameters are missing
         missing = pool.config.getMissingParameters()
 
     data = {'pool': pool, 'parent_config': parent_config, 'instances': instances, 'config_params_missing': missing,
-            'config_cyclic': cyclic}
+            'config_cyclic': cyclic, 'provider_msgs': provider_msgs}
 
     return render(request, 'pools/view.html', data)
 
@@ -475,6 +508,18 @@ def deletePoolMsg(request, msgid, from_pool='0'):
     elif request.method == 'GET':
         return render(request, 'pools/messages/delete.html', {'entry': entry,
                                                               'from_pool': '1' if from_pool else '0'})
+    else:
+        raise SuspiciousOperation
+
+
+@deny_restricted_users
+def deleteProviderMsg(request, msgid):
+    entry = get_object_or_404(ProviderStatusEntry, pk=msgid)
+    if request.method == 'POST':
+        entry.delete()
+        return redirect('ec2spotmanager:pools')
+    elif request.method == 'GET':
+        return render(request, 'providers/messages/delete.html', {'entry': entry})
     else:
         raise SuspiciousOperation
 
