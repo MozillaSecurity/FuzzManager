@@ -170,7 +170,7 @@ class CloudProvider():
     @abstractmethod
     def get_cores_per_instance():
         '''
-        returns ditionary of instance types and their number of cores
+        returns dictionary of instance types and their number of cores
 
         @rtype: dictionary
         @return: instance types and how many cores per instance type
@@ -181,7 +181,7 @@ class CloudProvider():
     @abstractmethod
     def get_allowed_regions(config):
         '''
-        Takes a configuration and returns cloud povider specific regions.
+        Takes a configuration and returns cloud provider specific regions.
 
         @ptype config: FlatObject
         @param config: pulling regions from config
@@ -195,7 +195,7 @@ class CloudProvider():
     @abstractmethod
     def get_image_name(config):
         '''
-        Takes a configuration and returns cloud povider specific image name.
+        Takes a configuration and returns cloud provider specific image name.
 
         @ptype config: FlatObject
         @param config: pulling image name from config
@@ -209,7 +209,7 @@ class CloudProvider():
     @abstractmethod
     def get_instance_types(config):
         '''
-        Takes a configuration and returns a list of cloud povider specific instance_types.
+        Takes a configuration and returns a list of cloud provider specific instance_types.
 
         @ptype config: FlatObject
         @param config: pulling instance types from config
@@ -223,7 +223,7 @@ class CloudProvider():
     @abstractmethod
     def get_max_price(config):
         '''
-        Takes a configuration and returns the cloud povider specific max_price.
+        Takes a configuration and returns the cloud provider specific max_price.
 
         @ptype config: FlatObject
         @param config: pulling max_price from config
@@ -237,7 +237,7 @@ class CloudProvider():
     @abstractmethod
     def get_tags(config):
         '''
-        Takes a configuration and returns a dictionary of  cloud povider specific tags.
+        Takes a configuration and returns a dictionary of cloud provider specific tags.
 
         @ptype config: FlatObject
         @param config: pulling tags field
@@ -261,16 +261,14 @@ class CloudProvider():
     @staticmethod
     @abstractmethod
     def config_supported(config):
-        '''
-        Takes a list of fields that are specific to the cloud provider
-        and compares them to the config. If any cloud field is in the config
-        return True
+        '''Compares the fields provided in the config with those required by the cloud
+        provider. If any field is missing, return False.
 
         @ptype config: FlatObject
         @param config: Flattened config
 
         @rtype: bool
-        @return: True if any cloud specific fields in config
+        @return: True if all required cloud specific fields in config
         '''
         return
 

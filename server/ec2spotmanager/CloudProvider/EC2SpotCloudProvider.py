@@ -38,14 +38,21 @@ def wrap_provider_errors(wrapped):
 class EC2SpotCloudProvider(CloudProvider):
     def __init__(self):
         self.logger = logging.getLogger("ec2spotmanager")
+        self.cluster = None
+        self.connected_region = None
+
+    def _connect(self, region):
+        if self.connected_region != region:
+            self.cluster = EC2Manager(None)  # create a new Manager to invalidate cached image names, etc.
+            self.cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            self.connected_region = region
+        return self.cluster
 
     @wrap_provider_errors
     def terminate_instances(self, instances_ids_by_region):
         for region, instance_ids in instances_ids_by_region.items():
-            cluster = EC2Manager(None)
-            cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-
+            cluster = self._connect(region)
             self.logger.info("Terminating %s instances in region %s", len(instance_ids), region)
             boto_instances = cluster.find(instance_ids=instance_ids)
             # Data consistency checks
@@ -59,14 +66,12 @@ class EC2SpotCloudProvider(CloudProvider):
                     self.logger.error("Instance with EC2 ID %s (status %d) is not in region list for region %s",
                                       boto_instance.id, state_code, region)
 
-                cluster.terminate(boto_instances)
+            cluster.terminate(boto_instances)
 
     @wrap_provider_errors
     def cancel_requests(self, requested_instances_by_region):
             for region, instance_ids in requested_instances_by_region.items():
-                cluster = EC2Manager(None)
-                cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+                cluster = self._connect(region)
                 cluster.cancel_spot_requests(instance_ids)
 
             self.logger.info("Canceling %s requests in region %s", len(instance_ids), region)
@@ -82,9 +87,7 @@ class EC2SpotCloudProvider(CloudProvider):
         images["default"]['count'] = count
         images["default"]['instance_type'] = instance_type
 
-        cluster = EC2Manager(None)
-        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+        cluster = self._connect(region)
 
         images['default']['image_id'] = image
         images['default'].pop('image_name')
@@ -117,10 +120,7 @@ class EC2SpotCloudProvider(CloudProvider):
         successful_requests = {}
         failed_requests = {}
 
-        cluster = EC2Manager(None)
-        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-
+        cluster = self._connect(region)
         results = cluster.check_spot_requests(instances, tags)
 
         for req_id, result in zip(instances, results):
@@ -168,11 +168,12 @@ class EC2SpotCloudProvider(CloudProvider):
     def check_instances_state(self, pool_id, region):
 
         instance_states = {}
-        cluster = EC2Manager(None)
-        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+        cluster = self._connect(region)
 
-        boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
+        if pool_id is None:
+            boto_instances = cluster.find(filters={"tag-key": SPOTMGR_TAG + "-PoolId"})
+        else:
+            boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
 
         for instance in boto_instances:
             if instance.state_code not in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
@@ -184,9 +185,7 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @wrap_provider_errors
     def get_image(self, region, config):
-        cluster = EC2Manager(None)
-        cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+        cluster = self._connect(region)
         ami = cluster.resolve_image_name(config.ec2_image_name)
         return ami
 
