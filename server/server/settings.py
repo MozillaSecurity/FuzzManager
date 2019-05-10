@@ -292,6 +292,8 @@ REDIS_DB = 0
 # CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_BROKER_URL = 'redis://'
+# CELERY_RESULT_BACKEND = 'redis://'
 # CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 # CELERY_TASK_ROUTES = {
 #     'crashmanager.cron.*': {'queue': 'cron'},
