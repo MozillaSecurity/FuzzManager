@@ -37,6 +37,7 @@ pytest>=3.10.0,<4.0
 pytest-cov>=2.6.0,<2.7
 pytest-django>=3.4.4,<3.5
 pytest-flake8>=1.0.1,<1.1
+pytest-mock>=1.10.4,<1.11
 pytest-pythonpath>=0.7.2,<0.8
 python-dateutil>=2.8,<3
 pytz>=2018.4

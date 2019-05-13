@@ -1,5 +1,6 @@
 import datetime
 import json
+import celery
 import redis
 from django.conf import settings
 from django.db.models.query_utils import Q
@@ -98,10 +99,110 @@ def update_stats():
 
 @app.task
 def check_instance_pools():
-    from .models import InstancePool
-    from .tasks import check_instance_pool
-    for instance_pool in InstancePool.objects.all():
-        check_instance_pool.delay(instance_pool.id)
+    """EC2SpotManager daemon.
+
+    - checks all instance pools
+    - spawns and monitors spot requests asynchronously
+    - cycles pools as required
+    """
+    from .models import InstancePool, Instance
+    from .tasks import check_and_resize_pool, cycle_and_terminate_disabled, terminate_instances, update_instances, \
+        update_requests
+
+    # This is the Celery "canvas" for how tasks are linked together.
+    #
+    #                         START
+    #                           |
+    #       ===================================================
+    #                  |
+    #           ===============                         \
+    #               |                                    \
+    #             update                                  \
+    #              spot    ... one per pool within region  \
+    #              reqs                                     |
+    #               |                                      /
+    #           ===============                           /
+    #                  |                                  \
+    #                  |                                   \  ... one per provider+region
+    #               reconcile                              /
+    #             DB and provider                         /
+    #              (across pools)                         \
+    #                  |                                   \
+    #                  |                                    |
+    #            terminate instances                       /
+    #            for disabled pools                       /
+    #            + pools needing cycle                   /
+    #               (across pools)                      /
+    #                  |
+    #                  |
+    #       ===================================================
+    #                           |
+    #                           |
+    #       ===================================================
+    #                          |                        \
+    #                         /\         /\              \
+    #                        /  \       /  \              \
+    #                       /pool\     /pool\              \
+    #                    Y / too  \ N / too  \ N            |
+    #                   |--\small /-->\large /-----|       /
+    #                   |   \    /     \    /      |      /
+    #                   |    \  /       \  /       |      \
+    #                   |     \/         \/        |       \  ... one per enabled pool
+    #                   |                 |Y       |       /
+    #                   |                 |        |      /
+    #             spawn instances     queue for    |      \
+    #               in cheapest         batch      |       \
+    #             provider+region    termination   |        |
+    #                   |                 |        |       /
+    #                   |                 |        |      /
+    #                   |                 |        |     /
+    #                   |                 |        |    /
+    #       ===================================================
+    #                           |
+    #                           |
+    #                       ===========
+    #                           |
+    #                        terminate
+    #                      any instances      ... one per provider+region
+    #                   from pool downsizing
+    #                     (across pools)
+    #                           |
+    #                       ===========
+    #                           |
+    #                          DONE
+    #
+
+    groups = {}
+    for pool in InstancePool.objects.all():
+        cfg = pool.config.flatten()
+        for provider in PROVIDERS:
+            cloud_provider = CloudProvider.get_instance(provider)
+            if cloud_provider.config_supported(cfg):
+                for region in cloud_provider.get_allowed_regions(cfg):
+                    groups.setdefault((provider, region), set()).add(pool.pk)
+            # also look at running instances. it could be that this pool was just edited to exclude a provider,
+            # but we still must manage active instances running there.
+            for region in Instance.objects.filter(pool=pool, provider=provider).values_list('region', flat=True):
+                groups.setdefault((provider, region), set()).add(pool.pk)
+
+    provider_parallel = []
+    for (provider, region), pools in groups.items():
+        provider_parallel.append(
+            celery.chain(celery.group([update_requests.si(provider, region, pool) for pool in pools]),
+                         update_instances.si(provider, region),
+                         cycle_and_terminate_disabled.si(provider, region)))
+
+    pool_parallel = []
+    for pool in InstancePool.objects.filter(isEnabled=True):
+        pool_parallel.append(check_and_resize_pool.si(pool.pk))
+
+    celery.chain(
+        celery.group(provider_parallel),
+        celery.chord(
+            pool_parallel,
+            terminate_instances.s()
+        )
+    )()
 
 
 @app.task

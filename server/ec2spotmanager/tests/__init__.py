@@ -19,6 +19,11 @@ from ec2spotmanager.models import Instance, InstancePool, PoolConfiguration, Poo
 LOG = logging.getLogger("fm.ec2spotmanager.tests")  # pylint: disable=invalid-name
 
 
+class UncatchableException(BaseException):
+    """Exception that does not inherit from Exception, so will not be caught by normal exception handling."""
+    pass
+
+
 def assert_contains(response, text):
     """Assert that the response was successful, and contains the given text.
     """
@@ -79,11 +84,12 @@ def create_instance(hostname,
                     ec2_region="",
                     ec2_zone="",
                     size=1,
-                    created=None):
+                    created=None,
+                    provider='EC2Spot'):
     if created is None:
         created = timezone.now()
     result = Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
                                      instance_id=ec2_instance_id, region=ec2_region, zone=ec2_zone, size=size,
-                                     created=created)
+                                     created=created, provider=provider)
     LOG.debug("Created Instance pk=%d", result.pk)
     return result

@@ -1,6 +1,7 @@
 import json
+import itertools
 import logging
-import fasteners
+import celery
 import redis
 from django.conf import settings
 from django.utils import timezone
@@ -18,177 +19,108 @@ SPOTMGR_TAG = "SpotManager"
 
 
 @app.task
-def check_instance_pool(pool_id):
-    from .models import Instance, InstancePool, PoolStatusEntry
-
-    lock = fasteners.InterProcessLock('/tmp/ec2spotmanager.pool%d.lck' % pool_id)
-
-    instance_pool = InstancePool.objects.get(pk=pool_id)
-
-    if not lock.acquire(blocking=False):
-        logger.warning('[Pool %d] Another check still in progress, exiting.', pool_id)
-        return
-
+def _terminate_instance_ids(provider, region, instance_ids):
+    cloud_provider = CloudProvider.get_instance(provider)
     try:
-        criticalPoolStatusEntries = PoolStatusEntry.objects.filter(pool=instance_pool, isCritical=True)
-
-        if criticalPoolStatusEntries:
-            return
-
-        if instance_pool.config.isCyclic():
-            _update_pool_status(instance_pool, "config-error", "Configuration error (cyclic).")
-            return
-
-        missing = instance_pool.config.getMissingParameters()
-        if missing:
-            _update_pool_status(instance_pool, "config-error", "Configuration error (missing: %r)." % (missing,))
-            return
-
-        config = instance_pool.config.flatten()
-
-        instance_cores_missing = config.size
-        running_instances = []
-
-        _update_pool_instances(instance_pool, config)
-
-        instances = Instance.objects.filter(pool=instance_pool)
-
-        for instance in instances:
-            if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
-                                        INSTANCE_STATE['requested']]:
-                instance_cores_missing -= instance.size
-                running_instances.append(instance)
-            elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
-                # The instance is no longer running, delete it from our database
-                logger.info("[Pool %d] Deleting terminated instance with ID %s from our database.",
-                            instance_pool.id, instance.instance_id)
-                instance.delete()
-            else:
-
-                instance_cores_missing -= instance.size
-                running_instances.append(instance)
-
-        # Continue working with the instances we have running
-        instances = running_instances
-
-        if not instance_pool.isEnabled:
-            if running_instances:
-                _terminate_pool_instances(running_instances, instance_pool)
-                logger.info("[Pool %d] Termination complete.", instance_pool.id)
-
-            return
-
-        if ((not instance_pool.last_cycled) or
-                instance_pool.last_cycled < timezone.now() - timezone.timedelta(seconds=config.cycle_interval)):
-            logger.info("[Pool %d] Needs to be cycled, terminating all instances...", instance_pool.id)
-            instance_pool.last_cycled = timezone.now()
-            _terminate_pool_instances(instances, instance_pool)
-            instance_pool.save()
-
-            logger.info("[Pool %d] Termination complete.", instance_pool.id)
-
-        if instance_cores_missing > 0:
-            logger.info("[Pool %d] Needs %s more instance cores, starting...",
-                        instance_pool.id, instance_cores_missing)
-            _start_pool_instances(instance_pool, config, count=instance_cores_missing)
-        elif instance_cores_missing < 0:
-            # Select the oldest instances we have running and terminate
-            # them so we meet the size limitation again.
-            instances = []
-            for instance in Instance.objects.filter(pool=instance_pool).order_by('created'):
-                if instance_cores_missing + instance.size > 0:
-                    # If this instance would leave us short of cores, let it run. Otherwise
-                    # the pool size may oscillate.
-                    continue
-                instances.append(instance)
-                instance_cores_missing += instance.size
-                if instance_cores_missing == 0:
-                    break
-            if instances:
-                instance_cores_missing = sum(instance.size for instance in instances)
-                logger.info("[Pool %d] Has %d instance cores over limit in %d instances, terminating...",
-                            instance_pool.id, instance_cores_missing, len(instances))
-                _terminate_pool_instances(instances, instance_pool)
-        else:
-            logger.debug("[Pool %d] Size is ok.", instance_pool.id)
-
+        cloud_provider.terminate_instances({region: instance_ids})
     except CloudProviderError as err:
-        _update_pool_status(instance_pool, err.TYPE, err.message)
+        _update_provider_status(provider, err.TYPE, err.message)
     except Exception as msg:
-        _update_pool_status(instance_pool, 'unclassified', str(msg))
+        _update_provider_status(provider, 'unclassified', str(msg))
 
-    finally:
-        lock.release()
+
+@app.task
+def _terminate_instance_request_ids(provider, region, request_ids):
+    cloud_provider = CloudProvider.get_instance(provider)
+    try:
+        cloud_provider.cancel_requests({region: request_ids})
+    except CloudProviderError as err:
+        _update_provider_status(provider, err.TYPE, err.message)
+    except Exception as msg:
+        _update_provider_status(provider, 'unclassified', str(msg))
 
 
 def _determine_best_location(config, count):
+    from .models import ProviderStatusEntry
+
     cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
+    best_provider = None
     best_zone = None
     best_region = None
     best_type = None
     best_median = None
     rejected_prices = {}
 
-    cloud_provider = CloudProvider.get_instance(PROVIDERS[0])  # TODO: support multiple providers
-    cores_per_instance = cloud_provider.get_cores_per_instance()
+    for provider in PROVIDERS:
+        cloud_provider = CloudProvider.get_instance(provider)
 
-    # Filter machine sizes that would put us over the number of cores required. If all do, then choose the smallest.
-    smallest = []
-    smallest_size = None
-    acceptable_types = []
-    for instance_type in cloud_provider.get_instance_types(config):
-        instance_size = cores_per_instance[instance_type]
-        if instance_size <= count:
-            acceptable_types.append(instance_type)
-        # keep track of all instance types with the least number of cores for this config
-        if not smallest or instance_size < smallest_size:
-            smallest_size = instance_size
-            smallest = [instance_type]
-        elif instance_size == smallest_size:
-            smallest.append(instance_type)
-    # replace the allowed instance types with those that are <= count, or the smallest if none are
-    instance_types = acceptable_types or smallest
-
-    # Calculate median values for all availability zones and best zone/price
-    allowed_regions = set(cloud_provider.get_allowed_regions(config))
-    for instance_type in instance_types:
-        data = cache.get('%s:price:%s' % (cloud_provider.get_name(), instance_type))
-        if data is None:
-            logger.warning("No price data for %s?", instance_type)
+        if not cloud_provider.config_supported(config):
             continue
-        data = json.loads(data)
-        for region in data:
-            if region not in allowed_regions:
+
+        if ProviderStatusEntry.objects.filter(provider=provider, isCritical=True).exists():
+            continue
+
+        cores_per_instance = cloud_provider.get_cores_per_instance()
+
+        # Filter machine sizes that would put us over the number of cores required. If all do, then choose the smallest.
+        smallest = []
+        smallest_size = None
+        acceptable_types = []
+        for instance_type in cloud_provider.get_instance_types(config):
+            instance_size = cores_per_instance[instance_type]
+            if instance_size <= count:
+                acceptable_types.append(instance_type)
+            # keep track of all instance types with the least number of cores for this config
+            if not smallest or instance_size < smallest_size:
+                smallest_size = instance_size
+                smallest = [instance_type]
+            elif instance_size == smallest_size:
+                smallest.append(instance_type)
+        # replace the allowed instance types with those that are <= count, or the smallest if none are
+        instance_types = acceptable_types or smallest
+
+        # Calculate median values for all availability zones and best zone/price
+        allowed_regions = set(cloud_provider.get_allowed_regions(config))
+        for instance_type in instance_types:
+            data = cache.get('%s:price:%s' % (cloud_provider.get_name(), instance_type))
+            if data is None:
+                logger.warning("No price data for %s?", instance_type)
                 continue
-            for zone in data[region]:
-                # look for blacklisted zone/type
-                # zone+type is blacklisted because a previous spot request timed-out
-                if cache.get("%s:blacklist:%s:%s" % (cloud_provider.get_name(), zone,
-                                                     instance_type)) is not None:
-                    logger.debug("%s/%s/%s is blacklisted", cloud_provider.get_name(), zone, instance_type)
+            data = json.loads(data)
+            for region in data:
+                if region not in allowed_regions:
                     continue
+                for zone in data[region]:
+                    # look for blacklisted zone/type
+                    # zone+type is blacklisted because a previous spot request timed-out
+                    if cache.get("%s:blacklist:%s:%s:%s" % (cloud_provider.get_name(), region, zone,
+                                                            instance_type)) is not None:
+                        logger.debug("%s/%s/%s/%s is blacklisted", cloud_provider.get_name(), region, zone,
+                                     instance_type)
+                        continue
 
-                # calculate price per core
-                prices = [price / cores_per_instance[instance_type] for price in data[region][zone]]
+                    # calculate price per core
+                    prices = [price / cores_per_instance[instance_type] for price in data[region][zone]]
 
-                # Do not consider a zone/region combination that has a current
-                # price higher than the maximum price we are willing to pay,
-                # even if the median would end up being lower than our maximum.
-                if prices[0] > cloud_provider.get_max_price(config):
-                    rejected_prices[zone] = min(rejected_prices.get(zone, 9999), prices[0])
-                    continue
+                    # Do not consider a zone/region combination that has a current
+                    # price higher than the maximum price we are willing to pay,
+                    # even if the median would end up being lower than our maximum.
+                    if prices[0] > cloud_provider.get_max_price(config):
+                        rejected_prices[zone] = min(rejected_prices.get(zone, 9999), prices[0])
+                        continue
 
-                median = get_price_median(prices)
-                if best_median is None or best_median > median:
-                    best_median = median
-                    best_zone = zone
-                    best_region = region
-                    best_type = instance_type
-                    logger.debug("Best price median currently %r in %s/%s (%s)",
-                                 best_median, best_region, best_zone, best_type)
+                    median = get_price_median(prices)
+                    if best_median is None or best_median > median:
+                        best_provider = provider
+                        best_median = median
+                        best_zone = zone
+                        best_region = region
+                        best_type = instance_type
+                        logger.debug("Best price median currently %r in %s/%s (%s)",
+                                     best_median, best_region, best_zone, best_type)
 
-    return (best_region, best_zone, best_type, rejected_prices)
+    return (best_provider, best_region, best_zone, best_type, rejected_prices)
 
 
 def _start_pool_instances(pool, config, count=1):
@@ -199,7 +131,7 @@ def _start_pool_instances(pool, config, count=1):
 
     try:
         # Figure out where to put our instances
-        region, zone, instance_type, rejected_prices = _determine_best_location(config, count)
+        provider, region, zone, instance_type, rejected_prices = _determine_best_location(config, count)
 
         priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 
@@ -207,7 +139,7 @@ def _start_pool_instances(pool, config, count=1):
             logger.warning("[Pool %d] No allowed region was cheap enough to spawn instances.", pool.id)
 
             if not priceLowEntries:
-                msg = "No allowed regions was cheap enough to spawn instances."
+                msg = "No allowed region was cheap enough to spawn instances."
                 for zone in rejected_prices:
                     msg += "\n%s at %s" % (zone, rejected_prices[zone])
                 _update_pool_status(pool, 'price-too-low', msg)
@@ -216,7 +148,7 @@ def _start_pool_instances(pool, config, count=1):
         elif priceLowEntries:
             priceLowEntries.delete()
 
-        cloud_provider = CloudProvider.get_instance(PROVIDERS[0])  # TODO: support multiple providers
+        cloud_provider = CloudProvider.get_instance(provider)
         image_name = cloud_provider.get_image_name(config)
         cores_per_instance = cloud_provider.get_cores_per_instance()
 
@@ -269,6 +201,7 @@ def _start_pool_instances(pool, config, count=1):
             instance.status_code = INSTANCE_STATE["requested"]
             instance.pool = pool
             instance.size = cores_per_instance[instance_type]
+            instance.provider = provider
             instance.save()
 
     except CloudProviderError as err:
@@ -277,55 +210,17 @@ def _start_pool_instances(pool, config, count=1):
         _update_pool_status(pool, 'unclassified', str(msg))
 
 
-def _terminate_pool_instances(instances, instance_pool):
-    """ Terminate an instance with the given configuration """
+def _update_provider_status(provider, type_, message):
+    from .models import ProviderStatusEntry, POOL_STATUS_ENTRY_TYPE
 
-    requested_instances = []
-    running_instances = []
+    is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}
 
-    for instance in instances:
-        if instance.status_code == INSTANCE_STATE['requested']:
-            requested_instances.append(instance)
-        else:
-            running_instances.append(instance)
-
-    cloud_provider = CloudProvider.get_instance(PROVIDERS[0])  # TODO: support multiple providers
-
-    if running_instances:
-        running_instance_ids_by_region = _get_instance_ids_by_region(running_instances)
-        try:
-            cloud_provider.terminate_instances(running_instance_ids_by_region)
-        except CloudProviderError as err:
-            _update_pool_status(instance_pool, err.TYPE, err.message)
-        except Exception as msg:
-            _update_pool_status(instance_pool, 'unclassified', str(msg))
-
-    if requested_instances:
-        requested_instance_ids_by_region = _get_instance_ids_by_region(requested_instances)
-        try:
-            cloud_provider.cancel_requests(requested_instance_ids_by_region)
-        except CloudProviderError as err:
-            _update_pool_status(instance_pool, err.TYPE, err.message)
-        except Exception as msg:
-            _update_pool_status(instance_pool, 'unclassified', str(msg))
-
-
-def _get_instance_ids_by_region(instances):
-    instance_ids_by_region = {}
-
-    for instance in instances:
-        if instance.region not in instance_ids_by_region:
-            instance_ids_by_region[instance.region] = []
-        instance_ids_by_region[instance.region].append(instance.instance_id)
-
-    return instance_ids_by_region
-
-
-def _get_instances_by_ids(instances):
-    instances_by_ids = {}
-    for instance in instances:
-        instances_by_ids[instance.instance_id] = instance
-    return instances_by_ids
+    entry = ProviderStatusEntry()
+    entry.type = POOL_STATUS_ENTRY_TYPE[type_]
+    entry.provider = provider
+    entry.msg = message
+    entry.isCritical = is_critical
+    entry.save()
 
 
 def _update_pool_status(pool, type_, message):
@@ -341,166 +236,377 @@ def _update_pool_status(pool, type_, message):
     entry.save()
 
 
-def _update_pool_instances(pool, config):
-    """Check the state of the instances in a pool and update it in the database"""
-    from .models import Instance, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+@app.task
+def update_requests(provider, region, pool_id):
+    """Update all requests in a given provider/region/pool.
 
-    debug_cloud_instances_ids_seen = set()
-    debug_not_updatable_continue = set()
-    debug_not_in_region = {}
+    @ptype provider: str
+    @param provider: CloudProvider name
 
-    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
-    cloud_provider = CloudProvider.get_instance(PROVIDERS[0])  # TODO: support multiple providers
+    @ptype region: str
+    @param region: Region name within the given provider
 
-    instances = Instance.objects.filter(pool=pool)
-    instance_ids_by_region = _get_instance_ids_by_region(instances)
-    instances_by_ids = _get_instances_by_ids(instances)
-    instances_left = []
-    instances_created = False
+    @ptype pool_id: int
+    @param pool_id: InstancePool pk
+    """
+    from .models import Instance, InstancePool, PoolStatusEntry, ProviderStatusEntry, POOL_STATUS_ENTRY_TYPE
 
-    debug_cloud_instance_ids_seen = set()
-    debug_not_updatable_continue = set()
-    debug_not_in_region = {}
+    logger.debug("-> update_requests(%r, %r, %r)", provider, region, pool_id)
 
-    for instance in instances_by_ids.values():
-        if instance.status_code != INSTANCE_STATE['requested']:
-            instances_left.append(instance)
+    try:
+        cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+        cloud_provider = CloudProvider.get_instance(provider)
 
-    # set config to this pool for now in case we set tags on fulfilled spot requests
-    tags = cloud_provider.get_tags(config)
-    tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
+        requested = {}  # provider_request_id -> Instance
+        instances_created = False
+        for instance in Instance.objects.filter(provider=provider, region=region, pool_id=pool_id,
+                                                status_code=INSTANCE_STATE['requested']):
+            requested[instance.instance_id] = instance
 
-    for region in instance_ids_by_region:
-        try:
-            # first check status of pending spot requests
-            requested = []
-            for instance_id in instance_ids_by_region[region]:
-                if instances_by_ids[instance_id].status_code == INSTANCE_STATE['requested']:
-                    requested.append(instance_id)
+        # check status of requested instances
+        if requested:
+            pool = InstancePool.objects.get(pk=pool_id)
 
-            if requested:
-                (successful_requests, failed_requests) = cloud_provider.check_instances_requests(
-                    region, requested, cloud_provider.get_tags(config))
+            tags = cloud_provider.get_tags(pool.config.flatten())
+            tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
 
-                for req_id in successful_requests:
-                    instance = instances_by_ids[req_id]
-                    instance.hostname = successful_requests[req_id]['hostname']
-                    instance.instance_id = successful_requests[req_id]['instance_id']
-                    instance.status_code = successful_requests[req_id]['status_code']
-                    instance.save()
+            (successful_requests, failed_requests) = cloud_provider.check_instances_requests(
+                region, requested.keys(), tags)
 
-                    del instances_by_ids[req_id]
-                    instances_by_ids[successful_requests[req_id]['instance_id']] = instance
-                    instance_ids_by_region[region].append(successful_requests[req_id]['instance_id'])
+            for req_id in successful_requests:
+                instance = requested[req_id]
+                instance.hostname = successful_requests[req_id]['hostname']
+                instance.instance_id = successful_requests[req_id]['instance_id']
+                instance.status_code = successful_requests[req_id]['status_code']
+                instance.save()
 
-                    instances_created = True
+                instances_created = True
 
-                for req_id in failed_requests:
-                    instance = instances_by_ids[req_id]
-                    if failed_requests[req_id]['action'] == 'blacklist':
-                        # request was not fulfilled for some reason.. blacklist this type/zone for a while
-                        inst = instances_by_ids[req_id]
-                        key = "%s:blacklist:%s:%s" % (cloud_provider.get_name(), inst.zone,
-                                                      failed_requests[req_id]['instance_type'])
-                        cache.set(key, "", ex=12 * 3600)
-                        logger.warning("Blacklisted %s for 12h", key)
-                        inst.delete()
-                    elif failed_requests[req_id]['action'] == 'disable_pool':
-                        _update_pool_status(pool, 'unclassifed', 'request failed')
+            for req_id in failed_requests:
+                instance = requested[req_id]
+                if failed_requests[req_id]['action'] == 'blacklist':
+                    # request was not fulfilled for some reason.. blacklist this type/region/zone for a while
+                    key = "%s:blacklist:%s:%s:%s" % (provider, instance.region, instance.zone,
+                                                     failed_requests[req_id]['instance_type'])
+                    cache.set(key, "", ex=12 * 3600)
+                    logger.warning("Blacklisted %s for 12h", key)
+                    instance.delete()
+                elif failed_requests[req_id]['action'] == 'disable_pool':
+                    _update_pool_status(pool, 'unclassified', 'request failed')
 
-            cloud_instances = cloud_provider.check_instances_state(pool.pk, region)
+        if instances_created:
+            # Delete certain warnings we might have created earlier that no longer apply
 
-            for cloud_instance in cloud_instances:
-                debug_cloud_instances_ids_seen.add(cloud_instance)
+            # If we ever exceeded the maximum spot instance count, we can clear
+            # the warning now because we obviously succeeded in starting some instances.
+            # The same holds for temporary failures of any sort
+            PoolStatusEntry.objects.filter(
+                pool=pool, type__in=(POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded'],
+                                     POOL_STATUS_ENTRY_TYPE['temporary-failure'])).delete()
 
-                if (SPOTMGR_TAG + "-Updatable" not in cloud_instances[cloud_instance]['tags'] or
-                        int(cloud_instances[cloud_instance]['tags'][SPOTMGR_TAG + "-Updatable"]) <= 0):
-                    # The instance is not marked as updatable. We must not touch it because
-                    # a spawning thread is still managing this instance. However, we must also
-                    # remove this instance from the instances_left list if it's already in our
-                    # database, because otherwise our code here would delete it from the database.
-                    if cloud_instance in instance_ids_by_region[region]:
-                        instances_left.remove(instances_by_ids[cloud_instance])
+            ProviderStatusEntry.objects.filter(
+                provider=provider, type__in=(POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded'],
+                                             POOL_STATUS_ENTRY_TYPE['temporary-failure'])).delete()
+
+            # Do not delete unclassified errors here for now, so the user can see them.
+
+    except CloudProviderError as err:
+        logger.exception("[Pool %d] cloud provider raised", pool.id)
+        _update_pool_status(pool, err.TYPE, err.message)
+    except Exception as msg:
+        logger.exception("[Pool %d] update_requests raised", pool.id)
+        _update_pool_status(pool, 'unclassified', str(msg))
+
+
+@app.task
+def update_instances(provider, region):
+    """Reconcile database instances with cloud provider for a given provider/region.
+
+    @ptype provider: str
+    @param provider: CloudProvider name
+
+    @ptype region: str
+    @param region: Region name within the given provider
+    """
+    from .models import Instance
+
+    logger.debug("-> update_instances(%r, %r)", provider, region)
+
+    try:
+        cloud_provider = CloudProvider.get_instance(provider)
+
+        debug_cloud_instance_ids_seen = set()
+        debug_not_updatable_continue = set()
+        debug_not_in_region = {}
+
+        instances = {}  # provider_id -> Instance
+        instances_left = set()  # Instance
+        for instance in Instance.objects.filter(provider=provider, region=region) \
+                .exclude(status_code=INSTANCE_STATE['requested']):
+            instances[instance.instance_id] = instance
+            instances_left.add(instance)
+
+        # reconcile instance state from provider with DB
+        cloud_instances = cloud_provider.check_instances_state(None, region)
+        for cloud_id, cloud_data in cloud_instances.items():
+            debug_cloud_instance_ids_seen.add(cloud_id)
+
+            if (SPOTMGR_TAG + "-Updatable" not in cloud_data['tags'] or
+                    int(cloud_data['tags'][SPOTMGR_TAG + "-Updatable"]) <= 0):
+                # The instance is not marked as updatable. We must not touch it because
+                # a spawning thread is still managing this instance. However, we must also
+                # remove this instance from the instances_left list if it's already in our
+                # database, because otherwise our code here would delete it from the database.
+                if cloud_id in instances:
+                    if instances[cloud_id] in instances_left:
+                        instances_left.remove(instances[cloud_id])
+                else:
+                    debug_not_updatable_continue.add(cloud_id)
+                continue
+
+            instance = None
+
+            # Whenever we see an instance that is not in our instance list for that region,
+            # make sure it's a terminated instance because we should never have a running
+            # instance that matches the search above but is not in our database.
+            if cloud_id not in instances:
+                if cloud_data['status'] not in {INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']}:
+
+                    # As a last resort, try to find the instance in our database.
+                    # If the instance was saved to our database between the entrance
+                    # to this function and the search query sent to provider, then the instance
+                    # will not be in our instances list but returned by provider. In this
+                    # case, we try to load it directly from the database.
+                    q = Instance.objects.filter(instance_id=cloud_id)
+                    if q:
+                        instance = q[0]
+                        logger.error("[Pool %d] Instance with ID %s was reloaded from database.", q.pool_id, cloud_id)
                     else:
-                        debug_not_updatable_continue.add(cloud_instance)
+                        logger.error("[Pool ?] Instance with ID %s is not in database", cloud_id)
+
+                        # Terminate at this point, we run in an inconsistent state
+                        raise RuntimeError("Database and cloud provider are inconsistent")
+
+                debug_not_in_region[cloud_id] = cloud_data['status']
+                continue
+
+            instance = instances[cloud_id]
+            if instance in instances_left:
+                instances_left.remove(instance)
+
+            # Check the status code and update if necessary
+            if instance.status_code != cloud_data['status']:
+                instance.status_code = cloud_data['status']
+                instance.save()
+
+        for instance in instances_left:
+            reasons = []
+
+            if instance.instance_id not in debug_cloud_instance_ids_seen:
+                reasons.append("no corresponding machine on cloud")
+
+            if instance.instance_id in debug_not_updatable_continue:
+                reasons.append("not updatable")
+
+            if instance.instance_id in debug_not_in_region:
+                reasons.append("has state code %s on cloud but not in our region"
+                               % debug_not_in_region[instance.instance_id])
+
+            if not reasons:
+                reasons.append("?")
+
+            logger.info("[Pool %d] Deleting instance with cloud instance ID %s from our database: %s",
+                        instance.pool_id, instance.instance_id, ", ".join(reasons))
+            instance.delete()
+
+    except CloudProviderError as err:
+        logger.exception("[Provider %s] cloud provider raised", provider)
+        _update_provider_status(provider, err.TYPE, err.message)
+    except Exception as msg:
+        logger.exception("[Provider %s] update_instances raised", provider)
+        _update_provider_status(provider, 'unclassified', str(msg))
+
+
+@app.task
+def cycle_and_terminate_disabled(provider, region):
+    """Kill off instances if pools need to be cycled or disabled.
+
+    @ptype provider: str
+    @param provider: CloudProvider name
+
+    @ptype region: str
+    @param region: Region name within the given provider
+    """
+    from .models import Instance, PoolStatusEntry, ProviderStatusEntry
+
+    logger.debug("-> cycle_and_terminate_disabled(%r, %r)", provider, region)
+
+    provider_has_critical_error = ProviderStatusEntry.objects.filter(provider=provider, isCritical=True).exists()
+
+    try:
+        # check if the pool has any instances to be terminated
+        requests_to_terminate = []
+        instances_to_terminate = []
+        instances_by_pool = {}
+        pool_disable = {}  # pool_id -> reason (or blank for enabled)
+        for instance in Instance.objects.filter(provider=provider, region=region):
+            if instance.pool_id not in pool_disable:
+                pool = instance.pool
+                if provider_has_critical_error:
+                    pool_disable[instance.pool_id] = "Provider error"
+                elif PoolStatusEntry.objects.filter(pool=pool, isCritical=True).exists():
+                    pool_disable[instance.pool_id] = "Pool error"
+                elif not pool.isEnabled:
+                    pool_disable[instance.pool_id] = "Disabled"
+                elif pool.last_cycled is None or \
+                        pool.last_cycled + timezone.timedelta(seconds=pool.config.cycle_interval) < timezone.now():
+                    pool_disable[instance.pool_id] = "Needs to be cycled"
+                else:
+                    pool_disable[instance.pool_id] = ""
+
+            if pool_disable[instance.pool_id]:
+                if instance.status_code not in {INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']}:
+                    instances_by_pool.setdefault(instance.pool_id, 0)
+                    instances_by_pool[instance.pool_id] += 1
+                if instance.status_code == INSTANCE_STATE['requested']:
+                    requests_to_terminate.append(instance.instance_id)
+                elif instance.status_code not in {INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']}:
+                    instances_to_terminate.append(instance.instance_id)
+
+        for pool_id, count in instances_by_pool.items():
+            logger.info("[Pool %d] %s, terminating %d instances in %s/%s...", pool_id, pool_disable[pool_id], count,
+                        provider, region)
+        if requests_to_terminate:
+            _terminate_instance_request_ids.delay(provider, region, requests_to_terminate)
+        if instances_to_terminate:
+            _terminate_instance_ids.delay(provider, region, instances_to_terminate)
+
+    except CloudProviderError as err:
+        logger.exception("[Provider %s] cloud provider raised", provider)
+        _update_provider_status(provider, err.TYPE, err.message)
+    except Exception as msg:
+        logger.exception("[Provider %s] cycle_and_terminate_disabled raised", provider)
+        _update_provider_status(provider, 'unclassified', str(msg))
+
+
+@app.task
+def check_and_resize_pool(pool_id):
+    """Check pool size and either request more instances from cheapest provider/region,
+    or terminate unneeded instances.
+
+    @ptype pool_id: int
+    @param pool_id: InstancePool pk
+    """
+    from .models import Instance, InstancePool, PoolStatusEntry
+
+    logger.debug("-> check_and_resize_pool(%r)", pool_id)
+
+    if PoolStatusEntry.objects.filter(pool_id=pool_id, isCritical=True).exists():
+        return []
+
+    try:
+        pool = InstancePool.objects.get(pk=pool_id)
+
+        # check config
+        if pool.config.isCyclic():
+            _update_pool_status(pool, "config-error", "Configuration error (cyclic).")
+            return []
+
+        missing = pool.config.getMissingParameters()
+        if missing:
+            _update_pool_status(pool, "config-error", "Configuration error (missing: %r)." % (missing,))
+            return []
+
+        # if any pools need cycling, that will be complete now, so update the time
+        if pool.last_cycled is None or \
+                pool.last_cycled + timezone.timedelta(seconds=pool.config.cycle_interval) < timezone.now():
+            logger.info("[Pool %d] All instances cycled.", pool_id)
+            pool.last_cycled = timezone.now()
+            pool.save()
+
+        config = pool.config.flatten()
+
+        instance_cores_missing = config.size
+        running_instances = []
+
+        instances = Instance.objects.filter(pool=pool)
+
+        for instance in instances:
+            if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],
+                                        INSTANCE_STATE['requested']]:
+                instance_cores_missing -= instance.size
+                running_instances.append(instance)
+            elif instance.status_code in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
+                # The instance is no longer running, delete it from our database
+                logger.info("[Pool %d] Deleting terminated instance with ID %s from our database.",
+                            pool_id, instance.instance_id)
+                instance.delete()
+            else:
+                instance_cores_missing -= instance.size
+                running_instances.append(instance)
+
+        # Continue working with the instances we have running
+        instances = running_instances
+
+        if instance_cores_missing > 0:
+            logger.info("[Pool %d] Needs %s more instance cores, starting...",
+                        pool_id, instance_cores_missing)
+            _start_pool_instances(pool, config, count=instance_cores_missing)
+
+        elif instance_cores_missing < 0:
+            # Select the oldest instances we have running and terminate
+            # them so we meet the size limitation again.
+            instances = []
+            for instance in Instance.objects.filter(pool=pool).order_by('created'):
+                if instance_cores_missing + instance.size > 0:
+                    # If this instance would leave us short of cores, let it run. Otherwise
+                    # the pool size may oscillate.
                     continue
+                instances.append(instance)
+                instance_cores_missing += instance.size
+                if instance_cores_missing == 0:
+                    break
 
-                instance = None
+            if instances:
+                instance_cores_missing = sum(instance.size for instance in instances)
+                logger.info("[Pool %d] Has %d instance cores over limit in %d instances, queuing for termination...",
+                            pool_id, instance_cores_missing, len(instances))
+                return [instance.id for instance in instances]
+        else:
+            logger.debug("[Pool %d] Size is ok.", pool_id)
 
-                # Whenever we see an instance that is not in our instance list for that region,
-                # make sure it's a terminated instance because we should never have a running
-                # instance that matches the search above but is not in our database.
-                if cloud_instance not in instance_ids_by_region[region]:
-                    if (cloud_instances[cloud_instance]['status']
-                            not in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]):
+    except CloudProviderError as err:
+        _update_pool_status(pool, err.TYPE, err.message)
+    except Exception as msg:
+        _update_pool_status(pool, 'unclassified', str(msg))
 
-                        # As a last resort, try to find the instance in our database.
-                        # If the instance was saved to our database between the entrance
-                        # to this function and the search query sent to provider, then the instance
-                        # will not be in our instances list but returned by provider. In this
-                        # case, we try to load it directly from the database.
-                        q = Instance.objects.filter(instance_id=cloud_instance)
-                        if q:
-                            instance = q[0]
-                            logger.error("[Pool %d] Instance with ID %s was reloaded from database.",
-                                         pool.id, cloud_instance)
-                        else:
-                            logger.error("[Pool %d] Instance with ID %s is not in database",
-                                         pool.id, cloud_instance)
+    return []
 
-                            # Terminate at this point, we run in an inconsistent state
-                            raise RuntimeError("Database and cloud provider are inconsistent")
 
-                    debug_not_in_region[cloud_instance] = cloud_instances[cloud_instance]['status']
-                    continue
+@app.task
+def terminate_instances(pool_instances):
+    """Terminate a given list of instances.
 
-                instance = instances_by_ids[cloud_instance]
-                if instance in instances_left:
-                    instances_left.remove(instance)
+    @ptype pool_instances: list of lists of instance ids
+    @param pool_instances: Takes the results from multiple calls to check_and_resize_pool(), and aggregates the results
+                           into one call to terminate instances/requests per provider/region.
+    """
+    from .models import Instance
 
-                # Check the status code and update if necessary
-                if instance.status_code != cloud_instances[cloud_instance]['status']:
-                    instance.status_code = cloud_instances[cloud_instance]['status']
-                    instance.save()
+    logger.debug("-> terminate_instances(%r)", pool_instances)
 
-        except CloudProviderError as err:
-            logger.exception("[Pool %d] cloud provider raised", pool.id)
-            _update_pool_status(pool, err.TYPE, err.message)
-            return
-        except Exception as msg:
-            logger.exception("[Pool %d] update_pool_instances raised", pool.id)
-            _update_pool_status(pool, 'unclassified', str(msg))
-            return
+    instances_by_provider_region = {}
+    for instance in Instance.objects.filter(pk__in=itertools.chain.from_iterable(pool_instances)):
+        requested, running = instances_by_provider_region.setdefault((instance.provider, instance.region), ([], []))
+        if instance.status_code == INSTANCE_STATE['requested']:
+            requested.append(instance.instance_id)
+        else:
+            running.append(instance.instance_id)
 
-    for instance in instances_left:
-        reasons = []
-
-        if instance.instance_id not in debug_cloud_instance_ids_seen:
-            reasons.append("no corresponding machine on cloud")
-
-        if instance.instance_id in debug_not_updatable_continue:
-            reasons.append("not updatable")
-
-        if instance.instance_id in debug_not_in_region:
-            reasons.append("has state code %s on cloud but not in our region"
-                           % debug_not_in_region[instance.instance_id])
-
-        if not reasons:
-            reasons.append("?")
-
-        logger.info("[Pool %d] Deleting instance with cloud instance ID %s from our database: %s",
-                    pool.id, instance.instance_id, ", ".join(reasons))
-        instance.delete()
-
-    if instances_created:
-        # Delete certain warnings we might have created earlier that no longer apply
-
-        # If we ever exceeded the maximum spot instance count, we can clear
-        # the warning now because we obviously succeeded in starting some instances.
-        PoolStatusEntry.objects.filter(
-            pool=pool, type=POOL_STATUS_ENTRY_TYPE['max-spot-instance-count-exceeded']).delete()
-
-        # The same holds for temporary failures of any sort
-        PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['temporary-failure']).delete()
-
-        # Do not delete unclassified errors here for now, so the user can see them.
+    provider_parallel = []
+    for (provider, region), (requested, running) in instances_by_provider_region.items():
+        if requested:
+            provider_parallel.append(_terminate_instance_request_ids.si(provider, region, requested))
+        if running:
+            provider_parallel.append(_terminate_instance_ids.si(provider, region, running))
+    celery.group(provider_parallel).delay()
