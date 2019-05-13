@@ -49,8 +49,9 @@
 				</div>
 				{% endfor %}
 				{% for provider, msgs in provider_msgs.items %}
-					{% if pool.pk in provider_pools.provider %}
-						{% for msg in msgs %}
+					{% for provider_name, provider_pool in provider_pools.items %}
+						{% if provider_name == provider and pool.pk in provider_pool %}
+							{% for msg in msgs %}
 				<div>
 					<div style="float:left; width:25px; overflow:hidden;">
 					<a href="{% url 'ec2spotmanager:providermsgdel' msg.pk %}">[x]</a>
@@ -63,8 +64,9 @@
 					{% endif %}
 					</div>
 				</div>
-						{% endfor %}
-					{% endif %}
+							{% endfor %}
+						{% endif %}
+					{% endfor %}
 				{% endfor %}
 			{% elif not pool.isEnabled %}
 				<span class="label label-warning">Disabled</span>
