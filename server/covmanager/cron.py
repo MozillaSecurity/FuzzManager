@@ -30,7 +30,7 @@ def create_weekly_report_mc(revision):
     short_revision = revision[:12]
 
     repository = Repository.objects.get(name="mozilla-central")
-    client = Client.objects.get_or_create(name="Server")
+    client = Client.objects.get_or_create(name="Server")[0]
 
     collections = Collection.objects.filter(
         Q(revision=revision) | Q(revision=short_revision)).filter(repository=repository)
