@@ -1,5 +1,8 @@
 import datetime
 import json
+import logging
+import time
+import uuid
 import celery
 import redis
 from django.conf import settings
@@ -9,9 +12,15 @@ from celeryconf import app
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
 
 
+LOG = logging.getLogger("ec2spotmanager")
+
 STATS_DELTA_SECS = 60 * 15  # 30 minutes
 STATS_TOTAL_DETAILED = 24  # How many hours the detailed statistics should include
 STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statistics
+
+# How long check_instance_pools lock should remain valid. If the task takes longer than this to complete, the lock will
+# be invalidated and another task allowed to run.
+CHECK_POOL_LOCK_EXPIRY = 30 * 60
 
 
 @app.task
@@ -97,6 +106,69 @@ def update_stats():
                 entry.delete()
 
 
+class _RedisLock(object):
+    """Simple Redis mutex lock.
+
+    based on: https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-components-in-redis \
+                                   /6-2-distributed-locking/6-2-3-building-a-lock-in-redis/
+
+    Not using RedLock because it isn't passable as a celery argument, so we can't release the lock in an async chain.
+    """
+
+    def __init__(self, conn, name, unique_id=None):
+        self.conn = conn
+        self.name = name
+        if unique_id is None:
+            self.unique_id = str(uuid.uuid4())
+        else:
+            self.unique_id = unique_id
+
+    def acquire(self, acquire_timeout=10):
+        end = time.time() + acquire_timeout
+        while time.time() < end:
+
+            if self.conn.set(self.name, self.unique_id, ex=CHECK_POOL_LOCK_EXPIRY, nx=True):
+                LOG.debug("Acquired lock: %s(%s)", self.name, self.unique_id)
+                return self.unique_id
+
+            time.sleep(0.01)
+
+        LOG.debug("Failed to acquire lock: %s(%s)", self.name, self.unique_id)
+        return None
+
+    def release(self):
+        pipe = self.conn.pipeline(True)
+
+        while True:
+            try:
+
+                pipe.watch(self.name)
+                if pipe.get(self.name) == self.unique_id:
+
+                    pipe.multi()
+                    pipe.delete(self.name)
+                    pipe.execute()
+                    LOG.debug("Released lock: %s(%s)", self.name, self.unique_id)
+                    return True
+
+                pipe.unwatch()
+                break
+
+            except redis.exceptions.WatchError:
+                pass
+
+        LOG.debug("Failed to release lock: %s(%s)", self.name, self.unique_id)
+        return False
+
+
+@app.task
+def _release_lock(lock_key):
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
+    if not lock.release():
+        LOG.warning('Lock ec2spotmanager:check_instance_pools(%s) was already expired.', lock_key)
+
+
 @app.task
 def check_instance_pools():
     """EC2SpotManager daemon.
@@ -171,38 +243,55 @@ def check_instance_pools():
     #                           |
     #                          DONE
     #
+    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT,
+                              db=settings.REDIS_DB)
+    lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools")
 
-    groups = {}
-    for pool in InstancePool.objects.all():
-        cfg = pool.config.flatten()
-        for provider in PROVIDERS:
-            cloud_provider = CloudProvider.get_instance(provider)
-            if cloud_provider.config_supported(cfg):
-                for region in cloud_provider.get_allowed_regions(cfg):
+    lock_key = lock.acquire()
+    if lock_key is None:
+        LOG.warning('Another EC2SpotManager update still in progress, exiting.')
+        return
+
+    try:
+        groups = {}
+        for pool in InstancePool.objects.all():
+            cfg = pool.config.flatten()
+            for provider in PROVIDERS:
+                cloud_provider = CloudProvider.get_instance(provider)
+                if cloud_provider.config_supported(cfg):
+                    for region in cloud_provider.get_allowed_regions(cfg):
+                        groups.setdefault((provider, region), set()).add(pool.pk)
+                # also look at running instances. it could be that this pool was just edited to exclude a provider,
+                # but we still must manage active instances running there.
+                for region in Instance.objects.filter(pool=pool, provider=provider).values_list('region', flat=True):
                     groups.setdefault((provider, region), set()).add(pool.pk)
-            # also look at running instances. it could be that this pool was just edited to exclude a provider,
-            # but we still must manage active instances running there.
-            for region in Instance.objects.filter(pool=pool, provider=provider).values_list('region', flat=True):
-                groups.setdefault((provider, region), set()).add(pool.pk)
 
-    provider_parallel = []
-    for (provider, region), pools in groups.items():
-        provider_parallel.append(
-            celery.chain(celery.group([update_requests.si(provider, region, pool) for pool in pools]),
-                         update_instances.si(provider, region),
-                         cycle_and_terminate_disabled.si(provider, region)))
+        provider_parallel = []
+        for (provider, region), pools in groups.items():
+            provider_parallel.append(
+                celery.chain(celery.group([update_requests.si(provider, region, pool) for pool in pools]),
+                             update_instances.si(provider, region),
+                             cycle_and_terminate_disabled.si(provider, region)))
 
-    pool_parallel = []
-    for pool in InstancePool.objects.filter(isEnabled=True):
-        pool_parallel.append(check_and_resize_pool.si(pool.pk))
+        pool_parallel = []
+        for pool in InstancePool.objects.filter(isEnabled=True):
+            pool_parallel.append(check_and_resize_pool.si(pool.pk))
 
-    celery.chain(
-        celery.group(provider_parallel),
-        celery.chord(
-            pool_parallel,
-            terminate_instances.s()
-        )
-    )()
+        celery.chain(
+            celery.group(provider_parallel),
+            celery.chord(
+                pool_parallel,
+                terminate_instances.s()
+            ),
+            _release_lock.si(lock_key)  # release on chain success
+        ).on_error(_release_lock.si(lock_key))()  # release on chain failure
+
+    except Exception as exc:  # pylint: disable=broad-except
+        try:
+            if not lock.release():  # release on error in this function
+                LOG.warning('Lock %s was already expired.', lock_key)
+        finally:
+            raise exc
 
 
 @app.task

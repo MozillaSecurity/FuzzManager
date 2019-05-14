@@ -30,11 +30,13 @@ def test_update_pool_graph(mocker):
     mock_group = mocker.patch('celery.group')
     mock_chain = mocker.patch('celery.chain')
     mock_chord = mocker.patch('celery.chord')
+    mock_lock = mocker.patch('ec2spotmanager.cron._RedisLock')
     mock_check_and_resize_pool = mocker.patch('ec2spotmanager.tasks.check_and_resize_pool')
     mock_cycle_and_terminate_disabled = mocker.patch('ec2spotmanager.tasks.cycle_and_terminate_disabled')
     mock_terminate_instances = mocker.patch('ec2spotmanager.tasks.terminate_instances')
     mock_update_instances = mocker.patch('ec2spotmanager.tasks.update_instances')
     mock_update_requests = mocker.patch('ec2spotmanager.tasks.update_requests')
+    mock_release_lock = mocker.patch('ec2spotmanager.cron._release_lock')
 
     config1 = create_config(name='config #1',
                             size=1, cycle_interval=1,
@@ -74,6 +76,10 @@ def test_update_pool_graph(mocker):
     assert mock_terminate_instances.s.call_count == 1
     assert mock_update_instances.si.call_count == 6
     assert mock_update_requests.si.call_count == 10
+    assert mock_lock.call_count == 1
+    assert mock_lock.return_value.acquire.call_count == 1
+    assert mock_lock.return_value.release.call_count == 0
+    assert mock_release_lock.si.call_count == 2
 
     cycle_and_terminate_disabled_idx = 0
     update_instances_idx = 0
@@ -135,9 +141,10 @@ def test_update_pool_graph(mocker):
     for i in range(6):
         assert mock_chain.call_args_list[i] == call(mock_group(), mock_update_instances.si(),
                                                     mock_cycle_and_terminate_disabled.si())
-    assert mock_chain.call_args_list[6] == call(mock_group(), mock_chord())
-    assert mock_chain.return_value.call_count == 1
-    assert mock_chain.return_value.call_args == call()
+    assert mock_chain.call_args_list[6] == call(mock_group(), mock_chord(), mock_release_lock.si())
+    assert mock_chain.return_value.on_error.call_count == 1
+    assert mock_chain.return_value.on_error.return_value.call_count == 1
+    assert mock_chain.return_value.on_error.return_value.call_args == call()
 
 
 def test_update_pool_graph_unsupported_running(mocker):
@@ -147,11 +154,13 @@ def test_update_pool_graph_unsupported_running(mocker):
     mock_group = mocker.patch('celery.group')
     mock_chain = mocker.patch('celery.chain')
     mock_chord = mocker.patch('celery.chord')
+    mock_lock = mocker.patch('ec2spotmanager.cron._RedisLock')
     mock_check_and_resize_pool = mocker.patch('ec2spotmanager.tasks.check_and_resize_pool')
     mock_cycle_and_terminate_disabled = mocker.patch('ec2spotmanager.tasks.cycle_and_terminate_disabled')
     mock_terminate_instances = mocker.patch('ec2spotmanager.tasks.terminate_instances')
     mock_update_instances = mocker.patch('ec2spotmanager.tasks.update_instances')
     mock_update_requests = mocker.patch('ec2spotmanager.tasks.update_requests')
+    mock_release_lock = mocker.patch('ec2spotmanager.cron._release_lock')
 
     config = create_config(name='config #1',
                            size=1, cycle_interval=1,
@@ -177,6 +186,10 @@ def test_update_pool_graph_unsupported_running(mocker):
     assert mock_terminate_instances.s.call_count == 1
     assert mock_update_instances.si.call_count == 2
     assert mock_update_requests.si.call_count == 2
+    assert mock_lock.call_count == 1
+    assert mock_lock.return_value.acquire.call_count == 1
+    assert mock_lock.return_value.release.call_count == 0
+    assert mock_release_lock.si.call_count == 2
 
     cycle_and_terminate_disabled_idx = 0
     update_instances_idx = 0
@@ -217,9 +230,10 @@ def test_update_pool_graph_unsupported_running(mocker):
     for i in range(2):
         assert mock_chain.call_args_list[i] == call(mock_group(), mock_update_instances.si(),
                                                     mock_cycle_and_terminate_disabled.si())
-    assert mock_chain.call_args_list[2] == call(mock_group(), mock_chord())
-    assert mock_chain.return_value.call_count == 1
-    assert mock_chain.return_value.call_args == call()
+    assert mock_chain.call_args_list[2] == call(mock_group(), mock_chord(), mock_release_lock.si())
+    assert mock_chain.return_value.on_error.call_count == 1
+    assert mock_chain.return_value.on_error.return_value.call_count == 1
+    assert mock_chain.return_value.on_error.return_value.call_args == call()
 
 
 def test_terminate_instances(mocker):
