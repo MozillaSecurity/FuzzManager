@@ -28,9 +28,9 @@ def test_covmanager_index(client):
 
 
 def test_covmanager_noperm(client):
-    """Request without permission results in 404"""
+    """Request without permission results in 403"""
     client.login(username='test-noperm', password='test')
     resp = client.get(reverse('covmanager:index'))
-    assert resp.status_code == 404
+    assert resp.status_code == 403
 
 #url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),

@@ -47,7 +47,7 @@ def test_crashmanager_logout(client):
 
 
 def test_crashmanager_noperm(client):
-    """Request without permission results in 404"""
+    """Request without permission results in 403"""
     client.login(username='test-noperm', password='test')
     resp = client.get(reverse('crashmanager:index'))
-    assert resp.status_code == 404
+    assert resp.status_code == 403

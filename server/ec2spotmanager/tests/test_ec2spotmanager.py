@@ -42,7 +42,7 @@ def test_ec2spotmanager_logout(client):
 
 
 def test_ec2spotmanager_noperm(client):
-    """Request without permission results in 404"""
+    """Request without permission results in 403"""
     client.login(username='test-noperm', password='test')
     resp = client.get(reverse('ec2spotmanager:index'))
-    assert resp.status_code == 404
+    assert resp.status_code == 403
