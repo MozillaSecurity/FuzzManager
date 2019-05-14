@@ -215,12 +215,18 @@ def _update_provider_status(provider, type_, message):
 
     is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}
 
-    entry = ProviderStatusEntry()
-    entry.type = POOL_STATUS_ENTRY_TYPE[type_]
-    entry.provider = provider
-    entry.msg = message
-    entry.isCritical = is_critical
-    entry.save()
+    if not ProviderStatusEntry.objects.filter(type=POOL_STATUS_ENTRY_TYPE[type_],
+                                              provider=provider,
+                                              msg=message,
+                                              isCritical=is_critical).exists():
+        entry = ProviderStatusEntry()
+        entry.type = POOL_STATUS_ENTRY_TYPE[type_]
+        entry.provider = provider
+        entry.msg = message
+        entry.isCritical = is_critical
+        entry.save()
+    else:
+        logger.warning('Ignoring provider error: already exists.')
 
 
 def _update_pool_status(pool, type_, message):
@@ -228,12 +234,18 @@ def _update_pool_status(pool, type_, message):
 
     is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}
 
-    entry = PoolStatusEntry()
-    entry.type = POOL_STATUS_ENTRY_TYPE[type_]
-    entry.pool = pool
-    entry.msg = message
-    entry.isCritical = is_critical
-    entry.save()
+    if not PoolStatusEntry.objects.filter(type=POOL_STATUS_ENTRY_TYPE[type_],
+                                          pool=pool,
+                                          msg=message,
+                                          isCritical=is_critical).exists():
+        entry = PoolStatusEntry()
+        entry.type = POOL_STATUS_ENTRY_TYPE[type_]
+        entry.pool = pool
+        entry.msg = message
+        entry.isCritical = is_critical
+        entry.save()
+    else:
+        logger.warning('Ignoring pool error: already exists.')
 
 
 @app.task
