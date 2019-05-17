@@ -1299,12 +1299,13 @@ def main(argv=None):
 
                 # Ignore slow units and oom files
                 if testcase is not None:
-                    if testcase.startswith("slow-unit-"):
+                    testcase_name = os.path.basename(testcase)
+                    if testcase_name.startswith("slow-unit-"):
                         continue
-                    if testcase.startswith("oom-"):
+                    if testcase_name.startswith("oom-"):
                         stats["ooms"] += 1
                         continue
-                    if testcase.startswith("timeout-"):
+                    if testcase_name.startswith("timeout-"):
                         stats["timeouts"] += 1
                         continue
 
