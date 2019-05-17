@@ -1,0 +1,162 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block css.custom %}
+  <link rel='stylesheet' href='/static/css/covmanager.css'>
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+  <div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Aggregated Reports</div>
+  <div class="panel-body">
+    <div class="panel panel-default" style="float: right;">
+    <div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
+    <div class="panel-body">
+      <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
+      <!--<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>-->
+    </div>
+    </div>
+
+    <div style="font-size: 16px;">
+    The list below contains all aggregated coverage reports that are automatically produced.
+    This includes weekly, monthly and quarterly reports.</br></br>
+
+    You can view each report individually, inspect its summary or select multiple reports
+    and view their difference.
+    </div>
+
+  </div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th @click="sortBy('id')" :class="{ active: sortKey == 'id' }" style="width: 25px;">ID</th>
+        <th @click="sortBy('description')" :class="{ active: sortKey == 'description' }" style="width: 150px;">Description</th>
+
+        <th @click="sortBy('created')" :class="{ active: sortKey == 'created' }" style="width: 80px;">Created</th>
+        <th @click="sortBy('repository')" :class="{ active: sortKey == 'repository' }" style="width: 50px;">Repository</th>
+        <th @click="sortBy('revision')" :class="{ active: sortKey == 'revision' }" style="width: 100px;">Revision</th>
+        <th style="width: 100px;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="collection in ordered_collections" :id="collection.id" @click="collection_click_handler(collection.id)">
+        <td><a :href="`../collections/${collection.id}/browse`">!{ collection.id }!</a></td>
+        <td>!{ collection.description }!</td>
+
+        <td>!{ collection.created | formatDate }!</td>
+        <td>!{ collection.repository }!</td>
+        <td>!{ collection.revision }!</td>
+        <td><button @click="summary(collection.id)" class="btn btn-default">View Report Summary</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+let URLS = {
+  collections_api: '{% url 'covmanager:reports_api' %}',
+  diff: '{% url 'covmanager:collections_diff' %}',
+  patch: '{% url 'covmanager:collections_patch' %}',
+}
+
+let pmanager = new HashParamManager()
+
+let covmanager = new Vue({
+  el: '#main',
+  data: {
+    collections: null,
+    sortKey: "",
+    reverse: false,
+    block_fetch: true,
+
+    selected_collections: [],
+  },
+  created: function () {
+    let self = this
+    self.fetch()
+  },
+  filters: {
+    formatDate: function (datetime) {
+      return formatClientTimestamp(datetime)
+    },
+  },
+  computed: {
+    ordered_collections: function () {
+      return _.orderBy(this.collections, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    },
+  },
+  methods: {
+    apiurl: function() {
+      let url = URLS.collections_api
+      let query = pmanager.get_query()
+
+      if (query) {
+        url += "?" + query
+        pmanager.update_hash()
+      }
+
+      return url;
+    },
+    fetch: _.throttle (function () {
+      this.loading = true
+      fetch(this.apiurl(), {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
+      }).then(json => {
+        this.collections = json["results"]
+        this.loading = false
+        this.block_fetch = false
+      })
+    }, 500),
+    navigate: function (dst) {
+      let ids = []
+
+      if (this.selected_collections.length > 0) {
+        ids = this.selected_collections;
+      } else {
+        for (let i = 0; i < this.ordered_collections.length; ++i) {
+          ids.push(this.ordered_collections[i].id)
+        }
+      }
+
+      if (ids) {
+        let url = URLS[dst] + '#ids=' + ids.join(',')
+        if (window.location.hash) {
+          url += "&" + window.location.hash.substr(1)
+        }
+
+        var win = window.open(url, '_blank');
+        win.focus();
+      }
+    },
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
+    summary: function(id) {
+      window.open(`../collections/${id}/summary/`, '_blank').focus()
+    },
+    collection_click_handler: function(id) {
+      var self = this
+      let idx = self.selected_collections.indexOf(id)
+      let target = $("#" + id)
+
+      if (idx < 0) {
+        self.selected_collections.push(id)
+        if (target)
+          target.toggleClass("collection-selected", true)
+      } else {
+        self.selected_collections.splice(idx, 1)
+        if (target)
+          target.toggleClass("collection-selected", false)
+      }
+    },
+  }
+})
+</script>
+{% endblock body_content %}

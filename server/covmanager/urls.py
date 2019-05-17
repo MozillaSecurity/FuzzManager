@@ -11,6 +11,8 @@ router.register(r'reportconfigurations', views.ReportConfigurationViewSet, base_
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^$', views.index, name='index'),
+    url(r'^reports/$', views.reports, name="reports"),
+    url(r'^reports/api/$', views.ReportViewSet.as_view({'get': 'list'}), name="reports_api"),
     url(r'^repositories/$', views.repositories, name="repositories"),
     url(r'^repositories/search/api/$', views.repositories_search_api, name="repositories_search_api"),
     url(r'^collections/$', views.collections, name="collections"),

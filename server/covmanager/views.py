@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q
 from django.http import Http404
@@ -22,7 +23,11 @@ from .SourceCodeProvider import SourceCodeProvider
 
 
 def index(request):
-    return redirect('covmanager:collections')
+    return redirect('covmanager:%s' % getattr(settings, 'COV_DEFAULT_PAGE', "collections"))
+
+
+def reports(request):
+    return render(request, 'collections/report.html', {})
 
 
 def repositories(request):
@@ -574,6 +579,32 @@ class CollectionViewSet(mixins.CreateModelMixin,
     """
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
+    serializer_class = CollectionSerializer
+    paginate_by_param = 'limit'
+    filter_backends = [
+        JsonQueryFilterBackend,
+        SimpleQueryFilterBackend,
+        CollectionFilterBackend
+    ]
+
+
+class ReportViewSet(mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
+                    viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing aggregated Collections (prefiltered)
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+
+    report_filters = getattr(settings, 'COV_REPORTS_FILTER', ["Report"])
+    report_filters = [Q(description__contains=v) for v in report_filters]
+    filter = report_filters.pop()
+
+    for report_filter in report_filters:
+        filter |= report_filter
+
+    queryset = Collection.objects.filter(filter)
+
     serializer_class = CollectionSerializer
     paginate_by_param = 'limit'
     filter_backends = [
