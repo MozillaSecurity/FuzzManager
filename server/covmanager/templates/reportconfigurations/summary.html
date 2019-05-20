@@ -171,7 +171,7 @@ let covmanager = new Vue({
       svg = d3.select("svg")
 
       let treemap = d3.treemap()
-                      .tile(d3.treemapResquarify.ratio(1))
+                      .tile(d3.treemapSquarify.ratio(1))
                       .size([width, height])
                       .round(true)
                       .paddingOuter(5)
