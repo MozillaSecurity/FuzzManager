@@ -203,25 +203,32 @@ let covmanager = new Vue({
           self.chart.maxlevel = d.depth
         }
 
-        if (d.parent) {
+        let level = parseInt(self.chart.level)
+        if (level >= 0) {
+          if (d.depth > level) {
+            d.id = ""
+            d.value = 0
+            return
+          }
+        }
+
+        if (d.parent && d.parent.min_val) {
           // We use linesTotal for size calculation but if the size drops below
           // a certain threshold, we just cap to avoid the box getting too small.
 
-          // There are two strategies: The first one caps by looking at the parent
-          // size. Here, our maximum cap should be 15%, but if there are too many
-          // children we will have to cap earlier to not overflow the parent.
-          //let max_factor = Math.min(1 / d.parent.children.length, 0.15)
-          //let ref_size = d.parent.data.linesTotal
+          // Our current strategy is to look at the root and use a fraction of that,
+          // independent of the depth of the node. This has the advantage that all
+          // capped rectangles are about the same area.
+          //
+          // However, with this approach alone, it can easily happen that the sum
+          // of the child boxes (by far) exceeds the available space in the parent
+          // box. So we refine the minimum value per box that has children by looking
+          // at the available space and the amount of boxes that need to be "promoted".
+          // Based on these numbers, we recalculate the minimum child value for each
+          // parent box and assign it here.
 
-          // The second strategy (preferred currently), is by looking at the root
-          // and using a fraction of that, independent of the depth of the node.
-          // This has the advantage that all capped rectangles are about the same
-          // area.
-          let ref_size = root_node.data.linesTotal
-          let max_factor = Math.min(1 / d.parent.children.length, 0.015)
-
-          if (d.data.linesTotal < ref_size * max_factor) {
-            d.value = ref_size * max_factor
+          if (d.data.linesTotal < d.parent.min_val) {
+            d.value = d.parent.min_val
           } else {
             d.value = d.data.linesTotal
           }
@@ -229,11 +236,26 @@ let covmanager = new Vue({
           d.value = d.data.linesTotal
         }
 
-        let level = parseInt(self.chart.level)
-        if (level >= 0) {
-          if (d.depth > level) {
-            d.value = 0
+        if (d.children) {
+          // This is the minimum child value calculation as explained in the comment above.
+          let ref_size = root_node.data.linesTotal
+          let max_factor = 0.015
+          let min_val = ref_size * max_factor
+
+          if (d.children.length * min_val > d.value) {
+            let avail = d.value
+            let min_cnt = 0
+            for (let child of d.children) {
+              if (child.value > min_val) {
+                avail -= child.value
+              } else {
+                min_cnt++
+              }
+            }
+            min_val = avail / min_cnt;
           }
+
+          d.min_val = min_val
         }
 
       }).sort(function(a, b) { return b.height - a.height || b.value - a.value; })
