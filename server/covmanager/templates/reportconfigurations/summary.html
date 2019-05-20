@@ -289,9 +289,34 @@ let covmanager = new Vue({
         // Add a non-breaking space if we have children, so we don't wrap
         let nbs = d.children ? "\xa0" : "";
 
-        return d.id.substring(d.id.lastIndexOf(".") + 1)
-              .split(/(?=[A-Z][^A-Z])/g)
-              .concat(nbs + format(d.data.linesTotal))
+        let id = d.id.substring(d.id.lastIndexOf(".") + 1)
+        let splitid = [ id ];
+
+        // Assume that each letter (on average) fits within 8px. Yes, this is a hack.
+        let max_len = Math.floor((d.x1 - d.x0) / 8);
+
+        if (id.length > max_len) {
+          splitid = id.split(/(?=[ ])/g)
+          let new_splitid = []
+          for (let sid of splitid) {
+            if (new_splitid.length == 0 || new_splitid[new_splitid.length - 1].length + sid.length > max_len) {
+              new_splitid.push(sid.trim())
+            } else {
+              new_splitid[new_splitid.length - 1] += sid
+            }
+          }
+          splitid = new_splitid;
+        }
+
+        // TODO: This can be improved further by breaking on [a-z][A-Z]
+        // a second time if a single word is still exceeding max length
+        //for (let idx = splitid.length - 1 ; idx >= 0; idx--) {
+        //  if (splitid[idx].length > max_len) {
+        //
+        //  }
+        //}
+
+        return splitid.concat(nbs + format(d.data.linesTotal))
       }
 
       cell.append("text")
