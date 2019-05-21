@@ -60,7 +60,7 @@ class GCECloudProvider(CloudProvider):
     '''Implementation of CloudProvider interface for GCE.
     '''
     NODE_STATE_MAP = {
-        "PROVISIONING": INSTANCE_STATE["pending"],
+        "PROVISIONING": INSTANCE_STATE["requested"],
         "STAGING": INSTANCE_STATE["pending"],
         "RUNNING": INSTANCE_STATE["running"],
         "STOPPING": INSTANCE_STATE["stopping"],
@@ -262,104 +262,101 @@ class GCECloudProvider(CloudProvider):
 
         zones = {}
         service_id = "6F81-5844-456A"  # Compute Engine
-        params = {"key": settings.GCE_API_KEY}
-        data = requests.get("https://cloudbilling.googleapis.com/v1/services/" + service_id + "/skus",
-                            params=params).json()
-        while True:
-            for sku in data["skus"]:
-                if sku["category"]["resourceFamily"] == "Compute" and \
-                        sku["category"]["usageType"] == "Preemptible":
+        compute_skus_url = "https://cloudbilling.googleapis.com/v1/services/" + service_id + "/skus"
 
-                    # group by sku["serviceRegions"] and sku["category"]["resourceGroup"]
-                    price, unit = get_price(sku)
+        def _get_skus_paginated():
+            params = {"key": settings.GCE_API_KEY}
+            data = requests.get(compute_skus_url, params=params).json()
+            while True:
+                for sku in data["skus"]:
+                    yield sku
+                if data["nextPageToken"]:
+                    params["pageToken"] = data["nextPageToken"]
+                    data = requests.get(compute_skus_url, params=params).json()
+                else:
+                    break
 
-                    # I don't know what this is for, so make sure it's 0
-                    if sku["description"].startswith("CPU Upgrade Premium"):
-                        assert price == 0, (
-                            "CPU Upgrade Premium is not 0 in %r/%r, please update pricing function"
-                            % (sku["serviceRegions"], sku["category"])
-                        )
-                        continue
+        for sku in _get_skus_paginated():
+            if sku["category"]["resourceFamily"] == "Compute" and \
+                    sku["category"]["usageType"] == "Preemptible":
 
-                    # these are the resourceGroup/descriptions we care about:
-                    #  CPU/Preemptible Memory-optimized Instance Core -> memopt-cpu
-                    #  F1Micro/Preemptible Micro Instance with burstable CPU -> f1-cpu
-                    #  G1Small/Preemptible Small Instance with 1 VCPU -> g1-cpu
-                    #  N1Standard/Preemptible N1 Predefined Instance Ram -> n1-ram
-                    #  N1Standard/Preemptible N1 Predefined Instance Core -> n1-cpu
-                    #  RAM/Preemptible Memory-optimized Instance Ram -> memopt-ram
-                    what = None
-                    if sku["category"]["resourceGroup"] == "CPU":
-                        if sku["description"].startswith("Preemptible Memory-optimized Instance Core"):
-                            what = "memopt-cpu"
-                    elif sku["category"]["resourceGroup"] == "F1Micro":
-                        if sku["description"].startswith("Preemptible Micro Instance with burstable CPU"):
-                            what = "f1-cpu"
-                    elif sku["category"]["resourceGroup"] == "G1Small":
-                        if sku["description"].startswith("Preemptible Small Instance with 1 VCPU"):
-                            what = "g1-cpu"
-                    elif sku["category"]["resourceGroup"] == "N1Standard":
-                        if sku["description"].startswith("Preemptible N1 Predefined Instance Ram"):
-                            what = "n1-ram"
-                        elif sku["description"].startswith("Preemptible N1 Predefined Instance Core"):
-                            what = "n1-cpu"
-                    elif sku["category"]["resourceGroup"] == "RAM":
-                        if sku["description"].startswith("Preemptible Memory-optimized Instance Ram"):
-                            what = "memopt-ram"
-                    if what is None:
-                        continue
+                # group by sku["serviceRegions"] and sku["category"]["resourceGroup"]
+                price, unit = get_price(sku)
 
-                    if what.endswith("-cpu"):
-                        assert unit == "h"
-                    else:
-                        assert what.endswith("-ram")
-                        assert unit == "GiBy.h"
+                # I don't know what this is for, so make sure it's 0
+                if sku["description"].startswith("CPU Upgrade Premium"):
+                    assert price == 0, (
+                        "CPU Upgrade Premium is not 0 in %r/%r, please update pricing function"
+                        % (sku["serviceRegions"], sku["category"])
+                    )
+                    continue
 
-                    for region in sku["serviceRegions"]:
-                        zonedata = zones.setdefault(region, {})
-                        # TODO: the friendly description describes the zone, but I have no way of mapping
-                        #       that to an API zone (eg. Tokyo & Japan -> asia-northeast1-a & asia-northeast1-b
-                        zonedata.setdefault(what, []).append(price)
+                # these are the resourceGroup/descriptions we care about:
+                #  CPU/Preemptible Memory-optimized Instance Core -> memopt-cpu
+                #  F1Micro/Preemptible Micro Instance with burstable CPU -> f1-inst
+                #  G1Small/Preemptible Small Instance with 1 VCPU -> g1-inst
+                #  N1Standard/Preemptible N1 Predefined Instance Ram -> n1-ram
+                #  N1Standard/Preemptible N1 Predefined Instance Core -> n1-cpu
+                #  RAM/Preemptible Memory-optimized Instance Ram -> memopt-ram
+                what = None
+                if sku["category"]["resourceGroup"] == "CPU":
+                    if sku["description"].startswith("Preemptible Memory-optimized Instance Core"):
+                        what = "memopt-cpu"
+                elif sku["category"]["resourceGroup"] == "F1Micro":
+                    if sku["description"].startswith("Preemptible Micro Instance with burstable CPU"):
+                        what = "f1-inst"
+                elif sku["category"]["resourceGroup"] == "G1Small":
+                    if sku["description"].startswith("Preemptible Small Instance with 1 VCPU"):
+                        what = "g1-inst"
+                elif sku["category"]["resourceGroup"] == "N1Standard":
+                    if sku["description"].startswith("Preemptible N1 Predefined Instance Ram"):
+                        what = "n1-ram"
+                    elif sku["description"].startswith("Preemptible N1 Predefined Instance Core"):
+                        what = "n1-cpu"
+                elif sku["category"]["resourceGroup"] == "RAM":
+                    if sku["description"].startswith("Preemptible Memory-optimized Instance Ram"):
+                        what = "memopt-ram"
+                if what is None:
+                    continue
 
-            if data["nextPageToken"]:
-                params["pageToken"] = data["nextPageToken"]
-                data = requests.get("https://cloudbilling.googleapis.com/v1/services/" + service_id + "/skus",
-                                    params=params).json()
-            else:
-                break
+                if what.endswith("-cpu") or what.endswith("-inst"):
+                    assert unit == "h"
+                else:
+                    assert what.endswith("-ram")
+                    assert unit == "GiBy.h"
+
+                for region in sku["serviceRegions"]:
+                    zonedata = zones.setdefault(region, {})
+                    # TODO: the friendly description describes the zone, but I have no way of mapping
+                    #       that to an API zone (eg. Tokyo & Japan -> asia-northeast1-a & asia-northeast1-b
+                    zonedata.setdefault(what, []).append(price)
 
         # now we have all the data, and just have to calculate for our instance types and return
         result = {}  # {instance-type: {region: {az: [prices]}}}
         for instance_type, cores in CORES_PER_INSTANCE.items():
             mem = RAM_PER_INSTANCE[instance_type]
 
+            keys = {}
             if instance_type.startswith("n1-ultramem-") or instance_type.startswith("n1-megamem-"):
-                mem_key = "memopt-ram"
-                cpu_key = "memopt-cpu"
+                keys["mem"] = "memopt-ram"
+                keys["cpu"] = "memopt-cpu"
             elif instance_type.startswith("n1-"):
-                mem_key = "n1-ram"
-                cpu_key = "n1-cpu"
+                keys["mem"] = "n1-ram"
+                keys["cpu"] = "n1-cpu"
             elif instance_type == "f1-micro":
-                mem_key = None
-                cpu_key = "f1-cpu"
+                keys["instance"] = "f1-inst"
             else:
                 assert instance_type == "g1-small", "instance type is %s" % (instance_type,)
-                mem_key = None
-                cpu_key = "g1-cpu"
+                keys["instance"] = "g1-inst"
 
             for zone, prices in zones.items():
-                if mem_key is not None and mem_key not in prices:
+                if any(key not in prices for key in keys.values()):
                     continue
-                if cpu_key not in prices:
-                    continue
-                if mem_key is None:
-                    mem_price = 0
-                else:
-                    mem_price = max(prices[mem_key])
-                cpu_price = max(prices[cpu_key])
                 region = result.setdefault(instance_type, {region_name: {}})[region_name]
                 assert zone not in region
-                region[zone] = [cpu_price * cores + mem_price * mem]
+                region[zone] = [max(prices.get(keys.get("cpu"), [0])) * cores +
+                                max(prices.get(keys.get("mem"), [0])) * mem +
+                                max(prices.get(keys.get("instance"), [0]))]
 
         # since we can't distinguish between zones using the billing API (see TODO above)
         # return the pricing data for all zones within the GCE region
