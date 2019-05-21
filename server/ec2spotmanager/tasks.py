@@ -1,6 +1,7 @@
 import json
 import itertools
 import logging
+import sys
 import celery
 import redis
 from django.conf import settings
@@ -168,20 +169,28 @@ def _start_pool_instances(pool, config, count=1):
         #     -> next time around, we will request 1x 4-core instance
         count = max(1, count // cores_per_instance[instance_type])
 
-        # setup userdata
-        userdata = config.userdata.decode('utf-8')
+        userdata = None
+        if provider == 'EC2Spot':
+            # setup userdata
+            userdata = config.ec2_userdata.decode('utf-8')
 
-        # Copy the userdata_macros and populate with internal variables
-        userdata_macros = dict(config.userdata_macros)
-        userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
-        userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
+            # Copy the userdata_macros and populate with internal variables
+            userdata_macros = dict(config.ec2_userdata_macros)
+            userdata_macros["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+            userdata_macros["EC2SPOTMANAGER_PROVIDER"] = provider
+            userdata_macros["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
 
-        userdata = UserData.handle_tags(userdata, userdata_macros)
+            userdata = UserData.handle_tags(userdata, userdata_macros)
 
-        if not userdata:
-            logger.error("[Pool %d] Failed to compile userdata.", pool.id)
-            _update_pool_status(pool, "config-error", "Configuration error: Failed to compile userdata")
-            return
+            if not userdata:
+                logger.error("[Pool %d] Failed to compile userdata.", pool.id)
+                _update_pool_status(pool, "config-error", "Configuration error: Failed to compile userdata")
+                return
+
+        elif provider == 'GCE':
+            config.gce_env["EC2SPOTMANAGER_POOLID"] = str(pool.id)
+            config.gce_env["EC2SPOTMANAGER_PROVIDER"] = provider
+            config.gce_env["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
 
         image_key = "%s:image:%s:%s" % (cloud_provider.get_name(), region, image_name)
         image = cache.get(image_key)
@@ -190,15 +199,19 @@ def _start_pool_instances(pool, config, count=1):
             image = cloud_provider.get_image(region, config)
             cache.set(image_key, image, ex=24 * 3600)
 
-        requested_instances = cloud_provider.start_instances(config, region, zone, userdata,
-                                                             image, instance_type, count)
+        tags = cloud_provider.get_tags(pool.config.flatten())
+        tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
 
-        for requested_instance in requested_instances:
+        requested_instances = cloud_provider.start_instances(config, region, zone, userdata,
+                                                             image, instance_type, count, tags)
+
+        for instance_name, requested_instance in requested_instances.items():
             instance = Instance()
-            instance.instance_id = requested_instance
+            instance.instance_id = instance_name
+            instance.hostname = requested_instance['hostname']
             instance.region = region
             instance.zone = zone
-            instance.status_code = INSTANCE_STATE["requested"]
+            instance.status_code = requested_instance['status_code']
             instance.pool = pool
             instance.size = cores_per_instance[instance_type]
             instance.provider = provider
@@ -225,6 +238,9 @@ def _update_provider_status(provider, type_, message):
         entry.msg = message
         entry.isCritical = is_critical
         entry.save()
+        logger.error('Logging ProviderStatusEntry(%s): %s (critical=%r)', provider, message, is_critical)
+        if sys.exc_info()[0] is not None:
+            logger.exception("ProviderStatusEntry backtrace:")
     else:
         logger.warning('Ignoring provider error: already exists.')
 
@@ -244,6 +260,9 @@ def _update_pool_status(pool, type_, message):
         entry.msg = message
         entry.isCritical = is_critical
         entry.save()
+        logger.error('Logging PoolStatusEntry(%d): %s (critical=%r)', pool.pk, message, is_critical)
+        if sys.exc_info()[0] is not None:
+            logger.exception("PoolStatusEntry backtrace:")
     else:
         logger.warning('Ignoring pool error: already exists.')
 

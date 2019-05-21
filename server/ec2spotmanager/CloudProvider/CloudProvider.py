@@ -9,11 +9,14 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-@contact:    rforbes@mozilla.com
+@contact:    truber@mozilla.com
 '''
 
-from __future__ import print_function
-
+import functools
+import logging
+import socket
+import ssl
+import traceback
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -23,7 +26,7 @@ INSTANCE_STATE_CODE = {-1: "requested", 0: "pending", 16: "running", 32: "shutti
 INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.items())
 
 # List of currently supported providers. This and what is returned by get_name() must match
-PROVIDERS = ['EC2Spot']
+PROVIDERS = ['EC2Spot', 'GCE']
 
 
 class CloudProviderError(Exception):
@@ -42,6 +45,24 @@ class CloudProviderTemporaryFailure(CloudProviderError):
 
 class CloudProviderInstanceCountError(CloudProviderError):
     TYPE = 'max-spot-instance-count-exceeded'
+
+
+def wrap_provider_errors(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(*args, **kwds):
+        try:
+            return wrapped(*args, **kwds)
+        except (ssl.SSLError, socket.error) as exc:
+            logging.getLogger("ec2spotmanager").exception("")
+            raise CloudProviderTemporaryFailure('%s: %s' % (wrapped.__name__, exc))
+        except CloudProviderError:
+            logging.getLogger("ec2spotmanager").exception("")
+            raise
+        except Exception:
+            logging.getLogger("ec2spotmanager").exception("")
+            raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, traceback.format_exc()))
+
+    return wrapper
 
 
 @six.add_metaclass(ABCMeta)
@@ -73,7 +94,7 @@ class CloudProvider():
         return
 
     @abstractmethod
-    def start_instances(self, config, region, zone, userdata, image, instance_type, count):
+    def start_instances(self, config, region, zone, userdata, image, instance_type, count, tags):
         '''
         Start instances using specified configuration.
 
@@ -97,6 +118,9 @@ class CloudProvider():
 
         @ptype count: int
         @param count: number of instances to start
+
+        @ptype tags: dictionary
+        @param tags: instance tags.
 
         @rtype: list
         @return: Request IDs given to us by the cloud provider. This can be the instance ID if the provider

@@ -23,7 +23,7 @@ def test_update_pool_status():
     """test that update_pool_status utility function works"""
     config = create_config(name='config #1', size=4, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config)
     _update_pool_status(pool, 'price-too-low', 'testing')
     entry = PoolStatusEntry.objects.get()

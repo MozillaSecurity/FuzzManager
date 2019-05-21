@@ -136,12 +136,20 @@ def test_create_config_view_create(client):
                             'ec2_security_groups': 'group #1',
                             'ec2_instance_types': 'machine #1',
                             'ec2_image_name': 'ami #1',
-                            'userdata': 'lorem ipsum',
-                            'userdata_macros': 'yup=123,nope=456',
+                            'ec2_userdata': 'lorem ipsum',
+                            'ec2_userdata_macros': 'yup=123,nope=456',
                             'ec2_allowed_regions': 'nowhere',
-                            'ec2_max_price': '0.01',
-                            'ec2_tags': 'good=true, bad=false',
-                            'ec2_raw_config': 'hello=world'})
+                            'max_price': '0.01',
+                            'instance_tags': 'good=true, bad=false',
+                            'ec2_raw_config': 'hello=world',
+                            'gce_machine_types': 'machine #2',
+                            'gce_image_name': 'cos #1',
+                            'gce_container_name': 'alpine:latest',
+                            'gce_disk_size': '12',
+                            'gce_env': 'tag1=value1,tag2=value2',
+                            'gce_cmd': 'cat',
+                            'gce_args': 'foo,bar',
+                            'gce_raw_config': 'tag3=value3,tag4=value4'})
     LOG.debug(response)
     cfg = PoolConfiguration.objects.get(name='config #1')
     assert cfg.parent is None
@@ -152,14 +160,22 @@ def test_create_config_view_create(client):
     assert json.loads(cfg.ec2_security_groups) == ['group #1']
     assert json.loads(cfg.ec2_instance_types) == ['machine #1']
     assert cfg.ec2_image_name == 'ami #1'
-    assert cfg.userdata_file.read() == b'lorem ipsum'
-    assert json.loads(cfg.userdata_macros) == {'yup': '123', 'nope': '456'}
+    assert cfg.ec2_userdata_file.read() == b'lorem ipsum'
+    assert json.loads(cfg.ec2_userdata_macros) == {'yup': '123', 'nope': '456'}
     assert json.loads(cfg.ec2_allowed_regions) == ['nowhere']
-    assert cfg.ec2_max_price == decimal.Decimal('0.01')
-    assert json.loads(cfg.ec2_tags) == {'good': 'true', 'bad': 'false'}
+    assert cfg.max_price == decimal.Decimal('0.01')
+    assert json.loads(cfg.instance_tags) == {'good': 'true', 'bad': 'false'}
     assert json.loads(cfg.ec2_raw_config) == {'hello': 'world'}
+    assert json.loads(cfg.gce_machine_types) == ['machine #2']
+    assert cfg.gce_image_name == 'cos #1'
+    assert cfg.gce_container_name == 'alpine:latest'
+    assert cfg.gce_disk_size == 12
+    assert json.loads(cfg.gce_env) == {'tag1': 'value1', 'tag2': 'value2'}
     assert response.status_code == requests.codes['found']
     assert response.url == reverse('ec2spotmanager:configview', kwargs={'configid': cfg.pk})
+    assert json.loads(cfg.gce_cmd) == ['cat']
+    assert json.loads(cfg.gce_args) == ['foo', 'bar']
+    assert json.loads(cfg.gce_raw_config) == {'tag3': 'value3', 'tag4': 'value4'}
 
 
 def test_create_config_view_clone(client):
@@ -172,10 +188,10 @@ def test_create_config_view_clone(client):
                         ec2_security_groups=['group #1'],
                         ec2_instance_types=['machine #1'],
                         ec2_image_name='ami #1',
-                        userdata_macros={'yup': '123', 'nope': '456'},
+                        ec2_userdata_macros={'yup': '123', 'nope': '456'},
                         ec2_allowed_regions=['nowhere'],
-                        ec2_max_price='0.01',
-                        ec2_tags={'good': 'true', 'bad': 'false'},
+                        max_price='0.01',
+                        instance_tags={'good': 'true', 'bad': 'false'},
                         ec2_raw_config={'hello': 'world'})
     response = client.get(reverse("ec2spotmanager:configcreate"), {'clone': cfg.pk})
     LOG.debug(response)
@@ -206,10 +222,10 @@ def test_view_config_view(client):
                         ec2_security_groups=['group #1'],
                         ec2_instance_types=['machine #1'],
                         ec2_image_name='ami #1',
-                        userdata_macros={'yup': '123', 'nope': '456'},
+                        ec2_userdata_macros={'yup': '123', 'nope': '456'},
                         ec2_allowed_regions=['nowhere'],
-                        ec2_max_price='0.01',
-                        ec2_tags={'good': 'true', 'bad': 'false'},
+                        max_price='0.01',
+                        instance_tags={'good': 'true', 'bad': 'false'},
                         ec2_raw_config={'hello': 'world'})
     client.login(username='test', password='test')
     response = client.get(reverse("ec2spotmanager:configview", kwargs={'configid': cfg.pk}))
@@ -240,10 +256,10 @@ def test_edit_config_view(client):
                         ec2_security_groups=['group #1'],
                         ec2_instance_types=['machine #1'],
                         ec2_image_name='ami #1',
-                        userdata_macros={'yup': '123', 'nope': '456'},
+                        ec2_userdata_macros={'yup': '123', 'nope': '456'},
                         ec2_allowed_regions=['nowhere'],
-                        ec2_max_price='0.01',
-                        ec2_tags={'good': 'true', 'bad': 'false'},
+                        max_price='0.01',
+                        instance_tags={'good': 'true', 'bad': 'false'},
                         ec2_raw_config={'hello': 'world'})
     client.login(username='test', password='test')
     response = client.get(reverse("ec2spotmanager:configedit", kwargs={'configid': cfg.pk}))

@@ -37,28 +37,31 @@ def assert_contains(response, text):
 
 
 def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_name=None, ec2_security_groups=None,
-                  ec2_instance_types=None, ec2_image_name=None, userdata_macros=None, ec2_allowed_regions=None,
-                  ec2_max_price=None, ec2_tags=None, ec2_raw_config=None, userdata=None):
+                  ec2_instance_types=None, ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
+                  max_price=None, instance_tags=None, ec2_raw_config=None, ec2_userdata=None, gce_image_name=None,
+                  gce_container_name=None):
     result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
                                               ec2_key_name=ec2_key_name,
                                               ec2_image_name=ec2_image_name,
-                                              ec2_max_price=ec2_max_price)
+                                              max_price=max_price,
+                                              gce_image_name=gce_image_name,
+                                              gce_container_name=gce_container_name)
     if ec2_security_groups is not None:
         result.ec2_security_groups_list = ec2_security_groups
     if ec2_instance_types is not None:
         result.ec2_instance_types_list = ec2_instance_types
     if ec2_allowed_regions is not None:
         result.ec2_allowed_regions_list = ec2_allowed_regions
-    if userdata_macros is not None:
-        result.userdata_macros_dict = userdata_macros
-    if ec2_tags is not None:
-        result.ec2_tags_dict = ec2_tags
+    if ec2_userdata_macros is not None:
+        result.ec2_userdata_macros_dict = ec2_userdata_macros
+    if instance_tags is not None:
+        result.instance_tags_dict = instance_tags
     if ec2_raw_config is not None:
         result.ec2_raw_config_dict = ec2_raw_config
-    if userdata is not None:
-        if not result.userdata_file.name:
-            result.userdata_file.save("default.sh", ContentFile(""))
-        result.userdata = userdata
+    if ec2_userdata is not None:
+        if not result.ec2_userdata_file.name:
+            result.ec2_userdata_file.save("default.sh", ContentFile(""))
+        result.ec2_userdata = ec2_userdata
     result.storeTestAndSave()
     LOG.debug("Created PoolConfiguration pk=%d", result.pk)
     return result

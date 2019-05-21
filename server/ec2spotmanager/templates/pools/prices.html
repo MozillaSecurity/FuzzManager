@@ -9,13 +9,15 @@
     <table class="table table-condensed table-hover table-bordered">
         <thead>
             <tr>
+                <th style="width: 100px;">Provider</th>
                 <th style="width: 100px;">Zone</th>
                 <th style="width: 25px;">Current Price (USD)</th>
             </tr>
         </thead>
         <tbody>
-            {% for zone, price in prices %}
+            {% for provider, zone, price in prices %}
             <tr class="{% cycle 'odd' 'even' %}">
+                <td>{{ provider }}</td>
                 <td>{{ zone }}</td>
                 <td>{{ price }}</td>
             </tr>{% endfor %}
