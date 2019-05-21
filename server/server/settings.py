@@ -248,6 +248,11 @@ LOGGING = {
             'propagate': True,
             'level': 'INFO',
         },
+        'libcloud': {
+            'handlers': ['ec2spotmanager_logfile'],
+            'propagate': True,
+            'level': 'INFO',
+        },
         'ec2spotmanager': {
             'handlers': ['ec2spotmanager_logfile'],
             'propagate': True,
@@ -266,6 +271,15 @@ LOGGING = {
 #
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
+
+# Google Compute credentials
+# This is using service account credentials
+# TODO: It should also be possible to use "installed application" or GCE role to authenticate, see libcloud docs
+#
+GCE_CLIENT_EMAIL = None  # these 3 fields are extracted from the JSON auth file
+GCE_PROJECT_ID = None
+GCE_PRIVATE_KEY = None  # PK as a string blob
+GCE_API_KEY = None  # this is a separate key created at "APIs & Services" / "Credentials"
 
 # Crashmanager configuration
 #

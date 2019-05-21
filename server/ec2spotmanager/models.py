@@ -34,33 +34,56 @@ class PoolConfiguration(models.Model):
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
+    max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
+    instance_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_types = models.CharField(max_length=4095, blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    userdata_file = models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
-                                     upload_to=get_storage_path, blank=True, null=True)
-    userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
+    ec2_userdata_file = \
+        models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
+                         upload_to=get_storage_path, blank=True, null=True)
+    ec2_userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
-    ec2_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_raw_config = models.CharField(max_length=4095, blank=True, null=True)
+    gce_machine_types = models.CharField(max_length=4095, blank=True, null=True)
+    gce_image_name = models.CharField(max_length=255, blank=True, null=True)
+    gce_container_name = models.CharField(max_length=512, blank=True, null=True)
+    gce_docker_privileged = models.BooleanField(default=False)
+    gce_disk_size = models.IntegerField(default=8, blank=True, null=True)
+    gce_cmd = models.CharField(max_length=4095, blank=True, null=True)
+    gce_args = models.CharField(max_length=4095, blank=True, null=True)
+    gce_env = models.CharField(max_length=4095, blank=True, null=True)
+    # this is a special case that allows copying ec2_userdata_macros into gce_env during flatten()
+    # we typically use userdata_macros to be the env vars provided to the userdata script
+    gce_env_include_macros = models.BooleanField(default=False)
+    gce_raw_config = models.CharField(max_length=4095, blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
-        self.ec2_tags_dict = None
-        self.ec2_tags_override = None
+        self.instance_tags_dict = None
+        self.instance_tags_override = None
         self.ec2_raw_config_dict = None
         self.ec2_raw_config_override = None
-        self.userdata_macros_dict = None
-        self.userdata_macros_override = None
-        self.userdata = None
+        self.ec2_userdata_macros_dict = None
+        self.ec2_userdata_macros_override = None
+        self.ec2_userdata = None
         self.ec2_security_groups_list = None
         self.ec2_security_groups_override = None
         self.ec2_allowed_regions_list = None
         self.ec2_allowed_regions_override = None
         self.ec2_instance_types_list = None
         self.ec2_instance_types_override = None
+        self.gce_machine_types_list = None
+        self.gce_machine_types_override = None
+        self.gce_cmd_list = None
+        self.gce_cmd_override = None
+        self.gce_args_list = None
+        self.gce_args_override = None
+        self.gce_env_dict = None
+        self.gce_env_override = None
+        self.gce_raw_config_dict = None
+        self.gce_raw_config_override = None
 
         # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
@@ -73,22 +96,38 @@ class PoolConfiguration(models.Model):
         self.config_fields = [
             'size',
             'cycle_interval',
+            'max_price',
             'ec2_key_name',
             'ec2_image_name',
-            'ec2_max_price',
-            'userdata',
+            'ec2_userdata',
+            'gce_image_name',
+            'gce_container_name',
+            'gce_disk_size',
+            'gce_env_include_macros',
+            'gce_docker_privileged',
+        ]
+
+        # Boolean fields are special in that they can be False and still be valid, though they are required.
+        self.boolean_fields = [
+            'gce_env_include_macros',
+            'gce_docker_privileged',
         ]
 
         self.list_config_fields = [
             'ec2_security_groups',
             'ec2_allowed_regions',
             'ec2_instance_types',
+            'gce_machine_types',
+            'gce_cmd',
+            'gce_args',
         ]
 
         self.dict_config_fields = [
-            'ec2_tags',
+            'instance_tags',
             'ec2_raw_config',
-            'userdata_macros',
+            'ec2_userdata_macros',
+            'gce_env',
+            'gce_raw_config',
         ]
 
         # For performance reasons we do not deserialize these fields
@@ -124,8 +163,30 @@ class PoolConfiguration(models.Model):
                 flat_parent_config[config_field] = getattr(self, config_field)
 
         for field in self.dict_config_fields:
+            if field == "gce_env" and self.gce_env_include_macros:
+                # handle gce_env specially if gce_env_include_macros
+                continue
             obj = getattr(self, field + "_dict")
             override = getattr(self, field + "_override")
+            if obj and not override:
+                flat_parent_config[field].update(obj)
+            elif obj and override:
+                flat_parent_config[field] = obj
+            elif override:
+                flat_parent_config[field] = {}
+
+        # special flag to include macros in GCE environment
+        # this is done after the loop to guarantee that userdata_macros have been flattened
+        if self.gce_env_include_macros:
+            field = "gce_env"
+            gce_env = getattr(self, field + "_dict")
+            override = getattr(self, field + "_override")
+            # start with userdata_macros
+            obj = flat_parent_config.ec2_userdata_macros.copy()
+            # overlay gce_env
+            if gce_env:
+                obj.update(gce_env)
+            # now apply same override logic as other fields
             if obj and not override:
                 flat_parent_config[field].update(obj)
             elif obj and override:
@@ -186,21 +247,21 @@ class PoolConfiguration(models.Model):
             if sobj:
                 setattr(self, field + '_list', json.loads(sobj))
 
-        if self.userdata_file:
-            self.userdata_file.open(mode='rb')
-            self.userdata = self.userdata_file.read()
-            self.userdata_file.close()
+        if self.ec2_userdata_file:
+            self.ec2_userdata_file.open(mode='rb')
+            self.ec2_userdata = self.ec2_userdata_file.read()
+            self.ec2_userdata_file.close()
 
     def storeTestAndSave(self):
-        if self.userdata:
+        if self.ec2_userdata:
             # Save the file using save() to avoid problems when initially
             # creating the directory. We use os.path.split to keep the
             # original filename assigned when saving the file.
-            self.userdata_file.save(os.path.split(self.userdata_file.name)[-1],
-                                    ContentFile(self.userdata), save=False)
-        elif self.userdata_file:
-            self.userdata_file.delete()
-            self.userdata_file = None
+            self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1],
+                                        ContentFile(self.ec2_userdata), save=False)
+        elif self.ec2_userdata_file:
+            self.ec2_userdata_file.delete()
+            self.ec2_userdata_file = None
 
         self.save()
 
@@ -216,25 +277,42 @@ class PoolConfiguration(models.Model):
 
     def getMissingParameters(self):
         flat_config = self.flatten()
+        ec2_missing_fields = []
+        gce_missing_fields = []
         missing_fields = []
 
         # Check regular fields, none of them is optional
         for field in self.config_fields:
+            if field in self.boolean_fields:
+                continue
             if field not in flat_config or not flat_config[field]:
-                missing_fields.append(field)
+                if field.startswith("ec2_"):
+                    ec2_missing_fields.append(field)
+                elif field.startswith("gce_"):
+                    gce_missing_fields.append(field)
+                else:
+                    missing_fields.append(field)
 
         # Most dicts/lists are optional except for the ec2_allowed_regions
         # field. Without that, we obviously cannot spawn any instances, so
         # we should report this field if it's missing or empty.
         if not flat_config.ec2_allowed_regions:
-            missing_fields.append("ec2_allowed_regions")
+            ec2_missing_fields.append("ec2_allowed_regions")
+        if not flat_config.ec2_instance_types:
+            ec2_missing_fields.append("ec2_instance_types")
+        if not flat_config.gce_machine_types:
+            gce_missing_fields.append("gce_machine_types")
 
-        return missing_fields
+        # if either ec2 or gce are complete, consider the config complete
+        if not gce_missing_fields or not ec2_missing_fields:
+            return missing_fields
+
+        return missing_fields + ec2_missing_fields + gce_missing_fields
 
 
 @receiver(models.signals.post_delete, sender=PoolConfiguration)
 def deletePoolConfigurationFiles(sender, instance, **kwargs):
-    if instance.userdata:
+    if instance.ec2_userdata:
         filename = instance.file.path
         filedir = os.path.dirname(filename)
 

@@ -1,9 +1,5 @@
 import datetime
-import functools
 import logging
-import socket
-import ssl
-import traceback
 import botocore
 import boto3
 import boto.ec2
@@ -12,27 +8,9 @@ from django.utils import timezone
 from django.conf import settings
 from laniakea.core.providers.ec2 import EC2Manager
 from .CloudProvider import (CloudProvider, CloudProviderTemporaryFailure, CloudProviderInstanceCountError,
-                            CloudProviderError, INSTANCE_STATE)
+                            INSTANCE_STATE, wrap_provider_errors)
 from ..tasks import SPOTMGR_TAG
 from ..common.ec2 import CORES_PER_INSTANCE
-
-
-def wrap_provider_errors(wrapped):
-    @functools.wraps(wrapped)
-    def wrapper(*args, **kwds):
-        try:
-            return wrapped(*args, **kwds)
-        except (ssl.SSLError, socket.error) as exc:
-            logging.getLogger("ec2spotmanager").exception("")
-            raise CloudProviderTemporaryFailure('%s: %s' % (wrapped.__name__, exc))
-        except CloudProviderError:
-            logging.getLogger("ec2spotmanager").exception("")
-            raise
-        except Exception:
-            logging.getLogger("ec2spotmanager").exception("")
-            raise CloudProviderError('%s: unhandled error: %s' % (wrapped.__name__, traceback.format_exc()))
-
-    return wrapper
 
 
 class EC2SpotCloudProvider(CloudProvider):
@@ -77,7 +55,7 @@ class EC2SpotCloudProvider(CloudProvider):
             self.logger.info("Canceling %s requests in region %s", len(instance_ids), region)
 
     @wrap_provider_errors
-    def start_instances(self, config, region, zone, userdata, image, instance_type, count=1):
+    def start_instances(self, config, region, zone, userdata, image, instance_type, count, _tags):
         images = self._create_laniakea_images(config)
 
         self.logger.info("Using instance type %s in region %s with availability zone %s.",
@@ -97,13 +75,16 @@ class EC2SpotCloudProvider(CloudProvider):
             instances = []
             self.logger.info("Creating %dx %s instances... (%d cores total)", count,
                              instance_type, count * CORES_PER_INSTANCE[instance_type])
-            for ec2_request in cluster.create_spot_requests(config.ec2_max_price *
+            for ec2_request in cluster.create_spot_requests(config.max_price *
                                                             CORES_PER_INSTANCE[instance_type],
                                                             delete_on_termination=True,
                                                             timeout=10 * 60):
                 instances.append(ec2_request)
 
-            return instances
+            return {instance: {'status_code': INSTANCE_STATE["requested"],
+                               'instance_id': instance,
+                               'hostname': ''}
+                    for instance in instances}
 
         except (boto.exception.EC2ResponseError, boto.exception.BotoServerError) as msg:
             if "MaxSpotInstanceCountExceeded" in str(msg):
@@ -207,11 +188,11 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @staticmethod
     def get_max_price(config):
-        return config.ec2_max_price
+        return config.max_price
 
     @staticmethod
     def get_tags(config):
-        return config.ec2_tags
+        return config.instance_tags
 
     @staticmethod
     def get_name():
@@ -219,7 +200,7 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @staticmethod
     def config_supported(config):
-        fields = ['ec2_allowed_regions', 'ec2_max_price', 'ec2_key_name', 'ec2_security_groups',
+        fields = ['ec2_allowed_regions', 'max_price', 'ec2_key_name', 'ec2_security_groups',
                   'ec2_instance_types', 'ec2_image_name']
         return all(config.get(key) for key in fields)
 

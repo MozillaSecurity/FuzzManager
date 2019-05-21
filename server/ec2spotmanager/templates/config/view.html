@@ -6,12 +6,13 @@
 <div class="panel panel-default">
 	<div class="panel-heading"><i class="glyphicon glyphicon-scale"></i> Instance Pools</div>
 	<div class="panel-body">
-			<a href="{% url 'ec2spotmanager:configcreate' %}?clone={{ config.pk }}" class="btn btn-default">Clone</a>
-			<a href="{% url 'ec2spotmanager:configedit' config.pk %}" class="btn btn-default">Edit</a>
-			<a href="{% url 'ec2spotmanager:configdel' config.pk %}" class="btn btn-danger">Delete</a>
-			<a href="{% url 'ec2spotmanager:configcycle' config.pk %}" class="btn btn-danger">Cycle pools using this configuration</a>
+		<a href="{% url 'ec2spotmanager:configcreate' %}?clone={{ config.pk }}" class="btn btn-default">Clone</a>
+		<a href="{% url 'ec2spotmanager:configedit' config.pk %}" class="btn btn-default">Edit</a>
+		<a href="{% url 'ec2spotmanager:configdel' config.pk %}" class="btn btn-danger">Delete</a>
+		<a href="{% url 'ec2spotmanager:configcycle' config.pk %}" class="btn btn-danger">Cycle pools using this configuration</a>
 	</div>
 	<table class="table table-condensed table-hover table-bordered">
+		<tr><td colspan=2><h4>Provider Common Configuration</h4></td></tr>
 		<tr><td>Name</td><td>{{ config.name }}</td></tr>
 		<tr><td>Parent</td><td>
 			{% if config.parent %}
@@ -22,16 +23,26 @@
 		</td></tr>
 		<tr><td>Size (cores)</td><td>{% if config.size %} {{ config.size }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>Cycle Interval</td><td>{% if config.cycle_interval %} {{ config.cycle_interval }} seconds {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>Maximum Price (per core)</td><td>{% if config.max_price %} {{ config.max_price }} USD {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>Additional Instance Tags</td><td>{% if config.instance_tags_dict %} {{ config.instance_tags_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.instance_tags_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td colspan=2><h4>EC2 Specific Configuration</h4></td></tr>
 		<tr><td>EC2 Key Name</td><td>{% if config.ec2_key_name %} {{ config.ec2_key_name }} {% else %} Not specified {% endif %}</td></tr>
 		<tr><td>EC2 Security Groups</td><td>{% if config.ec2_security_groups_list %} {{ config.ec2_security_groups_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_security_groups_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Instance Types</td><td>{% if config.ec2_instance_types_list %} {{ config.ec2_instance_types_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_instance_types_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Image Name</td><td>{% if config.ec2_image_name %} {{ config.ec2_image_name }} {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>Userdata File</td><td>{% if config.userdata_file %} {{ config.userdata_file }} {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>Userdata Macros</td><td>{% if config.userdata_macros_dict %} {{ config.userdata_macros_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.userdata_macros_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>EC2 Userdata File</td><td>{% if config.ec2_userdata_file %} {{ config.ec2_userdata_file }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>EC2 Userdata Macros</td><td>{% if config.ec2_userdata_macros_dict %} {{ config.ec2_userdata_macros_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.ec2_userdata_macros_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Allowed Regions</td><td>{% if config.ec2_allowed_regions_list %} {{ config.ec2_allowed_regions_list|listcsv }} {% else %} Not specified {% endif %}{% if config.ec2_allowed_regions_override %} (overwrite parent) {% endif %}</td></tr>
-		<tr><td>EC2 Maximum Price (per core)</td><td>{% if config.ec2_max_price %} {{ config.ec2_max_price }} USD {% else %} Not specified {% endif %}</td></tr>
-		<tr><td>EC2 Additional Tags</td><td>{% if config.ec2_tags_dict %} {{ config.ec2_tags_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.ec2_tags_override %} (overwrite parent) {% endif %}</td></tr>
 		<tr><td>EC2 Additional Raw Configuration</td><td>{% if config.ec2_raw_config_dict %} {{ config.ec2_raw_config_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.ec2_raw_config_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td colspan=2><h4>Google Compute Specific Configuration</h4></td></tr>
+		<tr><td>GCE Machine Types</td><td>{% if config.gce_machine_types_list %} {{ config.gce_machine_types_list|listcsv }} {% else %} Not specified {% endif %}{% if config.gce_machine_types_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>GCE Image Name</td><td>{% if config.gce_image_name %} {{ config.gce_image_name }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>GCE Container Name</td><td>{% if config.gce_container_name %} {{ config.gce_container_name }} {% else %} Not specified {% endif %}{% if config.gce_docker_privileged %} (with extended privileges) {% endif %}</td></tr>
+		<tr><td>GCE Disk Size (GB)</td><td>{% if config.gce_disk_size %} {{ config.gce_disk_size }} {% else %} Not specified {% endif %}</td></tr>
+		<tr><td>GCE Container Command</td><td>{% if config.gce_cmd_list %} {{ config.gce_cmd_list|listcsv }} {% else %} Not specified {% endif %}{% if config.gce_cmd_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>GCE Container Arguments</td><td>{% if config.gce_args_list %} {{ config.gce_args_list|listcsv }} {% else %} Not specified {% endif %}{% if config.gce_args_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>GCE Container Environment</td><td>{% if config.gce_env_dict %} {{ config.gce_env_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.gce_env_include_macros %} (include &quot;EC2 Userdata Macros&quot;) {% endif %}{% if config.gce_env_override %} (overwrite parent) {% endif %}</td></tr>
+		<tr><td>GCE Additional Raw Configuration</td><td>{% if config.gce_raw_config_dict %} {{ config.gce_raw_config_dict|dictcsv }} {% else %} Not specified {% endif %}{% if config.gce_raw_config_override %} (overwrite parent) {% endif %}</td></tr>
 	</table>
 </div>
 {% endblock body_content %}

@@ -42,22 +42,22 @@ def test_update_pool_graph(mocker):
                             size=1, cycle_interval=1,
                             ec2_key_name='a',
                             ec2_image_name='a',
-                            ec2_max_price='0.1',
-                            userdata='a',
+                            max_price='0.1',
+                            ec2_userdata='a',
                             ec2_allowed_regions=['a', 'b', 'e', 'f'])
     config2 = create_config(name='config #2',
                             size=1, cycle_interval=1,
                             ec2_key_name='a',
                             ec2_image_name='a',
-                            ec2_max_price='0.1',
-                            userdata='a',
+                            max_price='0.1',
+                            ec2_userdata='a',
                             ec2_allowed_regions=['a', 'b', 'c', 'd'])
     config3 = create_config(name='config #3',
                             size=1, cycle_interval=1,
                             ec2_key_name='a',
                             ec2_image_name='a',
-                            ec2_max_price='0.1',
-                            userdata='a',
+                            max_price='0.1',
+                            ec2_userdata='a',
                             ec2_allowed_regions=['a', 'b'])
     pool1 = create_pool(config=config1, enabled=True)
     pool2 = create_pool(config=config2, enabled=True)
@@ -166,8 +166,8 @@ def test_update_pool_graph_unsupported_running(mocker):
                            size=1, cycle_interval=1,
                            ec2_key_name='a',
                            ec2_image_name='a',
-                           ec2_max_price='0.1',
-                           userdata='a',
+                           max_price='0.1',
+                           ec2_userdata='a',
                            ec2_allowed_regions=['a'])
     pool = create_pool(config=config, enabled=False)
     create_instance(None, pool=pool, status_code=INSTANCE_STATE['requested'],

@@ -29,6 +29,8 @@
       {% endif %}
       {% csrf_token %}
 
+      <h4>Provider Common Configuration</h4>
+
       <label for="id_parent">Parent Configuration: </label>
       <select id="id_parent" name="parent">
         <option value="-1">None</option>
@@ -53,6 +55,21 @@
       <input id="id_cycle_interval" class="form-control" name="cycle_interval" type="text"
              value="{{ config.cycle_interval|default:"" }}">
       <br/>
+
+      <label for="id_max_price">Maximum Price (per core)</label><br/>
+      <input id="id_max_price" class="form-control" name="max_price" type="text"
+             value="{{ config.max_price|default:"" }}">
+      <br/>
+
+      <label for="id_instance_tags">Additional Instance Tags</label><br/>
+      <input id="id_instance_tags" class="form-control" name="instance_tags" type="text"
+             value="{{ config.instance_tags_dict|dictcsv }}">
+      <input id="id_instance_tags_override" name="instance_tags_override" type="checkbox"
+             {% if config.instance_tags_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_instance_tags_override">Overwrite parent config</label>
+      <br/>
+
+      <h4>EC2 Specific Configuration</h4>
 
       <label for="id_ec2_key_name">EC2 Key Name</label><br/>
       <input id="id_ec2_key_name" class="form-control" name="ec2_key_name" type="text"
@@ -80,24 +97,24 @@
              value="{{ config.ec2_image_name|default:"" }}">
       <br/>
 
-      <label for="id_userdata">EC2 Userdata Script</label><br/>
-      <textarea id="id_userdata" class="form-control" name="userdata"
-                spellcheck='false'>{{ config.userdata|default:"" }}</textarea>
+      <label for="id_ec2_userdata">EC2 Userdata Script</label><br/>
+      <textarea id="id_ec2_userdata" class="form-control" name="ec2_userdata"
+                spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
       <br/>
 
       <fieldset class="ec2-radio-group">
       <legend>EC2 Userdata Script Line Endings</legend>
-      <label><input type="radio" name="ec2_userdata_ff" value="unix"{% if userdata_ff == 'unix' %} checked="checked"{% endif %}> Unix</label>
-      <label><input type="radio" name="ec2_userdata_ff" value="dos"{% if userdata_ff == 'dos' %} checked="checked"{% endif %}> DOS</label>
+      <label><input type="radio" name="ec2_ec2_userdata_ff" value="unix"{% if ec2_userdata_ff == 'unix' %} checked="checked"{% endif %}> Unix</label>
+      <label><input type="radio" name="ec2_ec2_userdata_ff" value="dos"{% if ec2_userdata_ff == 'dos' %} checked="checked"{% endif %}> DOS</label>
       </fieldset>
       <br/>
 
-      <label for="id_userdata_macros">EC2 Userdata Macros</label><br/>
-      <input id="id_userdata_macros" class="form-control" name="userdata_macros" type="text"
-             value="{{ config.userdata_macros_dict|dictcsv }}">
-      <input id="id_userdata_macros_override" name="userdata_macros_override" type="checkbox"
-             {% if config.userdata_macros_override %}checked{% endif %} title="Overwrite parent config">
-      <label class="no-bold" for="id_userdata_macros_override">Overwrite parent config</label>
+      <label for="id_ec2_userdata_macros">EC2 Userdata Macros</label><br/>
+      <input id="id_ec2_userdata_macros" class="form-control" name="ec2_userdata_macros" type="text"
+             value="{{ config.ec2_userdata_macros_dict|dictcsv }}">
+      <input id="id_ec2_userdata_macros_override" name="ec2_userdata_macros_override" type="checkbox"
+             {% if config.ec2_userdata_macros_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_ec2_userdata_macros_override">Overwrite parent config</label>
       <br/>
 
       <label for="id_ec2_allowed_regions">EC2 Allowed Regions</label><br/>
@@ -108,25 +125,75 @@
       <label class="no-bold" for="id_ec2_allowed_regions_override">Overwrite parent config</label>
       <br/>
 
-      <label for="id_ec2_max_price">EC2 Maximum Price (per core)</label><br/>
-      <input id="id_ec2_max_price" class="form-control" name="ec2_max_price" type="text"
-             value="{{ config.ec2_max_price|default:"" }}">
-      <br/>
-
-      <label for="id_ec2_tags">EC2 Additional Tags</label><br/>
-      <input id="id_ec2_tags" class="form-control" name="ec2_tags" type="text"
-             value="{{ config.ec2_tags_dict|dictcsv }}">
-      <input id="id_ec2_tags_override" name="ec2_tags_override" type="checkbox"
-             {% if config.ec2_tags_override %}checked{% endif %} title="Overwrite parent config">
-      <label class="no-bold" for="id_ec2_tags_override">Overwrite parent config</label>
-      <br/>
-
       <label for="id_ec2_raw_config">Additional EC2 Raw Configuration</label><br/>
       <input id="id_ec2_raw_config" class="form-control" name="ec2_raw_config" type="text"
              value="{{ config.ec2_raw_config_dict|dictcsv }}">
       <input id="id_ec2_raw_config_override" name="ec2_raw_config_override" type="checkbox"
              {% if config.ec2_raw_config_override %}checked{% endif %} title="Overwrite parent config">
       <label class="no-bold" for="id_ec2_raw_config_override">Overwrite parent config</label>
+      <br/>
+
+      <h4>Google Compute Specific Configuration</h4>
+
+      <label for="id_gce_machine_types">GCE Machine Types</label><br/>
+      <input id="id_gce_machine_types" class="form-control" name="gce_machine_types" type="text"
+             value="{{ config.gce_machine_types_list|listcsv }}">
+      <input id="id_gce_machine_types_override" name="gce_machine_types_override" type="checkbox"
+             {% if config.gce_machine_types_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_machine_types_override">Overwrite parent config</label>
+      <br/>
+
+      <label for="id_gce_image_name">GCE Image Name</label><br/>
+      <input id="id_gce_image_name" class="form-control" name="gce_image_name" type="text"
+             value="{{ config.gce_image_name|default:"" }}">
+      <br/>
+
+      <label for="id_gce_container_name">GCE Container Name</label><br/>
+      <input id="id_gce_container_name" class="form-control" name="gce_container_name" type="text"
+             value="{{ config.gce_container_name|default:"" }}">
+      <input id="id_gce_docker_privileged" name="gce_docker_privileged" type="checkbox"
+             {% if config.gce_docker_privileged %}checked{% endif %} title="Give extended privileges to this container">
+      <label class="no-bold" for="id_gce_docker_privileged">Give extended privileges to this container</label>
+      <br/>
+
+      <label for="id_gce_disk_size">GCE Disk Size (GB)</label><br/>
+      <input id="id_gce_disk_size" class="form-control" name="gce_disk_size" type="text" value="{{ config.gce_disk_size|default:"" }}">
+      <br/>
+
+      <label for="id_gce_cmd">GCE Container Command</label><br/>
+      <input id="id_gce_cmd" class="form-control" name="gce_cmd" type="text"
+             value="{{ config.gce_cmd_list|listcsv }}">
+      <input id="id_gce_cmd_override" name="gce_cmd_override" type="checkbox"
+             {% if config.gce_cmd_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_cmd_override">Overwrite parent config</label>
+      <br/>
+
+      <label for="id_gce_args">GCE Container Arguments</label><br/>
+      <input id="id_gce_args" class="form-control" name="gce_args" type="text"
+             value="{{ config.gce_args_list|listcsv }}">
+      <input id="id_gce_args_override" name="gce_args_override" type="checkbox"
+             {% if config.gce_args_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_args_override">Overwrite parent config</label>
+      <br/>
+
+      <label for="id_gce_env">GCE Container Environment</label><br/>
+      <input id="id_gce_env" class="form-control" name="gce_env" type="text"
+             value="{{ config.gce_env_dict|dictcsv }}">
+      <input id="id_gce_env_override" name="gce_env_override" type="checkbox"
+             {% if config.gce_env_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_env_override">Overwrite parent config</label>
+      <br />
+      <input id="id_gce_env_include_macros" name="gce_env_include_macros" type="checkbox"
+             {% if config.gce_env_include_macros %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_env_include_macros">Include &quot;EC2 Userdata Macros&quot;</label>
+      <br/>
+
+      <label for="id_gce_raw_config">Additional GCE Raw Configuration</label><br/>
+      <input id="id_gce_raw_config" class="form-control" name="gce_raw_config" type="text"
+             value="{{ config.gce_raw_config_dict|dictcsv }}">
+      <input id="id_gce_raw_config_override" name="gce_raw_config_override" type="checkbox"
+             {% if config.gce_raw_config_override %}checked{% endif %} title="Overwrite parent config">
+      <label class="no-bold" for="id_gce_raw_config_override">Overwrite parent config</label>
       <br/>
 
       <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>

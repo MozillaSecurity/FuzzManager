@@ -17,7 +17,7 @@ import pytest
 from django.utils import timezone
 from . import UncatchableException, create_config, create_instance, create_pool
 from ec2spotmanager.tasks import update_requests, update_instances, cycle_and_terminate_disabled, \
-    check_and_resize_pool, _terminate_instance_ids, _terminate_instance_request_ids
+    check_and_resize_pool, _terminate_instance_ids, _terminate_instance_request_ids, SPOTMGR_TAG
 from ec2spotmanager.models import Instance  # PoolStatusEntry
 from ec2spotmanager.CloudProvider.CloudProvider import INSTANCE_STATE, CloudProviderTemporaryFailure
 
@@ -33,7 +33,7 @@ def test_nothing_to_do():
     """nothing is done if no pools are enabled"""
 
     config = create_config(name='config #1', size=1, cycle_interval=1, ec2_key_name='a', ec2_image_name='a',
-                           ec2_max_price='0.1', userdata='a', ec2_allowed_regions=['a'])
+                           max_price='0.1', ec2_userdata='a', ec2_allowed_regions=['a'])
     pool = create_pool(config=config)
     update_requests('prov1', 'a', pool.pk)
     update_instances('prov1', 'a')
@@ -81,7 +81,7 @@ def test_create_instance(mocker):
     # create database state
     config = create_config(name='config #1', size=1, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond', 'toronto'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond', 'toronto'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True)
 
     # call function under test
@@ -124,7 +124,7 @@ def test_fulfilled_spot_instance(mocker):
     # create database state
     config = create_config(name='config #1', size=1, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True)
     orig = create_instance(None, pool=pool, status_code=INSTANCE_STATE['requested'],
                            ec2_instance_id='req123', ec2_region="redmond", ec2_zone="mshq")
@@ -142,7 +142,7 @@ def test_fulfilled_spot_instance(mocker):
     assert instance.hostname == 'fm-test.fuzzing.allizom.com'
     assert instance.status_code == INSTANCE_STATE["running"]
     assert instance.instance_id == 'i-123'
-    assert boto_instance._test_tags == {'SpotManager-Updatable': '1'}  # pylint: disable=protected-access
+    assert boto_instance._test_tags == {SPOTMGR_TAG + '-Updatable': '1'}  # pylint: disable=protected-access
 
 
 def test_instance_shutting_down(mocker):
@@ -188,7 +188,7 @@ def test_instance_shutting_down(mocker):
     # create database state
     config = create_config(name='config #1', size=2, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True)
     orig1 = create_instance(None, pool=pool, status_code=INSTANCE_STATE['running'],
                             ec2_instance_id='i-123', ec2_region="redmond", ec2_zone="mshq")
@@ -231,7 +231,7 @@ def test_instance_not_updatable(mocker):
     # create database state
     config = create_config(name='config #1', size=1, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True, last_cycled=timezone.now())
     orig = create_instance(None, pool=pool, status_code=INSTANCE_STATE['running'],
                            ec2_instance_id='i-123', ec2_region="redmond", ec2_zone="mshq")
@@ -274,7 +274,7 @@ def test_instance_price_high(mocker):
     # create database state
     config = create_config(name='config #1', size=1, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.01', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.01', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True)
 
     # call function under test
@@ -323,7 +323,7 @@ def test_spot_instance_blacklist(mocker):
     # create database state
     config = create_config(name='config #1', size=1, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, enabled=True)
     create_instance(None, pool=pool, status_code=INSTANCE_STATE['requested'],
                     ec2_instance_id='req123', ec2_region="redmond", ec2_zone="mshq")
@@ -360,7 +360,7 @@ def test_pool_disabled(mocker):
     # create database state
     config = create_config(name='config #1', size=2, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config)
     create_instance(None, pool=pool, status_code=INSTANCE_STATE['running'],
                     ec2_instance_id='i-123', ec2_region="redmond", ec2_zone="mshq")
@@ -382,7 +382,7 @@ def test_pool_trim():
     # create database state
     config = create_config(name='config #1', size=4, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
-                           ec2_allowed_regions=['redmond'], ec2_max_price='0.1', userdata=b'cleverscript')
+                           ec2_allowed_regions=['redmond'], max_price='0.1', ec2_userdata=b'cleverscript')
     pool = create_pool(config=config, last_cycled=timezone.now() - datetime.timedelta(seconds=300), enabled=True)
     create_instance(None, pool=pool, status_code=INSTANCE_STATE['running'],
                     created=timezone.now() - datetime.timedelta(seconds=100),
