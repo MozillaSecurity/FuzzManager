@@ -39,12 +39,13 @@ def assert_contains(response, text):
 def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_name=None, ec2_security_groups=None,
                   ec2_instance_types=None, ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
                   max_price=None, instance_tags=None, ec2_raw_config=None, ec2_userdata=None, gce_image_name=None,
-                  gce_container_name=None):
+                  gce_container_name=None, gce_disk_size=None):
     result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
                                               ec2_key_name=ec2_key_name,
                                               ec2_image_name=ec2_image_name,
                                               max_price=max_price,
                                               gce_image_name=gce_image_name,
+                                              gce_disk_size=gce_disk_size,
                                               gce_container_name=gce_container_name)
     if ec2_security_groups is not None:
         result.ec2_security_groups_list = ec2_security_groups

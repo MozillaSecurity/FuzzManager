@@ -340,6 +340,7 @@ def test_rest_pool_config_get_sub_flat(api_client):
                          max_price=0.01,
                          instance_tags={'good': 'true', 'bad': 'false'},
                          ec2_raw_config={'hello': 'world'},
+                         gce_disk_size=8,
                          gce_image_name="cos #1",
                          gce_container_name="alpine:latest")
     cfg2 = create_config(name='config #2',

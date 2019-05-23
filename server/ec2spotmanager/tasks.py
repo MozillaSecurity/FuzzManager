@@ -494,7 +494,8 @@ def cycle_and_terminate_disabled(provider, region):
                 elif not pool.isEnabled:
                     pool_disable[instance.pool_id] = "Disabled"
                 elif pool.last_cycled is None or \
-                        pool.last_cycled + timezone.timedelta(seconds=pool.config.flatten().cycle_interval) < timezone.now():
+                        pool.last_cycled + timezone.timedelta(seconds=pool.config.flatten().cycle_interval) \
+                        < timezone.now():
                     pool_disable[instance.pool_id] = "Needs to be cycled"
                 else:
                     pool_disable[instance.pool_id] = ""
