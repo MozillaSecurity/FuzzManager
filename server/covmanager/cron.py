@@ -22,7 +22,7 @@ logger = logging.getLogger("covmanager")
 
 def create_weekly_report_mc(revision):
     from crashmanager.models import Client
-    from .models import Collection, Repository
+    from .models import Collection, Repository, Report
     from .tasks import aggregate_coverage_data
 
     # Some of our builds (e.g. JS shell) use the HG short revision format
@@ -47,6 +47,11 @@ def create_weekly_report_mc(revision):
     mergedCollection.client = client
     mergedCollection.coverage = None
     mergedCollection.save()
+
+    report = Report()
+    report.coverage = mergedCollection
+    report.data_created = last_monday
+    report.save()
 
     # New set of tools is the combination of all tools involved
     tools = []
