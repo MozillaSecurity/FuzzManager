@@ -5,8 +5,8 @@ from crashmanager import views
 
 
 router = routers.DefaultRouter()
-router.register(r'crashes', views.CrashEntryViewSet, base_name='crashes')
-router.register(r'buckets', views.BucketViewSet, base_name='buckets')
+router.register(r'crashes', views.CrashEntryViewSet, basename='crashes')
+router.register(r'buckets', views.BucketViewSet, basename='buckets')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),

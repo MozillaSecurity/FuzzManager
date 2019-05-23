@@ -4,9 +4,9 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
-router.register(r'collections', views.CollectionViewSet, base_name='collections')
-router.register(r'repositories', views.RepositoryViewSet, base_name='repositories')
-router.register(r'reportconfigurations', views.ReportConfigurationViewSet, base_name='reportconfigurations')
+router.register(r'collections', views.CollectionViewSet, basename='collections')
+router.register(r'repositories', views.RepositoryViewSet, basename='repositories')
+router.register(r'reportconfigurations', views.ReportConfigurationViewSet, basename='reportconfigurations')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),

@@ -5,7 +5,7 @@ from ec2spotmanager import views
 
 
 router = routers.DefaultRouter()
-router.register(r'configurations', views.PoolConfigurationViewSet, base_name='configurations')
+router.register(r'configurations', views.PoolConfigurationViewSet, basename='configurations')
 
 urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
