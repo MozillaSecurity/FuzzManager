@@ -9,7 +9,7 @@ import hashlib
 import json
 
 
-@app.task
+@app.task(ignore_result=True)
 def check_revision_update(pk):
     from covmanager.models import Collection, Repository  # noqa
     collection = Collection.objects.get(pk=pk)
@@ -30,7 +30,7 @@ def check_revision_update(pk):
     return
 
 
-@app.task
+@app.task(ignore_result=True)
 def aggregate_coverage_data(pk, pks):
     from covmanager.models import Collection, CollectionFile  # noqa
     from FTB import CoverageHelper # noqa
@@ -79,7 +79,7 @@ def aggregate_coverage_data(pk, pks):
     return
 
 
-@app.task
+@app.task(ignore_result=True)
 def calculate_report_summary(pk):
     from covmanager.models import ReportConfiguration, ReportSummary
     summary = ReportSummary.objects.get(pk=pk)

@@ -10,22 +10,22 @@ from celeryconf import app
 SIGNATURES_ZIP = os.path.realpath(os.path.join(getattr(settings, 'SIGNATURE_STORAGE', None), 'signatures.zip'))
 
 
-@app.task
+@app.task(ignore_result=True)
 def bug_update_status():
     call_command('bug_update_status')
 
 
-@app.task
+@app.task(ignore_result=True)
 def cleanup_old_crashes():
     call_command('cleanup_old_crashes')
 
 
-@app.task
+@app.task(ignore_result=True)
 def triage_new_crashes():
     call_command('triage_new_crashes')
 
 
-@app.task
+@app.task(ignore_result=True)
 def export_signatures():
     fd, tmpf = mkstemp(prefix="fm-sigs-", suffix=".zip")
     os.close(fd)

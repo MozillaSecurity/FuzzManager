@@ -10,7 +10,7 @@ from . import cron  # noqa ensure cron tasks get registered
 triage_cache = OrderedDict()
 
 
-@app.task
+@app.task(ignore_result=True)
 def triage_new_crash(pk):
     from .models import CrashEntry, Bucket
     entry = CrashEntry.objects.get(pk=pk)
@@ -59,4 +59,3 @@ def triage_new_crash(pk):
 
     entry.triagedOnce = True
     entry.save()
-    return

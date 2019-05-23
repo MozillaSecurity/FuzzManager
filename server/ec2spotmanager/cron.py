@@ -23,7 +23,7 @@ STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statist
 CHECK_POOL_LOCK_EXPIRY = 30 * 60
 
 
-@app.task
+@app.task(ignore_result=True)
 def update_stats():
     from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance
 
@@ -169,7 +169,7 @@ def _release_lock(lock_key):
         LOG.warning('Lock ec2spotmanager:check_instance_pools(%s) was already expired.', lock_key)
 
 
-@app.task
+@app.task(ignore_result=True)
 def check_instance_pools():
     """EC2SpotManager daemon.
 
@@ -294,7 +294,7 @@ def check_instance_pools():
             raise exc
 
 
-@app.task
+@app.task(ignore_result=True)
 def update_prices():
     """Periodically refresh spot price history and store it in redis to be consumed when spot instances are created.
 

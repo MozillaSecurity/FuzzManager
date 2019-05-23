@@ -59,7 +59,7 @@ def create_weekly_report_mc(revision):
     aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
 
-@app.task
+@app.task(ignore_result=True)
 def create_current_weekly_report_mc():
     COVERAGE_REVISION_URL = getattr(settings, 'COVERAGE_REVISION_URL', None)
 
