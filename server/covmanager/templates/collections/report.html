@@ -230,46 +230,67 @@ let covmanager = new Vue({
     publish: function (report) {
       let url = URLS.reports_api + "update/" + report.id + "/"
       let data = { "public" : !report.public }
-      this.update(url, data)
+      let desc = "publish this report"
+
+      if (report.public) {
+        desc = "unpublish this report"
+      }
+
+      this.update(url, data, desc)
     },
     promote: function (report) {
       let url = URLS.reports_api + "update/" + report.id + "/"
       let data = {}
+      let desc = "promote this report"
 
       if (report.is_quarterly) {
         data["is_quarterly"] = false
         data["is_monthly"] = false
+        desc = "demote this report"
       } else if (report.is_monthly) {
         data["is_quarterly"] = true
       } else {
         data["is_monthly"] = true
       }
 
-      this.update(url, data)
+      this.update(url, data, desc)
     },
-    update: function (url, data) {
+    update: function (url, data, desc) {
       let self = this
 
-      return fetch(url, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': this.csrftoken
-          },
-          body: JSON.stringify(data),
-        })
-        .then(response => {
-          this.loading = false
-          if (response.ok) {
-            return response.json()
-          }
-          sweetAlert('Oops', E_SERVER_ERROR, 'error')
-        })
-        .then(() => {
-          self.fetch()
-        })
+      sweetAlert({
+        title: "Confirm Action",
+        text: 'Would you really like to ' + desc + "?",
+        type: 'warning',
+        showCancelButton: true,
+        animation: "slide-from-top"
+      }, function(confirmed) {
+        if (!confirmed) {
+          /* User pressed cancel button */
+          return;
+        }
+
+        return fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': self.csrftoken
+            },
+            body: JSON.stringify(data),
+          })
+          .then(response => {
+            this.loading = false
+            if (response.ok) {
+              return response.json()
+            }
+            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+          })
+          .then(() => {
+            self.fetch()
+          })
+      })
     },
   }
 })
