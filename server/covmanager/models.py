@@ -203,3 +203,17 @@ class ReportConfiguration(models.Model):
 class ReportSummary(models.Model):
     collection = models.OneToOneField(Collection)
     cached_result = models.TextField(null=True, blank=True)
+
+
+class Report(models.Model):
+    # This field is used to store the date when the data itself was created.
+    # In particular, this is *not* necessarily the same as coverage.created
+    # because aggregated collections can be created later, losing the original
+    # creation dates. This date will be used as a reference time frame to
+    # determine week, month, quarter, etc. for displaying purposes.
+    data_created = models.DateTimeField(default=timezone.now)
+    public = models.BooleanField(blank=False, default=False)
+    coverage = models.ForeignKey(Collection, blank=False, null=False, on_delete=models.deletion.CASCADE)
+
+    is_monthly = models.BooleanField(blank=False, default=False)
+    is_quarterly = models.BooleanField(blank=False, default=False)
