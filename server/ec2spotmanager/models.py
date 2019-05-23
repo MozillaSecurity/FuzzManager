@@ -50,7 +50,7 @@ class PoolConfiguration(models.Model):
     gce_image_name = models.CharField(max_length=255, blank=True, null=True)
     gce_container_name = models.CharField(max_length=512, blank=True, null=True)
     gce_docker_privileged = models.BooleanField(default=False)
-    gce_disk_size = models.IntegerField(default=8, blank=True, null=True)
+    gce_disk_size = models.IntegerField(blank=True, null=True)
     gce_cmd = models.CharField(max_length=4095, blank=True, null=True)
     gce_args = models.CharField(max_length=4095, blank=True, null=True)
     gce_env = models.CharField(max_length=4095, blank=True, null=True)

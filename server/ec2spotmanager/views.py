@@ -128,7 +128,7 @@ def viewPool(request, poolid):
             cloud_provider = CloudProvider.get_instance(msg.provider)
             if cloud_provider.config_supported(pool.config.flatten()):
                 relevant_providers[msg.provider] = True
-            elif Instance.objects.filter(pool=pool, provider=status.provider).exists():
+            elif Instance.objects.filter(pool=pool, provider=msg.provider).exists():
                 relevant_providers[msg.provider] = True
             else:
                 relevant_providers[msg.provider] = False

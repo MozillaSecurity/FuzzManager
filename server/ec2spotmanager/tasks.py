@@ -494,7 +494,7 @@ def cycle_and_terminate_disabled(provider, region):
                 elif not pool.isEnabled:
                     pool_disable[instance.pool_id] = "Disabled"
                 elif pool.last_cycled is None or \
-                        pool.last_cycled + timezone.timedelta(seconds=pool.config.cycle_interval) < timezone.now():
+                        pool.last_cycled + timezone.timedelta(seconds=pool.config.flatten().cycle_interval) < timezone.now():
                     pool_disable[instance.pool_id] = "Needs to be cycled"
                 else:
                     pool_disable[instance.pool_id] = ""
@@ -552,14 +552,14 @@ def check_and_resize_pool(pool_id):
             _update_pool_status(pool, "config-error", "Configuration error (missing: %r)." % (missing,))
             return []
 
+        config = pool.config.flatten()
+
         # if any pools need cycling, that will be complete now, so update the time
         if pool.last_cycled is None or \
-                pool.last_cycled + timezone.timedelta(seconds=pool.config.cycle_interval) < timezone.now():
+                pool.last_cycled + timezone.timedelta(seconds=config.cycle_interval) < timezone.now():
             logger.info("[Pool %d] All instances cycled.", pool_id)
             pool.last_cycled = timezone.now()
             pool.save()
-
-        config = pool.config.flatten()
 
         instance_cores_missing = config.size
         running_instances = []

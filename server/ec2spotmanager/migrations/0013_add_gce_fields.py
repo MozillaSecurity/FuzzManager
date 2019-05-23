@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='poolconfiguration',
             name='gce_disk_size',
-            field=models.IntegerField(blank=True, default=8, null=True),
+            field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name='poolconfiguration',
