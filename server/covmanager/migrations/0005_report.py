@@ -22,7 +22,8 @@ class Migration(migrations.Migration):
                 ('public', models.BooleanField(default=False)),
                 ('is_monthly', models.BooleanField(default=False)),
                 ('is_quarterly', models.BooleanField(default=False)),
-                ('coverage', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='covmanager.Collection')),
+                ('coverage',
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='covmanager.Collection')),
             ],
         ),
     ]
