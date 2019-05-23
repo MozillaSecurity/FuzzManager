@@ -17,7 +17,7 @@
     </div>
 
     <div style="font-size: 16px;">
-    The list below contains all aggregated coverage reports that are automatically produced.
+    The list below contains all coverage reports that are automatically produced.
     This includes weekly, monthly and quarterly reports.</br></br>
 
     You can view each report individually, inspect its summary or select multiple reports
@@ -25,27 +25,24 @@
     </div>
 
   </div>
-  <table class="table table-condensed table-hover table-bordered table-db">
+  <table class="table table-condensed table-bordered table-db">
     <thead>
       <tr>
-        <th @click="sortBy('id')" :class="{ active: sortKey == 'id' }" style="width: 25px;">ID</th>
         <th @click="sortBy('description')" :class="{ active: sortKey == 'description' }" style="width: 150px;">Description</th>
-
-        <th @click="sortBy('created')" :class="{ active: sortKey == 'created' }" style="width: 80px;">Created</th>
-        <th @click="sortBy('repository')" :class="{ active: sortKey == 'repository' }" style="width: 50px;">Repository</th>
-        <th @click="sortBy('revision')" :class="{ active: sortKey == 'revision' }" style="width: 100px;">Revision</th>
+        <th @click="sortBy('data_created')" :class="{ active: sortKey == 'data_created' }" style="width: 80px;">Created</th>
         <th style="width: 100px;"></th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="collection in ordered_collections" :id="collection.id" @click="collection_click_handler(collection.id)">
-        <td><a :href="`../collections/${collection.id}/browse`">!{ collection.id }!</a></td>
-        <td>!{ collection.description }!</td>
-
-        <td>!{ collection.created | formatDate }!</td>
-        <td>!{ collection.repository }!</td>
-        <td>!{ collection.revision }!</td>
-        <td><button @click="summary(collection.id)" class="btn btn-default">View Report Summary</button></td>
+      <tr v-for="report in ordered_reports" :id="report.id" @click="report_click_handler(report.id)" :class="report.css_class">
+        <td>!{ report.description }!</td>
+        <td>!{ report.data_created | formatDate }!</td>
+        <td>
+          <button @click="summary(report.coverage)" class="btn btn-default">View Report Summary</button>
+          <button @click="browse(report.coverage)" class="btn btn-default">Browse</button>
+          <button @click="publish(report)" v-if="unrestricted" class="btn btn-default">!{ report.publish_text }!</button>
+          <button @click="promote(report)" v-if="unrestricted" class="btn btn-default">!{ report.promote_text }!</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -53,26 +50,35 @@
 
 <script>
 let URLS = {
-  collections_api: '{% url 'covmanager:reports_api' %}',
+  collections_api: '{% url 'covmanager:collections_api' %}',
+  reports_api: '{% url 'covmanager:reports_api' %}',
   diff: '{% url 'covmanager:collections_diff' %}',
   patch: '{% url 'covmanager:collections_patch' %}',
 }
+
+let unrestricted = false;
+{% if perms.crashmanager.view_crashmanager %}
+unrestricted = true;
+{% endif %}
+
 
 let pmanager = new HashParamManager()
 
 let covmanager = new Vue({
   el: '#main',
   data: {
-    collections: null,
+    csrftoken: "",
+    reports: null,
     sortKey: "",
     reverse: false,
     block_fetch: true,
+    unrestricted: unrestricted,
 
-    selected_collections: [],
+    selected_reports: [],
   },
   created: function () {
-    let self = this
-    self.fetch()
+    this.csrftoken = getCSRFToken()
+    this.fetch()
   },
   filters: {
     formatDate: function (datetime) {
@@ -80,13 +86,56 @@ let covmanager = new Vue({
     },
   },
   computed: {
-    ordered_collections: function () {
-      return _.orderBy(this.collections, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    ordered_reports: function () {
+      if (this.reports) {
+        for (let report of this.reports) {
+          report.css_class = {}
+          let selected = this.selected_reports.indexOf(report.id) >= 0
+
+          report.css_class['report'] = true
+
+          // Compute Publish/Unpublish button text
+          if (report.public) {
+            report.publish_text = "Unpublish"
+          } else {
+            report.publish_text = "Publish"
+          }
+
+          // Compute description and css class
+          if (report.is_quarterly) {
+            report.css_class['report-quarterly'] = true
+            report.description = "Quarterly Report"
+
+            if (selected)
+              report.css_class['report-quarterly-selected'] = true
+
+            report.promote_text = "Demote to Weekly"
+          } else if (report.is_monthly) {
+            report.css_class['report-monthly'] = true
+            report.description = "Monthly Report"
+
+            report.promote_text = "Promote to Quarterly"
+
+            if (selected)
+              report.css_class['report-monthly-selected'] = true
+          } else {
+            report.description = "Weekly Report"
+
+            report.promote_text = "Promote to Monthly"
+
+            if (selected)
+              report.css_class['report-selected'] = true
+          }
+        }
+      }
+
+
+      return _.orderBy(this.reports, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
     },
   },
   methods: {
     apiurl: function() {
-      let url = URLS.collections_api
+      let url = URLS.reports_api
       let query = pmanager.get_query()
 
       if (query) {
@@ -108,7 +157,7 @@ let covmanager = new Vue({
         sweetAlert('Oops', E_SERVER_ERROR, 'error')
         this.loading = false
       }).then(json => {
-        this.collections = json["results"]
+        this.reports = json["results"]
         this.loading = false
         this.block_fetch = false
       })
@@ -116,11 +165,15 @@ let covmanager = new Vue({
     navigate: function (dst) {
       let ids = []
 
-      if (this.selected_collections.length > 0) {
-        ids = this.selected_collections;
+      if (this.selected_reports.length > 0) {
+        for (let report of this.reports) {
+          if (this.selected_reports.indexOf(report.id) >= 0) {
+            ids.push(report.coverage)
+          }
+        }
       } else {
-        for (let i = 0; i < this.ordered_collections.length; ++i) {
-          ids.push(this.ordered_collections[i].id)
+        for (let i = 0; i < this.ordered_reports.length; ++i) {
+          ids.push(this.ordered_reports[i].coverage)
         }
       }
 
@@ -138,23 +191,66 @@ let covmanager = new Vue({
       this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
       this.sortKey = sortKey
     },
+    browse: function(id) {
+      window.open(`../collections/${id}/browse/`, '_blank').focus()
+    },
     summary: function(id) {
       window.open(`../collections/${id}/summary/`, '_blank').focus()
     },
-    collection_click_handler: function(id) {
+    report_click_handler: function(id) {
       var self = this
-      let idx = self.selected_collections.indexOf(id)
+      let idx = self.selected_reports.indexOf(id)
       let target = $("#" + id)
 
       if (idx < 0) {
-        self.selected_collections.push(id)
-        if (target)
-          target.toggleClass("collection-selected", true)
+        self.selected_reports.push(id)
       } else {
-        self.selected_collections.splice(idx, 1)
-        if (target)
-          target.toggleClass("collection-selected", false)
+        self.selected_reports.splice(idx, 1)
       }
+    },
+    publish: function (report) {
+      let url = URLS.reports_api + "update/" + report.id + "/"
+      let data = { "public" : !report.public }
+      this.update(url, data)
+    },
+    promote: function (report) {
+      let url = URLS.reports_api + "update/" + report.id + "/"
+      let data = {}
+
+      if (report.is_quarterly) {
+        data["is_quarterly"] = false
+        data["is_monthly"] = false
+      } else if (report.is_monthly) {
+        data["is_quarterly"] = true
+      } else {
+        data["is_monthly"] = true
+      }
+
+      this.update(url, data)
+    },
+    update: function (url, data) {
+      let self = this
+
+      return fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': this.csrftoken
+          },
+          body: JSON.stringify(data),
+        })
+        .then(response => {
+          this.loading = false
+          if (response.ok) {
+            return response.json()
+          }
+          sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        })
+        .then(() => {
+          self.fetch()
+        })
     },
   }
 })

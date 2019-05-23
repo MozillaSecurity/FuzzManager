@@ -85,8 +85,33 @@
  * Collection browser
  */
 
+.report:hover {
+  /*border: solid 1px #000000;*/
+  font-weight: bold;
+}
+
 .collection-selected {
   background: rgba(240, 130, 15, 0.3);
+}
+
+.report-selected {
+  background: rgba(240, 130, 15, 0.2);
+}
+
+.report-quarterly {
+  background: rgba(75, 0, 200, 0.3);
+}
+
+.report-monthly {
+  background: rgba(50, 255, 0, 0.3);
+}
+
+.report-quarterly-selected {
+  background: rgba(75, 0, 200, 0.5);
+}
+
+.report-monthly-selected {
+  background: rgba(50, 255, 0, 0.5);
 }
 
 /*
