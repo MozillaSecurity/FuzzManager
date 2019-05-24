@@ -39,10 +39,10 @@
         <td>!{ report.description }!</td>
         <td>!{ report.data_created | formatDate }!</td>
         <td>
-          <button @click="summary(report.coverage)" class="btn btn-default">View Report Summary</button>
-          <button @click="browse(report.coverage)" class="btn btn-default">Browse</button>
-          <button @click="publish(report)" v-if="unrestricted" class="btn btn-default">!{ report.publish_text }!</button>
-          <button @click="promote(report)" v-if="unrestricted" class="btn btn-default">!{ report.promote_text }!</button>
+          <button @click.stop="summary(report.coverage)" class="btn btn-default">View Report Summary</button>
+          <button @click.stop="browse(report.coverage)" class="btn btn-default">Browse</button>
+          <button @click.stop="publish(report)" v-if="unrestricted" class="btn btn-default">!{ report.publish_text }!</button>
+          <button @click.stop="promote(report)" v-if="unrestricted" class="btn btn-default">!{ report.promote_text }!</button>
         </td>
       </tr>
     </tbody>
