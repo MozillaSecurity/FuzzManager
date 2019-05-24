@@ -12,6 +12,7 @@
     <div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
+      <button @click="toggle_unpublished()" v-if="unrestricted" class="btn btn-default">!{ unpublished_btn_text }!</button>
       <!--<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>-->
     </div>
     </div>
@@ -73,12 +74,21 @@ let covmanager = new Vue({
     reverse: false,
     block_fetch: true,
     unrestricted: unrestricted,
+    show_unpublished: false,
 
     selected_reports: [],
   },
   created: function () {
     this.csrftoken = getCSRFToken()
     this.fetch()
+
+    pmanager.update_state()
+    this.show_unpublished = pmanager.get_value('unpublished', false)
+  },
+  watch: {
+    show_unpublished: function () {
+      return this.fetch()
+    }
   },
   filters: {
     formatDate: function (datetime) {
@@ -86,6 +96,13 @@ let covmanager = new Vue({
     },
   },
   computed: {
+    unpublished_btn_text: function() {
+      if (this.show_unpublished) {
+        return "Hide Unpublished Reports"
+      } else {
+        return "Show Unpublished Reports"
+      }
+    },
     ordered_reports: function () {
       if (this.reports) {
         function formatMonthly(d) {
@@ -227,6 +244,14 @@ let covmanager = new Vue({
         self.selected_reports.splice(idx, 1)
       }
     },
+    toggle_unpublished: function() {
+      if (this.show_unpublished) {
+        pmanager.update_value("unpublished", "")
+      } else {
+        pmanager.update_value("unpublished", "1")
+      }
+      pmanager.update_hash()
+    },
     publish: function (report) {
       let url = URLS.reports_api + "update/" + report.id + "/"
       let data = { "public" : !report.public }
@@ -294,5 +319,15 @@ let covmanager = new Vue({
     },
   }
 })
+
+// This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
+window.onhashchange = function () {
+  pmanager.update_state()
+
+  const show_unpublished = pmanager.get_value('unpublished', false)
+  if (covmanager.show_unpublished != show_unpublished) {
+    covmanager.show_unpublished = show_unpublished
+  }
+}
 </script>
 {% endblock body_content %}
