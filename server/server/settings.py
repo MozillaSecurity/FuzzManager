@@ -280,6 +280,7 @@ GCE_CLIENT_EMAIL = None  # these 3 fields are extracted from the JSON auth file
 GCE_PROJECT_ID = None
 GCE_PRIVATE_KEY = None  # PK as a string blob
 GCE_API_KEY = None  # this is a separate key created at "APIs & Services" / "Credentials"
+GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
 # Crashmanager configuration
 #

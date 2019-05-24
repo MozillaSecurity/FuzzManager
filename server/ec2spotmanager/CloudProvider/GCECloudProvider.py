@@ -77,7 +77,7 @@ class GCECloudProvider(CloudProvider):
             self.cluster = ComputeEngineManager(settings.GCE_CLIENT_EMAIL,
                                                 settings.GCE_PRIVATE_KEY,
                                                 settings.GCE_PROJECT_ID)
-            self.cluster.connect()
+            self.cluster.connect(credential_file=settings.GCE_AUTH_CACHE)
         return self.cluster
 
     @wrap_provider_errors
