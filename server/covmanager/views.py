@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
@@ -14,8 +14,8 @@ from wsgiref.util import FileWrapper
 
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
-from .models import Collection, Repository, ReportConfiguration, ReportSummary
-from .serializers import CollectionSerializer, RepositorySerializer, ReportConfigurationSerializer
+from .models import Collection, Repository, ReportConfiguration, ReportSummary, Report
+from .serializers import CollectionSerializer, RepositorySerializer, ReportConfigurationSerializer, ReportSerializer
 from .tasks import aggregate_coverage_data, calculate_report_summary
 from crashmanager.models import Tool
 
@@ -588,30 +588,54 @@ class CollectionViewSet(mixins.CreateModelMixin,
     ]
 
 
-class ReportViewSet(mixins.ListModelMixin,
+class ReportFilterBackend(filters.BaseFilterBackend):
+    """
+    Accepts broad filtering by q parameter to search multiple fields
+    """
+    def filter_queryset(self, request, queryset, view):
+        """
+        Return a filtered queryset.
+        """
+        # Return early on empty queryset
+        if not queryset:
+            return queryset
+
+        can_see_unpublished = False
+        if request.user and request.user.is_authenticated:
+            can_see_unpublished = request.user.has_perm('crashmanager.view_crashmanager')
+
+        # We allow users to see unpublished reports, if they ask for it
+        # and also have the permissions to do so.
+        unpublished_requested = request.method != 'GET' or "unpublished" in request.GET
+
+        # TODO: Right now we use the view_crashmanager permission because that
+        # typically indicates full/internal access. But in the future, this
+        # might be replaced by its own permission.
+        if not unpublished_requested or not can_see_unpublished:
+            queryset = queryset.filter(public=True)
+
+        return queryset.order_by('-pk')
+
+
+class ReportViewSet(mixins.UpdateModelMixin,
+                    mixins.ListModelMixin,
                     mixins.RetrieveModelMixin,
                     viewsets.GenericViewSet):
     """
-    API endpoint that allows viewing aggregated Collections (prefiltered)
+    API endpoint that allows viewing Reports
     """
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-
-    report_filters = getattr(settings, 'COV_REPORTS_FILTER', ["Report"])
-    report_filters = [Q(description__contains=v) for v in report_filters]
-    filter = report_filters.pop()
-
-    for report_filter in report_filters:
-        filter |= report_filter
-
-    queryset = Collection.objects.filter(filter)
-
-    serializer_class = CollectionSerializer
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
     paginate_by_param = 'limit'
-    filter_backends = [
-        JsonQueryFilterBackend,
-        SimpleQueryFilterBackend,
-        CollectionFilterBackend
-    ]
+    filter_backends = [ReportFilterBackend]
+
+    def partial_update(self, request, *args, **kwargs):
+        if (not request.user or not request.user.is_authenticated or
+                not request.user.has_perm('crashmanager.view_crashmanager')):
+            raise PermissionDenied()
+
+        return super(ReportViewSet, self).partial_update(request, *args, **kwargs)
 
 
 class RepositoryViewSet(mixins.ListModelMixin,

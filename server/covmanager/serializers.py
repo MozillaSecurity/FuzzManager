@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from crashmanager.models import Client, Tool
-from .models import Collection, CollectionFile, Repository, ReportConfiguration
+from .models import Collection, CollectionFile, Repository, ReportConfiguration, Report
 
 
 class InvalidArgumentException(APIException):
@@ -150,3 +150,25 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
 
         # Create our ReportConfiguration instance
         return super(ReportConfigurationSerializer, self).create(attrs)
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = (
+            'id', 'data_created', 'public', 'coverage', 'is_monthly', 'is_quarterly'
+        )
+        read_only_fields = ('id', 'data_created', 'coverage')
+
+    def __init__(self, *args, **kwargs):
+        super(ReportSerializer, self).__init__(*args, **kwargs)
+
+        request = self.context.get("request")
+        if request and hasattr(request, "GET"):
+            exclude_fields = request.GET.get("__exclude", None)
+            if exclude_fields:
+                exclude_fields = exclude_fields.split(',')
+
+        if exclude_fields:
+            for field in exclude_fields:
+                self.fields.pop(field)
