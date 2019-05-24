@@ -85,18 +85,27 @@
  * Collection browser
  */
 
-.report:hover {
-  /*border: solid 1px #000000;*/
-  font-weight: bold;
-}
-
 .collection-selected {
   background: rgba(240, 130, 15, 0.3);
 }
 
-.report-selected {
+/*
+ * Reports page
+ */
+
+.report-quarterly:not(.no-hover):hover {
+  background: rgba(75, 0, 200, 0.4);
+}
+
+.report-monthly:not(.no-hover):hover {
+  background: rgba(50, 255, 0, 0.4);
+}
+
+.report-weekly:not(.no-hover):hover {
   background: rgba(240, 130, 15, 0.2);
 }
+
+.report-weekly {}
 
 .report-quarterly {
   background: rgba(75, 0, 200, 0.3);
@@ -112,6 +121,10 @@
 
 .report-monthly-selected {
   background: rgba(50, 255, 0, 0.5);
+}
+
+.report-weekly-selected {
+  background: rgba(240, 130, 15, 0.3);
 }
 
 /*

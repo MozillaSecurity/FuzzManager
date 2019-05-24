@@ -130,6 +130,10 @@ let covmanager = new Vue({
 
           report.css_class['report'] = true
 
+          if (selected) {
+            report.css_class['no-hover'] = true
+          }
+
           // Compute Publish/Unpublish button text
           if (report.public) {
             report.publish_text = "Unpublish"
@@ -155,12 +159,13 @@ let covmanager = new Vue({
             if (selected)
               report.css_class['report-monthly-selected'] = true
           } else {
+            report.css_class['report-weekly'] = true
             report.description = "Weekly Report"
 
             report.promote_text = "Promote to Monthly"
 
             if (selected)
-              report.css_class['report-selected'] = true
+              report.css_class['report-weekly-selected'] = true
           }
         }
       }
