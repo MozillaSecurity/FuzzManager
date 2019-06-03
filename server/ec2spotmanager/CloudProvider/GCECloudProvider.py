@@ -13,9 +13,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import logging
 import requests
+import time
 import yaml
 from django.conf import settings
-from laniakea.core.providers.gce import ComputeEngineManager
+from laniakea.core.providers.gce import ComputeEngineManager, ComputeEngineManagerException
 from .CloudProvider import (CloudProvider, INSTANCE_STATE, INSTANCE_STATE_CODE, wrap_provider_errors)
 from ..tasks import SPOTMGR_TAG
 from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
@@ -77,7 +78,17 @@ class GCECloudProvider(CloudProvider):
             self.cluster = ComputeEngineManager(settings.GCE_CLIENT_EMAIL,
                                                 settings.GCE_PRIVATE_KEY,
                                                 settings.GCE_PROJECT_ID)
-            self.cluster.connect(credential_file=settings.GCE_AUTH_CACHE)
+            retries = [1, 5, 10, 30, None]
+            for retry in retries:
+                try:
+                    self.cluster.connect(credential_file=settings.GCE_AUTH_CACHE)
+                    break
+                except ComputeEngineManagerException as error:
+                    if retry is None:
+                        raise
+                    self.logger.warning("Connect error: %s, retrying in %d seconds", error, retry)
+                    time.sleep(retry)
+
         return self.cluster
 
     @wrap_provider_errors
