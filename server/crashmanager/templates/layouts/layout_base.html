@@ -69,6 +69,25 @@
           }).format(new Date(datetime))
         }
 
+				function formatMonthly(d) {
+          let months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+          ];
+
+          let date = new Date(d)
+          return months[date.getMonth()]  + " " + date.getFullYear()
+        }
+
+        function formatQuarterly(d) {
+          let quarters = [
+            "Q1", "Q2", "Q3", "Q4"
+          ];
+
+          let date = new Date(d)
+          return quarters[Math.floor(date.getMonth() / 3)] + " " + date.getFullYear()
+        }
+
         String.prototype.escape_code = function() {
           let tagsToReplace = {
             '&': '&amp;',

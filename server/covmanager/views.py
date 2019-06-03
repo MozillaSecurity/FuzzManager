@@ -191,6 +191,7 @@ def collections_diff_api(request, path):
             if k != "children":
                 ctooltipdata[k] = coverage[k]
 
+        ctooltipdata["id"] = collection.pk
         ctooltipdata["label"] = "No description"
         ctooltipdata["created"] = collection.created.strftime("%b. %-d %Y %-I:%M %p")
         if collection.description:
@@ -607,6 +608,12 @@ class ReportFilterBackend(filters.BaseFilterBackend):
         # We allow users to see unpublished reports, if they ask for it
         # and also have the permissions to do so.
         unpublished_requested = request.method != 'GET' or "unpublished" in request.GET
+
+        # The regular collection/browse view should be able to fetch optional
+        # report metadata limited to one or more collections.
+        if request.method == 'GET' and "coverage__ids" in request.GET:
+            coverage_ids = request.GET["coverage__ids"].split(",")
+            queryset = queryset.filter(coverage_id__in=coverage_ids)
 
         # TODO: Right now we use the view_crashmanager permission because that
         # typically indicates full/internal access. But in the future, this

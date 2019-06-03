@@ -143,62 +143,72 @@
 <script>
 /* Django */
 {% if diff_api %}
+let ISDIFF = true
 let APIURL = '{% url 'covmanager:collections_diff_api' "" %}'
 let GETPARAMS = 'ids={{ ids|join:"," }}'
 {% else %}
+let ISDIFF = false
 let APIURL = '{% url 'covmanager:collections_browse_api' collectionid "" %}'
 let GETPARAMS = null
+let COLLECTIONID = '{{ collectionid }}'
 {% endif %}
 
 const URLS = {
-  rc: '{% url 'covmanager:reportconfigurations_list_api' %}'
+  rc: '{% url 'covmanager:reportconfigurations_list_api' %}',
+  reports_api: '{% url 'covmanager:reports_api' %}',
 }
 /* End of Django */
 
 Vue.component('line-chart', {
   extends: VueChartJs.Line,
-  mounted() {
-    this.renderChart({
-      labels: covmanager.chartdata.labels,
-      datasets: covmanager.chartdata.datasets
-    },
-      {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          yAxes: [{
-            position: 'left',
-            id: 'y-axis-0',
-            ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
-            gridLines: { display: true }
-          },
-          {
-            position: 'right',
-            id: 'y-axis-1',
-            ticks: { beginAtZero: true },
-            gridLines: { display: false }
-          },
-          ],
-          xAxes: [{
-            gridLines: {
-              display: false
-            }
-          }]
-        },
-        tooltips: {
-          callbacks: {
-            beforeLabel: function (item, chart) {
-              return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]
+  methods: {
+    renderLineChart: function() {
+      this.renderChart({
+        labels: covmanager.chartdata.labels,
+        datasets: covmanager.chartdata.datasets
+      },
+        {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            yAxes: [{
+              position: 'left',
+              id: 'y-axis-0',
+              ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
+              gridLines: { display: true }
             },
-            afterLabel: function (item, chart) {
-              if (item.index > 0) {
-                let dataset = covmanager.chartdata.datasets[item.datasetIndex]
-                return `\u0394 to last: ${dataset.deltas[item.index - 1]} ${dataset.unit}`
+            {
+              position: 'right',
+              id: 'y-axis-1',
+              ticks: { beginAtZero: true },
+              gridLines: { display: false }
+            },
+            ],
+            xAxes: [{
+              gridLines: {
+                display: false
+              }
+            }]
+          },
+          tooltips: {
+            callbacks: {
+              beforeLabel: function (item, chart) {
+                return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]
+              },
+              afterLabel: function (item, chart) {
+                if (item.index > 0) {
+                  let dataset = covmanager.chartdata.datasets[item.datasetIndex]
+                  return `\u0394 to last: ${dataset.deltas[item.index - 1]} ${dataset.unit}`
+                }
               }
             }
           }
-        }
-      })
+        })
+    }
+  },
+  mounted() {
+    covmanager.chart = this
+    this.renderLineChart()
   }
 })
 
@@ -212,6 +222,7 @@ let covmanager = new Vue({
     highlight_lines: { previous: [], current: [] },
     coverage: [],
     source: null,
+    chart: null,
     chartdata: null,
     search: '',
     sortKey: '',
@@ -229,6 +240,7 @@ let covmanager = new Vue({
       show: false,
     },
     storage_support: false,
+    report_list: [],
   },
   created: function () {
     window.addEventListener('keydown', this.keydown)
@@ -376,6 +388,7 @@ let covmanager = new Vue({
 
         if ('ttdata' in json) {
           this.chartdata = {}
+          this.chartdata['ids'] = []
           this.chartdata['labels'] = []
           this.chartdata['datasets'] = [
             {
@@ -417,6 +430,7 @@ let covmanager = new Vue({
           ]
 
           for (let i = 0; i < json['ttdata'].length; ++i) {
+            this.chartdata['ids'].push(json['ttdata'][i]['id'])
             this.chartdata['labels'].push(this.wrap_text(json['ttdata'][i]['label'], 10))
 
             this.chartdata['datasets'][0]['data'].push(json['ttdata'][i]['coveragePercent'])
@@ -431,6 +445,10 @@ let covmanager = new Vue({
             }
           }
         }
+
+        // (Re)fetch potential report metadata. This could be cached in the
+        // future to only refetch if any of the ids actually change.
+        this.get_report_metadata()
 
         this.loading = false
         this.loading_incomplete = false
@@ -464,6 +482,56 @@ let covmanager = new Vue({
 
       pmanager.update_value('p', path_components.join('/') + '/')
       pmanager.update_hash()
+    },
+    get_report_metadata: function () {
+      let ids = null;
+      if (!ISDIFF) {
+        // Not a diff view, fetch for a single id
+        ids = COLLECTIONID
+      } else {
+        ids = pmanager.get_value('ids')
+        if (!ids) return;
+      }
+
+      return fetch(`${URLS['reports_api']}?coverage__ids=${ids}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+      }).then(json => {
+        this.report_list = json['results']
+
+        function compute_report_description(report) {
+          if (report.is_quarterly) {
+            report.description = "Quarterly Report - " + formatQuarterly(report.data_created)
+          } else if (report.is_monthly) {
+            report.description = "Monthly Report - " + formatMonthly(report.data_created)
+          } else {
+            report.description = "Weekly Report"
+          }
+        }
+
+        if (!ISDIFF && this.report_list) {
+          let report = compute_report_description(this.report_list[0])
+          document.title = `${report.description} - CovManager`
+        } else {
+          let new_labels = this.chartdata['labels']
+          for (let i = 0; i < this.chartdata['ids'].length; ++i) {
+            for (let report of this.report_list) {
+              if (report['coverage'] == this.chartdata['ids'][i]) {
+                compute_report_description(report)
+                this.chartdata['labels'][i] = this.wrap_text(report.description, 10)
+                break
+              }
+            }
+          }
+
+          this.chart._chart.update()
+        }
+      })
     },
     get_rc_list: function () {
       return fetch(`${URLS['rc']}?__exclude=directives`, {
