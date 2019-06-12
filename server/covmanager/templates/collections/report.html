@@ -310,30 +310,27 @@ let covmanager = new Vue({
         return
       }
 
-      // Make sure we always diff forward
-      let primary_report = this.selected_reports[0]
-      let secondary_report = this.selected_reports[1]
-      if (primary_report < secondary_report) {
-        primary_report = this.selected_reports[1]
-        secondary_report = this.selected_reports[0]
-      }
 
-      let primary_report_covid = null
-      let secondary_report_covid = null
+
+      let collection_ids = []
 
       for (let report of this.reports) {
-
-        if (primary_report == report.id) {
-          primary_report_covid = report.coverage
-        } else if (secondary_report == report.id) {
-          secondary_report_covid = report.coverage
+        if (this.selected_reports.indexOf(report.id) >= 0) {
+          collection_ids.push(report.coverage)
         }
 
-        if (primary_report_covid != null && secondary_report_covid != null)
+        if (collection_ids.length == 2)
           break
       }
 
-      window.open(`../collections/${primary_report_covid}/summary/htmlexport/?diff=${secondary_report_covid}`, '_blank').focus()
+      // Make sure we always diff forward
+      if (collection_ids[0] > collection_ids[1]) {
+        let tid = collection_ids[0]
+        collection_ids[0] = collection_ids[1]
+        collection_ids[1] = tid
+      }
+
+      window.open(`../collections/${collection_ids[1]}/summary/htmlexport/?diff=${collection_ids[0]}`, '_blank').focus()
     },
   }
 })
