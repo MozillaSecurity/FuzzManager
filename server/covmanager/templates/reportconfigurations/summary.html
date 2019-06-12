@@ -35,6 +35,7 @@
   <template v-else>
   <div class="panel-body">
     <button @click="refresh()" class="btn btn-default">Refresh this Report Summary</button>
+    <button @click="textual()" class="btn btn-default">View Textual Report</button>
   </div>
   <div class="panel-body">
   <div id="graph-container" style="margin: 0 auto; width: 1280px;">
@@ -53,6 +54,7 @@
 <script>
 let URLS = {
   rs_api : '{% url 'covmanager:collections_reportsummary_api' collectionid %}',
+  html_url : '{% url 'covmanager:collections_reportsummary_html_list' collectionid %}',
 }
 
 let pmanager = new HashParamManager()
@@ -151,6 +153,9 @@ let covmanager = new Vue({
       .then(() => {
         self.fetch()
       })
+    },
+    textual: function() {
+      window.open(URLS["html_url"], '_blank').focus()
     },
     draw: function() {
       let self = this

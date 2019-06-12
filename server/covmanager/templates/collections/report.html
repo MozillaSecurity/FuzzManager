@@ -12,6 +12,7 @@
     <div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
+      <button @click="summary_diff()" v-if="unrestricted" class="btn btn-default">View Summarized Diff</button>
       <button @click="toggle_unpublished()" v-if="unrestricted" class="btn btn-default">!{ unpublished_btn_text }!</button>
       <!--<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>-->
     </div>
@@ -302,6 +303,37 @@ let covmanager = new Vue({
             self.fetch()
           })
       })
+    },
+    summary_diff: function() {
+      if (this.selected_reports.length != 2) {
+        sweetAlert('Oops', "Summarized diff requires exactly 2 reports to be selected", 'error')
+        return
+      }
+
+      // Make sure we always diff forward
+      let primary_report = this.selected_reports[0]
+      let secondary_report = this.selected_reports[1]
+      if (primary_report < secondary_report) {
+        primary_report = this.selected_reports[1]
+        secondary_report = this.selected_reports[0]
+      }
+
+      let primary_report_covid = null
+      let secondary_report_covid = null
+
+      for (let report of this.reports) {
+
+        if (primary_report == report.id) {
+          primary_report_covid = report.coverage
+        } else if (secondary_report == report.id) {
+          secondary_report_covid = report.coverage
+        }
+
+        if (primary_report_covid != null && secondary_report_covid != null)
+          break
+      }
+
+      window.open(`../collections/${primary_report_covid}/summary/htmlexport/?diff=${secondary_report_covid}`, '_blank').focus()
     },
   }
 })

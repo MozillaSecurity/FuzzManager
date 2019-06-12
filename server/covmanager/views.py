@@ -74,13 +74,64 @@ def collections_reportsummary_html_list(request, collectionid):
 
     if not collection.reportsummary.cached_result:
         return HttpResponse(
-            content=json.dumps({"message": "The requested collection is currently being created."}),
+            content=json.dumps({"message": "The requested report summary is currently being created."}),
             content_type='application/json',
             status=204
         )
 
     root = json.loads(collection.reportsummary.cached_result)
     root["cid"] = collectionid
+
+    if "diff" in request.GET:
+        diff_collection = get_object_or_404(Collection, pk=request.GET["diff"])
+
+        if not diff_collection.coverage:
+            return HttpResponse(
+                content=json.dumps({"error": "Specified diff collection is not ready yet."}),
+                content_type='application/json',
+                status=400
+            )
+
+        if not hasattr(diff_collection, 'reportsummary'):
+            return HttpResponse(
+                content=json.dumps({"message": "The requested diff collection has no report summary."}),
+                content_type='application/json',
+                status=400
+            )
+
+        if not diff_collection.reportsummary.cached_result:
+            return HttpResponse(
+                content=json.dumps({"message": "The requested diff report summary is currently being created."}),
+                content_type='application/json',
+                status=204
+            )
+
+        root["diffid"] = diff_collection.pk
+
+        def annotate_delta(a, b):
+            delta = a["coveragePercent"] - b["coveragePercent"]
+
+            if delta > 0:
+                a["coveragePercentDelta"] = "+%s %%" % delta
+            elif delta < 0:
+                a["coveragePercentDelta"] = "%s %%" % delta
+
+            if "children" not in a or "children" not in b:
+                return
+
+            # Map children to their ids so we can iterate them side-by-side
+            a_child_dict = {c["id"]: c for c in a["children"]}
+            b_child_dict = {c["id"]: c for c in b["children"]}
+
+            for id in a_child_dict:
+                # The id might not be in the second report
+                if id in b_child_dict:
+                    annotate_delta(a_child_dict[id], b_child_dict[id])
+                else:
+                    a_child_dict[id]["coveragePercentDelta"] = "new"
+
+        diff = json.loads(diff_collection.reportsummary.cached_result)
+        annotate_delta(root, diff)
 
     return render(request, 'reportconfigurations/summary_html_list.html', {'root': root})
 

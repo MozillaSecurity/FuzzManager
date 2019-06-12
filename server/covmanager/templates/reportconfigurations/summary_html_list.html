@@ -10,6 +10,10 @@
 			  	{% recurseroot root %}
 			  	  <li>
 				    <a href="{% url 'covmanager:collections_browse' root.cid %}#rc={{ node.id }}">{{ node.name }}</a>: {{ node.coveragePercent }} %
+						{% if node.coveragePercentDelta %}
+						({{ node.coveragePercentDelta }})
+						{% endif %}
+
 				    {% if node.children %}
 				 	    <ul>{{ children }}</ul>
 				    {% endif %}
