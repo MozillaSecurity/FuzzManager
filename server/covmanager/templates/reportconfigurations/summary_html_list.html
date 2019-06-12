@@ -9,9 +9,11 @@
 			<ul>
 			  	{% recurseroot root %}
 			  	  <li>
-				    <a href="{% url 'covmanager:collections_browse' root.cid %}#rc={{ node.id }}">{{ node.name }}</a>: {{ node.coveragePercent }} %
+				    <a href="{% url 'covmanager:collections_browse' root.cid %}#rc={{ node.id }}" target="_blank">{{ node.name }}</a>: {{ node.coveragePercent }} %
 						{% if node.coveragePercentDelta %}
-						({{ node.coveragePercentDelta }})
+						(<a href="{% url 'covmanager:collections_diff' %}#ids={{ root.diffid }},{{ root.cid }}&rc={{ node.id }}" target="_blank">
+							{{ node.coveragePercentDelta }}
+						</a>)
 						{% endif %}
 
 				    {% if node.children %}
