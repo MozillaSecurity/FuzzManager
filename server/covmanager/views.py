@@ -111,9 +111,9 @@ def collections_reportsummary_html_list(request, collectionid):
         def annotate_delta(a, b):
             delta = a["coveragePercent"] - b["coveragePercent"]
 
-            if delta > 0:
+            if delta >= 1.0:
                 a["coveragePercentDelta"] = "+%s %%" % delta
-            elif delta < 0:
+            elif delta <= -1.0:
                 a["coveragePercentDelta"] = "%s %%" % delta
 
             if "children" not in a or "children" not in b:
