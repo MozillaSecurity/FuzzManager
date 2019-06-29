@@ -682,12 +682,20 @@ class LSanCrashInfo(CrashInfo):
         lsanOutput = crashData if crashData else stderr
         lsanErrorPattern = "ERROR: LeakSanitizer:"
         lsanPatternSeen = False
+        lsanStackStartPattern = "Direct leak of "
+        lsanStackStartPatternCount = 0
 
         expectedIndex = 0
         for traceLine in lsanOutput:
             if not lsanErrorPattern:
                 if lsanErrorPattern in traceLine:
                     lsanPatternSeen = True
+                continue
+
+            if lsanStackStartPattern in traceLine:
+                if lsanStackStartPatternCount > 0:
+                    break
+                lsanStackStartPatternCount += 1
                 continue
 
             parts = traceLine.strip().split()
