@@ -16,7 +16,7 @@ if __name__ == '__main__':
                        'Topic :: Software Development :: Testing',
                        'Topic :: Security'],
           description='A fuzzing management tools collection',
-          install_requires=['fasteners>=0.14.1', 'numpy>=1.11.2', 'requests>=2.20.1', 'six==1.12.0'],
+          install_requires=['fasteners>=0.14.1', 'numpy>=1.11.2,<1.17', 'requests>=2.20.1', 'six>=1.12.0'],
           keywords='fuzz fuzzing security test testing',
           license='MPL 2.0',
           maintainer='Mozilla Fuzzing Team',
