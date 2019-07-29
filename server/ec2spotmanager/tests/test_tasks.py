@@ -163,9 +163,11 @@ def test_instance_shutting_down(mocker):
     boto_instance1 = _MockInstance()
     boto_instance1.id = 'i-123'
     boto_instance1.public_dns_name = 'fm-test1.fuzzing.allizom.com'
+    boto_instance1.tags = {SPOTMGR_TAG + '-Updatable': '1'}
     boto_instance2 = _MockInstance2()
     boto_instance2.id = 'i-456'
     boto_instance2.public_dns_name = 'fm-test2.fuzzing.allizom.com'
+    boto_instance2.tags = {SPOTMGR_TAG + '-Updatable': '1'}
     mocker.patch('ec2spotmanager.CloudProvider.EC2SpotCloudProvider.CORES_PER_INSTANCE', new={'80286': 1})
     mock_ec2mgr = mocker.patch('ec2spotmanager.CloudProvider.EC2SpotCloudProvider.EC2Manager')
     mock_ec2mgr.return_value.find.return_value = (boto_instance1, boto_instance2)
@@ -197,6 +199,12 @@ def test_instance_shutting_down(mocker):
 
     # call function under test
     update_instances('EC2Spot', 'redmond')
+    remaining = {orig1.instance_id, orig2.instance_id}
+    for old in Instance.objects.all():
+        remaining.remove(old.instance_id)
+        assert old.status_code in {INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']}
+    assert not remaining
+
     cycle_and_terminate_disabled('EC2Spot', 'redmond')
     check_and_resize_pool(pool.pk)
 
@@ -207,11 +215,12 @@ def test_instance_shutting_down(mocker):
     # check that instances were replaced
     remaining = {'req123', 'req456'}
     for new in Instance.objects.all():
+        remaining.remove(new.instance_id)
         assert new.id not in {orig1.id, orig2.id}
         assert new.pool.id == pool.id
         assert new.size == 1
         assert new.status_code == INSTANCE_STATE["requested"]
-        remaining.remove(new.instance_id)
+    assert not remaining
 
 
 def test_instance_not_updatable(mocker):
@@ -293,10 +302,14 @@ def test_instance_price_high(mocker):
 def test_spot_instance_blacklist(mocker):
     """check that spot requests being cancelled will result in temporary blacklisting"""
     # ensure EC2Manager returns a request ID
+    class _status_code(object):
+        code = 'instance-terminated-by-service'
+
     class _MockReq(boto.ec2.spotinstancerequest.SpotInstanceRequest):
         def __init__(self, *args, **kwds):
             super(_MockReq, self).__init__(*args, **kwds)
             self.state = 'cancelled'
+            self.status = _status_code
     req = _MockReq()
     req.launch_specification = mocker.Mock()
     req.launch_specification.instance_type = '80286'
@@ -330,9 +343,10 @@ def test_spot_instance_blacklist(mocker):
 
     # call function under test
     # XXX: this message is inaccurate .. there were no allowed regions at all
-    with pytest.raises(UncatchableException, match="No allowed region was cheap enough to spawn instances"):
+    with pytest.raises(UncatchableException, match="temporary-failure: Spot request.* and cancelled"):
         update_requests('EC2Spot', 'redmond', pool.pk)
-        update_instances('EC2Spot', 'redmond')
+    update_instances('EC2Spot', 'redmond')
+    with pytest.raises(UncatchableException, match="No allowed region was cheap enough to spawn instances"):
         check_and_resize_pool(pool.pk)
 
     # check that laniakea calls were made

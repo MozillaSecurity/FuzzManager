@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.conf import settings
 from laniakea.core.providers.ec2 import EC2Manager
 from .CloudProvider import (CloudProvider, CloudProviderTemporaryFailure, CloudProviderInstanceCountError,
-                            INSTANCE_STATE, wrap_provider_errors)
+                            INSTANCE_STATE, INSTANCE_STATE_CODE, wrap_provider_errors)
 from ..tasks import SPOTMGR_TAG
 from ..common.ec2 import CORES_PER_INSTANCE
 
@@ -92,6 +92,9 @@ class EC2SpotCloudProvider(CloudProvider):
                                     region)
                 raise CloudProviderInstanceCountError(
                     "Auto-selected region exceeded its maximum spot instance count.")
+            elif "RequestLimitExceeded" in str(msg):
+                self.logger.warning("Request limit exceeded for region %s, trying again later.", region)
+                raise CloudProviderTemporaryFailure("Request limit exceeded for region %s" % (region,))
             elif "Service Unavailable" in str(msg):
                 raise CloudProviderTemporaryFailure("start_instances in region %s: %s" % (region, msg))
             raise
@@ -102,19 +105,29 @@ class EC2SpotCloudProvider(CloudProvider):
         failed_requests = {}
 
         cluster = self._connect(region)
-        results = cluster.check_spot_requests(instances, tags)
+        try:
+            results = cluster.check_spot_requests(instances, tags)
+        except boto.exception.BotoServerError as msg:
+            if "RequestLimitExceeded" in str(msg):
+                self.logger.warning("Request limit exceeded for region %s, trying again later.", region)
+                raise CloudProviderTemporaryFailure("Request limit exceeded for region %s" % (region,))
+            else:
+                raise
 
         for req_id, result in zip(instances, results):
             if isinstance(result, boto.ec2.instance.Instance):
-                self.logger.info("Spot request fulfilled %s -> %s", req_id, result.id)
+                # state_code is a 16-bit value where the high byte is
+                # an opaque internal value and should be ignored.
+                status_code = result.state_code & 255
+                status_desc = INSTANCE_STATE_CODE.get(status_code, "Unknown(%d)" % (status_code,))
+
+                self.logger.info("Spot request fulfilled %s -> %s (status: %s)", req_id, result.id, status_desc)
 
                 # spot request has been fulfilled
                 successful_requests[req_id] = {}
                 successful_requests[req_id]['hostname'] = result.public_dns_name
                 successful_requests[req_id]['instance_id'] = result.id
-                # state_code is a 16-bit value where the high byte is
-                # an opaque internal value and should be ignored.
-                successful_requests[req_id]['status_code'] = result.state_code & 255
+                successful_requests[req_id]['status_code'] = status_code
                 # Now that we saved the object into our database, mark the instance as updatable
                 # so our update code can pick it up and update it accordingly when it changes states
                 result.add_tag(SPOTMGR_TAG + "-Updatable", "1")
@@ -123,10 +136,13 @@ class EC2SpotCloudProvider(CloudProvider):
             elif isinstance(result, boto.ec2.spotinstancerequest.SpotInstanceRequest):
                 if result.state in {"cancelled", "closed"}:
                     # request was not fulfilled for some reason.. blacklist this type/zone for a while
-                    self.logger.info("Spot request %s is %s", req_id, result.state)
+                    # XXX: in some cases we are the ones who cancelled the request, if so we should not blacklist
+                    self.logger.info("Request %s is %s and %s", req_id, result.status.code, result.state)
                     failed_requests[req_id] = {}
                     failed_requests[req_id]['action'] = 'blacklist'
                     failed_requests[req_id]['instance_type'] = result.launch_specification.instance_type
+                    failed_requests[req_id]['reason'] = \
+                        'Spot request %s in %s is %s and %s' % (req_id, region, result.status.code, result.state)
                 elif result.state in {"open", "active"}:
                     # this should not happen! warn and leave in DB in case it's fulfilled later
                     self.logger.warning("Request %s is %s and %s.",
@@ -157,10 +173,9 @@ class EC2SpotCloudProvider(CloudProvider):
             boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
 
         for instance in boto_instances:
-            if instance.state_code not in [INSTANCE_STATE['shutting-down'], INSTANCE_STATE['terminated']]:
-                instance_states[instance.id] = {}
-                instance_states[instance.id]['status'] = instance.state_code & 255
-                instance_states[instance.id]['tags'] = instance.tags
+            instance_states[instance.id] = {}
+            instance_states[instance.id]['status'] = instance.state_code & 255
+            instance_states[instance.id]['tags'] = instance.tags
 
         return instance_states
 

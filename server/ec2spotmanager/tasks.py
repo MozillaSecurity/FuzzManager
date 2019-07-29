@@ -322,6 +322,7 @@ def update_requests(provider, region, pool_id):
                     cache.set(key, "", ex=12 * 3600)
                     logger.warning("Blacklisted %s for 12h", key)
                     instance.delete()
+                    _update_pool_status(pool, 'temporary-failure', failed_requests[req_id]['reason'])
                 elif failed_requests[req_id]['action'] == 'disable_pool':
                     _update_pool_status(pool, 'unclassified', 'request failed')
 
