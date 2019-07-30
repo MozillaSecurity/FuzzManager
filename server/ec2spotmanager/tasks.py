@@ -42,7 +42,7 @@ def _terminate_instance_request_ids(provider, region, request_ids):
 
 
 def _determine_best_location(config, count):
-    from .models import ProviderStatusEntry
+    from .models import Instance, ProviderStatusEntry
 
     cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 
@@ -51,6 +51,7 @@ def _determine_best_location(config, count):
     best_region = None
     best_type = None
     best_median = None
+    best_instances = None
     rejected_prices = {}
 
     for provider in PROVIDERS:
@@ -112,14 +113,19 @@ def _determine_best_location(config, count):
                         continue
 
                     median = get_price_median(prices)
-                    if best_median is None or best_median > median:
+                    if best_median is None or median <= best_median:
+                        # don't care about excluding stopped/stopping, as we just want to know how "busy" the zone is
+                        instances = int(Instance.objects.filter(provider=provider, region=region, zone=zone).count())
+                        if median == best_median and instances >= best_instances:
+                            continue
                         best_provider = provider
                         best_median = median
                         best_zone = zone
                         best_region = region
                         best_type = instance_type
-                        logger.debug("Best price median currently %r in %s/%s (%s)",
-                                     best_median, best_region, best_zone, best_type)
+                        best_instances = instances
+                        logger.debug("Best price median currently %r in %s/%s (%s, %d instances)",
+                                     best_median, best_region, best_zone, best_type, best_instances)
 
     return (best_provider, best_region, best_zone, best_type, rejected_prices)
 
