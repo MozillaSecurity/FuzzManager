@@ -165,7 +165,9 @@ class GCECloudProvider(CloudProvider):
 
         disk = cluster.build_bootdisk(image, config.gce_disk_size, True)
         conf = cluster.build_container_vm(yaml.safe_dump(container_spec), disk, zone=zone, preemptible=True)
-        conf["ex_labels"] = _LowercaseDict(tags)
+        tags = _LowercaseDict(tags)
+        tags[SPOTMGR_TAG + "-Updatable"] = "1"
+        conf["ex_labels"] = tags
         self.logger.info("Creating %dx %s instances... (%d cores total)", count,
                          instance_type, count * CORES_PER_INSTANCE[instance_type])
         nodes = cluster.create(instance_type, count, conf, image=image)

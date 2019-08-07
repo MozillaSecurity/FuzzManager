@@ -392,7 +392,8 @@ def update_instances(provider, region):
             if (SPOTMGR_TAG + "-Updatable" not in cloud_data['tags'] or
                     int(cloud_data['tags'][SPOTMGR_TAG + "-Updatable"]) <= 0):
 
-                logger.warning("*************** INSTANCE NOT UPDATABLE ***************")
+                logger.warning("*************** INSTANCE %s in %s/%s NOT UPDATABLE ***************",
+                               cloud_id, provider, region)
                 logger.warning("see: https://github.com/MozillaSecurity/FuzzManager/pull/550#discussion_r284260225")
 
                 # The instance is not marked as updatable. We must not touch it because
