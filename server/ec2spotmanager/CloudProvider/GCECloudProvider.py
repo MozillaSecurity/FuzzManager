@@ -214,10 +214,9 @@ class GCECloudProvider(CloudProvider):
 
         for node in libcloud_nodes:
 
-            if self.NODE_STATE_MAP[node.extra['status']] not in {INSTANCE_STATE['terminated']}:
-                instance_states[node.name] = {}
-                instance_states[node.name]['status'] = self.NODE_STATE_MAP[node.extra['status']]
-                instance_states[node.name]['tags'] = _LowercaseDict(node.extra['labels'])
+            instance_states[node.name] = {}
+            instance_states[node.name]['status'] = self.NODE_STATE_MAP[node.extra['status']]
+            instance_states[node.name]['tags'] = _LowercaseDict(node.extra['labels'])
 
         return instance_states
 
