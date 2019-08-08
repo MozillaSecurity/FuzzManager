@@ -156,8 +156,9 @@ class GCECloudProvider(CloudProvider):
                 ],
             },
         }
+        container_spec["spec"]["containers"][0]["securityContext"] = {"capabilities": {"add": "SYS_PTRACE"}}
         if config.gce_docker_privileged:
-            container_spec["spec"]["containers"][0]["securityContext"] = {"privileged": True}
+            container_spec["spec"]["containers"][0]["securityContext"]["privileged"] = True
         if config.gce_cmd:
             container_spec["spec"]["containers"][0]["command"] = config.gce_cmd
         if config.gce_args:
