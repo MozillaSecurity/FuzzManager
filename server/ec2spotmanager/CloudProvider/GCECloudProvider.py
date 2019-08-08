@@ -56,6 +56,9 @@ class _LowercaseDict(dict):
     def __delitem__(self, key):
         return super(_LowercaseDict, self).__delitem__(key.lower())
 
+    def __contains__(self, item):
+        return super(_LowercaseDict, self).__contains__(item.lower())
+
 
 class GCECloudProvider(CloudProvider):
     '''Implementation of CloudProvider interface for GCE.
