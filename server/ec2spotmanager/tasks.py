@@ -312,6 +312,7 @@ def update_requests(provider, region, pool_id):
 
             for req_id in successful_requests:
                 instance = requested[req_id]
+                instance.created = timezone.now()  # reset creation time now that the instance really exists
                 instance.hostname = successful_requests[req_id]['hostname']
                 instance.instance_id = successful_requests[req_id]['instance_id']
                 instance.status_code = successful_requests[req_id]['status_code']
@@ -446,6 +447,11 @@ def update_instances(provider, region):
             reasons = []
 
             if instance.instance_id not in debug_cloud_instance_ids_seen:
+                if timezone.now() - instance.created < timezone.timedelta(minutes=5):
+                    logger.warning("[Pool %d] Machine %s has no corresponding machine in %s/%s, "
+                                   "not deleting until it is at least 5 minutes old.",
+                                   instance.pool_id, instance.instance_id, instance.provider, instance.region)
+                    continue
                 reasons.append("no corresponding machine on cloud")
 
             if instance.instance_id in debug_not_updatable_continue:
