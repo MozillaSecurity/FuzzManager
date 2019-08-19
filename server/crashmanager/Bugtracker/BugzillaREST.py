@@ -108,8 +108,8 @@ class BugzillaREST():
 
         return ret
 
-    def createBug(self, product, component, summary, version, description=None, op_sys=None,
-                  platform=None, priority=None, severity=None, alias=None,
+    def createBug(self, product, component, summary, version, type='defect', description=None,
+                  op_sys=None, platform=None, priority=None, severity=None, alias=None,
                   cc=None, assigned_to=None, comment_is_private=None, is_markdown=None,
                   groups=None, qa_contact=None, status=None, resolution=None,
                   target_milestone=None, flags=None, whiteboard=None, keywords=None, attrs=None):
