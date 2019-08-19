@@ -284,6 +284,9 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
 # Crashmanager configuration
 #
+# FuzzManager supports username/password authentication as well as API keys
+# for authenticating to a Bugzilla instance. Omitting the username will cause
+# the password to be used as an API key instead.
 #BUGZILLA_USERNAME = "example@example.com"
 #BUGZILLA_PASSWORD = "secret"
 #CLEANUP_CRASHES_AFTER_DAYS = 14
