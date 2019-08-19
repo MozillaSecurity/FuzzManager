@@ -295,11 +295,12 @@ let covmanager = new Vue({
         return children
       }
 
-      for (path in children) {
-        if (children.hasOwnProperty(path) && path.indexOf(this.search) != -1) {
+      const regex = new RegExp(this.search, 'i')
+      Object.keys(children).forEach(path => {
+        if (path.match(regex)) {
           result[path] = children[path]
         }
-      }
+      })
 
       return result
     },
