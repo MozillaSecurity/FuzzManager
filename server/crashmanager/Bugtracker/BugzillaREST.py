@@ -27,34 +27,34 @@ class BugzillaREST():
         self.password = password
         self.api_key = api_key
         self.authToken = None
+        self.request_headers = {}
 
-        # If we have no username, no API key but a password, switch API key and password
+        # If we have no username, no API key but a password, use the password
+        # as the API key, as the UI has no extra field for the API key.
         if username is None and api_key is None and password is not None:
             self.api_key = password
             self.password = None
 
-        # The field to submit authentication information in depends on which
-        # method we use (username/password means we need to use token, with
-        # API key we can use the api_key field directly).
-        self.authField = 'token'
         if self.api_key is not None:
-            self.authField = 'api_key'
+            # Transmit the API key via request header instead of embedding
+            # it in the URI for additional security.
+            self.request_headers['X-BUGZILLA-API-KEY'] = self.api_key
 
-    def login(self, forceLogin=False):
+    def login(self, loginRequired=True, forceLogin=False):
         if (self.username is None or self.password is None) and self.api_key is None:
-            if forceLogin:
+            if loginRequired:
                 raise RuntimeError("Need username/password or API key to login.")
             else:
                 return False
 
+        # If we have an API key, we don't need to perform any login
+        if self.api_key is not None:
+            return False
+
         if forceLogin:
             self.authToken = None
 
-        if self.api_key is not None:
-            self.authToken = self.api_key
-
-        # We either use an API key which doesn't require any prior login
-        # or we still have a valid authentication token that we can use.
+        # We might still have a valid authentication token that we can use.
         if self.authToken is not None:
             return True
 
@@ -87,8 +87,10 @@ class BugzillaREST():
 
         extraParams = []
 
-        if self.login():
-            extraParams.append("&%s=%s" % (self.authField, self.authToken))
+        # Ensure we are logged in if we have any login data.
+        # However, we might not need any credentials for reading bugs.
+        if self.login(loginRequired=False):
+            extraParams.append("&token=%s" % self.authToken)
 
         if include_fields:
             extraParams.append("&include_fields=%s" % ",".join(include_fields))
@@ -96,7 +98,7 @@ class BugzillaREST():
         if exclude_fields:
             extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
 
-        response = requests.get(bugUrl + "".join(extraParams))
+        response = requests.get(bugUrl + "".join(extraParams), headers=self.request_headers)
         json = response.json()
 
         if "bugs" not in json:
@@ -125,11 +127,13 @@ class BugzillaREST():
             elif loc[k] is not None and loc[k] != '' and k != "self":
                 bug[k] = loc[k]
 
-        # Ensure we're logged in
-        self.login()
+        createUrl = "%s/bug" % self.baseUrl
 
-        createUrl = "%s/bug?%s=%s" % (self.baseUrl, self.authField, self.authToken)
-        response = requests.post(createUrl, bug)
+        # Ensure we're logged in, if required
+        if self.login():
+            createUrl = "%s?token=%s" % (createUrl, self.authToken)
+
+        response = requests.post(createUrl, bug, headers=self.request_headers)
         return response.json()
 
     def createComment(self, id, comment, is_private=False):
@@ -141,19 +145,22 @@ class BugzillaREST():
         cobj["comment"] = comment
         cobj["is_private"] = is_private
 
-        # Ensure we're logged in
-        self.login()
+        createUrl = "%s/bug/%s/comment" % (self.baseUrl, id)
 
-        createUrl = "%s/bug/%s/comment?%s=%s" % (self.baseUrl, id, self.authField, self.authToken)
-        response = requests.post(createUrl, cobj).json()
+        # Ensure we're logged in, if required
+        if self.login():
+            createUrl = "%s?token=%s" % (createUrl, self.authToken)
+        response = requests.post(createUrl, cobj, headers=self.request_headers).json()
 
         if "id" not in response:
             return response
 
         commentId = str(response["id"])
+        commentUrl = "%s/bug/comment/%s" % (self.baseUrl, commentId)
 
-        commentUrl = "%s/bug/comment/%s?%s=%s" % (self.baseUrl, commentId, self.authField, self.authToken)
-        response = requests.get(commentUrl).json()
+        if self.login():
+            commentUrl = "%s?token=%s" % (commentUrl, self.authToken)
+        response = requests.get(commentUrl, headers=self.request_headers).json()
 
         if "comments" not in response:
             return response
@@ -181,9 +188,10 @@ class BugzillaREST():
         # Attachment data must always be base64 encoded
         attachment["data"] = base64.b64encode(attachment["data"])
 
-        # Ensure we're logged in
-        self.login()
+        attachUrl = "%s/bug/%s/attachment" % (self.baseUrl, ids)
 
-        attachUrl = "%s/bug/%s/attachment?%s=%s" % (self.baseUrl, ids, self.authField, self.authToken)
-        response = requests.post(attachUrl, attachment)
+        # Ensure we're logged in, if required
+        if self.login():
+            attachUrl = "%s?token=%s" % (attachUrl, self.authToken)
+        response = requests.post(attachUrl, attachment, headers=self.request_headers)
         return response.json()
