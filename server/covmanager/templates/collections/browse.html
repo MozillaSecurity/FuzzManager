@@ -9,14 +9,15 @@
   <div class="panel-heading">
     <div>
       <i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser
-
-      <div class="pull-right" style="position: relative; top: 50%; transform: translateY(-25%);">
+      <form class="form-inline pull-right" style="transform: translateY(-22%);">
+        <label for="rc_select">
           <i class="glyphicon glyphicon-filter"></i>
-          <select @change="set_rc($event)">
-            <option disabled value="">Report Configuration</option>
-            <option v-for="entry in rc_list" :value="entry.id">!{ entry.description }!</option>
-          </select>
-        </div>
+        </label>
+        <select id="rc_select" class="form-control" @change="set_rc($event)">
+          <option disabled selected value style="display:none;">Report Configuration</option>
+          <option v-for="entry in rc_list" :value="entry.id">!{ entry.description }!</option>
+        </select>
+      </form>
     </div>
   </div>
 
