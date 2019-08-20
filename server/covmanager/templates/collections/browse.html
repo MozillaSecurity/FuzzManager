@@ -9,40 +9,17 @@
   <div class="panel-heading">
     <div>
       <i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser
-
-      <div class="pull-right" style="position: relative; top: 50%; transform: translateY(-25%);">
-          <i class="glyphicon glyphicon-filter"></i> Report Configuration
-          <b-button @click="show_modal()" :size="'sm'" :variant="'secondary'">!{ rc_name }!</b-button>
-        </div>
+      <form class="form-inline pull-right" style="transform: translateY(-22%);">
+        <label for="rc_select">
+          <i class="glyphicon glyphicon-filter"></i>
+        </label>
+        <select id="rc_select" class="form-control" @change="set_rc($event)">
+          <option disabled selected value style="display:none;">Report Configuration</option>
+          <option v-for="entry in rc_list" :value="entry.id">!{ entry.description }!</option>
+        </select>
+      </form>
     </div>
   </div>
-
-  <!--- Modal Component -->
-  <div class="modal modal-mask" role="document" style="display: block" v-if="modal.show">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Select a Report Configuration</h5>
-          <!-- Todo: This must be naturally on the same line. -->
-          <div class="pull-right" style="transform: translateY(-100%);">
-            <button type="button" class="close" @click="modal.show = false" data-dismiss="modal">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-        </div>
-        <div class="modal-body" style="margin: 0 auto; width: 50%;">
-          <div v-for="entry in rc_list" :key="entry.id">
-          <b-button :size="'sm'" :variant="'secondary'" @click="set_rc(entry.id)" style="width: 200px;">!{ entry.description }!</b-button>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger" @click="clear_rc()">Clear Current Report Configuration</button>
-          <button type="button" class="btn btn-danger" @click="modal.show = false">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- End of Modal Component -->
 
   <template v-if="loading">
     <div class="loader">
@@ -236,9 +213,6 @@ let covmanager = new Vue({
     rc_name: 'None',
     rc_id: null,
     rc_list: [],
-    modal: {
-      show: false,
-    },
     storage_support: false,
     report_list: [],
   },
@@ -322,11 +296,12 @@ let covmanager = new Vue({
         return children
       }
 
-      for (path in children) {
-        if (children.hasOwnProperty(path) && path.indexOf(this.search) != -1) {
+      const regex = new RegExp(this.search, 'i')
+      Object.keys(children).forEach(path => {
+        if (path.match(regex)) {
           result[path] = children[path]
         }
-      }
+      })
 
       return result
     },
@@ -558,13 +533,8 @@ let covmanager = new Vue({
         })
       })
     },
-    show_modal: function () {
-      this.modal.show = true
-      //$("#ddown").get(0).show()
-      //this.$refs.ddown.show()
-    },
-    set_rc: function (id) {
-      this.modal.show = false
+    set_rc: function (event) {
+      const id = event.target.options[event.target.options.selectedIndex].value
       pmanager.update_value('rc', id)
       pmanager.update_hash()
 
@@ -573,8 +543,6 @@ let covmanager = new Vue({
       }
     },
     clear_rc: function () {
-      this.modal.show = false
-
       pmanager.update_value('rc', "")
       pmanager.update_hash()
       this.rc_id = ""
