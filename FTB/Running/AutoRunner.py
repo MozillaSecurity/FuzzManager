@@ -257,21 +257,27 @@ class ASanRunner(AutoRunner):
 
         inASanTrace = False
         inUBSanTrace = False
+        inTSanTrace = False
         self.auxCrashData = []
         self.stderr = []
         for line in stderr.splitlines():
-            if inASanTrace or inUBSanTrace:
+            if inASanTrace or inUBSanTrace or inTSanTrace:
                 self.auxCrashData.append(line)
                 if inASanTrace and line.find("==ABORTING") >= 0:
                     inASanTrace = False
                 elif inUBSanTrace and "==SUMMARY: AddressSanitizer: undefined-behavior" in line:
                     inUBSanTrace = False
+                elif inTSanTrace and "SUMMARY: ThreadSanitizer: data race" in line:
+                    inTSanTrace = False
             elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.auxCrashData.append(line)
                 inASanTrace = True
             elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
                 self.auxCrashData.append(line)
                 inUBSanTrace = True
+            elif line.startswith("WARNING: ThreadSanitizer: data race"):
+                self.auxCrashData.append(line)
+                inTSanTrace = True
             else:
                 self.stderr.append(line)
 
