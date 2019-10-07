@@ -2769,6 +2769,17 @@ def test_RustParserTests5():
     assert crashInfo.crashAddress == 0
 
 
+def test_RustParserTests6():
+    """test parsing rust assertion failure backtrace"""
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData([], rustSampleTrace6.splitlines(), config, [])
+    assert isinstance(crashInfo, RustCrashInfo)
+    assert "panicked at 'assertion failed: `(left == right)`" in crashInfo.createShortSignature()
+    assert len(crashInfo.backtrace) == 4
+    assert crashInfo.backtrace[1] == "std::sys_common::backtrace::_print"
+    assert crashInfo.crashAddress == 0
+
+
 def test_MinidumpModuleInStackTest():
     config = ProgramConfiguration("test", "x86-64", "linux")
 

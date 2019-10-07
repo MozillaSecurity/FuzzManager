@@ -236,7 +236,6 @@ class CrashInfo(object):
                 result = ValgrindCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             else:
-                rustFirstDetected = False
                 minidumpFirstDetected = False
 
         # Default fallback to be used if there is neither ASan nor GDB output.
