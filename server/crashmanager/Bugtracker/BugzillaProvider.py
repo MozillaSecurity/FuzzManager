@@ -110,9 +110,11 @@ class BugzillaProvider(Provider):
         # Determine the state of the testcase
         sdata['testcase'] = "(Test not available)"
         if crashEntry.testcase:
+            # Always attach testcase and, where applicable, include in Comment 0
+            attachmentData['testcase_attach'] = True
+
             if crashEntry.testcase.isBinary:
                 sdata['testcase'] = "See attachment."
-                attachmentData['testcase_attach'] = True
             else:
                 crashEntry.testcase.test.open(mode='r')
                 testcase_data = crashEntry.testcase.test.read()
@@ -132,7 +134,6 @@ class BugzillaProvider(Provider):
                     sdata['testcase'] = testcase_data
                 else:
                     sdata['testcase'] = "See attachment."
-                    attachmentData['testcase_attach'] = True
 
         if crashEntry.rawCrashData:
             sdata['crashdata'] = crashEntry.rawCrashData
