@@ -24,6 +24,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
 from server.auth import CheckAppPermission
+from Bugtracker.Provider import ProviderException
 
 from django.conf import settings as django_settings
 
@@ -959,7 +960,10 @@ def createExternalBug(request, crashid):
 
         # Let the provider handle the POST request, which will file the bug
         # and return us the external bug ID
-        extBugId = provider.getInstance().handlePOSTCreate(request, entry)
+        try:
+            extBugId = provider.getInstance().handlePOSTCreate(request, entry)
+        except ProviderException as e:
+            return renderError(request, e.message)
 
         # Now create a bug in our database with that ID and assign it to the bucket
         extBug = Bug(externalId=extBugId, externalType=provider)

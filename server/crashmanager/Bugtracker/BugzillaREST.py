@@ -133,8 +133,7 @@ class BugzillaREST():
         if self.login():
             createUrl = "%s?token=%s" % (createUrl, self.authToken)
 
-        response = requests.post(createUrl, bug, headers=self.request_headers)
-        return response.json()
+        return requests.post(createUrl, bug, headers=self.request_headers)
 
     def createComment(self, id, comment, is_private=False):
         if is_private:

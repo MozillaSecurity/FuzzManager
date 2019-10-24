@@ -20,6 +20,10 @@ from abc import ABCMeta, abstractmethod
 import six
 
 
+class ProviderException(Exception):
+    ''' Generic Exception for Provider related errors '''
+    pass
+
 @six.add_metaclass(ABCMeta)
 class Provider():
     '''

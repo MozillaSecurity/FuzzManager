@@ -24,8 +24,13 @@ from django.shortcuts import render, get_object_or_404
 from django.utils import dateparse
 
 from .BugzillaREST import BugzillaREST
-from .Provider import Provider
+from .Provider import Provider, ProviderException
 from ..models import BugzillaTemplate, User
+
+
+class BugzillaProviderException(ProviderException):
+    ''' Bugzilla Provider related exceptions '''
+    pass
 
 
 class BugzillaProvider(Provider):
@@ -302,14 +307,17 @@ class BugzillaProvider(Provider):
         # Create the bug
         bz = BugzillaREST(self.hostname, username, password, api_key)
         ret = bz.createBug(**args)
-        if "id" not in ret:
-            raise RuntimeError("Failed to create bug: %s", ret)
+        if ret.status_code != 200:
+            content = json.loads(ret.content)
+            raise BugzillaProviderException(content['message'])
+
+        body = ret.json()
 
         # If we were told to attach the crash data, do so now
         if crashdata_attach:
-            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
+            cRet = bz.addAttachment(body["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
                                     is_binary=False)
-            ret["crashdataAttachmentResponse"] = cRet
+            body["crashdataAttachmentResponse"] = cRet
 
         # If we have a binary testcase or the testcase is too large,
         # attach it here in a second step
@@ -323,13 +331,13 @@ class BugzillaProvider(Provider):
                 filename = submitted_testcase_filename
 
             if crashEntry.testcase.isBinary:
-                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
-                ret["attachmentResponse"] = aRet
+                aRet = bz.addAttachment(body["id"], data, filename, "Testcase", is_binary=True)
+                body["attachmentResponse"] = aRet
             elif len(data) > 2048 or testcase_attach:
-                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=False)
-                ret["attachmentResponse"] = aRet
+                aRet = bz.addAttachment(body["id"], data, filename, "Testcase", is_binary=False)
+                body["attachmentResponse"] = aRet
 
-        return ret["id"]
+        return body["id"]
 
     def handlePOSTComment(self, request, crashEntry):
         args = {}
