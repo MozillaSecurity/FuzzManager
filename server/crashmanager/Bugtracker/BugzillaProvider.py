@@ -308,7 +308,13 @@ class BugzillaProvider(Provider):
         bz = BugzillaREST(self.hostname, username, password, api_key)
         ret = bz.createBug(**args)
         if ret.status_code != 200:
-            content = json.loads(ret.content)
+            try:
+                content = json.loads(ret.content)
+                if 'message' not in content:
+                    raise ValueError
+            except ValueError:
+                raise BugzillaProviderException('Invalid JSON response')
+
             raise BugzillaProviderException(content['message'])
 
         body = ret.json()
