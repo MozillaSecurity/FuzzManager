@@ -1603,7 +1603,7 @@ class TSanCrashInfo(CrashInfo):
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         tsanOutput = crashData if crashData else stderr
 
-        tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s(?:data race|thread leak)\s+\(pid=\d+\)"""  # noqa
+        tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""  # noqa
 
         # Cache this for use by createShortSignature
         self.tsanWarnLine = None
@@ -1675,6 +1675,13 @@ class TSanCrashInfo(CrashInfo):
             elif "thread leak" in msg:
                 if self.tsanIndexZero:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
+            elif "mutex" in msg or "deadlock" in msg:
+                for frame in self.backtrace:
+                    # This is a heuristic for finding an interesting frame
+                    # that does not refer to a mutex primitive.
+                    if "mutex" not in frame:
+                        msg += " [@ %s]" % frame
+                        break
             else:
                 raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)
 
