@@ -81,9 +81,16 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
     if restricted_only and not user.restricted:
         return signatures
 
-    # If the user is unrestricted and all=1 is set, do not apply any filters
-    if not user.restricted and "all" in request.GET and request.GET["all"]:
-        return signatures
+    if not user.restricted:
+        # If the user is unrestricted and all=1 is set, do not apply any filters
+        if "all" in request.GET and request.GET["all"]:
+            return signatures
+
+        # Unrestricted users can filter the signature view for a single tool
+        if "tool" in request.GET:
+            tool_name = request.GET["tool"]
+            tool = get_object_or_404(Tool, name=tool_name)
+            return signatures.filter(crashentry__tool=tool).distinct()
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
