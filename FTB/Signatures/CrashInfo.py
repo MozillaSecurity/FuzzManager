@@ -1646,6 +1646,12 @@ class TSanCrashInfo(CrashInfo):
                     #   ASan uses:
                     #     #0 0xaddr in function name filename:line
                     component = " ".join(parts[1:-2])
+
+                    if component == "<null>" and len(parts) > 3:
+                        # TSan uses <null> <null> to indicate missing symbols, e.g.
+                        #   #1 <null> <null> (libXext.so.6+0xcc89)
+                        # Remove parentheses around component
+                        component = parts[3][1:-1]
             else:
                 print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                 component = "<missing>"
