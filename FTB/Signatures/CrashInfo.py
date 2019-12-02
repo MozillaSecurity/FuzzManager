@@ -1134,11 +1134,11 @@ class GDBCrashInfo(CrashInfo):
                     derefOp = parts[1]
 
                 if derefOp is not None:
-                        (val, failed) = calculateDerefOpAddress(derefOp)
-                        if failed:
-                            failureReason = failed
-                        else:
-                            return val
+                    (val, failed) = calculateDerefOpAddress(derefOp)
+                    if failed:
+                        failureReason = failed
+                    else:
+                        return val
                 else:
                     failureReason = ("Failed to decode two-operand instruction: No dereference operation or "
                                      "hardcoded address detected.")
@@ -1640,18 +1640,18 @@ class TSanCrashInfo(CrashInfo):
 
             component = None
             if len(parts) > 2:
-                    # TSan has a different trace style than other sanitizers:
-                    #   TSan uses:
-                    #     #0 function name filename:line:col (bin+0xaddr)
-                    #   ASan uses:
-                    #     #0 0xaddr in function name filename:line
-                    component = " ".join(parts[1:-2])
+                # TSan has a different trace style than other sanitizers:
+                #   TSan uses:
+                #     #0 function name filename:line:col (bin+0xaddr)
+                #   ASan uses:
+                #     #0 0xaddr in function name filename:line
+                component = " ".join(parts[1:-2])
 
-                    if component == "<null>" and len(parts) > 3:
-                        # TSan uses <null> <null> to indicate missing symbols, e.g.
-                        #   #1 <null> <null> (libXext.so.6+0xcc89)
-                        # Remove parentheses around component
-                        component = parts[3][1:-1]
+                if component == "<null>" and len(parts) > 3:
+                    # TSan uses <null> <null> to indicate missing symbols, e.g.
+                    #   #1 <null> <null> (libXext.so.6+0xcc89)
+                    # Remove parentheses around component
+                    component = parts[3][1:-1]
             else:
                 print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                 component = "<missing>"

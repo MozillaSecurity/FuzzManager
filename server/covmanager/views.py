@@ -477,11 +477,11 @@ def tools_search_api(request):
 @csrf_exempt
 def collections_aggregate_api(request):
     if request.method != 'POST':
-            return HttpResponse(
-                content=json.dumps({"error": "This API only supports POST."}),
-                content_type='application/json',
-                status=400
-            )
+        return HttpResponse(
+            content=json.dumps({"error": "This API only supports POST."}),
+            content_type='application/json',
+            status=400
+        )
 
     if not request.is_ajax():
         raise SuspiciousOperation

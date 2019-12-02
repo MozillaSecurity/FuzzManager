@@ -48,11 +48,11 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @wrap_provider_errors
     def cancel_requests(self, requested_instances_by_region):
-            for region, instance_ids in requested_instances_by_region.items():
-                cluster = self._connect(region)
-                cluster.cancel_spot_requests(instance_ids)
+        for region, instance_ids in requested_instances_by_region.items():
+            cluster = self._connect(region)
+            cluster.cancel_spot_requests(instance_ids)
 
-            self.logger.info("Canceling %s requests in region %s", len(instance_ids), region)
+        self.logger.info("Canceling %s requests in region %s", len(instance_ids), region)
 
     @wrap_provider_errors
     def start_instances(self, config, region, zone, userdata, image, instance_type, count, _tags):

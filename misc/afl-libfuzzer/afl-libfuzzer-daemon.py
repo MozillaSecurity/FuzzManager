@@ -1053,7 +1053,7 @@ def main(argv=None):
 
         args = opts.rargs[1:]
         if args:
-                configuration.addProgramArguments(args)
+            configuration.addProgramArguments(args)
 
         metadata = {}
         if opts.metadata:

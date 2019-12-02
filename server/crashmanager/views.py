@@ -1319,7 +1319,7 @@ def json_to_query(json_str):
         qobj = Q()
 
         if "op" not in obj:
-                raise RuntimeError("No operator specified in query object")
+            raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]
         objkeys = [value for value in obj if value != "op"]
