@@ -7,10 +7,10 @@
 # JetBrains
 .idea/
 
+coverage/
 /server/db.sqlite3
 /server/settings.secret
 /server/tests/
-/server/coverage/
 /server/logs
 /test/
 /signatures/
@@ -31,3 +31,5 @@
 # Linting via pytest
 /.pytest_cache/
 
+/.eggs/
+/.tox/

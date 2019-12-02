@@ -1,4 +1,7 @@
 [run]
 omit =
     setup.py
+    dist/*
     */tests/*
+    .tox/*
+    .eggs/*

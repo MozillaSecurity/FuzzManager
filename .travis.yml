@@ -1,41 +1,68 @@
-dist: xenial
+dist: bionic
 sudo: false
 language: python
-python:
-    - 2.7
-    - 3.4
-    - 3.5
-    - 3.6
-    - 3.7
 env:
     global:
         - BOTO_CONFIG=/dev/null
-    matrix:
-        - DJANGO=2.0
-        - DJANGO=1.11
 matrix:
-    exclude:
+    include:
         - python: 2.7
-          env: DJANGO=2.0
+          env: TOXENV=py27
+        - python: 2.7
+          env: TOXENV=py27-next
+        - python: 3.5
+          env: TOXENV=py35
+        - python: 3.5
+          env: TOXENV=py35-2.0
+        - python: 3.5
+          env: TOXENV=py35-next
+        - python: 3.6
+          env: TOXENV=py36
+        - python: 3.6
+          env: TOXENV=py36-2.0
+        - python: 3.6
+          env: TOXENV=py36-3.0
+        - python: 3.6
+          env: TOXENV=py36-next
+        - python: 3.7
+          env: TOXENV=py37
+        - python: 3.7
+          env: TOXENV=py37-2.0
+        - python: 3.7
+          env: TOXENV=py37-3.0
+        - python: 3.7
+          env: TOXENV=py37-next
+        - python: 3.8
+          env: TOXENV=py38
+        - python: 3.8
+          env: TOXENV=py38-2.0
+        - python: 3.8
+          env: TOXENV=py38-3.0
+        - python: 3.8
+          env: TOXENV=py38-next
     allow_failures:
-        - env: DJANGO=2.0
+        - env: TOXENV=py35-2.0
+        - env: TOXENV=py36-2.0
+        - env: TOXENV=py37-2.0
+        - env: TOXENV=py38-2.0
+        - env: TOXENV=py36-3.0
+        - env: TOXENV=py37-3.0
+        - env: TOXENV=py38-3.0
+        - env: TOXENV=py27-next
+        - env: TOXENV=py35-next
+        - env: TOXENV=py36-next
+        - env: TOXENV=py37-next
+        - env: TOXENV=py38-next
 services:
     - redis-server
-before_install:
+-before_install:
     - pip install --upgrade setuptools pip
-    - pip install --upgrade virtualenv
 install:
-    - pip --version
-    - virtualenv --version
-    - git --version
-before_script:
-    - pip install -r server/requirements.txt
-    - if [ "$DJANGO" = "2.0" ]; then pip install "Django>2.0"; fi
-    - pip install --upgrade codecov
+    - pip install --upgrade tox
 script:
-    - python -m pytest
+    - tox
 after_success:
-    - codecov -X gcov
+    - tox -e codecov
 deploy:
     provider: pypi
     distributions: sdist bdist_wheel

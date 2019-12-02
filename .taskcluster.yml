@@ -1,0 +1,85 @@
+version: 1
+policy:
+  pullRequests: collaborators
+tasks:
+  $let:
+    user: ${event.sender.login}
+
+    head_rev:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.head.sha}
+      else:
+        $if: 'tasks_for == "github-push"'
+        then: ${event.after}
+        else: ${event.release.tag_name}
+
+    http_repo:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.head.repo.html_url}
+      else: ${event.repository.html_url}
+
+    ssh_repo:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.head.repo.ssh_url}
+      else: ${event.repository.ssh_url}
+
+    secret_url:
+      http://taskcluster/secrets/v1/secret/project/fuzzing/fuzzmanager-codecov
+
+  in:
+    $if: 'tasks_for in ["github-pull-request", "github-push"]'
+    then:
+      $map:
+        - {pyver: 2.7, toxenv: 'py27', name: 'tests python 2.7'}
+        - {pyver: 3.5, toxenv: 'py35', name: 'tests python 3.5'}
+        - {pyver: 3.6, toxenv: 'py36', name: 'tests python 3.6'}
+        - {pyver: 3.7, toxenv: 'py37', name: 'tests python 3.7'}
+        - {pyver: 3.8, toxenv: 'py38', name: 'tests python 3.8'}
+        - {pyver: 3.5, toxenv: 'py35-2.0', name: 'tests python 3.5 django 2.x'}
+        - {pyver: 3.6, toxenv: 'py36-2.0', name: 'tests python 3.6 django 2.x'}
+        - {pyver: 3.7, toxenv: 'py37-2.0', name: 'tests python 3.7 django 2.x'}
+        - {pyver: 3.8, toxenv: 'py38-2.0', name: 'tests python 3.8 django 2.x'}
+        - {pyver: 3.6, toxenv: 'py36-3.0', name: 'tests python 3.6 django 3.x'}
+        - {pyver: 3.7, toxenv: 'py37-3.0', name: 'tests python 3.7 django 3.x'}
+        - {pyver: 3.8, toxenv: 'py38-3.0', name: 'tests python 3.8 django 3.x'}
+        - {pyver: 2.7, toxenv: 'py27-next', name: 'tests python 2.7 bleeding edge'}
+        - {pyver: 3.5, toxenv: 'py35-next', name: 'tests python 3.5 bleeding edge'}
+        - {pyver: 3.6, toxenv: 'py36-next', name: 'tests python 3.6 bleeding edge'}
+        - {pyver: 3.7, toxenv: 'py37-next', name: 'tests python 3.7 bleeding edge'}
+        - {pyver: 3.8, toxenv: 'py38-next', name: 'tests python 3.8 bleeding edge'}
+      each(build):
+        provisionerId: proj-fuzzing
+        workerType: ci
+        created: {$fromNow: ''}
+        deadline: {$fromNow: '1 hour'}
+        scopes: [secrets:get:project/fuzzing/fuzzmanager-codecov]
+        payload:
+          maxRunTime: 3600
+          image: python:${build.pyver}-slim
+          features:
+            taskclusterProxy: true
+          command:
+            - /bin/bash
+            - '--login'
+            - '-x'
+            - '-c'
+            - >-
+              echo "[global]\ndisable-pip-version-check = true\nno-cache-dir = false\n" > /etc/pip.conf &&
+              apt-get update -qq &&
+              apt-get install -y -qq --no-install-recommends --no-install-suggests build-essential curl git openssh-client &&
+              cd ~ &&
+              mkdir .ssh &&
+              ssh-keyscan github.com > .ssh/known_hosts &&
+              export CODECOV_TOKEN="$(curl -L ${secret_url} | python -c 'import json, sys; a = json.load(sys.stdin); sys.stdout.write(a["secret"]["token"])')" &&
+              git clone --quiet $http_repo} repo &&
+              cd repo &&
+              git -c advice.detachedHead=false checkout ${head_rev} &&
+              pip -q install tox &&
+              export TOXENV=${build.toxenv} &&
+              tox &&
+              tox -e coverage
+        metadata:
+          name: FuzzManager ${build.name}
+          description: FuzzManager ${build.name}
+          owner: '${event.sender.login}@users.noreply.github.com'
+          source: ${http_repo}/raw/${head_rev}/.taskcluster.yml
