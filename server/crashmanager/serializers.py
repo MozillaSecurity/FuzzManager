@@ -28,6 +28,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     tool = serializers.CharField(source='tool.name', max_length=63)
     testcase = serializers.CharField(source='testcase.test', required=False)
     testcase_ext = serializers.CharField(required=False, allow_blank=True)
+    testcase_size = serializers.IntegerField(source='testcase.size', required=False, default=0)
     testcase_quality = serializers.IntegerField(source='testcase.quality', required=False, default=0)
     testcase_isbinary = serializers.BooleanField(source='testcase.isBinary', required=False, default=False)
 
@@ -45,7 +46,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         model = CrashEntry
         fields = (
             'rawStdout', 'rawStderr', 'rawCrashData', 'metadata',
-            'testcase', 'testcase_ext', 'testcase_quality', 'testcase_isbinary',
+            'testcase', 'testcase_ext', 'testcase_size', 'testcase_quality', 'testcase_isbinary',
             'platform', 'product', 'product_version', 'os', 'client', 'tool',
             'env', 'args', 'bucket', 'id', 'shortSignature', 'crashAddress',
         )
@@ -86,6 +87,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
             testcase = attrs['testcase']
             testcase_ext = attrs.pop('testcase_ext', None)
+            testcase_size = testcase.get('size', 0)
             testcase_quality = testcase.get('quality', 0)
             testcase_isbinary = testcase.get('isBinary', False)
             testcase = testcase['test']
@@ -100,7 +102,10 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             else:
                 h.update(repr(testcase).encode("utf-8"))
 
-            dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary, size=len(testcase))
+            if not testcase_size:
+                testcase_size = len(testcase)
+
+            dbobj = TestCase(quality=testcase_quality, isBinary=testcase_isbinary, size=testcase_size)
             dbobj.test.save("%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase))
             dbobj.save()
             attrs['testcase'] = dbobj
