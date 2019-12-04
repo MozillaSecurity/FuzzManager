@@ -14,7 +14,7 @@
           <i class="glyphicon glyphicon-filter"></i>
         </label>
         <select id="rc_select" class="form-control" @change="set_rc($event)">
-          <option disabled selected value style="display:none;">Report Configuration</option>
+          <option disabled selected value style="display:none;">!{ rc_name }!</option>
           <option v-for="entry in rc_list" :value="entry.id">!{ entry.description }!</option>
         </select>
       </form>
@@ -210,7 +210,7 @@ let covmanager = new Vue({
     last_line_clicked: null,
     line_click_timer: null,
     rc_dropdown: false,
-    rc_name: 'None',
+    rc_name: 'Report Configuration', // Placeholder value
     rc_id: null,
     rc_list: [],
     storage_support: false,
@@ -567,7 +567,7 @@ let covmanager = new Vue({
           return
         }
       }
-      this.rc_name = 'N/A'
+      this.rc_name = 'Report Configuration'
 
       if (this.rc_id && this.rc_list.length > 0) {
         // Apparently there is an rc id set, but it is not in our list.
