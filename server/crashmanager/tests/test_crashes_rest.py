@@ -288,10 +288,12 @@ def test_rest_crashes_query_crash(api_client, cm):
     assert resp['previous'] is None
     assert len(resp['results']) == 1
     resp = resp['results'][0]
-    assert set(resp.keys()) == {'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
-                                'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
-                                'testcase', 'testcase_isbinary', 'testcase_quality', 'tool',
-                                'shortSignature', 'crashAddress'}
+    assert set(resp.keys()) == {
+        'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
+        'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
+        'testcase', 'testcase_isbinary', 'testcase_quality', 'testcase_size', 'tool',
+        'shortSignature', 'crashAddress',
+    }
     for key, value in resp.items():
         if key == "testcase":
             continue
@@ -342,9 +344,11 @@ def test_rest_crashes_list_noraw(api_client, cm):
     assert resp['previous'] is None
     assert len(resp['results']) == 1
     resp = resp['results'][0]
-    assert set(resp.keys()) == {'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
-                                'product', 'product_version', 'testcase', 'testcase_isbinary',
-                                'testcase_quality', 'tool', 'shortSignature', 'crashAddress'}
+    assert set(resp.keys()) == {
+        'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
+        'product', 'product_version', 'testcase', 'testcase_isbinary',
+        'testcase_quality', 'testcase_size', 'tool', 'shortSignature', 'crashAddress',
+    }
     for key, value in resp.items():
         if key == "testcase":
             continue
@@ -446,10 +450,12 @@ def test_rest_crash_get(api_client, cm):
     LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']
     resp = json.loads(resp.content.decode('utf-8'))
-    assert set(resp.keys()) == {'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
-                                'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
-                                'testcase', 'testcase_isbinary', 'testcase_quality', 'tool',
-                                'shortSignature', 'crashAddress'}
+    assert set(resp.keys()) == {
+        'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
+        'product', 'product_version', 'rawCrashData', 'rawStderr', 'rawStdout',
+        'testcase', 'testcase_isbinary', 'testcase_size', 'testcase_quality', 'tool',
+        'shortSignature', 'crashAddress',
+    }
     for key, value in resp.items():
         if key == "testcase":
             continue

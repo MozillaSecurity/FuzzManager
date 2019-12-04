@@ -84,7 +84,7 @@ class Collector(Reporter):
             zipFile.extractall(self.sigCacheDir)
 
     @remote_checks
-    def submit(self, crashInfo, testCase=None, testCaseQuality=0, metaData=None):
+    def submit(self, crashInfo, testCase=None, testCaseQuality=0, testCaseSize=None, metaData=None):
         '''
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
@@ -97,6 +97,9 @@ class Collector(Reporter):
 
         @type testCaseQuality: int
         @param testCaseQuality: A value indicating the quality of the test (less is better)
+
+        @type testCaseSize: int or None
+        @param testCaseSize: The size of the testcase to report. If None, use the file size.
 
         @type metaData: map
         @param metaData: A map containing arbitrary (application-specific) data which
@@ -115,12 +118,16 @@ class Collector(Reporter):
         if testCase:
             (testCaseData, isBinary) = Collector.read_testcase(testCase)
 
+            if testCaseSize is None:
+                testCaseSize = len(testCaseData)
+
             if isBinary:
                 testCaseData = base64.b64encode(testCaseData)
 
             data["testcase"] = testCaseData
             data["testcase_isbinary"] = isBinary
             data["testcase_quality"] = testCaseQuality
+            data["testcase_size"] = testCaseSize
             data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
         data["platform"] = crashInfo.configuration.platform
@@ -395,6 +402,8 @@ def main(args=None):
     parser.add_argument("--testcase", help="File containing testcase", metavar="FILE")
     parser.add_argument("--testcasequality", default=0, type=int,
                         help="Integer indicating test case quality (%(default)s is best and default)", metavar="VAL")
+    parser.add_argument("--testcasesize", type=int,
+                        help="Integer indicating test case size (default is size of testcase data)", metavar="SIZE")
 
     # Options that affect how signatures are generated
     parser.add_argument("--forcecrashaddr", action='store_true',
@@ -524,7 +533,7 @@ def main(args=None):
 
     if opts.submit:
         testcase = opts.testcase
-        collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
+        collector.submit(crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata)
         return 0
 
     if opts.search:
@@ -549,7 +558,7 @@ def main(args=None):
         runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
         if runner.run():
             crashInfo = runner.getCrashInfo(configuration)
-            collector.submit(crashInfo, testcase, opts.testcasequality, metadata)
+            collector.submit(crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata)
         else:
             print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
             return 1
