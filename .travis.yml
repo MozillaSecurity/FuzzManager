@@ -13,13 +13,9 @@ matrix:
         - python: 3.5
           env: TOXENV=py35
         - python: 3.5
-          env: TOXENV=py35-2.0
-        - python: 3.5
           env: TOXENV=py35-next
         - python: 3.6
           env: TOXENV=py36
-        - python: 3.6
-          env: TOXENV=py36-2.0
         - python: 3.6
           env: TOXENV=py36-3.0
         - python: 3.6
@@ -27,24 +23,16 @@ matrix:
         - python: 3.7
           env: TOXENV=py37
         - python: 3.7
-          env: TOXENV=py37-2.0
-        - python: 3.7
           env: TOXENV=py37-3.0
         - python: 3.7
           env: TOXENV=py37-next
         - python: 3.8
           env: TOXENV=py38
         - python: 3.8
-          env: TOXENV=py38-2.0
-        - python: 3.8
           env: TOXENV=py38-3.0
         - python: 3.8
           env: TOXENV=py38-next
     allow_failures:
-        - env: TOXENV=py35-2.0
-        - env: TOXENV=py36-2.0
-        - env: TOXENV=py37-2.0
-        - env: TOXENV=py38-2.0
         - env: TOXENV=py36-3.0
         - env: TOXENV=py37-3.0
         - env: TOXENV=py38-3.0

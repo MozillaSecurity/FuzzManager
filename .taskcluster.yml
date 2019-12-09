@@ -24,35 +24,23 @@ tasks:
       else: ${event.repository.ssh_url}
 
     secret_url:
-      http://taskcluster/secrets/v1/secret/project/fuzzing/fuzzmanager-codecov
+      http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
   in:
     $if: 'tasks_for in ["github-pull-request", "github-push"]'
     then:
       $map:
-        - {pyver: 2.7, toxenv: 'py27', name: 'tests python 2.7'}
-        - {pyver: 3.5, toxenv: 'py35', name: 'tests python 3.5'}
-        - {pyver: 3.6, toxenv: 'py36', name: 'tests python 3.6'}
-        - {pyver: 3.7, toxenv: 'py37', name: 'tests python 3.7'}
-        - {pyver: 3.8, toxenv: 'py38', name: 'tests python 3.8'}
-        - {pyver: 3.5, toxenv: 'py35-2.0', name: 'tests python 3.5 django 2.x'}
-        - {pyver: 3.6, toxenv: 'py36-2.0', name: 'tests python 3.6 django 2.x'}
-        - {pyver: 3.7, toxenv: 'py37-2.0', name: 'tests python 3.7 django 2.x'}
-        - {pyver: 3.8, toxenv: 'py38-2.0', name: 'tests python 3.8 django 2.x'}
-        - {pyver: 3.6, toxenv: 'py36-3.0', name: 'tests python 3.6 django 3.x'}
-        - {pyver: 3.7, toxenv: 'py37-3.0', name: 'tests python 3.7 django 3.x'}
-        - {pyver: 3.8, toxenv: 'py38-3.0', name: 'tests python 3.8 django 3.x'}
-        - {pyver: 2.7, toxenv: 'py27-next', name: 'tests python 2.7 bleeding edge'}
-        - {pyver: 3.5, toxenv: 'py35-next', name: 'tests python 3.5 bleeding edge'}
-        - {pyver: 3.6, toxenv: 'py36-next', name: 'tests python 3.6 bleeding edge'}
-        - {pyver: 3.7, toxenv: 'py37-next', name: 'tests python 3.7 bleeding edge'}
-        - {pyver: 3.8, toxenv: 'py38-next', name: 'tests python 3.8 bleeding edge'}
+        - {pyver: 2.7, toxenv: 'py27', name: 'tests python 2.7 django 1.x'}
+        - {pyver: 3.5, toxenv: 'py35', name: 'tests python 3.5 django 2.x'}
+        - {pyver: 3.6, toxenv: 'py36', name: 'tests python 3.6 django 2.x'}
+        - {pyver: 3.7, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
+        - {pyver: 3.8, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
       each(build):
         provisionerId: proj-fuzzing
         workerType: ci
         created: {$fromNow: ''}
         deadline: {$fromNow: '1 hour'}
-        scopes: [secrets:get:project/fuzzing/fuzzmanager-codecov]
+        scopes: [secrets:get:project/fuzzing/codecov-fuzzmanager]
         payload:
           maxRunTime: 3600
           image: python:${build.pyver}-slim
