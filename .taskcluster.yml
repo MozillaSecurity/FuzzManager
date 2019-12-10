@@ -59,7 +59,7 @@ tasks:
               mkdir .ssh &&
               ssh-keyscan github.com > .ssh/known_hosts &&
               export CODECOV_TOKEN="$(curl -L ${secret_url} | python -c 'import json, sys; a = json.load(sys.stdin); sys.stdout.write(a["secret"]["token"])')" &&
-              git clone --quiet $http_repo} repo &&
+              git clone --quiet ${http_repo} repo &&
               cd repo &&
               git -c advice.detachedHead=false checkout ${head_rev} &&
               pip -q install tox &&
