@@ -883,66 +883,64 @@ def findSignatures(request, crashid):
             matchingBucket = bucket
             break
 
-        # TODO: This could be made configurable through a GET parameter
-        if distance <= 4:
-            proposedCrashSignature = signature.fit(entry.crashinfo)
-            if proposedCrashSignature:
-                # We now try to determine how this signature will behave in other buckets
-                # If the signature matches lots of other buckets as well, it is likely too
-                # broad and we should not consider it (or later rate it worse than others).
-                matchesInOtherBuckets = 0
-                matchesInOtherBucketsLimitExceeded = False
-                nonMatchesInOtherBuckets = 0
-                otherMatchingBucketIds = []
-                for otherBucket in buckets:
-                    if otherBucket.pk == bucket.pk:
-                        continue
+        proposedCrashSignature = signature.fit(entry.crashinfo)
+        if proposedCrashSignature:
+            # We now try to determine how this signature will behave in other buckets
+            # If the signature matches lots of other buckets as well, it is likely too
+            # broad and we should not consider it (or later rate it worse than others).
+            matchesInOtherBuckets = 0
+            matchesInOtherBucketsLimitExceeded = False
+            nonMatchesInOtherBuckets = 0
+            otherMatchingBucketIds = []
+            for otherBucket in buckets:
+                if otherBucket.pk == bucket.pk:
+                    continue
 
-                    if otherBucket.pk not in firstEntryPerBucketCache:
-                        c = CrashEntry.objects.filter(bucket=otherBucket).first()
-                        firstEntryPerBucketCache[otherBucket.pk] = c
-                        if c:
-                            # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
-
-                    firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
-                    if firstEntryCrashInfo:
+                if otherBucket.pk not in firstEntryPerBucketCache:
+                    c = CrashEntry.objects.filter(bucket=otherBucket).first()
+                    firstEntryPerBucketCache[otherBucket.pk] = c
+                    if c:
                         # Omit testcase for performance reasons for now
-                        if proposedCrashSignature.matches(firstEntryCrashInfo):
-                            matchesInOtherBuckets += 1
-                            otherMatchingBucketIds.append(otherBucket.pk)
+                        firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(attachTestcase=False)
 
-                            # We already match too many foreign buckets. Abort our search here
-                            # to speed up the response time.
-                            if matchesInOtherBuckets > 5:
-                                matchesInOtherBucketsLimitExceeded = True
-                                break
-                        else:
-                            nonMatchesInOtherBuckets += 1
+                firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
+                if firstEntryCrashInfo:
+                    # Omit testcase for performance reasons for now
+                    if proposedCrashSignature.matches(firstEntryCrashInfo):
+                        matchesInOtherBuckets += 1
+                        otherMatchingBucketIds.append(otherBucket.pk)
 
-                bucket.offCount = distance
+                        # We already match too many foreign buckets. Abort our search here
+                        # to speed up the response time.
+                        if matchesInOtherBuckets > 5:
+                            matchesInOtherBucketsLimitExceeded = True
+                            break
+                    else:
+                        nonMatchesInOtherBuckets += 1
 
-                if matchesInOtherBuckets + nonMatchesInOtherBuckets > 0:
-                    bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (
-                        matchesInOtherBuckets + nonMatchesInOtherBuckets)) * 100, 2)
-                else:
-                    bucket.foreignMatchPercentage = 0
+            bucket.offCount = distance
 
-                bucket.foreignMatchCount = matchesInOtherBuckets
-                bucket.foreignMatchLimitExceeded = matchesInOtherBucketsLimitExceeded
+            if matchesInOtherBuckets + nonMatchesInOtherBuckets > 0:
+                bucket.foreignMatchPercentage = round((float(matchesInOtherBuckets) / (
+                    matchesInOtherBuckets + nonMatchesInOtherBuckets)) * 100, 2)
+            else:
+                bucket.foreignMatchPercentage = 0
 
-                if matchesInOtherBuckets == 0:
-                    bucket.foreignColor = "green"
-                elif matchesInOtherBuckets < 3:
-                    bucket.foreignColor = "yellow"
-                else:
-                    bucket.foreignColor = "red"
+            bucket.foreignMatchCount = matchesInOtherBuckets
+            bucket.foreignMatchLimitExceeded = matchesInOtherBucketsLimitExceeded
 
-                # Only include the bucket in our results if the number of matches in other buckets is below
-                # out limit. Otherwise, it will just distract the user.
-                if matchesInOtherBuckets <= 5:
-                    bucket.linkToOthers = ",".join([str(x) for x in otherMatchingBucketIds])
-                    similarBuckets.append(bucket)
+            if matchesInOtherBuckets == 0:
+                bucket.foreignColor = "green"
+            elif matchesInOtherBuckets < 3:
+                bucket.foreignColor = "yellow"
+            else:
+                bucket.foreignColor = "red"
+
+            # Only include the bucket in our results if the number of matches in other buckets is below
+            # out limit. Otherwise, it will just distract the user.
+            if matchesInOtherBuckets <= 5:
+                bucket.linkToOthers = ",".join([str(x) for x in otherMatchingBucketIds])
+                similarBuckets.append(bucket)
 
     if matchingBucket:
         entry.bucket = matchingBucket
