@@ -67,7 +67,7 @@ tasks:
               git -c advice.detachedHead=false checkout ${fetch_rev} &&
               export TOXENV=${build.toxenv} &&
               set +x &&
-              export CODECOV_TOKEN="$(curl -L ${codecov_secret_url} | jshon -e secret -e token -u)" &&
+              export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
               set -x &&
               tox &&
               tox -e codecov
