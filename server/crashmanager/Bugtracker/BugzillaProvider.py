@@ -110,9 +110,6 @@ class BugzillaProvider(Provider):
         # Determine the state of the testcase
         sdata['testcase'] = "(Test not available)"
         if crashEntry.testcase:
-            # Always attach testcase and, where applicable, include in Comment 0
-            attachmentData['testcase_attach'] = True
-
             if crashEntry.testcase.isBinary:
                 sdata['testcase'] = "See attachment."
             else:
@@ -268,10 +265,6 @@ class BugzillaProvider(Provider):
         if 'crashdata_attach' in request.POST:
             crashdata_attach = request.POST['crashdata_attach']
 
-        testcase_attach = False
-        if 'testcase_attach' in request.POST:
-            testcase_attach = True
-
         # Remove any other variables that we don't want to pass on
         for key in request.POST:
             if key not in self.templateFields:
@@ -322,12 +315,9 @@ class BugzillaProvider(Provider):
             if submitted_testcase_filename:
                 filename = submitted_testcase_filename
 
-            if crashEntry.testcase.isBinary:
-                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=True)
-                ret["attachmentResponse"] = aRet
-            elif len(data) > 2048 or testcase_attach:
-                aRet = bz.addAttachment(ret["id"], data, filename, "Testcase", is_binary=False)
-                ret["attachmentResponse"] = aRet
+            aRet = bz.addAttachment(ret["id"], data, filename, "Testcase",
+                                    is_binary=crashEntry.testcase.isBinary)
+            ret["attachmentResponse"] = aRet
 
         return ret["id"]
 
@@ -355,10 +345,6 @@ class BugzillaProvider(Provider):
         crashdata_attach = None
         if 'crashdata_attach' in request.POST:
             crashdata_attach = request.POST['crashdata_attach']
-
-        testcase_attach = False
-        if 'testcase_attach' in request.POST:
-            testcase_attach = True
 
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
@@ -389,12 +375,9 @@ class BugzillaProvider(Provider):
             if "count" in ret:
                 cref = "comment %s" % ret["count"]
 
-            if crashEntry.testcase.isBinary:
-                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for %s" % cref, is_binary=True)
-                ret["attachmentResponse"] = aRet
-            elif len(data) > 2048 or testcase_attach:
-                aRet = bz.addAttachment(args["id"], data, filename, "Testcase for %s" % cref, is_binary=False)
-                ret["attachmentResponse"] = aRet
+            aRet = bz.addAttachment(args["id"], data, filename, "Testcase for %s" % cref,
+                                    is_binary=crashEntry.testcase.isBinary)
+            ret["attachmentResponse"] = aRet
 
         return ret["id"]
 
