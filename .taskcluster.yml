@@ -63,8 +63,8 @@ tasks:
               mkdir repo &&
               cd repo &&
               git init . &&
-              git remote add origin ${http_repo} repo &&
-              git fetch --depth=1 "${fetch_ref}" &&
+              git remote add origin ${http_repo} &&
+              git fetch -q --depth=1 origin "${fetch_ref}" &&
               git -c advice.detachedHead=false checkout ${fetch_rev} &&
               export TOXENV=${build.toxenv} &&
               tox &&
