@@ -5,7 +5,7 @@ tasks:
   $let:
     user: ${event.sender.login}
 
-    head_rev:
+    fetch_rev:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.head.sha}
       else:
@@ -13,17 +13,20 @@ tasks:
         then: ${event.after}
         else: ${event.release.tag_name}
 
+    fetch_ref:
+      $if: 'tasks_for == "github-pull-request"'
+      then: "pull/${event.number}/head"
+      else:
+        $if: 'tasks_for == "github-push"'
+        then: ${event.ref}
+        else: "tags/${event.release.tag_name}"
+
     http_repo:
       $if: 'tasks_for == "github-pull-request"'
-      then: ${event.pull_request.head.repo.html_url}
-      else: ${event.repository.html_url}
+      then: ${event.pull_request.base.repo.clone_url}
+      else: ${event.repository.clone_url}
 
-    ssh_repo:
-      $if: 'tasks_for == "github-pull-request"'
-      then: ${event.pull_request.head.repo.ssh_url}
-      else: ${event.repository.ssh_url}
-
-    secret_url:
+    codecov_secret_url:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
   in:
@@ -54,15 +57,15 @@ tasks:
             - >-
               echo "[global]\ndisable-pip-version-check = true\nno-cache-dir = false\n" > /etc/pip.conf &&
               apt-get update -qq &&
-              apt-get install -y -qq --no-install-recommends --no-install-suggests build-essential curl git openssh-client &&
-              cd ~ &&
-              mkdir .ssh &&
-              ssh-keyscan github.com > .ssh/known_hosts &&
-              export CODECOV_TOKEN="$(curl -L ${secret_url} | python -c 'import json, sys; a = json.load(sys.stdin); sys.stdout.write(a["secret"]["token"])')" &&
-              git clone --quiet ${http_repo} repo &&
-              cd repo &&
-              git -c advice.detachedHead=false checkout ${head_rev} &&
+              apt-get install -y -qq --no-install-recommends --no-install-suggests build-essential curl git jshon mercurial &&
               pip -q install tox &&
+              export CODECOV_TOKEN="$(curl -L ${codecov_secret_url} | jshon -e secret -e token -u)" &&
+              mkdir repo &&
+              cd repo &&
+              git init . &&
+              git remote add origin ${http_repo} repo &&
+              git fetch --depth=1 "${fetch_ref}" &&
+              git -c advice.detachedHead=false checkout ${fetch_rev} &&
               export TOXENV=${build.toxenv} &&
               tox &&
               tox -e coverage
@@ -70,4 +73,4 @@ tasks:
           name: FuzzManager ${build.name}
           description: FuzzManager ${build.name}
           owner: '${event.sender.login}@users.noreply.github.com'
-          source: ${http_repo}/raw/${head_rev}/.taskcluster.yml
+          source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
