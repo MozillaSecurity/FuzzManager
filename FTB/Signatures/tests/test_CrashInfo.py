@@ -2836,6 +2836,26 @@ def test_TSanParserSimpleRaceTest():
     assert crashInfo.crashAddress is None
 
 
+def test_TSanParserLockReportTest():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    with open(os.path.join(CWD, 'resources', 'tsan-lock-report.txt'), 'r') as f:
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+
+    assert crashInfo.createShortSignature() == (
+        "ThreadSanitizer: lock-order-inversion (potential deadlock) [@ PR_Lock]")
+
+    assert len(crashInfo.backtrace) == 12
+    assert crashInfo.backtrace[0] == "pthread_mutex_lock"
+    assert crashInfo.backtrace[1] == "PR_Lock"
+    assert crashInfo.backtrace[2] == "sftk_hasAttribute"
+    assert crashInfo.backtrace[3] == "sftk_CopyObject"
+    assert crashInfo.backtrace[4] == "pthread_mutex_lock"
+
+    assert crashInfo.crashInstruction is None
+    assert crashInfo.crashAddress is None
+
+
 def test_TSanParserTest():
     config = ProgramConfiguration("test", "x86-64", "linux")
 

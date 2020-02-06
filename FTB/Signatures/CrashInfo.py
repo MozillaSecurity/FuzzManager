@@ -1673,7 +1673,7 @@ class TSanCrashInfo(CrashInfo):
             msg = re.sub(r"\s*\(pid=\d+\)", "", self.tsanWarnLine)
             msg = msg.replace("WARNING: ", "")
 
-            if "data race" in msg:
+            if "data race" in msg or "race on external object" in msg:
                 if self.tsanIndexZero:
                     msg += " [@ %s]" % self.tsanIndexZero[0]
                     if len(self.tsanIndexZero) > 1:
@@ -1688,6 +1688,9 @@ class TSanCrashInfo(CrashInfo):
                     if "mutex" not in frame:
                         msg += " [@ %s]" % frame
                         break
+            elif "signal" in msg or "use-after-free" in msg:
+                if self.backtrace:
+                    msg += " [@ %s]" % self.backtrace[0]
             else:
                 raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)
 
