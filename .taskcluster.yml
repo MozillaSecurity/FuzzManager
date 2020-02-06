@@ -56,19 +56,26 @@ tasks:
             - '-c'
             - >-
               echo "[global]\ndisable-pip-version-check = true\nno-cache-dir = false\n" > /etc/pip.conf &&
+              function read_token () {
+                echo "export $1=" > token.txt;
+                curl -L $2 | jshon -e secret -e token -u >> token.txt;
+                cat token.txt | tr -d '\n' > token.sh;
+                . token.sh;
+                rm token.txt token.sh
+              } &&
               apt-get update -qq &&
               apt-get install -y -qq --no-install-recommends --no-install-suggests build-essential curl git jshon mercurial &&
               pip -q install tox &&
-              export CODECOV_TOKEN="$(curl -L ${codecov_secret_url} | jshon -e secret -e token -u)" &&
-              mkdir repo &&
+              cd ~ &&
+              read_token CODECOV_TOKEN ${codecov_secret_url} &&
+              git init repo &&
               cd repo &&
-              git init . &&
               git remote add origin ${http_repo} &&
               git fetch -q --depth=1 origin "${fetch_ref}" &&
               git -c advice.detachedHead=false checkout ${fetch_rev} &&
               export TOXENV=${build.toxenv} &&
               tox &&
-              tox -e coverage
+              tox -e codecov
         metadata:
           name: FuzzManager ${build.name}
           description: FuzzManager ${build.name}
