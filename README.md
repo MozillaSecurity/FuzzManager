@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/MozillaSecurity/FuzzManager.svg?branch=master)](https://travis-ci.org/MozillaSecurity/FuzzManager)
+[![Task Status](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/FuzzManager/master/badge.svg)](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/FuzzManager/master/latest)
 [![codecov](https://codecov.io/gh/MozillaSecurity/FuzzManager/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/FuzzManager)
 
 # What is FuzzManager
