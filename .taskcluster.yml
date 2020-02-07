@@ -33,11 +33,11 @@ tasks:
     $if: 'tasks_for in ["github-pull-request", "github-push"]'
     then:
       $map:
-        - {pyver: 2.7, toxenv: 'py27', name: 'tests python 2.7 django 1.x'}
-        - {pyver: 3.5, toxenv: 'py35', name: 'tests python 3.5 django 2.x'}
-        - {pyver: 3.6, toxenv: 'py36', name: 'tests python 3.6 django 2.x'}
-        - {pyver: 3.7, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
-        - {pyver: 3.8, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
+        - {image: ci-py-27, toxenv: 'py27', name: 'tests python 2.7 django 1.x'}
+        - {image: ci-py-35, toxenv: 'py35', name: 'tests python 3.5 django 2.x'}
+        - {image: ci-py-36, toxenv: 'py36', name: 'tests python 3.6 django 2.x'}
+        - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
+        - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
       each(build):
         provisionerId: proj-fuzzing
         workerType: ci
@@ -46,7 +46,7 @@ tasks:
         scopes: [secrets:get:project/fuzzing/codecov-fuzzmanager]
         payload:
           maxRunTime: 3600
-          image: python:${build.pyver}-slim
+          image: mozillasecurity/${build.image}:latest
           features:
             taskclusterProxy: true
           command:
@@ -55,11 +55,6 @@ tasks:
             - '-x'
             - '-c'
             - >-
-              echo "[global]\ndisable-pip-version-check = true\nno-cache-dir = false\n" > /etc/pip.conf &&
-              apt-get update -qq &&
-              apt-get install -y -qq --no-install-recommends --no-install-suggests build-essential curl git jshon mercurial &&
-              pip -q install tox &&
-              cd ~ &&
               git init repo &&
               cd repo &&
               git remote add origin ${http_repo} &&
