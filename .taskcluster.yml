@@ -29,6 +29,9 @@ tasks:
     codecov_secret_url:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
+    pypi_secret_url:
+      http://taskcluster/secrets/v1/secret/project/fuzzing/pypi
+
   in:
     $if: 'tasks_for in ["github-pull-request", "github-push"]'
     then:
@@ -55,19 +58,54 @@ tasks:
             - '-x'
             - '-c'
             - >-
+              retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
               git init repo &&
               cd repo &&
               git remote add origin ${http_repo} &&
-              git fetch -q --depth=1 origin "${fetch_ref}" &&
+              retry git fetch -q --depth=1 origin "${fetch_ref}" &&
               git -c advice.detachedHead=false checkout ${fetch_rev} &&
-              export TOXENV=${build.toxenv} &&
               set +x &&
               export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
               set -x &&
-              tox &&
-              tox -e codecov
+              tox -e ${build.toxenv} &&
+              retry tox -e codecov
         metadata:
           name: FuzzManager ${build.name}
           description: FuzzManager ${build.name}
-          owner: '${event.sender.login}@users.noreply.github.com'
+          owner: '${user}@users.noreply.github.com'
+          source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+    else:
+      $if: 'tasks_for in ["github-release"]'
+      then:
+        provisionerId: proj-fuzzing
+        workerType: ci
+        created: {$fromNow: ''}
+        deadline: {$fromNow: '1 hour'}
+        scopes: [secrets:get:project/fuzzing/pypi]
+        payload:
+          maxRunTime: 3600
+          image: mozillasecurity/ci-py-38:latest
+          features:
+            taskclusterProxy: true
+          command:
+            - /bin/bash
+            - '--login'
+            - '-x'
+            - '-c'
+            - >-
+              retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
+              git init repo &&
+              cd repo &&
+              git remote add origin ${http_repo} &&
+              retry git fetch -q --depth=1 origin "${fetch_ref}" &&
+              git -c advice.detachedHead=false checkout ${fetch_rev} &&
+              set +x &&
+              export TWINE_USERNAME="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e username -u)" &&
+              export TWINE_PASSWORD="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e password -u)" &&
+              set -x &&
+              retry tox -e pypi
+        metadata:
+          name: FuzzManager PyPI upload
+          description: FuzzManager PyPI upload
+          owner: '${user}@users.noreply.github.com'
           source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
