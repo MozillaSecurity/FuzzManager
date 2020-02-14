@@ -1,0 +1,14 @@
+WARNING: ThreadSanitizer: data race (pid=9337)
+  Write of size 4 at 0x7fe3c3075190 by thread T1:
+    #0 foo2() simple_stack2.cc:20 (exe+0x000000003d0c)
+    #1 bar2() simple_stack2.cc:29 (exe+0x000000003d74)
+    #2 main simple_stack2.cc:41 (exe+0x000000003ddb)
+
+  Previous read of size 4 at 0x7fe3c3075190 by main thread:
+    #0 foo1() simple_stack2.cc:9 (exe+0x000000003c9a)
+    #1 bar1() simple_stack2.cc:16 (exe+0x000000003ce4)
+    #2 Thread1(void*) simple_stack2.cc:34 (exe+0x000000003d99)
+
+  Thread T1 (tid=9338, running) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000000de83)
+    #1 main simple_stack2.cc:40 (exe+0x000000003dd6)

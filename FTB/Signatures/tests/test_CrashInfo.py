@@ -2820,20 +2820,21 @@ def test_TSanParserSimpleLeakTest():
 def test_TSanParserSimpleRaceTest():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
-    with open(os.path.join(CWD, 'resources', 'tsan-simple-race-report.txt'), 'r') as f:
-        crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
+    for fn in ['tsan-simple-race-report.txt', 'tsan-simple-race-report-swapped.txt']:
+        with open(os.path.join(CWD, 'resources', fn), 'r') as f:
+            crashInfo = CrashInfo.fromRawCrashData([], [], config, f.read().splitlines())
 
-    assert crashInfo.createShortSignature() == ("ThreadSanitizer: data race [@ foo1] vs. [@ foo2]")
+        assert crashInfo.createShortSignature() == ("ThreadSanitizer: data race [@ foo1] vs. [@ foo2]")
 
-    assert len(crashInfo.backtrace) == 8
-    assert crashInfo.backtrace[0] == "foo1"
-    assert crashInfo.backtrace[1] == "bar1"
-    assert crashInfo.backtrace[2] == "Thread1"
-    assert crashInfo.backtrace[3] == "foo2"
-    assert crashInfo.backtrace[4] == "bar2"
+        assert len(crashInfo.backtrace) == 8
+        assert crashInfo.backtrace[0] == "foo1"
+        assert crashInfo.backtrace[1] == "bar1"
+        assert crashInfo.backtrace[2] == "Thread1"
+        assert crashInfo.backtrace[3] == "foo2"
+        assert crashInfo.backtrace[4] == "bar2"
 
-    assert crashInfo.crashInstruction is None
-    assert crashInfo.crashAddress is None
+        assert crashInfo.crashInstruction is None
+        assert crashInfo.crashAddress is None
 
 
 def test_TSanParserLockReportTest():

@@ -1611,13 +1611,22 @@ class TSanCrashInfo(CrashInfo):
 
         expectedIndex = 0
         reportFound = False
+        brokenStack = False
+        isDataRace = False
+        backtraces = []
+        currentBacktrace = None
         for traceLine in tsanOutput:
             if not reportFound:
                 match = re.search(tsanWarningPattern, traceLine)
                 if match is not None:
                     self.tsanWarnLine = traceLine.strip()
                     reportFound = True
+                    isDataRace = "data race" in self.tsanWarnLine
                 continue
+
+            if "[failed to restore the stack]" in traceLine:
+                # TSan failed to symbolize at least one stack
+                brokenStack = True
 
             parts = traceLine.strip().split()
 
@@ -1632,6 +1641,9 @@ class TSanCrashInfo(CrashInfo):
 
             # We may see multiple traces in TSAN
             if index == 0:
+                if currentBacktrace is not None:
+                    backtraces.append(currentBacktrace)
+                currentBacktrace = []
                 expectedIndex = 0
 
             if not expectedIndex == index:
@@ -1656,13 +1668,54 @@ class TSanCrashInfo(CrashInfo):
                 print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                 component = "<missing>"
 
-            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+            currentBacktrace.append(CrashInfo.sanitizeStackFrame(component))
 
             if index == 0:
                 # Memorize index 0 components for short signature later
-                self.tsanIndexZero.append(self.backtrace[-1])
+                self.tsanIndexZero.append(currentBacktrace[-1])
 
             expectedIndex += 1
+
+        if currentBacktrace is not None:
+            backtraces.append(currentBacktrace)
+
+        # For data races, TSan emits two stacks. If both stacks are intact,
+        # we should try to canonicalize their order to avoid creating multiple
+        # buckets for the same race.
+        if not brokenStack and isDataRace and len(backtraces) >= 2:
+            trace1 = backtraces.pop(0)
+            trace2 = backtraces.pop(0)
+
+            done = False
+            for idx in range(0, min(len(trace1), len(trace2))):
+                if trace1[idx] > trace2[idx]:
+                    backtraces.insert(0, trace1)
+                    backtraces.insert(0, trace2)
+                    done = True
+                    break
+                elif trace1[idx] < trace2[idx]:
+                    backtraces.insert(0, trace2)
+                    backtraces.insert(0, trace1)
+                    done = True
+                    break
+                # Continue if the frames are equal
+
+            if not done:
+                # While unlikely, traces can be equal or one be a subset of the other.
+                # If they have different length, sort them by length.
+                if len(trace1) <= len(trace2):
+                    backtraces.insert(0, trace2)
+                    backtraces.insert(0, trace1)
+                else:
+                    backtraces.insert(0, trace1)
+                    backtraces.insert(0, trace2)
+
+        # Merge individual backtraces into one
+        for backtrace in backtraces:
+            self.backtrace.extend(backtrace)
+
+        # Sort the zero indexes
+        self.tsanIndexZero.sort()
 
     def createShortSignature(self):
         '''

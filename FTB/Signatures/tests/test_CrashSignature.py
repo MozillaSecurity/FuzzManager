@@ -689,6 +689,8 @@ def test_SignatureGenerationTSanRaceTest():
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
     testSignature = crashInfo.createCrashSignature()
 
+    print(testSignature)
+
     assert testSignature.matches(crashInfo)
 
     outputSymptoms = []
@@ -702,8 +704,8 @@ def test_SignatureGenerationTSanRaceTest():
 
     for stringMatchVal in [
         "WARNING: ThreadSanitizer: data race",
-        "Write of size 4 at 0x[0-9a-fA-F]+ by thread T1:",
-        "Previous read of size 4 at 0x[0-9a-fA-F]+ by main thread:"
+        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:",
+        "(Previous )?[Rr]ead of size 4 at 0x[0-9a-fA-F]+ by main thread( \\(mutexes .*\\))?:"
     ]:
         found = False
         for symptom in outputSymptoms:
