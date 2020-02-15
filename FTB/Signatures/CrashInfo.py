@@ -1683,32 +1683,7 @@ class TSanCrashInfo(CrashInfo):
         # we should try to canonicalize their order to avoid creating multiple
         # buckets for the same race.
         if not brokenStack and isDataRace and len(backtraces) >= 2:
-            trace1 = backtraces.pop(0)
-            trace2 = backtraces.pop(0)
-
-            done = False
-            for idx in range(0, min(len(trace1), len(trace2))):
-                if trace1[idx] > trace2[idx]:
-                    backtraces.insert(0, trace1)
-                    backtraces.insert(0, trace2)
-                    done = True
-                    break
-                elif trace1[idx] < trace2[idx]:
-                    backtraces.insert(0, trace2)
-                    backtraces.insert(0, trace1)
-                    done = True
-                    break
-                # Continue if the frames are equal
-
-            if not done:
-                # While unlikely, traces can be equal or one be a subset of the other.
-                # If they have different length, sort them by length.
-                if len(trace1) <= len(trace2):
-                    backtraces.insert(0, trace2)
-                    backtraces.insert(0, trace1)
-                else:
-                    backtraces.insert(0, trace1)
-                    backtraces.insert(0, trace2)
+            backtraces = sorted(backtraces[:2]) + backtraces[2:]
 
         # Merge individual backtraces into one
         for backtrace in backtraces:
