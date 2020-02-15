@@ -218,8 +218,9 @@ def getSanitizedAssertionPattern(msgs):
         # Specific TSan patterns
         replacementPatterns.append("(Previous )?[Rr]ead of size")
         replacementPatterns.append("(Previous )?[Ww]rite of size")
-        replacementPatterns.append("thread T[0-9]+( \\(mutexes .*\\))?:")
-        replacementPatterns.append("by main thread( \\(mutexes .*\\))?:")
+        # We avoid the use of parentheses here because they would be double-escaped
+        replacementPatterns.append("thread T[0-9]+( .+mutexes: .+)?:")
+        replacementPatterns.append("by main thread( .+mutexes: .+)?:")
 
         # Replace everything that looks like a memory address
         replacementPatterns.append("0x[0-9a-fA-F]+")

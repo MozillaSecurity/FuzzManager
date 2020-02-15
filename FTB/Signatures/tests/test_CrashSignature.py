@@ -714,6 +714,37 @@ def test_SignatureGenerationTSanRaceTest():
         assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
 
 
+def test_SignatureGenerationTSanRaceTestComplex1():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    with open(os.path.join(CWD, 'resources', 'tsan-report2.txt'), 'r') as f:
+        crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
+    testSignature = crashInfo.createCrashSignature()
+
+    print(testSignature)
+
+    assert testSignature.matches(crashInfo)
+
+    outputSymptoms = []
+
+    for symptom in testSignature.symptoms:
+        if isinstance(symptom, OutputSymptom):
+            assert symptom.src == "crashdata"
+            outputSymptoms.append(symptom)
+
+    assert len(outputSymptoms) == 3
+
+    for stringMatchVal in [
+        "WARNING: ThreadSanitizer: data race",
+        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:",
+        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:"
+    ]:
+        found = False
+        for symptom in outputSymptoms:
+            if symptom.output.value == stringMatchVal:
+                found = True
+        assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
+
+
 def test_SignatureMatchWithUnicode():
     config = ProgramConfiguration('test', 'x86-64', 'linux')
     crashInfo = CrashInfo.fromRawCrashData(["(Â«f => (generator.throw(f))Â», Â«undefinedÂ»)"], [], config)
