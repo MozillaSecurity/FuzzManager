@@ -160,7 +160,7 @@ def getAuxiliaryAbortMessage(output):
 
             if needTSanRW:
                 lastLine = [lastLine]
-        elif needTSanRW and re.match(r"\s*(?:Read|Write|Previous read|Previous write) of size", line):
+        elif needTSanRW and re.match(r"\s*(?:Previous )?(?:[Aa]tomic )?(?:[Rr]ead|[Ww]rite) of size", line):
             lastLine.append(line.strip())
         elif "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
@@ -216,6 +216,8 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns = []
 
         # Specific TSan patterns
+        replacementPatterns.append("(Previous )?[Aa]tomic [Rr]ead of size")
+        replacementPatterns.append("(Previous )?[Aa]tomic [Ww]rite of size")
         replacementPatterns.append("(Previous )?[Rr]ead of size")
         replacementPatterns.append("(Previous )?[Ww]rite of size")
         # We avoid the use of parentheses here because they would be double-escaped
