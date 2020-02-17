@@ -751,11 +751,11 @@ def test_SignatureGenerationTSanRaceTestAtomic():
         with open(os.path.join(CWD, 'resources', fn), 'r') as f:
             crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
 
-        assert crashInfo.backtrace[0] == "pthread_mutex_destroy"
+        assert(crashInfo.backtrace[0] == "pthread_mutex_destroy")
+        assert(crashInfo.createShortSignature() ==
+               "ThreadSanitizer: data race [@ pthread_mutex_destroy] vs. [@ pthread_mutex_unlock]")
 
         testSignature = crashInfo.createCrashSignature()
-
-        print(testSignature)
 
         assert testSignature.matches(crashInfo)
 

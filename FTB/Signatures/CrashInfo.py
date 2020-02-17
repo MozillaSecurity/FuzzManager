@@ -1670,10 +1670,6 @@ class TSanCrashInfo(CrashInfo):
 
             currentBacktrace.append(CrashInfo.sanitizeStackFrame(component))
 
-            if index == 0:
-                # Memorize index 0 components for short signature later
-                self.tsanIndexZero.append(currentBacktrace[-1])
-
             expectedIndex += 1
 
         if currentBacktrace is not None:
@@ -1687,10 +1683,9 @@ class TSanCrashInfo(CrashInfo):
 
         # Merge individual backtraces into one
         for backtrace in backtraces:
+            # Memorize index 0 components for short signature later
+            self.tsanIndexZero.append(backtrace[0])
             self.backtrace.extend(backtrace)
-
-        # Sort the zero indexes
-        self.tsanIndexZero.sort()
 
     def createShortSignature(self):
         '''
