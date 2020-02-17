@@ -704,8 +704,8 @@ def test_SignatureGenerationTSanRaceTest():
 
     for stringMatchVal in [
         "WARNING: ThreadSanitizer: data race",
-        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:",
-        "(Previous )?[Rr]ead of size 4 at 0x[0-9a-fA-F]+ by main thread( \\(mutexes .*\\))?:"
+        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( .+mutexes: .+)?:",
+        "(Previous )?[Rr]ead of size 4 at 0x[0-9a-fA-F]+ by main thread( .+mutexes: .+)?:"
     ]:
         found = False
         for symptom in outputSymptoms:
@@ -735,8 +735,8 @@ def test_SignatureGenerationTSanRaceTestComplex1():
 
     for stringMatchVal in [
         "WARNING: ThreadSanitizer: data race",
-        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:",
-        "(Previous )?[Ww]rite of size 4 at 0x[0-9a-fA-F]+ by thread T[0-9]+( \\(mutexes .*\\))?:"
+        "(Previous )?[Ww]rite of size 8 at 0x[0-9a-fA-F]+ by thread T[0-9]+( .+mutexes: .+)?:",
+        "(Previous )?[Ww]rite of size 8 at 0x[0-9a-fA-F]+ by thread T[0-9]+( .+mutexes: .+)?:"
     ]:
         found = False
         for symptom in outputSymptoms:
