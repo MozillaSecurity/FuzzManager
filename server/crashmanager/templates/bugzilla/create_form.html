@@ -1,11 +1,72 @@
-Summary <input id="id_summary" class="form-control" maxlength="1023" name="summary" type="text" value="{{ template.summary }}" style="width:100%">
+<script>
+    let results = {};
+    async function productLoad() {
+      /**
+       * Fetch product list
+       */
+      const response = await fetch('https://{{ hostname }}/latest/configuration');
+      const json = await response.json();
+      results = json.product;
+
+      const product = document.getElementById('product');
+      // Reset options
+      // product.options.length = 0;
+      Object.keys(results).sort().forEach((key, index) => {
+        product.options[index] = new Option(key, key);
+      });
+
+      product.addEventListener('change', loadComponents, false);
+
+      const selectedProduct = '{{ template.product }}';
+      if (selectedProduct.length) {
+        product.value = selectedProduct;
+      }
+
+      // Ensure component list is updated
+      product.dispatchEvent(new Event('change'));
+    }
+
+    function loadComponents() {
+      /**
+       * Update components based on selected product
+       */
+      const product = document.getElementById('product');
+      if (product && product.selectedIndex !== -1) {
+        const selectedProduct = product.options[product.selectedIndex];
+        const component = document.getElementById('component');
+        Object.keys(results[selectedProduct.value].component).sort().forEach((key, index) => {
+          component.options[index] = new Option(key, key);
+        });
+
+        const selectedComp = '{{ template.component }}';
+        if (selectedComp.length) {
+          for (let i = 0; i < component.options.length; i++) {
+            if (component.options[i].value === selectedComp) {
+              component.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', productLoad, false)
+</script>
+<p>Summary <input id="id_summary" class="form-control" maxlength="1023" name="summary" type="text" value="{{ template.summary }}" style="width:100%"></p>
+<div id=duplicates"></div>
 
 <br/>
     <div class="row">
       <div class="col-md-1">Product</div>
-      <div class="col-md-3"><input id="id_product" class="form-control" maxlength="1023" name="product" type="text" value="{{ template.product }}"></div>
+      <div class="col-md-3">
+        <select id="product" style="width: 100%">
+          <option>Loading products...</option>
+        </select>
+      </div>
       <div class="col-md-1">Component</div>
-      <div class="col-md-3"><input id="id_component" class="form-control" maxlength="1023" name="component" type="text" value="{{ template.component }}"></div>
+      <div class="col-md-3">
+        <select id="component" style="width: 100%"></select>
+      </div>
     </div>
 <br/>
     <div class="row">
