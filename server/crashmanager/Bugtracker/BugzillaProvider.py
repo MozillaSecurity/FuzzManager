@@ -388,6 +388,7 @@ class BugzillaProvider(Provider):
             template = {}
 
         data = {
+            'hostname': self.hostname,
             'createTemplate': True,
             'template': template,
             'provider': self.pk,
@@ -401,6 +402,7 @@ class BugzillaProvider(Provider):
         templates = BugzillaTemplate.objects.all()
 
         data = {
+            'hostname': self.hostname,
             'provider': self.pk,
             'templates': templates,
             'template': template,
