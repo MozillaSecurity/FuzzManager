@@ -492,8 +492,8 @@ class S3Manager():
         # fuzzing working directory so we can retrieve it later.
         if refresh or not os.path.exists(id_file):
             h = hashlib.new('sha1')
-            h.update(platform.node())
-            h.update(str(time.time()))
+            h.update(platform.node().encode('utf-8'))
+            h.update(str(time.time()).encode('utf-8'))
             id = h.hexdigest()
             with open(id_file, 'w') as id_fd:
                 id_fd.write(id)
