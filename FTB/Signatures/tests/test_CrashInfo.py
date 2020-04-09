@@ -12,13 +12,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-from numpy import int64, uint64, int32, uint32
 import os
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
-    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo, RustCrashInfo
+    NoCrashInfo, MinidumpCrashInfo, AppleCrashInfo, CDBCrashInfo, RustCrashInfo, \
+    int32
 from FTB.Signatures.CrashSignature import CrashSignature
 
 CWD = os.path.dirname(os.path.realpath(__file__))
@@ -1020,10 +1020,8 @@ def test_GDBParserTestCrashAddressSimple():
     assert GDBCrashInfo.calculateCrashAddress("mov    %rax,0x10(%rbx)", registerMap64) == 0xF
     assert GDBCrashInfo.calculateCrashAddress("mov    %eax,0x10(%ebx)", registerMap32) == 0xF
 
-    assert (GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64) ==
-            int64(uint64(0xfffffffffffffff0)))
-    assert (GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32) ==
-            int32(uint32(0xfffffff0)))
+    assert GDBCrashInfo.calculateCrashAddress("mov    %rbx,-0x10(%rax)", registerMap64) == -16
+    assert GDBCrashInfo.calculateCrashAddress("mov    %ebx,-0x10(%eax)", registerMap32) == -16
 
     # Scalar test
     assert GDBCrashInfo.calculateCrashAddress("movl   $0x7b,0x0", registerMap32) == 0x0
@@ -1032,11 +1030,11 @@ def test_GDBParserTestCrashAddressSimple():
     # Note: The crash address here can also be 0xf7600000 because the double quadword
     # move can fail on the second 8 bytes if the source address is not 16-byte aligned
     assert (GDBCrashInfo.calculateCrashAddress("movdqu 0x40(%ecx),%xmm4", registerMap32) ==
-            int32(uint32(0xf75ffff8)))
+            int32(0xf75ffff8))
 
     # Again, this is an unaligned access and the crash can be at 0x7ffff6700000 or 0x7ffff6700000 - 4
     assert (GDBCrashInfo.calculateCrashAddress("mov    -0x4(%rdi,%rsi,2),%eax", registerMap64) ==
-            int64(uint64(0x7ffff66ffffe)))
+            0x7ffff66ffffe)
 
 
 def test_GDBParserTestRegression1():

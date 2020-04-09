@@ -20,7 +20,6 @@ from __future__ import print_function
 
 from abc import ABCMeta
 import json
-from numpy import int32, int64, uint32, uint64
 import os
 import re
 import sys
@@ -31,6 +30,92 @@ from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
+
+
+def uint32(val):
+    '''Force `val` into unsigned 32-bit range.
+
+    Note that the input is returned as an int, therefore
+    any math on the result may no longer be in uint32 range.
+
+    >>> uint32(0x100000000)
+    0
+    >>> uint32(-1)
+    4294967295
+    >>> uint32(0xFFFFFFF0)
+    4294967280
+    >>> uint32(0x7FFFFFFF)
+    2147483647
+    >>> uint32(0x80000000)
+    2147483648
+    '''
+    return val & 0xFFFFFFFF
+
+
+def int32(val):
+    '''Force `val` into signed 32-bit range.
+
+    Note that the input is returned as an int, therefore
+    any math on the result may no longer be in int32 range.
+
+    >>> int32(0x100000000)
+    0
+    >>> int32(-1)
+    -1
+    >>> int32(0xFFFFFFF0)
+    -16
+    >>> int32(0x7FFFFFFF)
+    2147483647
+    >>> int32(0x80000000)
+    -2147483648
+    '''
+    val = uint32(val)
+    if val.bit_length() == 32:
+        val = val - 0x100000000
+    return val
+
+
+def uint64(val):
+    '''Force `val` into unsigned 64-bit range.
+
+    Note that the input is returned as an int, therefore
+    any math on the result may no longer be in uint64 range.
+
+    >>> uint64(0x10000000000000000)
+    0
+    >>> uint64(-1)
+    18446744073709551615
+    >>> uint64(0xFFFFFFFFFFFFFFF0)
+    18446744073709551600
+    >>> uint64(0x7FFFFFFFFFFFFFFF)
+    9223372036854775807
+    >>> uint64(0x8000000000000000)
+    9223372036854775808
+    '''
+    return val & 0xFFFFFFFFFFFFFFFF
+
+
+def int64(val):
+    '''Force `val` into signed 64-bit range.
+
+    Note that the input is returned as an int, therefore
+    any math on the result may no longer be in int64 range.
+
+    >>> int64(0x10000000000000000)
+    0
+    >>> int64(-1)
+    -1
+    >>> int64(0xFFFFFFFFFFFFFFF0)
+    -16
+    >>> int64(0x7FFFFFFFFFFFFFFF)
+    9223372036854775807
+    >>> int64(0x8000000000000000)
+    -9223372036854775808
+    '''
+    val = uint64(val)
+    if val.bit_length() == 64:
+        val = val - 0x10000000000000000
+    return val
 
 
 @six.add_metaclass(ABCMeta)
@@ -1059,10 +1144,10 @@ class GDBCrashInfo(CrashInfo):
                     return (None, "Missing value for register %s " % match.group(2))
                 else:
                     if RegisterHelper.getBitWidth(registerMap) == 32:
-                        return (int(int32(uint32(offset)) + int32(uint32(val))), None)
+                        return (int32(uint32(offset) + uint32(val)), None)
                     else:
                         # Assume 64 bit width
-                        return (int(int64(uint64(offset)) + int64(uint64(val))), None)
+                        return (int64(uint64(offset) + uint64(val)), None)
             else:
                 return (None, "Failed to match dereference operation.")
 
@@ -1211,10 +1296,10 @@ class GDBCrashInfo(CrashInfo):
                     return (None, "Missing value for register %s " % derefOps[0])
                 else:
                     if RegisterHelper.getBitWidth(registerMap) == 32:
-                        return (int(int32(uint32(offset)) + int32(uint32(val))), None)
+                        return (int32(uint32(offset) + uint32(val)), None)
                     else:
                         # Assume 64 bit width
-                        return (int(int64(uint64(offset)) + int64(uint64(val))), None)
+                        return (int64(uint64(offset) + uint64(val)), None)
 
             # ARM assembly has nested comma-separated operands, so we need to merge
             # those inside  brackets back together before proceeding.
@@ -1270,10 +1355,10 @@ class GDBCrashInfo(CrashInfo):
                     return (None, "Missing value for register %s" % match.group(3))
 
             if RegisterHelper.getBitWidth(registerMap) == 32:
-                val = int32(uint32(regA)) + int32(uint32(offset)) + (int32(uint32(regB)) * int32(uint32(mult)))
+                val = int32(uint32(regA) + uint32(offset) + uint32(regB) * uint32(mult))
             else:
                 # Assume 64 bit width
-                val = int64(uint64(regA)) + int64(uint64(offset)) + (int64(uint64(regB)) * int64(uint64(mult)))
+                val = int64(uint64(regA) + uint64(offset) + uint64(regB) * uint64(mult))
             return (int(val), None)
 
         return (None, "Unknown failure.")
