@@ -418,6 +418,7 @@ class User(models.Model):
             ("view_crashmanager", "Can see CrashManager app"),
             ("view_covmanager", "Can see CovManager app"),
             ("view_ec2spotmanager", "Can see EC2SpotManager app"),
+            ("view_taskmanager", "Can see TaskManager app"),
         )
 
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)

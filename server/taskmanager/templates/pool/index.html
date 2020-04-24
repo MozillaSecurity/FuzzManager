@@ -1,0 +1,96 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+  <div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Fuzzing Pools</div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th @click="sortBy('pool_id')" :class="{ active: sortKey == 'pool_id' }" style="width: 25px;">ID</th>
+        <th @click="sortBy('pool_name')" :class="{ active: sortKey == 'pool_name' }" style="width: 100px;">Name</th>
+        <th @click="sortBy('running')" :class="{ active: sortKey == 'running' }" style="width: 75px;"># of Tasks (Running/Requested)</th>
+        <th @click="sortBy('status')" :class="{ active: sortKey == 'status' }" style="width: 150px;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="pool in ordered_pools" :id="pool.id">
+        <td><a :href="`../pools/${pool.id}/`">!{ pool.pool_id }!</a></td>
+        <td>!{ pool.pool_name }!</td>
+        <td>!{ pool.running }!/!{ pool.size }!</td>
+        <td>!{ pool.status }!</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<script>
+let URLS = {
+  pools_api: '{% url 'taskmanager:pool-list' %}',
+}
+let taskmanager = new Vue({
+  el: '#main',
+  data: {
+    pools: null,
+    sortKey: "",
+    reverse: false,
+    block_fetch: true,
+    timer: '',
+  },
+  created: function () {
+    this.fetch()
+    this.timer = setInterval(this.fetch, 60000)
+  },
+  beforeDestroy: function () {
+    clearInterval(this.timer)
+  },
+  computed: {
+    ordered_pools: function () {
+      return _.orderBy(this.pools, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    },
+  },
+  methods: {
+    apiurl: function() {
+      let url = URLS.pools_api
+      return url;
+    },
+    fetch: _.throttle (function () {
+      this.loading = true
+      fetch(this.apiurl(), {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
+      }).then(json => {
+        this.pools = json["results"]
+        this.loading = false
+        this.block_fetch = false
+      })
+    }, 500),
+    navigate: function (dst) {
+      let ids = []
+
+      for (let i = 0; i < this.ordered_pools.length; ++i) {
+        ids.push(this.ordered_collections[i].id)
+      }
+
+      if (ids) {
+        let url = URLS[dst] + '#ids=' + ids.join(',')
+        if (window.location.hash) {
+          url += "&" + window.location.hash.substr(1)
+        }
+
+        var win = window.open(url, '_blank');
+        win.focus();
+      }
+    },
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
+  }
+})
+</script>
+{% endblock body_content %}

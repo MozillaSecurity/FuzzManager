@@ -49,6 +49,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'ec2spotmanager',
     'crashmanager',
+    'taskmanager',
     'covmanager',
     'rest_framework',
     'rest_framework.authtoken',
@@ -140,6 +141,7 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r'/oidc/.*',
     r'/ec2spotmanager/rest/.*',
     r'/covmanager/rest/.*',
+    r'/taskmanager/rest/.*',
     r'/crashmanager/rest/.*',
 )
 
@@ -282,6 +284,13 @@ GCE_PRIVATE_KEY = None  # PK as a string blob
 GCE_API_KEY = None  # this is a separate key created at "APIs & Services" / "Credentials"
 GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
+# TaskManager configuration
+#
+# TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
+# TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
+TC_ROOT_URL = "https://community-tc.services.mozilla.com/"  # root URL to the taskcluster instance
+# TC_PROJECT = ""  # taskcluster project for fuzzing resources
+
 # Crashmanager configuration
 #
 # FuzzManager supports username/password authentication as well as API keys
@@ -316,6 +325,7 @@ REDIS_DB = 0
 # CELERY_TASK_ROUTES = {
 #     'crashmanager.cron.*': {'queue': 'cron'},
 #     'ec2spotmanager.cron.*': {'queue': 'cron'},
+#     'taskmanager.cron.*': {'queue': 'cron'},
 # }
 # CELERY_BEAT_SCHEDULE = {
 #     'Poll Bugzilla every 15 minutes': {
@@ -341,5 +351,9 @@ REDIS_DB = 0
 #     'Cache EC2 spot market pricing in Redis': {
 #         'task': 'ec2spotmanager.cron.update_prices',
 #         'schedule': 15 * 60,
+#     },
+#     'Read TaskManager state from Taskcluster/Github': {
+#         'task': 'taskmanager.cron.update_pools',
+#         'schedule': 5 * 60,
 #     },
 # }
