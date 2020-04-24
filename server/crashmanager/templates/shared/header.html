@@ -16,6 +16,9 @@
                         {% if perms.crashmanager.view_crashmanager %}
                         <li><a href="/crashmanager"><i class="glyphicon glyphicon-alert"> </i> CrashManager</a></li>
                         {% endif %}
+                        {% if perms.crashmanager.view_taskmanager %}
+                        <li><a href="/taskmanager"><i class="glyphicon glyphicon-tasks"></i> TaskManager</a></li>
+                        {% endif %}
                         {% if perms.crashmanager.view_ec2spotmanager %}
                         <li><a href="/ec2spotmanager"><i class="glyphicon glyphicon-scale"></i> EC2SpotManager</a></li>
                         {% endif %}
@@ -33,6 +36,8 @@
                 <li><a href="{% url 'crashmanager:signatures' %}"><i class="glyphicon glyphicon-tag"></i> Signatures</a></li>
                 <li><a href="{% url 'crashmanager:stats' %}"><i class="glyphicon glyphicon-object-align-bottom"></i> Statistics</a></li>
                 <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="glyphicon glyphicon-globe"></i> Providers</a></li>
+            {% elif app_name == 'taskmanager' %}
+                <li><a href="{% url 'taskmanager:pool-list-ui' %}"><i class="glyphicon glyphicon-tasks"></i> Pools</a></li>
             {% elif app_name == 'ec2spotmanager' %}
                 <li><a href="{% url 'ec2spotmanager:pools' %}"><i class="glyphicon glyphicon-scale"></i> Pools</a></li>
                 <li><a href="{% url 'ec2spotmanager:configs' %}"><i class="glyphicon glyphicon-list-alt"></i> Configurations</a></li>

@@ -1,0 +1,104 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+  <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Pool Status</div>
+  <div class="panel-body">
+    <table class="table">
+      <tr><td>Pool ID:</td><td>{{ pool.pool_id }}</td></tr>
+      <tr><td>Pool Name:</td><td>{{ pool.pool_name }}</td></tr>
+      <tr><td>Platform:</td><td>{{ pool.platform }}</td></tr>
+      <tr><td>Size:</td><td>{{ pool.size }}</td></tr>
+      <tr><td>CPU:</td><td>{{ pool.cpu }}</td></tr>
+      <tr><td>Cycle Time:</td><td>!{ formatDateRelative(new Date({{ pool.cycle_time.total_seconds }} * 1000), 0, '') }!</td></tr>
+    </table>
+  </div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th @click="sortBy('task_id')" :class="{ active: sortKey == 'task_id' }" style="width: 50px;">Task</th>
+        <th @click="sortBy('run_id')" :class="{ active: sortKey == 'run_id' }" style="width: 15px;">Run</th>
+        <th @click="sortBy('state')" :class="{ active: sortKey == 'state' }" style="width: 25px;">State</th>
+        <th @click="sortBy('created')" :class="{ active: sortKey == 'created' }" style="width: 60px;">Created</th>
+        <th @click="sortBy('started')" :class="{ active: sortKey == 'started' }" style="width: 60px;">Started</th>
+        <th @click="sortBy('resolved')" :class="{ active: sortKey == 'resolved' }" style="width: 60px;">Resolved</th>
+        <th @click="sortBy('expires')" :class="{ active: sortKey == 'expires' }" style="width: 60px;">Expires</th>
+        <th style="width: 150px;">Status Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="task in ordered_tasks" :id="task.id">
+        <td><a :href="'{{ tc_root_url }}tasks/' + task.task_id">!{ task.task_id }!</a></td>
+        <td>!{ task.run_id }!</td>
+        <td>!{ task.state }!</td>
+        <td>!{ task.created | formatDate }!<br/>!{ task.created | formatDateAgo }!</td>
+        <td v-if="task.started !== null">!{ task.started | formatDate }!<br/>!{ formatDateRelative(task.created, task.started, 'later') }!</td>
+        <td v-else>N/A</td>
+        <td v-if="task.resolved !== null">!{ task.resolved | formatDate }!<br/>!{ formatDateRelative(task.started !== null ? task.started : task.created, task.resolved, 'later') }!</td>
+        <td v-else>N/A</td>
+        <td>!{ task.expires | formatDate }!<br/>!{ new Date(task.expires) > new Date() ? formatDateRelative(new Date(), task.expires, 'from now') : formatDateRelative(task.expires) }!</td>
+        <td v-if="task.status_data"><pre>!{ task.status_data }!</pre></td>
+        <td v-else>N/A</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<script>
+let URLS = {
+  tasks_api: '{% url 'taskmanager:task-list' %}',
+}
+let taskmanager = new Vue({
+  el: '#main',
+  data: {
+    tasks: null,
+    sortKey: "created",
+    reverse: true,
+    block_fetch: true,
+    timer: '',
+  },
+  created: function () {
+    this.fetch()
+    this.timer = setInterval(this.fetch, 60000)
+  },
+  beforeDestroy: function () {
+    clearInterval(this.timer)
+  },
+  computed: {
+    ordered_tasks: function () {
+      return _.orderBy(this.tasks, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
+    },
+  },
+  filters: {
+    formatDate: formatClientTimestamp,
+    formatDateAgo: formatDateRelative,
+  },
+  methods: {
+    apiurl: function() {
+      return  URLS.tasks_api
+    },
+    fetch: _.throttle (function () {
+      this.loading = true
+      fetch(this.apiurl(), {
+        method: 'GET',
+        credentials: 'same-origin'
+      }).then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        this.loading = false
+      }).then(json => {
+        this.tasks = json["results"]
+        this.loading = false
+        this.block_fetch = false
+      })
+    }, 500),
+    formatDateRelative: formatDateRelative,
+    sortBy: function (sortKey) {
+      this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
+      this.sortKey = sortKey
+    },
+  }
+})
+</script>
+{% endblock body_content %}

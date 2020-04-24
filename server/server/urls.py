@@ -16,6 +16,7 @@ urlpatterns = [
     url(r'^logout/$', LogoutView.as_view(), name="logout"),
     url(r'^covmanager/', include('covmanager.urls')),
     url(r'^crashmanager/', include('crashmanager.urls')),
+    url(r'^taskmanager/', include('taskmanager.urls')),
     url(r'^ec2spotmanager/', include('ec2spotmanager.urls')),
 ]
 urlpatterns += staticfiles_urlpatterns()

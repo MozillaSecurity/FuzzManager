@@ -69,7 +69,36 @@
           }).format(new Date(datetime))
         }
 
-				function formatMonthly(d) {
+        function formatDateRelative(datetime, relative_to, suffix) {
+          relative_to = (relative_to !== undefined) ? new Date(relative_to) : new Date()
+          suffix = (suffix !== undefined) ? suffix : 'ago'
+          delta = Math.abs(relative_to.getTime() - new Date(datetime).getTime()) / 1000
+          days = Math.floor(delta / 86400)
+          hours = Math.floor((delta % 86400) / 3600)
+          minutes = Math.floor((delta % 3600) / 60)
+          let ret = ''
+          if (days > 1) {
+            ret += `${days} days `
+          } else if (days > 0) {
+            ret += `${days} day `
+          }
+          if (hours > 1) {
+            ret += `${hours} hours `
+          } else if (hours > 0) {
+            ret += `${hours} hour `
+          }
+          if (minutes > 1) {
+            ret += `${minutes} minutes `
+          } else if (minutes > 0) {
+            ret += `${minutes} minute `
+          }
+          if (ret.length === 0) {
+            ret = 'less than a minute '
+          }
+          return ret + suffix
+        }
+
+        function formatMonthly(d) {
           let months = [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"

@@ -31,4 +31,5 @@ class Command(BaseCommand):
             'crashmanager.models.User:view_covmanager',
             'crashmanager.models.User:view_crashmanager',
             'crashmanager.models.User:view_ec2spotmanager',
+            'crashmanager.models.User:view_taskmanager',
         ])
