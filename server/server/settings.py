@@ -49,7 +49,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'ec2spotmanager',
     'crashmanager',
-    'taskmanager',
+    #'taskmanager',
     'covmanager',
     'rest_framework',
     'rest_framework.authtoken',
@@ -286,10 +286,13 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
 # TaskManager configuration
 #
-# TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
-# TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
-TC_ROOT_URL = "https://community-tc.services.mozilla.com/"  # root URL to the taskcluster instance
-# TC_PROJECT = ""  # taskcluster project for fuzzing resources
+# TaskManager is used to allow tracking fuzzing tasks run in a Taskcluster instance.
+# Most people will find EC2 easier to use for small clusters.
+#
+#TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
+#TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
+#TC_ROOT_URL = ""  # root URL to the taskcluster instance
+#TC_PROJECT = ""  # taskcluster project for fuzzing resources
 
 # Crashmanager configuration
 #

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 '''
-EC2Reporter -- Simple EC2 status reporting tool for EC2SpotManager
+TaskStatusReporter -- Simple status reporting tool for TaskManager
 
 Provide process and class level interfaces to send simple textual
-status reports to EC2SpotManager.
+status reports to TaskManager.
 
 @author:     Jesse Schwartzentruber (:truber)
 
