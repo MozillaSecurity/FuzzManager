@@ -65,7 +65,7 @@ class TaskViewSet(mixins.ListModelMixin,
         SimpleQueryFilterBackend,
     ]
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], authentication_classes=(TokenAuthentication,))
     def update_status(self, request):
         if set(request.data.keys()) != {"client", "status_data"}:
             LOG.debug("request.data.keys(): %s", request.data.keys())
