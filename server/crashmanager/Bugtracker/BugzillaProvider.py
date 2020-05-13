@@ -113,7 +113,7 @@ class BugzillaProvider(Provider):
             if crashEntry.testcase.isBinary:
                 sdata['testcase'] = "See attachment."
             else:
-                crashEntry.testcase.test.open(mode='r')
+                crashEntry.testcase.test.open(mode='rb')
                 testcase_data = crashEntry.testcase.test.read()
                 crashEntry.testcase.test.close()
 
@@ -128,7 +128,7 @@ class BugzillaProvider(Provider):
                 # Also attach if the file can't be decoded as ascii, as some bug
                 # tracking systems might have trouble with unicode comment data.
                 if len(testcase_data) <= 2048 and is_ascii(testcase_data):
-                    sdata['testcase'] = testcase_data
+                    sdata['testcase'] = testcase_data.decode('ascii')
                 else:
                     sdata['testcase'] = "See attachment."
 

@@ -95,7 +95,7 @@
             {% if entry.testcase.isBinary %}
             <br/>
             {% else %}
-            <pre><code>{{ entry.testcase.content }}</code></pre>
+            <pre><code>{{ entry.testcase.content.decode }}</code></pre>
             {% endif %}
             <a href="{% url 'crashmanager:download_test' entry.pk %}" class="btn btn-success">Download</a>
         </div>
