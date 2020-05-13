@@ -41,7 +41,7 @@ class CrashSignature(object):
         self.symptoms = []
 
         try:
-            obj = json.loads(rawSignature, object_pairs_hook=OrderedDict)
+            obj = json.loads(rawSignature)
         except ValueError as e:
             raise RuntimeError("Invalid JSON: %s" % e)
 
@@ -198,7 +198,7 @@ class CrashSignature(object):
         if not sigSymptoms:
             return None
 
-        return CrashSignature(json.dumps(sigObj, indent=2))
+        return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
     def getSymptomsDiff(self, crashInfo):
         symptomsDiff = []
@@ -221,9 +221,11 @@ class CrashSignature(object):
     def getSignatureUnifiedDiffTuples(self, crashInfo):
         diffTuples = []
 
-        newRawCrashSignature = self.fit(crashInfo)
-        oldLines = self.rawSignature.splitlines()
+        # go through dumps(loads()) to standardize the format.
+        # the dumps args here must match what is returned by `fit()`
+        oldLines = json.dumps(json.loads(self.rawSignature), indent=2, sort_keys=True).splitlines()
         newLines = []
+        newRawCrashSignature = self.fit(crashInfo)
         if newRawCrashSignature:
             newLines = newRawCrashSignature.rawSignature.splitlines()
         context = max(len(oldLines), len(newLines))

@@ -523,7 +523,7 @@ class CrashInfo(object):
 
         sigObj = {"symptoms": symptomArr}
 
-        return CrashSignature(json.dumps(sigObj, indent=2))
+        return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
     @staticmethod
     def sanitizeStackFrame(frame):

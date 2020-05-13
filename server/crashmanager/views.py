@@ -703,6 +703,9 @@ def viewSignature(request, sigid):
 
     latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
 
+    # standardize formatting of the signature
+    bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
+
     return render(request, 'signatures/view.html', {'bucket': bucket, 'latestCrash': latestCrash})
 
 
@@ -718,7 +721,7 @@ def editSignature(request, sigid):
 
         # TODO: FIXME: Update bug here as well
         return __handleSignaturePost(request, bucket)
-    elif request.method == 'GET':
+    if request.method == 'GET':
         if sigid is not None:
             bucket = get_object_or_404(Bucket, pk=sigid)
             check_authorized_for_signature(request, bucket)
@@ -726,12 +729,13 @@ def editSignature(request, sigid):
             if 'fit' in request.GET:
                 entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
                 bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
+            else:
+                # standardize formatting of the signature
+                # this is the same format returned by `fit()`
+                bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
 
             return render(request, 'signatures/edit.html', {'bucket': bucket})
-        else:
-            raise SuspiciousOperation
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def linkSignature(request, sigid):
