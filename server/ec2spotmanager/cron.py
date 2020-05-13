@@ -20,7 +20,7 @@ STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statist
 
 # How long check_instance_pools lock should remain valid. If the task takes longer than this to complete, the lock will
 # be invalidated and another task allowed to run.
-CHECK_POOL_LOCK_EXPIRY = 30 * 60
+CHECK_POOL_LOCK_EXPIRY = 3 * 60
 
 
 @app.task(ignore_result=True)
@@ -286,12 +286,14 @@ def check_instance_pools():
             _release_lock.si(lock_key)  # release on chain success
         ).on_error(_release_lock.si(lock_key))()  # release on chain failure
 
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-except
         try:
             if not lock.release():  # release on error in this function
                 LOG.warning('Lock %s was already expired.', lock_key)
+        except Exception:  # pylint: disable=broad-except
+            LOG.exception("Ignoring exception raised while releasing lock.")
         finally:
-            raise exc
+            raise
 
 
 @app.task(ignore_result=True)
