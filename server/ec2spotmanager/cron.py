@@ -163,7 +163,7 @@ class _RedisLock(object):
 
 @app.task
 def _release_lock(lock_key):
-    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    cache = redis.StrictRedis.from_url(settings.REDIS_URL)
     lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
     if not lock.release():
         LOG.warning('Lock ec2spotmanager:check_instance_pools(%s) was already expired.', lock_key)
@@ -243,8 +243,7 @@ def check_instance_pools():
     #                           |
     #                          DONE
     #
-    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT,
-                              db=settings.REDIS_DB)
+    cache = redis.StrictRedis.from_url(settings.REDIS_URL)
     lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools")
 
     lock_key = lock.acquire()
@@ -328,8 +327,7 @@ def update_prices():
         now = timezone.now()
         expires = now + datetime.timedelta(hours=12)  # how long this data is valid (if not replaced)
         # use pipeline() so everything is in 1 transaction per provider.
-        cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT,
-                                  db=settings.REDIS_DB).pipeline()
+        cache = redis.StrictRedis.from_url(settings.REDIS_URL).pipeline()
         for instance_type in prices:
             key = provider + ':price:' + instance_type
             cache.delete(key)

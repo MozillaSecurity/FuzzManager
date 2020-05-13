@@ -41,10 +41,11 @@ def _terminate_instance_request_ids(provider, region, request_ids):
         _update_provider_status(provider, 'unclassified', str(msg))
 
 
-def _determine_best_location(config, count):
+def _determine_best_location(config, count, cache=None):
     from .models import Instance, ProviderStatusEntry
 
-    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    if cache is None:
+        cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
     best_provider = None
     best_zone = None
@@ -134,11 +135,11 @@ def _start_pool_instances(pool, config, count=1):
     """ Start an instance with the given configuration """
     from .models import Instance, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 
-    cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
     try:
         # Figure out where to put our instances
-        provider, region, zone, instance_type, rejected_prices = _determine_best_location(config, count)
+        provider, region, zone, instance_type, rejected_prices = _determine_best_location(config, count, cache=cache)
 
         priceLowEntries = PoolStatusEntry.objects.filter(pool=pool, type=POOL_STATUS_ENTRY_TYPE['price-too-low'])
 
@@ -291,7 +292,7 @@ def update_requests(provider, region, pool_id):
     logger.debug("-> update_requests(%r, %r, %r)", provider, region, pool_id)
 
     try:
-        cache = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+        cache = redis.StrictRedis.from_url(settings.REDIS_URL)
         cloud_provider = CloudProvider.get_instance(provider)
 
         requested = {}  # provider_request_id -> Instance
