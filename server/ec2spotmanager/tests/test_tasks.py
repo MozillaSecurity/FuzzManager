@@ -70,7 +70,7 @@ def test_create_instance(mocker):
         if ":image:" in key:
             return 'warp'
         raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
-    mock_redis = mocker.patch('redis.StrictRedis')
+    mock_redis = mocker.patch('redis.StrictRedis.from_url')
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
 
     # ensure EC2Manager returns a request ID
@@ -181,7 +181,7 @@ def test_instance_shutting_down(mocker):
         if ":image:" in key:
             return 'warp'
         raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
-    mock_redis = mocker.patch('redis.StrictRedis')
+    mock_redis = mocker.patch('redis.StrictRedis.from_url')
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
 
     # ensure EC2Manager returns a request ID
@@ -274,7 +274,7 @@ def test_instance_price_high(mocker):
         if ":image:" in key:
             return 'warp'
         raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
-    mock_redis = mocker.patch('redis.StrictRedis')
+    mock_redis = mocker.patch('redis.StrictRedis.from_url')
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
 
     mocker.patch('ec2spotmanager.CloudProvider.EC2SpotCloudProvider.CORES_PER_INSTANCE', new={'80286': 1})
@@ -329,7 +329,7 @@ def test_spot_instance_blacklist(mocker):
 
     def _mock_redis_set(key, value, ex=None):
         assert ":blacklist:redmond:mshq:" in key
-    mock_redis = mocker.patch('redis.StrictRedis')
+    mock_redis = mocker.patch('redis.StrictRedis.from_url')
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
     mock_redis.return_value.set = mocker.Mock(side_effect=_mock_redis_set)
 
@@ -364,7 +364,7 @@ def test_pool_disabled(mocker):
     """check that pool disabled results in running and pending instances being terminated"""
     # ensure EC2Manager returns a request ID
     mock_ec2mgr = mocker.patch('ec2spotmanager.CloudProvider.EC2SpotCloudProvider.EC2Manager')
-    mocker.patch('redis.StrictRedis')
+    mocker.patch('redis.StrictRedis.from_url')
     mock_term_instance = mocker.patch('ec2spotmanager.tasks._terminate_instance_ids')
     mock_term_request = mocker.patch('ec2spotmanager.tasks._terminate_instance_request_ids')
 
