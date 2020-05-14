@@ -14,7 +14,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
-from collections import OrderedDict
 import difflib
 import json
 
