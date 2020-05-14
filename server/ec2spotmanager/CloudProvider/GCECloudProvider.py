@@ -17,7 +17,8 @@ import time
 import yaml
 from django.conf import settings
 from laniakea.core.providers.gce import ComputeEngineManager, ComputeEngineManagerException
-from .CloudProvider import (CloudProvider, INSTANCE_STATE, INSTANCE_STATE_CODE, wrap_provider_errors)
+from .CloudProvider import (CloudProvider, CloudProviderTemporaryFailure, INSTANCE_STATE,
+                            INSTANCE_STATE_CODE, wrap_provider_errors)
 from ..tasks import SPOTMGR_TAG
 from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
 
@@ -208,10 +209,15 @@ class GCECloudProvider(CloudProvider):
         instance_states = {}
         cluster = self._connect()
 
-        if pool_id is None:
-            libcloud_nodes = cluster.filter().has_labels([(SPOTMGR_TAG + "-PoolId").lower()]).nodes
-        else:
-            libcloud_nodes = cluster.filter().labels({(SPOTMGR_TAG + "-PoolId").lower(): str(pool_id)}).nodes
+        try:
+            if pool_id is None:
+                libcloud_nodes = cluster.filter().has_labels([(SPOTMGR_TAG + "-PoolId").lower()]).nodes
+            else:
+                libcloud_nodes = cluster.filter().labels({(SPOTMGR_TAG + "-PoolId").lower(): str(pool_id)}).nodes
+        except Exception as exc:
+            if "Please try again" in str(exc):
+                raise CloudProviderTemporaryFailure(str(exc))
+            raise
 
         for node in libcloud_nodes:
 

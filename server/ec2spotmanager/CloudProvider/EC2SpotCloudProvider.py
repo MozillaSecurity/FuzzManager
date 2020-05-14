@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 import botocore
 import boto3
 import boto.ec2
@@ -87,16 +88,19 @@ class EC2SpotCloudProvider(CloudProvider):
                     for instance in instances}
 
         except (boto.exception.EC2ResponseError, boto.exception.BotoServerError) as msg:
-            if "MaxSpotInstanceCountExceeded" in str(msg):
-                self.logger.warning("start_instances: Maximum instance count exceeded for region %s",
-                                    region)
-                raise CloudProviderInstanceCountError(
-                    "Auto-selected region exceeded its maximum spot instance count.")
-            elif "RequestLimitExceeded" in str(msg):
-                self.logger.warning("Request limit exceeded for region %s, trying again later.", region)
-                raise CloudProviderTemporaryFailure("Request limit exceeded for region %s" % (region,))
-            elif "Service Unavailable" in str(msg):
-                raise CloudProviderTemporaryFailure("start_instances in region %s: %s" % (region, msg))
+            code_match = re.search(r"<Code>([A-Za-z]+)</Code>", str(msg))
+            if code_match is not None:
+                code = code_match.group(1)
+                if code == "MaxSpotInstanceCountExceeded":
+                    self.logger.warning("start_instances: Maximum instance count exceeded for region %s",
+                                        region)
+                    raise CloudProviderInstanceCountError(
+                        "Auto-selected region exceeded its maximum spot instance count.")
+                if code == "RequestLimitExceeded":
+                    self.logger.warning("Request limit exceeded for region %s, trying again later.", region)
+                    raise CloudProviderTemporaryFailure("Request limit exceeded for region %s" % (region,))
+                if code in {"InternalError", "Unavailable"}:
+                    raise CloudProviderTemporaryFailure("start_instances in region %s: %s" % (region, msg))
             raise
 
     @wrap_provider_errors
@@ -167,10 +171,18 @@ class EC2SpotCloudProvider(CloudProvider):
         instance_states = {}
         cluster = self._connect(region)
 
-        if pool_id is None:
-            boto_instances = cluster.find(filters={"tag-key": SPOTMGR_TAG + "-PoolId"})
-        else:
-            boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
+        try:
+            if pool_id is None:
+                boto_instances = cluster.find(filters={"tag-key": SPOTMGR_TAG + "-PoolId"})
+            else:
+                boto_instances = cluster.find(filters={"tag:" + SPOTMGR_TAG + "-PoolId": str(pool_id)})
+        except boto.exception.BotoServerError as msg:
+            code_match = re.search(r"<Code>([A-Za-z]+)</Code>", str(msg))
+            if code_match is not None:
+                code = code_match.group(1)
+                if code == "Unavailable":
+                    raise CloudProviderTemporaryFailure("getting instances in region %s: %s" % (region, msg))
+            raise
 
         for instance in boto_instances:
             instance_states[instance.id] = {}
