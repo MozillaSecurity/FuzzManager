@@ -308,7 +308,7 @@ def update_requests(provider, region, pool_id):
             tags[SPOTMGR_TAG + '-PoolId'] = str(pool.pk)
 
             (successful_requests, failed_requests) = cloud_provider.check_instances_requests(
-                region, requested.keys(), tags)
+                region, list(requested), tags)
 
             for req_id in successful_requests:
                 instance = requested[req_id]

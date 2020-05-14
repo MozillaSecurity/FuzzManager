@@ -99,7 +99,7 @@
 
       <label for="id_ec2_userdata">EC2 Userdata Script</label><br/>
       <textarea id="id_ec2_userdata" class="form-control" name="ec2_userdata"
-                spellcheck='false'>{{ config.ec2_userdata|default:"" }}</textarea>
+                spellcheck='false'>{{ config.ec2_userdata.decode|default:"" }}</textarea>
       <br/>
 
       <fieldset class="ec2-radio-group">
