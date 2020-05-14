@@ -49,7 +49,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'ec2spotmanager',
     'crashmanager',
-    #'taskmanager',
+    'taskmanager',
     'covmanager',
     'rest_framework',
     'rest_framework.authtoken',
