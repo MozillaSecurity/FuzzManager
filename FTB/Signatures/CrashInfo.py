@@ -259,6 +259,7 @@ class CrashInfo(object):
         lsanString = "ERROR: LeakSanitizer:"
         tsanString = "WARNING: ThreadSanitizer:"
         ubsanString = ": runtime error: "
+        ubsanString2 = "ERROR: UndefinedBehaviorSanitizer"
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
         appleString = "Mac OS X"
         cdbString = "Microsoft (R) Windows Debugger"
@@ -285,7 +286,7 @@ class CrashInfo(object):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif asanString in line:
+            elif asanString in line or ubsanString2 in line:
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif lsanString in line:
@@ -610,7 +611,7 @@ class ASanCrashInfo(CrashInfo):
         asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
-                                   \sAddressSanitizer.*\s
+                                   \s[A-Za-z]+Sanitizer.*\s
                                      (?:on\saddress             # The most common format, used for all overflows
                                        |on\sunknown\saddress    # Used in case of a SIGSEGV
                                        |double-free\son         # Used in case of a double-free

@@ -728,6 +728,17 @@ stack backtrace:
    3:     0x7f7a3a17d8d2 - std::panicking::default_hook::hf425c768c5ffbbad
 """
 
+ubsanTraceGenericCrash = """
+==8555==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000000004141 (pc 0x7f070b805037 bp 0x7f06626006b0 sp 0x7f0662600680 T28456)
+==8555==The signal is caused by a READ memory access.
+==8555==Hint: address points to the zero page.
+    #0 0x7f070b805036 in mozilla::dom::ToJSValue(JSContext*, mozilla::dom::Promise&, JS::MutableHandle<JS::Value>) (/home/worker/builds/m-c-20200514094044-fuzzing-debug/libxul.so+0x4e3d036)
+    #1 0x7f070e4d7a9e in js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>) (/home/worker/builds/m-c-20200514094044-fuzzing-debug/libxul.so+0x7b0fa9e)
+
+UndefinedBehaviorSanitizer can not provide additional info.
+==8555==ABORTING
+"""  # noqa
+
 ubsanTraceSignedIntOverflow = """
 codec/decoder/core/inc/dec_golomb.h:182:37: runtime error: signed integer overflow: -2147483648 - 1 cannot be represented in type 'int'
     #0 0x51353a in WelsDec::BsGetUe(WelsCommon::TagBitStringAux*, unsigned int*) /home/user/code/openh264/./codec/decoder/core/inc/dec_golomb.h:182:37
@@ -2663,6 +2674,20 @@ def test_UBSanParserTestCrash3():
     assert crashInfo.createShortSignature() == "No crash detected"
     assert len(crashInfo.backtrace) == 0
     assert crashInfo.crashAddress is None
+
+
+def test_UBSanParserTestCrash4():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData([], [], config, ubsanTraceGenericCrash.splitlines())
+    assert crashInfo.createShortSignature() == ("[@ mozilla::dom::ToJSValue]")
+    assert len(crashInfo.backtrace) == 2
+    assert crashInfo.backtrace[0] == "mozilla::dom::ToJSValue"
+    assert crashInfo.backtrace[1] == "js::jit::DoCallFallback"
+
+    assert crashInfo.crashAddress == 0x000000004141
+    assert crashInfo.registers["pc"] == 0x7f070b805037
+    assert crashInfo.registers["bp"] == 0x7f06626006b0
+    assert crashInfo.registers["sp"] == 0x7f0662600680
 
 
 def test_RustParserTests1():
