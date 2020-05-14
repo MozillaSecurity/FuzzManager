@@ -62,7 +62,7 @@ def update_pools():
             if task["status"]["taskId"] == task_group_id:
                 continue
             for run in task["status"]["runs"]:
-                task, _ = Task.objects.get_or_create(
+                task_obj, created = Task.objects.get_or_create(
                     pool=pool,
                     decision_id=task_group_id,
                     task_id=task["status"]["taskId"],
@@ -71,17 +71,23 @@ def update_pools():
                         "created": task["task"]["created"],
                         "state": run["state"],
                         "started": run.get("started"),
-                        "resolved": run["resolved"],
+                        "resolved": run.get("resolved"),
                         "expires": task["task"]["expires"],
                     },
                 )
+                if not created:
+                    task_obj.state = run["state"]
+                    task_obj.started = run.get("started")
+                    task_obj.resolved = run.get("resolved")
+                    task_obj.expires = task["task"]["expires"]
+                    task_obj.save()
                 LOG.info(
                     ">>> task[%d] %s (run %d)",
-                    task.pk,
-                    task.task_id,
-                    task.run_id,
+                    task_obj.pk,
+                    task_obj.task_id,
+                    task_obj.run_id,
                 )
-                tasks_seen.add(task.pk)
+                tasks_seen.add(task_obj.pk)
 
     # check last fires from the hook
     hook_group_id = "project-" + settings.TC_PROJECT
@@ -96,7 +102,7 @@ def update_pools():
         LOG.info("> pool[%d] %s (%s)", pool.pk, hook, pool.pool_name)
         pools_seen.add((platform, id_))
         for fire in hooks_svc.listLastFires(hook_group_id, hook)["lastFires"]:
-            LOG.info("%r", fire)
+            LOG.debug("%r", fire)
             if fire["result"] != "success":
                 continue
             update_task_group(fire["taskId"])
