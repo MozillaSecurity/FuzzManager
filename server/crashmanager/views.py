@@ -1142,9 +1142,9 @@ def userSettings(request):
         if "changefilter" in request.POST:
             if user.restricted:
                 raise PermissionDenied({"message": "You don't have permission to change your tools filter."})
-            user.defaultToolsFilter.clear()
-            user.defaultToolsFilter = [Tool.objects.get(
-                name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")]
+            user.defaultToolsFilter.set([Tool.objects.get(
+                name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")],
+                clear=True)
             data = createUserSettingsData(user, msg="Tools filter updated successfully.")
         elif "changetemplate" in request.POST:
             user.defaultProviderId = int(request.POST['defaultProvider'])
