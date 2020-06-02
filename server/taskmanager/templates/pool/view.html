@@ -45,7 +45,7 @@
 </div>
 <script>
 let URLS = {
-  tasks_api: '{% url 'taskmanager:task-list' %}',
+  tasks_api: '{% url 'taskmanager:task-list' %}?query={"op":"OR","pool":{{ pool.id }}}',
 }
 let taskmanager = new Vue({
   el: '#main',

@@ -124,7 +124,7 @@ def json_to_query(json_str):
             raise RuntimeError("No operator specified in query object")
 
         op = obj["op"]
-        objkeys = obj.keys()
+        objkeys = list(obj)
         objkeys.remove("op")
 
         if op == 'NOT' and len(objkeys) > 1:
