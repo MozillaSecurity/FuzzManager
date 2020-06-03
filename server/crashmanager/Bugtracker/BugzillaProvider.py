@@ -263,7 +263,7 @@ class BugzillaProvider(Provider):
         # because they are not template fields and would be stripped
         crashdata_attach = None
         if 'crashdata_attach' in request.POST:
-            crashdata_attach = request.POST['crashdata_attach']
+            crashdata_attach = request.POST['crashdata_attach'].encode('utf-8')
 
         # Remove any other variables that we don't want to pass on
         for key in request.POST:
@@ -344,7 +344,7 @@ class BugzillaProvider(Provider):
 
         crashdata_attach = None
         if 'crashdata_attach' in request.POST:
-            crashdata_attach = request.POST['crashdata_attach']
+            crashdata_attach = request.POST['crashdata_attach'].encode('utf-8')
 
         bz = BugzillaREST(self.hostname, username, password, api_key)
 
