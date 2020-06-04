@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 StreamCollector -- Runs as a thread and reads a single output stream of a process.

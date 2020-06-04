@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 ConfigurationFiles -- Generic class used in FuzzManager to read one or more configuration files

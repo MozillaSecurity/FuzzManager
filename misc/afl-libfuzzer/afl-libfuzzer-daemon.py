@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 '''
 AFL Management Daemon -- Tool to manage AFL queue and results
