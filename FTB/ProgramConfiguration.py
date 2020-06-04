@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 ProgramConfiguration -- Configuration of a target program

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 S3Manager -- Class to manage builds, corpus and queues for AFL and libFuzzer on AWS S3

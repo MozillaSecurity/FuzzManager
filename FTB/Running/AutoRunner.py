@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 """
 AutoRunner -- Determine the correct runner class (GDB, ASan, etc) for

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 WaitpidMonitor -- Thread that runs (blocking) waitpid on a process.

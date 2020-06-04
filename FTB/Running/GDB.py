@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 '''
 GDB - Contains functions directly used by GDB for crash processing
