@@ -15,7 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 # Ensure print() compatibility with Python 3
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 from abc import ABCMeta
 from distutils import spawn
@@ -85,6 +85,7 @@ class AutoRunner():
         )
 
         (stdout, _) = process.communicate()
+        stdout = stdout.decode("utf-8", errors="ignore")
 
         force_gdb = bool(os.environ.get('FTB_FORCE_GDB', False))
 
@@ -172,7 +173,10 @@ class GDBRunner(AutoRunner):
             env=self.env
         )
 
-        (self.stdout, self.stderr) = process.communicate(input=self.stdin)
+        (stdout, stderr) = process.communicate(input=self.stdin)
+
+        self.stdout = stdout.decode("utf-8", errors="ignore")
+        self.stderr = stderr.decode("utf-8", errors="ignore")
 
         # Detect where the GDB trace starts/ends
         traceStart = self.stdout.rfind(" received signal SIG")
@@ -194,8 +198,8 @@ class GDBRunner(AutoRunner):
 
         # If we used the core dump method, use stdout/err from the first run
         if self.force_core:
-            self.stdout = plainStdout
-            self.stderr = plainStderr
+            self.stdout = plainStdout.decode("utf-8", errors="ignore")
+            self.stderr = plainStderr.decode("utf-8", errors="ignore")
 
         return True
 
@@ -252,7 +256,10 @@ class ASanRunner(AutoRunner):
             env=self.env
         )
 
-        (self.stdout, stderr) = process.communicate(input=self.stdin)
+        (stdout, stderr) = process.communicate(input=self.stdin)
+
+        self.stdout = stdout.decode("utf-8", errors="ignore")
+        stderr = stderr.decode("utf-8", errors="ignore")
 
         inASanTrace = False
         inUBSanTrace = False
