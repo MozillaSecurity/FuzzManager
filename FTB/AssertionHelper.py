@@ -18,7 +18,8 @@ import re
 
 
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
-RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\(.+\)")
+RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\([^\)]")
+RE_MOZ_CRASH_END = re.compile(r".*\) at .+?:\d+$")
 RE_PID = re.compile(r"^\[\d+\]\s+")
 RE_RUST_ASSERT = re.compile(r"^thread .*? panicked at '.+$")
 RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
@@ -96,11 +97,15 @@ def getAssertion(output):
         elif line.startswith("ASSERTION") and RE_ASSERTION.search(line):
             lastLine = line
             haveFatalAssertion = True
-        elif not haveFatalAssertion and "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line):
+        elif (not haveFatalAssertion and not haveMozCrashLine and
+                "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line)):
             # MOZ_CRASH line, but with a message (we should only look at these)
-            if not haveMozCrashLine:
+            if RE_MOZ_CRASH_END.search(line) is None:
+                endRegex = RE_MOZ_CRASH_END
+                lastLine = [line]
+            else:
                 lastLine = line
-                haveMozCrashLine = True
+            haveMozCrashLine = True
         elif "Self-hosted JavaScript assertion info" in line:
             lastLine = line
             haveSelfHostedJSAssert = True
