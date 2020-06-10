@@ -82,6 +82,11 @@ thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
   left: `Inline`,
  right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8"""
 
+mozCrashMultiLine = """
+Hit MOZ_CRASH(assertion failed: combined_local_clip_rect.size.width >= 0.0 &&
+    combined_local_clip_rect.size.height >= 0.0) at gfx/wr/webrender/src/prim_store/mod.rs:2198
+"""  # noqa
+
 mozCrashWithPath = "Hit MOZ_CRASH(/builds/worker/workspace/build/src/media/libopus/celt/celt_decoder.c:125 assertion failed: st->start < st->end) at nil:16"  # noqa
 
 multiMozCrash = """
@@ -141,6 +146,17 @@ def test_AssertionHelperTestMozCrash():
     expectedMsg = (r"Hit MOZ_CRASH\(named lambda static scopes should have been skipped\) at "
                    r"([a-zA-Z]:)?/.+/ScopeObject\.cpp(:[0-9]+)+")
     assert sanitizedMsg == expectedMsg
+    _check_regex_matches(err, sanitizedMsg)
+
+
+def test_AssertionHelperTestMozCrashMultiLine():
+    err = mozCrashMultiLine.splitlines()
+
+    sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
+    assert sanitizedMsg[0] == (r"Hit MOZ_CRASH\(assertion failed:"
+                               r" combined_local_clip_rect\.size\.width >= 0\.0 &&")
+    assert sanitizedMsg[-1] == (r"    combined_local_clip_rect\.size\.height >= 0\.0\)"
+                                r" at gfx/wr/webrender/src/prim_store/mod\.rs(:[0-9]+)+")
     _check_regex_matches(err, sanitizedMsg)
 
 
