@@ -864,8 +864,13 @@ def main(argv=None):
 
         cmdline_file = os.path.join(opts.s3_corpus_refresh, "cmdline")
         if not os.path.exists(cmdline_file):
+            # this can happen in a few legitimate cases:
+            #  - project folder does not exist at all (new project)
+            #  - only closed queues existed (old project)
+            #  - no queues exist (recently refreshed manually)
+            # print the error, but return 0
             print("Error: Failed to download a cmdline file from queue directories.", file=sys.stderr)
-            return 2
+            return 0
 
         build_path = os.path.join(opts.s3_corpus_refresh, "build")
 

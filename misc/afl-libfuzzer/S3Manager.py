@@ -226,8 +226,8 @@ class S3Manager():
 
             remote_key.get_contents_to_filename(tmp_file)
 
-            with open(tmp_file, 'r') as tmp_fd:
-                hash_name = hashlib.sha1(str(tmp_fd.read())).hexdigest()
+            with open(tmp_file, 'rb') as tmp_fd:
+                hash_name = hashlib.sha1(tmp_fd.read()).hexdigest()
 
             os.rename(tmp_file, os.path.join(download_dir, hash_name))
 
