@@ -1288,8 +1288,8 @@ def main(argv=None):
                 testcase = monitor.getTestcase()
                 stderr = monitor.getStderr()
 
-                if not monitor.inited and not trace:
-                    print("Process did not startup correctly, aborting...", file=sys.stderr)
+                if not monitor.inited and not trace and not testcase:
+                    print("Process did not startup correctly, aborting... (1)", file=sys.stderr)
                     return 2
 
                 # libFuzzer can exit due to OOM with and without a testcase.
@@ -1305,6 +1305,21 @@ def main(argv=None):
                 # Ignore slow units and oom files
                 if testcase is not None:
                     testcase_name = os.path.basename(testcase)
+
+                    if not monitor.inited:
+                        if testcase_name.startswith("oom-") or testcase_name.startswith("timeout-"):
+                            hashname = testcase_name.split("-")[1]
+                            potential_corpus_file = os.path.join(corpus_dir, hashname)
+                            if os.path.exists(potential_corpus_file):
+                                print("Removing problematic corpus file %s..." % hashname, file=sys.stderr)
+                                os.remove(potential_corpus_file)
+                                continue
+
+                        # If neither an OOM or a Timeout caused the startup failure or we couldn't
+                        # find and remove the offending file, we should bail out at this point.
+                        print("Process did not startup correctly, aborting... (2)", file=sys.stderr)
+                        return 2
+
                     if testcase_name.startswith("slow-unit-"):
                         continue
                     if testcase_name.startswith("oom-"):
