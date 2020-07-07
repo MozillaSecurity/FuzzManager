@@ -1313,7 +1313,7 @@ def main(argv=None):
                             if os.path.exists(potential_corpus_file):
                                 print("Removing problematic corpus file %s..." % hashname, file=sys.stderr)
                                 os.remove(potential_corpus_file)
-                            continue
+                                continue
 
                         # If neither an OOM or a Timeout caused the startup failure or we couldn't
                         # find and remove the offending file, we should bail out at this point.
