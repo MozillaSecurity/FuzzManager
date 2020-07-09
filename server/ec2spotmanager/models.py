@@ -280,7 +280,9 @@ class PoolConfiguration(models.Model):
             return False
         tortoise = self
         hare = self._cache_parent(cache)
-        while tortoise != hare and hare._cache_parent(cache) is not None and hare._cache_parent(cache)._cache_parent(cache):
+        while tortoise != hare:
+            if hare._cache_parent(cache) is None or hare._cache_parent(cache)._cache_parent(cache) is None:
+                break
             tortoise = tortoise._cache_parent(cache)
             hare = hare._cache_parent(cache)._cache_parent(cache)
         return tortoise == hare

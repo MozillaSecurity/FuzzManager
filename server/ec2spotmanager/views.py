@@ -41,8 +41,18 @@ def pools(request):
     entries = (
         InstancePool.objects
         .annotate(size=Count('instance'))
-        .annotate(instance_requested_count=Sum('instance__size', filter=Q(instance__status_code=INSTANCE_STATE['requested'])))
-        .annotate(instance_running_count=Sum('instance__size', filter=Q(instance__status_code=INSTANCE_STATE['running'])))
+        .annotate(
+            instance_requested_count=Sum(
+                'instance__size',
+                filter=Q(instance__status_code=INSTANCE_STATE['requested']),
+            )
+        )
+        .annotate(
+            instance_running_count=Sum(
+                'instance__size',
+                filter=Q(instance__status_code=INSTANCE_STATE['running']),
+            )
+        )
         .select_related('config')
         .order_by('config__name')
     )
