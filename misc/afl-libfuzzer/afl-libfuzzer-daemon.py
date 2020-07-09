@@ -1144,6 +1144,10 @@ def main(argv=None):
         # Memorize if we just did a corpus reduction, for S3 sync
         corpus_reduction_done = False
 
+        # Memorize which corpus files we deleted (e.g. for timing out),
+        # as this can happen in multiple subprocesses at once.
+        removed_corpus_files = set()
+
         try:
             while True:
                 if restarts is not None and restarts < 0 and all(x is None for x in monitors):
@@ -1313,6 +1317,9 @@ def main(argv=None):
                             if os.path.exists(potential_corpus_file):
                                 print("Removing problematic corpus file %s..." % hashname, file=sys.stderr)
                                 os.remove(potential_corpus_file)
+                                removed_corpus_files.add(potential_corpus_file)
+
+                            if potential_corpus_file in removed_corpus_files:
                                 continue
 
                         # If neither an OOM or a Timeout caused the startup failure or we couldn't
