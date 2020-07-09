@@ -136,27 +136,29 @@ class PoolConfiguration(models.Model):
 
         super(PoolConfiguration, self).__init__(*args, **kwargs)
 
-    def flatten(self):
-        if self.isCyclic():
+    def flatten(self, cache=None):
+        # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
+        if self.isCyclic(cache):
             raise RuntimeError("Attempted to flatten a cyclic configuration")
 
         self.deserializeFields()
 
-        # Start with an empty configuration
-        flat_parent_config = FlatObject({})
-
-        # Dictionaries and lists should be explicitely initialized empty
-        # so they can be updated/extended by the child configurations
-        for field in self.dict_config_fields:
-            flat_parent_config[field] = {}
-
-        for field in self.list_config_fields:
-            flat_parent_config[field] = []
-
-        # If we are not the top-most confifugration, recursively call flatten
+        # If we are not the top-most configuration, recursively call flatten
         # and proceed with the configuration provided by our parent.
-        if self.parent is not None:
-            flat_parent_config = self.parent.flatten()
+        if self._cache_parent(cache) is not None:
+            flat_parent_config = self._cache_parent(cache).flatten(cache)
+
+        else:
+            # Start with an empty configuration
+            flat_parent_config = FlatObject({})
+
+            # Dictionaries and lists should be explicitly initialized empty
+            # so they can be updated/extended by the child configurations
+            for field in self.dict_config_fields:
+                flat_parent_config[field] = {}
+
+            for field in self.list_config_fields:
+                flat_parent_config[field] = []
 
         for config_field in self.config_fields:
             if getattr(self, config_field) is not None:
@@ -265,14 +267,24 @@ class PoolConfiguration(models.Model):
 
         self.save()
 
-    def isCyclic(self):
-        if not self.parent:
+    def _cache_parent(self, cache):
+        # use a prefetched {config_id: config} cache dictionary
+        # to lookup self.parent
+        if cache is None:
+            return self.parent
+        return cache.get(self.parent_id)
+
+    def isCyclic(self, cache=None):
+        # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
+        if self._cache_parent(cache) is None:
             return False
         tortoise = self
-        hare = self.parent
-        while tortoise != hare and hare.parent and hare.parent.parent:
-            tortoise = tortoise.parent
-            hare = hare.parent.parent
+        hare = self._cache_parent(cache)
+        while tortoise != hare:
+            if hare._cache_parent(cache) is None or hare._cache_parent(cache)._cache_parent(cache) is None:
+                break
+            tortoise = tortoise._cache_parent(cache)
+            hare = hare._cache_parent(cache)._cache_parent(cache)
         return tortoise == hare
 
     def getMissingParameters(self):

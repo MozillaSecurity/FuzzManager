@@ -5,7 +5,8 @@ from chartjs.views.base import JSONView
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
-from django.db.models.aggregates import Count
+from django.db.models import Q
+from django.db.models.aggregates import Count, Sum
 from django.http.response import Http404  # noqa
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
@@ -37,7 +38,28 @@ def pools(request):
     filters = {}
     isSearch = True
 
-    entries = InstancePool.objects.annotate(size=Count('instance')).order_by('config__name')
+    entries = (
+        InstancePool.objects
+        .annotate(size=Count('instance'))
+        .annotate(
+            instance_requested_count=Sum(
+                'instance__size',
+                filter=Q(instance__status_code=INSTANCE_STATE['requested']),
+            )
+        )
+        .annotate(
+            instance_running_count=Sum(
+                'instance__size',
+                filter=Q(instance__status_code=INSTANCE_STATE['running']),
+            )
+        )
+        .select_related('config')
+        .order_by('config__name')
+    )
+    configs = {
+        cfg.id: cfg
+        for cfg in PoolConfiguration.objects.all()  # fetch all pool configs since most will be used by flatten later
+    }
 
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -56,7 +78,13 @@ def pools(request):
 
     entries = entries.filter(**filters)
     for entry in entries:
-        entry.msgs = PoolStatusEntry.objects.filter(pool=entry).order_by('-created')
+        entry.msgs = []
+
+    for status_entry in PoolStatusEntry.objects.order_by('-created'):
+        for entry in entries:
+            if entry.id == status_entry.pool_id:
+                entry.msgs.append(status_entry)
+                break
 
     provider_msgs = {}
     for msg in ProviderStatusEntry.objects.all().order_by('-created'):
@@ -64,7 +92,7 @@ def pools(request):
 
     provider_pools = {}
     for pool in entries:
-        flattened_config = pool.config.flatten()
+        flattened_config = pool.config.flatten(configs)
         for provider in provider_msgs:
             provider_pools.setdefault(provider, set())
             cloud_provider = CloudProvider.get_instance(provider)
@@ -74,11 +102,12 @@ def pools(request):
                 provider_pools[provider].add(pool.pk)
 
     for pool in entries:
-        pool.instance_requested_count = sum(instance.size for instance in Instance.objects.filter(
-            pool=pool, status_code=INSTANCE_STATE['requested']))
-        pool.instance_running_count = sum(instance.size for instance in Instance.objects.filter(
-            pool=pool, status_code=INSTANCE_STATE['running']))
-        if pool.size <= pool.instance_running_count:
+        # Sum() returns None instead of 0 for empty set
+        if pool.instance_requested_count is None:
+            pool.instance_requested_count = 0
+        if pool.instance_running_count is None:
+            pool.instance_running_count = 0
+        if pool.instance_requested_count <= pool.instance_running_count:
             pool.size_label = 'success'
         elif pool.size == 0:
             pool.size_label = 'danger'
