@@ -143,7 +143,7 @@ class PoolConfiguration(models.Model):
 
         self.deserializeFields()
 
-        # If we are not the top-most confifugration, recursively call flatten
+        # If we are not the top-most configuration, recursively call flatten
         # and proceed with the configuration provided by our parent.
         if self._cache_parent(cache) is not None:
             flat_parent_config = self._cache_parent(cache).flatten(cache)
@@ -152,7 +152,7 @@ class PoolConfiguration(models.Model):
             # Start with an empty configuration
             flat_parent_config = FlatObject({})
 
-            # Dictionaries and lists should be explicitely initialized empty
+            # Dictionaries and lists should be explicitly initialized empty
             # so they can be updated/extended by the child configurations
             for field in self.dict_config_fields:
                 flat_parent_config[field] = {}
