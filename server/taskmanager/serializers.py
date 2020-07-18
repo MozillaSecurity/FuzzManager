@@ -11,7 +11,10 @@ class PoolSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Add dynamic fields"""
         ret = super(PoolSerializer, self).to_representation(instance)
-        ret["cycle_time"] = int(instance.cycle_time.total_seconds())
+        if instance.cycle_time is None:
+            ret["cycle_time"] = None
+        else:
+            ret["cycle_time"] = int(instance.cycle_time.total_seconds())
         ret["running"] = Task.objects.filter(pool=instance, state="running").count()
         if ret["size"] == 0:
             ret["status"] = "disabled"

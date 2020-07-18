@@ -94,6 +94,8 @@ def update_pools():
     for hook in hooks_svc.listHooks(hook_group_id)["hooks"]:
         hook = hook["hookId"]
         platform, id_ = hook.split("-", 1)
+        if not id_.startswith('pool'):
+            continue
         pool, _ = Pool.objects.get_or_create(
             pool_id=id_,
             platform=platform,
