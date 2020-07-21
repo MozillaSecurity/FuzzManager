@@ -183,7 +183,7 @@ class SimplePersistentApplication(PersistentApplication):
         monitor.start()
         monitor.join(self.processingTimeout)
 
-        if monitor.isAlive():
+        if monitor.is_alive():
             # Timed out
             return False
 
