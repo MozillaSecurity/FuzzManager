@@ -1,8 +1,6 @@
 import datetime
 import json
 import logging
-import time
-import uuid
 import celery
 import redis
 from django.conf import settings
@@ -10,9 +8,11 @@ from django.db.models.query_utils import Q
 from django.utils import timezone
 from celeryconf import app
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
+from server.utils import RedisLock
 
 
 LOG = logging.getLogger("ec2spotmanager")
+
 
 STATS_DELTA_SECS = 60 * 15  # 30 minutes
 STATS_TOTAL_DETAILED = 24  # How many hours the detailed statistics should include
@@ -20,7 +20,7 @@ STATS_TOTAL_ACCUMULATED = 30  # How many days should we keep accumulated statist
 
 # How long check_instance_pools lock should remain valid. If the task takes longer than this to complete, the lock will
 # be invalidated and another task allowed to run.
-CHECK_POOL_LOCK_EXPIRY = 3 * 60
+CHECK_POOL_LOCK_EXPIRY = 30 * 60
 
 
 @app.task(ignore_result=True)
@@ -106,65 +106,10 @@ def update_stats():
                 entry.delete()
 
 
-class _RedisLock(object):
-    """Simple Redis mutex lock.
-
-    based on: https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-components-in-redis \
-                                   /6-2-distributed-locking/6-2-3-building-a-lock-in-redis/
-
-    Not using RedLock because it isn't passable as a celery argument, so we can't release the lock in an async chain.
-    """
-
-    def __init__(self, conn, name, unique_id=None):
-        self.conn = conn
-        self.name = name
-        if unique_id is None:
-            self.unique_id = str(uuid.uuid4())
-        else:
-            self.unique_id = unique_id
-
-    def acquire(self, acquire_timeout=10):
-        end = time.time() + acquire_timeout
-        while time.time() < end:
-
-            if self.conn.set(self.name, self.unique_id, ex=CHECK_POOL_LOCK_EXPIRY, nx=True):
-                LOG.debug("Acquired lock: %s(%s)", self.name, self.unique_id)
-                return self.unique_id
-
-            time.sleep(0.01)
-
-        LOG.debug("Failed to acquire lock: %s(%s)", self.name, self.unique_id)
-        return None
-
-    def release(self):
-        pipe = self.conn.pipeline(True)
-
-        while True:
-            try:
-
-                pipe.watch(self.name)
-                if pipe.get(self.name) == self.unique_id:
-
-                    pipe.multi()
-                    pipe.delete(self.name)
-                    pipe.execute()
-                    LOG.debug("Released lock: %s(%s)", self.name, self.unique_id)
-                    return True
-
-                pipe.unwatch()
-                break
-
-            except redis.exceptions.WatchError:
-                pass
-
-        LOG.debug("Failed to release lock: %s(%s)", self.name, self.unique_id)
-        return False
-
-
 @app.task
 def _release_lock(lock_key):
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
-    lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
+    lock = RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
     if not lock.release():
         LOG.warning('Lock ec2spotmanager:check_instance_pools(%s) was already expired.', lock_key)
 
@@ -244,9 +189,9 @@ def check_instance_pools():
     #                          DONE
     #
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
-    lock = _RedisLock(cache, "ec2spotmanager:check_instance_pools")
+    lock = RedisLock(cache, "ec2spotmanager:check_instance_pools")
 
-    lock_key = lock.acquire()
+    lock_key = lock.acquire(lock_expiry=CHECK_POOL_LOCK_EXPIRY)
     if lock_key is None:
         LOG.warning('Another EC2SpotManager update still in progress, exiting.')
         return
