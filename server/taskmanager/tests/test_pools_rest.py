@@ -84,7 +84,7 @@ def test_rest_pool_read(api_client, item):
         assert len(resp["results"]) == 1
         resp = resp["results"][0]
     assert set(resp.keys()) == {
-        "pool_id", "pool_name", "platform", "size", "cpu", "cycle_time", "id", "running", "status",
+        "pool_id", "pool_name", "platform", "size", "cpu", "cycle_time", "id", "running", "status", "max_run_time",
     }
     assert resp["id"] == pool.pk
     assert resp["pool_id"] == pool.pool_id
@@ -101,8 +101,8 @@ def test_rest_pool_running_status(api_client):
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     pool = create_pool()
-    create_task(pool=pool)
-    task2 = create_task(pool=pool)
+    create_task(pool=pool, run_id=1)
+    task2 = create_task(pool=pool, run_id=2)
     url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
 
     resp = api_client.get(url)

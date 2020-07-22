@@ -11,6 +11,7 @@ import subprocess
 import redis
 from django.conf import settings
 from django.db.models import Q
+from django.utils import timezone
 from celeryconf import app
 from server.utils import RedisLock
 
@@ -68,7 +69,7 @@ def update_pools():
         return
 
     try:
-        now = datetime.datetime.now(datetime.timezone.utc)
+        now = datetime.datetime.now(timezone.utc)
 
         pools_seen = set()  # (platform, fuzzing_id)
         tasks_seen = set()  # (db_id)
@@ -91,23 +92,26 @@ def update_pools():
                     continue
                 for run in task["status"]["runs"]:
                     task_obj, created = Task.objects.get_or_create(
-                        pool=pool,
-                        decision_id=task_group_id,
                         task_id=task["status"]["taskId"],
                         run_id=run["runId"],
                         defaults={
                             "created": task["task"]["created"],
-                            "state": run["state"],
-                            "started": run.get("started"),
-                            "resolved": run.get("resolved"),
+                            "decision_id": task_group_id,
                             "expires": task["task"]["expires"],
+                            "pool": pool,
+                            "resolved": run.get("resolved"),
+                            "started": run.get("started"),
+                            "state": run["state"],
                         },
                     )
                     if not created:
-                        task_obj.state = run["state"]
-                        task_obj.started = run.get("started")
-                        task_obj.resolved = run.get("resolved")
+                        task_obj.created = task["task"]["created"]
+                        task_obj.decision_id = task_group_id
                         task_obj.expires = task["task"]["expires"]
+                        task_obj.pool = pool
+                        task_obj.resolved = run.get("resolved")
+                        task_obj.started = run.get("started")
+                        task_obj.state = run["state"]
                         task_obj.save()
                     # re-read from the DB to resolve date fields
                     task_obj = Task.objects.get(pk=task_obj.pk)
@@ -195,6 +199,7 @@ def update_pools():
                     "size": pool_data.tasks,
                     "cpu": pool_data.cpu,
                     "cycle_time": datetime.timedelta(seconds=pool_data.cycle_time),
+                    "max_run_time": datetime.timedelta(seconds=pool_data.max_run_time),
                 },
             )
             if not created:
@@ -202,6 +207,7 @@ def update_pools():
                 pool.size = pool_data.tasks
                 pool.cpu = pool_data.cpu
                 pool.cycle_time = datetime.timedelta(seconds=pool_data.cycle_time)
+                pool.max_run_time = datetime.timedelta(seconds=pool_data.max_run_time)
                 pool.save()
             pools_seen.add((pool_data.platform, pool_data.pool_id))
             LOG.info("> pool[%d] %s-%s (%s)", pool.pk, pool.platform, pool.pool_id, pool.pool_name)

@@ -142,6 +142,24 @@ def test_rest_task_status(api_client, make_data, result, status_data):
     assert task.status_data == status_data
 
 
+def test_rest_task_status_unknown(api_client):
+    """post should require well-formed parameters"""
+    user = User.objects.get(username="test")
+    api_client.force_authenticate(user=user)
+    url = "/taskmanager/rest/tasks/update_status/"
+
+    data = {
+        "client": "task-unknown-run-0",
+        "status_data": "Hello world",
+    }
+    resp = api_client.post(url, data=data)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes["ok"]
+    task = Task.objects.get()
+    assert task.status_data == data["status_data"]
+    assert task.pool is None
+
+
 @pytest.mark.parametrize("item", [True, False])
 def test_rest_task_read(api_client, item):
     user = User.objects.get(username="test")

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 import logging
 import re
 
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.decorators import action
@@ -16,6 +18,11 @@ from .models import Pool, Task
 from .serializers import PoolSerializer, TaskSerializer
 
 LOG = logging.getLogger("fm.taskmanager.views")
+
+# If status is reported for an unknown task, we store it in the DB with the Pool key nulled.
+# We can't show this in taskmanager until we know what pool it belongs to. If for some reason
+# the task is never claimed by a pool, we set an expiry so it will be deleted.
+UNKNOWN_TASK_STATUS_EXPIRES = datetime.timedelta(hours=1)
 
 
 @deny_restricted_users
@@ -79,10 +86,14 @@ class TaskViewSet(mixins.ListModelMixin,
         if match is None:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            task = Task.objects.get(task_id=match.group(1), run_id=int(match.group(2)))
-        except Task.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        now = datetime.datetime.now(timezone.utc)
+        task, created = Task.objects.get_or_create(
+            task_id=match.group(1),
+            run_id=int(match.group(2)),
+            defaults={
+                "expires": now + UNKNOWN_TASK_STATUS_EXPIRES,
+            },
+        )
 
         serializer = TaskSerializer(
             task,
