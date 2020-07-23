@@ -59,7 +59,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer):
             for field in itertools.chain(obj.config_fields, obj.list_config_fields, obj.dict_config_fields):
                 if field == 'ec2_userdata':
                     continue
-                result[field] = getattr(flattened, field)
+                result[field] = flattened.get(field, None)
         else:
             obj.deserializeFields()
             for field in obj.config_fields:
