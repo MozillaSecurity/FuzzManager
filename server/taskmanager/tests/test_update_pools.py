@@ -13,13 +13,17 @@ import datetime
 import logging
 import os.path
 import pytest
+import sys
 from django.utils import timezone
 from taskmanager.cron import update_pools
 from taskmanager.models import Pool, Task
 
 
 LOG = logging.getLogger('fm.taskmanager.tests.tasks')
-pytestmark = pytest.mark.usefixtures("taskmanager_test")  # pylint: disable=invalid-name
+pytestmark = [  # pylint: disable=invalid-name
+    pytest.mark.skipif(sys.version_info < (3, 6), reason="fuzzing-tc requires python3.6 or higher"),
+    pytest.mark.usefixtures("taskmanager_test"),
+]
 
 
 def test_update_lock(mocker):
