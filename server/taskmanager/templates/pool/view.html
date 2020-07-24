@@ -11,6 +11,7 @@
       <tr><td>Size:</td><td>{{ pool.size }}</td></tr>
       <tr><td>CPU:</td><td>{{ pool.cpu }}</td></tr>
       <tr><td>Cycle Time:</td><td>!{ formatDateRelative(new Date({{ pool.cycle_time.total_seconds }} * 1000), 0, '') }!</td></tr>
+      <tr><td>Max. Run Time:</td><td>!{ formatDateRelative(new Date({{ pool.max_run_time.total_seconds }} * 1000), 0, '') }!</td></tr>
     </table>
   </div>
   <table class="table table-condensed table-hover table-bordered table-db">
@@ -28,7 +29,7 @@
     </thead>
     <tbody>
       <tr v-for="task in ordered_tasks" :id="task.id">
-        <td><a :href="'{{ tc_root_url }}tasks/' + task.task_id">!{ task.task_id }!</a></td>
+        <td><a :href="'{{ tc_root_url }}tasks/' + task.task_id + '/runs/' + task.run_id">!{ task.task_id }!</a></td>
         <td>!{ task.run_id }!</td>
         <td>!{ task.state }!</td>
         <td>!{ task.created | formatDate }!<br/>!{ task.created | formatDateAgo }!</td>
