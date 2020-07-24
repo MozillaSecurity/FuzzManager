@@ -42,8 +42,8 @@ class PoolSerializer(serializers.ModelSerializer):
             # fuzzing work probably happened and we should count it.
             query = (
                 Q(pool=instance) &
-                Q(started__is_null=False) &
-                (Q(resolved__is_null=True) | Q(resolved__gte=last_cycle_start))
+                Q(started__isnull=False) &
+                (Q(resolved__isnull=True) | Q(resolved__gte=last_cycle_start))
             )
             for task in Task.objects.filter(query):
                 begin = max(task.started, last_cycle_start)
