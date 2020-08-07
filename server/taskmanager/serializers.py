@@ -49,7 +49,7 @@ class PoolSerializer(serializers.ModelSerializer):
                 begin = max(task.started, last_cycle_start)
                 end = task.resolved or now
                 run_time += (end - begin).total_seconds()
-            run_ratio = run_time / ret["cycle_time"]
+            run_ratio = float(run_time) / ret["cycle_time"]
             # Only care if the run_ratio is less than duty_cycle by at least the
             # threshold.
             if (run_ratio - duty_cycle) >= -RUN_RATIO_THRESHOLD:
