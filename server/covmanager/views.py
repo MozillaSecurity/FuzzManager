@@ -109,7 +109,7 @@ def collections_reportsummary_html_list(request, collectionid):
         root["diffid"] = diff_collection.pk
 
         def annotate_delta(a, b):
-            delta = a["coveragePercent"] - b["coveragePercent"]
+            delta = round(a["coveragePercent"] - b["coveragePercent"], 2)
 
             if delta >= 1.0:
                 a["coveragePercentDelta"] = "+%s %%" % delta
