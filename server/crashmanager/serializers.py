@@ -45,7 +45,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = CrashEntry
         fields = (
-            'rawStdout', 'rawStderr', 'rawCrashData', 'metadata',
+            'rawStdout', 'rawStderr', 'rawCrashData', 'metadata', 'created', 'triagedOnce',
             'testcase', 'testcase_ext', 'testcase_size', 'testcase_quality', 'testcase_isbinary',
             'platform', 'product', 'product_version', 'os', 'client', 'tool',
             'env', 'args', 'bucket', 'id', 'shortSignature', 'crashAddress',
