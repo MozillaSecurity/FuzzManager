@@ -31,7 +31,7 @@ def _create_user(username, email="test@mozilla.com", password="test", restricted
     (user, _) = cmUser.get_or_create_restricted(user)
     user.restricted = restricted
     user.save()
-    return user
+    return user.user
 
 
 @pytest.fixture
@@ -41,6 +41,36 @@ def crashmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     _create_user("test")
     _create_user("test-restricted", restricted=True)
     _create_user("test-noperm", has_permission=False)
+
+
+@pytest.fixture
+def user_normal(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create a normal, authenticated user"""
+    user = _create_user("test")
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def user_restricted(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create a restricted, authenticated user"""
+    user = _create_user("test-restricted", restricted=True)
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def user_noperm(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create an authenticated user with no crashmanager ACL"""
+    user = _create_user("test-noperm", has_permission=False)
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def user(request):
+    assert request.param in {"normal", "restricted", "noperm"}
+    return request.getfixturevalue("user_" + request.param)
 
 
 @pytest.fixture
@@ -201,8 +231,8 @@ def cm():
             return result
 
         @staticmethod
-        def create_toolfilter(tool):
-            user = User.objects.get(username='test')
+        def create_toolfilter(tool, user='test'):
+            user = User.objects.get(username=user)
             cmuser, _ = cmUser.objects.get_or_create(user=user)
             cmuser.defaultToolsFilter.add(Tool.objects.get(name=tool))
 

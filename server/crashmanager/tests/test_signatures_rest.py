@@ -13,77 +13,93 @@ import json
 import logging
 import pytest
 import requests
-from django.contrib.auth.models import User
+
+
+# What should be allowed:
+#
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        |      |          | no auth | no perm | unrestricted | unrestricted      | restricted | restricted        |
+# |        |      |          |         |         |              | ignore_toolfilter |            | ignore_toolfilter |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# | GET    | /    | list     | 401     | 403     | toolfilter   | all               | toolfilter | toolfilter        |
+# |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        | /id/ | retrieve | 401     | 403     | all          | all               | toolfilter | toolfilter        |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# | POST   | /    | create   | 401     | 403     | all (TODO)   | all (TODO)        | all (TODO) | all (TODO)        |
+# |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        | /id/ | -        | 401     | 403     | 405          | 405               | 405        | 405               |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# | PUT    | /    | -        | 401     | 403     | 405          | 405               | 405        | 405               |
+# |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        | /id/ | -        | 401     | 403     | 405          | 405               | 405        | 405               |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# | PATCH  | /    | -        | 401     | 403     | 405          | 405               | 405        | 405               |
+# |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        | /id/ | update   | 401     | 403     | all (TODO)   | all (TODO)        | 405        | 405               |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# | DELETE | /    | -        | 401     | 403     | 405          | 405               | 405        | 405               |
+# |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
+# |        | /id/ | delete   | 401     | 403     | all (TODO)   | all (TODO)        | 405        | 405               |
+# +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
-pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
-def test_rest_signatures_no_auth(api_client):
-    """must yield forbidden without authentication"""
-    url = '/crashmanager/rest/buckets/'
-    assert api_client.get(url).status_code == requests.codes['unauthorized']
-    assert api_client.post(url).status_code == requests.codes['unauthorized']
-    assert api_client.put(url).status_code == requests.codes['unauthorized']
-    assert api_client.patch(url).status_code == requests.codes['unauthorized']
-    assert api_client.delete(url).status_code == requests.codes['unauthorized']
+def _compare_rest_result_to_bucket(result, bucket, size, quality):
+    assert set(result) == {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
+                           'signature', 'size'}
+    assert result["id"] == bucket.pk
+    assert result["best_quality"] == quality
+    assert result["bug"] == bucket.bug_id
+    assert result["frequent"] == bucket.frequent
+    assert result["permanent"] == bucket.permanent
+    assert result["shortDescription"] == bucket.shortDescription
+    assert result["signature"] == bucket.signature
+    assert result["size"] == size
 
 
-def test_rest_signatures_no_perm(api_client):
+@pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
+@pytest.mark.parametrize("url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"])
+def test_rest_signatures_no_auth(db, api_client, method, url):
+    """must yield unauthorized without authentication"""
+    assert getattr(api_client, method)(url, {}).status_code == requests.codes['unauthorized']
+
+
+@pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
+@pytest.mark.parametrize("url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"])
+def test_rest_signatures_no_perm(user_noperm, api_client, method, url):
     """must yield forbidden without permission"""
-    user = User.objects.get(username='test-noperm')
-    api_client.force_authenticate(user=user)
-    url = '/crashmanager/rest/buckets/'
-    assert api_client.get(url).status_code == requests.codes['forbidden']
-    assert api_client.post(url).status_code == requests.codes['forbidden']
-    assert api_client.put(url).status_code == requests.codes['forbidden']
-    assert api_client.patch(url).status_code == requests.codes['forbidden']
-    assert api_client.delete(url).status_code == requests.codes['forbidden']
+    assert getattr(api_client, method)(url, {}).status_code == requests.codes['forbidden']
 
 
-def test_rest_signatures_auth(api_client):
-    """test that authenticated requests work"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.get('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['ok']
+@pytest.mark.parametrize("method, url, user", [
+    ("delete", "/crashmanager/rest/buckets/", "normal"),
+    ("delete", "/crashmanager/rest/buckets/", "restricted"),
+    ("delete", "/crashmanager/rest/buckets/1/", "normal"),  # TODO: this should be allowed, but hasn't been implemented
+    ("delete", "/crashmanager/rest/buckets/1/", "restricted"),
+    ("patch", "/crashmanager/rest/buckets/", "normal"),
+    ("patch", "/crashmanager/rest/buckets/", "restricted"),
+    ("patch", "/crashmanager/rest/buckets/1/", "normal"),  # TODO: this should be allowed, but hasn't been implemented
+    ("patch", "/crashmanager/rest/buckets/1/", "restricted"),
+    ("post", "/crashmanager/rest/buckets/", "normal"),  # TODO: this should be allowed, but hasn't been implemented
+    ("post", "/crashmanager/rest/buckets/", "restricted"),  # TODO: this should be allowed, but hasn't been implemented
+    ("post", "/crashmanager/rest/buckets/1/", "normal"),
+    ("post", "/crashmanager/rest/buckets/1/", "restricted"),
+    ("put", "/crashmanager/rest/buckets/", "normal"),
+    ("put", "/crashmanager/rest/buckets/", "restricted"),
+    ("put", "/crashmanager/rest/buckets/1/", "normal"),
+    ("put", "/crashmanager/rest/buckets/1/", "restricted"),
+], indirect=["user"])
+def test_rest_signatures_methods(api_client, user, method, url):
+    """must yield method-not-allowed for unsupported methods"""
+    assert getattr(api_client, method)(url, {}).status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_signatures_patch(api_client):
-    """patch should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.patch('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signatures_put(api_client):
-    """put should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.put('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signatures_post(api_client):
-    """post should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.post('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signatures_delete(api_client):
-    """delete should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.delete('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signatures_query_buckets(api_client, cm):
-    """test that buckets can be queried"""
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("ignore_toolfilter", [True, False])
+def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter):
+    """test that buckets can be listed"""
     bucket1 = cm.create_bucket(shortDescription="bucket #1")
     bucket2 = cm.create_bucket(shortDescription="bucket #2")
     buckets = [bucket1, bucket2, bucket1, bucket1]
@@ -91,6 +107,7 @@ def test_rest_signatures_query_buckets(api_client, cm):
              cm.create_testcase("test2.txt", quality=9),
              cm.create_testcase("test3.txt", quality=2),
              cm.create_testcase("test4.txt", quality=3)]
+    tools = ["tool2", "tool2", "tool1", "tool1"]
     for i in range(4):
         cm.create_crash(shortSignature="crash #%d" % (i + 1),
                         client="client #%d" % (i + 1),
@@ -98,137 +115,74 @@ def test_rest_signatures_query_buckets(api_client, cm):
                         product="product #%d" % (i + 1),
                         product_version="%d" % (i + 1),
                         platform="platform #%d" % (i + 1),
-                        tool="tool #1",
+                        tool=tools[i],
                         testcase=tests[i],
                         bucket=buckets[i])
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.get('/crashmanager/rest/buckets/')
+    # Create toolfilter, check that query returns only tool-filtered crashes
+    cm.create_toolfilter('tool1', user=user.username)
+    params = {}
+    if ignore_toolfilter:
+        params["ignore_toolfilter"] = "1"
+    resp = api_client.get('/crashmanager/rest/buckets/', params)
+    LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']
     resp = json.loads(resp.content.decode('utf-8'))
     assert set(resp.keys()) == {'count', 'next', 'previous', 'results'}
-    assert resp['count'] == 2
+    expected_buckets = 2 if ignore_toolfilter and user.username == "test" else 1
+    assert resp['count'] == expected_buckets
     assert resp['next'] is None
     assert resp['previous'] is None
     resp = resp['results']
-    assert len(resp) == 2
-    assert set(resp[0].keys()) == {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
-                                   'signature', 'size'}
-    if resp[0]['id'] == bucket1.pk:
-        resp1 = resp[0]
-        resp2 = resp[1]
-        assert resp2['id'] == bucket2.pk
+    assert len(resp) == expected_buckets
+    resp = sorted(resp, key=lambda x: x["id"])
+    if ignore_toolfilter and user.username == "test":
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1)
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9)
     else:
-        resp1 = resp[1]
-        resp2 = resp[0]
-        assert resp1['id'] == bucket1.pk
-        assert resp2['id'] == bucket2.pk
-    assert resp1['best_quality'] == 1
-    assert resp2['best_quality'] == 9
-    assert resp1['bug'] is None
-    assert resp2['bug'] is None
-    assert not resp1['frequent']
-    assert not resp2['frequent']
-    assert not resp1['permanent']
-    assert not resp2['permanent']
-    assert resp1['shortDescription'] == "bucket #1"
-    assert resp2['shortDescription'] == "bucket #2"
-    assert resp1['signature'] == ""
-    assert resp2['signature'] == ""
-    assert resp1['size'] == 3
-    assert resp2['size'] == 1
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2)
 
 
-def test_rest_signature_no_auth(api_client):
-    """must yield forbidden without authentication"""
-    url = '/crashmanager/rest/buckets/1/'
-    assert api_client.get(url).status_code == requests.codes['unauthorized']
-    assert api_client.post(url).status_code == requests.codes['unauthorized']
-    assert api_client.put(url).status_code == requests.codes['unauthorized']
-    assert api_client.patch(url).status_code == requests.codes['unauthorized']
-    assert api_client.delete(url).status_code == requests.codes['unauthorized']
-
-
-def test_rest_signature_no_perm(api_client):
-    """must yield forbidden without permission"""
-    user = User.objects.get(username='test-noperm')
-    api_client.force_authenticate(user=user)
-    url = '/crashmanager/rest/buckets/1/'
-    assert api_client.get(url).status_code == requests.codes['forbidden']
-    assert api_client.post(url).status_code == requests.codes['forbidden']
-    assert api_client.put(url).status_code == requests.codes['forbidden']
-    assert api_client.patch(url).status_code == requests.codes['forbidden']
-    assert api_client.delete(url).status_code == requests.codes['forbidden']
-
-
-def test_rest_signature_auth(api_client):
-    """test that authenticated requests work"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.get('/crashmanager/rest/buckets/')
-    assert resp.status_code == requests.codes['ok']
-
-
-def test_rest_signature_delete(api_client):
-    """delete should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.delete('/crashmanager/rest/buckets/1/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signature_patch(api_client):
-    """patch should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.patch('/crashmanager/rest/buckets/1/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signature_put(api_client):
-    """put should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.put('/crashmanager/rest/buckets/1/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signature_post(api_client):
-    """post should not be allowed"""
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.post('/crashmanager/rest/buckets/1/')
-    assert resp.status_code == requests.codes['method_not_allowed']
-
-
-def test_rest_signature_get(api_client, cm):
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("ignore_toolfilter", [True, False])
+def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
     """test that individual Signature can be fetched"""
-    bucket = cm.create_bucket(shortDescription="bucket #1")
+    bucket1 = cm.create_bucket(shortDescription="bucket #1")
+    bucket2 = cm.create_bucket(shortDescription="bucket #2")
     tests = [cm.create_testcase("test1.txt", quality=9),
+             None,
              cm.create_testcase("test3.txt", quality=2),
              cm.create_testcase("test4.txt", quality=3)]
-    for i in range(3):
+    buckets = [bucket1, bucket1, bucket2, bucket2]
+    tools = ["tool1", "tool2", "tool2", "tool3"]
+    for i in range(4):
         cm.create_crash(shortSignature="crash #%d" % (i + 1),
                         client="client #%d" % (i + 1),
                         os="os #%d" % (i + 1),
                         product="product #%d" % (i + 1),
                         product_version="%d" % (i + 1),
                         platform="platform #%d" % (i + 1),
-                        tool="tool #1",
+                        tool=tools[i],
                         testcase=tests[i],
-                        bucket=bucket)
-    user = User.objects.get(username='test')
-    api_client.force_authenticate(user=user)
-    resp = api_client.get('/crashmanager/rest/buckets/%d/' % bucket.pk)
-    assert resp.status_code == requests.codes['ok']
-    resp = json.loads(resp.content.decode('utf-8'))
-    assert set(resp.keys()) == {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
-                                'signature', 'size'}
-    assert resp['id'] == bucket.pk
-    assert resp['best_quality'] == 2
-    assert resp['bug'] is None
-    assert not resp['frequent']
-    assert not resp['permanent']
-    assert resp['shortDescription'] == "bucket #1"
-    assert resp['signature'] == ""
-    assert resp['size'] == 3
+                        bucket=buckets[i])
+    cm.create_toolfilter('tool1', user=user.username)
+    params = {}
+    if ignore_toolfilter:
+        params["ignore_toolfilter"] = "1"
+    for i, bucket in enumerate([bucket1, bucket2]):
+        resp = api_client.get('/crashmanager/rest/buckets/%d/' % bucket.pk, params)
+        LOG.debug(resp)
+        allowed = user.username == "test" or i == 0  # only unrestricted user, or in-toolfilter
+        if not allowed:
+            assert resp.status_code == requests.codes['not_found']
+        else:
+            status_code = resp.status_code
+            resp = resp.json()
+            assert status_code == requests.codes['ok'], resp['detail']
+            if user.username == "test":
+                if ignore_toolfilter:
+                    size, quality = [(2, 9), (2, 2)][i]
+                else:
+                    size, quality = [(1, 9), (0, None)][i]
+            else:
+                size, quality = (1, 9)
+            _compare_rest_result_to_bucket(resp, bucket, size, quality)

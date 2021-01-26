@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
-from django.core.exceptions import SuspiciousOperation, PermissionDenied
+from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
@@ -11,8 +11,10 @@ import functools
 import json
 import operator
 import os
-from rest_framework import filters, mixins, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import six
@@ -75,13 +77,15 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
     return entries
 
 
-def filter_signatures_by_toolfilter(request, signatures, restricted_only=False):
+def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, legacy_filters=True):
     user = User.get_or_create_restricted(request.user)[0]
 
     if restricted_only and not user.restricted:
         return signatures
 
-    if not user.restricted:
+    # allow legacy filters for web-ui based views
+    # these don't work with the rest api (use `ignore_toolfilter` or `query` instead)
+    if not user.restricted and legacy_filters:
         # If the user is unrestricted and all=1 is set, do not apply any filters
         if "all" in request.GET and request.GET["all"]:
             return signatures
@@ -1161,7 +1165,7 @@ def userSettings(request):
         raise SuspiciousOperation
 
 
-class JsonQueryFilterBackend(filters.BaseFilterBackend):
+class JsonQueryFilterBackend(BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
     """
@@ -1173,45 +1177,64 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
         if querystr is not None:
             try:
                 _, queryobj = json_to_query(querystr)
-            except RuntimeError as e:
+            except (RuntimeError, TypeError) as e:
                 raise InvalidArgumentException("error in query: %s" % e)
-            queryset = queryset.filter(queryobj)
+            try:
+                queryset = queryset.filter(queryobj)
+            except FieldError as exc:
+                raise InvalidArgumentException("error in query: %s" % exc)
         return queryset
 
 
-class BucketAnnotateFilterBackend(filters.BaseFilterBackend):
+class ToolFilterCrashesBackend(BaseFilterBackend):
     """
-    Annotates bucket queryset with size and best_quality
+    Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
+    Only unrestricted users can use ignore_toolfilter.
     """
+    def filter_queryset(self, request, queryset, view):
+        """Return a filtered queryset"""
+        ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
+        try:
+            ignore_toolfilter = int(ignore_toolfilter)
+            assert ignore_toolfilter in {0, 1}
+        except (AssertionError, ValueError):
+            raise InvalidArgumentException({'ignore_toolfilter': ['Expecting 0 or 1.']})
+        view.ignore_toolfilter = bool(ignore_toolfilter)
+        return filter_crash_entries_by_toolfilter(
+            request, queryset,
+            restricted_only=bool(view.ignore_toolfilter) or view.action != "list")
+
+
+class ToolFilterSignaturesBackend(BaseFilterBackend):
+    """
+    Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
+    Only unrestricted users can use ignore_toolfilter.
+    """
+    def filter_queryset(self, request, queryset, view):
+        """Return a filtered queryset"""
+        ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
+        try:
+            ignore_toolfilter = int(ignore_toolfilter)
+            assert ignore_toolfilter in {0, 1}
+        except (AssertionError, ValueError):
+            raise InvalidArgumentException({'ignore_toolfilter': ['Expecting 0 or 1.']})
+        view.ignore_toolfilter = bool(ignore_toolfilter)
+        return filter_signatures_by_toolfilter(
+            request, queryset, legacy_filters=False,
+            restricted_only=bool(view.ignore_toolfilter) or view.action != "list")
+
+
+class BucketAnnotateFilterBackend(BaseFilterBackend):
+    """Annotates bucket queryset with size and best_quality"""
     def filter_queryset(self, request, queryset, view):
         # we should use a subquery to get best_quality which would allow us to also get the corresponding crash
         # Subquery was added in Django 1.11
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 
-class CrashEntryViewSet(mixins.CreateModelMixin,
-                        mixins.RetrieveModelMixin,
-                        viewsets.GenericViewSet):
-    """
-    API endpoint that allows adding/viewing CrashEntries
-    """
-    authentication_classes = (TokenAuthentication,)
-    queryset = CrashEntry.objects.all().select_related('product', 'platform', 'os', 'client', 'tool', 'testcase')
-    serializer_class = CrashEntrySerializer
-    filter_backends = [JsonQueryFilterBackend]
-
-    def retrieve(self, request, *args, **kwargs):
-        deny_restricted_users(request)
-        return super(CrashEntryViewSet, self).retrieve(request, *args, **kwargs)
-
-    def list(self, request, *args, **kwargs):
-        """
-        Based on ListModelMixin.list()
-        """
-        deny_restricted_users(request)
-
-        queryset = self.filter_queryset(self.get_queryset())
-
+class DeferRawFilterBackend(BaseFilterBackend):
+    """Optionally defer raw fields"""
+    def filter_queryset(self, request, queryset, view):
         include_raw = request.query_params.get('include_raw', '1')
         try:
             include_raw = int(include_raw)
@@ -1222,19 +1245,29 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         if not include_raw:
             queryset = queryset.defer('rawStdout', 'rawStderr', 'rawCrashData')
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, include_raw=include_raw, many=True)
-            return self.get_paginated_response(serializer.data)
+        view.include_raw = bool(include_raw)
+        return queryset
 
-        serializer = self.get_serializer(queryset, include_raw=include_raw, many=True)
-        return Response(serializer.data)
+
+class CrashEntryViewSet(mixins.CreateModelMixin,
+                        mixins.ListModelMixin,
+                        mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
+    """API endpoint that allows adding/viewing CrashEntries"""
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = CrashEntry.objects.all().select_related('product', 'platform', 'os', 'client', 'tool', 'testcase')
+    serializer_class = CrashEntrySerializer
+    filter_backends = [ToolFilterCrashesBackend, JsonQueryFilterBackend, OrderingFilter, DeferRawFilterBackend]
+
+    def get_serializer(self, *args, **kwds):
+        kwds["include_raw"] = getattr(self, "include_raw", True)
+        return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
 
     def partial_update(self, request, pk=None):
-        """
-        Update individual crash fields.
-        """
-        deny_restricted_users(request)
+        """Update individual crash fields."""
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise MethodNotAllowed(request.method)
 
         allowed_fields = {"testcase_quality"}
         try:
@@ -1263,23 +1296,28 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
 
 
 class BucketViewSet(mixins.ListModelMixin,
-                    mixins.RetrieveModelMixin,
                     viewsets.GenericViewSet):
-    """
-    API endpoint that allows viewing Buckets
-    """
-    authentication_classes = (TokenAuthentication,)
+    """API endpoint that allows viewing Buckets"""
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Bucket.objects.all().select_related('bug')
     serializer_class = BucketSerializer
-    filter_backends = [BucketAnnotateFilterBackend, JsonQueryFilterBackend]
+    filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
 
     def retrieve(self, request, *args, **kwargs):
-        deny_restricted_users(request)
-        return super(BucketViewSet, self).retrieve(request, *args, **kwargs)
-
-    def list(self, request, *args, **kwargs):
-        deny_restricted_users(request)
-        return super(BucketViewSet, self).list(request, *args, **kwargs)
+        user = User.get_or_create_restricted(request.user)[0]
+        instance = self.get_object()
+        ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
+        if not ignore_toolfilter and not user.restricted:
+            # if a normal user requested toolfilter, we ignored it...
+            # recalculate size and quality using toolfilter
+            # even if the result is 0
+            defaultToolsFilter = user.defaultToolsFilter.all()
+            crashes_in_filter = instance.crashentry_set.filter(tool__in=defaultToolsFilter)
+            agg = crashes_in_filter.aggregate(quality=Min("testcase__quality"), size=Count("id"))
+            instance.size = agg["size"]
+            instance.quality = agg["quality"]
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 def json_to_query(json_str):
