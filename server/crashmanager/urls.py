@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^signatures/watch/(?P<sigid>\d+)/delete/$', views.deleteBucketWatch, name='sigwatchdel'),
     url(r'^signatures/watch/new/$', views.newBucketWatch, name='sigwatchnew'),
     url(r'^crashes/$', views.crashes, name='crashes'),
+    url(r'^crashes2/$', views.list_crashes, name='crashes2'),
     url(r'^crashes/all/$', views.crashes, name='allcrashes', kwargs={'ignore_toolfilter': True}),
     url(r'^crashes/query/$', views.queryCrashes, name='querycrashes'),
     url(r'^crashes/watch/(?P<sigid>\d+)/$', views.bucketWatchCrashes, name='sigwatchcrashes'),

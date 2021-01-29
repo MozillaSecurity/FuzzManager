@@ -376,6 +376,11 @@ def crashes(request, ignore_toolfilter=False):
     return render(request, 'crashes/index.html', data)
 
 
+def list_crashes(request):
+    user = User.get_or_create_restricted(request.user)[0]
+    return render(request, 'crashes/index2.html', {'restricted': user.restricted})
+
+
 def queryCrashes(request):
     query = None
     entries = None

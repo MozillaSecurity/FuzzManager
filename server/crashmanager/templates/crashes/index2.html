@@ -1,0 +1,373 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block css.custom %}
+<style>
+.add-filter {
+  cursor: crosshair;
+}
+</style>
+{% endblock css.custom %}
+
+{% block body_content %}
+<div id="main" class="panel panel-default">
+  <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Crashes</div>
+  <div class="panel-body">
+    <span v-if="advancedQuery">
+      <label for="id_query">Search Query</label><br/>
+      <textarea id="id_query" class="form-control" name="query" spellcheck="false" :rows="(advancedQueryStr.match(/\n/g) || '').length + 1" v-model="advancedQueryStr"></textarea><br />
+      <pre v-if="advancedQueryError !== ''" class="alert alert-warning" role="alert">!{ advancedQueryError }!</pre>
+    </span>
+    <span v-else>
+      <label for="id_search">Search Text</label>: <input id="id_search" type="text" name="search" autocomplete="off" v-model="searchStr" /><br/>
+      <label for="id_bucketed">Include Bucketed</label>: <input id="id_bucketed" type="checkbox" name="bucketed" :disabled="!canUnshowBucketed" v-model="showBucketed" /><br/>
+    </span>
+    {% if not restricted %}
+    <label for="id_no_toolfilter">Ignore Tool Filter</label>: <input id="id_no_toolfilter" type="checkbox" name="alltools" v-model="ignoreToolFilter" /><br/>
+    {% endif %}
+    <span v-if="advancedQuery">
+      <a title="Discard query and start over in simple mode" @click="resetQueryToggleAdvanced()">Reset to simple search</a><br/>
+    </span>
+    <span v-else>
+      <span v-for="(value, key) in filters">
+        !{ validFilters[key] }!: <span style="font-family:monospace;">!{ value }!</span> <i @click="removeFilter(key)" class="glyphicon glyphicon-remove"></i><br/>
+      </span>
+      <a title="Show the full query for the current search/filters" @click="convertFiltersToAdvancedQuery()">Advanced query</a><br/>
+    </span>
+  </div>
+  <div class="panel-body">
+
+    <p v-if="advancedQuery || searchStr.trim() !== '' || !_.isEmpty(filters)">Displaying !{ currentEntries }!/!{ totalEntries }! entries matching query.</p>
+    <p v-else-if="!showBucketed">Displaying !{ currentEntries }!/!{ totalEntries }! unbucketed entries.</p>
+    <p v-else>Displaying !{ currentEntries }!/!{ totalEntries }! entries.</p>
+
+    <div class="pagination">
+      <span class="step-links">
+        <a @click="prevPage()" v-show="currentPage > 1" class="glyphicon glyphicon-chevron-left"></a>
+        <span class="current">Page !{ currentPage }! of !{ totalPages }!.</span>
+        <a @click="nextPage()" v-show="currentPage < totalPages" data-toggle="tooltip" data-placement="top" title="" class="glyphicon glyphicon-chevron-right" style="color:dimgray" data-original-title="Next"></a>
+      </span>
+    </div>
+  </div>
+  <table class="table table-condensed table-hover table-bordered table-db">
+    <thead>
+      <tr>
+        <th @click="sortBy('id')" :class="{ active: sortKey == 'id' }" style="width: 25px;">ID</th>
+        <th @click="sortBy('created')" :class="{ active: sortKey == 'created' }" style="width: 50px;">Date Added</th>
+        <th @click="sortBy('bucket')" :class="{ active: sortKey == 'bucket' }" style="width: 25px;">Bucket</th>
+        <th @click="sortBy('shortSignature')" :class="{ active: sortKey == 'shortSignature' }" style="width: 100px;">Short Signature</th>
+        <th @click="sortBy('crashAddress')" :class="{ active: sortKey == 'crashAddress' }" style="width: 40px;">Crash Address</th>
+        <th @click="sortBy('testcase__quality')" :class="{ active: sortKey == 'testcase__quality' }" style="width: 50px;">Test Status</th>
+        <th @click="sortBy('product__name')" :class="{ active: sortKey == 'product__name' }" style="width: 50px;">Product</th>
+        <th @click="sortBy('product__version')" :class="{ active: sortKey == 'product__version' }" style="width: 50px;">Version</th>
+        <th @click="sortBy('platform__name')" :class="{ active: sortKey == 'platform__name' }" style="width: 25px;">Platform</th>
+        <th @click="sortBy('os__name')" :class="{ active: sortKey == 'os__name' }" style="width: 25px;">OS</th>
+        <th @click="sortBy('tool__name')" :class="{ active: sortKey == 'tool__name' }" style="width: 40px;">Tool</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="crash in crashes" :id="crash.id">
+        <td><a :href="'{% url 'crashmanager:crashview' '123456789' %}'.replace('123456789', crash.id)">!{ crash.id }!</a></td>
+        <td>!{ crash.created | formatDate }!</td>
+        <td v-if="crash.bucket">
+          <a :href="'{% url 'crashmanager:sigview' '123456789' %}'.replace('123456789', crash.bucket)">!{ crash.bucket }! </a>
+        </td>
+        <td v-else>
+          <span v-if="!crash.triagedOnce" class="glyphicon glyphicon-hourglass" data-toggle="tooltip" data-placement="top" title="This item hasn't been triaged yet by the server."></span>
+          <a :href="`{% url 'crashmanager:signew' %}?crashid=${crash.id}`" data-toggle="tooltip" data-placement="top" title="Add" class="glyphicon glyphicon-oil" style="color:dimgray"></a>
+          <a :href="'{% url 'crashmanager:findsigs' '123456789' %}'.replace('123456789', crash.id)" data-toggle="tooltip" data-placement="top" title="Search" class="glyphicon glyphicon-search" style="color:dimgray"></a>
+        </td>
+        <td>!{ crash.shortSignature }!</td>
+        <td>!{ crash.crashAddress }!</td>
+        <td v-if="crash.testcase">
+          <a title="Add to search" class="add-filter" @click="addFilter('testcase__quality', crash.testcase_quality)">Q!{ crash.testcase_quality }!</a>
+          !{ crash.testcase_size }!
+          <span v-if="crash.testcase_isbinary">(binary)</span>
+        </td>
+        <td v-else>No test</td>
+        <td><a title="Add to search" class="add-filter" @click="addFilter('product__name', crash.product)">!{ crash.product }!</a></td>
+        <td><a title="Add to search" class="add-filter" @click="addFilter('product__version', crash.product_version)">!{ crash.product_version }!</a></td>
+        <td><a title="Add to search" class="add-filter" @click="addFilter('platform__name', crash.platform)">!{ crash.platform }!</a></td>
+        <td>
+          <a title="Add to search" class="add-filter" @click="addFilter('os__name', crash.os)">
+            <img v-if="crash.os === 'linux'" width="16px" height="16px" alt="Linux" src="{{STATIC_URL}}img/os/linux.png"/>
+            <img v-else-if="crash.os === 'macosx'" width="16px" height="16px" alt="MacOS" src="{{STATIC_URL}}img/os/macosx.png"/>
+            <img v-else-if="crash.os ==='windows'" width="16px" height="16px" alt="Windows" src="{{STATIC_URL}}img/os/windows.png"/>
+            <img v-else-if="crash.os === 'android'" width="16px" height="16px" alt="Android" src="{{STATIC_URL}}img/os/android.png"/>
+            <span v-else>!{ crash.os }!</span>
+          </a>
+        </td>
+        <td><a title="Add to search" class="add-filter" @click="addFilter('tool__name', crash.tool)">!{ crash.tool }!</a></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<script>
+const pageSize = 100
+const crashesUrl = `{% url 'crashmanager:crashes-list' %}?include_raw=0&limit=${pageSize}`
+const validSortKeys = [
+  'bucket',
+  'crashAddress',
+  'created',
+  'id',
+  'os__name',
+  'platform__name',
+  'product__name',
+  'product__version',
+  'shortSignature',
+  'testcase__quality',
+  'tool__name',
+]
+const validFilters = {
+  'bucket': "Bucket",
+  'client__name': "Client name",
+  'client__name__contains': "Client name (sub-string match)",
+  'os__name': "OS",
+  'platform__name': "Platform",
+  'product__name': "Product",
+  'product__version': "Version",
+  'testcase__quality': "Testcase Quality",
+  'testcase__quality__gt': "Testcase Quality (greater than)",
+  'testcase__quality__lt': "Testcase Quality (lesser than)",
+  'tool__name': "Tool",
+  'tool__name__contains': "Tool (sub-string match)",
+}
+const defaultReverse = true
+const defaultSortKey = 'id'
+let crashmanager = new Vue({
+  el: '#main',
+  data: {
+    advancedQuery: false,
+    advancedQueryError: '',
+    advancedQueryStr: '',
+    canUnshowBucketed: true,
+    crashes: null,
+    currentEntries: '?',
+    currentPage: 1,
+    filters: {},
+    ignoreToolFilter: false,
+    loading: true,
+    reverse: defaultReverse,
+    searchStr: '',
+    showBucketed: false,
+    sortKey: defaultSortKey,
+    totalEntries: '?',
+    totalPages: 1,
+    validFilters: validFilters,
+  },
+  watch: {
+    advancedQueryStr: function (val) {
+      this.debouncedFetch()
+    },
+    ignoreToolFilter: function (val) {
+      this.fetch()
+    },
+    searchStr: function (val) {
+      this.debouncedFetch()
+    },
+    showBucketed: function (val) {
+      this.fetch()
+    },
+  },
+  created: function () {
+    this.debouncedFetch = _.debounce(this.fetch, 1000)
+    if (location.hash.startsWith('#')) {
+      const hash = (location.hash.substring(1)
+        .split(',')
+        .map(v => v.split('='))
+        .reduce((pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }), {}))
+      if (hash.hasOwnProperty('page')) {
+        try {
+          this.currentPage = Number.parseInt(hash.page, 10)
+        } catch (e) {
+          console.debug(`parsing '#page=\\d+': ${e}`)
+        }
+      }
+      if (hash.hasOwnProperty('sort')) {
+        hashSortKey = hash.sort
+        hashReverse = false
+        if (hashSortKey.startsWith('-')) {
+          hashSortKey = hashSortKey.substring(1)
+          hashReverse = true
+        }
+        if (validSortKeys.includes(hashSortKey)) {
+          this.sortKey = hashSortKey
+          this.reverse = hashReverse
+        } else {
+          console.debug(`parsing '#sort=\\s+': unrecognized key '${hashSortKey}'`)
+        }
+      }
+      this.ignoreToolFilter = hash.alltools === '1'
+      if (hash.advanced === '1') {
+        this.advancedQuery = true
+        this.advancedQueryStr = JSON.stringify(JSON.parse(hash.query || ''), null, 2)
+        return  // setting advancedQueryStr will trigger fetch
+      } else {
+        this.showBucketed = hash.bucketed === '1'
+        for (filter of Object.keys(validFilters)) {
+          if (hash.hasOwnProperty(filter)) {
+            this.filters[filter] = hash[filter]
+            if (filter == 'bucket') {
+              this.showBucketed = true
+              this.canUnshowBucketed = false
+            }
+          }
+        }
+      }
+    }
+    this.fetch()
+  },
+  filters: {
+    formatDate: formatClientTimestamp,
+  },
+  methods: {
+    addFilter: function (key, value) {
+      this.filters[key] = value
+      if (key == 'bucket') {
+        this.showBucketed = true
+        this.canUnshowBucketed = false
+      }
+      this.fetch()
+    },
+    apiurl: function () {
+      params = {
+        'offset': `${(this.currentPage - 1) * pageSize}`,
+        'ordering': `${this.reverse ? '-': ''}${this.sortKey}`,
+        'ignore_toolfilter': this.ignoreToolFilter ? '1' : '0',
+      }
+      if (this.advancedQuery) {
+        params.query = encodeURIComponent(this.advancedQueryStr)
+      } else {
+        params.query = encodeURIComponent(JSON.stringify(this.buildSimpleQuery()))
+      }
+      return `${crashesUrl}&${Object.entries(params).map((kv) => kv.join('=')).join('&')}`
+    },
+    buildSimpleQuery: function () {
+      query = Object.assign({"op": "AND"}, this.filters)
+      const searchStr = this.searchStr.trim()
+      if (searchStr !== '') {
+        query['_search'] = {
+          'op': 'OR',
+          'shortSignature__contains': searchStr,
+          'rawStderr__contains': searchStr,
+          'rawCrashData__contains': searchStr,
+          'args__contains': searchStr,
+        }
+      }
+      if (!this.showBucketed) {
+        query['bucket__isnull'] = true
+      }
+      return query
+    },
+    convertFiltersToAdvancedQuery: function () {
+      this.advancedQuery = true
+      this.advancedQueryStr = JSON.stringify(this.buildSimpleQuery(), null, 2)
+      this.searchStr = ''
+      this.filters = {}
+      this.showBucketed = false
+      this.canUnshowBucketed = true
+      this.updateHash()
+    },
+    fetch: _.throttle(async function () {
+      this.loading = true
+      this.advancedQueryError = ''
+      try {
+        const response = await fetch(this.apiurl(), {method: 'GET', credentials: 'same-origin'})
+        if (response.ok) {
+          data = await response.json()
+          this.crashes = data["results"]
+          this.currentEntries = this.crashes.length
+          this.totalEntries = data["count"]
+          this.totalPages = Math.max(Math.ceil(this.totalEntries / pageSize), 1)
+          if (this.currentPage > this.totalPages) {
+            this.currentPage = this.totalPages
+            this.fetch()
+            return
+          }
+          this.updateHash()
+        } else {
+          if (this.advancedQuery) {
+            response.json().then((val) => {
+              this.advancedQueryError = val.detail
+            })
+          } else {
+            // TODO: this should set advancedQueryError when in advanced mode
+            response.text().then(console.debug)
+            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+          }
+          this.loading = false
+        }
+      } catch(e) {
+        // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+        console.debug(e)
+        location.reload()
+        return
+      }
+      this.loading = false
+    }, 500, {'trailing': true}),
+    nextPage: function () {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++
+        this.fetch()
+      }
+    },
+    prevPage: function () {
+      if (this.currentPage > 1) {
+        this.currentPage--
+        this.fetch()
+      }
+    },
+    removeFilter: function(key) {
+      if (this.filters.hasOwnProperty(key)) {
+        delete this.filters[key]
+        if (key == 'bucket') {
+          this.canUnshowBucketed = true
+        }
+        this.fetch()
+      }
+    },
+    resetQueryToggleAdvanced: function () {
+      this.advancedQuery = false
+      this.advancedQueryStr = ''
+      this.searchStr = ''
+      this.filters = {}
+      this.showBucketed = false
+      this.canUnshowBucketed = true
+      this.fetch()
+    },
+    sortBy: function (sortKey) {
+      const keyChange = this.sortKey !== sortKey
+      this.reverse = !keyChange ? !this.reverse : false
+      this.sortKey = sortKey
+      this.fetch()
+    },
+    updateHash: function () {
+      let hash = {}
+      if (this.currentPage !== 1) {
+        hash.page = this.currentPage
+      }
+      if (this.sortKey !== defaultSortKey || this.reverse !== defaultReverse) {
+        hash.sort = (this.reverse ? '-' : '') + this.sortKey
+      }
+      if (this.ignoreToolFilter)
+        hash.alltools = '1'
+      if (this.advancedQuery) {
+        hash.advanced = '1'
+        hash.query = encodeURIComponent(this.advancedQueryStr)
+      } else {
+        if (this.searchStr.trim() !== '')
+          hash.search = encodeURIComponent(this.searchStr.trim())
+        if (this.showBucketed)
+          hash.bucketed = '1'
+        for (const [key, value] of Object.entries(this.filters))
+          hash[key] = encodeURIComponent(value)
+      }
+      if (Object.entries(hash).length) {
+        location.hash = '#' + Object.entries(hash).map((kv) => kv.join('=')).join()
+      } else {
+        location.hash = ''
+      }
+    },
+  }
+})
+</script>
+{% endblock body_content %}
