@@ -56,7 +56,7 @@ def update_pools():
     """This should look at both Github & Taskcluster and update the database.
     """
     import taskcluster
-    from fuzzing_tc.common.pool import PoolConfiguration
+    from fuzzing_decision.common.pool import PoolConfiguration
     from .models import Pool, Task
 
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
