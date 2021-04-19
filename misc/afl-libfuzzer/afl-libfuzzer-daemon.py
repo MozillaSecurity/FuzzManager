@@ -475,7 +475,7 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
 
 
 def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
-                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
+                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None, transform=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
 
@@ -492,6 +492,10 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
     @type test_path: String
     @param test_path: Optional filename where to copy the test before
                       attempting to reproduce a crash.
+
+    @type transform: String
+    @param transform: Optional path to script for applying post-crash
+                      transformations.
 
     @rtype: int
     @return: Non-zero return code on failure
@@ -554,6 +558,13 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
 
             if base_env:
                 env = dict(base_env)
+
+            if transform:
+                try:
+                    subprocess.check_call([transform, crash_file], env=env)
+                except subprocess.CalledProcessError:
+                    print("Failed to apply post crash transformation.  Aborting...", file=sys.stderr)
+                    return 2
 
             if test_idx is not None:
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
@@ -657,6 +668,8 @@ def main(argv=None):
                            help="Shows useful debug information (e.g. disables command output suppression)")
     mainGroup.add_argument("--stats", dest="stats",
                            help="Collect aggregated statistics in specified file", metavar="FILE")
+    mainGroup.add_argument("--transform", dest="transform",
+                           help="Apply post crash transformation to the testcase", metavar="FILE")
 
     s3Group.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                          help="Use S3 to synchronize queues")
@@ -787,6 +800,10 @@ def main(argv=None):
         collector = Collector(sigCacheDir=opts.sigdir, serverHost=opts.serverhost, serverPort=opts.serverport,
                               serverProtocol=opts.serverproto, serverAuthToken=serverauthtoken,
                               clientId=opts.clientid, tool=opts.tool)
+
+    if opts.transform and not os.path.isfile(opts.transform):
+        print("Error: Failed to locate transformation script %s" % opts.transform, file=sys.stderr)
+        return 2
 
     # ## Begin generic S3 action handling ##
 
@@ -1380,6 +1397,13 @@ def main(argv=None):
 
                     print("Crash matches signature %s, not submitting..." % sigfile, file=sys.stderr)
                 else:
+                    if opts.transform:
+                        try:
+                            subprocess.check_call([opts.transform, testcase], stdout=devnull, env=env)
+                        except subprocess.CalledProcessError:
+                            print("Failed to apply post crash transformation.  Aborting...", file=sys.stderr)
+                            return 2
+
                     collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
                     collector.submit(crashInfo, testcase)
                     print("Successfully submitted crash.", file=sys.stderr)
