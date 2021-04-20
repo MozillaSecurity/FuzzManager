@@ -17,6 +17,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
+from zipfile import ZipFile
+
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
@@ -559,11 +561,12 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
             if base_env:
                 env = dict(base_env)
 
+            submission = crash_file
             if transform:
                 try:
-                    subprocess.check_call([transform, crash_file], env=env)
-                except subprocess.CalledProcessError:
-                    print("Failed to apply post crash transformation.  Aborting...", file=sys.stderr)
+                    submission = apply_transform(transform, crash_file)
+                except Exception as e:
+                    print(e.args[1], file=sys.stderr)
                     return 2
 
             if test_idx is not None:
@@ -581,11 +584,11 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
             runner = AutoRunner.fromBinaryArgs(cmdline[0], cmdline[1:], env=env, stdin=stdin)
             if runner.run():
                 crash_info = runner.getCrashInfo(configuration)
-                collector.submit(crash_info, crash_file)
-                open(crash_file + ".submitted", 'a').close()
+                collector.submit(crash_info, submission)
+                open(submission + ".submitted", 'a').close()
                 print("Success: Submitted crash to server.", file=sys.stderr)
             else:
-                open(crash_file + ".failed", 'a').close()
+                open(submission + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
 
         if firefox:
@@ -630,6 +633,36 @@ def test_binary_asan(bin_path):
     if stdout.find(b" __asan_init") >= 0 or stdout.find(b"__ubsan_default_options") >= 0:
         return True
     return False
+
+
+def apply_transform(script_path, testcase_path):
+    """
+    Apply a post-crash transformation to the testcase
+
+    @type script_path: String
+    @param script_path: Path to the transformation script
+
+    @type testcase_path: String
+    @param testcase_path: Path to the testcase
+
+    @rtype: String
+    @return: Path to the archive containing the original and transformed testcase
+    """
+
+    try:
+        result = subprocess.check_output([script_path, testcase_path])
+    except subprocess.CalledProcessError:
+        raise Exception("Failed to apply post crash transformation.  Aborting...")
+
+    if not os.path.isfile(result):
+        raise Exception("Transform did not return a valid testcase.  Aborting...")
+
+    dest = testcase_path + ".zip"
+    with ZipFile(dest, 'w') as archive:
+        archive.write(testcase_path)
+        archive.write(result)
+
+    return dest
 
 
 def main(argv=None):
@@ -1380,6 +1413,15 @@ def main(argv=None):
                         write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
                     return 2
 
+                if opts.transform:
+                    # If a transformation script was supplied, update the testcase path to
+                    # point to the archive which includes both, the original and updated testcases
+                    try:
+                        testcase = apply_transform(opts.transform, testcase)
+                    except Exception as e:
+                        print(e.args[1], file=sys.stderr)
+                        return 2
+
                 # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
                 if not opts.fuzzmanager:
                     continue
@@ -1397,13 +1439,6 @@ def main(argv=None):
 
                     print("Crash matches signature %s, not submitting..." % sigfile, file=sys.stderr)
                 else:
-                    if opts.transform:
-                        try:
-                            subprocess.check_call([opts.transform, testcase], stdout=devnull, env=env)
-                        except subprocess.CalledProcessError:
-                            print("Failed to apply post crash transformation.  Aborting...", file=sys.stderr)
-                            return 2
-
                     collector.generate(crashInfo, forceCrashAddress=True, forceCrashInstruction=False, numFrames=8)
                     collector.submit(crashInfo, testcase)
                     print("Successfully submitted crash.", file=sys.stderr)
