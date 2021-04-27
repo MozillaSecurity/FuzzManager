@@ -293,6 +293,12 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 #TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
 #TC_ROOT_URL = ""  # root URL to the taskcluster instance
 #TC_PROJECT = ""  # taskcluster project for fuzzing resources
+#TC_EXTRA_POOLS = [] # extra pools to include in TaskManager that don't fit the "platform-pool[0-9]+" pattern
+
+# Credentials for Mozilla Pulse instance used for by Taskcluster instance (for TaskManager)
+#TC_PULSE_VHOST = ""
+#TC_PULSE_USERNAME = ""
+#TC_PULSE_PASSWORD = ""
 
 # Crashmanager configuration
 #
@@ -353,8 +359,8 @@ REDIS_URL = 'redis://localhost:6379?db=0'  # unix sockets, use unix:///path/to/s
 #         'task': 'ec2spotmanager.cron.update_prices',
 #         'schedule': 15 * 60,
 #     },
-#     'Read TaskManager state from Taskcluster/Github': {
-#         'task': 'taskmanager.cron.update_pools',
+#     'Cleanup expired TaskManager tasks': {
+#         'task': 'taskmanager.cron.delete_expired',
 #         'schedule': 5 * 60,
 #     },
 # }

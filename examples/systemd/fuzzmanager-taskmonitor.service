@@ -1,0 +1,12 @@
+[Unit]
+Description=FuzzManager TaskCluster pulse listener
+
+[Service]
+User=ubuntu
+Restart=always
+SyslogIdentifier=fm-task-monitor
+ExecStart=/usr/bin/python manage.py taskmanager_pulse_listen
+WorkingDirectory=/path/to/FuzzManager/server
+
+[Install]
+WantedBy=multi-user.target
