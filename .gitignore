@@ -33,3 +33,7 @@ coverage/
 
 /.eggs/
 /.tox/
+
+# NPM
+server/frontend/node_modules
+server/frontend/dist

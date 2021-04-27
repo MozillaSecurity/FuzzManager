@@ -1,0 +1,21 @@
+{
+    "name": "fuzzmanager",
+    "version": "0.1.0",
+    "description": "FuzzManager frontend project",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack --config webpack.dev.js",
+        "start": "webpack --config webpack.dev.js --watch",
+        "production": "webpack --config webpack.prod.js"
+    },
+    "dependencies": {
+        "vue": "^2.6.12"
+    },
+    "devDependencies": {
+        "vue-loader": "^15.9.6",
+        "vue-template-compiler": "^2.6.12",
+        "webpack": "^5.36.0",
+        "webpack-cli": "^4.6.0",
+        "webpack-merge": "^5.7.3"
+    }
+}
