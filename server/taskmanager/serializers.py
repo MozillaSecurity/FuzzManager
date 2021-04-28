@@ -58,7 +58,7 @@ class PoolSerializer(serializers.ModelSerializer):
                 ret["status"] = "partial"
             else:
                 ret["status"] = "idle"
-        elif ret["running"] >= ret["size"]:
+        elif ret["size"] is not None and ret["running"] >= ret["size"]:
             ret["status"] = "healthy"
         elif ret["running"] > 0:
             ret["status"] = "partial"
