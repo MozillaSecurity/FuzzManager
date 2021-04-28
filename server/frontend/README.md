@@ -9,5 +9,5 @@
 
 > Run following commands in `FuzzManager/server/frontend` folder
 * `npm run build`: Build for development
-* `npm run start`: Start a local development server on `localhost:8080`
+* `npm run start`: Continuously build for development (watching for changes)
 * `npm run production`: Build for production

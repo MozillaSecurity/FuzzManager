@@ -49,5 +49,6 @@ six>=1.12.0
 #git+https://github.com/MozillaSecurity/orion#egg=fuzzing-decision&subdirectory=services/fuzzing-decision
 urllib3>=1.22,<2
 vine>=1.1.4,<1.2
+whitenoise==5.2.0
 wrapt>=1.10.11,<1.11
 #django-livesync==0.4

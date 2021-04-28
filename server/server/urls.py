@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.conf.urls import include, url
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -20,3 +22,4 @@ urlpatterns = [
     url(r'^ec2spotmanager/', include('ec2spotmanager.urls')),
 ]
 urlpatterns += staticfiles_urlpatterns()
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
