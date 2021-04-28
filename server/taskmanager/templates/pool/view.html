@@ -113,7 +113,7 @@ let taskmanager = new Vue({
     formatDateAgo: formatDateRelative,
   },
   methods: {
-    apiurl: function() i{
+    apiurl: function() {
       return `${tasksUrl}&offset=${(this.currentPage - 1) * pageSize}&ordering=${this.reverse ? '-': ''}${this.sortKey}`
     },
     fetch: _.throttle (async function () {
