@@ -649,20 +649,23 @@ def apply_transform(script_path, testcase_path):
     @return: Path to the archive containing the original and transformed testcase
     """
 
-    try:
-        result = subprocess.check_output([script_path, testcase_path])
-    except subprocess.CalledProcessError:
-        raise Exception("Failed to apply post crash transformation.  Aborting...")
+    with tempfile.TemporaryDirectory() as output_path:
+        try:
+            subprocess.check_call([script_path, testcase_path, output_path])
+        except subprocess.CalledProcessError:
+            raise Exception("Failed to apply post crash transformation.  Aborting...")
 
-    if not os.path.isfile(result):
-        raise Exception("Transform did not return a valid testcase.  Aborting...")
+        if len(os.listdir(output_path)) == 0:
+            raise Exception("Transformation script did not generate any files.  Aborting...")
 
-    dest = testcase_path + ".zip"
-    with ZipFile(dest, 'w') as archive:
-        archive.write(testcase_path)
-        archive.write(result)
+        archive_path = testcase_path + ".zip"
+        with ZipFile(archive_path, 'w') as archive:
+            archive.write(testcase_path)
+            for root, dirs, files in os.walk(output_path):
+                for file in files:
+                    archive.write(os.path.join(root, file))
 
-    return dest
+    return archive_path
 
 
 def main(argv=None):
