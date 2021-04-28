@@ -17,21 +17,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from Collector.Collector import Collector
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Running.AutoRunner import AutoRunner
-from FTB.Signatures.CrashInfo import CrashInfo
-
-from S3Manager import S3Manager
-
 import argparse
 import collections
-from fasteners import InterProcessLock
 import os
-from pathlib import Path
 import re
 import shutil
-from six.moves import queue
 import stat
 import subprocess
 import sys
@@ -40,6 +30,16 @@ import threading
 import time
 import traceback
 import zipfile
+from pathlib import Path
+
+from fasteners import InterProcessLock
+from six.moves import queue
+
+from Collector.Collector import Collector
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Running.AutoRunner import AutoRunner
+from FTB.Signatures.CrashInfo import CrashInfo
+from S3Manager import S3Manager
 
 haveFFPuppet = True
 try:
