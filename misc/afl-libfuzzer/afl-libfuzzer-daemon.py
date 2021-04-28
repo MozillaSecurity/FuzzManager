@@ -567,7 +567,6 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
                     submission = apply_transform(transform, crash_file)
                 except Exception as e:
                     print(e.args[1], file=sys.stderr)
-                    return 2
 
             if test_idx is not None:
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
@@ -1422,7 +1421,6 @@ def main(argv=None):
                         testcase = apply_transform(opts.transform, testcase)
                     except Exception as e:
                         print(e.args[1], file=sys.stderr)
-                        return 2
 
                 # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
                 if not opts.fuzzmanager:
