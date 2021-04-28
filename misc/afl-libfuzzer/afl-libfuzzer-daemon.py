@@ -17,8 +17,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from zipfile import ZipFile
-
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
@@ -30,6 +28,7 @@ import argparse
 import collections
 from fasteners import InterProcessLock
 import os
+from pathlib import Path
 import re
 import shutil
 from six.moves import queue
@@ -40,6 +39,7 @@ import tempfile
 import threading
 import time
 import traceback
+import zipfile
 
 haveFFPuppet = True
 try:
@@ -659,11 +659,10 @@ def apply_transform(script_path, testcase_path):
             raise Exception("Transformation script did not generate any files.  Aborting...")
 
         archive_path = testcase_path + ".zip"
-        with ZipFile(archive_path, 'w') as archive:
-            archive.write(testcase_path)
-            for root, dirs, files in os.walk(output_path):
-                for file in files:
-                    archive.write(os.path.join(root, file))
+        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as archive:
+            archive.write(testcase_path, os.path.basename(testcase_path))
+            for file in Path(output_path).rglob('*.*'):
+                archive.write(file, arcname=file.relative_to(output_path))
 
     return archive_path
 
