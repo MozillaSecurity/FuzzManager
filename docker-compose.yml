@@ -1,0 +1,40 @@
+---
+version: "3.9"
+services:
+
+  backend:
+    container_name: fuzzmanager
+    build: .
+
+    depends_on:
+      - database
+
+    environment:
+      DEBUG: "false"
+      SECRET_KEY: YskonP1FOlIthZKysJcXQ3Bn6sAjUXaei8JVjesWbE
+      ALLOWED_HOSTS: localhost
+      DATABASE_URL: mysql://fuzzmanager:mozilla1234@database/fuzzmanager
+      DATA_DIR: /data
+
+    volumes:
+      - userdata:/data
+
+  database:
+    container_name: fuzzmanager-db
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+
+    environment:
+      MYSQL_USER: fuzzmanager
+      MYSQL_PASSWORD: mozilla1234
+      MYSQL_DATABASE: fuzzmanager
+      MYSQL_ROOT_PASSWORD: mozilla6789
+
+    volumes:
+      - mysql:/var/lib/mysql
+
+volumes:
+  userdata:
+    driver: local
+  mysql:
+    driver: local
