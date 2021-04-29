@@ -19,6 +19,9 @@ services:
     volumes:
       - userdata:/data
 
+    ports:
+      - "8000:80"
+
   database:
     container_name: fuzzmanager-db
     image: mysql:8
