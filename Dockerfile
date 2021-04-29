@@ -14,19 +14,13 @@ COPY . /src/
 # Retrieve previous Javascript build
 COPY --from=frontend /src/dist/ /srv/server/frontend/dist/
 
-# Setup unprivileged user account
-RUN adduser --disabled-password --gecos "" --force-badname --uid 2000 fuzzmanager
-RUN chown fuzzmanager /src -R
-
 # Install dependencies
-RUN pip install -q /src -r /src/server/requirements3.0.txt gunicorn
+RUN pip install -q /src -r /src/server/requirements3.0.txt -r /src/server/requirements-docker.txt
 
 # Use settings with environment variable support
 ENV DJANGO_SETTINGS_MODULE "server.settings_env"
 
-# Run as fuzzmanager using server's code base
 WORKDIR /src/server
-USER fuzzmanager
 
 # Run with gunicorn, using container's port 80
 ENV PORT 80
