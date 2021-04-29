@@ -1,7 +1,18 @@
+FROM node:16-alpine as frontend
+
+COPY server/frontend /src
+WORKDIR /src
+
+RUN npm install
+RUN npm run production
+
 FROM python:3.8
 
 # Embed full source code
 COPY . /src/
+
+# Retrieve previous Javascript build
+COPY --from=frontend /src/dist/ /srv/server/frontend/dist/
 
 # Setup unprivileged user account
 RUN adduser --disabled-password --gecos "" --force-badname --uid 2000 fuzzmanager
