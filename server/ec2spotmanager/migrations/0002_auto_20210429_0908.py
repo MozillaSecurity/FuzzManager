@@ -14,7 +14,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='poolconfiguration',
             name='ec2_userdata_file',
-            field=models.FileField(blank=True, null=True, storage=ec2spotmanager.models.OverwritingStorage(location='/home/lao/dev/mozilla/FuzzManager/server'), upload_to=ec2spotmanager.models.get_storage_path),
+            field=models.FileField(
+                blank=True,
+                null=True,
+                storage=ec2spotmanager.models.OverwritingStorage(location='/home/lao/dev/mozilla/FuzzManager/server'),
+                upload_to=ec2spotmanager.models.get_storage_path
+            ),
         ),
         migrations.AlterField(
             model_name='poolstatusentry',

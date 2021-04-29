@@ -14,6 +14,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='testcase',
             name='test',
-            field=models.FileField(storage=django.core.files.storage.FileSystemStorage(location='/home/lao/dev/mozilla/FuzzManager/server'), upload_to='tests'),
+            field=models.FileField(
+                storage=django.core.files.storage.FileSystemStorage(
+                    location='/home/lao/dev/mozilla/FuzzManager/server'
+                ),
+                upload_to='tests'
+            ),
         ),
     ]

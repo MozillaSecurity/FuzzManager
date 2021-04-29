@@ -14,6 +14,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='collectionfile',
             name='file',
-            field=models.FileField(max_length=255, storage=django.core.files.storage.FileSystemStorage(location=None), upload_to='coverage'),
+            field=models.FileField(
+                max_length=255,
+                storage=django.core.files.storage.FileSystemStorage(location=None),
+                upload_to='coverage'
+            ),
         ),
     ]
