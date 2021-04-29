@@ -12,7 +12,7 @@ FROM python:3.8
 COPY . /src/
 
 # Retrieve previous Javascript build
-COPY --from=frontend /src/dist/ /srv/server/frontend/dist/
+COPY --from=frontend /src/dist/ /src/server/frontend/dist/
 
 # Install dependencies
 RUN pip install -q /src -r /src/server/requirements3.0.txt -r /src/server/requirements-docker.txt
