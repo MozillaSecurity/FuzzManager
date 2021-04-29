@@ -17,7 +17,7 @@
         <td><a :href="`../pools/${pool.id}/`">!{ pool.pool_id }!</a></td>
         <td>!{ pool.pool_name }!</td>
         <td>!{ pool.running }!/!{ pool.size }!</td>
-        <td>!{ pool.status }!</td>
+        <td><span class="label" v-bind:class="{'label-warning': pool.status != 'idle' && pool.status != 'healthy', 'label-success': pool.status == 'healthy', 'label-danger': pool.status == 'idle'}">!{ pool.status }!</span></td>
       </tr>
     </tbody>
   </table>
@@ -30,7 +30,7 @@ let taskmanager = new Vue({
   el: '#main',
   data: {
     pools: null,
-    sortKey: "",
+    sortKey: "pool_name",
     reverse: false,
     block_fetch: true,
     timer: '',

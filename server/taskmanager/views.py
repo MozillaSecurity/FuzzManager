@@ -11,6 +11,7 @@ from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from server.auth import CheckAppPermission
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, deny_restricted_users
@@ -38,7 +39,11 @@ def list_pools(request):
 @deny_restricted_users
 def view_pool(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
-    return render(request, 'pool/view.html', {"pool": pool, "tc_root_url": settings.TC_ROOT_URL})
+    return render(request, 'pool/view.html', {
+        "pool": pool,
+        "tc_root_url": settings.TC_ROOT_URL,
+        "tc_project": settings.TC_PROJECT,
+    })
 
 
 class PoolViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,6 +58,7 @@ class PoolViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
+        OrderingFilter,
     ]
 
 
@@ -70,6 +76,7 @@ class TaskViewSet(mixins.ListModelMixin,
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
+        OrderingFilter,
     ]
 
     @action(detail=False, methods=['post'], authentication_classes=(TokenAuthentication,))
