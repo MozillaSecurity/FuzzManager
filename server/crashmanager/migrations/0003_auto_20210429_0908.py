@@ -2,6 +2,7 @@
 
 import django.core.files.storage
 from django.db import migrations, models
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -16,7 +17,7 @@ class Migration(migrations.Migration):
             name='test',
             field=models.FileField(
                 storage=django.core.files.storage.FileSystemStorage(
-                    location='/home/lao/dev/mozilla/FuzzManager/server'
+                    location=settings.BASE_DIR,
                 ),
                 upload_to='tests'
             ),
