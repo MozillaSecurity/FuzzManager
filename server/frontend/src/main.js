@@ -1,7 +1,9 @@
 import Vue from "vue"
-import Dummy from "./components/Dummy.vue"
+import Edit from "./components/Signatures/Edit.vue"
 
 export default new Vue({
     el: '#app',
-    render: h => h(Dummy),
+    components: {
+        'edit': Edit,
+    }
 })

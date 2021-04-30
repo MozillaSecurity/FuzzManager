@@ -1,20 +1,21 @@
 {% extends 'layouts/layout_base.html' %}
 
 {% block body_content %}
-<div id="app"></div>
 <div class="panel panel-info">
-    <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Edit Signature</div>
+    <div class="panel-heading">
+        <i class="glyphicon glyphicon-tag"></i>
+        {% if bucket.pk != None %} Edit Signature {% else %} New Signature {% endif %}
+    </div>
     <div class="panel-body">
         {% if error_message %}<div class="alert alert-warning" role="alert">{{ error_message }}</div>{% endif %}
 
         {% if inList %}<p>New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">{{ inListCount }}</span></p>{% endif %}
         {% if outList %}<p>Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">{{ outListCount }}</span></p>{% endif %}
-
+        
         {% if bucket.pk != None %}
-            <form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
-                {% else %}
-                <form action="{% url 'crashmanager:signew' %}" method="post">
-            {% endif %}
+        <edit :bucket-id="{{ bucket.pk }}"></edit>
+        {% else %}
+        <form action="{% url 'crashmanager:signew' %}" method="post">
             {% csrf_token %}
             <label for="id_shortDescription">Description</label><br/>
             <input id="id_shortDescription" class="form-control" maxlength="1023" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
@@ -37,10 +38,11 @@
                 <label for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
             </div>
             <div class="btn-group">
-                <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
+                <input type="submit" name="submit_save" value="Create" class="btn btn-success"/>
                 <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
             </div>
         </form>
+        {% endif %}
 
         <div class="field">
             {% if inList %}

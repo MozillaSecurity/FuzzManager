@@ -505,7 +505,7 @@ def deleteCrashEntry(request, crashid):
 
 
 def __handleSignaturePost(request, bucket):
-    # This method contains code shared between newSignature and editSignature
+    # This method contains code for newSignature
     # and handles the POST request processing after the bucket object has been
     # either fetched or created.
     try:
@@ -714,31 +714,19 @@ def viewSignature(request, sigid):
 
 
 def editSignature(request, sigid):
-    if request.method == 'POST':
+    if request.method == 'GET' and sigid is not None:
         bucket = get_object_or_404(Bucket, pk=sigid)
         check_authorized_for_signature(request, bucket)
 
-        bucket.signature = request.POST['signature']
-        bucket.shortDescription = request.POST['shortDescription']
-        bucket.frequent = "frequent" in request.POST
-        bucket.permanent = "permanent" in request.POST
+        if 'fit' in request.GET:
+            entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
+            bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
+        else:
+            # standardize formatting of the signature
+            # this is the same format returned by `fit()`
+            bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
 
-        # TODO: FIXME: Update bug here as well
-        return __handleSignaturePost(request, bucket)
-    if request.method == 'GET':
-        if sigid is not None:
-            bucket = get_object_or_404(Bucket, pk=sigid)
-            check_authorized_for_signature(request, bucket)
-
-            if 'fit' in request.GET:
-                entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
-                bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
-            else:
-                # standardize formatting of the signature
-                # this is the same format returned by `fit()`
-                bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
-
-            return render(request, 'signatures/edit.html', {'bucket': bucket})
+        return render(request, 'signatures/edit.html', {'bucket': bucket})
     raise SuspiciousOperation
 
 
@@ -1296,6 +1284,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
 
 
 class BucketViewSet(mixins.ListModelMixin,
+                    mixins.UpdateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
     authentication_classes = (TokenAuthentication, SessionAuthentication)
@@ -1318,6 +1307,105 @@ class BucketViewSet(mixins.ListModelMixin,
             instance.quality = agg["quality"]
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    def __handleSignaturePost(self, request, bucket, submitSave, reassign):
+        try:
+            signature = bucket.getSignature()
+        except RuntimeError as e:
+            data = {'bucket': bucket, 'error_message': 'Signature is not valid: %s' % e}
+            return render(request, 'signatures/edit.html', data)
+
+        # Only save if we hit "save" (not e.g. "preview")
+        print("-----------------------")
+        print(submitSave)
+        if submitSave:
+            print("Going to save Bucket")
+            bucket.save()
+
+        # If the reassign checkbox is checked, assign all unassigned issues that match
+        # our signature to this bucket. Furthermore, remove all non-matching issues
+        # from our bucket.
+        #
+        # Again, we only actually save if we hit "save". For previewing, we just count
+        # how many issues would be assigned and removed.
+        if reassign:
+            inList, outList = [], []
+            inListCount, outListCount = 0, 0
+
+            signature = bucket.getSignature()
+            needTest = signature.matchRequiresTest()
+            entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
+            entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
+            if needTest:
+                entries = entries.select_related('testcase')
+
+            requiredOutputs = signature.getRequiredOutputSources()
+            entries = CrashEntry.deferRawFields(entries, requiredOutputs)
+
+            if not submitSave:
+                entries = entries.select_related('tool').order_by('-id')  # used by the preview list
+
+            # If we are saving, we only care about the id of each entry
+            # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
+            entriesOffset = 0
+            while True:
+                entriesChunk = entries[entriesOffset:entriesOffset + 100]
+                if not entriesChunk:
+                    break
+                entriesOffset += 100
+                for entry in entriesChunk:
+                    match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
+                                                                requiredOutputSources=requiredOutputs))
+                    if match and entry.bucket_id is None:
+                        if submitSave:
+                            inList.append(entry.pk)
+                        elif len(inList) < 100:
+                            inList.append(entry)
+                        inListCount += 1
+                    elif not match and entry.bucket_id is not None:
+                        if submitSave:
+                            outList.append(entry.pk)
+                        elif len(outList) < 100:
+                            outList.append(entry)
+                        outListCount += 1
+
+            if submitSave:
+                while inList:
+                    updList, inList = inList[:500], inList[500:]
+                    CrashEntry.objects.filter(pk__in=updList).update(bucket=bucket)
+                while outList:
+                    updList, outList = outList[:500], outList[500:]
+                    CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
+
+        # Save bucket and redirect to viewing it
+        if submitSave:
+            return redirect('crashmanager:sigview', sigid=bucket.pk)
+
+        # Render the preview page
+        data = {
+            'bucket': bucket,
+            'error_message': "This is a preview, don't forget to save!",
+            'inList': inList, 'outList': outList,
+            'inListCount': inListCount, 'outListCount': outListCount,
+        }
+        return render(request, 'signatures/edit.html', data)
+
+    def partial_update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
+        check_authorized_for_signature(request, bucket)
+
+        bucket.signature = serializer.validated_data.get('signature')
+        bucket.shortDescription = serializer.validated_data.get('shortDescription')
+        bucket.frequent = serializer.validated_data.get('frequent')
+        bucket.permanent = serializer.validated_data.get('permanent')
+
+        save = request.query_params.get('save', 'true').lower() not in ('false', '0')
+        reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
+        # TODO: FIXME: Update bug here as well
+        return self.__handleSignaturePost(request, bucket, save, reassign)
 
 
 def json_to_query(json_str):
