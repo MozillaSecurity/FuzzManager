@@ -186,13 +186,16 @@ And create a super user to be able to login on http://localhost:8000
 docker-compose run backend python manage.py createsuperuser
 ```
 
-The docker container is configured through environment variables:
+By default the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
+- `DEBUG = False` to enable production mode
+- `ALLOWED_HOSTS = ["localhost", ]` to allow development usage on `http://localhost:8000`
 
-- `DEBUG`, set to `true` by default for the docker image, will enable production mode on the Django project.
-- `ALLOWED_HOSTS` is a list of public hostnames used to reach the server (separated by comma)
-- `SECRET_KEY` must be set to a random string
-- `DATABASE_URL` must be a supported [db_url](https://django-environ.readthedocs.io/en/latest/#supported-types) from `django-environ`, used to reach your database
-- `DATA_DIR` must be a writable path (usually a docker volume)
+You can customize settigs by mounting a file from your host into the container:
+
+```yaml
+volumes:
+  - "./settings_docker.py:/src/server/server/settings_docker.py:ro"
+```
 
 ## Client Usage
 
