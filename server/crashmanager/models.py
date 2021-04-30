@@ -5,6 +5,8 @@ from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
+from django.forms.models import model_to_dict
+from django.urls import reverse
 from django.utils import timezone
 import json
 import logging
@@ -119,6 +121,68 @@ class Bucket(models.Model):
             self.optimizedSignature = None
 
         super(Bucket, self).save(*args, **kwargs)
+
+    def reassign(self, submitSave):
+        """
+        Assign all unassigned issues that match our signature to this bucket.
+        Furthermore, remove all non-matching issues from our bucket.
+        
+        We only actually save if "submitSave" is set.
+        For previewing, we just count how many issues would be assigned and removed.
+        """
+        inList, outList = [], []
+        inListCount, outListCount = 0, 0
+
+        signature = self.getSignature()
+        needTest = signature.matchRequiresTest()
+        entries = CrashEntry.objects.filter(models.Q(bucket=None) | models.Q(bucket=self))
+        entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
+        if needTest:
+            entries = entries.select_related('testcase')
+
+        requiredOutputs = signature.getRequiredOutputSources()
+        entries = CrashEntry.deferRawFields(entries, requiredOutputs)
+
+        if not submitSave:
+            entries = entries.select_related('tool').order_by('-id')  # used by the preview list
+
+        # If we are saving, we only care about the id of each entry
+        # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
+        entriesOffset = 0
+        while True:
+            entriesChunk = entries[entriesOffset:entriesOffset + 100]
+            if not entriesChunk:
+                break
+            entriesOffset += 100
+            for entry in entriesChunk:
+                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
+                                                            requiredOutputSources=requiredOutputs))
+                if match and entry.bucket_id is None:
+                    if submitSave:
+                        inList.append(entry.pk)
+                    elif len(inList) < 100:
+                        dictEntry = model_to_dict(entry, fields=[field.name for field in entry._meta.fields])
+                        dictEntry.update({"url": reverse('crashmanager:crashview', kwargs={'crashid': entry.pk})})
+                        inList.append(dictEntry)
+                    inListCount += 1
+                elif not match and entry.bucket_id is not None:
+                    if submitSave:
+                        outList.append(entry.pk)
+                    elif len(outList) < 100:
+                        dictEntry = model_to_dict(entry, fields=[field.name for field in entry._meta.fields])
+                        dictEntry.update({"url": reverse('crashmanager:crashview', kwargs={'crashid': entry.pk})})
+                        outList.append(dictEntry)
+                    outListCount += 1
+
+        if submitSave:
+            while inList:
+                updList, inList = inList[:500], inList[500:]
+                CrashEntry.objects.filter(pk__in=updList).update(bucket=self)
+            while outList:
+                updList, outList = outList[:500], outList[500:]
+                CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
+
+        return inList, outList, inListCount, outListCount
 
     def optimizeSignature(self, unbucketed_entries):
         buckets = Bucket.objects.all()
