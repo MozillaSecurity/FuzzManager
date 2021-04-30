@@ -17,10 +17,13 @@ COPY --from=frontend /src/dist/ /src/server/frontend/dist/
 # Install dependencies
 RUN pip install -q /src -r /src/server/requirements3.0.txt -r /src/server/requirements-docker.txt
 
-# Use settings with environment variable support
-ENV DJANGO_SETTINGS_MODULE "server.settings_env"
+# Use a custom settings file that can be overwritten
+ENV DJANGO_SETTINGS_MODULE "server.settings_docker"
 
 WORKDIR /src/server
+
+# Collect staticfiles, including Vue.js build
+RUN python manage.py collectstatic --no-input
 
 # Run with gunicorn, using container's port 80
 ENV PORT 80
