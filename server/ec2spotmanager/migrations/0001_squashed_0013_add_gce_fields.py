@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ("status_code", models.IntegerField()),
                 (
                     "status_data",
-                    models.CharField(blank=True, max_length=4095, null=True),
+                    models.TextField(blank=True, null=True),
                 ),
                 (
                     "ec2_instance_id",
@@ -110,7 +110,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "ec2_instance_type",
-                    models.CharField(blank=True, max_length=1023, null=True),
+                    models.TextField(blank=True, null=True),
                 ),
                 (
                     "ec2_image_name",
@@ -129,7 +129,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "ec2_userdata_macros",
-                    models.CharField(blank=True, max_length=4095, null=True),
+                    models.TextField(blank=True, null=True),
                 ),
                 (
                     "ec2_allowed_regions",
@@ -144,7 +144,7 @@ class Migration(migrations.Migration):
                 ("ec2_tags", models.CharField(blank=True, max_length=1023, null=True)),
                 (
                     "ec2_raw_config",
-                    models.CharField(blank=True, max_length=4095, null=True),
+                    models.TextField(blank=True, null=True),
                 ),
                 (
                     "parent",
@@ -305,7 +305,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="poolconfiguration",
             name="ec2_instance_types",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.RenameField(
             model_name="instance", old_name="ec2_instance_id", new_name="instance_id",
@@ -364,12 +364,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="poolconfiguration",
             name="gce_args",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="poolconfiguration",
             name="gce_cmd",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="poolconfiguration",
@@ -389,7 +389,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="poolconfiguration",
             name="gce_env",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="poolconfiguration",
@@ -404,11 +404,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="poolconfiguration",
             name="gce_machine_types",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="poolconfiguration",
             name="gce_raw_config",
-            field=models.CharField(blank=True, max_length=4095, null=True),
+            field=models.TextField(blank=True, null=True),
         ),
     ]
