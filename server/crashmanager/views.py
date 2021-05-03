@@ -514,14 +514,14 @@ def newSignature(request):
         crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
 
         configuration = ProgramConfiguration(crashEntry.product.name,
-                                                crashEntry.platform.name,
-                                                crashEntry.os.name,
-                                                crashEntry.product.version)
+                                             crashEntry.platform.name,
+                                             crashEntry.os.name,
+                                             crashEntry.product.version)
 
         crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout,
-                                                crashEntry.rawStderr,
-                                                configuration,
-                                                crashEntry.rawCrashData)
+                                               crashEntry.rawStderr,
+                                               configuration,
+                                               crashEntry.rawCrashData)
 
         maxStackFrames = 8
         forceCrashInstruction = False
@@ -1215,7 +1215,7 @@ class BucketViewSet(mixins.ListModelMixin,
 
     def __validate(self, request, bucket, submitSave, reassign):
         try:
-            signature = bucket.getSignature()
+            bucket.getSignature()
         except RuntimeError as e:
             raise ValidationError('Signature is not valid: %s' % e)
 
@@ -1244,7 +1244,14 @@ class BucketViewSet(mixins.ListModelMixin,
             'outListCount': outListCount,
         }
 
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed(request.method)
+
     def partial_update(self, request, *args, **kwargs):
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise MethodNotAllowed(request.method)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -1264,7 +1271,7 @@ class BucketViewSet(mixins.ListModelMixin,
             status=status.HTTP_200_OK,
             data=data,
         )
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -126,7 +126,7 @@ class Bucket(models.Model):
         """
         Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
-        
+
         We only actually save if "submitSave" is set.
         For previewing, we just count how many issues would be assigned and removed.
         """
@@ -156,7 +156,7 @@ class Bucket(models.Model):
             entriesOffset += 100
             for entry in entriesChunk:
                 match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
-                                                            requiredOutputSources=requiredOutputs))
+                                                             requiredOutputSources=requiredOutputs))
                 if match and entry.bucket_id is None:
                     if submitSave:
                         inList.append(entry.pk)
