@@ -49,14 +49,16 @@ export default {
         },
     },
     computed: {
+        staticLogo (name) {
+            return window.location.origin + "/static/img/os/" + name + ".png"
+        }
+    },
+    methods: {
         testCaseText (entry) {
             if (!entry.testcase) return "No test"
             text = "Q" + entry.testcase.quality + "\n" + entry.testcase.size
             if (entry.testcase.isBinary) text += "\n    (binary)"
             return text
-        },
-        staticLogo (name) {
-            return window.location.origin + "/static/img/os/" + name + ".png"
         }
     }
 }

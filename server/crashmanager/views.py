@@ -558,7 +558,7 @@ def newSignature(request):
         proposedShortDesc = crashInfo.createShortSignature()
 
         data = {
-            'proposedSig': proposedSignature,
+            'proposedSig': json.loads(proposedSignature),
             'proposedDesc': proposedShortDesc,
             'warningMessage': errorMsg
         }
@@ -1280,9 +1280,9 @@ class BucketViewSet(mixins.ListModelMixin,
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
         # TODO: FIXME: Update bug here as well
         data = self.__validate(request, bucket, save, reassign)
-        status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
+        response_status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
         return Response(
-            status=status,
+            status=response_status,
             data=data,
         )
 

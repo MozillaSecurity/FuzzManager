@@ -74,7 +74,7 @@ export default {
             default: null
         },
         proposedSignature: {
-            type: String,
+            type: Object,
             default: null
         },
         proposedDescription: {
@@ -87,7 +87,12 @@ export default {
         },
     },
     data: () => ({
-        bucket: {},
+        bucket: {
+            signature: "",
+            shortDescription: "",
+            frequent: false,
+            permanent: false,
+        },
         reassign: true,
         warning: '',
         inList: [],
@@ -99,7 +104,7 @@ export default {
         if (this.bucketId) {
             this.bucket = await api.retrieveBucket(this.bucketId)
         } else {
-            if (this.proposedSignature) this.bucket.signature = this.proposedSignature
+            if (this.proposedSignature) this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2)
             if (this.proposedDescription) this.bucket.shortDescription = this.proposedDescription
             if (this.warningMessage) this.warning = this.warningMessage
         }
@@ -123,8 +128,8 @@ export default {
                 }
                 this.warning = data.warningMessage
                 this.inList = data.inList
-                this.inListCount = data.outList
-                this.outList = data.inListCount
+                this.outList = data.outList
+                this.inListCount = data.inListCount
                 this.outListCount = data.outListCount
             } catch (err) {
                 this.warning = err.response.data[0]
@@ -149,8 +154,8 @@ export default {
                 }
                 this.warning = data.warningMessage
                 this.inList = data.inList
-                this.inListCount = data.outList
-                this.outList = data.inListCount
+                this.outList = data.outList
+                this.inListCount = data.inListCount
                 this.outListCount = data.outListCount
             } catch (err) {
                 this.warning = err.response.data[0]
