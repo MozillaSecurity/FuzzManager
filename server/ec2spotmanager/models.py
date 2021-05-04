@@ -38,26 +38,26 @@ class PoolConfiguration(models.Model):
     instance_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
-    ec2_instance_types = models.CharField(max_length=4095, blank=True, null=True)
+    ec2_instance_types = models.TextField(blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_userdata_file = \
         models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
                          upload_to=get_storage_path, blank=True, null=True)
-    ec2_userdata_macros = models.CharField(max_length=4095, blank=True, null=True)
+    ec2_userdata_macros = models.TextField(blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_raw_config = models.CharField(max_length=4095, blank=True, null=True)
-    gce_machine_types = models.CharField(max_length=4095, blank=True, null=True)
+    ec2_raw_config = models.TextField(blank=True, null=True)
+    gce_machine_types = models.TextField(blank=True, null=True)
     gce_image_name = models.CharField(max_length=255, blank=True, null=True)
     gce_container_name = models.CharField(max_length=512, blank=True, null=True)
     gce_docker_privileged = models.BooleanField(default=False)
     gce_disk_size = models.IntegerField(blank=True, null=True)
-    gce_cmd = models.CharField(max_length=4095, blank=True, null=True)
-    gce_args = models.CharField(max_length=4095, blank=True, null=True)
-    gce_env = models.CharField(max_length=4095, blank=True, null=True)
+    gce_cmd = models.TextField(blank=True, null=True)
+    gce_args = models.TextField(blank=True, null=True)
+    gce_env = models.TextField(blank=True, null=True)
     # this is a special case that allows copying ec2_userdata_macros into gce_env during flatten()
     # we typically use userdata_macros to be the env vars provided to the userdata script
     gce_env_include_macros = models.BooleanField(default=False)
-    gce_raw_config = models.CharField(max_length=4095, blank=True, null=True)
+    gce_raw_config = models.TextField(blank=True, null=True)
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
@@ -345,7 +345,7 @@ class Instance(models.Model):
     pool = models.ForeignKey(InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE)
     hostname = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.IntegerField()
-    status_data = models.CharField(max_length=4095, blank=True, null=True)
+    status_data = models.TextField(blank=True, null=True)
     instance_id = models.CharField(max_length=255, blank=True, null=True)
     region = models.CharField(max_length=255)
     zone = models.CharField(max_length=255)
