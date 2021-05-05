@@ -61,6 +61,7 @@
 </template>
 
 <script>
+import { errorParser } from '../../helpers'
 import * as api from '../../api'
 import List from './CrashEntries/List.vue'
 
@@ -132,7 +133,7 @@ export default {
                 this.inListCount = data.inListCount
                 this.outListCount = data.outListCount
             } catch (err) {
-                this.warning = err.response.data[0]
+                this.warning = errorParser(err)
             }
         },
         async update (save) {
@@ -158,7 +159,7 @@ export default {
                 this.inListCount = data.inListCount
                 this.outListCount = data.outListCount
             } catch (err) {
-                this.warning = err.response.data[0]
+                this.warning = errorParser(err)
             }
         }
     }
