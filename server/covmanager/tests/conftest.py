@@ -17,7 +17,6 @@ import tempfile
 import pytest
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.core.files import File
 from covmanager.models import Collection, CollectionFile, Repository
 from crashmanager.models import Client, Tool, User as cmUser
 
@@ -64,7 +63,7 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
 
 
 @pytest.fixture
-def cm(request):
+def cm(request, settings, tmpdir):
 
     class _result(object):
         have_git = HAVE_GIT
@@ -94,13 +93,17 @@ def cm(request):
 
         @staticmethod
         def create_collection_file(data):
-            location = tempfile.mkdtemp(prefix='testcov_', dir=os.path.dirname(__file__))
-            request.addfinalizer(lambda: shutil.rmtree(location))
+
+            # Use a specific temporary directory to upload covmanager files
+            # This is required as Django now needs a path relative to that folder in FileField
+            location = str(tmpdir)
+            CollectionFile.file.field.storage.location = location
+
             tmp_fd, path = tempfile.mkstemp(suffix=".data", dir=location)
             os.close(tmp_fd)
             with open(path, "w") as fp:
                 fp.write(data)
-            result = CollectionFile.objects.create(file=File(open(path)))
+            result = CollectionFile.objects.create(file=os.path.basename(path))
             LOG.debug("Created CollectionFile pk=%d", result.pk)
             return result
 
