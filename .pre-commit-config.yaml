@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v7.25.0
+    hooks:
+    -   id: eslint
+        language: node
+        args: ['--fix', '--max-warnings', '0']
+        files: ^server/frontend/.*\.(js|vue)$
+        types: [file]
+        additional_dependencies:
+        - eslint@7.25.0
+        - eslint-plugin-vue@7.9.0
+        - eslint-config-standard@16.0.2
+        - eslint-plugin-import@2.22.1
+        - eslint-plugin-node@11.1.0
+        - eslint-plugin-promise@4.2.1
+        - eslint-import-resolver-webpack@0.13.0
+        - babel-eslint@10.1.0
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes
