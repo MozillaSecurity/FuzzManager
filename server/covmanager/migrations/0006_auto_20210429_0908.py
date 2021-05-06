@@ -2,6 +2,7 @@
 
 import django.core.files.storage
 from django.db import migrations, models
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -16,7 +17,9 @@ class Migration(migrations.Migration):
             name='file',
             field=models.FileField(
                 max_length=255,
-                storage=django.core.files.storage.FileSystemStorage(location=None),
+                storage=django.core.files.storage.FileSystemStorage(
+                    location=getattr(settings, 'COV_STORAGE', None)
+                ),
                 upload_to='coverage'
             ),
         ),

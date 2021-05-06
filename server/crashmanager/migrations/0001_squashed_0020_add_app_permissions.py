@@ -241,7 +241,7 @@ class Migration(migrations.Migration):
                     "test",
                     models.FileField(
                         storage=django.core.files.storage.FileSystemStorage(
-                            location="/home/decoder/Mozilla/repos/FuzzManager/server"
+                            location=None
                         ),
                         upload_to=b"tests",
                     ),
