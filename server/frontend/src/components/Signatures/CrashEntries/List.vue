@@ -2,16 +2,16 @@
   <table class="table table-condensed table-hover table-bordered table-db">
     <thead>
       <tr>
-        <th style="width: 25px;">ID</th>
-        <th style="width: 50px;">Date Added</th>
-        <th style="width: 100px;">Short Signature</th>
-        <th style="width: 40px;">Crash Address</th>
-        <th style="width: 50px;">Test Status</th>
-        <th style="width: 50px;">Product</th>
-        <th style="width: 50px;">Version</th>
-        <th style="width: 25px;">Platform</th>
-        <th style="width: 25px;">OS</th>
-        <th style="width: 40px;">Tool</th>
+        <th>ID</th>
+        <th>Date Added</th>
+        <th>Short Signature</th>
+        <th>Crash Address</th>
+        <th>Test Status</th>
+        <th>Product</th>
+        <th>Version</th>
+        <th>Platform</th>
+        <th>OS</th>
+        <th>Tool</th>
       </tr>
     </thead>
     <tbody>
@@ -33,28 +33,28 @@
             height="16px"
             alt="Linux"
             :src="staticLogo(entry.os)"
-            v-if="entry.os == 'linux'"
+            v-if="entry.os === 'linux'"
           />
           <img
             width="16px"
             height="16px"
             alt="MacOS"
             :src="staticLogo(entry.os)"
-            v-else-if="entry.os == 'macosx'"
+            v-else-if="entry.os === 'macosx'"
           />
           <img
             width="16px"
             height="16px"
             alt="Windows"
             :src="staticLogo(entry.os)"
-            v-else-if="entry.os == 'windows'"
+            v-else-if="entry.os === 'windows'"
           />
           <img
             width="16px"
             height="16px"
             alt="Android"
             :src="staticLogo(entry.os)"
-            v-else-if="entry.os == 'android'"
+            v-else-if="entry.os === 'android'"
           />
           <template v-else>{{ entry.os }}</template>
         </td>
