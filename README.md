@@ -177,20 +177,20 @@ docker-compose up
 On a first run, you must execute the database migrations:
 
 ```console
-docker-compose run backend python manage.py migrate
+docker-compose exec backend python manage.py migrate
 ```
 
 And create a super user to be able to login on http://localhost:8000
 
 ```console
-docker-compose run backend python manage.py createsuperuser
+docker-compose exec backend python manage.py createsuperuser
 ```
 
 By default the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
 - `DEBUG = False` to enable production mode
 - `ALLOWED_HOSTS = ["localhost", ]` to allow development usage on `http://localhost:8000`
 
-You can customize settigs by mounting a file from your host into the container:
+You can customize settings by mounting a file from your host into the container:
 
 ```yaml
 volumes:
