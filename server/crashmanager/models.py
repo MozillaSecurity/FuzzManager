@@ -5,7 +5,6 @@ from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
-from django.forms.models import model_to_dict
 from django.utils import timezone
 import json
 import logging
