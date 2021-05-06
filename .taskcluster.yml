@@ -84,11 +84,11 @@ tasks:
         - taskId: {$eval: as_slugid("docker_build")}
           provisionerId: proj-fuzzing
           workerType: ci
-          dependencies:
-            - {$eval: as_slugid("py35")}
-            - {$eval: as_slugid("py36")}
-            - {$eval: as_slugid("py37")}
-            - {$eval: as_slugid("py38")}
+          #dependencies:
+          #  - {$eval: as_slugid("py35")}
+          #  - {$eval: as_slugid("py36")}
+          #  - {$eval: as_slugid("py37")}
+          #  - {$eval: as_slugid("py38")}
           created: {$fromNow: ''}
           deadline: {$fromNow: '1 hour'}
           payload:
@@ -105,7 +105,7 @@ tasks:
               - --build-tool
               - dind
               - --image
-              - MozillaSecurity/FuzzManager
+              - mozillasecurity/fuzzmanager
               - --tag
               - "${fetch_rev}"
               - --write
