@@ -14,11 +14,11 @@ TEST_STORAGE = "/data/crashes"
 USERDATA_STORAGE = "/data/userdata"
 
 DATABASES = {
-   'default': {
-      'ENGINE': 'django.db.backends.mysql',
-      'NAME': 'fuzzmanager',
-      'USER': 'fuzzmanager',
-      'PASSWORD': 'mozilla1234',
-      'HOST': 'database',
-   }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'fuzzmanager',
+        'USER': 'fuzzmanager',
+        'PASSWORD': 'mozilla1234',
+        'HOST': 'database',
+    }
 }
