@@ -52,7 +52,7 @@ export default {
         testCaseText (entry) {
             if (!entry.testcase) return "No test"
             let text = "Q" + entry.testcase_quality + "\n" + entry.testcase_size
-            if (entry.testcase_isBinary) text += "\n    (binary)"
+            if (entry.testcase_isbinary) text += "\n    (binary)"
             return text
         },
         staticLogo (name) {
