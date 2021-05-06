@@ -6,7 +6,6 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.forms.models import model_to_dict
-from django.urls import reverse
 from django.utils import timezone
 import json
 import logging
@@ -130,6 +129,8 @@ class Bucket(models.Model):
         We only actually save if "submitSave" is set.
         For previewing, we just count how many issues would be assigned and removed.
         """
+        from .serializers import CrashEntryVueSerializer
+
         inList, outList = [], []
         inListCount, outListCount = 0, 0
 
@@ -161,17 +162,13 @@ class Bucket(models.Model):
                     if submitSave:
                         inList.append(entry.pk)
                     elif len(inList) < 100:
-                        dictEntry = model_to_dict(entry, fields=[field.name for field in entry._meta.fields])
-                        dictEntry.update({"url": reverse('crashmanager:crashview', kwargs={'crashid': entry.pk})})
-                        inList.append(dictEntry)
+                        inList.append(CrashEntryVueSerializer(entry).data)
                     inListCount += 1
                 elif not match and entry.bucket_id is not None:
                     if submitSave:
                         outList.append(entry.pk)
                     elif len(outList) < 100:
-                        dictEntry = model_to_dict(entry, fields=[field.name for field in entry._meta.fields])
-                        dictEntry.update({"url": reverse('crashmanager:crashview', kwargs={'crashid': entry.pk})})
-                        outList.append(dictEntry)
+                        outList.append(CrashEntryVueSerializer(entry).data)
                     outListCount += 1
 
         if submitSave:

@@ -15,26 +15,26 @@
         </tr>
     </thead>
     <tbody>
-        <tr v-for="(entry, index) in entries" :key="entry.pk" :class="{'odd': index % 2 === 0, 'even': index % 2 !== 0}">
+        <tr v-for="(entry, index) in entries" :key="entry.id" :class="{'odd': index % 2 === 0, 'even': index % 2 !== 0}">
             <td>
-                <a :href="entry.url">{{ entry.pk }}</a>
+                <a :href="entry.url">{{ entry.id }}</a>
             </td>
             <!-- TODO: Restore date formatting (previously: `entry.created|date:"r"`) -->
             <td>{{ entry.created }}</td>
             <td>{{ entry.shortSignature }}</td>
             <td>{{ entry.crashAddress }}</td>
             <td>{{ testCaseText(entry) }}</td>
-            <td>{{ entry.product.name }}</td>
-            <td>{{ entry.product.version }}</td>
-            <td>{{ entry.platform.name }}</td>
+            <td>{{ entry.product }}</td>
+            <td>{{ entry.product_version }}</td>
+            <td>{{ entry.platform }}</td>
             <td>
-                <img width="16px" height="16px" alt="Linux" :src="staticLogo(entry.os.name)" v-if="entry.os.name == 'linux'"/>
-                <img width="16px" height="16px" alt="MacOS" :src="staticLogo(entry.os.name)" v-else-if="entry.os.name == 'macosx'"/>
-                <img width="16px" height="16px" alt="Windows" :src="staticLogo(entry.os.name)" v-else-if="entry.os.name == 'windows'"/>
-                <img width="16px" height="16px" alt="Android" :src="staticLogo(entry.os.name)" v-else-if="entry.os.name == 'android'"/>
-                <template v-else>{{ entry.os.name }}</template>
+                <img width="16px" height="16px" alt="Linux" :src="staticLogo(entry.os)" v-if="entry.os == 'linux'"/>
+                <img width="16px" height="16px" alt="MacOS" :src="staticLogo(entry.os)" v-else-if="entry.os == 'macosx'"/>
+                <img width="16px" height="16px" alt="Windows" :src="staticLogo(entry.os)" v-else-if="entry.os == 'windows'"/>
+                <img width="16px" height="16px" alt="Android" :src="staticLogo(entry.os)" v-else-if="entry.os == 'android'"/>
+                <template v-else>{{ entry.os }}</template>
             </td>
-            <td>{{ entry.tool.name }}</td>
+            <td>{{ entry.tool }}</td>
         </tr>
     </tbody>
 </table>
@@ -48,17 +48,15 @@ export default {
             required: true
         },
     },
-    computed: {
-        staticLogo (name) {
-            return window.location.origin + "/static/img/os/" + name + ".png"
-        }
-    },
     methods: {
         testCaseText (entry) {
             if (!entry.testcase) return "No test"
-            let text = "Q" + entry.testcase.quality + "\n" + entry.testcase.size
-            if (entry.testcase.isBinary) text += "\n    (binary)"
+            let text = "Q" + entry.testcase_quality + "\n" + entry.testcase_size
+            if (entry.testcase_isBinary) text += "\n    (binary)"
             return text
+        },
+        staticLogo (name) {
+            return window.location.origin + "/static/img/os/" + name + ".png"
         }
     }
 }

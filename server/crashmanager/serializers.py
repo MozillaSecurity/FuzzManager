@@ -2,6 +2,7 @@ import base64
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
+from django.urls import reverse
 import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -141,3 +142,14 @@ class BucketSerializer(serializers.ModelSerializer):
         # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
         # see note in BucketAnnotateFilterBackend
         return serialized
+
+
+class CrashEntryVueSerializer(CrashEntrySerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta(CrashEntrySerializer.Meta):
+        fields = CrashEntrySerializer.Meta.fields + ('url', )
+        read_only_fields = CrashEntrySerializer.Meta.read_only_fields + ('url', )
+
+    def get_url(self, entry):
+        return reverse('crashmanager:crashview', kwargs={'crashid': entry.id})
