@@ -6,14 +6,15 @@ from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 import functools
 import json
 import operator
 import os
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -504,161 +505,63 @@ def deleteCrashEntry(request, crashid):
         raise SuspiciousOperation
 
 
-def __handleSignaturePost(request, bucket):
-    # This method contains code shared between newSignature and editSignature
-    # and handles the POST request processing after the bucket object has been
-    # either fetched or created.
-    try:
-        signature = bucket.getSignature()
-    except RuntimeError as e:
-        data = {'bucket': bucket, 'error_message': 'Signature is not valid: %s' % e}
-        return render(request, 'signatures/edit.html', data)
-
-    submitSave = bool('submit_save' in request.POST)
-
-    # Only save if we hit "save" (not e.g. "preview")
-    if submitSave:
-        bucket.save()
-
-    # If the reassign checkbox is checked, assign all unassigned issues that match
-    # our signature to this bucket. Furthermore, remove all non-matching issues
-    # from our bucket.
-    #
-    # Again, we only actually save if we hit "save". For previewing, we just count
-    # how many issues would be assigned and removed.
-    if 'reassign' in request.POST:
-        inList, outList = [], []
-        inListCount, outListCount = 0, 0
-
-        signature = bucket.getSignature()
-        needTest = signature.matchRequiresTest()
-        entries = CrashEntry.objects.filter(Q(bucket=None) | Q(bucket=bucket))
-        entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
-        if needTest:
-            entries = entries.select_related('testcase')
-
-        requiredOutputs = signature.getRequiredOutputSources()
-        entries = CrashEntry.deferRawFields(entries, requiredOutputs)
-
-        if not submitSave:
-            entries = entries.select_related('tool').order_by('-id')  # used by the preview list
-
-        # If we are saving, we only care about the id of each entry
-        # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
-        entriesOffset = 0
-        while True:
-            entriesChunk = entries[entriesOffset:entriesOffset + 100]
-            if not entriesChunk:
-                break
-            entriesOffset += 100
-            for entry in entriesChunk:
-                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
-                                                             requiredOutputSources=requiredOutputs))
-                if match and entry.bucket_id is None:
-                    if submitSave:
-                        inList.append(entry.pk)
-                    elif len(inList) < 100:
-                        inList.append(entry)
-                    inListCount += 1
-                elif not match and entry.bucket_id is not None:
-                    if submitSave:
-                        outList.append(entry.pk)
-                    elif len(outList) < 100:
-                        outList.append(entry)
-                    outListCount += 1
-
-        if submitSave:
-            while inList:
-                updList, inList = inList[:500], inList[500:]
-                CrashEntry.objects.filter(pk__in=updList).update(bucket=bucket)
-            while outList:
-                updList, outList = outList[:500], outList[500:]
-                CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
-
-    # Save bucket and redirect to viewing it
-    if submitSave:
-        return redirect('crashmanager:sigview', sigid=bucket.pk)
-
-    # Render the preview page
-    data = {
-        'bucket': bucket,
-        'error_message': "This is a preview, don't forget to save!",
-        'inList': inList, 'outList': outList,
-        'inListCount': inListCount, 'outListCount': outListCount,
-    }
-    return render(request, 'signatures/edit.html', data)
-
-
 def newSignature(request):
-    if request.method == 'POST':
-        # TODO: FIXME: Update bug here as well
-        bucket = Bucket(
-            signature=request.POST['signature'],
-            shortDescription=request.POST['shortDescription'],
-            frequent="frequent" in request.POST,
-            permanent="permanent" in request.POST
-        )
-        return __handleSignaturePost(request, bucket)
-    elif request.method == 'GET':
-        if 'crashid' in request.GET:
-            crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
-
-            configuration = ProgramConfiguration(crashEntry.product.name,
-                                                 crashEntry.platform.name,
-                                                 crashEntry.os.name,
-                                                 crashEntry.product.version)
-
-            crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout,
-                                                   crashEntry.rawStderr,
-                                                   configuration,
-                                                   crashEntry.rawCrashData)
-
-            maxStackFrames = 8
-            forceCrashInstruction = False
-            forceCrashAddress = True
-            errorMsg = None
-
-            if 'stackframes' in request.GET:
-                maxStackFrames = int(request.GET['stackframes'])
-            elif set(crashInfo.backtrace) & {
-                    "std::panicking::rust_panic",
-                    "std::panicking::rust_panic_with_hook",
-            }:
-                # rust panic adds 5-6 frames of noise at the top of the stack
-                maxStackFrames += 6
-
-            if 'forcecrashaddress' in request.GET:
-                forceCrashAddress = bool(int(request.GET['forcecrashaddress']))
-
-            if 'forcecrashinstruction' in request.GET:
-                forceCrashInstruction = bool(int(request.GET['forcecrashinstruction']))
-
-            # First try to create the signature with the crash address included.
-            # However, if that fails, try without forcing the crash signature.
-            proposedSignature = crashInfo.createCrashSignature(
-                forceCrashAddress=forceCrashAddress,
-                forceCrashInstruction=forceCrashInstruction,
-                maxFrames=maxStackFrames
-            )
-            if proposedSignature is None:
-                errorMsg = crashInfo.failureReason
-                proposedSignature = crashInfo.createCrashSignature(maxFrames=maxStackFrames)
-
-            proposedSignature = str(proposedSignature)
-            proposedShortDesc = crashInfo.createShortSignature()
-
-            data = {'new': True, 'bucket': {
-                    'pk': None,
-                    'bug': None,
-                    'signature': proposedSignature,
-                    'shortDescription': proposedShortDesc
-                    },
-                    'error_message': errorMsg
-                    }
-        else:
-            data = {'new': True}
-    else:
+    if request.method != 'GET':
         raise SuspiciousOperation
+
+    data = {}
+    if 'crashid' in request.GET:
+        crashEntry = get_object_or_404(CrashEntry, pk=request.GET['crashid'])
+
+        configuration = ProgramConfiguration(crashEntry.product.name,
+                                             crashEntry.platform.name,
+                                             crashEntry.os.name,
+                                             crashEntry.product.version)
+
+        crashInfo = CrashInfo.fromRawCrashData(crashEntry.rawStdout,
+                                               crashEntry.rawStderr,
+                                               configuration,
+                                               crashEntry.rawCrashData)
+
+        maxStackFrames = 8
+        forceCrashInstruction = False
+        forceCrashAddress = True
+        errorMsg = None
+
+        if 'stackframes' in request.GET:
+            maxStackFrames = int(request.GET['stackframes'])
+        elif set(crashInfo.backtrace) & {
+                "std::panicking::rust_panic",
+                "std::panicking::rust_panic_with_hook",
+        }:
+            # rust panic adds 5-6 frames of noise at the top of the stack
+            maxStackFrames += 6
+
+        if 'forcecrashaddress' in request.GET:
+            forceCrashAddress = bool(int(request.GET['forcecrashaddress']))
+
+        if 'forcecrashinstruction' in request.GET:
+            forceCrashInstruction = bool(int(request.GET['forcecrashinstruction']))
+
+        # First try to create the signature with the crash address included.
+        # However, if that fails, try without forcing the crash signature.
+        proposedSignature = crashInfo.createCrashSignature(
+            forceCrashAddress=forceCrashAddress,
+            forceCrashInstruction=forceCrashInstruction,
+            maxFrames=maxStackFrames
+        )
+        if proposedSignature is None:
+            errorMsg = crashInfo.failureReason
+            proposedSignature = crashInfo.createCrashSignature(maxFrames=maxStackFrames)
+
+        proposedSignature = str(proposedSignature)
+        proposedShortDesc = crashInfo.createShortSignature()
+
+        data = {
+            'proposedSig': json.loads(proposedSignature),
+            'proposedDesc': proposedShortDesc,
+            'warningMessage': errorMsg
+        }
 
     return render(request, 'signatures/edit.html', data)
 
@@ -714,32 +617,21 @@ def viewSignature(request, sigid):
 
 
 def editSignature(request, sigid):
-    if request.method == 'POST':
-        bucket = get_object_or_404(Bucket, pk=sigid)
-        check_authorized_for_signature(request, bucket)
+    if request.method != 'GET' or sigid is None:
+        raise SuspiciousOperation
 
-        bucket.signature = request.POST['signature']
-        bucket.shortDescription = request.POST['shortDescription']
-        bucket.frequent = "frequent" in request.POST
-        bucket.permanent = "permanent" in request.POST
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    check_authorized_for_signature(request, bucket)
 
-        # TODO: FIXME: Update bug here as well
-        return __handleSignaturePost(request, bucket)
-    if request.method == 'GET':
-        if sigid is not None:
-            bucket = get_object_or_404(Bucket, pk=sigid)
-            check_authorized_for_signature(request, bucket)
+    if 'fit' in request.GET:
+        entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
+        bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
+    else:
+        # standardize formatting of the signature
+        # this is the same format returned by `fit()`
+        bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
 
-            if 'fit' in request.GET:
-                entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
-                bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
-            else:
-                # standardize formatting of the signature
-                # this is the same format returned by `fit()`
-                bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
-
-            return render(request, 'signatures/edit.html', {'bucket': bucket})
-    raise SuspiciousOperation
+    return render(request, 'signatures/edit.html', {'bucketId': bucket.pk})
 
 
 def linkSignature(request, sigid):
@@ -1296,6 +1188,8 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
 
 
 class BucketViewSet(mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    mixins.UpdateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
     authentication_classes = (TokenAuthentication, SessionAuthentication)
@@ -1318,6 +1212,86 @@ class BucketViewSet(mixins.ListModelMixin,
             instance.quality = agg["quality"]
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    def __validate(self, request, bucket, submitSave, reassign):
+        try:
+            bucket.getSignature()
+        except RuntimeError as e:
+            raise ValidationError('Signature is not valid: %s' % e)
+
+        # Only save if we hit "save" (not e.g. "preview")
+        if submitSave:
+            bucket.save()
+
+        inList, outList = [], []
+        inListCount, outListCount = 0, 0
+        # If the reassign checkbox is checked
+        if reassign:
+            inList, outList, inListCount, outListCount = bucket.reassign(submitSave)
+
+        # Save bucket and redirect to viewing it
+        if submitSave:
+            return {
+                'url': reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+            }
+
+        # Render the preview page
+        return {
+            'warningMessage': "This is a preview, don't forget to save!",
+            'inList': inList,
+            'outList': outList,
+            'inListCount': inListCount,
+            'outListCount': outListCount,
+        }
+
+    def update(self, request, *args, **kwargs):
+        raise MethodNotAllowed(request.method)
+
+    def partial_update(self, request, *args, **kwargs):
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise MethodNotAllowed(request.method)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
+        check_authorized_for_signature(request, bucket)
+
+        bucket.signature = serializer.validated_data.get('signature')
+        bucket.shortDescription = serializer.validated_data.get('shortDescription')
+        bucket.frequent = serializer.validated_data.get('frequent')
+        bucket.permanent = serializer.validated_data.get('permanent')
+
+        save = request.query_params.get('save', 'true').lower() not in ('false', '0')
+        reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
+        # TODO: FIXME: Update bug here as well
+        data = self.__validate(request, bucket, save, reassign)
+        return Response(
+            status=status.HTTP_200_OK,
+            data=data,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        bucket = Bucket(
+            signature=serializer.validated_data.get('signature'),
+            shortDescription=serializer.validated_data.get('shortDescription'),
+            frequent=serializer.validated_data.get('frequent'),
+            permanent=serializer.validated_data.get('permanent')
+        )
+
+        save = request.query_params.get('save', 'true').lower() not in ('false', '0')
+        reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
+        # TODO: FIXME: Update bug here as well
+        data = self.__validate(request, bucket, save, reassign)
+        response_status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
+        return Response(
+            status=response_status,
+            data=data,
+        )
 
 
 def json_to_query(json_str):

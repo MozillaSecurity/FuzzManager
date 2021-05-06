@@ -2,6 +2,7 @@ import base64
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
+from django.urls import reverse
 import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -125,14 +126,14 @@ class BucketSerializer(serializers.ModelSerializer):
     bug = serializers.CharField(source='bug.externalId', default=None)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
-    size = serializers.IntegerField(write_only=True)
-    best_quality = serializers.IntegerField(write_only=True)
+    size = serializers.IntegerField(write_only=True, required=False)
+    best_quality = serializers.IntegerField(write_only=True, required=False)
 
     class Meta:
         model = Bucket
         fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
         ordering = ['-id']
-        read_only_fields = ('id', 'frequent', 'permanent', 'shortDescription', 'signature')
+        read_only_fields = ('id', )
 
     def to_representation(self, obj):
         serialized = super(BucketSerializer, self).to_representation(obj)
@@ -141,3 +142,14 @@ class BucketSerializer(serializers.ModelSerializer):
         # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
         # see note in BucketAnnotateFilterBackend
         return serialized
+
+
+class CrashEntryVueSerializer(CrashEntrySerializer):
+    url = serializers.SerializerMethodField()
+
+    class Meta(CrashEntrySerializer.Meta):
+        fields = CrashEntrySerializer.Meta.fields + ('url', )
+        read_only_fields = CrashEntrySerializer.Meta.read_only_fields + ('url', )
+
+    def get_url(self, entry):
+        return reverse('crashmanager:crashview', kwargs={'crashid': entry.id})

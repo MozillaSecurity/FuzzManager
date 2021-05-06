@@ -1,58 +1,10 @@
 {% extends 'layouts/layout_base.html' %}
 
 {% block body_content %}
-<div id="app"></div>
-<div class="panel panel-info">
-    <div class="panel-heading"><i class="glyphicon glyphicon-tag"></i> Edit Signature</div>
-    <div class="panel-body">
-        {% if error_message %}<div class="alert alert-warning" role="alert">{{ error_message }}</div>{% endif %}
-
-        {% if inList %}<p>New issues that will be assigned to this bucket (<a href="#crashes_in">list</a>): <span class="badge">{{ inListCount }}</span></p>{% endif %}
-        {% if outList %}<p>Issues that will be removed from this bucket (<a href="#crashes_out">list</a>): <span class="badge">{{ outListCount }}</span></p>{% endif %}
-
-        {% if bucket.pk != None %}
-            <form action="{% url 'crashmanager:sigedit' bucket.pk %}" method="post">
-                {% else %}
-                <form action="{% url 'crashmanager:signew' %}" method="post">
-            {% endif %}
-            {% csrf_token %}
-            <label for="id_shortDescription">Description</label><br/>
-            <input id="id_shortDescription" class="form-control" maxlength="1023" name="shortDescription" type="text" value="{{ bucket.shortDescription }}">
-            <br/>
-            <label for="id_signature">Signature</label><br/>
-            <textarea id="id_signature" class="form-control" name="signature" spellcheck='false'>{{ bucket.signature }}</textarea>
-
-            <div class="field">
-                <input type="checkbox" id="id_frequent" name="frequent" value="unassigned" {% if bucket.frequent %}checked{% endif %}/>
-                <label for="id_frequent">Mark this bucket as a frequent bucket</label>
-            </div>
-
-            <div class="field">
-                <input type="checkbox" id="id_permanent" name="permanent" value="unassigned" {% if bucket.permanent %}checked{% endif %}/>
-                <label for="id_permanent">Mark this bucket as a permanent bucket</label>
-            </div>
-
-            <div class="field">
-                <input type="checkbox" id="id_reassign" name="reassign" value="unassigned" checked/>
-                <label for="id_reassign">Reassign matching crashes (unassigned crashes and crashes assigned to this bucket will be reassigned)</label>
-            </div>
-            <div class="btn-group">
-                <input type="submit" name="submit_save" value="Save" class="btn btn-danger"/>
-                <input type="submit" name="submit_preview" value="Preview" class="btn btn-default"/>
-            </div>
-        </form>
-
-        <div class="field">
-            {% if inList %}
-                <label id="crashes_in">New issues that will be assigned to this bucket{% if inListCount > inList|length %} (truncated){% endif %}:</label>
-                {% include "signatures/include/crashentry_list.html" with entries=inList %}
-            {% endif %}
-
-            {% if outList %}
-                <label id="crashes_out">Issues that will be removed from this bucket{% if outListCount > outList|length %} (truncated){% endif %}:</label>
-                {% include "signatures/include/crashentry_list.html" with entries=outList %}
-            {% endif %}
-        </div>
-    </div>
-</div>
+<createoredit
+    {% if bucketId != None %} :bucket-id="{{ bucketId }}" {% endif %}
+    {% if proposedSig != None %} :proposed-signature="{{ proposedSig }}" {% endif %}
+    {% if proposedDesc != None %} :proposed-description="'{{ proposedDesc }}'" {% endif %}
+    {% if warningMessage != None %} :warning-message="'{{ warningMessage }}'" {% endif %}
+/>
 {% endblock body_content %}

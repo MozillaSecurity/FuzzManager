@@ -13,7 +13,10 @@ import json
 import logging
 import pytest
 import requests
-
+from django.urls import reverse
+from rest_framework import status
+from crashmanager.models import Bucket, CrashEntry
+from .conftest import _create_user
 
 # What should be allowed:
 #
@@ -25,7 +28,7 @@ import requests
 # |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
 # |        | /id/ | retrieve | 401     | 403     | all          | all               | toolfilter | toolfilter        |
 # +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
-# | POST   | /    | create   | 401     | 403     | all (TODO)   | all (TODO)        | all (TODO) | all (TODO)        |
+# | POST   | /    | create   | 401     | 403     | all          | all (TODO)        | all        | all (TODO)        |
 # |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
 # |        | /id/ | -        | 401     | 403     | 405          | 405               | 405        | 405               |
 # +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
@@ -35,7 +38,7 @@ import requests
 # +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
 # | PATCH  | /    | -        | 401     | 403     | 405          | 405               | 405        | 405               |
 # |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
-# |        | /id/ | update   | 401     | 403     | all (TODO)   | all (TODO)        | 405        | 405               |
+# |        | /id/ | update   | 401     | 403     | all          | all               | 405        | 405               |
 # +--------+------+----------+---------+---------+--------------+-------------------+------------+-------------------+
 # | DELETE | /    | -        | 401     | 403     | 405          | 405               | 405        | 405               |
 # |        +------+----------+---------+---------+--------------+-------------------+------------+-------------------+
@@ -80,10 +83,7 @@ def test_rest_signatures_no_perm(user_noperm, api_client, method, url):
     ("delete", "/crashmanager/rest/buckets/1/", "restricted"),
     ("patch", "/crashmanager/rest/buckets/", "normal"),
     ("patch", "/crashmanager/rest/buckets/", "restricted"),
-    ("patch", "/crashmanager/rest/buckets/1/", "normal"),  # TODO: this should be allowed, but hasn't been implemented
     ("patch", "/crashmanager/rest/buckets/1/", "restricted"),
-    ("post", "/crashmanager/rest/buckets/", "normal"),  # TODO: this should be allowed, but hasn't been implemented
-    ("post", "/crashmanager/rest/buckets/", "restricted"),  # TODO: this should be allowed, but hasn't been implemented
     ("post", "/crashmanager/rest/buckets/1/", "normal"),
     ("post", "/crashmanager/rest/buckets/1/", "restricted"),
     ("put", "/crashmanager/rest/buckets/", "normal"),
@@ -186,3 +186,276 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             else:
                 size, quality = (1, 9)
             _compare_rest_result_to_bucket(resp, bucket, size, quality)
+
+
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("from_crash", [False, True])
+def test_new_signature_create(api_client, cm, user, from_crash):  # pylint: disable=invalid-name
+    if from_crash:
+        if user.username == 'test-restricted':
+            _create_user('test')
+        api_client.login(username='test', password='test')
+        stderr = "Program received signal SIGSEGV, Segmentation fault.\n#0  sym_a ()\n#1  sym_b ()"
+        crash = cm.create_crash(shortSignature='crash #1', stderr=stderr)
+        response = api_client.get(reverse("crashmanager:signew") + '?crashid=%d' % crash.pk)
+        LOG.debug(response)
+        assert response.status_code == requests.codes['ok']
+
+        # create a bucket from the proposed signature and see that it matches the crash
+        sig = json.dumps(response.context['proposedSig'])
+        desc = response.context['proposedDesc']
+        api_client.force_authenticate(user=user)
+    else:
+        crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+        sig = json.dumps({
+            'symptoms': [
+                {"src": "stderr",
+                 "type": "output",
+                 "value": "/^blah/"}
+            ]
+        })
+        desc = 'bucket #1'
+
+    resp = api_client.post('/crashmanager/rest/buckets/', data={
+        'signature': sig,
+        'shortDescription': desc,
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    bucket = Bucket.objects.get(shortDescription=desc)
+    crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+    assert crash.bucket == bucket
+    assert json.loads(bucket.signature) == json.loads(sig)
+    assert bucket.shortDescription == desc
+    assert not bucket.frequent
+    assert not bucket.permanent
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert resp.json() == {
+        'url': reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+    }
+
+
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("many", [False, True])
+def test_new_signature_create_w_reassign(api_client, cm, user, many):  # pylint: disable=invalid-name
+    if many:
+        crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+    else:
+        crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+                "type": "output",
+                "value": "/^blah/"}
+        ]
+    })
+
+    resp = api_client.post('/crashmanager/rest/buckets/?reassign=true', data={
+        'signature': sig,
+        'shortDescription': 'bucket #1',
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    bucket = Bucket.objects.get(shortDescription='bucket #1')
+    if many:
+        crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
+        for crash in crashes:
+            assert crash.bucket == bucket
+    else:
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        assert crash.bucket == bucket
+    assert json.loads(bucket.signature) == json.loads(sig)
+    assert bucket.shortDescription == "bucket #1"
+    assert not bucket.frequent
+    assert not bucket.permanent
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert resp.json() == {
+        'url': reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+    }
+
+
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("many", [False, True])
+def test_new_signature_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
+    if many:
+        crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+    else:
+        crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+                "type": "output",
+                "value": "/^blah/"}
+        ]
+    })
+
+    resp = api_client.post('/crashmanager/rest/buckets/?save=false', data={
+        'signature': sig,
+        'shortDescription': 'bucket #1',
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    assert not Bucket.objects.filter(shortDescription='bucket #1').exists()
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data['warningMessage'] == "This is a preview, don't forget to save!"
+    in_list = data['inList']
+    out_list = data['outList']
+    assert not out_list
+    if many:
+        crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
+        for crash in crashes:
+            assert crash.bucket is None
+
+        assert len(in_list) == 100
+        assert data['inListCount'] == 201
+
+        for shown, crash in zip(reversed(data['inList']), crashes[-100:]):
+            assert shown['id'] == crash.pk
+    else:
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        assert crash.bucket is None
+
+        assert len(in_list) == 1
+        assert in_list[0]['id'] == crash.pk
+
+
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
+def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-name
+    bucket = cm.create_bucket()
+    crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+                "type": "output",
+                "value": "/^blah/"}
+        ]
+    })
+
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'signature': sig,
+        'shortDescription': 'bucket #1',
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    bucket = Bucket.objects.get(pk=bucket.pk)
+    crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+    assert crash.bucket is None
+    assert json.loads(bucket.signature) == json.loads(sig)
+    assert bucket.shortDescription == 'bucket #1'
+    assert not bucket.frequent
+    assert not bucket.permanent
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == {
+        'url': reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+    }
+
+
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
+@pytest.mark.parametrize("many", [False, True])
+def test_edit_signature_edit_w_reassign(api_client, cm, user, many):  # pylint: disable=invalid-name
+    bucket = cm.create_bucket()
+    if many:
+        crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
+    else:
+        crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+                "type": "output",
+                "value": "/^blah/"}
+        ]
+    })
+
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=true' % bucket.pk, data={
+        'signature': sig,
+        'shortDescription': 'bucket #1',
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    bucket = Bucket.objects.get(pk=bucket.pk)
+    if many:
+        crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
+        for crash in crashes:
+            assert crash.bucket == bucket
+    else:
+        crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        assert crash.bucket == bucket
+    assert json.loads(bucket.signature) == json.loads(sig)
+    assert bucket.shortDescription == 'bucket #1'
+    assert not bucket.frequent
+    assert not bucket.permanent
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == {
+        'url': reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+    }
+
+
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
+@pytest.mark.parametrize("many", [False, True])
+def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
+    bucket = cm.create_bucket()
+    if many:
+        crashes1 = [cm.create_crash(shortSignature='crash #1', stderr="foo", bucket=bucket) for _ in range(201)]
+        crashes2 = [cm.create_crash(shortSignature='crash #2', stderr="blah") for _ in range(201)]
+    else:
+        crash1 = cm.create_crash(shortSignature='crash #1', stderr="foo", bucket=bucket)
+        crash2 = cm.create_crash(shortSignature='crash #2', stderr="blah")
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?save=false' % bucket.pk, data={
+        'signature': sig,
+        'shortDescription': 'bucket #1',
+        'frequent': False,
+        'permanent': False,
+    }, format='json')
+
+    LOG.debug(resp)
+    bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+    # Bucket wasn't updated
+    assert bucket.shortDescription == ''
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data['warningMessage'] == "This is a preview, don't forget to save!"
+    in_list = data['inList']
+    out_list = data['outList']
+    if many:
+        assert len(in_list) == 100
+        assert len(out_list) == 100
+        assert data['inListCount'] == 201
+        assert data['outListCount'] == 201
+        for crash in crashes1:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            assert crash.bucket == bucket
+        for crash in crashes2:
+            crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+            assert crash.bucket is None
+        for shown, crash in zip(reversed(in_list), crashes2[-100:]):
+            assert shown['id'] == crash.pk
+        for shown, crash in zip(reversed(out_list), crashes1[-100:]):
+            assert shown['id'] == crash.pk
+    else:
+        assert len(in_list) == 1
+        assert len(out_list) == 1
+        crash1 = CrashEntry.objects.get(pk=crash1.pk)  # re-read
+        crash2 = CrashEntry.objects.get(pk=crash2.pk)  # re-read
+        assert crash1.bucket == bucket
+        assert crash2.bucket is None
+        assert out_list[0]['id'] == crash1.pk
+        assert in_list[0]['id'] == crash2.pk
