@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='test',
             field=models.FileField(
                 storage=django.core.files.storage.FileSystemStorage(
-                    location=settings.BASE_DIR,
+                    location=getattr(settings, 'TEST_STORAGE', None)
                 ),
                 upload_to='tests'
             ),

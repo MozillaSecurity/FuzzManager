@@ -6,6 +6,7 @@ import django.core.files.storage
 from django.db import migrations, models
 import django.db.migrations.operations.special
 import django.db.models.deletion
+from django.conf import settings
 import django.utils.timezone
 import ec2spotmanager.models
 
@@ -122,7 +123,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=django.core.files.storage.FileSystemStorage(
-                            location=b"/home/decoder/Mozilla/repos/FuzzManager/server"
+                            location=getattr(settings, 'USERDATA_STORAGE', None)
                         ),
                         upload_to=ec2spotmanager.models.get_storage_path,
                     ),
