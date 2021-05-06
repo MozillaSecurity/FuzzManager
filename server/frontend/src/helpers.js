@@ -32,3 +32,17 @@ export const errorParser = (error) => {
   if (typeof message === "string") return message;
   return message.toString();
 };
+
+export const E_SERVER_ERROR = "Error while communicating with the server.";
+
+export const formatClientTimestamp = (datetime) => {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+    timeZoneName: "short",
+  }).format(new Date(datetime));
+};

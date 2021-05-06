@@ -145,11 +145,35 @@ class BucketSerializer(serializers.ModelSerializer):
 
 
 class CrashEntryVueSerializer(CrashEntrySerializer):
-    url = serializers.SerializerMethodField()
+    view_url = serializers.SerializerMethodField()
+    sig_view_url = serializers.SerializerMethodField()
+    sig_new_url = serializers.SerializerMethodField()
+    find_sigs_url = serializers.SerializerMethodField()
 
     class Meta(CrashEntrySerializer.Meta):
-        fields = CrashEntrySerializer.Meta.fields + ('url', )
-        read_only_fields = CrashEntrySerializer.Meta.read_only_fields + ('url', )
+        fields = CrashEntrySerializer.Meta.fields + (
+            'view_url',
+            'sig_view_url',
+            'sig_new_url',
+            'find_sigs_url',
+        )
+        read_only_fields = CrashEntrySerializer.Meta.read_only_fields + (
+            'view_url',
+            'sig_view_url',
+            'sig_new_url',
+            'find_sigs_url',
+        )
 
-    def get_url(self, entry):
+    def get_view_url(self, entry):
         return reverse('crashmanager:crashview', kwargs={'crashid': entry.id})
+
+    def get_sig_view_url(self, entry):
+        if entry.bucket:
+            return reverse('crashmanager:sigview', kwargs={'sigid': entry.bucket.id})
+        return None
+
+    def get_sig_new_url(self, entry):
+        return f"{reverse('crashmanager:signew')}?crashid={entry.id}"
+
+    def get_find_sigs_url(self, entry):
+        return reverse('crashmanager:findsigs', kwargs={'crashid': entry.id})

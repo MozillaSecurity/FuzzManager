@@ -21,7 +21,7 @@
         :class="{ odd: index % 2 === 0, even: index % 2 !== 0 }"
       >
         <td>
-          <a :href="entry.url">{{ entry.id }}</a>
+          <a :href="entry.view_url">{{ entry.id }}</a>
         </td>
         <!-- TODO: Restore date formatting (previously: `entry.created|date:"r"`) -->
         <td>{{ entry.created }}</td>

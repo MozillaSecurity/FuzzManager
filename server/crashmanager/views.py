@@ -25,7 +25,7 @@ from wsgiref.util import FileWrapper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
+from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -1163,7 +1163,11 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
 
     def get_serializer(self, *args, **kwds):
         kwds["include_raw"] = getattr(self, "include_raw", True)
-        return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
+        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        if vue:
+            return CrashEntryVueSerializer(*args, **kwds)
+        else:
+            return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
 
     def partial_update(self, request, pk=None):
         """Update individual crash fields."""
