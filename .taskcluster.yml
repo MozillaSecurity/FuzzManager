@@ -93,7 +93,7 @@ tasks:
           deadline: {$fromNow: '1 hour'}
           payload:
             maxRunTime: 3600
-            image: "mozilla/taskboot:0.2.2"
+            image: "mozilla/taskboot:0.3.3"
             features:
               dind: true
             env:
