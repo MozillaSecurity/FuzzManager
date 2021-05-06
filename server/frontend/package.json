@@ -9,6 +9,7 @@
         "production": "webpack --config webpack.prod.js"
     },
     "dependencies": {
+        "axios": "^0.21.1",
         "vue": "^2.6.12"
     },
     "devDependencies": {

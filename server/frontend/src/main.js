@@ -1,7 +1,9 @@
 import Vue from "vue"
-import Dummy from "./components/Dummy.vue"
+import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue"
 
 export default new Vue({
     el: '#app',
-    render: h => h(Dummy),
+    components: {
+        'createoredit': CreateOrEdit,
+    }
 })
