@@ -10,16 +10,14 @@
       </div>
 
       <p v-if="inList.length">
-        New issues that will be assigned to this bucket (<a
-href="#crashes_in"
-          >list</a
-        >): <span class="badge">{{ inListCount }}</span>
+        New issues that will be assigned to this bucket (
+        <a href="#crashes_in">list</a>):
+        <span class="badge">{{ inListCount }}</span>
       </p>
       <p v-if="outList.length">
-        Issues that will be removed from this bucket (<a
-href="#crashes_out"
-          >list</a
-        >): <span class="badge">{{ outListCount }}</span>
+        Issues that will be removed from this bucket (
+        <a href="#crashes_out">list</a>):
+        <span class="badge">{{ outListCount }}</span>
       </p>
 
       <form v-on:submit.prevent="">
@@ -47,19 +45,17 @@ href="#crashes_out"
 
         <div class="field">
           <input type="checkbox" id="id_permanent" v-model="bucket.permanent" />
-          <label
-for="id_permanent"
-            >Mark this bucket as a permanent bucket</label
-          >
+          <label for="id_permanent">
+            Mark this bucket as a permanent bucket
+          </label>
         </div>
 
         <div class="field">
           <input type="checkbox" id="id_reassign" v-model="reassign" />
-          <label
-for="id_reassign"
-            >Reassign matching crashes (unassigned crashes and crashes assigned
-            to this bucket will be reassigned)</label
-          >
+          <label for="id_reassign">
+            Reassign matching crashes (unassigned crashes and crashes assigned
+            to this bucket will be reassigned)
+          </label>
         </div>
         <div class="btn-group" v-if="bucketId">
           <button
@@ -97,22 +93,18 @@ for="id_reassign"
 
       <div class="field">
         <template v-if="inList.length">
-          <label
-id="crashes_in"
-            >New issues that will be assigned to this bucket{{
-              inListCount > inList.length ? " (truncated)" : ""
-            }}:</label
-          >
+          <label id="crashes_in">
+            New issues that will be assigned to this bucket
+            {{ inListCount > inList.length ? " (truncated)" : "" }}:
+          </label>
           <List :entries="inList" />
         </template>
 
         <template v-if="outList.length">
-          <label
-id="crashes_out"
-            >Issues that will be removed from this bucket{{
-              outListCount > outList.length ? " (truncated)" : ""
-            }}:</label
-          >
+          <label id="crashes_out">
+            Issues that will be removed from this bucket
+            {{ outListCount > outList.length ? " (truncated)" : "" }}:
+          </label>
           <List :entries="outList" />
         </template>
       </div>
