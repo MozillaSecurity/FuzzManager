@@ -1,5 +1,5 @@
 {% extends 'layouts/layout_base.html' %}
 
 {% block body_content %}
-<crasheslist :restricted="{{ restricted|lower }}" partial-crashes-url="{% url 'crashmanager:crashes-list' %}" />
+<crasheslist :restricted="{{ restricted|lower }}"/>
 {% endblock body_content %}

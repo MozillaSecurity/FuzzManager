@@ -209,7 +209,8 @@
 import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
 import sweetAlert from "sweetalert";
-import { E_SERVER_ERROR } from "../../helpers";
+import { errorParser, E_SERVER_ERROR } from "../../helpers";
+import * as api from "../../api";
 import Row from "./Row.vue";
 
 const pageSize = 100;
@@ -252,10 +253,6 @@ export default {
       type: Boolean,
       required: true,
     },
-    partialCrashesUrl: {
-      type: String,
-      required: true,
-    },
   },
   data: () => ({
     advancedQuery: false,
@@ -291,8 +288,18 @@ export default {
     },
   },
   computed: {
-    crashesUrl() {
-      return `${this.partialCrashesUrl}?vue=1&include_raw=0&limit=${pageSize}`;
+    params() {
+      return {
+        vue: "1",
+        include_raw: "0",
+        limit: pageSize,
+        offset: `${(this.currentPage - 1) * pageSize}`,
+        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
+        query: this.advancedQuery
+          ? this.advancedQueryStr
+          : JSON.stringify(this.buildSimpleQuery()),
+      };
     },
   },
   created: function () {
@@ -365,23 +372,6 @@ export default {
       }
       this.fetch();
     },
-    apiurl: function () {
-      let params = {
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
-        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-      };
-      if (this.advancedQuery) {
-        params.query = encodeURIComponent(this.advancedQueryStr);
-      } else {
-        params.query = encodeURIComponent(
-          JSON.stringify(this.buildSimpleQuery())
-        );
-      }
-      return `${this.crashesUrl}&${Object.entries(params)
-        .map((kv) => kv.join("="))
-        .join("&")}`;
-    },
     buildSimpleQuery: function () {
       let query = Object.assign({ op: "AND" }, this.filters);
       const searchStr = this.searchStr.trim();
@@ -413,44 +403,41 @@ export default {
         this.loading = true;
         this.advancedQueryError = "";
         try {
-          const response = await fetch(this.apiurl(), {
-            method: "GET",
-            credentials: "same-origin",
-          });
-          if (response.ok) {
-            const data = await response.json();
-            this.crashes = data["results"];
-            this.currentEntries = this.crashes.length;
-            this.totalEntries = data["count"];
-            this.totalPages = Math.max(
-              Math.ceil(this.totalEntries / pageSize),
-              1
-            );
-            if (this.currentPage > this.totalPages) {
-              this.currentPage = this.totalPages;
-              this.fetch();
-              return;
-            }
-            this.updateHash();
-          } else {
+          const data = await api.listCrashes(this.params);
+          this.crashes = data.results;
+          this.currentEntries = this.crashes.length;
+          this.totalEntries = data.count;
+          this.totalPages = Math.max(
+            Math.ceil(this.totalEntries / pageSize),
+            1
+          );
+          if (this.currentPage > this.totalPages) {
+            this.currentPage = this.totalPages;
+            this.fetch();
+            return;
+          }
+          this.updateHash();
+        } catch (err) {
+          if (
+            err.response &&
+            err.response.status === 400 &&
+            err.response.data
+          ) {
             if (this.advancedQuery) {
-              response.json().then((val) => {
-                this.advancedQueryError = val.detail;
-              });
+              this.advancedQueryError = err.response.data.detail;
             } else {
-              // TODO: this should set advancedQueryError when in advanced mode
               // eslint-disable-next-line no-console
-              response.text().then(console.debug);
+              console.debug(err.response.data);
               sweetAlert("Oops", E_SERVER_ERROR, "error");
             }
             this.loading = false;
+          } else {
+            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+            // eslint-disable-next-line no-console
+            console.debug(errorParser(err));
+            location.reload();
+            return;
           }
-        } catch (e) {
-          // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-          // eslint-disable-next-line no-console
-          console.debug(e);
-          location.reload();
-          return;
         }
         this.loading = false;
       },
