@@ -75,11 +75,41 @@ tasks:
               description: FuzzManager ${build.name}
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - taskId: {$eval: as_slugid("linting")}
+          provisionerId: proj-fuzzing
+          workerType: ci
+          created: {$fromNow: ''}
+          deadline: {$fromNow: '1 hour'}
+          payload:
+            maxRunTime: 3600
+            image: node:16-alpine
+            command:
+              - /bin/sh
+              - '-x'
+              - '-c'
+              - >-
+                apk add --quiet python3 py3-pip git bash &&
+                pip3 install -q pre-commit &&
+                git init repo &&
+                cd repo &&
+                git remote add origin ${http_repo} &&
+                git fetch -q --depth=1 origin "${fetch_ref}" &&
+                git -c advice.detachedHead=false checkout ${fetch_rev} &&
+                cd server/frontend &&
+                npm ci &&
+                cd ../.. &&
+                pre-commit run -a
+          metadata:
+            name: FuzzManager source code linting
+            description: FuzzManager source code linting
+            owner: '${user}@users.noreply.github.com'
+            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
           then:
             - provisionerId: proj-fuzzing
               workerType: ci
               dependencies:
+                - {$eval: as_slugid("linting")}
                 - {$eval: as_slugid("py36")}
                 - {$eval: as_slugid("py37")}
                 - {$eval: as_slugid("py38")}
