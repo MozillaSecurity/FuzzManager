@@ -2,15 +2,17 @@
 extends:
   - eslint:recommended
   - plugin:vue/strongly-recommended
-  - standard
+  - plugin:prettier/recommended
   - plugin:import/errors
   - plugin:import/warnings
 
 plugins:
   - vue
+  - prettier
 
 env:
   browser: true
+  node: true
 
 rules:
   no-console: 1
