@@ -15,7 +15,11 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(entry, index) in entries" :key="entry.id" :class="{ 'odd': index % 2 === 0, 'even': index % 2 !== 0 }">
+      <tr
+        v-for="(entry, index) in entries"
+        :key="entry.id"
+        :class="{ odd: index % 2 === 0, even: index % 2 !== 0 }"
+      >
         <td>
           <a :href="entry.url">{{ entry.id }}</a>
         </td>
@@ -69,22 +73,21 @@ export default {
   props: {
     entries: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
-    testCaseText (entry) {
-      if (!entry.testcase) return 'No test'
-      let text = 'Q' + entry.testcase_quality + '\n' + entry.testcase_size
-      if (entry.testcase_isbinary) text += '\n    (binary)'
-      return text
+    testCaseText(entry) {
+      if (!entry.testcase) return "No test";
+      let text = "Q" + entry.testcase_quality + "\n" + entry.testcase_size;
+      if (entry.testcase_isbinary) text += "\n    (binary)";
+      return text;
     },
-    staticLogo (name) {
-      return window.location.origin + '/static/img/os/' + name + '.png'
-    }
-  }
-}
+    staticLogo(name) {
+      return window.location.origin + "/static/img/os/" + name + ".png";
+    },
+  },
+};
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
