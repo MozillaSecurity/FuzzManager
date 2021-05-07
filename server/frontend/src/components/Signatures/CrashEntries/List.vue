@@ -23,8 +23,7 @@
         <td>
           <a :href="entry.view_url">{{ entry.id }}</a>
         </td>
-        <!-- TODO: Restore date formatting (previously: `entry.created|date:"r"`) -->
-        <td>{{ entry.created }}</td>
+        <td>{{ entry.created | formatDate }}</td>
         <td>{{ entry.shortSignature }}</td>
         <td>{{ entry.crashAddress }}</td>
         <td>{{ testCaseText(entry) }}</td>
@@ -69,12 +68,17 @@
 </template>
 
 <script>
+import { formatClientTimestamp } from "../../../helpers";
+
 export default {
   props: {
     entries: {
       type: Array,
       required: true,
     },
+  },
+  filters: {
+    formatDate: formatClientTimestamp,
   },
   methods: {
     testCaseText(entry) {
