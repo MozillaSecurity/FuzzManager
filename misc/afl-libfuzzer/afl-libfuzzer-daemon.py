@@ -17,20 +17,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from Collector.Collector import Collector
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Running.AutoRunner import AutoRunner
-from FTB.Signatures.CrashInfo import CrashInfo
-
-from S3Manager import S3Manager
-
 import argparse
 import collections
-from fasteners import InterProcessLock
 import os
 import re
 import shutil
-from six.moves import queue
 import stat
 import subprocess
 import sys
@@ -38,6 +29,17 @@ import tempfile
 import threading
 import time
 import traceback
+import zipfile
+from pathlib import Path
+
+from fasteners import InterProcessLock
+from six.moves import queue
+
+from Collector.Collector import Collector
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Running.AutoRunner import AutoRunner
+from FTB.Signatures.CrashInfo import CrashInfo
+from S3Manager import S3Manager
 
 haveFFPuppet = True
 try:
@@ -475,7 +477,7 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
 
 
 def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
-                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None):
+                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None, transform=None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
 
@@ -492,6 +494,10 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
     @type test_path: String
     @param test_path: Optional filename where to copy the test before
                       attempting to reproduce a crash.
+
+    @type transform: String
+    @param transform: Optional path to script for applying post-crash
+                      transformations.
 
     @rtype: int
     @return: Non-zero return code on failure
@@ -555,6 +561,13 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
             if base_env:
                 env = dict(base_env)
 
+            submission = crash_file
+            if transform:
+                try:
+                    submission = apply_transform(transform, crash_file)
+                except Exception as e:
+                    print(e.args[1], file=sys.stderr)
+
             if test_idx is not None:
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
             elif test_in_env is not None:
@@ -570,11 +583,11 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
             runner = AutoRunner.fromBinaryArgs(cmdline[0], cmdline[1:], env=env, stdin=stdin)
             if runner.run():
                 crash_info = runner.getCrashInfo(configuration)
-                collector.submit(crash_info, crash_file)
-                open(crash_file + ".submitted", 'a').close()
+                collector.submit(crash_info, submission)
+                open(submission + ".submitted", 'a').close()
                 print("Success: Submitted crash to server.", file=sys.stderr)
             else:
-                open(crash_file + ".failed", 'a').close()
+                open(submission + ".failed", 'a').close()
                 print("Error: Failed to reproduce the given crash, cannot submit.", file=sys.stderr)
 
         if firefox:
@@ -621,6 +634,38 @@ def test_binary_asan(bin_path):
     return False
 
 
+def apply_transform(script_path, testcase_path):
+    """
+    Apply a post-crash transformation to the testcase
+
+    @type script_path: String
+    @param script_path: Path to the transformation script
+
+    @type testcase_path: String
+    @param testcase_path: Path to the testcase
+
+    @rtype: String
+    @return: Path to the archive containing the original and transformed testcase
+    """
+
+    with tempfile.TemporaryDirectory() as output_path:
+        try:
+            subprocess.check_call([script_path, testcase_path, output_path])
+        except subprocess.CalledProcessError:
+            raise Exception("Failed to apply post crash transformation.  Aborting...")
+
+        if len(os.listdir(output_path)) == 0:
+            raise Exception("Transformation script did not generate any files.  Aborting...")
+
+        archive_path = testcase_path + ".zip"
+        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as archive:
+            archive.write(testcase_path, os.path.basename(testcase_path))
+            for file in Path(output_path).rglob('*.*'):
+                archive.write(file, arcname=file.relative_to(output_path))
+
+    return archive_path
+
+
 def main(argv=None):
     '''Command line options.'''
 
@@ -657,6 +702,8 @@ def main(argv=None):
                            help="Shows useful debug information (e.g. disables command output suppression)")
     mainGroup.add_argument("--stats", dest="stats",
                            help="Collect aggregated statistics in specified file", metavar="FILE")
+    mainGroup.add_argument("--transform", dest="transform",
+                           help="Apply post crash transformation to the testcase", metavar="FILE")
 
     s3Group.add_argument("--s3-queue-upload", dest="s3_queue_upload", action='store_true',
                          help="Use S3 to synchronize queues")
@@ -787,6 +834,10 @@ def main(argv=None):
         collector = Collector(sigCacheDir=opts.sigdir, serverHost=opts.serverhost, serverPort=opts.serverport,
                               serverProtocol=opts.serverproto, serverAuthToken=serverauthtoken,
                               clientId=opts.clientid, tool=opts.tool)
+
+    if opts.transform and not os.path.isfile(opts.transform):
+        print("Error: Failed to locate transformation script %s" % opts.transform, file=sys.stderr)
+        return 2
 
     # ## Begin generic S3 action handling ##
 
@@ -1362,6 +1413,14 @@ def main(argv=None):
                         warning = "Fuzzing did not startup correctly."
                         write_aggregated_stats_libfuzzer(opts.stats, stats, monitors, [warning])
                     return 2
+
+                if opts.transform:
+                    # If a transformation script was supplied, update the testcase path to
+                    # point to the archive which includes both, the original and updated testcases
+                    try:
+                        testcase = apply_transform(opts.transform, testcase)
+                    except Exception as e:
+                        print(e.args[1], file=sys.stderr)
 
                 # If we run in local mode (no --fuzzmanager specified), then we just continue after each crash
                 if not opts.fuzzmanager:
