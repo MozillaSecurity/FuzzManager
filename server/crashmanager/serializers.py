@@ -173,7 +173,7 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
         return None
 
     def get_sig_new_url(self, entry):
-        return f"{reverse('crashmanager:signew')}?crashid={entry.id}"
+        return "{}?crashid={}".format(reverse('crashmanager:signew'), entry.id)
 
     def get_find_sigs_url(self, entry):
         return reverse('crashmanager:findsigs', kwargs={'crashid': entry.id})
