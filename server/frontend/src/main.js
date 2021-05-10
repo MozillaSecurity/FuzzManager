@@ -5,8 +5,12 @@ window.E_SERVER_ERROR = E_SERVER_ERROR;
 window.formatClientTimestamp = formatClientTimestamp;
 
 import Vue from "vue";
+import VueRouter from "vue-router";
+import router from "./router.js";
 import List from "./components/Crashes/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
+
+Vue.use(VueRouter);
 
 window.onload = function () {
   new Vue({
@@ -15,5 +19,6 @@ window.onload = function () {
       createoredit: CreateOrEdit,
       crasheslist: List,
     },
+    router,
   });
 };

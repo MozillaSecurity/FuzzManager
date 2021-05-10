@@ -275,13 +275,13 @@ export default {
   }),
   watch: {
     advancedQueryStr: function () {
-      this.debouncedFetch();
+      if (this.advancedQuery) this.debouncedFetch();
     },
     ignoreToolFilter: function () {
       this.fetch();
     },
     searchStr: function () {
-      this.debouncedFetch();
+      if (!this.advancedQuery) this.debouncedFetch();
     },
     showBucketed: function () {
       this.fetch();
@@ -304,8 +304,8 @@ export default {
   },
   created: function () {
     this.debouncedFetch = _debounce(this.fetch, 1000);
-    if (location.hash.startsWith("#")) {
-      const hash = location.hash
+    if (this.$route.hash.startsWith("#")) {
+      const hash = this.$route.hash
         .substring(1)
         .split(",")
         .map((v) => v.split("="))
@@ -435,7 +435,7 @@ export default {
             // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
             // eslint-disable-next-line no-console
             console.debug(errorParser(err));
-            location.reload();
+            this.$router.go(0);
             return;
           }
         }
@@ -500,13 +500,16 @@ export default {
           hash[key] = encodeURIComponent(value);
       }
       if (Object.entries(hash).length) {
-        location.hash =
+        const routeHash =
           "#" +
           Object.entries(hash)
             .map((kv) => kv.join("="))
             .join();
+        if (this.$route.hash !== routeHash)
+          this.$router.push({ name: "crashes-list", hash: routeHash });
       } else {
-        location.hash = "";
+        if (this.$route.hash !== "")
+          this.$router.push({ name: "crashes-list", hash: "" });
       }
     },
   },
