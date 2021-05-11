@@ -164,6 +164,39 @@ FuzzManager jobs:
 */30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
 
+### Run server with Docker
+
+A docker image is available by building the `Dockerfile`.
+
+You can easily run a local server (and Mysql database server) by using [docker-composer](https://docs.docker.com/compose/):
+
+```console
+docker-compose up
+```
+
+On a first run, you must execute the database migrations:
+
+```console
+docker-compose exec backend python manage.py migrate
+```
+
+And create a super user to be able to login on http://localhost:8000
+
+```console
+docker-compose exec backend python manage.py createsuperuser
+```
+
+By default the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
+- `DEBUG = False` to enable production mode
+- `ALLOWED_HOSTS = ["localhost", ]` to allow development usage on `http://localhost:8000`
+
+You can customize settings by mounting a file from your host into the container:
+
+```yaml
+volumes:
+  - "./settings_docker.py:/src/server/server/settings_docker.py:ro"
+```
+
 ## Client Usage
 
 In order to talk to FuzzManager, your fuzzer should use the client interface provided, called the Collector. It can be used as a standalone command line tool or directly as a Python class in case your fuzzer is written in Python.

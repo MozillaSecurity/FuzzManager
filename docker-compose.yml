@@ -1,0 +1,37 @@
+---
+version: "3.7"
+services:
+
+  backend:
+    container_name: fuzzmanager
+    build: .
+
+    depends_on:
+      - database
+
+    volumes:
+      - userdata:/data
+      - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
+
+    ports:
+      - "8000:80"
+
+  database:
+    container_name: fuzzmanager-db
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+
+    environment:
+      MYSQL_USER: fuzzmanager
+      MYSQL_PASSWORD: mozilla1234
+      MYSQL_DATABASE: fuzzmanager
+      MYSQL_ROOT_PASSWORD: mozilla6789
+
+    volumes:
+      - mysql:/var/lib/mysql
+
+volumes:
+  userdata:
+    driver: local
+  mysql:
+    driver: local

@@ -26,6 +26,11 @@ tasks:
       then: ${event.pull_request.base.repo.clone_url}
       else: ${event.repository.clone_url}
 
+    head_repo:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.head.repo.clone_url}
+      else: ${event.repository.clone_url}
+
     codecov_secret_url:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
@@ -102,6 +107,45 @@ tasks:
           metadata:
             name: FuzzManager source code linting
             description: FuzzManager source code linting
+            owner: '${user}@users.noreply.github.com'
+            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - taskId: {$eval: as_slugid("docker")}
+          provisionerId: proj-fuzzing
+          workerType: ci
+          dependencies:
+            - {$eval: as_slugid("linting")}
+            - {$eval: as_slugid("py36")}
+            - {$eval: as_slugid("py37")}
+            - {$eval: as_slugid("py38")}
+          created: {$fromNow: ''}
+          deadline: {$fromNow: '1 hour'}
+          payload:
+            image: "mozillasecurity/orion-builder:latest"
+            maxRunTime: 3600
+            capabilities:
+              privileged: true
+            env:
+              LOAD_DEPS: "0"
+              GIT_REPOSITORY: ${head_repo}
+              GIT_REVISION: ${fetch_rev}
+              BUILD_TOOL: img
+              DOCKERFILE: Dockerfile
+              IMAGE_NAME: mozillasecurity/fuzzmanager
+              ARCHIVE_PATH: /image.tar
+            command:
+              - sh
+              - -c
+              - uname -a && exec build
+            artifacts:
+              public/fuzzmanager.tar.zst:
+                expires: {$fromNow: '6 months'}
+                path: /image.tar.zst
+                type: file
+          scopes:
+            - docker-worker:capability:privileged
+          metadata:
+            name: FuzzManager Docker build
+            description: FuzzManager Docker build
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
