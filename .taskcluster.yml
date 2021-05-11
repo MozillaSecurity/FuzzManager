@@ -105,6 +105,46 @@ tasks:
             description: FuzzManager source code linting
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - taskId: {$eval: as_slugid("docker")}
+          provisionerId: proj-fuzzing
+          workerType: ci
+          dependencies:
+            - {$eval: as_slugid("linting")}
+            - {$eval: as_slugid("py35")}
+            - {$eval: as_slugid("py36")}
+            - {$eval: as_slugid("py37")}
+            - {$eval: as_slugid("py38")}
+          created: {$fromNow: ''}
+          deadline: {$fromNow: '1 hour'}
+          payload:
+            image: "mozillasecurity/orion-builder:latest"
+            maxRunTime: 3600
+            capabilities:
+              privileged: true
+            env:
+              LOAD_DEPS: "0"
+              GIT_REPOSITORY: ${http_repo}
+              GIT_REVISION: ${fetch_ref}
+              BUILD_TOOL: img
+              DOCKERFILE: Dockerfile
+              IMAGE_NAME: mozillasecurity/fuzzmanager
+              ARCHIVE_PATH: /image.tar
+            command:
+              - sh
+              - -c
+              - uname -a && exec build
+            artifacts:
+              public/fuzzmanager.tar.zst:
+                expires: {$fromNow: '6 months'}
+                path: /image.tar.zst
+                type: file
+          scopes:
+            - docker-worker:capability:privileged
+          metadata:
+            name: FuzzManager Docker build
+            description: FuzzManager Docker build
+            owner: '${user}@users.noreply.github.com'
+            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
           then:
             - provisionerId: proj-fuzzing
