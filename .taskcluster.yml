@@ -26,6 +26,11 @@ tasks:
       then: ${event.pull_request.base.repo.clone_url}
       else: ${event.repository.clone_url}
 
+    head_repo:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.head.repo.clone_url}
+      else: ${event.repository.clone_url}
+
     codecov_secret_url:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
@@ -123,7 +128,7 @@ tasks:
               privileged: true
             env:
               LOAD_DEPS: "0"
-              GIT_REPOSITORY: ${http_repo}
+              GIT_REPOSITORY: ${head_repo}
               GIT_REVISION: ${fetch_ref}
               BUILD_TOOL: img
               DOCKERFILE: Dockerfile
