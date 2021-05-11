@@ -129,7 +129,7 @@ tasks:
             env:
               LOAD_DEPS: "0"
               GIT_REPOSITORY: ${head_repo}
-              GIT_REVISION: ${fetch_ref}
+              GIT_REVISION: ${fetch_rev}
               BUILD_TOOL: img
               DOCKERFILE: Dockerfile
               IMAGE_NAME: mozillasecurity/fuzzmanager
