@@ -287,21 +287,6 @@ export default {
       this.fetch();
     },
   },
-  computed: {
-    params() {
-      return {
-        vue: "1",
-        include_raw: "0",
-        limit: pageSize,
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
-        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-        query: this.advancedQuery
-          ? this.advancedQueryStr
-          : JSON.stringify(this.buildSimpleQuery()),
-      };
-    },
-  },
   created: function () {
     this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
@@ -398,12 +383,25 @@ export default {
       this.canUnshowBucketed = true;
       this.updateHash();
     },
+    buildParams() {
+      return {
+        vue: "1",
+        include_raw: "0",
+        limit: pageSize,
+        offset: `${(this.currentPage - 1) * pageSize}`,
+        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
+        query: this.advancedQuery
+          ? this.advancedQueryStr
+          : JSON.stringify(this.buildSimpleQuery()),
+      };
+    },
     fetch: _throttle(
       async function () {
         this.loading = true;
         this.advancedQueryError = "";
         try {
-          const data = await api.listCrashes(this.params);
+          const data = await api.listCrashes(this.buildParams());
           this.crashes = data.results;
           this.currentEntries = this.crashes.length;
           this.totalEntries = data.count;
