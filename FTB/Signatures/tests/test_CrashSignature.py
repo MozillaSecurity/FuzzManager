@@ -641,9 +641,9 @@ def test_SignatureAsanAccessViolationTest():
 
     testSig = crashInfoPos.createCrashSignature()
 
-    assert "/ERROR: AddressSanitizer" in str(testSig)
-    assert "access-violation" in str(testSig)
-    assert isinstance(testSig.symptoms[1], StackFramesSymptom)
+    assert "/ERROR: AddressSanitizer" not in str(testSig)
+    assert "access-violation" not in str(testSig)
+    assert isinstance(testSig.symptoms[0], StackFramesSymptom)
 
 
 def test_SignatureStackSizeTest():
