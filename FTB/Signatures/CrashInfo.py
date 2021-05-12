@@ -627,25 +627,26 @@ class ASanCrashInfo(CrashInfo):
         expectedIndex = 0
         reportFound = False
         for traceLine in asanOutput:
-            if not reportFound:
+            if not reportFound or self.crashAddress is None:
                 match = re.search(asanCrashAddressPattern, traceLine)
-                if match is None:
+                if match is not None:
+                    reportFound = True
+                    try:
+                        self.crashAddress = int(match.group(1), 16)
+                    except TypeError:
+                        pass  # No crash address available
+
+                    # Crash Address and Registers are in the same line for ASan
+                    match = re.search(asanRegisterPattern, traceLine)
+                    # Collect register values if they are available in the ASan trace
+                    if match is not None:
+                        self.registers["pc"] = int(match.group(1), 16)
+                        self.registers[match.group(2)] = int(match.group(3), 16)
+                        self.registers[match.group(4)] = int(match.group(5), 16)
+                elif not reportFound:
                     # Not in the ASan output yet.
                     # Some lines in eg. debug+asan builds might error if we continue.
                     continue
-                reportFound = True
-                try:
-                    self.crashAddress = int(match.group(1), 16)
-                except TypeError:
-                    pass  # No crash address available
-
-                # Crash Address and Registers are in the same line for ASan
-                match = re.search(asanRegisterPattern, traceLine)
-                # Collect register values if they are available in the ASan trace
-                if match is not None:
-                    self.registers["pc"] = int(match.group(1), 16)
-                    self.registers[match.group(2)] = int(match.group(3), 16)
-                    self.registers[match.group(4)] = int(match.group(5), 16)
 
             parts = traceLine.strip().split()
 

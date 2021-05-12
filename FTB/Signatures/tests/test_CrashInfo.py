@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import os
 
+import pytest
+
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
@@ -35,6 +37,24 @@ asanTraceAV = """
 
 asanTraceCrash = """
 ASAN:SIGSEGV
+=================================================================
+==5854==ERROR: AddressSanitizer: SEGV on unknown address 0x00000014 (pc 0x0810845f sp 0xffc57860 bp 0xffc57f18 T0)
+    #0 0x810845e in js::AbstractFramePtr::asRematerializedFrame() const /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114
+    #1 0x810845e in js::AbstractFramePtr::script() const /srv/repos/mozilla-central/js/src/shell/../vm/Stack-inl.h:572
+    #2 0x810845e in EvalInFrame(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:2655
+    #3 0x93f5b92 in js::CallJSNative(JSContext*, bool (*)(JSContext*, unsigned int, JS::Value*), JS::CallArgs const&) /srv/repos/mozilla-central/js/src/jscntxtinlines.h:231
+    #4 0x93f5b92 in js::Invoke(JSContext*, JS::CallArgs, js::MaybeConstruct) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:484
+    #5 0x9346ba7 in js::Invoke(JSContext*, JS::Value const&, JS::Value const&, unsigned int, JS::Value const*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:540
+    #6 0x8702baa in js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/jit/BaselineIC.cpp:8638
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
+==5854==ABORTING
+"""  # noqa
+
+asanTraceCrashWithWarning = """
+ASAN:SIGSEGV
+==17692==WARNING: AddressSanitizer failed to allocate 0x1fffffffc bytes
 =================================================================
 ==5854==ERROR: AddressSanitizer: SEGV on unknown address 0x00000014 (pc 0x0810845f sp 0xffc57860 bp 0xffc57f18 T0)
     #0 0x810845e in js::AbstractFramePtr::asRematerializedFrame() const /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114
@@ -839,6 +859,21 @@ def test_ASanParserTestCrash():
     assert crashInfo.registers["bp"] == 0xffc57f18
 
 
+def test_ASanParserTestCrashWithWarning():
+    config = ProgramConfiguration("test", "x86", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceCrashWithWarning.splitlines(), config)
+    assert len(crashInfo.backtrace) == 7
+    assert crashInfo.backtrace[0] == "js::AbstractFramePtr::asRematerializedFrame"
+    assert crashInfo.backtrace[2] == "EvalInFrame"
+    assert crashInfo.backtrace[3] == "js::CallJSNative"
+
+    assert crashInfo.crashAddress == 0x00000014
+    assert crashInfo.registers["pc"] == 0x0810845f
+    assert crashInfo.registers["sp"] == 0xffc57860
+    assert crashInfo.registers["bp"] == 0xffc57f18
+
+
 def test_ASanParserTestFailedAlloc():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
@@ -926,14 +961,20 @@ def test_ASanParserTestDebugAssertion():
             crashInfo.createShortSignature())
 
 
-def test_ASanDetectionTest():
+@pytest.mark.parametrize("stderr, crashdata", [
+    ("", asanTraceCrash),
+    (asanTraceUAF, ""),
+    ("", asanTraceCrashWithWarning),
+])
+def test_ASanDetectionTest(stderr, crashdata):
     config = ProgramConfiguration("test", "x86", "linux")
-
-    crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=asanTraceCrash.splitlines())
-    crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines(), config)
-
-    assert isinstance(crashInfo1, ASanCrashInfo)
-    assert isinstance(crashInfo2, ASanCrashInfo)
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        stderr.splitlines(),
+        config,
+        auxCrashData=crashdata.splitlines(),
+    )
+    assert isinstance(crashInfo, ASanCrashInfo)
 
 
 def test_ASanParserTestParamOverlap():
