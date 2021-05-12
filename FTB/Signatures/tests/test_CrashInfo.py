@@ -147,6 +147,12 @@ asanTraceInvalidFree = """
     #0 0x4c8690 in __interceptor_free /srv/repos/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:38
 """  # noqa
 
+asanTraceOOM = """
+==5027==ERROR: AddressSanitizer: allocator is out of memory trying to allocate 0x24 bytes
+    #0 0x55928e177bbd in operator new(unsigned long) /builds/worker/fetches/llvm-project/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x7f58443bd5cb in std::vector<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, std::allocator<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> > >::operator=(std::vector<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, std::allocator<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> > > const&) (/lib/x86_64-linux-gnu/libLLVM-11.so.1+0x12335cb)
+"""  # noqa
+
 asanTraceDebugAssertion = """
 ### XPCOM_MEM_LEAK_LOG defined -- logging leaks to wtmp1/q1-final-leaks.txt
 Crash Annotation GraphicsCriticalError: |[0][GFX1]: Texture deallocated too late during shutdown (t=22.4895) [GFX1]: Texture deallocated too late during shutdown
@@ -964,6 +970,26 @@ def test_ASanParserTestInvalidFree():
 
     assert (("AddressSanitizer: attempting free on address which was not malloc()-ed "
              "[@ __interceptor_free]") == crashInfo.createShortSignature())
+
+
+def test_ASanParserTestOOM():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceOOM.splitlines(), config)
+    assert len(crashInfo.backtrace) == 2
+    assert crashInfo.backtrace[0] == "operator new"
+    assert crashInfo.backtrace[1] == (
+        "std::vector<"
+        "std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, "
+        "std::allocator<"
+        "std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> "
+        "> >::operator="
+    )
+
+    assert crashInfo.crashAddress is None
+
+    assert (("AddressSanitizer: allocator is out of memory trying to allocate 0x24 bytes "
+             "[@ operator new]") == crashInfo.createShortSignature())
 
 
 def test_ASanParserTestDebugAssertion():
