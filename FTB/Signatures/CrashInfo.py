@@ -258,6 +258,7 @@ class CrashInfo(object):
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
         tsanString = "WARNING: ThreadSanitizer:"
+        tsanString2 = "ERROR: ThreadSanitizer:"
         ubsanString = ": runtime error: "
         ubsanString2 = "ERROR: UndefinedBehaviorSanitizer"
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
@@ -286,7 +287,7 @@ class CrashInfo(object):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif asanString in line or ubsanString2 in line:
+            elif asanString in line or ubsanString2 in line or tsanString2 in line:
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif lsanString in line:
@@ -668,9 +669,22 @@ class ASanCrashInfo(CrashInfo):
                                    (index, expectedIndex))
 
             component = None
-            if len(parts) > 2:
+            # TSan doesn't include address, symbol will be immediately following the frame number
+            if len(parts) > 1 and not parts[1].startswith("0x"):
+                if parts[1] == "<null>":
+                    # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
+                    if "+" in parts[-1]:
+                        # Remove parentheses around component
+                        component = parts[-1][1:-1]
+                    else:
+                        component = "<missing>"
+                else:
+                    component = " ".join(parts[1:-2])
+            elif len(parts) > 2:
                 if parts[2] == "in":
                     component = " ".join(parts[3:-1])
+                elif parts[2:] == ["(<unknown", "module>)"]:
+                    component = "<missing>"
                 else:
                     # Remove parentheses around component
                     component = parts[2][1:-1]

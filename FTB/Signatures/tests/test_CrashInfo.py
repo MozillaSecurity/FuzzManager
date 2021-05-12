@@ -46,6 +46,8 @@ ASAN:SIGSEGV
     #4 0x93f5b92 in js::Invoke(JSContext*, JS::CallArgs, js::MaybeConstruct) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:484
     #5 0x9346ba7 in js::Invoke(JSContext*, JS::Value const&, JS::Value const&, unsigned int, JS::Value const*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:540
     #6 0x8702baa in js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/jit/BaselineIC.cpp:8638
+    #7 0x7f1fda874dd0  (/usr/lib/x86_64-linux-gnu/dri/swrast_dri.so+0x67edd0)
+    #8 0x17930ba87d6f  (<unknown module>)
 
 AddressSanitizer can not provide additional info.
 SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
@@ -748,6 +750,22 @@ stack backtrace:
    3:     0x7f7a3a17d8d2 - std::panicking::default_hook::hf425c768c5ffbbad
 """
 
+tsanTraceCrash = """
+==7727==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000000 (pc 0x559ed71aa5e3 bp 0x000000000033 sp 0x7fe1a51bcf00 T7880)
+==7727==The signal is caused by a WRITE memory access.
+==7727==Hint: address points to the zero page.
+    #0 mozalloc_abort /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 (firefox+0xcb5e3)
+    #1 mozalloc_handle_oom(unsigned long) /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_oom.cpp:51:3 (firefox+0xcb6ac)
+    #2 GeckoHandleOOM /builds/worker/checkouts/gecko/toolkit/xre/nsAppRunner.cpp:5825:47 (libxul.so+0x679a4d5)
+    #3 gkrust_shared::oom_hook::hook::hdb794dafd9a70020 /builds/worker/checkouts/gecko/toolkit/library/rust/shared/lib.rs:133:13 (libxul.so+0x7c33ea6)
+    #4 <null> <null> (swrast_dri.so+0x75dc33)
+    #5 <null> <null> (0x7eff0a5dad88)
+
+ThreadSanitizer can not provide additional info.
+SUMMARY: ThreadSanitizer: SEGV /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 in mozalloc_abort
+==7727==ABORTING
+"""  # noqa
+
 ubsanTraceGenericCrash = """
 ==8555==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000000004141 (pc 0x7f070b805037 bp 0x7f06626006b0 sp 0x7f0662600680 T28456)
 ==8555==The signal is caused by a READ memory access.
@@ -847,11 +865,13 @@ def test_ASanParserTestCrash():
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines(), config)
-    assert len(crashInfo.backtrace) == 7
+    assert len(crashInfo.backtrace) == 9
     assert crashInfo.backtrace[0] == "js::AbstractFramePtr::asRematerializedFrame"
     assert crashInfo.backtrace[2] == "EvalInFrame"
     assert crashInfo.backtrace[3] == "js::CallJSNative"
     assert crashInfo.backtrace[6] == "js::jit::DoCallFallback"
+    assert crashInfo.backtrace[7] == "/usr/lib/x86_64-linux-gnu/dri/swrast_dri.so+0x67edd0"
+    assert crashInfo.backtrace[8] == "<missing>"
 
     assert crashInfo.crashAddress == 0x00000014
     assert crashInfo.registers["pc"] == 0x0810845f
@@ -965,6 +985,8 @@ def test_ASanParserTestDebugAssertion():
     ("", asanTraceCrash),
     (asanTraceUAF, ""),
     ("", asanTraceCrashWithWarning),
+    ("", tsanTraceCrash),
+    ("", ubsanTraceGenericCrash),
 ])
 def test_ASanDetectionTest(stderr, crashdata):
     config = ProgramConfiguration("test", "x86", "linux")
@@ -2919,6 +2941,25 @@ def test_TSanParserLockReportTest():
 
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None
+
+
+def test_TSanParserTestCrash():
+    config = ProgramConfiguration("test", "x86", "linux")
+
+    crashInfo = CrashInfo.fromRawCrashData([], [], config, tsanTraceCrash.splitlines())
+    assert crashInfo.createShortSignature() == "[@ mozalloc_abort]"
+    assert len(crashInfo.backtrace) == 6
+    assert crashInfo.backtrace[0] == "mozalloc_abort"
+    assert crashInfo.backtrace[1] == "mozalloc_handle_oom"
+    assert crashInfo.backtrace[2] == "GeckoHandleOOM"
+    assert crashInfo.backtrace[3] == "gkrust_shared::oom_hook::hook"
+    assert crashInfo.backtrace[4] == "swrast_dri.so+0x75dc33"
+    assert crashInfo.backtrace[5] == "<missing>"
+
+    assert crashInfo.crashAddress == 0
+    assert crashInfo.registers["pc"] == 0x559ed71aa5e3
+    assert crashInfo.registers["bp"] == 0x033
+    assert crashInfo.registers["sp"] == 0x7fe1a51bcf00
 
 
 def test_TSanParserTest():
