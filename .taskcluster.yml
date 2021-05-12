@@ -37,7 +37,6 @@ tasks:
     then:
       $flatten:
         - $map:
-          - {image: ci-py-35, toxenv: 'py35', name: 'tests python 3.5 django 2.x'}
           - {image: ci-py-36, toxenv: 'py36', name: 'tests python 3.6 django 2.x'}
           - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
           - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
@@ -81,7 +80,6 @@ tasks:
             - provisionerId: proj-fuzzing
               workerType: ci
               dependencies:
-                - {$eval: as_slugid("py35")}
                 - {$eval: as_slugid("py36")}
                 - {$eval: as_slugid("py37")}
                 - {$eval: as_slugid("py38")}
