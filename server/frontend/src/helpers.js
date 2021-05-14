@@ -36,7 +36,7 @@ export const errorParser = (error) => {
 export const E_SERVER_ERROR = "Error while communicating with the server.";
 
 export const formatClientTimestamp = (datetime) => {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(undefined, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
