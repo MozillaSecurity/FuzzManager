@@ -87,6 +87,10 @@
       <p v-else-if="!showBucketed">
         Displaying {{ currentEntries }}/{{ totalEntries }} unbucketed entries.
       </p>
+      <p v-else-if="watchId !== null && crashes">
+        Displaying {{ currentEntries }} new entries in bucket
+        {{ crashes[0].bucket }}.
+      </p>
       <p v-else>Displaying {{ currentEntries }}/{{ totalEntries }} entries.</p>
 
       <div class="pagination">
@@ -253,6 +257,11 @@ export default {
       type: Boolean,
       required: true,
     },
+    watchId: {
+      type: Number,
+      required: false,
+      default: null,
+    },
   },
   data: () => ({
     advancedQuery: false,
@@ -288,16 +297,11 @@ export default {
     },
   },
   created: function () {
+    this.showBucketed = this.watchId !== null;
+    if (this.$route.query.q) this.searchStr = this.$route.query.q;
     this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
-      const hash = this.$route.hash
-        .substring(1)
-        .split(",")
-        .map((v) => v.split("="))
-        .reduce(
-          (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
-          {}
-        );
+      const hash = this.parseHash();
       if (Object.prototype.hasOwnProperty.call(hash, "page")) {
         try {
           this.currentPage = Number.parseInt(hash.page, 10);
@@ -323,6 +327,8 @@ export default {
           );
         }
       }
+      if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
+        this.filters["bucket"] = hash.bucket;
       this.ignoreToolFilter = hash.alltools === "1";
       if (hash.advanced === "1") {
         this.advancedQuery = true;
@@ -357,6 +363,20 @@ export default {
       }
       this.fetch();
     },
+    buildParams() {
+      return {
+        vue: "1",
+        include_raw: "0",
+        limit: pageSize,
+        offset: `${(this.currentPage - 1) * pageSize}`,
+        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
+        query: this.advancedQuery
+          ? this.advancedQueryStr
+          : JSON.stringify(this.buildSimpleQuery()),
+        watch: this.watchId === null ? false : this.watchId,
+      };
+    },
     buildSimpleQuery: function () {
       let query = Object.assign({ op: "AND" }, this.filters);
       const searchStr = this.searchStr.trim();
@@ -379,22 +399,13 @@ export default {
       this.advancedQueryStr = JSON.stringify(this.buildSimpleQuery(), null, 2);
       this.searchStr = "";
       this.filters = {};
-      this.showBucketed = false;
+      const hash = this.parseHash();
+      if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
+        this.filters["bucket"] = hash.bucket;
+      this.showBucketed =
+        this.watchId !== null || this.filters["bucket"] !== undefined;
       this.canUnshowBucketed = true;
       this.updateHash();
-    },
-    buildParams() {
-      return {
-        vue: "1",
-        include_raw: "0",
-        limit: pageSize,
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
-        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-        query: this.advancedQuery
-          ? this.advancedQueryStr
-          : JSON.stringify(this.buildSimpleQuery()),
-      };
     },
     fetch: _throttle(
       async function () {
@@ -448,6 +459,16 @@ export default {
         this.fetch();
       }
     },
+    parseHash: function () {
+      return this.$route.hash
+        .substring(1)
+        .split(",")
+        .map((v) => v.split("="))
+        .reduce(
+          (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
+          {}
+        );
+    },
     prevPage: function () {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -468,7 +489,11 @@ export default {
       this.advancedQueryStr = "";
       this.searchStr = "";
       this.filters = {};
-      this.showBucketed = false;
+      const hash = this.parseHash();
+      if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
+        this.filters["bucket"] = hash.bucket;
+      this.showBucketed =
+        this.watchId !== null || this.filters["bucket"] !== undefined;
       this.canUnshowBucketed = true;
       this.fetch();
     },
@@ -487,6 +512,8 @@ export default {
         hash.sort = (this.reverse ? "-" : "") + this.sortKey;
       }
       if (this.ignoreToolFilter) hash.alltools = "1";
+      if (this.filters["bucket"] !== undefined)
+        hash.bucket = this.filters["bucket"];
       if (this.advancedQuery) {
         hash.advanced = "1";
         hash.query = encodeURIComponent(this.advancedQueryStr);
@@ -504,10 +531,10 @@ export default {
             .map((kv) => kv.join("="))
             .join();
         if (this.$route.hash !== routeHash)
-          this.$router.push({ name: "crashes-list", hash: routeHash });
+          this.$router.push({ path: this.$route.path, hash: routeHash });
       } else {
         if (this.$route.hash !== "")
-          this.$router.push({ name: "crashes-list", hash: "" });
+          this.$router.push({ path: this.$route.path, hash: "" });
       }
     },
   },
