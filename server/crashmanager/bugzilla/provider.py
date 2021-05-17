@@ -23,14 +23,14 @@ from django.forms.models import model_to_dict
 from django.shortcuts import render, get_object_or_404
 from django.utils import dateparse
 
-from .BugzillaREST import BugzillaREST
-from .Provider import Provider
+from .api import BugzillaREST
 from ..models import BugzillaTemplate, User
 
 
-class BugzillaProvider(Provider):
+class BugzillaProvider(object):
     def __init__(self, pk, hostname):
-        super(BugzillaProvider, self).__init__(pk, hostname)
+        self.pk = pk
+        self.hostname = hostname
 
         self.templateFields = [
             "name",
