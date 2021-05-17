@@ -258,6 +258,7 @@ class CrashInfo(object):
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
         tsanString = "WARNING: ThreadSanitizer:"
+        tsanString2 = "ERROR: ThreadSanitizer:"
         ubsanString = ": runtime error: "
         ubsanString2 = "ERROR: UndefinedBehaviorSanitizer"
         ubsanRegex = r".+?:\d+:\d+: runtime error:\s+.+"
@@ -286,7 +287,7 @@ class CrashInfo(object):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif asanString in line or ubsanString2 in line:
+            elif asanString in line or ubsanString2 in line or tsanString2 in line:
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif lsanString in line:
@@ -615,6 +616,7 @@ class ASanCrashInfo(CrashInfo):
                                      (?:on\saddress             # The most common format, used for all overflows
                                        |on\sunknown\saddress    # Used in case of a SIGSEGV
                                        |double-free\son         # Used in case of a double-free
+                                       |allocator\sis\sout\sof\smemory\strying\sto\sallocate\s0x[0-9a-f]+\sbytes
                                        |failed\sto\sallocate\s0x[0-9a-f]+\s
                                        |negative-size-param:\s*\(size=-\d+\)
                                        |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
@@ -627,25 +629,26 @@ class ASanCrashInfo(CrashInfo):
         expectedIndex = 0
         reportFound = False
         for traceLine in asanOutput:
-            if not reportFound:
+            if not reportFound or self.crashAddress is None:
                 match = re.search(asanCrashAddressPattern, traceLine)
-                if match is None:
+                if match is not None:
+                    reportFound = True
+                    try:
+                        self.crashAddress = int(match.group(1), 16)
+                    except TypeError:
+                        pass  # No crash address available
+
+                    # Crash Address and Registers are in the same line for ASan
+                    match = re.search(asanRegisterPattern, traceLine)
+                    # Collect register values if they are available in the ASan trace
+                    if match is not None:
+                        self.registers["pc"] = int(match.group(1), 16)
+                        self.registers[match.group(2)] = int(match.group(3), 16)
+                        self.registers[match.group(4)] = int(match.group(5), 16)
+                elif not reportFound:
                     # Not in the ASan output yet.
                     # Some lines in eg. debug+asan builds might error if we continue.
                     continue
-                reportFound = True
-                try:
-                    self.crashAddress = int(match.group(1), 16)
-                except TypeError:
-                    pass  # No crash address available
-
-                # Crash Address and Registers are in the same line for ASan
-                match = re.search(asanRegisterPattern, traceLine)
-                # Collect register values if they are available in the ASan trace
-                if match is not None:
-                    self.registers["pc"] = int(match.group(1), 16)
-                    self.registers[match.group(2)] = int(match.group(3), 16)
-                    self.registers[match.group(4)] = int(match.group(5), 16)
 
             parts = traceLine.strip().split()
 
@@ -667,9 +670,22 @@ class ASanCrashInfo(CrashInfo):
                                    (index, expectedIndex))
 
             component = None
-            if len(parts) > 2:
+            # TSan doesn't include address, symbol will be immediately following the frame number
+            if len(parts) > 1 and not parts[1].startswith("0x"):
+                if parts[1] == "<null>":
+                    # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
+                    if "+" in parts[-1]:
+                        # Remove parentheses around component
+                        component = parts[-1][1:-1]
+                    else:
+                        component = "<missing>"
+                else:
+                    component = " ".join(parts[1:-2])
+            elif len(parts) > 2:
                 if parts[2] == "in":
                     component = " ".join(parts[3:-1])
+                elif parts[2:] == ["(<unknown", "module>)"]:
+                    component = "<missing>"
                 else:
                     # Remove parentheses around component
                     component = parts[2][1:-1]

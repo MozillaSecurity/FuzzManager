@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import os
 
+import pytest
+
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import ASanCrashInfo, GDBCrashInfo, CrashInfo, \
@@ -35,6 +37,26 @@ asanTraceAV = """
 
 asanTraceCrash = """
 ASAN:SIGSEGV
+=================================================================
+==5854==ERROR: AddressSanitizer: SEGV on unknown address 0x00000014 (pc 0x0810845f sp 0xffc57860 bp 0xffc57f18 T0)
+    #0 0x810845e in js::AbstractFramePtr::asRematerializedFrame() const /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114
+    #1 0x810845e in js::AbstractFramePtr::script() const /srv/repos/mozilla-central/js/src/shell/../vm/Stack-inl.h:572
+    #2 0x810845e in EvalInFrame(JSContext*, unsigned int, JS::Value*) /srv/repos/mozilla-central/js/src/shell/js.cpp:2655
+    #3 0x93f5b92 in js::CallJSNative(JSContext*, bool (*)(JSContext*, unsigned int, JS::Value*), JS::CallArgs const&) /srv/repos/mozilla-central/js/src/jscntxtinlines.h:231
+    #4 0x93f5b92 in js::Invoke(JSContext*, JS::CallArgs, js::MaybeConstruct) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:484
+    #5 0x9346ba7 in js::Invoke(JSContext*, JS::Value const&, JS::Value const&, unsigned int, JS::Value const*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/vm/Interpreter.cpp:540
+    #6 0x8702baa in js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>) /srv/repos/mozilla-central/js/src/jit/BaselineIC.cpp:8638
+    #7 0x7f1fda874dd0  (/usr/lib/x86_64-linux-gnu/dri/swrast_dri.so+0x67edd0)
+    #8 0x17930ba87d6f  (<unknown module>)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114 js::AbstractFramePtr::asRematerializedFrame() const
+==5854==ABORTING
+"""  # noqa
+
+asanTraceCrashWithWarning = """
+ASAN:SIGSEGV
+==17692==WARNING: AddressSanitizer failed to allocate 0x1fffffffc bytes
 =================================================================
 ==5854==ERROR: AddressSanitizer: SEGV on unknown address 0x00000014 (pc 0x0810845f sp 0xffc57860 bp 0xffc57f18 T0)
     #0 0x810845e in js::AbstractFramePtr::asRematerializedFrame() const /srv/repos/mozilla-central/js/src/shell/../jit/RematerializedFrame.h:114
@@ -123,6 +145,12 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
 asanTraceInvalidFree = """
 ==30731==ERROR: AddressSanitizer: attempting free on address which was not malloc()-ed: 0x62a00006c200 in thread T24 (MediaPD~oder #1)
     #0 0x4c8690 in __interceptor_free /srv/repos/llvm/projects/compiler-rt/lib/asan/asan_malloc_linux.cc:38
+"""  # noqa
+
+asanTraceOOM = """
+==5027==ERROR: AddressSanitizer: allocator is out of memory trying to allocate 0x24 bytes
+    #0 0x55928e177bbd in operator new(unsigned long) /builds/worker/fetches/llvm-project/llvm/projects/compiler-rt/lib/asan/asan_new_delete.cpp:99:3
+    #1 0x7f58443bd5cb in std::vector<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, std::allocator<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> > >::operator=(std::vector<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, std::allocator<std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> > > const&) (/lib/x86_64-linux-gnu/libLLVM-11.so.1+0x12335cb)
 """  # noqa
 
 asanTraceDebugAssertion = """
@@ -728,6 +756,22 @@ stack backtrace:
    3:     0x7f7a3a17d8d2 - std::panicking::default_hook::hf425c768c5ffbbad
 """
 
+tsanTraceCrash = """
+==7727==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000000 (pc 0x559ed71aa5e3 bp 0x000000000033 sp 0x7fe1a51bcf00 T7880)
+==7727==The signal is caused by a WRITE memory access.
+==7727==Hint: address points to the zero page.
+    #0 mozalloc_abort /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 (firefox+0xcb5e3)
+    #1 mozalloc_handle_oom(unsigned long) /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_oom.cpp:51:3 (firefox+0xcb6ac)
+    #2 GeckoHandleOOM /builds/worker/checkouts/gecko/toolkit/xre/nsAppRunner.cpp:5825:47 (libxul.so+0x679a4d5)
+    #3 gkrust_shared::oom_hook::hook::hdb794dafd9a70020 /builds/worker/checkouts/gecko/toolkit/library/rust/shared/lib.rs:133:13 (libxul.so+0x7c33ea6)
+    #4 <null> <null> (swrast_dri.so+0x75dc33)
+    #5 <null> <null> (0x7eff0a5dad88)
+
+ThreadSanitizer can not provide additional info.
+SUMMARY: ThreadSanitizer: SEGV /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 in mozalloc_abort
+==7727==ABORTING
+"""  # noqa
+
 ubsanTraceGenericCrash = """
 ==8555==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000000004141 (pc 0x7f070b805037 bp 0x7f06626006b0 sp 0x7f0662600680 T28456)
 ==8555==The signal is caused by a READ memory access.
@@ -827,11 +871,28 @@ def test_ASanParserTestCrash():
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = ASanCrashInfo([], asanTraceCrash.splitlines(), config)
-    assert len(crashInfo.backtrace) == 7
+    assert len(crashInfo.backtrace) == 9
     assert crashInfo.backtrace[0] == "js::AbstractFramePtr::asRematerializedFrame"
     assert crashInfo.backtrace[2] == "EvalInFrame"
     assert crashInfo.backtrace[3] == "js::CallJSNative"
     assert crashInfo.backtrace[6] == "js::jit::DoCallFallback"
+    assert crashInfo.backtrace[7] == "/usr/lib/x86_64-linux-gnu/dri/swrast_dri.so+0x67edd0"
+    assert crashInfo.backtrace[8] == "<missing>"
+
+    assert crashInfo.crashAddress == 0x00000014
+    assert crashInfo.registers["pc"] == 0x0810845f
+    assert crashInfo.registers["sp"] == 0xffc57860
+    assert crashInfo.registers["bp"] == 0xffc57f18
+
+
+def test_ASanParserTestCrashWithWarning():
+    config = ProgramConfiguration("test", "x86", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceCrashWithWarning.splitlines(), config)
+    assert len(crashInfo.backtrace) == 7
+    assert crashInfo.backtrace[0] == "js::AbstractFramePtr::asRematerializedFrame"
+    assert crashInfo.backtrace[2] == "EvalInFrame"
+    assert crashInfo.backtrace[3] == "js::CallJSNative"
 
     assert crashInfo.crashAddress == 0x00000014
     assert crashInfo.registers["pc"] == 0x0810845f
@@ -911,6 +972,26 @@ def test_ASanParserTestInvalidFree():
              "[@ __interceptor_free]") == crashInfo.createShortSignature())
 
 
+def test_ASanParserTestOOM():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo([], asanTraceOOM.splitlines(), config)
+    assert len(crashInfo.backtrace) == 2
+    assert crashInfo.backtrace[0] == "operator new"
+    assert crashInfo.backtrace[1] == (
+        "std::vector<"
+        "std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction>, "
+        "std::allocator<"
+        "std::pair<unsigned short, llvm::LegalizeActions::LegalizeAction> "
+        "> >::operator="
+    )
+
+    assert crashInfo.crashAddress is None
+
+    assert (("AddressSanitizer: allocator is out of memory trying to allocate 0x24 bytes "
+             "[@ operator new]") == crashInfo.createShortSignature())
+
+
 def test_ASanParserTestDebugAssertion():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
@@ -926,14 +1007,22 @@ def test_ASanParserTestDebugAssertion():
             crashInfo.createShortSignature())
 
 
-def test_ASanDetectionTest():
+@pytest.mark.parametrize("stderr, crashdata", [
+    ("", asanTraceCrash),
+    (asanTraceUAF, ""),
+    ("", asanTraceCrashWithWarning),
+    ("", tsanTraceCrash),
+    ("", ubsanTraceGenericCrash),
+])
+def test_ASanDetectionTest(stderr, crashdata):
     config = ProgramConfiguration("test", "x86", "linux")
-
-    crashInfo1 = CrashInfo.fromRawCrashData([], [], config, auxCrashData=asanTraceCrash.splitlines())
-    crashInfo2 = CrashInfo.fromRawCrashData([], asanTraceUAF.splitlines(), config)
-
-    assert isinstance(crashInfo1, ASanCrashInfo)
-    assert isinstance(crashInfo2, ASanCrashInfo)
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        stderr.splitlines(),
+        config,
+        auxCrashData=crashdata.splitlines(),
+    )
+    assert isinstance(crashInfo, ASanCrashInfo)
 
 
 def test_ASanParserTestParamOverlap():
@@ -2878,6 +2967,25 @@ def test_TSanParserLockReportTest():
 
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None
+
+
+def test_TSanParserTestCrash():
+    config = ProgramConfiguration("test", "x86", "linux")
+
+    crashInfo = CrashInfo.fromRawCrashData([], [], config, tsanTraceCrash.splitlines())
+    assert crashInfo.createShortSignature() == "[@ mozalloc_abort]"
+    assert len(crashInfo.backtrace) == 6
+    assert crashInfo.backtrace[0] == "mozalloc_abort"
+    assert crashInfo.backtrace[1] == "mozalloc_handle_oom"
+    assert crashInfo.backtrace[2] == "GeckoHandleOOM"
+    assert crashInfo.backtrace[3] == "gkrust_shared::oom_hook::hook"
+    assert crashInfo.backtrace[4] == "swrast_dri.so+0x75dc33"
+    assert crashInfo.backtrace[5] == "<missing>"
+
+    assert crashInfo.crashAddress == 0
+    assert crashInfo.registers["pc"] == 0x559ed71aa5e3
+    assert crashInfo.registers["bp"] == 0x033
+    assert crashInfo.registers["sp"] == 0x7fe1a51bcf00
 
 
 def test_TSanParserTest():
