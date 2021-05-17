@@ -230,10 +230,10 @@ class ASanRunner(AutoRunner):
             if "UBSAN_OPTIONS" in os.environ:
                 self.env["UBSAN_OPTIONS"] = os.environ["UBSAN_OPTIONS"]
             else:
-                # Default to print stacktraces if no other options are set. If the caller overrides
-                # these options, they need to set this themselves, otherwise this code won't be able
-                # to isolate a UBSan trace.
-                self.env["UBSAN_OPTIONS"] = "print_stacktrace=1"
+                # Default to print stacktraces and summary if no other options are set. If the caller
+                # overrides these options, they need to set this themselves, otherwise this code won't
+                # be able to isolate a UBSan trace.
+                self.env["UBSAN_OPTIONS"] = "print_stacktrace=1:print_summary=1"
 
         if "ASAN_OPTIONS" not in self.env:
             if "ASAN_OPTIONS" in os.environ:
@@ -269,15 +269,25 @@ class ASanRunner(AutoRunner):
         for line in stderr.splitlines():
             if inASanTrace or inUBSanTrace or inTSanTrace:
                 self.auxCrashData.append(line)
-                if inASanTrace and line.find("==ABORTING") >= 0:
+                if (inASanTrace or inUBSanTrace) and line.find("==ABORTING") >= 0:
                     inASanTrace = False
+                    inUBSanTrace = False
                 elif inUBSanTrace and "==SUMMARY: AddressSanitizer: undefined-behavior" in line:
+                    # This format is used when combining ASan and UBSan.
+                    inUBSanTrace = False
+                elif inUBSanTrace and "SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior" in line:
+                    # This is what UBSan emits on its own with `print_summary=1`.
                     inUBSanTrace = False
                 elif inTSanTrace and "SUMMARY: ThreadSanitizer: data race" in line:
                     inTSanTrace = False
             elif line.find("==ERROR: AddressSanitizer") >= 0:
                 self.auxCrashData.append(line)
                 inASanTrace = True
+            elif line.find("==ERROR: UndefinedBehaviorSanitizer:") >= 0:
+                # This is only seen when UBSan-only builds (e.g. libFuzzer without ASan)
+                # handle a regular crash/abort and emit a backtrace for it.
+                self.auxCrashData.append(line)
+                inUBSanTrace = True
             elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
                 self.auxCrashData.append(line)
                 inUBSanTrace = True
