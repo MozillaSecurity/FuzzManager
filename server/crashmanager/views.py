@@ -186,12 +186,17 @@ def watchedSignatures(request):
     # 3         blah        0           tr
     user = User.get_or_create_restricted(request.user)[0]
 
+    filters = {
+        'user': user,
+        'crashentry__gt': F('bucketwatch__lastCrash'),
+    }
     # the join of Bucket+CrashEntry is a big one, and each filter() call on a related field adds a join
     # therefore this needs to be a single filter() call, otherwise we get duplicate crashentries in the result
     # this is why tool filtering is done manually here and not using filter_signatures_by_toolfilter()
     defaultToolsFilter = user.defaultToolsFilter.all()
-    buckets = Bucket.objects.filter(user=user, crashentry__gt=F('bucketwatch__lastCrash'),
-                                    crashentry__tool__in=defaultToolsFilter)
+    if defaultToolsFilter:
+        filters['crashentry__tool__in'] = defaultToolsFilter
+    buckets = Bucket.objects.filter(**filters)
     buckets = buckets.annotate(newCrashes=Count('crashentry'))
     buckets = buckets.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
     # what's left is only watched buckets with new crashes
