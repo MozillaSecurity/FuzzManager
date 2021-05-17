@@ -21,7 +21,7 @@
         <tbody>
         {% for entry in providers %}
         <tr class="{% cycle 'odd' 'even' %}">
-            <td><a title="View Bug Provider" href="{% url 'crashmanager:bugproviderview' entry.pk %}">{{ entry.classname|escape }}</a></td>
+            <td><a title="View Bug Provider" href="{% url 'crashmanager:bugproviderview' entry.pk %}">Bugzilla</a></td>
             <td>{{ entry.hostname|escape }}</td>
             <td>{{ entry.urlTemplate|escape }}</td>
             <td>{{ entry.size|escape }}</td>

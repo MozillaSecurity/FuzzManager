@@ -970,7 +970,6 @@ def editBugProvider(request, providerId):
 
     provider = get_object_or_404(BugProvider, pk=providerId)
     if request.method == 'POST':
-        provider.classname = request.POST['classname']
         provider.hostname = request.POST['hostname']
         provider.urlTemplate = request.POST['urlTemplate']
 
@@ -991,7 +990,7 @@ def createBugProvider(request):
     deny_restricted_users(request)
 
     if request.method == 'POST':
-        provider = BugProvider(classname=request.POST['classname'], hostname=request.POST['hostname'],
+        provider = BugProvider(hostname=request.POST['hostname'],
                                urlTemplate=request.POST['urlTemplate'])
 
         try:

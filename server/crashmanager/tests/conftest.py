@@ -143,9 +143,8 @@ def cm():
             return result
 
         @staticmethod
-        def create_bugprovider(classname="BugzillaProvider", hostname="", urlTemplate="%s"):
-            result = BugProvider.objects.create(classname=classname,
-                                                hostname=hostname,
+        def create_bugprovider(hostname="", urlTemplate="%s"):
+            result = BugProvider.objects.create(hostname=hostname,
                                                 urlTemplate=urlTemplate)
             LOG.debug("Created BugProvider pk=%d", result.pk)
             return result
