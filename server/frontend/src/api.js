@@ -13,3 +13,6 @@ export const createBucket = async ({ params, ...data }) =>
 export const updateBucket = async ({ id, params, ...data }) =>
   (await axios.patch(`/crashmanager/rest/buckets/${id}/`, data, { params }))
     .data;
+
+export const listCrashes = async (params) =>
+  (await axios.get("/crashmanager/rest/crashes/", { params })).data;

@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
 from django.http import Http404, HttpResponse
@@ -25,7 +24,7 @@ from wsgiref.util import FileWrapper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer
+from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -108,34 +107,6 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, 
 
 def renderError(request, err):
     return render(request, 'error.html', {'error_message': err})
-
-
-def paginate_requested_list(request, entries):
-    page_size = request.GET.get('page_size')
-    if not page_size:
-        page_size = 100
-    paginator = Paginator(entries, page_size)
-    page = request.GET.get('page')
-
-    try:
-        page_entries = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        page_entries = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        page_entries = paginator.page(paginator.num_pages)
-
-    # We need to preserve the query parameters when adding the page to the
-    # query URL, so we store the sanitized copy inside our entries object.
-    paginator_query = request.GET.copy()
-    if 'page' in paginator_query:
-        del paginator_query['page']
-
-    page_entries.paginator_query = paginator_query
-    page_entries.count = paginator.count
-
-    return page_entries
 
 
 def stats(request):
@@ -253,15 +224,7 @@ def bucketWatchCrashes(request, sigid):
     user = User.get_or_create_restricted(request.user)[0]
     bucket = get_object_or_404(Bucket, pk=sigid)
     watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
-    entries = CrashEntry.objects.all().order_by('-id').filter(bucket=bucket, id__gt=watch.lastCrash)
-    entries = CrashEntry.deferRawFields(entries)
-    entries = filter_crash_entries_by_toolfilter(request, entries)
-    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
-
-    data = {'crashlist': paginate_requested_list(request, entries), 'isWatch': True, 'bucket': bucket,
-            'latestCrash': latestCrash}
-
-    return render(request, 'crashes/index.html', data)
+    return render(request, 'crashes/index.html', {'restricted': user.restricted, 'watchId': watch.id})
 
 
 def signatures(request):
@@ -318,134 +281,9 @@ def signatures(request):
     return render(request, 'signatures/index.html', data)
 
 
-def crashes(request, ignore_toolfilter=False):
-    filters = {}
-    q = None
-    isSearch = True
-
-    entries = CrashEntry.objects.all().order_by('-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=ignore_toolfilter)
-
-    # These are all keys that are allowed for exact filtering
-    exactFilterKeys = [
-        "bucket",
-        "client__name",
-        "client__name__contains",
-        "os__name",
-        "product__name",
-        "product__version",
-        "platform__name",
-        "testcase__quality",
-        "testcase__quality__gt",
-        "testcase__quality__lt",
-        "tool__name",
-        "tool__name__contains",
-    ]
-
-    for key in exactFilterKeys:
-        if key in request.GET:
-            filters[key] = request.GET[key]
-
-    if "sig" in request.GET:
-        filters["shortSignature__contains"] = request.GET["sig"]
-
-    if "q" in request.GET:
-        q = request.GET["q"]
-        entries = entries.filter(
-            Q(shortSignature__contains=q) |
-            Q(rawStderr__contains=q) |
-            Q(rawCrashData__contains=q) |
-            Q(args__contains=q)
-        )
-
-    # If we don't have any filters up to this point, don't consider it a search
-    if not filters and q is None:
-        isSearch = False
-
-    # Do not display triaged crash entries unless there is an all=1 parameter
-    # specified in the search query. Otherwise only show untriaged entries.
-    if "all" not in request.GET or not request.GET["all"]:
-        filters["bucket"] = None
-
-    entries = entries.filter(**filters)
-    entries = entries.select_related('bucket', 'tool', 'os', 'product', 'platform', 'testcase')
-    entries = CrashEntry.deferRawFields(entries)
-
-    data = {
-        'q': q,
-        'request': request,
-        'isAll': ignore_toolfilter,
-        'isSearch': isSearch,
-        'crashlist': paginate_requested_list(request, entries)
-    }
-
-    return render(request, 'crashes/index.html', data)
-
-
-def queryCrashes(request):
-    query = None
-    entries = None
-
-    if "query" in request.POST:
-        rawQuery = request.POST["query"]
-    elif "query" in request.GET:
-        rawQuery = request.GET["query"]
-    else:
-        return render(request, 'crashes/index.html', {'isQuery': True})
-
-    query_lines = rawQuery.splitlines()
-
-    try:
-        (obj, query) = json_to_query(rawQuery)
-    except RuntimeError as e:
-        return render(request, 'crashes/index.html', {'error_message': "Invalid query: %s" % e,
-                                                      'query_lines': query_lines, 'isQuery': True})
-
-    # Prettify the raw query for displaying
-    rawQuery = json.dumps(obj, indent=2)
-    urlQuery = json.dumps(obj, separators=(',', ':'))
-
-    if query:
-        entries = CrashEntry.objects.all().order_by('-id').filter(query)
-        entries = CrashEntry.deferRawFields(entries)
-        entries = filter_crash_entries_by_toolfilter(request, entries)
-
-    # Re-get the lines as we might have reformatted
-    query_lines = rawQuery.splitlines()
-
-    data = {'request': request, 'query_lines': query_lines, 'urlQuery': urlQuery, 'isQuery': True, 'crashlist': entries}
-
-    return render(request, 'crashes/index.html', data)
-
-
-def autoAssignCrashEntries(request):
-    entries = CrashEntry.objects.filter(bucket=None).select_related('product', 'platform', 'os', 'testcase')
-    buckets = Bucket.objects.all()
-
-    for bucket in buckets:
-        signature = bucket.getSignature()
-        needTest = signature.matchRequiresTest()
-
-        for entry in entries:
-            entry_modified = False
-
-            if not entry.triagedOnce:
-                entry.triagedOnce = True
-                entry_modified = True
-
-            if signature.matches(entry.getCrashInfo(attachTestcase=needTest)):
-                entry.bucket = bucket
-                entry_modified = True
-
-            if entry_modified:
-                entry.save(update_fields=['bucket', 'triagedOnce'])
-
-    # This query ensures that all issues that have been bucketed manually before
-    # the server had a chance to triage them will have their triageOnce flag set,
-    # so the hourglass in the UI isn't displayed anymore.
-    CrashEntry.objects.exclude(bucket=None).update(triagedOnce=True)
-
-    return redirect('crashmanager:crashes')
+def crashes(request):
+    user = User.get_or_create_restricted(request.user)[0]
+    return render(request, 'crashes/index.html', {'restricted': user.restricted})
 
 
 def viewCrashEntry(request, crashid):
@@ -1102,6 +940,16 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
             restricted_only=bool(view.ignore_toolfilter) or view.action != "list")
 
 
+class WatchFilterCrashesBackend(BaseFilterBackend):
+    """Filters the queryset to retrieve watched entries if '?watch=<int>'"""
+    def filter_queryset(self, request, queryset, view):
+        watch_id = request.query_params.get('watch', 'false').lower()
+        if watch_id == 'false':
+            return queryset
+        watch = BucketWatch.objects.get(id=watch_id)
+        return queryset.filter(bucket=watch.bucket, id__gt=watch.lastCrash)
+
+
 class ToolFilterSignaturesBackend(BaseFilterBackend):
     """
     Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
@@ -1154,11 +1002,21 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = CrashEntry.objects.all().select_related('product', 'platform', 'os', 'client', 'tool', 'testcase')
     serializer_class = CrashEntrySerializer
-    filter_backends = [ToolFilterCrashesBackend, JsonQueryFilterBackend, OrderingFilter, DeferRawFilterBackend]
+    filter_backends = [
+        WatchFilterCrashesBackend,
+        ToolFilterCrashesBackend,
+        JsonQueryFilterBackend,
+        OrderingFilter,
+        DeferRawFilterBackend
+    ]
 
     def get_serializer(self, *args, **kwds):
         kwds["include_raw"] = getattr(self, "include_raw", True)
-        return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
+        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        if vue:
+            return CrashEntryVueSerializer(*args, **kwds)
+        else:
+            return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
 
     def partial_update(self, request, pk=None):
         """Update individual crash fields."""
