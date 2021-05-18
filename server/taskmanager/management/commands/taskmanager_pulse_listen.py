@@ -47,10 +47,12 @@ class Command(BaseCommand):
         LOG.info("got %s", msg.delivery_info["exchange"])
         if msg.delivery_info["exchange"].startswith("exchange/taskcluster-queue/v1/task-"):
             update_task.delay(body)
+            msg.ack()
             return
         if msg.delivery_info["exchange"] == "exchange/taskcluster-github/v1/push":
             if body["body"]["ref"] == "refs/heads/master":
                 update_pool_defns.delay()
+            msg.ack()
             return
         raise RuntimeError("Unhandled message: %s" % (msg.delivery_info["exchange"],))
 
