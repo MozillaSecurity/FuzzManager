@@ -438,29 +438,10 @@ def test_watch_signature_crashes(client, cm):  # pylint: disable=invalid-name
     """Crashes in a signature watch should be shown correctly."""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
-    crash1 = cm.create_crash(shortSignature='crash #1', bucket=bucket)
-    url = reverse("crashmanager:sigwatchcrashes", kwargs={"sigid": bucket.pk})
     watch = cm.create_bucketwatch(bucket=bucket)
-    # check that crash1 is shown
-    response = client.get(url)
+    response = client.get(reverse("crashmanager:sigwatchcrashes", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes['ok']
-    crashes = response.context['crashlist']
-    assert len(crashes) == 1
-    assert crashes[0] == crash1
-    watch.lastCrash = crash1.pk
-    watch.save()
-    # check that no crashes are shown
-    response = client.get(url)
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    crashes = response.context['crashlist']
-    assert not crashes
-    crash2 = cm.create_crash(shortSignature='crash #2', bucket=bucket)
-    # check that crash2 is shown
-    response = client.get(url)
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    crashes = response.context['crashlist']
-    assert len(crashes) == 1
-    assert crashes[0] == crash2
+    assert response.context['watchId'] == watch.id
+    assert response.context['restricted'] is False
+    assert_contains(response, 'crasheslist')
