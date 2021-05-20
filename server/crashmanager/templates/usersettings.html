@@ -39,6 +39,13 @@
 			<input type="hidden" name="changetemplate" value="1" />
 			<input type="submit" name="submit" value="Save Default Provider/Template" class="btn btn-danger"/>
 		</form>
+		{% if providers %}
+		<hr/>
+		Provide API Keys to authenticate calls to your Bug Providers on this browser:
+		{% for p in providers %}
+			<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
+		{% endfor %}
+		{% endif %}
 	</div>
 </div>
 {% endblock body_content %}
