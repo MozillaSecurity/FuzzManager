@@ -25,7 +25,7 @@ from django.utils import dateparse
 
 from .BugzillaREST import BugzillaREST
 from .Provider import Provider
-from ..models import BugzillaTemplate, User
+from ..models import BugzillaTemplate, BugzillaTemplateMode, User
 
 
 class BugzillaProvider(Provider):
@@ -415,7 +415,9 @@ class BugzillaProvider(Provider):
         if 'template' in request.POST:
             bugTemplate = get_object_or_404(BugzillaTemplate, pk=request.POST['template'])
         else:
-            bugTemplate = BugzillaTemplate()
+            bugTemplate = BugzillaTemplate(
+                mode=BugzillaTemplateMode.Comment if "comment" in request.POST else BugzillaTemplateMode.Bug
+            )
 
         if "comment" in request.POST:
             # If we're updating the comment field of a template, then just update that field
