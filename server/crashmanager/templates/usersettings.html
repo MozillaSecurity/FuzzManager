@@ -1,51 +1,57 @@
 {% extends 'layouts/layout_base.html' %}
 
 {% block body_content %}
-<div class="panel panel-default">
-	<div class="panel-heading"><i class="glyphicon glyphicon-cog"></i> User Settings</div>
-	<div class="panel-body">
-		{% if msg %}<p><i>{{ msg }}</i></p>{% endif %}
-		<form action="{% url 'crashmanager:usersettings' %}" method="post">
-			{% csrf_token %}
-			Select the tools you would like to include in your default views:
-			{% for tool in tools %}
-			<div class="field">
-				<input type="checkbox" id="id_tool_{{ tool.name }}" name="tool_{{ tool.name }}" value="unassigned" {% if tool.checked %}checked{% endif %} />
-				<strong>{{ tool.name }}</strong>
-			</div>
-			{% endfor %}
-			<input type="hidden" name="changefilter" value="1" />
-			<input type="submit" name="submit" value="Save Tool Filters" class="btn btn-danger"/>
-		</form>
-		<hr/>
-		<form action="{% url 'crashmanager:usersettings' %}" method="post">
-			{% csrf_token %}
-			<div class="field">
-				<strong>Default Provider:</strong>
-				<select id="provider" name="defaultProvider">
-				{% for p in providers %}
-					<option value="{{ p.pk }}" {% if p.pk == defaultProviderId %}selected="selected"{% endif %}>{{ p.hostname }}</option>
+<div>
+	<div class="panel panel-default">
+		<div class="panel-heading"><i class="glyphicon glyphicon-cog"></i> User Settings</div>
+		<div class="panel-body">
+			{% if msg %}<p><i>{{ msg }}</i></p>{% endif %}
+			<form action="{% url 'crashmanager:usersettings' %}" method="post">
+				{% csrf_token %}
+				Select the tools you would like to include in your default views:
+				{% for tool in tools %}
+				<div class="field">
+					<input type="checkbox" id="id_tool_{{ tool.name }}" name="tool_{{ tool.name }}" value="unassigned" {% if tool.checked %}checked{% endif %} />
+					<strong>{{ tool.name }}</strong>
+				</div>
 				{% endfor %}
-				</select>
-			</div>
-			<div class="field">
-				<strong>Default Template:</strong>
-				<select id="template" name="defaultTemplate">
-				{% for t in templates %}
-					<option value="{{ t.pk }}" {% if t.pk == defaultTemplateId %}selected="selected"{% endif %}>{{ t.name }}</option>
-				{% endfor %}
-				</select>
-			</div>
-			<input type="hidden" name="changetemplate" value="1" />
-			<input type="submit" name="submit" value="Save Default Provider/Template" class="btn btn-danger"/>
-		</form>
-		{% if providers %}
-		<hr/>
-		Provide API Keys to authenticate calls to your Bug Providers on this browser:
-		{% for p in providers %}
-			<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
-		{% endfor %}
-		{% endif %}
+				<input type="hidden" name="changefilter" value="1" />
+				<input type="submit" name="submit" value="Save Tool Filters" class="btn btn-danger"/>
+			</form>
+			<hr/>
+			<form action="{% url 'crashmanager:usersettings' %}" method="post">
+				{% csrf_token %}
+				<div class="field">
+					<strong>Default Provider:</strong>
+					<select id="provider" name="defaultProvider">
+					{% for p in providers %}
+						<option value="{{ p.pk }}" {% if p.pk == defaultProviderId %}selected="selected"{% endif %}>{{ p.hostname }}</option>
+					{% endfor %}
+					</select>
+				</div>
+				<div class="field">
+					<strong>Default Template:</strong>
+					<select id="template" name="defaultTemplate">
+					{% for t in templates %}
+						<option value="{{ t.pk }}" {% if t.pk == defaultTemplateId %}selected="selected"{% endif %}>{{ t.name }}</option>
+					{% endfor %}
+					</select>
+				</div>
+				<input type="hidden" name="changetemplate" value="1" />
+				<input type="submit" name="submit" value="Save Default Provider/Template" class="btn btn-danger"/>
+			</form>
+		</div>
 	</div>
+	{% if bugzilla_providers %}
+	<div class="panel panel-default">
+		<div class="panel-heading"><i class="glyphicon glyphicon-cog"></i> Bugzilla Providers Settings</div>
+		<div class="panel-body">
+			Provide API Keys to authenticate calls to your Bugzilla Providers on this browser:
+			{% for p in bugzilla_providers %}
+				<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
+			{% endfor %}
+		</div>
+	</div>
+	{% endif %}
 </div>
 {% endblock body_content %}
