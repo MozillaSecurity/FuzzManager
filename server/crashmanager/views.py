@@ -1,12 +1,17 @@
 from collections import OrderedDict
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, Layout, Div, Field, Submit
 from datetime import timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
+from django.forms import ModelForm, Textarea
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.generic.list import ListView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 import functools
 import json
 import operator
@@ -23,7 +28,8 @@ from wsgiref.util import FileWrapper
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
+from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
+    BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
 from server.auth import CheckAppPermission
 
@@ -1270,3 +1276,192 @@ class SignaturesDownloadView(AbstractDownloadView):
         file_path = os.path.join(storage_base, filename)
 
         return self.response(file_path, filename)
+
+
+class BugzillaTemplateListView(ListView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/list.html'
+    paginate_by = 100
+
+
+class BugzillaTemplateDeleteView(DeleteView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/delete.html'
+    success_url = reverse_lazy('crashmanager:templates')
+    pk_url_kwarg = 'templateId'
+
+
+class Row(Div):
+    css_class = 'row'
+
+
+class BugzillaTemplateBugForm(ModelForm):
+    helper = FormHelper()
+    helper.layout = Layout(
+        Row(Field('name', wrapper_class='col-md-6')),
+        'summary',
+        Row(
+            Field('product', wrapper_class='col-md-6'),
+            Field('component', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('whiteboard', wrapper_class='col-md-6'),
+            Field('keywords', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('op_sys', wrapper_class='col-md-6'),
+            Field('platform', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('cc', wrapper_class='col-md-6'),
+            Field('assigned_to', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('priority', wrapper_class='col-md-6'),
+            Field('severity', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('alias', wrapper_class='col-md-6'),
+            Field('qa_contact', wrapper_class='col-md-6'),
+        ),
+        Row(
+            Field('version', wrapper_class='col-md-6'),
+            Field('target_milestone', wrapper_class='col-md-6'),
+        ),
+        'attrs',
+        'description',
+        'security',
+        Row(Field('security_group', wrapper_class='col-md-6')),
+        Row(Field('testcase_filename', wrapper_class='col-md-6')),
+        Submit('submit', 'Save', css_class='btn btn-danger'),
+        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>""")
+    )
+
+    class Meta:
+        model = BugzillaTemplate
+        fields = [
+            'name',
+            'summary',
+            'product',
+            'component',
+            'whiteboard',
+            'keywords',
+            'op_sys',
+            'platform',
+            'cc',
+            'assigned_to',
+            'priority',
+            'severity',
+            'alias',
+            'qa_contact',
+            'version',
+            'target_milestone',
+            'attrs',
+            'description',
+            'security',
+            'security_group',
+            'testcase_filename',
+        ]
+
+        labels = {
+            'name': 'Template name',
+            'summary': 'Summary',
+            'product': 'Product',
+            'component': 'Component',
+            'whiteboard': 'Whiteboard',
+            'keywords': 'Keywords',
+            'op_sys"': 'OS',
+            'platform': 'Platform',
+            'cc': 'Cc',
+            'assigned_to': 'Assigned to',
+            'priority': 'Priority',
+            'severity': 'Severity',
+            'alias': 'Alias',
+            'qa_contact': 'QA',
+            'version': 'Version',
+            'target_milestone': 'Target milestone',
+            'attrs': 'Custom fields',
+            'description': 'Bug description',
+            'security': 'This is a security bug',
+            'security_group': 'Security group',
+            'testcase_filename': 'Filename that will be used for the testcase',
+        }
+
+        widgets = {}
+        for field in fields:
+            if field not in ['description', 'attrs', 'security']:
+                widgets[field] = Textarea(attrs={'rows': 1})
+
+        widgets['attrs'] = Textarea(attrs={'rows': 2})
+
+
+class BugzillaTemplateCommentForm(ModelForm):
+    helper = FormHelper()
+    helper.layout = Layout(
+        'name',
+        'comment',
+        Submit('submit', 'Save', css_class='btn btn-danger'),
+        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>""")
+    )
+
+    class Meta:
+        model = BugzillaTemplate
+        fields = ['name', 'comment']
+        labels = {
+            'name': 'Template name',
+            'comment': 'Comment',
+        }
+        widgets = {
+            'name': Textarea(attrs={'rows': 1}),
+            'comment': Textarea(attrs={'rows': 6})
+        }
+
+
+class BugzillaTemplateEditView(UpdateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    success_url = reverse_lazy('crashmanager:templates')
+    pk_url_kwarg = 'templateId'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Edit template'
+        return context
+
+    def get_form_class(self):
+        if self.object.mode == BugzillaTemplateMode.Bug:
+            return BugzillaTemplateBugForm
+        else:
+            return BugzillaTemplateCommentForm
+
+
+class BugzillaTemplateBugCreateView(CreateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    form_class = BugzillaTemplateBugForm
+    success_url = reverse_lazy('crashmanager:templates')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create a bug template'
+        return context
+
+    def form_valid(self, form):
+        form.instance.mode = BugzillaTemplateMode.Bug
+        return super(BugzillaTemplateBugCreateView, self).form_valid(form)
+
+
+class BugzillaTemplateCommentCreateView(CreateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    form_class = BugzillaTemplateCommentForm
+    success_url = reverse_lazy('crashmanager:templates')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create a comment template'
+        return context
+
+    def form_valid(self, form):
+        form.instance.mode = BugzillaTemplateMode.Comment
+        return super(BugzillaTemplateCommentCreateView, self).form_valid(form)

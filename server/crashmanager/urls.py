@@ -48,6 +48,13 @@ urlpatterns = [
         name='viewtemplate', kwargs={'mode': 'create'}),
     url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/comment/$', views.viewEditBugTemplate,
         name='viewcommenttemplate', kwargs={'mode': 'comment'}),
+    url(r'^bugzilla/templates/$', views.BugzillaTemplateListView.as_view(), name='templates'),
+    url(r'^bugzilla/templates/create-bug/$', views.BugzillaTemplateBugCreateView.as_view(), name='templatecreatebug'),
+    url(r'^bugzilla/templates/create-comment/$', views.BugzillaTemplateCommentCreateView.as_view(),
+        name='templatecreatecomment'),
+    url(r'^bugzilla/templates/(?P<templateId>\d+)/$', views.BugzillaTemplateEditView.as_view(), name='templateedit'),
+    url(r'^bugzilla/templates/(?P<templateId>\d+)/delete/$', views.BugzillaTemplateDeleteView.as_view(),
+        name='templatedel'),
 
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
