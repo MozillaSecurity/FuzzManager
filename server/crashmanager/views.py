@@ -871,6 +871,7 @@ def userSettings(request):
             "user": user,
             "tools": tools,
             "providers": providers,
+            "bugzilla_providers": providers.filter(classname="BugzillaProvider"),
             "templates": templates,
             "defaultProviderId": user.defaultProviderId,
             "defaultTemplateId": user.defaultTemplateId,
