@@ -754,28 +754,6 @@ def createExternalBugComment(request, crashid):
         raise SuspiciousOperation
 
 
-def createBugTemplate(request, providerId):
-    provider = get_object_or_404(BugProvider, pk=providerId)
-    if request.method == 'POST':
-        # Let the provider handle the template creation
-        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-
-        return redirect('crashmanager:viewtemplate', providerId=provider.pk, templateId=templateId)
-    elif request.method == 'GET':
-        return provider.getInstance().renderContextCreateTemplate(request)
-    else:
-        raise SuspiciousOperation
-
-
-def viewEditBugTemplate(request, providerId, templateId, mode):
-    provider = get_object_or_404(BugProvider, pk=providerId)
-    if request.method == 'GET':
-        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
-    elif request.method == 'POST':
-        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
-
-
 def viewBugProviders(request):
     providers = BugProvider.objects.annotate(size=Count('bug'))
     return render(request, 'providers/index.html', {'providers': providers})

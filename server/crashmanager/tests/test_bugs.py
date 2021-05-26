@@ -26,10 +26,7 @@ pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=inv
                           ("crashmanager:bugprovideredit", {'providerId': 0}),
                           ("crashmanager:bugproviderview", {'providerId': 0}),
                           ("crashmanager:createbug", {'crashid': 0}),
-                          ("crashmanager:createbugcomment", {'crashid': 0}),
-                          ("crashmanager:createtemplate", {'providerId': 0}),
-                          ("crashmanager:viewtemplate", {'providerId': 0, 'templateId': 0}),
-                          ("crashmanager:viewcommenttemplate", {'providerId': 0, 'templateId': 0})])
+                          ("crashmanager:createbugcomment", {'crashid': 0})])
 def test_bug_providers_no_login(client, name, kwargs):
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
@@ -43,10 +40,7 @@ def test_bug_providers_no_login(client, name, kwargs):
                           ("crashmanager:bugprovidercreate", {}),
                           ("crashmanager:bugproviderdel", {'providerId': 0}),
                           ("crashmanager:bugprovideredit", {'providerId': 0}),
-                          ("crashmanager:bugproviderview", {'providerId': 0}),
-                          ("crashmanager:createtemplate", {'providerId': 0}),
-                          ("crashmanager:viewtemplate", {'providerId': 0, 'templateId': 0, 'mode': 'create'}),
-                          ("crashmanager:viewcommenttemplate", {'providerId': 0, 'templateId': 0, 'mode': 'comment'})])
+                          ("crashmanager:bugproviderview", {'providerId': 0})])
 def test_bug_providers_simple_git(client, cm, name, kwargs):  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')

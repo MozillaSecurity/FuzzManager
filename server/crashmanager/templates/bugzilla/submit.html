@@ -7,90 +7,60 @@
     <div class="panel-body">
         {% if error_message %}<div class="alert alert-danger" role="alert">{{ error_message }}</div>{% endif %}
 
-        {% if createTemplate %}
-        <form action="{% url 'crashmanager:createtemplate' provider %}" method="post">
-        {% else %}
-            <select id="template" name="template">
-                {% for t in templates %}
-                <option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
-                {% endfor %}
-            </select>
-	    {% if template %}
-                {% if mode == "create" %}
-                    <a href="{% url 'crashmanager:viewtemplate' provider template.pk %}">Edit this template</a>
-                {% elif mode == "comment" %}
-                    <a href="{% url 'crashmanager:viewcommenttemplate' provider template.pk %}">Edit this template</a>
-	        {% endif %}
-	    {% endif %}
-            <br/><br/>
-            <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
-
-	    {% with "crashmanager:"|add:postTarget as targeturl %}
-            <form action="{% url targeturl entry.pk %}" method="post">
-	    {% endwith %}
-                <input type="hidden" name="entry" value="{{ entry.pk }}"/>
+        <select id="template" name="template">
+            {% for t in templates %}
+            <option value="{{ t.pk }}" {% if t.pk == template.pk %}selected="selected" {% endif %}>{{ t.name }}</option>
+            {% endfor %}
+        </select>
+        {% if template %}
+            <a href="{% url 'crashmanager:templateedit' template.pk %}">Edit this template</a>
         {% endif %}
-                {% csrf_token %}
-                <input type="hidden" name="provider" value="{{ provider }}"/>
+        <br/><br/>
+        <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
 
-                {% if createTemplate %}
-                <div class="field">
-                    <label class="label" for="id_name">Template Name:</label>
-                    <input id="id_name" class="form-control" maxlength="255" name="name" type="text"/>
-                </div>
-                {% else %}
-                <div class="row">
-                    <div class="col-md-1">Username:</div>
-                    <div class="col-md-3"><input id="id_bugzilla_username" class="form-control" name="bugzilla_username" type="text" value=""/></div>
-                    <div class="col-md-1">Password:</div>
-                    <div class="col-md-3"><input id="id_bugzilla_password" class="form-control" name="bugzilla_password" type="password"/></div>
-                </div>
-		<div class="row">
-                    <div class="col-md-5"><small>Leave the username empty to use the password as API key instead.</small></div>						
-		</div>
-                <hr/>
-                {% endif %}
+        {% with "crashmanager:"|add:postTarget as targeturl %}
+        <form action="{% url targeturl entry.pk %}" method="post">
+        {% endwith %}
+            <input type="hidden" name="entry" value="{{ entry.pk }}"/>
+            {% csrf_token %}
+            <input type="hidden" name="provider" value="{{ provider }}"/>
 
-		{% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
-		{% include templatePath %}
-		{% endwith %}
+            <div class="row">
+                <div class="col-md-1">Username:</div>
+                <div class="col-md-3"><input id="id_bugzilla_username" class="form-control" name="bugzilla_username" type="text" value=""/></div>
+                <div class="col-md-1">Password:</div>
+                <div class="col-md-3"><input id="id_bugzilla_password" class="form-control" name="bugzilla_password" type="password"/></div>
+            </div>
+            <div class="row">
+                <div class="col-md-5"><small>Leave the username empty to use the password as API key instead.</small></div>						
+            </div>
+            <hr/>
 
-		{% if not createTemplate %}
+            {% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
+            {% include templatePath %}
+            {% endwith %}
+
 		    {% if attachmentData.crashdata_attach %}
 			    The following crash data will be attached:<br/>
 			    <textarea id="id_crashdata_attach" class="form-control" name="crashdata_attach" style="width:100%">{{ attachmentData.crashdata_attach }}</textarea>
 		    {% endif %}
 		    <br/>
 		    <div class="row">
-		    <div class="col-md-3">
-                        Testcase will be attached to the bug. Filename:
-                        <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
-		    </div>
+                <div class="col-md-3">
+                    Testcase will be attached to the bug. Filename:
+                    <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
+                </div>
 		    </div>
 		    <div class="row">
-		    <div class="col-md-3">
-                        <input type="checkbox" id="id_testcase_skip" name="testcase_skip" value="unassigned" {% if attachmentData.testcase_skip %}checked disabled{% endif %}/>
-                        Do not attach a testcase (file bug without test).
+                <div class="col-md-3">
+                    <input type="checkbox" id="id_testcase_skip" name="testcase_skip" value="unassigned" {% if attachmentData.testcase_skip %}checked disabled{% endif %}/>
+                    Do not attach a testcase (file bug without test).
+                </div>
 		    </div>
-		    </div>
-                    <div class="row"></br></div>
-		{% else %}
-		    <div class="row">
-		    <div class="col-md-3">
-                        Filename that will be used for the testcase:
-		    </div>
-		    <div class="col-md-3">
-                        <input id="id_testcase_filename" class="form-control" name="testcase_filename" type="text" value="{{ template.testcase_filename }}"/><br/>
-		    </div>
-		    </div>
-		{% endif %}
-
-		
-
-                <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
-                <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
-            </form>
-        </div>
+            <div class="row"></br></div>
+            <input type="submit" name="submit_save" value="Submit" class="btn btn-danger"/>
+            <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
+        </form>
     </div>
 </div>
 {% endblock body_content %}
