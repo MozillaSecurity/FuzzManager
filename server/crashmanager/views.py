@@ -28,7 +28,8 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
+from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
+    BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -1138,6 +1139,17 @@ class BucketViewSet(mixins.ListModelMixin,
             status=response_status,
             data=data,
         )
+
+
+class BugzillaTemplateViewSet(mixins.ListModelMixin,
+                              mixins.RetrieveModelMixin,
+                              viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing BugzillaTemplates
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = BugzillaTemplate.objects.all()
+    serializer_class = BugzillaTemplateSerializer
 
 
 def json_to_query(json_str):
