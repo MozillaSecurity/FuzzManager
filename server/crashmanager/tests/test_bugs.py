@@ -13,6 +13,7 @@ import logging
 import pytest
 import requests
 from django.urls import reverse
+from crashmanager.models import BugzillaTemplate
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.bugs")
@@ -36,16 +37,44 @@ def test_bug_providers_no_login(client, name, kwargs):
 
 
 @pytest.mark.parametrize(("name", "kwargs"),
+                         [("crashmanager:templates", {}),
+                          ("crashmanager:templatecreatebug", {}),
+                          ("crashmanager:templatecreatecomment", {}),
+                          ("crashmanager:templateedit", {'templateId': 0}),
+                          ("crashmanager:templatedel", {'templateId': 0})])
+def test_bugzilla_templates_no_login(client, name, kwargs):
+    """Request without login hits the login redirect"""
+    path = reverse(name, kwargs=kwargs)
+    resp = client.get(path)
+    assert resp.status_code == requests.codes['found']
+    assert resp.url == '/login/?next=' + path
+
+
+@pytest.mark.parametrize(("name", "kwargs"),
                          [("crashmanager:bugproviders", {}),
                           ("crashmanager:bugprovidercreate", {}),
                           ("crashmanager:bugproviderdel", {'providerId': 0}),
                           ("crashmanager:bugprovideredit", {'providerId': 0}),
                           ("crashmanager:bugproviderview", {'providerId': 0})])
-def test_bug_providers_simple_git(client, cm, name, kwargs):  # pylint: disable=invalid-name
+def test_bug_providers_simple_get(client, cm, name, kwargs):  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     if 'providerId' in kwargs:
         kwargs['providerId'] = cm.create_bugprovider().pk
+    response = client.get(reverse(name, kwargs=kwargs))
+    LOG.debug(response)
+    assert response.status_code == requests.codes['ok']
+
+
+@pytest.mark.parametrize(("name", "kwargs"),
+                         [("crashmanager:templates", {}),
+                          ("crashmanager:templatecreatebug", {}),
+                          ("crashmanager:templatecreatecomment", {}),
+                          ("crashmanager:templateedit", {'templateId': 0}),
+                          ("crashmanager:templatedel", {'templateId': 0})])
+def test_bugzilla_templates_simple_get(client, cm, name, kwargs):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    client.login(username='test', password='test')
     if 'templateId' in kwargs:
         kwargs['templateId'] = cm.create_template().pk
     response = client.get(reverse(name, kwargs=kwargs))
@@ -53,7 +82,111 @@ def test_bug_providers_simple_git(client, cm, name, kwargs):  # pylint: disable=
     assert response.status_code == requests.codes['ok']
 
 
-def test_create_bug_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_template_edit(client, cm):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    pk = cm.create_template().pk
+    assert len(BugzillaTemplate.objects.all()) == 1
+    template = BugzillaTemplate.objects.get()
+    assert template.mode.value == "bug"
+    assert template.name == ""
+    assert template.product == ""
+    assert template.component == ""
+    assert template.version == ""
+    client.login(username='test', password='test')
+    response = client.post(reverse("crashmanager:templateedit", kwargs={'templateId': pk}), data={
+        "mode": "bug",
+        "name": "My bug template",
+        "product": "Test product",
+        "component": "Test component",
+        "version": "1.0",
+        "summary": "",
+        "description": "",
+        "whiteboard": "",
+        "keywords": "",
+        "op_sys": "",
+        "platform": "",
+        "priority": "",
+        "severity": "",
+        "alias": "",
+        "cc": "",
+        "assigned_to": "",
+        "qa_contact": "",
+        "target_milestone": "",
+        "attrs": "",
+        "security": False,
+        "security_group": "",
+        "testcase_filename": "",
+        "comment": ""
+    })
+    LOG.debug(response)
+    # Redirecting to template list when the action is successful
+    assert response.status_code == requests.codes['found']
+    assert response.url == '/crashmanager/bugzilla/templates/'
+    assert len(BugzillaTemplate.objects.all()) == 1
+    template = BugzillaTemplate.objects.get()
+    assert template.mode.value == "bug"
+    assert template.name == "My bug template"
+    assert template.product == "Test product"
+    assert template.component == "Test component"
+    assert template.version == "1.0"
+
+
+def test_template_del(client, cm):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    pk = cm.create_template().pk
+    assert len(BugzillaTemplate.objects.all()) == 1
+    client.login(username='test', password='test')
+    response = client.delete(reverse("crashmanager:templatedel", kwargs={'templateId': pk}))
+    LOG.debug(response)
+    # Redirecting to template list when the action is successful
+    assert response.status_code == requests.codes['found']
+    assert response.url == '/crashmanager/bugzilla/templates/'
+    assert len(BugzillaTemplate.objects.all()) == 0
+
+
+def test_template_create_bug_post(client, cm):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    assert len(BugzillaTemplate.objects.all()) == 0
+    client.login(username='test', password='test')
+    response = client.post(reverse("crashmanager:templatecreatebug"), data={
+        "name": "My bug template",
+        "product": "Test product",
+        "component": "Test component",
+        "version": "1.0",
+    })
+    LOG.debug(response)
+    # Redirecting to template list when the action is successful
+    assert response.status_code == requests.codes['found']
+    assert response.url == '/crashmanager/bugzilla/templates/'
+    assert len(BugzillaTemplate.objects.all()) == 1
+    template = BugzillaTemplate.objects.get()
+    assert template.mode.value == "bug"
+    assert template.name == "My bug template"
+    assert template.product == "Test product"
+    assert template.component == "Test component"
+    assert template.version == "1.0"
+
+
+def test_template_create_comment_post(client, cm):  # pylint: disable=invalid-name
+    """No errors are thrown in template"""
+    assert len(BugzillaTemplate.objects.all()) == 0
+    client.login(username='test', password='test')
+    response = client.post(
+        reverse("crashmanager:templatecreatecomment"),
+        data={"name": "My comment template", "comment": "A comment"}
+    )
+    LOG.debug(response)
+    # Redirecting to template list when the action is successful
+    assert response.status_code == requests.codes['found']
+    assert response.url == '/crashmanager/bugzilla/templates/'
+    assert len(BugzillaTemplate.objects.all()) == 1
+    template = BugzillaTemplate.objects.get()
+    assert template.mode.value == "comment"
+    assert template.name == "My comment template"
+    assert template.comment == "A comment"
+
+
+def test_create_external_bug_simple_get(client, cm):  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket()
@@ -64,7 +197,7 @@ def test_create_bug_simple_get(client, cm):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes['ok']
 
 
-def test_create_bug_comment_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_create_external_bug_comment_simple_get(client, cm):  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     crash = cm.create_crash()
