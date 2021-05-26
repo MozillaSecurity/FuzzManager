@@ -17,7 +17,7 @@ from crashmanager.models import BugzillaTemplate
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.bugs")
-pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
 @pytest.mark.parametrize(("name", "kwargs"),
@@ -56,7 +56,7 @@ def test_bugzilla_templates_no_login(client, name, kwargs):
                           ("crashmanager:bugproviderdel", {'providerId': 0}),
                           ("crashmanager:bugprovideredit", {'providerId': 0}),
                           ("crashmanager:bugproviderview", {'providerId': 0})])
-def test_bug_providers_simple_get(client, cm, name, kwargs):  # pylint: disable=invalid-name
+def test_bug_providers_simple_get(client, cm, name, kwargs):
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     if 'providerId' in kwargs:
@@ -72,7 +72,7 @@ def test_bug_providers_simple_get(client, cm, name, kwargs):  # pylint: disable=
                           ("crashmanager:templatecreatecomment", {}),
                           ("crashmanager:templateedit", {'templateId': 0}),
                           ("crashmanager:templatedel", {'templateId': 0})])
-def test_bugzilla_templates_simple_get(client, cm, name, kwargs):  # pylint: disable=invalid-name
+def test_bugzilla_templates_simple_get(client, cm, name, kwargs):
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     if 'templateId' in kwargs:
@@ -82,7 +82,7 @@ def test_bugzilla_templates_simple_get(client, cm, name, kwargs):  # pylint: dis
     assert response.status_code == requests.codes['ok']
 
 
-def test_template_edit(client, cm):  # pylint: disable=invalid-name
+def test_template_edit(client, cm):
     """No errors are thrown in template"""
     pk = cm.create_template().pk
     assert len(BugzillaTemplate.objects.all()) == 1
@@ -131,7 +131,7 @@ def test_template_edit(client, cm):  # pylint: disable=invalid-name
     assert template.version == "1.0"
 
 
-def test_template_del(client, cm):  # pylint: disable=invalid-name
+def test_template_del(client, cm):
     """No errors are thrown in template"""
     pk = cm.create_template().pk
     assert len(BugzillaTemplate.objects.all()) == 1
@@ -144,7 +144,7 @@ def test_template_del(client, cm):  # pylint: disable=invalid-name
     assert len(BugzillaTemplate.objects.all()) == 0
 
 
-def test_template_create_bug_post(client, cm):  # pylint: disable=invalid-name
+def test_template_create_bug_post(client, cm):
     """No errors are thrown in template"""
     assert len(BugzillaTemplate.objects.all()) == 0
     client.login(username='test', password='test')
@@ -167,7 +167,7 @@ def test_template_create_bug_post(client, cm):  # pylint: disable=invalid-name
     assert template.version == "1.0"
 
 
-def test_template_create_comment_post(client, cm):  # pylint: disable=invalid-name
+def test_template_create_comment_post(client, cm):
     """No errors are thrown in template"""
     assert len(BugzillaTemplate.objects.all()) == 0
     client.login(username='test', password='test')
@@ -186,7 +186,7 @@ def test_template_create_comment_post(client, cm):  # pylint: disable=invalid-na
     assert template.comment == "A comment"
 
 
-def test_create_external_bug_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_create_external_bug_simple_get(client, cm):
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket()
@@ -197,7 +197,7 @@ def test_create_external_bug_simple_get(client, cm):  # pylint: disable=invalid-
     assert response.status_code == requests.codes['ok']
 
 
-def test_create_external_bug_comment_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_create_external_bug_comment_simple_get(client, cm):
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     crash = cm.create_crash()
