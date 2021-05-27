@@ -1,4 +1,8 @@
 repos:
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.25.0
     hooks:
