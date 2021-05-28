@@ -6,6 +6,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'crashes', views.CrashEntryViewSet, basename='crashes')
 router.register(r'buckets', views.BucketViewSet, basename='buckets')
+router.register(r'providers', views.BugProviderViewSet, basename='providers')
 router.register(r'bugzilla/templates', views.BugzillaTemplateViewSet, basename='templates')
 
 
