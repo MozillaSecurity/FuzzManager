@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
+from enumfields import Enum, EnumField
 import json
 import logging
 import re
@@ -447,7 +448,13 @@ if getattr(settings, 'USE_CELERY', None):
             triage_new_crash.delay(instance.pk)
 
 
+class BugzillaTemplateMode(Enum):
+    Bug = 'bug'
+    Comment = 'comment'
+
+
 class BugzillaTemplate(models.Model):
+    mode = EnumField(BugzillaTemplateMode, max_length=30)
     name = models.TextField()
     product = models.TextField()
     component = models.TextField()

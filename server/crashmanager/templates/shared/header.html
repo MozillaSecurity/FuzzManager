@@ -75,6 +75,7 @@
                         <li class="divider" role="presentation"></li>
                         {% if perms.crashmanager.view_crashmanager %}
                         <li><a href="{% url 'crashmanager:usersettings' %}"><i class="glyphicon glyphicon-cog"></i> Settings</a></li>
+                        <li><a href="{% url 'crashmanager:templates' %}"><i class="glyphicon glyphicon-list-alt"></i> Bugzilla templates</a></li>
                         {% endif %}
                         <li><a href="#"><i class="glyphicon glyphicon-envelope"></i> Contact</a></li>
                     </ul>

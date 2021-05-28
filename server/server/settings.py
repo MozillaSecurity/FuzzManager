@@ -55,6 +55,7 @@ INSTALLED_APPS = (
     'rest_framework.authtoken',
     'chartjs',
     #'mozilla_django_oidc',
+    'crispy_forms',
 )
 
 
@@ -105,6 +106,8 @@ TEMPLATES = [
         },
     },
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,
 # you can probably use similar code to get 2FA for your FuzzManager instance.

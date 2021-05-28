@@ -6,6 +6,7 @@ from . import views
 router = routers.DefaultRouter()
 router.register(r'crashes', views.CrashEntryViewSet, basename='crashes')
 router.register(r'buckets', views.BucketViewSet, basename='buckets')
+router.register(r'bugzilla/templates', views.BugzillaTemplateViewSet, basename='templates')
 
 
 app_name = 'crashmanager'
@@ -43,11 +44,13 @@ urlpatterns = [
     url(r'^bugprovider/(?P<providerId>\d+)/$', views.viewBugProvider, name='bugproviderview'),
     url(r'^bugprovider/(?P<providerId>\d+)/edit/$', views.editBugProvider, name='bugprovideredit'),
     url(r'^bugprovider/(?P<providerId>\d+)/delete/$', views.deleteBugProvider, name='bugproviderdel'),
-    url(r'^bugprovider/(?P<providerId>\d+)/templates/create/$', views.createBugTemplate, name='createtemplate'),
-    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/$', views.viewEditBugTemplate,
-        name='viewtemplate', kwargs={'mode': 'create'}),
-    url(r'^bugprovider/(?P<providerId>\d+)/templates/(?P<templateId>\d+)/comment/$', views.viewEditBugTemplate,
-        name='viewcommenttemplate', kwargs={'mode': 'comment'}),
+    url(r'^bugzilla/templates/$', views.BugzillaTemplateListView.as_view(), name='templates'),
+    url(r'^bugzilla/templates/create-bug/$', views.BugzillaTemplateBugCreateView.as_view(), name='templatecreatebug'),
+    url(r'^bugzilla/templates/create-comment/$', views.BugzillaTemplateCommentCreateView.as_view(),
+        name='templatecreatecomment'),
+    url(r'^bugzilla/templates/(?P<templateId>\d+)/$', views.BugzillaTemplateEditView.as_view(), name='templateedit'),
+    url(r'^bugzilla/templates/(?P<templateId>\d+)/delete/$', views.BugzillaTemplateDeleteView.as_view(),
+        name='templatedel'),
 
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),

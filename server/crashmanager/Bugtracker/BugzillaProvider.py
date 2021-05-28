@@ -381,55 +381,6 @@ class BugzillaProvider(Provider):
 
         return ret["id"]
 
-    def renderContextCreateTemplate(self, request):
-        if 'template' in request.GET:
-            template = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
-        else:
-            template = {}
-
-        data = {
-            'hostname': self.hostname,
-            'createTemplate': True,
-            'template': template,
-            'provider': self.pk,
-            'mode': "create",
-        }
-
-        return render(request, 'bugzilla/submit.html', data)
-
-    def renderContextViewTemplate(self, request, templateId, mode):
-        template = get_object_or_404(BugzillaTemplate, pk=templateId)
-        templates = BugzillaTemplate.objects.all()
-
-        data = {
-            'hostname': self.hostname,
-            'provider': self.pk,
-            'templates': templates,
-            'template': template,
-            'mode': mode,
-        }
-
-        return render(request, 'bugzilla/view_edit_template.html', data)
-
-    def handlePOSTCreateEditTemplate(self, request):
-        if 'template' in request.POST:
-            bugTemplate = get_object_or_404(BugzillaTemplate, pk=request.POST['template'])
-        else:
-            bugTemplate = BugzillaTemplate()
-
-        if "comment" in request.POST:
-            # If we're updating the comment field of a template, then just update that field
-            bugTemplate.comment = request.POST["comment"]
-        else:
-            for field in self.templateFields:
-                setattr(bugTemplate, field, request.POST[field])
-
-            for flag in self.templateFlags:
-                setattr(bugTemplate, flag, flag in request.POST)
-
-        bugTemplate.save()
-        return bugTemplate.pk
-
     def getTemplateList(self):
         return BugzillaTemplate.objects.all()
 
