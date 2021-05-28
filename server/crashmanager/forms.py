@@ -1,6 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
-from django.forms import ModelForm, Textarea
+from django.forms import ModelForm, Textarea, TextInput
 
 from .models import BugzillaTemplate
 
@@ -104,7 +104,7 @@ class BugzillaTemplateBugForm(ModelForm):
         widgets = {}
         for field in fields:
             if field not in ['description', 'attrs', 'security']:
-                widgets[field] = Textarea(attrs={'rows': 1})
+                widgets[field] = TextInput()
 
         widgets['attrs'] = Textarea(attrs={'rows': 2})
 
@@ -126,6 +126,6 @@ class BugzillaTemplateCommentForm(ModelForm):
             'comment': 'Comment',
         }
         widgets = {
-            'name': Textarea(attrs={'rows': 1}),
+            'name': TextInput(),
             'comment': Textarea(attrs={'rows': 6})
         }
