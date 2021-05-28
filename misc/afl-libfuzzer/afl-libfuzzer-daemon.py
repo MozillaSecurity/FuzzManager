@@ -1019,7 +1019,7 @@ def main(argv=None):
 
         if not os.listdir(updated_tests_dir):
             print("Error: Merge returned empty result, refusing to upload.")
-            return 2
+            return 0
 
         # replace existing corpus with reduced corpus
         print("Uploading reduced corpus to s3://%s/%s/corpus/" % (opts.s3_bucket, opts.project))
