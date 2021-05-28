@@ -102,12 +102,12 @@ def update_task(pulse_data):
         "started": run_obj.get("started"),
         "state": run_obj["state"],
     }
-    task_obj, created = Task.objects.update_or_create(
+    task_obj, _ = Task.objects.update_or_create(
         task_id=status["taskId"],
         run_id=run_id,
         defaults=defaults,
     )
-    if created:
+    if task_obj.created is None:
         # `created` field isn't available via pulse, so get it from Taskcluster
         queue_svc = taskcluster.Queue({"rootUrl": settings.TC_ROOT_URL})
         task = queue_svc.task(status["taskId"])

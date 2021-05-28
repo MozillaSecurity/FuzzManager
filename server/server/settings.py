@@ -359,6 +359,10 @@ REDIS_URL = 'redis://localhost:6379?db=0'  # unix sockets, use unix:///path/to/s
 #         'task': 'ec2spotmanager.cron.update_prices',
 #         'schedule': 15 * 60,
 #     },
+#     'Poll TaskManager tasks with missed pulses': {
+#         'task': 'taskmanager.cron.update_tasks',
+#         'schedule': 15 * 60,
+#     },
 #     'Cleanup expired TaskManager tasks': {
 #         'task': 'taskmanager.cron.delete_expired',
 #         'schedule': 5 * 60,
