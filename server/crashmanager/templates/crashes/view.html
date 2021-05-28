@@ -62,7 +62,7 @@
 	    <span class="glyphicon glyphicon-eye-open"></span>
             </button>
 	    <div id="stdout" class="accordian-body collapse">
-              <pre><code>{{ entry.rawStdout }}</code></pre>
+              <pre><code v-pre>{{ entry.rawStdout }}</code></pre>
             </div>
         </div>
         <br />
@@ -75,7 +75,7 @@
 	    <span class="glyphicon glyphicon-eye-open"></span>
             </button>
 	    <div id="stderr" class="accordian-body collapse">
-              <pre><code>{{ entry.rawStderr }}</code></pre>
+              <pre><code v-pre>{{ entry.rawStderr }}</code></pre>
             </div>
         </div>
         <br />
@@ -84,7 +84,7 @@
         {% if entry.rawCrashData %}
         <div class="field">
             <strong>Additional Crash Data</strong>
-            <pre><code class="language-bash">{{ entry.rawCrashData }}</code></pre>
+            <pre><code class="language-bash" v-pre>{{ entry.rawCrashData }}</code></pre>
         </div>
         <br />
         {% endif %}
@@ -95,7 +95,7 @@
             {% if entry.testcase.isBinary %}
             <br/>
             {% else %}
-            <pre><code>{{ entry.testcase.content.decode }}</code></pre>
+            <pre><code v-pre>{{ entry.testcase.content.decode }}</code></pre>
             {% endif %}
             <a href="{% url 'crashmanager:download_test' entry.pk %}" class="btn btn-success">Download</a>
         </div>
@@ -107,7 +107,7 @@
             <strong>Command-Line Arguments</strong>
             <br/>
             {% for arg in entry.argsList %}
-            <code>{{ arg }}</code>
+            <code v-pre>{{ arg }}</code>
             {% endfor %}
         </div>
         <br/>

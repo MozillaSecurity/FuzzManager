@@ -25,7 +25,7 @@
                 </td>
                 {% if forloop.counter == 1 %}
                 <td rowspan="{{ diff|length }}">
-                    <pre><code class="language-bash">{{ matchingEntries.0.crashinfo }}</code></pre>
+                    <pre><code class="language-bash" v-pre>{{ matchingEntries.0.crashinfo }}</code></pre>
 	    	</td>
                 {% endif %}
             </tr>
