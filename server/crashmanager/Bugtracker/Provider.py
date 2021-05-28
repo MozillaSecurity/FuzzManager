@@ -47,18 +47,6 @@ class Provider():
         return
 
     @abstractmethod
-    def renderContextCreateTemplate(self, request):
-        return
-
-    @abstractmethod
-    def renderContextViewTemplate(self, request, templateId, mode):
-        return
-
-    @abstractmethod
-    def handlePOSTCreateEditTemplate(self, request):
-        return
-
-    @abstractmethod
     def getTemplateList(self):
         return
 

@@ -14,8 +14,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
 from django.core.files.base import ContentFile
 import pytest
-from crashmanager.models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, Client, CrashEntry, OS, \
-    Platform, Product, TestCase as cmTestCase, Tool, User as cmUser
+from crashmanager.models import Bucket, BucketWatch, Bug, BugProvider, BugzillaTemplate, BugzillaTemplateMode, Client, \
+    CrashEntry, OS, Platform, Product, TestCase as cmTestCase, Tool, User as cmUser
 
 
 LOG = logging.getLogger("fm.crashmanager.tests")
@@ -169,7 +169,8 @@ def cm():
             return result
 
         @staticmethod
-        def create_template(name="",
+        def create_template(mode=BugzillaTemplateMode.Bug,
+                            name="",
                             product="",
                             component="",
                             summary="",
@@ -191,7 +192,8 @@ def cm():
                             security_group="",
                             comment="",
                             testcase_filename=""):
-            result = BugzillaTemplate.objects.create(name=name,
+            result = BugzillaTemplate.objects.create(mode=mode,
+                                                     name=name,
                                                      product=product,
                                                      component=component,
                                                      summary=summary,

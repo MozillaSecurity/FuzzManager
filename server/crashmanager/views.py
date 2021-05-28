@@ -5,8 +5,10 @@ from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min, Max
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.generic.list import ListView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 import functools
 import json
 import operator
@@ -23,8 +25,11 @@ from wsgiref.util import FileWrapper
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from .models import CrashEntry, Bucket, BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import InvalidArgumentException, BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
+from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
+from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
+    BucketWatch, BugProvider, Bug, Tool, User
+from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
+    BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -750,28 +755,6 @@ def createExternalBugComment(request, crashid):
         raise SuspiciousOperation
 
 
-def createBugTemplate(request, providerId):
-    provider = get_object_or_404(BugProvider, pk=providerId)
-    if request.method == 'POST':
-        # Let the provider handle the template creation
-        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-
-        return redirect('crashmanager:viewtemplate', providerId=provider.pk, templateId=templateId)
-    elif request.method == 'GET':
-        return provider.getInstance().renderContextCreateTemplate(request)
-    else:
-        raise SuspiciousOperation
-
-
-def viewEditBugTemplate(request, providerId, templateId, mode):
-    provider = get_object_or_404(BugProvider, pk=providerId)
-    if request.method == 'GET':
-        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
-    elif request.method == 'POST':
-        templateId = provider.getInstance().handlePOSTCreateEditTemplate(request)
-        return provider.getInstance().renderContextViewTemplate(request, templateId, mode)
-
-
 def viewBugProviders(request):
     providers = BugProvider.objects.annotate(size=Count('bug'))
     return render(request, 'providers/index.html', {'providers': providers})
@@ -1158,6 +1141,17 @@ class BucketViewSet(mixins.ListModelMixin,
         )
 
 
+class BugzillaTemplateViewSet(mixins.ListModelMixin,
+                              mixins.RetrieveModelMixin,
+                              viewsets.GenericViewSet):
+    """
+    API endpoint that allows viewing BugzillaTemplates
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = BugzillaTemplate.objects.all()
+    serializer_class = BugzillaTemplateSerializer
+
+
 def json_to_query(json_str):
     """
     This method converts JSON objects into trees of Django Q objects.
@@ -1270,3 +1264,66 @@ class SignaturesDownloadView(AbstractDownloadView):
         file_path = os.path.join(storage_base, filename)
 
         return self.response(file_path, filename)
+
+
+class BugzillaTemplateListView(ListView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/list.html'
+    paginate_by = 100
+
+
+class BugzillaTemplateDeleteView(DeleteView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/delete.html'
+    success_url = reverse_lazy('crashmanager:templates')
+    pk_url_kwarg = 'templateId'
+
+
+class BugzillaTemplateEditView(UpdateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    success_url = reverse_lazy('crashmanager:templates')
+    pk_url_kwarg = 'templateId'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Edit template'
+        return context
+
+    def get_form_class(self):
+        if self.object.mode == BugzillaTemplateMode.Bug:
+            return BugzillaTemplateBugForm
+        else:
+            return BugzillaTemplateCommentForm
+
+
+class BugzillaTemplateBugCreateView(CreateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    form_class = BugzillaTemplateBugForm
+    success_url = reverse_lazy('crashmanager:templates')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create a bug template'
+        return context
+
+    def form_valid(self, form):
+        form.instance.mode = BugzillaTemplateMode.Bug
+        return super(BugzillaTemplateBugCreateView, self).form_valid(form)
+
+
+class BugzillaTemplateCommentCreateView(CreateView):
+    model = BugzillaTemplate
+    template_name = 'bugzilla/create_edit.html'
+    form_class = BugzillaTemplateCommentForm
+    success_url = reverse_lazy('crashmanager:templates')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create a comment template'
+        return context
+
+    def form_valid(self, form):
+        form.instance.mode = BugzillaTemplateMode.Comment
+        return super(BugzillaTemplateCommentCreateView, self).form_valid(form)
