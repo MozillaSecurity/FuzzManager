@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-md-4">
+    <div class="form-group col-md-4">
       <label for="bp_select">Provider</label>
       <select id="bp_select" class="form-control" v-model="selectedProvider">
         <option
@@ -12,8 +12,8 @@
         </option>
       </select>
     </div>
-    <div class="col-md-4">
-      <label for="product">Product</label>
+    <div class="form-group col-md-4">
+      <label for="product">Product*</label>
       <div class="row">
         <div class="col-md-2">
           <button
@@ -52,8 +52,8 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <label for="component">Component</label>
+    <div class="form-group col-md-4">
+      <label for="component">Component*</label>
       <select
         id="component"
         name="component"
@@ -78,6 +78,23 @@ import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
 
 export default {
+  props: {
+    givenProvider: {
+      type: String,
+      required: false,
+      default: null,
+    },
+    givenProduct: {
+      type: String,
+      required: false,
+      default: "",
+    },
+    givenComponent: {
+      type: String,
+      required: false,
+      default: "",
+    },
+  },
   data: () => ({
     providers: [],
     selectedProvider: null,
@@ -90,6 +107,7 @@ export default {
     this.providers = data.results.filter(
       (p) => p.classname === "BugzillaProvider"
     );
+    if (this.givenProvider) this.selectedProvider = this.givenProvider;
     this.assignProducts();
   },
   computed: {
@@ -111,6 +129,19 @@ export default {
         let stored = JSON.parse(localStorage.getItem(this.localStorageKey));
         if (!stored) stored = await this.fetchProducts();
         this.products = stored.products;
+      }
+
+      if (this.givenProduct) {
+        const product = this.products.find((p) => p.name === this.givenProduct);
+        if (product) {
+          this.selectedProduct = product.name;
+          if (this.givenComponent) {
+            const component = product.components.find(
+              (c) => c === this.givenComponent
+            );
+            if (component) this.selectedComponent = component;
+          }
+        }
       }
     },
     async refreshProducts() {
