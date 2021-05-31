@@ -1,74 +1,106 @@
 <template>
-  <div class="row">
-    <div class="form-group col-md-4">
-      <label for="bp_select">Provider</label>
-      <select id="bp_select" class="form-control" v-model="selectedProvider">
-        <option
-          v-for="provider in providers"
-          :key="provider.hostname"
-          :value="provider.hostname"
-        >
-          {{ provider.hostname }}
-        </option>
-      </select>
-    </div>
-    <div class="form-group col-md-4">
-      <label for="product">Product*</label>
-      <div class="row">
-        <div class="col-md-2">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            :disabled="!selectedProvider"
-            title="Refresh product list"
-            v-on:click="refreshProducts"
+  <div>
+    <div class="row">
+      <div class="form-group col-md-4">
+        <label for="bp_select">Provider</label>
+        <select id="bp_select" class="form-control" v-model="selectedProvider">
+          <option
+            v-for="provider in providers"
+            :key="provider.hostname"
+            :value="provider.hostname"
           >
-            <i class="glyphicon glyphicon-refresh"></i>
-          </button>
-        </div>
-        <div class="col-md-10">
-          <select
-            id="product"
-            name="product"
-            class="form-control"
-            v-model="selectedProduct"
-            :disabled="!selectedProvider"
-          >
-            <option
-              v-if="selectedProvider && !products.length"
-              value=""
-              disabled
+            {{ provider.hostname }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group col-md-4" v-if="!fetchError">
+        <label for="product">Product*</label>
+        <div class="row">
+          <div class="col-md-2">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              :disabled="!selectedProvider"
+              title="Refresh product list"
+              v-on:click="refreshProducts"
             >
-              Products loading...
-            </option>
-            <option
-              v-for="product in products"
-              :key="product.id"
-              :value="product.name"
+              <i class="glyphicon glyphicon-refresh"></i>
+            </button>
+          </div>
+          <div class="col-md-10">
+            <select
+              id="product"
+              name="product"
+              class="form-control"
+              v-model="selectedProduct"
+              :disabled="!selectedProvider"
             >
-              {{ product.name }}
-            </option>
-          </select>
+              <option
+                v-if="selectedProvider && !products.length"
+                value=""
+                disabled
+              >
+                Products loading...
+              </option>
+              <option
+                v-for="product in products"
+                :key="product.id"
+                :value="product.name"
+              >
+                {{ product.name }}
+              </option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="form-group col-md-4">
-      <label for="component">Component*</label>
-      <select
-        id="component"
-        name="component"
-        class="form-control"
-        v-model="selectedComponent"
-        :disabled="!selectedProduct"
-      >
-        <option
-          v-for="component in components"
-          :key="component"
-          :value="component"
+      <div class="form-group col-md-4" v-else>
+        <label for="product">Product*</label>
+        <input
+          type="text"
+          id="product"
+          name="product"
+          class="form-control"
+          :value="givenProduct"
+        />
+      </div>
+      <div class="form-group col-md-4" v-if="!fetchError">
+        <label for="component">Component*</label>
+        <select
+          id="component"
+          name="component"
+          class="form-control"
+          v-model="selectedComponent"
+          :disabled="!selectedProduct"
         >
-          {{ component }}
-        </option>
-      </select>
+          <option
+            v-for="component in components"
+            :key="component"
+            :value="component"
+          >
+            {{ component }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group col-md-4" v-else>
+        <label for="component">Component*</label>
+        <input
+          type="text"
+          id="component"
+          name="component"
+          class="form-control"
+          :value="givenComponent"
+        />
+      </div>
+    </div>
+
+    <div
+      v-if="fetchError"
+      class="alert alert-danger error-message"
+      role="alert"
+    >
+      An error occured while fetching products and components from
+      <strong>{{ selectedProvider }}</strong
+      >. Please, enter your product and component by hand.
     </div>
   </div>
 </template>
@@ -96,6 +128,7 @@ export default {
     },
   },
   data: () => ({
+    fetchError: false,
     providers: [],
     selectedProvider: null,
     products: [],
@@ -152,27 +185,33 @@ export default {
       this.assignProducts();
     },
     async fetchProducts() {
-      const data = await bugzillaApi.fetchLatestConfiguration(
-        this.selectedProvider
-      );
-      const products = Object.entries(data.product)
-        .filter(([, product]) => product.is_active)
-        .map(([name, product]) => {
-          return {
-            id: product.id,
-            name: name,
-            components: Object.entries(product.component)
-              .filter(([, component]) => component.is_active)
-              .map(([name]) => name),
-          };
-        });
-      const toSave = { version: data.version, products: products };
-      localStorage.setItem(this.localStorageKey, JSON.stringify(toSave));
-      return toSave;
+      try {
+        const data = await bugzillaApi.fetchLatestConfiguration(
+          this.selectedProvider
+        );
+        const products = Object.entries(data.product)
+          .filter(([, product]) => product.is_active)
+          .map(([name, product]) => {
+            return {
+              id: product.id,
+              name: name,
+              components: Object.entries(product.component)
+                .filter(([, component]) => component.is_active)
+                .map(([name]) => name),
+            };
+          });
+        const toSave = { version: data.version, products: products };
+        localStorage.setItem(this.localStorageKey, JSON.stringify(toSave));
+        return toSave;
+      } catch {
+        this.fetchError = true;
+        return [];
+      }
     },
   },
   watch: {
     selectedProvider: function () {
+      this.fetchError = false;
       this.products = [];
       this.selectedProduct = "";
       this.selectedComponent = "";
@@ -182,4 +221,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.error-message {
+  margin-top: 0rem;
+  margin-bottom: 1.5rem;
+}
+</style>
