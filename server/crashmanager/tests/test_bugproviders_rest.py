@@ -12,7 +12,7 @@ LOG = logging.getLogger("fm.crashmanager.tests.bugproviders.rest")
 def test_rest_bugproviders_no_auth(db, api_client, method):
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(
-        "/crashmanager/rest/providers/", {}
+        "/crashmanager/rest/bugproviders/", {}
     ).status_code == requests.codes['unauthorized']
 
 
@@ -20,19 +20,19 @@ def test_rest_bugproviders_no_auth(db, api_client, method):
 def test_rest_bugproviders_no_perm(user_noperm, api_client, method):
     """must yield forbidden without permission"""
     assert getattr(api_client, method)(
-        "/crashmanager/rest/providers/", {}
+        "/crashmanager/rest/bugproviders/", {}
     ).status_code == requests.codes['forbidden']
 
 
 @pytest.mark.parametrize("method, url, user", [
-    ("delete", "/crashmanager/rest/providers/", "normal"),
-    ("delete", "/crashmanager/rest/providers/", "restricted"),
-    ("patch", "/crashmanager/rest/providers/", "normal"),
-    ("patch", "/crashmanager/rest/providers/", "restricted"),
-    ("post", "/crashmanager/rest/providers/", "normal"),
-    ("post", "/crashmanager/rest/providers/", "restricted"),
-    ("put", "/crashmanager/rest/providers/", "normal"),
-    ("put", "/crashmanager/rest/providers/", "restricted"),
+    ("delete", "/crashmanager/rest/bugproviders/", "normal"),
+    ("delete", "/crashmanager/rest/bugproviders/", "restricted"),
+    ("patch", "/crashmanager/rest/bugproviders/", "normal"),
+    ("patch", "/crashmanager/rest/bugproviders/", "restricted"),
+    ("post", "/crashmanager/rest/bugproviders/", "normal"),
+    ("post", "/crashmanager/rest/bugproviders/", "restricted"),
+    ("put", "/crashmanager/rest/bugproviders/", "normal"),
+    ("put", "/crashmanager/rest/bugproviders/", "restricted"),
 ], indirect=["user"])
 def test_rest_bugproviders_methods(api_client, user, method, url):
     """must yield method-not-allowed for unsupported methods"""
@@ -40,16 +40,16 @@ def test_rest_bugproviders_methods(api_client, user, method, url):
 
 
 @pytest.mark.parametrize("method, url, user", [
-    ("get", "/crashmanager/rest/providers/1/", "normal"),
-    ("get", "/crashmanager/rest/providers/1/", "restricted"),
-    ("delete", "/crashmanager/rest/providers/1/", "normal"),
-    ("delete", "/crashmanager/rest/providers/1/", "restricted"),
-    ("patch", "/crashmanager/rest/providers/1/", "normal"),
-    ("patch", "/crashmanager/rest/providers/1/", "restricted"),
-    ("post", "/crashmanager/rest/providers/1/", "normal"),
-    ("post", "/crashmanager/rest/providers/1/", "restricted"),
-    ("put", "/crashmanager/rest/providers/1/", "normal"),
-    ("put", "/crashmanager/rest/providers/1/", "restricted"),
+    ("get", "/crashmanager/rest/bugproviders/1/", "normal"),
+    ("get", "/crashmanager/rest/bugproviders/1/", "restricted"),
+    ("delete", "/crashmanager/rest/bugproviders/1/", "normal"),
+    ("delete", "/crashmanager/rest/bugproviders/1/", "restricted"),
+    ("patch", "/crashmanager/rest/bugproviders/1/", "normal"),
+    ("patch", "/crashmanager/rest/bugproviders/1/", "restricted"),
+    ("post", "/crashmanager/rest/bugproviders/1/", "normal"),
+    ("post", "/crashmanager/rest/bugproviders/1/", "restricted"),
+    ("put", "/crashmanager/rest/bugproviders/1/", "normal"),
+    ("put", "/crashmanager/rest/bugproviders/1/", "restricted"),
 ], indirect=["user"])
 def test_rest_bugproviders_methods_not_found(api_client, user, method, url):
     """must yield not-found for undeclared methods"""
@@ -70,7 +70,7 @@ def test_rest_bugproviders_list(api_client, user, cm):
     providers = [cm.create_bugprovider(hostname="test-provider%d.com" % (i + 1),
                                        urlTemplate="test-provider%d.com/template" % (i + 1))
                  for i in range(expected)]
-    resp = api_client.get("/crashmanager/rest/providers/")
+    resp = api_client.get("/crashmanager/rest/bugproviders/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']
     resp = resp.json()
