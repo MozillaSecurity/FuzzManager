@@ -160,7 +160,9 @@ export default {
         this.products = [];
       } else {
         let stored = JSON.parse(localStorage.getItem(this.localStorageKey));
-        if (!stored) stored = await this.fetchProducts();
+        const lastWeek = new Date().setDate(new Date().getDate() - 7);
+        if (!stored || new Date(stored.stored).getTime() < lastWeek)
+          stored = await this.fetchProducts();
         this.products = stored.products;
       }
 
@@ -200,7 +202,11 @@ export default {
                 .map(([name]) => name),
             };
           });
-        const toSave = { version: data.version, products: products };
+        const toSave = {
+          version: data.version,
+          stored: new Date(),
+          products: products,
+        };
         localStorage.setItem(this.localStorageKey, JSON.stringify(toSave));
         return toSave;
       } catch {
