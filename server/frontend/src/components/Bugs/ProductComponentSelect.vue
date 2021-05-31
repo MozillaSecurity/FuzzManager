@@ -60,7 +60,7 @@
           id="product"
           name="product"
           class="form-control"
-          :value="givenProduct"
+          :value="defaultTemplateProduct"
         />
       </div>
       <div class="form-group col-md-4" v-if="!fetchError">
@@ -88,7 +88,7 @@
           id="component"
           name="component"
           class="form-control"
-          :value="givenComponent"
+          :value="defaultTemplateComponent"
         />
       </div>
     </div>
@@ -111,17 +111,17 @@ import * as bugzillaApi from "../../bugzilla_api";
 
 export default {
   props: {
-    givenProvider: {
+    defaultProvider: {
       type: String,
       required: false,
       default: null,
     },
-    givenProduct: {
+    defaultTemplateProduct: {
       type: String,
       required: false,
       default: "",
     },
-    givenComponent: {
+    defaultTemplateComponent: {
       type: String,
       required: false,
       default: "",
@@ -140,7 +140,7 @@ export default {
     this.providers = data.results.filter(
       (p) => p.classname === "BugzillaProvider"
     );
-    if (this.givenProvider) this.selectedProvider = this.givenProvider;
+    if (this.defaultProvider) this.selectedProvider = this.defaultProvider;
     this.assignProducts();
   },
   computed: {
@@ -166,13 +166,15 @@ export default {
         this.products = stored.products;
       }
 
-      if (this.givenProduct) {
-        const product = this.products.find((p) => p.name === this.givenProduct);
+      if (this.defaultTemplateProduct) {
+        const product = this.products.find(
+          (p) => p.name === this.defaultTemplateProduct
+        );
         if (product) {
           this.selectedProduct = product.name;
-          if (this.givenComponent) {
+          if (this.defaultTemplateComponent) {
             const component = product.components.find(
-              (c) => c === this.givenComponent
+              (c) => c === this.defaultTemplateComponent
             );
             if (component) this.selectedComponent = component;
           }
@@ -187,6 +189,10 @@ export default {
       this.assignProducts();
     },
     async fetchProducts() {
+      /*
+       * Return fetched products and components retrieved from https://{selectedProvider}/latest/configuration
+       * Also store them in browser localStorage under "bugzilla-products-{selectedProvider}" key
+       */
       try {
         const data = await bugzillaApi.fetchLatestConfiguration(
           this.selectedProvider
