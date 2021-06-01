@@ -229,6 +229,7 @@ class BugzillaProvider(Provider):
             attachmentData = self.substituteTemplateForCrash(template, crashEntry)
 
         data = {
+            'id': self.pk,
             'hostname': self.hostname,
             'templates': templates,
             'template': template,

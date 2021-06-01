@@ -199,3 +199,16 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
 
     def get_mode(self, obj):
         return obj.mode.value
+
+
+class ExternalBugSerializer(serializers.Serializer):
+    provider = serializers.PrimaryKeyRelatedField(queryset=BugProvider.objects.all())
+    bug_id = serializers.CharField()
+    redirect_url = serializers.SerializerMethodField(required=False)
+
+    class Meta:
+        fields = ('provider', 'bug_id', 'redirect_url')
+        read_only_fields = ('redirect_url')
+
+    def get_redirect_url(self, instance):
+        return reverse('crashmanager:sigview', kwargs={'sigid': instance['entry'].bucket.pk})

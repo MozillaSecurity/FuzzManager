@@ -28,7 +28,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
+from .serializers import BugzillaTemplateSerializer, ExternalBugSerializer, InvalidArgumentException, \
     BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
 from server.auth import CheckAppPermission
 
@@ -1032,6 +1032,35 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
             obj.testcase.quality = testcase_quality
             obj.testcase.save()
         return Response(CrashEntrySerializer(obj).data)
+
+
+class ExternalBugViewSet(mixins.UpdateModelMixin,
+                         viewsets.GenericViewSet):
+    """API endpoint that allows assigning an external Bug to a Bucket"""
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    serializer_class = ExternalBugSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        entry = get_object_or_404(CrashEntry, id=self.kwargs["crashid"])
+        check_authorized_for_crash_entry(request, entry)
+
+        if not entry.bucket:
+            raise ValidationError("Cannot assign an external bug to an issue that is not associated "
+                                  "to a bucket/signature")
+
+        extBug, _ = Bug.objects.get_or_create(
+            externalId=serializer.validated_data.get('bug_id'),
+            defaults={
+                "externalType": serializer.validated_data.get('provider')
+            }
+        )
+        entry.bucket.bug = extBug
+        entry.bucket.save(update_fields=['bug'])
+
+        return Response(ExternalBugSerializer({'entry': entry, **serializer.validated_data}).data)
 
 
 class BucketViewSet(mixins.ListModelMixin,
