@@ -36,7 +36,7 @@ def _get_or_create_pool(worker_type):
 
 @app.task(ignore_result=True)
 def update_pool_defns():
-    from fuzzing_decision.common.pool import PoolConfiguration
+    from fuzzing_decision.common.pool import PoolConfigLoader
     from .models import Pool, Task
 
     # don't remove pools while they have existing tasks
@@ -57,7 +57,7 @@ def update_pool_defns():
     )
     check_output(["git", "reset", "--hard", "FETCH_HEAD"], cwd=storage)
     for config_file in storage.glob("pool*.yml"):
-        pool_data = PoolConfiguration.from_file(config_file)
+        pool_data = PoolConfigLoader.from_file(config_file)
         defaults = {
             "pool_name": pool_data.name,
             "size": pool_data.tasks,
@@ -102,12 +102,12 @@ def update_task(pulse_data):
         "started": run_obj.get("started"),
         "state": run_obj["state"],
     }
-    task_obj, created = Task.objects.update_or_create(
+    task_obj, _ = Task.objects.update_or_create(
         task_id=status["taskId"],
         run_id=run_id,
         defaults=defaults,
     )
-    if created:
+    if task_obj.created is None:
         # `created` field isn't available via pulse, so get it from Taskcluster
         queue_svc = taskcluster.Queue({"rootUrl": settings.TC_ROOT_URL})
         task = queue_svc.task(status["taskId"])
