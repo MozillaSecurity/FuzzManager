@@ -1,6 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
-from django.forms import ModelForm, Textarea, TextInput
+from django.forms import CharField, ModelForm, Textarea, TextInput
 
 from .models import BugzillaTemplate
 
@@ -18,6 +18,7 @@ class BugzillaTemplateBugForm(ModelForm):
             Field('product', wrapper_class='col-md-6'),
             Field('component', wrapper_class='col-md-6'),
         ),
+        HTML("""<productcomponentselect></productcomponentselect>"""),
         Row(
             Field('whiteboard', wrapper_class='col-md-6'),
             Field('keywords', wrapper_class='col-md-6'),
@@ -50,6 +51,8 @@ class BugzillaTemplateBugForm(ModelForm):
         Submit('submit', 'Save', css_class='btn btn-danger'),
         HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>""")
     )
+    product = CharField(label='Current product (choose below)', widget=TextInput(attrs={'disabled': True}))
+    component = CharField(label='Current component (choose below)', widget=TextInput(attrs={'disabled': True}))
 
     class Meta:
         model = BugzillaTemplate
@@ -80,8 +83,6 @@ class BugzillaTemplateBugForm(ModelForm):
         labels = {
             'name': 'Template name',
             'summary': 'Summary',
-            'product': 'Product',
-            'component': 'Component',
             'whiteboard': 'Whiteboard',
             'keywords': 'Keywords',
             'op_sys"': 'OS',

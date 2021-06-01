@@ -18,3 +18,6 @@ export const updateBucket = async ({ id, params, ...data }) =>
 
 export const listCrashes = async (params) =>
   (await mainAxios.get("/crashmanager/rest/crashes/", { params })).data;
+
+export const listBugProviders = async () =>
+  (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;

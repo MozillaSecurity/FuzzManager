@@ -10,6 +10,7 @@ import router from "./router.js";
 import List from "./components/Crashes/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
+import ProductComponentSelect from "./components/Bugs/ProductComponentSelect.vue";
 
 Vue.use(VueRouter);
 
@@ -20,6 +21,7 @@ window.onload = function () {
       createoredit: CreateOrEdit,
       crasheslist: List,
       providerkey: ProviderKey,
+      productcomponentselect: ProductComponentSelect,
     },
     router,
   });
