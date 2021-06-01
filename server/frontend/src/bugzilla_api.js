@@ -10,3 +10,6 @@ export const whoAmI = async ({ hostname, key }) =>
       headers: { "X-BUGZILLA-API-KEY": key },
     })
   ).data;
+
+export const fetchLatestConfiguration = async (hostname) =>
+  (await bugzillaAxios.get(`https://${hostname}/latest/configuration`)).data;

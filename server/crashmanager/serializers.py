@@ -9,7 +9,8 @@ from rest_framework.exceptions import APIException
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from crashmanager.models import CrashEntry, Bucket, BugzillaTemplate, Platform, Product, OS, TestCase, Client, Tool
+from crashmanager.models import CrashEntry, Bucket, BugProvider, BugzillaTemplate, \
+    Platform, Product, OS, TestCase, Client, Tool
 
 
 class InvalidArgumentException(APIException):
@@ -177,6 +178,12 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
 
     def get_find_sigs_url(self, entry):
         return reverse('crashmanager:findsigs', kwargs={'crashid': entry.id})
+
+
+class BugProviderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BugProvider
+        fields = ('classname', 'hostname', 'urlTemplate',)
 
 
 class BugzillaTemplateSerializer(serializers.ModelSerializer):

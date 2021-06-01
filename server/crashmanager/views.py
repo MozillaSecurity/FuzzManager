@@ -29,7 +29,7 @@ from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
-    BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer
+    BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -1139,6 +1139,16 @@ class BucketViewSet(mixins.ListModelMixin,
             status=response_status,
             data=data,
         )
+
+
+class BugProviderViewSet(mixins.ListModelMixin,
+                         viewsets.GenericViewSet):
+    """
+    API endpoint that allows listing BugProviders
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = BugProvider.objects.all()
+    serializer_class = BugProviderSerializer
 
 
 class BugzillaTemplateViewSet(mixins.ListModelMixin,
