@@ -11,7 +11,7 @@ import CrashesList from "./components/Crashes/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import ProductComponentSelect from "./components/Bugs/ProductComponentSelect.vue";
-import PossibleDuplicatesList from "./components/Bugs/PossibleDuplicates/List.vue";
+import SummaryInput from "./components/Bugs/SummaryInput.vue";
 
 Vue.use(VueRouter);
 
@@ -23,7 +23,7 @@ window.onload = function () {
       crasheslist: CrashesList,
       providerkey: ProviderKey,
       productcomponentselect: ProductComponentSelect,
-      possiblebugduplicates: PossibleDuplicatesList,
+      summaryinput: SummaryInput,
     },
     router,
   });

@@ -63,7 +63,7 @@ def test_rest_externalbug_update(api_client, cm, user_normal):
     assert resp == {
         "bug_id": "123456",
         "provider": provider.id,
-        "redirect_url": "/crashmanager/signatures/%d/" % bucket.id
+        "details_url": "/crashmanager/signatures/%d/" % bucket.id
     }
     assert Bug.objects.count() == 1
     createdBug = Bug.objects.get()

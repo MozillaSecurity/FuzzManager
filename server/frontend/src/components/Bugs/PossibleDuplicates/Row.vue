@@ -50,7 +50,7 @@ export default {
           id: this.entryId,
           ...payload,
         });
-        window.location.href = data.redirect_url;
+        window.location.href = data.details_url;
       } catch (err) {
         this.$emit("error", errorParser(err));
       }

@@ -1,6 +1,4 @@
-<p>Summary <input id="id_summary" class="form-control" maxlength="1023" name="summary" type="text" value="{{ template.summary }}" style="width:100%"></p>
-<possiblebugduplicates summary="{{ template.summary }}" :entry-id="{{ entry.id }}" :provider-id="{{ id }}" provider-hostname="{{ hostname }}"></possiblebugduplicates>
-
+<summaryinput initial-summary="{{ template.summary }}" :entry-id="{{ entry.id }}" :provider-id="{{ id }}" provider-hostname="{{ hostname }}"></summaryinput>
 <br/>
     <productcomponentselect default-provider="{{ hostname }}" default-template-product="{{ template.product }}" default-template-component="{{ template.component }}"></productcomponentselect>
 <br/>

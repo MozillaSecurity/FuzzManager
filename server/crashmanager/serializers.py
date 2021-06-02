@@ -204,11 +204,11 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
 class ExternalBugSerializer(serializers.Serializer):
     provider = serializers.PrimaryKeyRelatedField(queryset=BugProvider.objects.all())
     bug_id = serializers.CharField()
-    redirect_url = serializers.SerializerMethodField(required=False)
+    details_url = serializers.SerializerMethodField(required=False)
 
     class Meta:
-        fields = ('provider', 'bug_id', 'redirect_url')
-        read_only_fields = ('redirect_url')
+        fields = ('provider', 'bug_id', 'details_url')
+        read_only_fields = ('details_url')
 
-    def get_redirect_url(self, instance):
-        return reverse('crashmanager:sigview', kwargs={'sigid': instance['entry'].bucket.pk})
+    def get_details_url(self, instance):
+        return reverse('crashmanager:sigview', kwargs={'sigid': instance['bucket']})

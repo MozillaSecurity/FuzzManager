@@ -1060,7 +1060,9 @@ class ExternalBugViewSet(mixins.UpdateModelMixin,
         entry.bucket.bug = extBug
         entry.bucket.save(update_fields=['bug'])
 
-        return Response(ExternalBugSerializer({'entry': entry, **serializer.validated_data}).data)
+        # We need to override update instead of perform_update, to use the
+        # bucket.pk in the serializer and generate the bucket details_url
+        return Response(ExternalBugSerializer({'bucket': entry.bucket.pk, **serializer.validated_data}).data)
 
 
 class BucketViewSet(mixins.ListModelMixin,
