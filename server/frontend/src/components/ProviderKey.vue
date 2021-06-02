@@ -61,7 +61,7 @@
         >
           <span aria-hidden="true">&times;</span>
         </button>
-        Your API key wasn't saved because an error occured while contacting
+        Your API key wasn't saved because an error occurred while contacting
         <strong>{{ providerHostname }}</strong> API:
         <br />
         <em class="mt-light">{{ error }}</em>

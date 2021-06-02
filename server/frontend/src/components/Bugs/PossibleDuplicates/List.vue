@@ -9,42 +9,61 @@
       {{ !loading ? "Fetch similar bugs" : "Fetching bugs..." }}
     </button>
 
-    <div
-      v-if="duplicates && !bugzillaToken"
-      class="alert alert-warning alert-message"
-      role="alert"
-    >
-      Similar bugs were retrieved from
-      <strong>{{ providerHostname }}</strong> without any authentication. Please
-      define an API Token for this provider in your settings to retrieve
-      security bugs.
-    </div>
+    <div v-if="duplicates">
+      <div
+        v-if="!bugzillaToken"
+        class="alert alert-warning alert-message"
+        role="alert"
+      >
+        Similar bugs were retrieved from
+        <strong>{{ providerHostname }}</strong> without any authentication.
+        Please define an API Token for this provider in your settings to
+        retrieve security bugs.
+      </div>
 
-    <p v-if="duplicates && !duplicates.length">No similar bugs were found.</p>
-    <div
-      class="pre-scrollable scroll-panel"
-      v-if="duplicates && duplicates.length"
-    >
-      <table class="table table-condensed table-hover table-bordered no-margin">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Summary</th>
-            <th>Component</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <Row
-            v-for="duplicate in duplicates"
-            :key="duplicate.id"
-            :bug="duplicate"
-            :entry-id="entryId"
-            :provider-id="providerId"
-          />
-        </tbody>
-      </table>
+      <div
+        v-if="assignError"
+        class="alert alert-danger alert-message"
+        role="alert"
+      >
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+          v-on:click="assignError = null"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        An error occurred while assigning this external bug to the current crash
+        bucket: {{ assignError }}
+      </div>
+      <p v-if="!duplicates.length">No similar bugs were found.</p>
+      <div class="pre-scrollable scroll-panel" v-else>
+        <table
+          class="table table-condensed table-hover table-bordered no-margin"
+        >
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Summary</th>
+              <th>Component</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <Row
+              v-for="duplicate in duplicates"
+              :key="duplicate.id"
+              :bug="duplicate"
+              :entry-id="entryId"
+              :provider-id="providerId"
+              v-on:error="setAssignError"
+            />
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div
@@ -52,7 +71,7 @@
       class="alert alert-danger alert-message"
       role="alert"
     >
-      An error occured while fetching similar bugs from
+      An error occurred while fetching similar bugs from
       <strong>{{ providerHostname }}</strong
       >.
     </div>
@@ -89,6 +108,7 @@ export default {
     loading: false,
     duplicates: null,
     fetchError: false,
+    assignError: null,
   }),
   computed: {
     bugzillaToken() {
@@ -96,8 +116,12 @@ export default {
     },
   },
   methods: {
+    setAssignError(value) {
+      this.assignError = value;
+    },
     async fetchDuplicates() {
       this.fetchError = false;
+      this.assignError = null;
       this.duplicates = null;
       this.loading = true;
       try {

@@ -37,11 +37,9 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    assignError: false,
-  }),
   methods: {
     async assignExternalBug() {
+      this.$emit("error", null);
       const payload = {
         bug_id: this.bug.id,
         provider: this.providerId,
@@ -54,8 +52,7 @@ export default {
         });
         window.location.href = data.redirect_url;
       } catch (err) {
-        // TODO: Properly display this error so the user can see it
-        this.assignError = errorParser(err);
+        this.$emit("error", errorParser(err));
       }
     },
   },
