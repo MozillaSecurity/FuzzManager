@@ -21,3 +21,6 @@ export const listCrashes = async (params) =>
 
 export const listBugProviders = async () =>
   (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;
+
+export const listTemplates = async () =>
+  (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;

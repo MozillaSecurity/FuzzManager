@@ -1,0 +1,380 @@
+<template>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <i class="glyphicon glyphicon-list-alt"></i> Create an external bug
+    </div>
+    <div class="panel-body">
+      <h3>Configuration</h3>
+      <div class="row">
+        <div class="form-group col-md-6">
+          <label for="bp_select">Bug provider</label>
+          <select
+            id="bp_select"
+            class="form-control"
+            v-model="selectedProvider"
+          >
+            <option v-for="p in providers" :key="p.id" :value="p.id">
+              {{ p.hostname }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="bt_select">Bug template</label>
+          <select
+            id="bt_select"
+            class="form-control"
+            v-model="selectedTemplate"
+          >
+            <option v-for="t in templates" :key="t.id" :value="t.id">
+              {{ t.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="alert alert-warning" role="alert" v-if="provider">
+        You are about to submit this bug to
+        <strong>{{ provider.hostname }}</strong>
+      </div>
+      <hr />
+
+      <h3>Create a bug for crash {{ entryId }}</h3>
+      <form v-if="template">
+        <SummaryInput
+          v-if="provider"
+          :initial-summary="template.summary"
+          :bucket-id="bucketId"
+          :provider="provider"
+        />
+
+        <div class="row">
+          <ProductComponentSelect
+            v-if="provider"
+            :provider-hostname="provider.hostname"
+            :template-product="template.product"
+            :template-component="template.component"
+          />
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="whiteboard">Whiteboard</label>
+            <input
+              id="id_whiteboard"
+              class="form-control"
+              maxlength="1023"
+              name="whiteboard"
+              type="text"
+              v-model="template.whiteboard"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="keywords">Keywords</label>
+            <input
+              id="id_keywords"
+              class="form-control"
+              maxlength="1023"
+              name="keywords"
+              type="text"
+              v-model="template.keywords"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="op_sys">OS</label>
+            <input
+              id="id_op_sys"
+              class="form-control"
+              maxlength="1023"
+              name="op_sys"
+              type="text"
+              v-model="template.op_sys"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="platform">Platform</label>
+            <input
+              id="id_platform"
+              class="form-control"
+              maxlength="1023"
+              name="platform"
+              type="text"
+              v-model="template.platform"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="cc">Cc</label>
+            <input
+              id="id_cc"
+              class="form-control"
+              maxlength="1023"
+              name="cc"
+              type="text"
+              v-model="template.cc"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="assigned_to">Assigned to</label>
+            <input
+              id="id_assigned_to"
+              class="form-control"
+              maxlength="1023"
+              name="assigned_to"
+              type="text"
+              v-model="template.assigned_to"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="priority">Priority</label>
+            <input
+              id="id_priority"
+              class="form-control"
+              maxlength="1023"
+              name="priority"
+              type="text"
+              v-model="template.priority"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="severity">Severity</label>
+            <input
+              id="id_severity"
+              class="form-control"
+              maxlength="1023"
+              name="severity"
+              type="text"
+              v-model="template.severity"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="alias">Alias</label>
+            <input
+              id="id_alias"
+              class="form-control"
+              maxlength="1023"
+              name="alias"
+              type="text"
+              v-model="template.alias"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="qa_contact">QA</label>
+            <input
+              id="id_qa_contact"
+              class="form-control"
+              maxlength="1023"
+              name="qa_contact"
+              type="text"
+              v-model="template.qa_contact"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="status">Status</label>
+            <input
+              id="id_status"
+              class="form-control"
+              maxlength="1023"
+              name="status"
+              type="text"
+              v-model="template.status"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="resolution">Resolution</label>
+            <input
+              id="id_resolution"
+              class="form-control"
+              maxlength="1023"
+              name="resolution"
+              type="text"
+              v-model="template.resolution"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="version">Version</label>
+            <input
+              id="id_version"
+              class="form-control"
+              maxlength="1023"
+              name="version"
+              type="text"
+              v-model="template.version"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="target_milestone">Target milestone</label>
+            <input
+              id="id_target_milestone"
+              class="form-control"
+              maxlength="1023"
+              name="target_milestone"
+              type="text"
+              v-model="template.target_milestone"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-12">
+            <label for="attrs">Custom Fields</label>
+            <i
+              class="glyphicon glyphicon-question-sign"
+              data-toggle="popover"
+              title="Custom Fields"
+              data-content="name=value pairs"
+            ></i>
+            <textarea
+              id="id_attrs"
+              class="form-control"
+              name="attrs"
+              v-model="template.attrs"
+            ></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-12">
+            <label for="description">Bug description</label>
+            <textarea
+              id="id_description"
+              class="form-control"
+              name="description"
+              v-model="template.description"
+            ></textarea>
+          </div>
+        </div>
+        <hr />
+
+        <h3>Security</h3>
+        <div class="row">
+          <div class="form-group col-md-6">
+            <input
+              type="checkbox"
+              id="id_security"
+              name="security"
+              value="unassigned"
+              :checked="template.security"
+            />
+            <span>This is a security bug.</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="security_group">
+              Security Group (default is core-security)
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              maxlength="1023"
+              id="id_security_group"
+              name="security_group"
+              v-model="template.security_group"
+            />
+          </div>
+        </div>
+        <hr />
+
+        <div>
+          <input
+            type="submit"
+            name="submit_save"
+            value="Submit"
+            class="btn btn-danger"
+          />
+          <input
+            type="button"
+            value="Cancel"
+            class="btn btn-default"
+            onClick="javascript:history.go(-1)"
+          />
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script>
+import * as api from "../../api";
+import SummaryInput from "./SummaryInput.vue";
+import ProductComponentSelect from "./ProductComponentSelect.vue";
+
+export default {
+  components: {
+    SummaryInput,
+    ProductComponentSelect,
+  },
+  props: {
+    providerId: {
+      type: Number,
+      required: true,
+    },
+    providerHostname: {
+      type: String,
+      required: true,
+    },
+    templateId: {
+      type: Number,
+      required: true,
+    },
+    entryId: {
+      type: Number,
+      required: true,
+    },
+    bucketId: {
+      type: Number,
+      required: true,
+    },
+  },
+  data: () => ({
+    providers: [],
+    selectedProvider: null,
+    provider: null,
+    templates: [],
+    selectedTemplate: null,
+    template: null,
+  }),
+  async mounted() {
+    let data = await api.listBugProviders();
+    this.providers = data.results.filter(
+      (p) => p.classname === "BugzillaProvider"
+    );
+    this.provider = this.providers.find((p) => p.id === this.providerId);
+    this.selectedProvider = this.provider.id;
+
+    data = await api.listTemplates();
+    this.templates = data.results.filter((t) => t.mode === "bug");
+    this.template = this.templates.find((t) => t.id === this.templateId);
+    this.selectedTemplate = this.template.id;
+  },
+  watch: {
+    selectedProvider() {
+      this.provider = this.providers.find(
+        (p) => p.id === this.selectedProvider
+      );
+    },
+    selectedTemplate() {
+      this.template = this.templates.find(
+        (t) => t.id === this.selectedTemplate
+      );
+    },
+  },
+};
+</script>
+
+<style scoped></style>

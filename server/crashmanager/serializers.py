@@ -190,7 +190,7 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
 class BugProviderSerializer(serializers.ModelSerializer):
     class Meta:
         model = BugProvider
-        fields = ('classname', 'hostname', 'urlTemplate',)
+        fields = ('id', 'classname', 'hostname', 'urlTemplate',)
 
 
 class BugzillaTemplateSerializer(serializers.ModelSerializer):

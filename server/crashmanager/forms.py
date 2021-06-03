@@ -18,7 +18,7 @@ class BugzillaTemplateBugForm(ModelForm):
             Field('product', wrapper_class='col-md-6'),
             Field('component', wrapper_class='col-md-6'),
         ),
-        HTML("""<productcomponentselect></productcomponentselect>"""),
+        HTML("""<ppcselect></ppcselect>"""),
         Row(
             Field('whiteboard', wrapper_class='col-md-6'),
             Field('keywords', wrapper_class='col-md-6'),

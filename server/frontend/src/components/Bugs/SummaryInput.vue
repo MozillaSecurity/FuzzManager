@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <div>
-      Summary
+  <div class="core">
+    <div class="form-group">
+      <label for="summary">Summary</label>
       <div class="input-group">
         <input
           id="id_summary"
@@ -30,15 +30,15 @@
         role="alert"
       >
         Similar bugs were retrieved from
-        <strong>{{ providerHostname }}</strong> without any authentication.
+        <strong>{{ provider.hostname }}</strong> without any authentication.
         Please define an API Token for this provider in your settings to
         retrieve security bugs.
       </div>
       <List
         :duplicates="duplicates"
         :bucket-id="bucketId"
-        :provider-id="providerId"
-        :provider-hostname="providerHostname"
+        :provider-id="provider.id"
+        :provider-hostname="provider.hostname"
       />
     </div>
     <div
@@ -47,7 +47,7 @@
       role="alert"
     >
       An error occurred while fetching similar bugs from
-      <strong>{{ providerHostname }}</strong
+      <strong>{{ provider.hostname }}</strong
       >.
     </div>
   </div>
@@ -70,12 +70,8 @@ export default {
       type: Number,
       required: true,
     },
-    providerId: {
-      type: Number,
-      required: true,
-    },
-    providerHostname: {
-      type: String,
+    provider: {
+      type: Object,
       required: true,
     },
   },
@@ -90,7 +86,7 @@ export default {
   },
   computed: {
     bugzillaToken() {
-      return localStorage.getItem("provider-" + this.providerId + "-api-key");
+      return localStorage.getItem("provider-" + this.provider.id + "-api-key");
     },
   },
   methods: {
@@ -100,20 +96,27 @@ export default {
       this.loading = true;
       try {
         const data = await bugzillaApi.fetchPossibleDuplicates({
-          hostname: this.providerHostname,
+          hostname: this.provider.hostname,
           params: { summary: this.summary },
           headers: this.bugzillaToken
             ? { "X-BUGZILLA-API-KEY": this.bugzillaToken }
             : {},
         });
         this.duplicates = data.bugs.map((b) => {
-          return { ...b, link: `https://${this.providerHostname}/${b.id}` };
+          return { ...b, link: `https://${this.provider.hostname}/${b.id}` };
         });
       } catch {
         this.fetchError = true;
       } finally {
         this.loading = false;
       }
+    },
+  },
+  watch: {
+    provider: function () {
+      this.loading = false;
+      this.duplicates = null;
+      this.fetchError = false;
     },
   },
 };
@@ -123,5 +126,8 @@ export default {
 .alert-message {
   margin-top: 1rem;
   margin-bottom: 0rem;
+}
+.core {
+  margin-bottom: 1.5rem;
 }
 </style>
