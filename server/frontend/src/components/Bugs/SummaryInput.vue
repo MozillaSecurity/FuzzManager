@@ -118,6 +118,12 @@ export default {
       this.duplicates = null;
       this.fetchError = false;
     },
+    initialSummary: function () {
+      this.summary = this.initialSummary;
+    },
+    summary: function () {
+      this.$emit("update-summary", this.summary);
+    },
   },
 };
 </script>

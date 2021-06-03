@@ -42,7 +42,8 @@
       <form v-if="template">
         <SummaryInput
           v-if="provider"
-          :initial-summary="template.summary"
+          :initial-summary="summary"
+          v-on:update-summary="summary = $event"
           :bucket-id="bucketId"
           :provider="provider"
         />
@@ -90,7 +91,7 @@
               maxlength="1023"
               name="op_sys"
               type="text"
-              v-model="template.op_sys"
+              v-model="opSys"
             />
           </div>
           <div class="form-group col-md-6">
@@ -101,7 +102,7 @@
               maxlength="1023"
               name="platform"
               type="text"
-              v-model="template.platform"
+              v-model="platform"
             />
           </div>
         </div>
@@ -231,8 +232,8 @@
           </div>
         </div>
         <div class="row">
-          <div class="form-group col-md-12">
-            <label for="attrs">Custom Fields</label>
+          <div class="form-group col-md-6">
+            <label for="attrs">Custom fields</label>
             <i
               class="glyphicon glyphicon-question-sign"
               data-toggle="popover"
@@ -246,9 +247,19 @@
               v-model="template.attrs"
             ></textarea>
           </div>
+          <div class="form-group col-md-6">
+            <label for="attrs">Rendered custom fields</label>
+            <textarea
+              id="id_rendered_attrs"
+              class="form-control"
+              name="rendered_attrs"
+              readonly
+              :value="renderedAttrs"
+            ></textarea>
+          </div>
         </div>
         <div class="row">
-          <div class="form-group col-md-12">
+          <div class="form-group col-md-6">
             <label for="description">Bug description</label>
             <textarea
               id="id_description"
@@ -256,6 +267,17 @@
               name="description"
               v-model="template.description"
             ></textarea>
+          </div>
+          <div class="form-group col-md-6">
+            <label for="rendered_description">Rendered description</label>
+            <textarea
+              id="id_rendered_description"
+              class="form-control"
+              name="rendered_description"
+              readonly
+              :value="renderedDescription"
+            >
+            </textarea>
           </div>
         </div>
         <hr />
@@ -310,6 +332,7 @@
 </template>
 
 <script>
+var Mustache = require("mustache");
 import * as api from "../../api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
@@ -348,6 +371,10 @@ export default {
     templates: [],
     selectedTemplate: null,
     template: null,
+    entry: null,
+    summary: "",
+    opSys: "",
+    platform: "",
   }),
   async mounted() {
     let data = await api.listBugProviders();
@@ -361,6 +388,134 @@ export default {
     this.templates = data.results.filter((t) => t.mode === "bug");
     this.template = this.templates.find((t) => t.id === this.templateId);
     this.selectedTemplate = this.template.id;
+
+    this.entry = await api.retrieveCrash(this.entryId);
+
+    this.updateFields();
+  },
+  computed: {
+    entryMetadata() {
+      if (this.entry && this.entry.metadata)
+        return JSON.parse(this.entry.metadata);
+      return {};
+    },
+    preSummary() {
+      if (this.template.summary) return this.template.summary;
+      if (
+        this.entry.shortSignature &&
+        this.entry.shortSignature.startsWith("[@")
+      )
+        return "Crash " + this.entry.shortSignature;
+      return this.entry.shortSignature;
+    },
+    crashDataRendered() {
+      let data = "";
+      if (this.entry.rawCrashData) data = this.entry.rawCrashData;
+      else data = this.entry.rawStderr;
+      return data
+        .split("\n")
+        .map((l) => "    " + l)
+        .join("\n");
+    },
+    renderedAttrs() {
+      if (!this.template || !this.entry) return "";
+      try {
+        let rendered = Mustache.render(this.template.attrs, {
+          ...this.metadataExtension(this.template.attrs),
+        });
+        if (
+          this.entry.shortSignature &&
+          this.entry.shortSignature.startsWith("[@")
+        )
+          rendered += "\ncf_crash_signature=" + this.entry.shortSignature;
+        return rendered;
+      } catch {
+        return "";
+      }
+    },
+    renderedDescription() {
+      if (!this.template || !this.entry) return "";
+      try {
+        let rendered = Mustache.render(this.template.description, {
+          summary: this.summary,
+          shortsig: this.entry.shortSignature,
+          product: this.entry.product,
+          version: this.entry.product_version
+            ? this.entry.product_version
+            : "(Version not available)",
+          args: this.entry.args ? JSON.parse(this.entry.args).join(" ") : "",
+          os: this.entry.os,
+          platform: this.entry.platform,
+          client: this.entry.client,
+          // TODO: Update this when we will implement testCase part.
+          testcase: this.entry.testcase
+            ? "See attachment."
+            : "(Test not available)",
+          crashdata: this.crashDataRendered,
+          // Before %crashdata.attached%, now {{crashdataattached}}
+          crashdataattached: "For detailed crash information, see attachment.",
+          ...this.metadataExtension(this.template.description),
+        });
+
+        // Remove the specified pathPrefix from traces and assertion
+        if (this.entryMetadata.pathprefix)
+          rendered = rendered.replaceAll(this.entryMetadata.pathprefix, "");
+
+        return rendered;
+      } catch {
+        return "";
+      }
+    },
+  },
+  methods: {
+    metadataExtension(field) {
+      let extension = {};
+      for (var [key, value] of Object.entries(this.entryMetadata)) {
+        extension["metadata" + key] = value;
+      }
+      if (field) {
+        const regexp = new RegExp(/metadata([a-zA-Z0-9_-]+)/, "g");
+        const matches = field.matchAll(regexp);
+        for (const [match] of matches) {
+          if (extension[match] === undefined)
+            extension[match] = "(" + match + " not available)";
+        }
+      }
+      return extension;
+    },
+    updateFields() {
+      // Summary
+      if (!this.entryMetadata.pathprefix) this.summary = this.preSummary;
+      // Remove the specified pathPrefix from traces and assertion
+      else
+        this.summary = this.preSummary.replaceAll(
+          this.entryMetadata.pathprefix,
+          ""
+        );
+
+      // OpSys
+      this.opSys = this.template.op_sys;
+      // FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
+      if (!this.template.op_sys) {
+        if (this.entry.os == "linux") this.opSys = "Linux";
+        else if (this.entry.os == "macosx") this.opSys = "Mac OS X";
+        else if (this.entry.os.startsWith("win")) {
+          /*
+           * Translate win7 -> Windows 7, win8 -> Windows 8
+           * Doesn't work for Vista, XP, needs to be improved
+           */
+          this.opSys = this.entry.os.replaceAll("win", "Windows ");
+        }
+      }
+
+      // Platform
+      if (this.template.platform) this.platform = this.template.platform;
+      // BMO uses x86_64, not x86-64, and ARM instead of arm
+      else
+        this.platform = this.entry.platform
+          .replaceAll("-", "_")
+          .replaceAll("arm", "ARM");
+    },
   },
   watch: {
     selectedProvider() {
@@ -372,6 +527,7 @@ export default {
       this.template = this.templates.find(
         (t) => t.id === this.selectedTemplate
       );
+      this.updateFields();
     },
   },
 };
