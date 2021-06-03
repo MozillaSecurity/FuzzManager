@@ -24,13 +24,16 @@ def _get_or_create_pool(worker_type):
         platform, pool_id = worker_type.split("-", 1)
         assert pool_id.startswith("pool")
 
-    pool, _ = Pool.objects.get_or_create(
+    pool, created = Pool.objects.get_or_create(
         pool_id=pool_id,
         platform=platform,
         defaults={
             "pool_name": pool_id,
         },
     )
+    if created:
+        LOG.info("created new pool %d for %s/%s", pool.id, platform, pool_id)
+
     return pool
 
 
@@ -93,6 +96,13 @@ def update_task(pulse_data):
     run_id = pulse_data["runId"]
     run_obj = next(run for run in status["runs"] if run["runId"] == run_id)
     pool = _get_or_create_pool(status["workerType"])
+    if pool is None:
+        LOG.debug(
+            "ignoring task %s update for workerType %s",
+            status["taskId"],
+            status["workerType"],
+        )
+        return
 
     defaults = {
         "decision_id": status["taskGroupId"],
@@ -102,13 +112,23 @@ def update_task(pulse_data):
         "started": run_obj.get("started"),
         "state": run_obj["state"],
     }
-    task_obj, _ = Task.objects.update_or_create(
+    task_obj, created = Task.objects.update_or_create(
         task_id=status["taskId"],
         run_id=run_id,
         defaults=defaults,
+    )
+    LOG.info(
+        "%s task %s run %d in pool %s/%s -> %s",
+        "created" if created else "updated",
+        status["taskId"],
+        run_id,
+        pool.pool_id,
+        pool.platform,
+        run_obj["state"],
     )
     if task_obj.created is None:
         # `created` field isn't available via pulse, so get it from Taskcluster
         queue_svc = taskcluster.Queue({"rootUrl": settings.TC_ROOT_URL})
         task = queue_svc.task(status["taskId"])
         Task.objects.filter(id=task_obj.id).update(created=task["created"])
+        LOG.info("task %s was created at %s", status["taskId"], task["created"])
