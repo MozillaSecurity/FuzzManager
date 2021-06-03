@@ -18,7 +18,11 @@
             <tr><td>External Bug Status</td>
                 <td>
             {% if bucket.bug %}
+                {% if bucket.bug.externalType.urlTemplate %}
                 Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ bucket.bug.externalType.urlTemplate|varformat:bucket.bug.externalId }}" target="_blank">bug {{ bucket.bug.externalId }}</a>.
+                {% else %}
+                Reported as bug {{ bucket.bug.externalId }} on {{ bucket.bug.externalType.hostname }}
+                {% endif %}
             {% else %}
                 Unreported.
             {% endif %}
