@@ -53,7 +53,9 @@
             v-if="provider"
             :provider-hostname="provider.hostname"
             :template-product="template.product"
+            v-on:update-product="product = $event"
             :template-component="template.component"
+            v-on:update-component="component = $event"
           />
         </div>
 
@@ -289,8 +291,7 @@
               type="checkbox"
               id="id_security"
               name="security"
-              value="unassigned"
-              :checked="template.security"
+              v-model="template.security"
             />
             <span>This is a security bug.</span>
           </div>
@@ -307,24 +308,68 @@
               id="id_security_group"
               name="security_group"
               v-model="template.security_group"
+              :disabled="!template.security"
             />
           </div>
         </div>
         <hr />
 
-        <div>
-          <input
-            type="submit"
-            name="submit_save"
-            value="Submit"
-            class="btn btn-danger"
-          />
-          <input
+        <div v-if="createError" class="alert alert-danger" role="alert">
+          <button
             type="button"
-            value="Cancel"
-            class="btn btn-default"
-            onClick="javascript:history.go(-1)"
-          />
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+            v-on:click="createError = null"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          An error occurred while submitting the bug to
+          <strong>{{ provider.hostname }}</strong
+          >: {{ createError }}
+        </div>
+
+        <div v-else-if="createdBugId" class="alert alert-success" role="alert">
+          Bug
+          <strong
+            ><a :href="bugLink" target="_blank">{{ createdBugId }}</a></strong
+          >
+          was successfully submitted and created on
+          <strong>{{ provider.hostname }}</strong> provider.
+        </div>
+
+        <div v-if="assignError" class="alert alert-danger" role="alert">
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+            v-on:click="assignError = null"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          An error occurred while assigning the created external bug to the
+          current crash bucket: {{ assignError }}
+        </div>
+
+        <div v-if="!bugzillaToken" class="alert alert-warning" role="alert">
+          Please define an API Token for
+          <strong>{{ provider.hostname }}</strong> in your settings to submit a
+          new bug.
+        </div>
+
+        <div>
+          <button
+            type="button"
+            class="btn btn-danger"
+            v-on:click="createExternalBug"
+            :disabled="!bugzillaToken"
+          >
+            Submit
+          </button>
+          <button type="button" class="btn btn-default" v-on:click="goBack">
+            Cancel
+          </button>
         </div>
       </form>
     </div>
@@ -333,7 +378,9 @@
 
 <script>
 var Mustache = require("mustache");
+import { errorParser } from "../../helpers";
 import * as api from "../../api";
+import * as bugzillaApi from "../../bugzilla_api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 
@@ -373,8 +420,13 @@ export default {
     template: null,
     entry: null,
     summary: "",
+    product: "",
+    component: "",
     opSys: "",
     platform: "",
+    createError: null,
+    assignError: null,
+    createdBugId: null,
   }),
   async mounted() {
     let data = await api.listBugProviders();
@@ -394,6 +446,12 @@ export default {
     this.updateFields();
   },
   computed: {
+    bugLink() {
+      return `https://${this.provider.hostname}/${this.createdBugId}`;
+    },
+    bugzillaToken() {
+      return localStorage.getItem("provider-" + this.provider.id + "-api-key");
+    },
     entryMetadata() {
       if (this.entry && this.entry.metadata)
         return JSON.parse(this.entry.metadata);
@@ -468,6 +526,9 @@ export default {
     },
   },
   methods: {
+    goBack() {
+      window.history.back();
+    },
     metadataExtension(field) {
       let extension = {};
       for (var [key, value] of Object.entries(this.entryMetadata)) {
@@ -515,6 +576,80 @@ export default {
         this.platform = this.entry.platform
           .replaceAll("-", "_")
           .replaceAll("arm", "ARM");
+    },
+    async createExternalBug() {
+      this.createdBugId = null;
+      this.createError = null;
+      this.assignError = null;
+
+      // Convert this.renderedAttrs to an object
+      const attrs = Object.fromEntries(
+        this.renderedAttrs.split("\n").map((l) => l.split("="))
+      );
+
+      let groups = [];
+      if (this.template.security)
+        groups = this.template.security_group
+          ? [this.template.security_group]
+          : ["core-security"];
+
+      // Status ?? Resolution ??
+      const rawPayload = {
+        type: "defect",
+        name: this.template.name,
+        product: this.product,
+        component: this.component,
+        summary: this.summary,
+        version: this.template.version,
+        description: this.renderedDescription,
+        op_sys: this.opSys,
+        platform: this.platform,
+        priority: this.template.priority,
+        severity: this.template.severity,
+        alias: this.template.alias,
+        cc: this.template.cc,
+        assigned_to: this.template.assigned_to,
+        qa_contact: this.template.qa_contact,
+        target_milestone: this.template.target_milestone,
+        whiteboard: this.template.whiteboard,
+        keywords: this.template.keywords,
+        groups: groups.length ? groups : "",
+        ...attrs,
+      };
+
+      const cleanPayload = {};
+      Object.keys(rawPayload).forEach((prop) => {
+        if (![null, undefined, NaN, ""].includes(rawPayload[prop])) {
+          cleanPayload[prop] = rawPayload[prop];
+        }
+      });
+
+      try {
+        const data = await bugzillaApi.createBug({
+          hostname: this.provider.hostname,
+          ...cleanPayload,
+          headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+        });
+        this.createdBugId = data.id;
+        this.assignExternalBug();
+      } catch (err) {
+        this.createError = errorParser(err);
+      }
+    },
+    async assignExternalBug() {
+      const payload = {
+        bug: this.createdBugId,
+        bug_provider: this.provider.id,
+      };
+      try {
+        await api.updateBucket({
+          id: this.bucketId,
+          params: { reassign: false },
+          ...payload,
+        });
+      } catch (err) {
+        this.assignError = errorParser(err);
+      }
     },
   },
   watch: {

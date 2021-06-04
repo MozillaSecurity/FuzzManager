@@ -225,6 +225,12 @@ export default {
         this.assignProducts();
       }
     },
+    selectedProduct: function () {
+      this.$emit("update-product", this.selectedProduct);
+    },
+    selectedComponent: function () {
+      this.$emit("update-component", this.selectedComponent);
+    },
   },
 };
 </script>
