@@ -124,15 +124,20 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 
 class BucketSerializer(serializers.ModelSerializer):
+    signature = serializers.CharField(style={'base_template': 'textarea.html'}, required=False)
     bug = serializers.CharField(source='bug.externalId', default=None)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
+    provider = serializers.PrimaryKeyRelatedField(write_only=True, required=False, queryset=BugProvider.objects.all())
 
     class Meta:
         model = Bucket
-        fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
+        fields = (
+            'best_quality', 'bug', 'frequent', 'id', 'permanent', 'provider',
+            'shortDescription', 'signature', 'size',
+        )
         ordering = ['-id']
         read_only_fields = ('id', )
 
@@ -199,16 +204,3 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
 
     def get_mode(self, obj):
         return obj.mode.value
-
-
-class ExternalBugSerializer(serializers.Serializer):
-    provider = serializers.PrimaryKeyRelatedField(queryset=BugProvider.objects.all())
-    bug_id = serializers.CharField()
-    details_url = serializers.SerializerMethodField(required=False)
-
-    class Meta:
-        fields = ('provider', 'bug_id', 'details_url')
-        read_only_fields = ('details_url')
-
-    def get_details_url(self, instance):
-        return reverse('crashmanager:sigview', kwargs={'sigid': instance['bucket']})

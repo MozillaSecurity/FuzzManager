@@ -36,7 +36,7 @@
       </div>
       <List
         :duplicates="duplicates"
-        :entry-id="entryId"
+        :bucket-id="bucketId"
         :provider-id="providerId"
         :provider-hostname="providerHostname"
       />
@@ -66,7 +66,7 @@ export default {
       type: String,
       required: true,
     },
-    entryId: {
+    bucketId: {
       type: Number,
       required: true,
     },

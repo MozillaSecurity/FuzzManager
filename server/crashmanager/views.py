@@ -28,7 +28,7 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
-from .serializers import BugzillaTemplateSerializer, ExternalBugSerializer, InvalidArgumentException, \
+from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
     BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
 from server.auth import CheckAppPermission
 
@@ -1034,37 +1034,6 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         return Response(CrashEntrySerializer(obj).data)
 
 
-class ExternalBugViewSet(mixins.UpdateModelMixin,
-                         viewsets.GenericViewSet):
-    """API endpoint that allows assigning an external Bug to a Bucket"""
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
-    serializer_class = ExternalBugSerializer
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        entry = get_object_or_404(CrashEntry, id=self.kwargs["crashid"])
-        check_authorized_for_crash_entry(request, entry)
-
-        if not entry.bucket:
-            raise ValidationError("Cannot assign an external bug to an issue that is not associated "
-                                  "to a bucket/signature")
-
-        extBug, _ = Bug.objects.get_or_create(
-            externalId=serializer.validated_data.get('bug_id'),
-            defaults={
-                "externalType": serializer.validated_data.get('provider')
-            }
-        )
-        entry.bucket.bug = extBug
-        entry.bucket.save(update_fields=['bug'])
-
-        # We need to override update instead of perform_update, to use the
-        # bucket.pk in the serializer and generate the bucket details_url
-        return Response(ExternalBugSerializer({'bucket': entry.bucket.pk, **serializer.validated_data}).data)
-
-
 class BucketViewSet(mixins.ListModelMixin,
                     mixins.CreateModelMixin,
                     mixins.UpdateModelMixin,
@@ -1136,10 +1105,21 @@ class BucketViewSet(mixins.ListModelMixin,
         bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
         check_authorized_for_signature(request, bucket)
 
-        bucket.signature = serializer.validated_data.get('signature')
-        bucket.shortDescription = serializer.validated_data.get('shortDescription')
-        bucket.frequent = serializer.validated_data.get('frequent')
-        bucket.permanent = serializer.validated_data.get('permanent')
+        # Either we are assigning an external bug to this bucket
+        if serializer.initial_data.get('bug') is not None:
+            extBug, _ = Bug.objects.get_or_create(
+                externalId=serializer.validated_data.get('bug')['externalId'],
+                defaults={
+                    "externalType": serializer.validated_data.get('provider')
+                }
+            )
+            bucket.bug = extBug
+        # Or updating its values
+        else:
+            bucket.signature = serializer.validated_data.get('signature')
+            bucket.shortDescription = serializer.validated_data.get('shortDescription')
+            bucket.frequent = serializer.validated_data.get('frequent')
+            bucket.permanent = serializer.validated_data.get('permanent')
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')

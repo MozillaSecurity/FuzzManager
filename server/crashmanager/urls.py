@@ -15,8 +15,6 @@ urlpatterns = [
     url(r'^rest/api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^rest/signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures_rest'),
     url(r'^rest/crashes/(?P<crashid>\d+)/download/$', views.TestDownloadView.as_view(), name='download_test_rest'),
-    url(r'^rest/crashes/(?P<crashid>\d+)/external-bug/$', views.ExternalBugViewSet.as_view({'put': 'update'}),
-        name='assign-external-bug'),
     url(r'^$', views.crashes, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
     url(r'^signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures'),

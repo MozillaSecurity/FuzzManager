@@ -28,7 +28,7 @@ export default {
       type: Object,
       required: true,
     },
-    entryId: {
+    bucketId: {
       type: Number,
       required: true,
     },
@@ -41,16 +41,17 @@ export default {
     async assignExternalBug() {
       this.$emit("error", null);
       const payload = {
-        bug_id: this.bug.id,
+        bug: this.bug.id,
         provider: this.providerId,
       };
 
       try {
-        const data = await api.assignExternalBug({
-          id: this.entryId,
+        const data = await api.updateBucket({
+          id: this.bucketId,
+          params: { reassign: false },
           ...payload,
         });
-        window.location.href = data.details_url;
+        window.location.href = data.url;
       } catch (err) {
         this.$emit("error", errorParser(err));
       }

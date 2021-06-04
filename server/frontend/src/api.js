@@ -21,7 +21,3 @@ export const listCrashes = async (params) =>
 
 export const listBugProviders = async () =>
   (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;
-
-export const assignExternalBug = async ({ id, ...data }) =>
-  (await mainAxios.put(`/crashmanager/rest/crashes/${id}/external-bug/`, data))
-    .data;

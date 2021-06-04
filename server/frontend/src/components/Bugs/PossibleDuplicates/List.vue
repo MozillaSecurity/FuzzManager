@@ -40,7 +40,7 @@
             v-for="duplicate in duplicates"
             :key="duplicate.id"
             :bug="duplicate"
-            :entry-id="entryId"
+            :bucket-id="bucketId"
             :provider-id="providerId"
             v-on:error="setAssignError"
           />
@@ -62,7 +62,7 @@ export default {
       type: Array,
       required: true,
     },
-    entryId: {
+    bucketId: {
       type: Number,
       required: true,
     },
