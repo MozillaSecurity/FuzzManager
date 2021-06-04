@@ -37,8 +37,10 @@
             <td>{{ entry.size }}</td>
             <td>{{ entry.quality }}</td>
             <td>
-                {% if entry.bug %}
+                {% if entry.bug.externalType.urlTemplate %}
                 <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{entry.bug.externalId }}</a>
+                {% elif entry.bug %}
+                {{ entry.bug.externalId }} on {{ entry.bug.externalType.hostname }}
                 {% else %}
                 <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
                 {% endif %}
