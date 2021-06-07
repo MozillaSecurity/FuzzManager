@@ -11,7 +11,7 @@ from . import cron  # noqa ensure cron tasks get registered
 LOG = getLogger("taskmanager.tasks")
 
 
-def _get_or_create_pool(worker_type):
+def get_or_create_pool(worker_type):
     from .models import Pool
 
     if worker_type in settings.TC_EXTRA_POOLS:
@@ -95,7 +95,7 @@ def update_task(pulse_data):
     status = pulse_data["status"]
     run_id = pulse_data["runId"]
     run_obj = next(run for run in status["runs"] if run["runId"] == run_id)
-    pool = _get_or_create_pool(status["workerType"])
+    pool = get_or_create_pool(status["workerType"])
     if pool is None:
         LOG.debug(
             "ignoring task %s update for workerType %s",
