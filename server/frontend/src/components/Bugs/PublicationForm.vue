@@ -596,7 +596,6 @@ export default {
       // Status ?? Resolution ??
       const rawPayload = {
         type: "defect",
-        name: this.template.name,
         product: this.product,
         component: this.component,
         summary: this.summary,
