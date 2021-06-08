@@ -751,19 +751,12 @@ def createExternalBugTemp(request, crashid):
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         template = provider.getInstance().getTemplateForUser(request, entry)
-
-        # attachmentData = {}
-
-        # if template:
-        #     attachmentData = self.substituteTemplateForCrash(template, entry)
         data = {
             'provider': provider.pk,
             'hostname': provider.hostname,
             'template': template['pk'],
             'entry': entry,
-            # 'attachmentData': attachmentData,
         }
-
         return render(request, 'bugzilla/create_external_bug.html', data)
     else:
         raise SuspiciousOperation
