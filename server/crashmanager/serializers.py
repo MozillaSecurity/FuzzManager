@@ -124,15 +124,22 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 
 class BucketSerializer(serializers.ModelSerializer):
+    signature = serializers.CharField(style={'base_template': 'textarea.html'}, required=False)
     bug = serializers.CharField(source='bug.externalId', default=None)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
+    bug_provider = serializers.PrimaryKeyRelatedField(
+        write_only=True, required=False, queryset=BugProvider.objects.all()
+    )
 
     class Meta:
         model = Bucket
-        fields = ('best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size')
+        fields = (
+            'best_quality', 'bug', 'frequent', 'id', 'permanent', 'bug_provider',
+            'shortDescription', 'signature', 'size',
+        )
         ordering = ['-id']
         read_only_fields = ('id', )
 

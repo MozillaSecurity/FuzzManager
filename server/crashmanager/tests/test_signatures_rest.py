@@ -15,7 +15,7 @@ import pytest
 import requests
 from django.urls import reverse
 from rest_framework import status
-from crashmanager.models import Bucket, CrashEntry
+from crashmanager.models import Bucket, Bug, CrashEntry
 from .conftest import _create_user
 
 # What should be allowed:
@@ -459,3 +459,30 @@ def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: dis
         assert crash2.bucket is None
         assert out_list[0]['id'] == crash1.pk
         assert in_list[0]['id'] == crash2.pk
+
+
+def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
+    """test that partial_update action create a new Bug and assign it to this Bucket"""
+    provider = cm.create_bugprovider(hostname='test-provider.com', urlTemplate='test-provider.com/template')
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig)
+    assert not Bug.objects.count()
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'bug': 123456,
+        'bug_provider': provider.id,
+    }, format='json')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    assert resp.json() == {"url": reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})}
+    assert Bug.objects.count() == 1
+    createdBug = Bug.objects.get()
+    assert createdBug.externalId == "123456"
+    assert createdBug.externalType == provider
+    bucket.refresh_from_db()
+    assert bucket.bug == createdBug

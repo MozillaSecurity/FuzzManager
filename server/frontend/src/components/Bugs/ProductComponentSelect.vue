@@ -98,7 +98,7 @@
       class="alert alert-danger error-message"
       role="alert"
     >
-      An error occured while fetching products and components from
+      An error occurred while fetching products and components from
       <strong>{{ selectedProvider }}</strong
       >. Please, enter your product and component by hand.
     </div>

@@ -7,10 +7,11 @@ window.formatClientTimestamp = formatClientTimestamp;
 import Vue from "vue";
 import VueRouter from "vue-router";
 import router from "./router.js";
-import List from "./components/Crashes/List.vue";
+import CrashesList from "./components/Crashes/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import ProductComponentSelect from "./components/Bugs/ProductComponentSelect.vue";
+import SummaryInput from "./components/Bugs/SummaryInput.vue";
 
 Vue.use(VueRouter);
 
@@ -19,9 +20,10 @@ window.onload = function () {
     el: "#app",
     components: {
       createoredit: CreateOrEdit,
-      crasheslist: List,
+      crasheslist: CrashesList,
       providerkey: ProviderKey,
       productcomponentselect: ProductComponentSelect,
+      summaryinput: SummaryInput,
     },
     router,
   });
