@@ -130,12 +130,14 @@ class BucketSerializer(serializers.ModelSerializer):
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
-    provider = serializers.PrimaryKeyRelatedField(write_only=True, required=False, queryset=BugProvider.objects.all())
+    bug_provider = serializers.PrimaryKeyRelatedField(
+        write_only=True, required=False, queryset=BugProvider.objects.all()
+    )
 
     class Meta:
         model = Bucket
         fields = (
-            'best_quality', 'bug', 'frequent', 'id', 'permanent', 'provider',
+            'best_quality', 'bug', 'frequent', 'id', 'permanent', 'bug_provider',
             'shortDescription', 'signature', 'size',
         )
         ordering = ['-id']

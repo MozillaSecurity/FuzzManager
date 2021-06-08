@@ -42,7 +42,7 @@ export default {
       this.$emit("error", null);
       const payload = {
         bug: this.bug.id,
-        provider: this.providerId,
+        bug_provider: this.providerId,
       };
 
       try {

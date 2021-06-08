@@ -475,7 +475,7 @@ def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     assert not Bug.objects.count()
     resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
         'bug': 123456,
-        'provider': provider.id,
+        'bug_provider': provider.id,
     }, format='json')
     LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']

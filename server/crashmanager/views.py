@@ -1110,7 +1110,7 @@ class BucketViewSet(mixins.ListModelMixin,
             extBug, _ = Bug.objects.get_or_create(
                 externalId=serializer.validated_data.get('bug')['externalId'],
                 defaults={
-                    "externalType": serializer.validated_data.get('provider')
+                    "externalType": serializer.validated_data.get('bug_provider')
                 }
             )
             bucket.bug = extBug
