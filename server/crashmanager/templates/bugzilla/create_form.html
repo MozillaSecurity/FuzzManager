@@ -1,6 +1,6 @@
-<summaryinput initial-summary="{{ template.summary }}" :bucket-id="{{ entry.bucket.id }}" :provider="{ 'id': {{ id }}, 'hostname': '{{ hostname }}' }"></summaryinput>
+<summaryinput initial-summary="{{ template.summary }}" :bucket-id="{{ entry.bucket.id }}" :provider="{ 'id': {{ provider }}, 'hostname': '{{ hostname }}' }"></summaryinput>
 <br/>
-    <ppcselect :provider-id="{{ id }}" template-product="{{ template.product }}" template-component="{{ template.component }}"></ppcselect>
+    <ppcselect :provider-id="{{ provider }}" template-product="{{ template.product }}" template-component="{{ template.component }}"></ppcselect>
 <br/>
     <div class="row">
       <div class="col-md-1">Whiteboard</div>
