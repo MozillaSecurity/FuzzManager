@@ -23,6 +23,7 @@ export const errorParser = (error) => {
     )
       message = error.response.data;
     else if (error.response.data.detail) message = error.response.data.detail;
+    else if (error.response.data.message) message = error.response.data.message;
   }
 
   if (!message && error.message) message = error.message;

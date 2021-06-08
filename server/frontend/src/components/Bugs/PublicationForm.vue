@@ -429,6 +429,8 @@ export default {
     createdBugId: null,
   }),
   async mounted() {
+    this.entry = await api.retrieveCrash(this.entryId);
+
     let data = await api.listBugProviders();
     this.providers = data.results.filter(
       (p) => p.classname === "BugzillaProvider"
@@ -440,8 +442,6 @@ export default {
     this.templates = data.results.filter((t) => t.mode === "bug");
     this.template = this.templates.find((t) => t.id === this.templateId);
     this.selectedTemplate = this.template.id;
-
-    this.entry = await api.retrieveCrash(this.entryId);
 
     this.updateFields();
   },
