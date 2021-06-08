@@ -1105,10 +1105,21 @@ class BucketViewSet(mixins.ListModelMixin,
         bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
         check_authorized_for_signature(request, bucket)
 
-        bucket.signature = serializer.validated_data.get('signature')
-        bucket.shortDescription = serializer.validated_data.get('shortDescription')
-        bucket.frequent = serializer.validated_data.get('frequent')
-        bucket.permanent = serializer.validated_data.get('permanent')
+        # Either we are assigning an external bug to this bucket
+        if serializer.initial_data.get('bug') is not None:
+            extBug, _ = Bug.objects.get_or_create(
+                externalId=serializer.validated_data.get('bug')['externalId'],
+                defaults={
+                    "externalType": serializer.validated_data.get('bug_provider')
+                }
+            )
+            bucket.bug = extBug
+        # Or updating its values
+        else:
+            bucket.signature = serializer.validated_data.get('signature')
+            bucket.shortDescription = serializer.validated_data.get('shortDescription')
+            bucket.frequent = serializer.validated_data.get('frequent')
+            bucket.permanent = serializer.validated_data.get('permanent')
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
