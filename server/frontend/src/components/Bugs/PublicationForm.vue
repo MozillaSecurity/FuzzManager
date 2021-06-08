@@ -39,7 +39,10 @@
       <hr />
 
       <h3>Create a bug for crash {{ entryId }}</h3>
-      <form v-if="template">
+      <div class="alert alert-info" role="alert" v-if="!template">
+        Please pick a bug template to file a new bug.
+      </div>
+      <form v-else>
         <SummaryInput
           v-if="provider"
           :initial-summary="summary"
@@ -441,9 +444,10 @@ export default {
     data = await api.listTemplates();
     this.templates = data.results.filter((t) => t.mode === "bug");
     this.template = this.templates.find((t) => t.id === this.templateId);
-    this.selectedTemplate = this.template.id;
-
-    this.updateFields();
+    if (this.template) {
+      this.selectedTemplate = this.template.id;
+      this.updateFields();
+    }
   },
   computed: {
     bugLink() {
