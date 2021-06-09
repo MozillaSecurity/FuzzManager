@@ -735,6 +735,33 @@ def createExternalBug(request, crashid):
         raise SuspiciousOperation
 
 
+def createExternalBugTemp(request, crashid):
+    entry = get_object_or_404(CrashEntry, pk=crashid)
+    check_authorized_for_crash_entry(request, entry)
+
+    if not entry.bucket:
+        return renderError(request, ("Cannot create an external bug for an issue that is not associated "
+                                     "to a bucket/signature"))
+
+    if request.method == 'GET':
+        if 'provider' in request.GET:
+            provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
+        else:
+            user = User.get_or_create_restricted(request.user)[0]
+            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
+
+        template = provider.getInstance().getTemplateForUser(request, entry)
+        data = {
+            'provider': provider.pk,
+            'hostname': provider.hostname,
+            'template': template['pk'],
+            'entry': entry,
+        }
+        return render(request, 'bugzilla/create_external_bug.html', data)
+    else:
+        raise SuspiciousOperation
+
+
 def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)

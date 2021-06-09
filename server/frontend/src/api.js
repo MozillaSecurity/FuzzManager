@@ -16,8 +16,14 @@ export const updateBucket = async ({ id, params, ...data }) =>
   (await mainAxios.patch(`/crashmanager/rest/buckets/${id}/`, data, { params }))
     .data;
 
+export const retrieveCrash = async (id) =>
+  (await mainAxios.get(`/crashmanager/rest/crashes/${id}/`)).data;
+
 export const listCrashes = async (params) =>
   (await mainAxios.get("/crashmanager/rest/crashes/", { params })).data;
 
 export const listBugProviders = async () =>
   (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;
+
+export const listTemplates = async () =>
+  (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;

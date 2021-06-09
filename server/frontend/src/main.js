@@ -10,7 +10,8 @@ import router from "./router.js";
 import CrashesList from "./components/Crashes/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
-import ProductComponentSelect from "./components/Bugs/ProductComponentSelect.vue";
+import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
+import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
 import SummaryInput from "./components/Bugs/SummaryInput.vue";
 
 Vue.use(VueRouter);
@@ -22,8 +23,9 @@ window.onload = function () {
       createoredit: CreateOrEdit,
       crasheslist: CrashesList,
       providerkey: ProviderKey,
-      productcomponentselect: ProductComponentSelect,
+      ppcselect: FullPPCSelect,
       summaryinput: SummaryInput,
+      bugpublicationform: BugPublicationForm,
     },
     router,
   });

@@ -1,69 +1,55 @@
 <template>
   <div>
-    <div class="row">
-      <div class="form-group col-md-4">
-        <label for="bp_select">Provider</label>
-        <select id="bp_select" class="form-control" v-model="selectedProvider">
-          <option
-            v-for="provider in providers"
-            :key="provider.hostname"
-            :value="provider.hostname"
-          >
-            {{ provider.hostname }}
-          </option>
-        </select>
-      </div>
-      <div class="form-group col-md-4" v-if="!fetchError">
+    <div>
+      <div class="form-group" :class="styleClass" v-if="!fetchError">
         <label for="product">Product*</label>
-        <div class="row">
-          <div class="col-md-2">
+        <div class="input-group">
+          <span class="input-group-btn">
             <button
               type="button"
               class="btn btn-secondary"
-              :disabled="!selectedProvider"
+              :disabled="!providerHostname"
               title="Refresh product list"
               v-on:click="refreshProducts"
             >
               <i class="glyphicon glyphicon-refresh"></i>
             </button>
-          </div>
-          <div class="col-md-10">
-            <select
-              id="product"
-              name="product"
-              class="form-control"
-              v-model="selectedProduct"
-              :disabled="!selectedProvider"
+          </span>
+          <select
+            id="product"
+            name="product"
+            class="form-control"
+            v-model="selectedProduct"
+            :disabled="!providerHostname"
+          >
+            <option
+              v-if="providerHostname && !products.length"
+              value=""
+              disabled
             >
-              <option
-                v-if="selectedProvider && !products.length"
-                value=""
-                disabled
-              >
-                Products loading...
-              </option>
-              <option
-                v-for="product in products"
-                :key="product.id"
-                :value="product.name"
-              >
-                {{ product.name }}
-              </option>
-            </select>
-          </div>
+              Products loading...
+            </option>
+            <option
+              v-for="product in products"
+              :key="product.id"
+              :value="product.name"
+            >
+              {{ product.name }}
+            </option>
+          </select>
         </div>
       </div>
-      <div class="form-group col-md-4" v-else>
+      <div class="form-group" :class="styleClass" v-else>
         <label for="product">Product*</label>
         <input
           type="text"
           id="product"
           name="product"
           class="form-control"
-          :value="defaultTemplateProduct"
+          :value="templateProduct"
         />
       </div>
-      <div class="form-group col-md-4" v-if="!fetchError">
+      <div class="form-group" :class="styleClass" v-if="!fetchError">
         <label for="component">Component*</label>
         <select
           id="component"
@@ -81,72 +67,70 @@
           </option>
         </select>
       </div>
-      <div class="form-group col-md-4" v-else>
+      <div class="form-group" :class="styleClass" v-else>
         <label for="component">Component*</label>
         <input
           type="text"
           id="component"
           name="component"
           class="form-control"
-          :value="defaultTemplateComponent"
+          :value="templateComponent"
         />
       </div>
     </div>
 
-    <div
-      v-if="fetchError"
-      class="alert alert-danger error-message"
-      role="alert"
-    >
-      An error occurred while fetching products and components from
-      <strong>{{ selectedProvider }}</strong
-      >. Please, enter your product and component by hand.
+    <div class="row override-row">
+      <div
+        v-if="fetchError"
+        class="alert alert-danger error-message col-md-12"
+        role="alert"
+      >
+        An error occurred while fetching products and components from
+        <strong>{{ providerHostname }}</strong
+        >. Please, enter your product and component by hand.
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
 
 export default {
   props: {
-    defaultProvider: {
+    providerHostname: {
       type: String,
-      required: false,
-      default: null,
+      required: true,
     },
-    defaultTemplateProduct: {
+    templateProduct: {
       type: String,
       required: false,
       default: "",
     },
-    defaultTemplateComponent: {
+    templateComponent: {
       type: String,
       required: false,
       default: "",
+    },
+    styleClass: {
+      type: String,
+      required: false,
+      default: "col-md-6",
     },
   },
   data: () => ({
     fetchError: false,
-    providers: [],
-    selectedProvider: null,
     products: [],
     selectedProduct: "",
     selectedComponent: "",
   }),
   async mounted() {
-    const data = await api.listBugProviders();
-    this.providers = data.results.filter(
-      (p) => p.classname === "BugzillaProvider"
-    );
-    if (this.defaultProvider) this.selectedProvider = this.defaultProvider;
     this.assignProducts();
   },
   computed: {
     localStorageKey() {
-      if (!this.selectedProvider) return null;
-      return "bugzilla-products-" + this.selectedProvider;
+      if (!this.providerHostname) return null;
+      return "bugzilla-products-" + this.providerHostname;
     },
     components() {
       if (!this.products || !this.selectedProduct) return [];
@@ -166,15 +150,15 @@ export default {
         this.products = stored.products;
       }
 
-      if (this.defaultTemplateProduct) {
+      if (this.products && this.products.length && this.templateProduct) {
         const product = this.products.find(
-          (p) => p.name === this.defaultTemplateProduct
+          (p) => p.name === this.templateProduct
         );
         if (product) {
           this.selectedProduct = product.name;
-          if (this.defaultTemplateComponent) {
+          if (this.templateComponent) {
             const component = product.components.find(
-              (c) => c === this.defaultTemplateComponent
+              (c) => c === this.templateComponent
             );
             if (component) this.selectedComponent = component;
           }
@@ -190,12 +174,12 @@ export default {
     },
     async fetchProducts() {
       /*
-       * Return fetched products and components retrieved from https://{selectedProvider}/latest/configuration
-       * Also store them in browser localStorage under "bugzilla-products-{selectedProvider}" key
+       * Return fetched products and components retrieved from https://{providerHostname}/latest/configuration
+       * Also store them in browser localStorage under "bugzilla-products-{providerHostname}" key
        */
       try {
         const data = await bugzillaApi.fetchLatestConfiguration(
-          this.selectedProvider
+          this.providerHostname
         );
         const products = Object.entries(data.product)
           .filter(([, product]) => product.is_active)
@@ -222,18 +206,40 @@ export default {
     },
   },
   watch: {
-    selectedProvider: function () {
+    providerHostname: function () {
       this.fetchError = false;
       this.products = [];
       this.selectedProduct = "";
       this.selectedComponent = "";
       this.assignProducts();
     },
+    templateProduct: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.selectedProduct = "";
+        this.assignProducts();
+      }
+    },
+    templateComponent: function (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.selectedComponent = "";
+        this.assignProducts();
+      }
+    },
+    selectedProduct: function () {
+      this.$emit("update-product", this.selectedProduct);
+    },
+    selectedComponent: function () {
+      this.$emit("update-component", this.selectedComponent);
+    },
   },
 };
 </script>
 
 <style scoped>
+.override-row {
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}
 .error-message {
   margin-top: 0rem;
   margin-bottom: 1.5rem;

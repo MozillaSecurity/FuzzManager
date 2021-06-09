@@ -40,7 +40,8 @@ a.fixedbug:active {
 }
 
 #id_signature,
-#id_description {
+#id_description,
+#id_rendered_description {
   height: 600px;
 }
 

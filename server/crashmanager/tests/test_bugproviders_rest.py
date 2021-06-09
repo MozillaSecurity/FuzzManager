@@ -57,7 +57,7 @@ def test_rest_bugproviders_methods_not_found(api_client, user, method, url):
 
 
 def _compare_rest_result_to_bugprovider(result, provider):
-    expected_fields = {"classname", "hostname", "urlTemplate"}
+    expected_fields = {"id", "classname", "hostname", "urlTemplate"}
     assert set(result) == expected_fields
     for key, value in result.items():
         assert value == getattr(provider, key)

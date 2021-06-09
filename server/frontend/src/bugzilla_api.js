@@ -24,3 +24,7 @@ export const fetchPossibleDuplicates = async ({ hostname, params, headers }) =>
       }
     )
   ).data;
+
+export const createBug = async ({ hostname, headers, ...data }) =>
+  (await bugzillaAxios.post(`https://${hostname}/rest/bug`, data, { headers }))
+    .data;
