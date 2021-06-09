@@ -14,7 +14,7 @@
     </div>
     <div v-if="!notAttachTest">
       <div class="alert alert-info" role="alert">
-        Testcase will be attached to the bug.
+        Testcase will be attached to the {{ mode }}.
       </div>
       <div class="row">
         <div class="form-group col-md-6">
