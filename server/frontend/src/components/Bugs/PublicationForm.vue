@@ -317,6 +317,15 @@
         </div>
         <hr />
 
+        <TestCaseSection
+          v-if="entry.testcase"
+          :initial-not-attach-test="notAttachTest"
+          v-on:update-not-attach-test="notAttachTest = $event"
+          :entry="entry"
+          v-on:update-filename="entry.testcase = $event"
+          v-on:update-content="testCaseContent = $event"
+        />
+
         <div v-if="createError" class="alert alert-danger" role="alert">
           <button
             type="button"
@@ -339,6 +348,24 @@
           >
           was successfully submitted and created on
           <strong>{{ provider.hostname }}</strong> provider.
+        </div>
+
+        <div
+          v-if="publishTestCaseError"
+          class="alert alert-danger"
+          role="alert"
+        >
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+            v-on:click="publishTestCaseError = null"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+          An error occurred while attaching the testcase to the created external
+          bug: {{ publishTestCaseError }}
         </div>
 
         <div v-if="assignError" class="alert alert-danger" role="alert">
@@ -386,11 +413,13 @@ import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
+import TestCaseSection from "./TestCaseSection.vue";
 
 export default {
   components: {
     SummaryInput,
     ProductComponentSelect,
+    TestCaseSection,
   },
   props: {
     providerId: {
@@ -428,8 +457,11 @@ export default {
     opSys: "",
     platform: "",
     createError: null,
+    publishTestCaseError: null,
     assignError: null,
     createdBugId: null,
+    notAttachTest: false,
+    testCaseContent: null,
   }),
   async mounted() {
     this.entry = await api.retrieveCrash(this.entryId);
@@ -479,6 +511,14 @@ export default {
         .map((l) => "    " + l)
         .join("\n");
     },
+    testCaseRendered() {
+      if (!this.entry.testcase) return "(Test not available)";
+      else if (this.testCaseContent.length > 2048) return "See attachment.";
+      return this.testCaseContent
+        .split("\n")
+        .map((l) => "    " + l)
+        .join("\n");
+    },
     renderedAttrs() {
       if (!this.template || !this.entry) return "";
       try {
@@ -509,10 +549,7 @@ export default {
           os: this.entry.os,
           platform: this.entry.platform,
           client: this.entry.client,
-          // TODO: Update this when we will implement testCase part.
-          testcase: this.entry.testcase
-            ? "See attachment."
-            : "(Test not available)",
+          testcase: this.testCaseRendered,
           crashdata: this.crashDataRendered,
           // Before %crashdata.attached%, now {{crashdataattached}}
           crashdataattached: "For detailed crash information, see attachment.",
@@ -584,7 +621,7 @@ export default {
     async createExternalBug() {
       this.createdBugId = null;
       this.createError = null;
-      this.assignError = null;
+      (this.publishTestCaseError = null), (this.assignError = null);
 
       // Convert this.renderedAttrs to an object
       const attrs = Object.fromEntries(
@@ -634,10 +671,44 @@ export default {
           headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
         });
         this.createdBugId = data.id;
+        this.publishAttachments();
         this.assignExternalBug();
       } catch (err) {
         this.createError = errorParser(err);
       }
+    },
+    async publishAttachments() {
+      // Publish TestCase
+      if (this.entry.testcase && !this.notAttachTest) {
+        let content = this.testCaseContent;
+        // If the testcase is binary we need to download it first
+        if (this.entry.testcase_isbinary) {
+          content = await api.retrieveCrashTestCase(this.entry.id);
+        }
+
+        const payload = {
+          ids: [this.createdBugId],
+          data: btoa(content),
+          file_name: this.entry.testcase,
+          summary: "Testcase",
+          content_type: this.entry.testcase_isbinary
+            ? "application/octet-stream"
+            : "text/plain",
+        };
+
+        try {
+          await bugzillaApi.createAttachment({
+            hostname: this.provider.hostname,
+            id: this.createdBugId,
+            ...payload,
+            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+          });
+        } catch (err) {
+          this.publishTestCaseError = errorParser(err);
+        }
+      }
+
+      // TODO: Publish CrashData
     },
     async assignExternalBug() {
       const payload = {

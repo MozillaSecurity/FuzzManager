@@ -45,7 +45,8 @@ a.fixedbug:active {
   height: 600px;
 }
 
-#id_crashdata_attach {
+#id_crashdata_attach,
+#id_testcase_content {
   height: 400px;
 }
 
