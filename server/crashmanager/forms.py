@@ -12,13 +12,16 @@ class Row(Div):
 class BugzillaTemplateBugForm(ModelForm):
     helper = FormHelper()
     helper.layout = Layout(
+        HTML("""<div v-pre>"""),
         Row(Field('name', wrapper_class='col-md-6')),
         'summary',
         Row(
             Field('product', wrapper_class='col-md-6'),
             Field('component', wrapper_class='col-md-6'),
         ),
-        HTML("""<productcomponentselect></productcomponentselect>"""),
+        HTML("""</div>"""),
+        HTML("""<ppcselect></ppcselect>"""),
+        HTML("""<div v-pre>"""),
         Row(
             Field('whiteboard', wrapper_class='col-md-6'),
             Field('keywords', wrapper_class='col-md-6'),
@@ -49,7 +52,8 @@ class BugzillaTemplateBugForm(ModelForm):
         Row(Field('security_group', wrapper_class='col-md-6')),
         Row(Field('testcase_filename', wrapper_class='col-md-6')),
         Submit('submit', 'Save', css_class='btn btn-danger'),
-        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>""")
+        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>"""),
+        HTML("""</div>""")
     )
     product = CharField(label='Current product (choose below)', widget=TextInput(attrs={'disabled': True}))
     component = CharField(label='Current component (choose below)', widget=TextInput(attrs={'disabled': True}))
@@ -113,10 +117,12 @@ class BugzillaTemplateBugForm(ModelForm):
 class BugzillaTemplateCommentForm(ModelForm):
     helper = FormHelper()
     helper.layout = Layout(
+        HTML("""<div v-pre>"""),
         'name',
         'comment',
         Submit('submit', 'Save', css_class='btn btn-danger'),
-        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>""")
+        HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>"""),
+        HTML("""</div>""")
     )
 
     class Meta:
