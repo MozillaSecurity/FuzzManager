@@ -31,15 +31,7 @@ class Provider():
         self.hostname = hostname
 
     @abstractmethod
-    def renderContextCreate(self, request, crashEntry):
-        return
-
-    @abstractmethod
     def renderContextComment(self, request, crashEntry):
-        return
-
-    @abstractmethod
-    def handlePOSTCreate(self, request, crashEntry):
         return
 
     @abstractmethod
