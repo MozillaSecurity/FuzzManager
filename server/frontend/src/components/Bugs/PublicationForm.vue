@@ -496,9 +496,9 @@ export default {
     assignError: null,
     createdBugId: null,
     notAttachTest: false,
-    testCaseContent: null,
+    testCaseContent: "",
     notAttachData: false,
-    crashData: null,
+    crashData: "",
   }),
   async mounted() {
     this.entry = await api.retrieveCrash(this.entryId);
