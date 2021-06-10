@@ -709,40 +709,6 @@ def createExternalBug(request, crashid):
         return renderError(request, ("Cannot create an external bug for an issue that is not associated "
                                      "to a bucket/signature"))
 
-    if request.method == 'POST':
-        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-
-        # Let the provider handle the POST request, which will file the bug
-        # and return us the external bug ID
-        extBugId = provider.getInstance().handlePOSTCreate(request, entry)
-
-        # Now create a bug in our database with that ID and assign it to the bucket
-        extBug = Bug(externalId=extBugId, externalType=provider)
-        extBug.save()
-        entry.bucket.bug = extBug
-        entry.bucket.save(update_fields=['bug'])
-
-        return redirect('crashmanager:sigview', sigid=entry.bucket.pk)
-    elif request.method == 'GET':
-        if 'provider' in request.GET:
-            provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
-        else:
-            user = User.get_or_create_restricted(request.user)[0]
-            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
-
-        return provider.getInstance().renderContextCreate(request, entry)
-    else:
-        raise SuspiciousOperation
-
-
-def createExternalBugTemp(request, crashid):
-    entry = get_object_or_404(CrashEntry, pk=crashid)
-    check_authorized_for_crash_entry(request, entry)
-
-    if not entry.bucket:
-        return renderError(request, ("Cannot create an external bug for an issue that is not associated "
-                                     "to a bucket/signature"))
-
     if request.method == 'GET':
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
@@ -754,7 +720,7 @@ def createExternalBugTemp(request, crashid):
         data = {
             'provider': provider.pk,
             'hostname': provider.hostname,
-            'template': template['pk'],
+            'template': template['pk'] if template else -1,
             'entry': entry,
         }
         return render(request, 'bugzilla/create_external_bug.html', data)
