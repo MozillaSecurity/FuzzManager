@@ -217,9 +217,7 @@ class BugzillaProvider(Provider):
 
         return attachmentData
 
-    def renderContextGeneric(self, request, crashEntry, mode, postTarget):
-        # This generic function works for both creating bugs and commenting
-        # because they require almost the same actions
+    def renderContextComment(self, request, crashEntry):
         template = self.getTemplateForUser(request, crashEntry)
         templates = BugzillaTemplate.objects.all()
 
@@ -234,92 +232,10 @@ class BugzillaProvider(Provider):
             'template': template,
             'entry': crashEntry,
             'provider': self.pk,
-            'mode': mode,
-            'postTarget': postTarget,
             'attachmentData': attachmentData,
         }
 
         return render(request, 'bugzilla/submit.html', data)
-
-    def renderContextCreate(self, request, crashEntry):
-        return self.renderContextGeneric(request, crashEntry, "create", "createbug")
-
-    def renderContextComment(self, request, crashEntry):
-        return self.renderContextGeneric(request, crashEntry, "comment", "createbugcomment")
-
-    def handlePOSTCreate(self, request, crashEntry):
-        args = request.POST.dict()
-
-        username = request.POST['bugzilla_username']
-        password = request.POST['bugzilla_password']
-        api_key = None
-
-        # If we have no username, interpret the password as API key
-        if not username:
-            api_key = password
-            password = None
-
-        # Fiddle out attachment data/flags before POST conversion
-        # because they are not template fields and would be stripped
-        crashdata_attach = None
-        if 'crashdata_attach' in request.POST:
-            crashdata_attach = request.POST['crashdata_attach'].encode('utf-8')
-
-        # Remove any other variables that we don't want to pass on
-        for key in request.POST:
-            if key not in self.templateFields:
-                del(args[key])
-
-        # Convert the attrs field to a dict
-        if "attrs" in args:
-            args["attrs"] = dict([x.split("=", 1) for x in args["attrs"].splitlines()])
-
-        if 'security' in request.POST and request.POST['security']:
-            args["groups"] = ["core-security"]
-            # Allow security_group to override the default security group used
-            if 'security_group' in request.POST and request.POST['security_group']:
-                args["groups"] = [request.POST['security_group']]
-
-        # security_group is a field we need in our template, but it does not correspond
-        # to a field in Bugzilla so we need to remove it here.
-        if 'security_group' in args:
-            del(args['security_group'])
-
-        # Strip the submitted testcase filename, we need to handle
-        # it separately when creating our testcase attachment
-        submitted_testcase_filename = None
-        if 'testcase_filename' in args:
-            submitted_testcase_filename = args['testcase_filename']
-            del(args['testcase_filename'])
-
-        # Create the bug
-        bz = BugzillaREST(self.hostname, username, password, api_key)
-        ret = bz.createBug(**args)
-        if "id" not in ret:
-            raise RuntimeError("Failed to create bug: %s", ret)
-
-        # If we were told to attach the crash data, do so now
-        if crashdata_attach:
-            cRet = bz.addAttachment(ret["id"], crashdata_attach, "crash_data.txt", "Detailed Crash Information",
-                                    is_binary=False)
-            ret["crashdataAttachmentResponse"] = cRet
-
-        # If we have a binary testcase or the testcase is too large,
-        # attach it here in a second step
-        if crashEntry.testcase is not None and 'testcase_skip' not in request.POST:
-            crashEntry.testcase.test.open(mode='rb')
-            data = crashEntry.testcase.test.read()
-            crashEntry.testcase.test.close()
-            filename = os.path.basename(crashEntry.testcase.test.name)
-
-            if submitted_testcase_filename:
-                filename = submitted_testcase_filename
-
-            aRet = bz.addAttachment(ret["id"], data, filename, "Testcase",
-                                    is_binary=crashEntry.testcase.isBinary)
-            ret["attachmentResponse"] = aRet
-
-        return ret["id"]
 
     def handlePOSTComment(self, request, crashEntry):
         args = {}

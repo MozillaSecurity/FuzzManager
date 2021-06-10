@@ -18,9 +18,7 @@
         <br/><br/>
         <div class="alert alert-warning" role="alert">You are about to submit this information to: <strong>{{ hostname }}</strong></div>
 
-        {% with "crashmanager:"|add:postTarget as targeturl %}
-        <form action="{% url targeturl entry.pk %}" method="post">
-        {% endwith %}
+        <form action="{% url 'crashmanager:createbugcomment' entry.pk %}" method="post">
             <input type="hidden" name="entry" value="{{ entry.pk }}"/>
             {% csrf_token %}
             <input type="hidden" name="provider" value="{{ provider }}"/>
@@ -36,9 +34,7 @@
             </div>
             <hr/>
 
-            {% with "bugzilla/"|add:mode|add:"_form.html" as templatePath %}
-            {% include templatePath %}
-            {% endwith %}
+            {% include "bugzilla/comment_form.html" %}
 
 		    {% if attachmentData.crashdata_attach %}
 			    The following crash data will be attached:<br/>

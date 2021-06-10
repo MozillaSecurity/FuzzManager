@@ -110,32 +110,6 @@ class BugzillaREST():
 
         return ret
 
-    def createBug(self, product, component, summary, version, type='defect', description=None,
-                  op_sys=None, platform=None, priority=None, severity=None, alias=None,
-                  cc=None, assigned_to=None, comment_is_private=None, is_markdown=None,
-                  groups=None, qa_contact=None, status=None, resolution=None,
-                  target_milestone=None, flags=None, whiteboard=None, keywords=None, attrs=None):
-
-        # Compose our bug attribute using all given arguments with special
-        # handling of the self and attrs arguments
-        loc = locals()
-        bug = {}
-        for k in loc:
-            if k == "attrs" and loc[k] is not None:
-                for ak in loc[k]:
-                    bug[ak] = loc[k][ak]
-            elif loc[k] is not None and loc[k] != '' and k != "self":
-                bug[k] = loc[k]
-
-        createUrl = "%s/bug" % self.baseUrl
-
-        # Ensure we're logged in, if required
-        if self.login():
-            createUrl = "%s?token=%s" % (createUrl, self.authToken)
-
-        response = requests.post(createUrl, bug, headers=self.request_headers)
-        return response.json()
-
     def createComment(self, id, comment, is_private=False):
         if is_private:
             is_private = 1
