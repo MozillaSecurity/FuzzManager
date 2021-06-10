@@ -732,26 +732,6 @@ def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
-    if request.method == 'POST':
-        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        provider.getInstance().handlePOSTComment(request, entry)
-        return redirect('crashmanager:crashview', crashid=crashid)
-    elif request.method == 'GET':
-        if 'provider' in request.GET:
-            provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
-        else:
-            user = User.get_or_create_restricted(request.user)[0]
-            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
-
-        return provider.getInstance().renderContextComment(request, entry)
-    else:
-        raise SuspiciousOperation
-
-
-def createExternalCommentTemp(request, crashid):
-    entry = get_object_or_404(CrashEntry, pk=crashid)
-    check_authorized_for_crash_entry(request, entry)
-
     if request.method == 'GET':
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])

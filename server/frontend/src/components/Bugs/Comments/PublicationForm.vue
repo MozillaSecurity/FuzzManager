@@ -205,11 +205,11 @@
 
 <script>
 var Mustache = require("mustache");
-import { errorParser } from "../../helpers";
-import * as api from "../../api";
-import * as bugzillaApi from "../../bugzilla_api";
-import CrashDataSection from "../Bugs/CrashDataSection.vue";
-import TestCaseSection from "../Bugs/TestCaseSection.vue";
+import { errorParser } from "../../../helpers";
+import * as api from "../../../api";
+import * as bugzillaApi from "../../../bugzilla_api";
+import CrashDataSection from "../CrashDataSection.vue";
+import TestCaseSection from "../TestCaseSection.vue";
 
 export default {
   components: {
