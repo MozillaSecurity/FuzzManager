@@ -46,7 +46,9 @@ a.fixedbug:active {
 }
 
 #id_crashdata_attach,
-#id_testcase_content {
+#id_testcase_content,
+#id_comment,
+#id_rendered_comment {
   height: 400px;
 }
 

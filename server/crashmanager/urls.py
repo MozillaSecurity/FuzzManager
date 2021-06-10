@@ -38,6 +38,7 @@ urlpatterns = [
     url(r'^crashes/(?P<crashid>\d+)/delete/$', views.deleteCrashEntry, name='crashdel'),
     url(r'^crashes/(?P<crashid>\d+)/createbug/$', views.createExternalBug, name='createbug'),
     url(r'^crashes/(?P<crashid>\d+)/createbugcomment/$', views.createExternalBugComment, name='createbugcomment'),
+    url(r'^crashes/(?P<crashid>\d+)/createcommenttemp/$', views.createExternalCommentTemp, name='createbugcommenttemp'),
     url(r'^crashes/(?P<crashid>\d+)/findsignatures/$', views.findSignatures, name='findsigs'),
     url(r'^crashes/(?P<crashid>\d+)/download/$', views.TestDownloadView.as_view(), name='download_test'),
     url(r'^bugprovider/$', views.viewBugProviders, name='bugproviders'),

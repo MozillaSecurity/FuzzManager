@@ -12,6 +12,7 @@ import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
+import CommentPublicationForm from "./components/Comments/PublicationForm.vue";
 
 Vue.use(VueRouter);
 
@@ -24,6 +25,7 @@ window.onload = function () {
       providerkey: ProviderKey,
       ppcselect: FullPPCSelect,
       bugpublicationform: BugPublicationForm,
+      commentpublicationform: CommentPublicationForm,
     },
     router,
   });

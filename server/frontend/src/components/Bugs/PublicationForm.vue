@@ -459,10 +459,6 @@ export default {
       type: Number,
       required: true,
     },
-    providerHostname: {
-      type: String,
-      required: true,
-    },
     templateId: {
       type: Number,
       required: true,
