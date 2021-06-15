@@ -94,7 +94,7 @@
 <script>
 import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
-import { errorParser } from "../../helpers";
+import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 
@@ -140,7 +140,7 @@ export default {
       );
     this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
-      const hash = this.parseHash();
+      const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
         let hashSortKey = hash.sort;
         let hashReverse = false;
@@ -190,16 +190,6 @@ export default {
       this.reverse = !keyChange ? !this.reverse : false;
       this.sortKey = sortKey;
       this.fetch();
-    },
-    parseHash() {
-      return this.$route.hash
-        .substring(1)
-        .split(",")
-        .map((v) => v.split("="))
-        .reduce(
-          (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
-          {}
-        );
     },
     buildParams() {
       return {

@@ -213,7 +213,7 @@
 import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
 import sweetAlert from "sweetalert";
-import { errorParser, E_SERVER_ERROR } from "../../helpers";
+import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 
@@ -301,7 +301,7 @@ export default {
     if (this.$route.query.q) this.searchStr = this.$route.query.q;
     this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
-      const hash = this.parseHash();
+      const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "page")) {
         try {
           this.currentPage = Number.parseInt(hash.page, 10);
@@ -399,7 +399,7 @@ export default {
       this.advancedQueryStr = JSON.stringify(this.buildSimpleQuery(), null, 2);
       this.searchStr = "";
       this.filters = {};
-      const hash = this.parseHash();
+      const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
       this.showBucketed =
@@ -459,16 +459,6 @@ export default {
         this.fetch();
       }
     },
-    parseHash: function () {
-      return this.$route.hash
-        .substring(1)
-        .split(",")
-        .map((v) => v.split("="))
-        .reduce(
-          (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
-          {}
-        );
-    },
     prevPage: function () {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -489,7 +479,7 @@ export default {
       this.advancedQueryStr = "";
       this.searchStr = "";
       this.filters = {};
-      const hash = this.parseHash();
+      const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
       this.showBucketed =
