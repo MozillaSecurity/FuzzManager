@@ -145,14 +145,6 @@ def settings(request):
     return render(request, 'settings.html')
 
 
-def allSignatures(request):
-    entries = Bucket.objects.annotate(size=Count('crashentry'),
-                                      quality=Min('crashentry__testcase__quality')).order_by('-id')
-    entries = filter_signatures_by_toolfilter(request, entries, restricted_only=True)
-    entries = entries.select_related('bug', 'bug__externalType')
-    return render(request, 'signatures/index.html', {'isAll': True, 'siglist': entries})
-
-
 def watchedSignatures(request):
     # for this user, list watches
     # buckets   sig       new crashes   remove
@@ -233,61 +225,7 @@ def bucketWatchCrashes(request, sigid):
 
 
 def signatures(request):
-    entries = Bucket.objects.all().order_by('-id')
-
-    filters = {}
-    q = None
-    isSearch = False
-
-    # These are all keys that are allowed for exact filtering
-    exactFilterKeys = [
-        "bug__externalId",
-        "shortDescription__contains",
-        "signature__contains",
-        "optimizedSignature__isnull",
-    ]
-
-    for key in exactFilterKeys:
-        if key in request.GET:
-            isSearch = True
-            filters[key] = request.GET[key]
-
-    if "q" in request.GET:
-        isSearch = True
-        q = request.GET["q"]
-        entries = entries.filter(
-            Q(shortDescription__contains=q) |
-            Q(signature__contains=q)
-        )
-
-    if "ids" in request.GET:
-        isSearch = True
-        ids = [int(x) for x in request.GET["ids"].split(",")]
-        entries = entries.filter(pk__in=ids)
-
-    # Do not display triaged crash entries unless there is an all=1 parameter
-    # specified in the search query. Otherwise only show untriaged entries.
-    if ("all" not in request.GET or not request.GET["all"]) and not isSearch:
-        filters["bug"] = None
-
-    entries = entries.filter(**filters)
-
-    # Apply default tools filter, only display buckets that contain at least one
-    # crash from a tool that we are interested in. Since this query is probably
-    # the slowest, it should run after other filters.
-    entries = filter_signatures_by_toolfilter(request, entries)
-
-    # Annotate size and quality to each bucket that we're going to display.
-    entries = entries.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
-
-    entries = entries.select_related('bug', 'bug__externalType')
-
-    data = {'q': q, 'request': request, 'isSearch': isSearch, 'siglist': entries}
-    return render(request, 'signatures/index.html', data)
-
-
-def signatures2(request):
-    return render(request, 'signatures/index2.html')
+    return render(request, 'signatures/index.html')
 
 
 def crashes(request):

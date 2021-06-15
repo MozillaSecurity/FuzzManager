@@ -9,9 +9,9 @@
           <button
             type="button"
             class="btn btn-default"
-            v-on:click="updateShowAssigned"
+            v-on:click="updateShowAll"
           >
-            {{ showAssigned ? "View All" : "View Unassigned" }}
+            {{ showAll ? "View Unassigned" : "View All" }}
           </button>
           <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
@@ -42,7 +42,7 @@
         />
       </div>
       <br />
-      <p v-if="showAssigned">
+      <p v-if="showAll">
         Displaying all {{ signatures.length }} signature entries in the
         database.
       </p>
@@ -166,13 +166,13 @@ export default {
     this.fetch();
   },
   computed: {
-    showAssigned() {
-      return this.queryStr.includes('"bug__isnull": true');
+    showAll() {
+      return !this.queryStr.includes('"bug__isnull": true');
     },
   },
   methods: {
-    updateShowAssigned() {
-      if (!this.showAssigned) {
+    updateShowAll() {
+      if (this.showAll) {
         this.queryStr = JSON.stringify(
           Object.assign({ bug__isnull: true }, JSON.parse(this.queryStr)),
           null,
