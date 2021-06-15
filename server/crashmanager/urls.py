@@ -17,6 +17,7 @@ urlpatterns = [
     url(r'^rest/crashes/(?P<crashid>\d+)/download/$', views.TestDownloadView.as_view(), name='download_test_rest'),
     url(r'^$', views.crashes, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
+    url(r'^signatures2/$', views.signatures2, name='signatures2'),
     url(r'^signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures'),
     url(r'^signatures/all/$', views.allSignatures, name='allsignatures'),
     url(r'^signatures/new/$', views.newSignature, name='signew'),

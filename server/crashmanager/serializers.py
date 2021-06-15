@@ -152,6 +152,60 @@ class BucketSerializer(serializers.ModelSerializer):
         return serialized
 
 
+class BucketVueSerializer(BucketSerializer):
+    view_url = serializers.SerializerMethodField()
+    link_url = serializers.SerializerMethodField()
+    opt_pre_url = serializers.SerializerMethodField()
+    bug_closed = serializers.SerializerMethodField()
+    bug_urltemplate = serializers.SerializerMethodField()
+    bug_hostname = serializers.SerializerMethodField()
+
+    class Meta(BucketSerializer.Meta):
+        fields = BucketSerializer.Meta.fields + (
+            'view_url',
+            'link_url',
+            'opt_pre_url',
+            'bug_closed',
+            'bug_urltemplate',
+            'bug_hostname',
+        )
+        read_only_fields = BucketSerializer.Meta.read_only_fields + (
+            'view_url',
+            'link_url',
+            'opt_pre_url',
+            'bug_closed',
+            'bug_urltemplate',
+            'bug_hostname',
+        )
+
+    def get_view_url(self, sig):
+        return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
+
+    def get_link_url(self, sig):
+        return reverse('crashmanager:siglink', kwargs={'sigid': sig.id})
+
+    def get_opt_pre_url(self, sig):
+        return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
+
+    def get_bug_closed(self, sig):
+        if sig.bug:
+            return sig.bug.closed
+        return None
+
+    def get_bug_urltemplate(self, sig):
+        if sig.bug and sig.bug.externalType:
+            try:
+                return sig.bug.externalType.urlTemplate % sig.bug.externalId
+            except Exception:
+                return None
+        return None
+
+    def get_bug_hostname(self, sig):
+        if sig.bug and sig.bug.externalType:
+            return sig.bug.externalType.hostname
+        return None
+
+
 class CrashEntryVueSerializer(CrashEntrySerializer):
     view_url = serializers.SerializerMethodField()
     sig_view_url = serializers.SerializerMethodField()

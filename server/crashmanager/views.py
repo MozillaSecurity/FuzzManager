@@ -29,7 +29,7 @@ from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
-    BucketSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
+    BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -284,6 +284,10 @@ def signatures(request):
 
     data = {'q': q, 'request': request, 'isSearch': isSearch, 'siglist': entries}
     return render(request, 'signatures/index.html', data)
+
+
+def signatures2(request):
+    return render(request, 'signatures/index2.html')
 
 
 def crashes(request):
@@ -1039,6 +1043,14 @@ class BucketViewSet(mixins.ListModelMixin,
     queryset = Bucket.objects.all().select_related('bug')
     serializer_class = BucketSerializer
     filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
+    ordering_fields = ['id', 'shortDescription', 'size']
+
+    def get_serializer(self, *args, **kwds):
+        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        if vue:
+            return BucketVueSerializer(*args, **kwds)
+        else:
+            return super(BucketViewSet, self).get_serializer(*args, **kwds)
 
     def retrieve(self, request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]
