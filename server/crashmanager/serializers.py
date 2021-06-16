@@ -198,7 +198,7 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BugzillaTemplate
-        fields = ('id', 'mode', 'name', 'product', 'component', 'summary', 'version',
+        fields = ('id', 'mode', 'name', 'comment', 'product', 'component', 'summary', 'version',
                   'description', 'op_sys', 'platform', 'priority', 'severity', 'alias',
                   'cc', 'assigned_to', 'qa_contact', 'target_milestone', 'whiteboard',
                   'keywords', 'attrs', 'security_group', 'testcase_filename', 'security',)

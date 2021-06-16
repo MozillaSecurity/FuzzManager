@@ -47,10 +47,10 @@ def test_rest_templates_methods(api_client, user, method, url):
 
 def _compare_rest_result_to_template(result, template):
     expected_fields = {
-        "id", "mode", "name", "product", "component", "summary", "version", "description",
-        "op_sys", "platform", "priority", "severity", "alias", "cc", "assigned_to",
-        "qa_contact", "target_milestone", "whiteboard", "keywords", "attrs",
-        "security_group", "testcase_filename", "security",
+        "id", "mode", "name", "comment", "product", "component", "summary", "version",
+        "description", "op_sys", "platform", "priority", "severity", "alias", "cc",
+        "assigned_to", "qa_contact", "target_milestone", "whiteboard", "keywords",
+        "attrs", "security_group", "testcase_filename", "security",
     }
     assert set(result) == expected_fields
     for key, value in result.items():

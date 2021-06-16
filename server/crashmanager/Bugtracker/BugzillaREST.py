@@ -15,7 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import base64
 import requests
 
 
@@ -109,63 +108,3 @@ class BugzillaREST():
             ret[bug["id"]] = bug
 
         return ret
-
-    def createComment(self, id, comment, is_private=False):
-        if is_private:
-            is_private = 1
-        else:
-            is_private = 0
-        cobj = {}
-        cobj["comment"] = comment
-        cobj["is_private"] = is_private
-
-        createUrl = "%s/bug/%s/comment" % (self.baseUrl, id)
-
-        # Ensure we're logged in, if required
-        if self.login():
-            createUrl = "%s?token=%s" % (createUrl, self.authToken)
-        response = requests.post(createUrl, cobj, headers=self.request_headers).json()
-
-        if "id" not in response:
-            return response
-
-        commentId = str(response["id"])
-        commentUrl = "%s/bug/comment/%s" % (self.baseUrl, commentId)
-
-        if self.login():
-            commentUrl = "%s?token=%s" % (commentUrl, self.authToken)
-        response = requests.get(commentUrl, headers=self.request_headers).json()
-
-        if "comments" not in response:
-            return response
-
-        if commentId not in response["comments"]:
-            return response
-
-        return response["comments"][commentId]
-
-    def addAttachment(self, ids, data, file_name, summary, comment=None, is_private=None, is_binary=False):
-        # Compose our request using all given arguments with special
-        # handling of the self and is_binary arguments
-        loc = locals()
-        attachment = {}
-        for k in loc:
-            if loc[k] is not None and loc[k] != '' and k != "self" and k != "is_binary":
-                attachment[k] = loc[k]
-
-        # Set proper content-type
-        if is_binary:
-            attachment["content_type"] = "application/octet-stream"
-        else:
-            attachment["content_type"] = "text/plain"
-
-        # Attachment data must always be base64 encoded
-        attachment["data"] = base64.b64encode(attachment["data"])
-
-        attachUrl = "%s/bug/%s/attachment" % (self.baseUrl, ids)
-
-        # Ensure we're logged in, if required
-        if self.login():
-            attachUrl = "%s?token=%s" % (attachUrl, self.authToken)
-        response = requests.post(attachUrl, attachment, headers=self.request_headers)
-        return response.json()

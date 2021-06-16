@@ -732,18 +732,21 @@ def createExternalBugComment(request, crashid):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
-    if request.method == 'POST':
-        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        provider.getInstance().handlePOSTComment(request, entry)
-        return redirect('crashmanager:crashview', crashid=crashid)
-    elif request.method == 'GET':
+    if request.method == 'GET':
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
             user = User.get_or_create_restricted(request.user)[0]
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
-        return provider.getInstance().renderContextComment(request, entry)
+        template = provider.getInstance().getTemplateForUser(request, entry)
+        data = {
+            'provider': provider.pk,
+            'hostname': provider.hostname,
+            'template': template['pk'] if template else -1,
+            'entry': entry,
+        }
+        return render(request, 'bugzilla/create_external_comment.html', data)
     else:
         raise SuspiciousOperation
 
