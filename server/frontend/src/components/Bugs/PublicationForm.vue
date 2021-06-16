@@ -115,7 +115,18 @@
         <div class="row">
           <div class="form-group col-md-6">
             <label for="cc">Cc</label>
+            <UserDropdown
+              v-if="provider && bugzillaToken"
+              input-id="id_cc"
+              input-name="cc"
+              :provider="provider"
+              :bugzilla-token="bugzillaToken"
+              :initial-value="template.cc"
+              :multiple="true"
+              v-on:update-value="template.cc = $event"
+            />
             <input
+              v-else
               id="id_cc"
               class="form-control"
               maxlength="1023"
@@ -126,7 +137,17 @@
           </div>
           <div class="form-group col-md-6">
             <label for="assigned_to">Assigned to</label>
+            <UserDropdown
+              v-if="provider && bugzillaToken"
+              input-id="id_assigned_to"
+              input-name="assigned_to"
+              :provider="provider"
+              :bugzilla-token="bugzillaToken"
+              :initial-value="template.assigned_to"
+              v-on:update-value="template.assigned_to = $event"
+            />
             <input
+              v-else
               id="id_assigned_to"
               class="form-control"
               maxlength="1023"
@@ -176,7 +197,17 @@
           </div>
           <div class="form-group col-md-6">
             <label for="qa_contact">QA</label>
+            <UserDropdown
+              v-if="provider && bugzillaToken"
+              input-id="id_qa_contact"
+              input-name="qa_contact"
+              :provider="provider"
+              :bugzilla-token="bugzillaToken"
+              :initial-value="template.qa_contact"
+              v-on:update-value="template.qa_contact = $event"
+            />
             <input
+              v-else
               id="id_qa_contact"
               class="form-control"
               maxlength="1023"
@@ -444,6 +475,7 @@ import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
+import UserDropdown from "./UserDropdown.vue";
 import CrashDataSection from "./CrashDataSection.vue";
 import TestCaseSection from "./TestCaseSection.vue";
 
@@ -451,6 +483,7 @@ export default {
   components: {
     SummaryInput,
     ProductComponentSelect,
+    UserDropdown,
     CrashDataSection,
     TestCaseSection,
   },
@@ -684,7 +717,7 @@ export default {
         priority: this.template.priority,
         severity: this.template.severity,
         alias: this.template.alias,
-        cc: this.template.cc,
+        cc: this.template.cc.split(","),
         assigned_to: this.template.assigned_to,
         qa_contact: this.template.qa_contact,
         target_milestone: this.template.target_milestone,
