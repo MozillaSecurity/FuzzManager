@@ -708,8 +708,8 @@ export default {
           headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
         });
         this.createdBugId = data.id;
-        await this.publishAttachments();
         await this.assignExternalBug();
+        await this.publishAttachments();
       } catch (err) {
         this.createError = errorParser(err);
       } finally {
@@ -720,15 +720,15 @@ export default {
       let payload = {};
       // Publish Crash data
       if (!this.notAttachData) {
-        payload = {
-          ids: [this.createdBugId],
-          data: btoa(this.crashData),
-          file_name: "crash_data.txt",
-          summary: "Detailed Crash Information",
-          content_type: "text/plain",
-        };
-
         try {
+          payload = {
+            ids: [this.createdBugId],
+            data: btoa(this.crashData),
+            file_name: "crash_data.txt",
+            summary: "Detailed Crash Information",
+            content_type: "text/plain",
+          };
+
           await bugzillaApi.createAttachment({
             hostname: this.provider.hostname,
             id: this.createdBugId,
@@ -742,23 +742,23 @@ export default {
 
       // Publish TestCase
       if (this.entry.testcase && !this.notAttachTest) {
-        let content = this.testCaseContent;
-        // If the testcase is binary we need to download it first
-        if (this.entry.testcase_isbinary) {
-          content = await api.retrieveCrashTestCase(this.entry.id);
-        }
-
-        payload = {
-          ids: [this.createdBugId],
-          data: btoa(content),
-          file_name: this.entry.testcase,
-          summary: "Testcase",
-          content_type: this.entry.testcase_isbinary
-            ? "application/octet-stream"
-            : "text/plain",
-        };
-
         try {
+          let content = this.testCaseContent;
+          // If the testcase is binary we need to download it first
+          if (this.entry.testcase_isbinary) {
+            content = await api.retrieveCrashTestCase(this.entry.id);
+          }
+
+          payload = {
+            ids: [this.createdBugId],
+            data: btoa(content),
+            file_name: this.entry.testcase,
+            summary: "Testcase",
+            content_type: this.entry.testcase_isbinary
+              ? "application/octet-stream"
+              : "text/plain",
+          };
+
           await bugzillaApi.createAttachment({
             hostname: this.provider.hostname,
             id: this.createdBugId,
