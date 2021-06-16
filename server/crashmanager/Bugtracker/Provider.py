@@ -31,14 +31,6 @@ class Provider():
         self.hostname = hostname
 
     @abstractmethod
-    def renderContextComment(self, request, crashEntry):
-        return
-
-    @abstractmethod
-    def handlePOSTComment(self, request, crashEntry):
-        return
-
-    @abstractmethod
     def getTemplateList(self):
         return
 

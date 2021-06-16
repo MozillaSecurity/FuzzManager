@@ -29,6 +29,18 @@ export const createBug = async ({ hostname, headers, ...data }) =>
   (await bugzillaAxios.post(`https://${hostname}/rest/bug`, data, { headers }))
     .data;
 
+export const createComment = async ({ hostname, id, headers, ...data }) =>
+  (
+    await bugzillaAxios.post(
+      `https://${hostname}/rest/bug/${id}/comment`,
+      data,
+      { headers }
+    )
+  ).data;
+
+export const retrieveComment = async ({ hostname, id }) =>
+  (await bugzillaAxios.get(`https://${hostname}/rest/bug/comment/${id}`)).data;
+
 export const createAttachment = async ({ hostname, id, headers, ...data }) =>
   (
     await bugzillaAxios.post(
