@@ -205,6 +205,7 @@
 
 <script>
 var Mustache = require("mustache");
+import { Base64 } from "js-base64"; // eslint-disable-line import/no-unresolved
 import { errorParser } from "../../../helpers";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
@@ -257,6 +258,7 @@ export default {
     crashData: "",
   }),
   async mounted() {
+    Base64.extendString();
     this.entry = await api.retrieveCrash(this.entryId);
     this.crashData = this.entry.rawCrashData
       ? this.entry.rawCrashData
@@ -417,7 +419,7 @@ export default {
       if (!this.notAttachData) {
         payload = {
           ids: [this.externalBugId],
-          data: btoa(this.crashData),
+          data: this.crashData.toBase64(),
           file_name: "crash_data.txt",
           summary: "Detailed Crash Information",
           content_type: "text/plain",
@@ -453,7 +455,7 @@ export default {
 
         payload = {
           ids: [this.externalBugId],
-          data: btoa(content),
+          data: content.toBase64(),
           file_name: this.entry.testcase,
           summary: `Testcase for ${comment}`,
           content_type: this.entry.testcase_isbinary
