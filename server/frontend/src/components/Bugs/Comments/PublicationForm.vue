@@ -258,7 +258,6 @@ export default {
     crashData: "",
   }),
   async mounted() {
-    Base64.extendString();
     this.entry = await api.retrieveCrash(this.entryId);
     this.crashData = this.entry.rawCrashData
       ? this.entry.rawCrashData
@@ -419,7 +418,7 @@ export default {
       if (!this.notAttachData) {
         payload = {
           ids: [this.externalBugId],
-          data: this.crashData.toBase64(),
+          data: Base64.encode(this.crashData),
           file_name: "crash_data.txt",
           summary: "Detailed Crash Information",
           content_type: "text/plain",
@@ -455,7 +454,7 @@ export default {
 
         payload = {
           ids: [this.externalBugId],
-          data: content.toBase64(),
+          data: Base64.encode(content),
           file_name: this.entry.testcase,
           summary: `Testcase for ${comment}`,
           content_type: this.entry.testcase_isbinary
