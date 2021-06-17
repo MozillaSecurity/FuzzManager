@@ -439,7 +439,7 @@
 
 <script>
 var Mustache = require("mustache");
-import { Base64 } from "js-base64"; // eslint-disable-line import/no-unresolved
+import { Base64 } from "js-base64";
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
