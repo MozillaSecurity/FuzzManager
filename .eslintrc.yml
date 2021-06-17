@@ -79,6 +79,3 @@ parserOptions:
 settings:
   import/external-module-folders:
     - ./server/frontend/node_modules
-  import/resolver:
-    webpack:
-      config: './server/frontend/webpack.dev.js'
