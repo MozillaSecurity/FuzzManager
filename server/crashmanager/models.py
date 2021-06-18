@@ -506,6 +506,10 @@ class User(models.Model):
     restricted = models.BooleanField(blank=False, default=False)
     bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
 
+    # Notifications
+    inaccessible_bug = models.BooleanField(blank=False, default=False)
+    bucket_hit = models.BooleanField(blank=False, default=False)
+
     @staticmethod
     def get_or_create_restricted(request_user):
         (user, created) = User.objects.get_or_create(user=request_user)

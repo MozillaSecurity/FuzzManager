@@ -150,6 +150,9 @@ class UserSettingsForm(ModelForm):
             Field('defaultTemplateId', wrapper_class='col-md-6'),
         ),
         'email',
+        HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
+        'inaccessible_bug',
+        'bucket_hit',
         Submit('submit', 'Save settings', css_class='btn btn-danger'),
     )
     defaultToolsFilter = ModelMultipleChoiceField(
@@ -168,7 +171,13 @@ class UserSettingsForm(ModelForm):
 
     class Meta:
         model = User
-        fields = ['defaultToolsFilter', 'defaultProviderId', 'defaultTemplateId']
+        fields = [
+            'defaultToolsFilter',
+            'defaultProviderId',
+            'defaultTemplateId',
+            'inaccessible_bug',
+            'bucket_hit'
+        ]
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)

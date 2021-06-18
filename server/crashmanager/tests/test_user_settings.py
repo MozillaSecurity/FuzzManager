@@ -50,12 +50,16 @@ def test_user_settings_edit(client, cm):
     assert user.defaultProviderId == 1
     assert user.defaultTemplateId == 0
     assert user.user.email == 'test@mozilla.com'
+    assert not user.inaccessible_bug
+    assert not user.bucket_hit
     client.login(username='test', password='test')
     response = client.post(reverse("crashmanager:usersettings"), data={
         "defaultToolsFilter": [tools[0].pk, tools[1].pk],
         "defaultProviderId": providers[1].pk,
         "defaultTemplateId": 1,
-        "email": "mynewemail@mozilla.com"
+        "email": "mynewemail@mozilla.com",
+        "inaccessible_bug": True,
+        "bucket_hit": True,
     })
     LOG.debug(response)
     # Redirecting to user settings when the action is successful
@@ -67,3 +71,5 @@ def test_user_settings_edit(client, cm):
     assert user.defaultProviderId == 2
     assert user.defaultTemplateId == 1
     assert user.user.email == "mynewemail@mozilla.com"
+    assert user.inaccessible_bug
+    assert user.bucket_hit
