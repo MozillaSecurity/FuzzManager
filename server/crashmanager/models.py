@@ -24,6 +24,9 @@ if getattr(settings, 'USE_CELERY', None):
 class Tool(models.Model):
     name = models.CharField(max_length=63)
 
+    def __str__(self):
+        return self.name
+
 
 class Platform(models.Model):
     name = models.CharField(max_length=63)
@@ -85,6 +88,9 @@ class BugProvider(models.Model):
         providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
+
+    def __str__(self):
+        return self.hostname
 
 
 class Bug(models.Model):
@@ -477,6 +483,9 @@ class BugzillaTemplate(models.Model):
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class User(models.Model):
