@@ -25,6 +25,14 @@ export const fetchPossibleDuplicates = async ({ hostname, params, headers }) =>
     )
   ).data;
 
+export const fetchSuggestedUsers = async ({ hostname, params, headers }) =>
+  (
+    await bugzillaAxios.get(`https://${hostname}/rest/user`, {
+      params,
+      headers,
+    })
+  ).data;
+
 export const createBug = async ({ hostname, headers, ...data }) =>
   (await bugzillaAxios.post(`https://${hostname}/rest/bug`, data, { headers }))
     .data;
