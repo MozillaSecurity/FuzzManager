@@ -1,7 +1,7 @@
 # coding: utf-8
 '''Tests for usersettings views.
 
-@author:     Jesse Schwartzentruber (:truber)
+@author:     Eva Bardou
 
 @license:
 

@@ -1,8 +1,8 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
 from django.conf import settings
-from django.forms import CharField, CheckboxSelectMultiple, ChoiceField, ModelChoiceField, \
-    ModelMultipleChoiceField, ModelForm, Textarea, TextInput
+from django.forms import CharField, CheckboxSelectMultiple, ChoiceField, EmailField, \
+    ModelChoiceField, ModelMultipleChoiceField, ModelForm, Textarea, TextInput
 from rest_framework.exceptions import ValidationError
 
 from .models import BugProvider, BugzillaTemplate, Tool, User
@@ -167,7 +167,7 @@ class UserSettingsForm(ModelForm):
         empty_label=None
     )
     defaultTemplateId = ChoiceField(label='Default Template:')
-    email = CharField(label='Email:')
+    email = EmailField(label='Email:')
 
     class Meta:
         model = User
