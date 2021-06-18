@@ -49,11 +49,13 @@ def test_user_settings_edit(client, cm):
     assert list(user.defaultToolsFilter.all()) == []
     assert user.defaultProviderId == 1
     assert user.defaultTemplateId == 0
+    assert user.user.email == 'test@mozilla.com'
     client.login(username='test', password='test')
     response = client.post(reverse("crashmanager:usersettings"), data={
         "defaultToolsFilter": [tools[0].pk, tools[1].pk],
         "defaultProviderId": providers[1].pk,
         "defaultTemplateId": 1,
+        "email": "mynewemail@mozilla.com"
     })
     LOG.debug(response)
     # Redirecting to user settings when the action is successful
@@ -64,3 +66,4 @@ def test_user_settings_edit(client, cm):
     assert list(user.defaultToolsFilter.all()) == list(Tool.objects.all())
     assert user.defaultProviderId == 2
     assert user.defaultTemplateId == 1
+    assert user.user.email == "mynewemail@mozilla.com"

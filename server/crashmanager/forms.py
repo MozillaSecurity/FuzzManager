@@ -1,5 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
+from django.conf import settings
 from django.forms import CharField, CheckboxSelectMultiple, ChoiceField, ModelChoiceField, \
     ModelMultipleChoiceField, ModelForm, Textarea, TextInput
 from rest_framework.exceptions import ValidationError
@@ -148,6 +149,7 @@ class UserSettingsForm(ModelForm):
             Field('defaultProviderId', wrapper_class='col-md-6'),
             Field('defaultTemplateId', wrapper_class='col-md-6'),
         ),
+        'email',
         Submit('submit', 'Save settings', css_class='btn btn-danger'),
     )
     defaultToolsFilter = ModelMultipleChoiceField(
@@ -161,9 +163,8 @@ class UserSettingsForm(ModelForm):
         label='Default Provider:',
         empty_label=None
     )
-    defaultTemplateId = ChoiceField(
-        label='Default Template:',
-    )
+    defaultTemplateId = ChoiceField(label='Default Template:')
+    email = CharField(label='Email:')
 
     class Meta:
         model = User
@@ -179,6 +180,14 @@ class UserSettingsForm(ModelForm):
             for t in p.getInstance().getTemplateList()
         ]))
 
+        instance = kwargs.get('instance', None)
+        if instance:
+            self.initial['email'] = instance.user.email
+
+        if not settings.ALLOW_EMAIL_EDITION:
+            self.fields['email'].required = False
+            self.fields['email'].widget.attrs['readonly'] = True
+
     def clean_defaultToolsFilter(self):
         data = self.cleaned_data['defaultToolsFilter']
         if self.user and list(self.user.defaultToolsFilter.all()) != list(data) and self.user.restricted:
@@ -188,3 +197,8 @@ class UserSettingsForm(ModelForm):
     def clean_defaultProviderId(self):
         data = self.cleaned_data['defaultProviderId'].id
         return data
+
+    def save(self, *args, **kwargs):
+        self.instance.user.email = self.cleaned_data['email']
+        self.instance.user.save()
+        return super().save(*args, **kwargs)
