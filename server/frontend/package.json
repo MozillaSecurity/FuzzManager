@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "axios": "^0.21.1",
+        "js-base64": "^3.6.1",
         "lodash": "^4.17.4",
         "mustache": "^4.2.0",
         "sweetalert": "^1.1.3",
