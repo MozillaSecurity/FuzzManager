@@ -49,9 +49,12 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality):
-    assert set(result) == {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription',
-                           'signature', 'size'}
+def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
+    attributes = {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size'}
+    if vue:
+        attributes.update({'view_url', 'link_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
+
+    assert set(result) == attributes
     assert result["id"] == bucket.pk
     assert result["best_quality"] == quality
     assert result["bug"] == bucket.bug_id
@@ -60,6 +63,13 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality):
     assert result["shortDescription"] == bucket.shortDescription
     assert result["signature"] == bucket.signature
     assert result["size"] == size
+    if vue:
+        assert result["view_url"] == reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
+        assert result["link_url"] == reverse('crashmanager:siglink', kwargs={'sigid': bucket.pk})
+        assert result["opt_pre_url"] == reverse('crashmanager:sigoptpre', kwargs={'sigid': bucket.pk})
+        assert result["bug_closed"] is None
+        assert result["bug_urltemplate"] is None
+        assert result["bug_hostname"] is None
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
@@ -98,7 +108,8 @@ def test_rest_signatures_methods(api_client, user, method, url):
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
-def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter):
+@pytest.mark.parametrize("vue", [True, False])
+def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     """test that buckets can be listed"""
     bucket1 = cm.create_bucket(shortDescription="bucket #1")
     bucket2 = cm.create_bucket(shortDescription="bucket #2")
@@ -123,6 +134,8 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter):
     params = {}
     if ignore_toolfilter:
         params["ignore_toolfilter"] = "1"
+    if vue:
+        params["vue"] = "1"
     resp = api_client.get('/crashmanager/rest/buckets/', params)
     LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']
@@ -136,10 +149,10 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter):
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1)
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, vue=vue)
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, vue=vue)
     else:
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, vue=vue)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)

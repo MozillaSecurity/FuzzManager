@@ -20,59 +20,10 @@ from . import assert_contains
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.signatures")
-ALL_SIGS_FMT = "Displaying all %d signature entries in the database."
-SIGS_FMT = "Displaying %d unreported signature entries from the database."
 pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
-# pylint: disable=no-self-use
-@pytest.mark.parametrize(("name", "entries_fmt"),
-                         [("crashmanager:signatures", SIGS_FMT),
-                          ("crashmanager:allsignatures", ALL_SIGS_FMT)])
-class TestSignaturesViews(object):
-    """Common signatures tests"""
-
-    def test_signatures_view_no_sigs(self, client, name, entries_fmt):
-        """If no sigs in db, an appropriate message is shown."""
-        client.login(username='test', password='test')
-        response = client.get(reverse(name))
-        LOG.debug(response)
-        assert response.status_code == requests.codes['ok']
-        siglist = response.context['siglist']
-        assert not siglist  # 0 buckets
-        assert_contains(response, entries_fmt % 0)
-
-    def test_signatures_view_with_sig(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
-        """Create one bucket and check that it is shown ok."""
-        client.login(username='test', password='test')
-        bucket = cm.create_bucket(shortDescription="bucket #1")
-        response = client.get(reverse(name))
-        LOG.debug(response)
-        assert response.status_code == requests.codes['ok']
-        siglist = response.context['siglist']
-        assert len(siglist) == 1  # 1 bucket
-        assert siglist[0] == bucket  # same bucket we created
-        assert_contains(response, "bucket #1")
-        assert_contains(response, entries_fmt % 1)
-
-    def test_signatures_view_with_sigs(self, client, cm, name, entries_fmt):  # pylint: disable=invalid-name
-        """Create two buckets and check that they are shown ok."""
-        client.login(username='test', password='test')
-        buckets = (cm.create_bucket(shortDescription="bucket #1"),
-                   cm.create_bucket(shortDescription="bucket #2"))
-        response = client.get(reverse(name))
-        LOG.debug(response)
-        assert response.status_code == requests.codes['ok']
-        siglist = response.context['siglist']
-        assert len(siglist) == 2  # 2 buckets
-        assert set(siglist) == set(buckets)  # same buckets we created
-        assert_contains(response, "bucket #1")
-        assert_contains(response, "bucket #2")
-        assert_contains(response, entries_fmt % 2)
-
-
 @pytest.mark.parametrize(("name", "kwargs"), [("crashmanager:signatures", {}),
-                                              ("crashmanager:allsignatures", {}),
                                               ("crashmanager:findsigs", {'crashid': 0}),
                                               ("crashmanager:siglink", {'sigid': 0}),
                                               ("crashmanager:sigunlink", {'sigid': 0}),
@@ -88,111 +39,13 @@ def test_signatures_no_login(client, name, kwargs):
     assert resp.url == '/login/?next=' + path
 
 
-def test_signatures_view_logged(client, cm):  # pylint: disable=invalid-name
-    """Create a bucket and mark it logged, see that no entries are shown."""
+def test_signatures_view(client):  # pylint: disable=invalid-name
+    """Check that the Vue component is called"""
     client.login(username='test', password='test')
-    cm.create_bucket(shortDescription="bucket #1", bug=cm.create_bug('123'))
     response = client.get(reverse("crashmanager:signatures"))
     LOG.debug(response)
     assert response.status_code == requests.codes['ok']
-    siglist = response.context['siglist']
-    assert not siglist.count()  # 0 buckets
-    assert_contains(response, SIGS_FMT % 0)
-
-
-def test_signatures_view_logged_unlogged(client, cm):  # pylint: disable=invalid-name
-    """Create two buckets and mark one logged, see that only unlogged entry is shown."""
-    client.login(username='test', password='test')
-    bucket = cm.create_bucket(shortDescription="bucket #1")
-    cm.create_bucket(shortDescription="bucket #2", bug=cm.create_bug('123'))
-    response = client.get(reverse("crashmanager:signatures"))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    siglist = response.context['siglist']
-    assert len(siglist) == 1  # 1 bucket
-    assert siglist[0] == bucket  # same bucket we created
-    assert_contains(response, "bucket #1")
-    assert_contains(response, SIGS_FMT % 1)
-
-
-def test_signatures_view_toolfilter(client, cm):  # pylint: disable=invalid-name
-    """Check that toolfilter affects bucket size."""
-    client.login(username='test', password='test')
-    bucket1 = cm.create_bucket(shortDescription="bucket #1")
-    bucket2 = cm.create_bucket(shortDescription="bucket #2")
-    cm.create_crash(shortSignature="crash #1", tool="tool #1", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #2", tool="tool #2", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #3", tool="tool #1", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #4", tool="tool #1", bucket=bucket2)
-    cm.create_toolfilter("tool #1")
-    response = client.get(reverse("crashmanager:signatures"))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    siglist = response.context['siglist']
-    LOG.debug(siglist)
-    assert len(siglist) == 2  # 2 buckets
-    assert siglist[0] == bucket2
-    assert siglist[0].size == 1
-    assert siglist[1] == bucket1
-    assert siglist[1].size == 2
-    assert_contains(response, "bucket #1")
-    assert_contains(response, "bucket #2")
-    assert_contains(response, SIGS_FMT % 2)
-
-
-def test_all_signatures_view_logged(client, cm):  # pylint: disable=invalid-name
-    """Create a bucket, mark logged, and see that /all/ still shows the entry."""
-    client.login(username='test', password='test')
-    bucket = cm.create_bucket(shortDescription="bucket #1", bug=cm.create_bug('123'))
-    response = client.get(reverse("crashmanager:allsignatures"))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    assert_contains(response, "bucket #1")
-    siglist = response.context['siglist']
-    assert len(siglist) == 1  # 1 bucket
-    assert siglist[0] == bucket  # same bucket we created
-    assert_contains(response, ALL_SIGS_FMT % 1)
-
-
-def test_all_signatures_view_logged_unlogged(client, cm):  # pylint: disable=invalid-name
-    """Create a bucket, mark logged, and see that /all/ shows both entries."""
-    client.login(username='test', password='test')
-    buckets = (cm.create_bucket(shortDescription="bucket #1"),
-               cm.create_bucket(shortDescription="bucket #2", bug=cm.create_bug('123')))
-    response = client.get(reverse("crashmanager:allsignatures"))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    siglist = response.context['siglist']
-    assert len(siglist) == 2  # 2 buckets
-    assert set(siglist) == set(buckets)  # same buckets we created
-    assert_contains(response, "bucket #1")
-    assert_contains(response, "bucket #2")
-    assert_contains(response, ALL_SIGS_FMT % 2)
-
-
-def test_all_signatures_view_toolfilter(client, cm):  # pylint: disable=invalid-name
-    """Check that toolfilter is ignored in /all/."""
-    client.login(username='test', password='test')
-    bucket1 = cm.create_bucket(shortDescription="bucket #1")
-    bucket2 = cm.create_bucket(shortDescription="bucket #2")
-    cm.create_crash(shortSignature="crash #1", tool="tool #1", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #2", tool="tool #2", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #3", tool="tool #1", bucket=bucket1)
-    cm.create_crash(shortSignature="crash #4", tool="tool #1", bucket=bucket2)
-    cm.create_toolfilter("tool #1")
-    response = client.get(reverse("crashmanager:allsignatures"))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-    siglist = response.context['siglist']
-    LOG.debug(siglist)
-    assert len(siglist) == 2  # 2 buckets
-    assert siglist[0] == bucket2
-    assert siglist[0].size == 1
-    assert siglist[1] == bucket1
-    assert siglist[1].size == 3
-    assert_contains(response, "bucket #1")
-    assert_contains(response, "bucket #2")
-    assert_contains(response, ALL_SIGS_FMT % 2)
+    assert_contains(response, 'signatureslist')
 
 
 def test_del_signature_simple_get(client, cm):  # pylint: disable=invalid-name

@@ -9,6 +9,9 @@ const mainAxios = axios.create({
 export const retrieveBucket = async (id) =>
   (await mainAxios.get(`/crashmanager/rest/buckets/${id}/`)).data;
 
+export const listBuckets = async (params) =>
+  (await mainAxios.get("/crashmanager/rest/buckets/", { params })).data;
+
 export const createBucket = async ({ params, ...data }) =>
   (await mainAxios.post("/crashmanager/rest/buckets/", data, { params })).data;
 
