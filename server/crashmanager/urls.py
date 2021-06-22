@@ -18,7 +18,6 @@ urlpatterns = [
     url(r'^$', views.crashes, name='index'),
     url(r'^signatures/$', views.signatures, name='signatures'),
     url(r'^signatures/download/$', views.SignaturesDownloadView.as_view(), name='download_signatures'),
-    url(r'^signatures/all/$', views.allSignatures, name='allsignatures'),
     url(r'^signatures/new/$', views.newSignature, name='signew'),
     url(r'^signatures/(?P<sigid>\d+)/edit/$', views.editSignature, name='sigedit'),
     url(r'^signatures/(?P<sigid>\d+)/link/$', views.linkSignature, name='siglink'),

@@ -47,3 +47,14 @@ export const formatClientTimestamp = (datetime) => {
     timeZoneName: "short",
   }).format(new Date(datetime));
 };
+
+export const parseHash = (hash) => {
+  return hash
+    .substring(1)
+    .split(",")
+    .map((v) => v.split("="))
+    .reduce(
+      (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
+      {}
+    );
+};

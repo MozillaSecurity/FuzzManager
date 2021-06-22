@@ -8,6 +8,7 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import router from "./router.js";
 import CrashesList from "./components/Crashes/List.vue";
+import SignaturesList from "./components/Signatures/List.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
@@ -22,6 +23,7 @@ window.onload = function () {
     components: {
       createoredit: CreateOrEdit,
       crasheslist: CrashesList,
+      signatureslist: SignaturesList,
       providerkey: ProviderKey,
       ppcselect: FullPPCSelect,
       bugpublicationform: BugPublicationForm,
