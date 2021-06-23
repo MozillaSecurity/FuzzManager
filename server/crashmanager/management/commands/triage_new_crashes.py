@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand, CommandError  # noqa
+from notifications.signals import notify
 
 from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket
@@ -36,6 +37,15 @@ class Command(BaseCommand):
                 entry.save()
 
                 if matched:
+                    notify.send(
+                        bucket,
+                        recipient=bucket.watchers,
+                        actor=bucket,
+                        verb="bucket_hit",
+                        target=entry,
+                        level="info",
+                        description=f"The bucket {bucket.pk} received a new crash entry {entry.pk}"
+                    )
                     break
 
         # This query ensures that all issues that have been bucketed manually before

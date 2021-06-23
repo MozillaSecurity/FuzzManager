@@ -98,6 +98,14 @@ class Bug(models.Model):
     externalType = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
     closed = models.DateTimeField(blank=True, null=True)
 
+    @property
+    def tools_filter_users(self):
+        ids = User.objects.filter(
+            defaultToolsFilter__crashentry__bucket__in=self.bucket_set.all(),
+            inaccessible_bug=True,
+        ).values_list('user_id', flat=True)
+        return DjangoUser.objects.filter(id__in=ids).distinct()
+
 
 class Bucket(models.Model):
     bug = models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE)
@@ -106,6 +114,14 @@ class Bucket(models.Model):
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
     permanent = models.BooleanField(blank=False, default=False)
+
+    @property
+    def watchers(self):
+        ids = User.objects.filter(
+            bucketwatch__bucket=self,
+            bucket_hit=True
+        ).values_list('user_id', flat=True)
+        return DjangoUser.objects.filter(id__in=ids).distinct()
 
     def getSignature(self):
         return CrashSignature(self.signature)
