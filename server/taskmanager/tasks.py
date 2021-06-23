@@ -14,6 +14,7 @@ LOG = getLogger("taskmanager.tasks")
 def get_or_create_pool(worker_type):
     from .models import Pool
 
+    params = {}
     if worker_type in settings.TC_EXTRA_POOLS:
         platform = "linux"  # default .. change manually if wrong
         pool_id = worker_type
@@ -23,13 +24,16 @@ def get_or_create_pool(worker_type):
             return
         platform, pool_id = worker_type.split("-", 1)
         assert pool_id.startswith("pool")
+        try:
+            params["id"] = int(pool_id[4:])
+        except ValueError:
+            pass
+    params["pool_name"] = pool_id
 
     pool, created = Pool.objects.get_or_create(
         pool_id=pool_id,
         platform=platform,
-        defaults={
-            "pool_name": pool_id,
-        },
+        defaults=params,
     )
     if created:
         LOG.info("created new pool %d for %s/%s", pool.id, platform, pool_id)
