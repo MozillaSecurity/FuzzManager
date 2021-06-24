@@ -9,6 +9,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from notifications.models import Notification
 import functools
 import json
 import operator
@@ -29,7 +30,8 @@ from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm, UserSet
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
-    BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
+    BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, \
+    BugProviderSerializer, NotificationSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -143,6 +145,10 @@ def stats(request):
 
 def settings(request):
     return render(request, 'settings.html')
+
+
+def inbox(request):
+    return render(request, 'inbox.html')
 
 
 def watchedSignatures(request):
@@ -1066,6 +1072,16 @@ class BugzillaTemplateViewSet(mixins.ListModelMixin,
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = BugzillaTemplate.objects.all()
     serializer_class = BugzillaTemplateSerializer
+
+
+class NotificationViewSet(mixins.ListModelMixin,
+                          viewsets.GenericViewSet):
+    """
+    API endpoint that allows listing unread Notifications
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = Notification.objects.unread()
+    serializer_class = NotificationSerializer
 
 
 def json_to_query(json_str):

@@ -8,6 +8,7 @@ router.register(r'crashes', views.CrashEntryViewSet, basename='crashes')
 router.register(r'buckets', views.BucketViewSet, basename='buckets')
 router.register(r'bugproviders', views.BugProviderViewSet, basename='bugproviders')
 router.register(r'bugzilla/templates', views.BugzillaTemplateViewSet, basename='templates')
+router.register(r'inbox', views.NotificationViewSet, basename='inbox')
 
 
 app_name = 'crashmanager'
@@ -55,6 +56,7 @@ urlpatterns = [
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
     url(r'^usersettings/$', views.UserSettingsEditView.as_view(), name='usersettings'),
+    url(r'^inbox/$', views.inbox, name='inbox'),
 
     url(r'^rest/', include(router.urls)),
 ]

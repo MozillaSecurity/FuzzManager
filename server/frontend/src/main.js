@@ -14,6 +14,7 @@ import ProviderKey from "./components/ProviderKey.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
 import CommentPublicationForm from "./components/Bugs/Comments/PublicationForm.vue";
+import Inbox from "./components/Notifications/Inbox.vue";
 
 Vue.use(VueRouter);
 
@@ -28,6 +29,7 @@ window.onload = function () {
       ppcselect: FullPPCSelect,
       bugpublicationform: BugPublicationForm,
       commentpublicationform: CommentPublicationForm,
+      inbox: Inbox,
     },
     router,
   });
