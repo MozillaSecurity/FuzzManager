@@ -17,6 +17,7 @@ import operator
 import os
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
@@ -1081,6 +1082,22 @@ class NotificationViewSet(mixins.ListModelMixin,
 
     def get_queryset(self):
         return Notification.objects.unread().filter(recipient=self.request.user)
+
+    @action(detail=True, methods=['patch'])
+    def mark_as_read(self, request, pk=None):
+        notification = self.get_object()
+
+        if notification.recipient != request.user:
+            raise PermissionDenied()
+
+        notification.mark_as_read()
+        return Response(status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['patch'])
+    def mark_all_as_read(self, request):
+        notifications = self.get_queryset()
+        notifications.mark_all_as_read()
+        return Response(status=status.HTTP_200_OK)
 
 
 def json_to_query(json_str):

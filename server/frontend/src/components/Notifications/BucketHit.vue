@@ -4,8 +4,8 @@
     <span class="description">
       {{ notification.description }}
     </span>
-    <button type="button" class="close" title="Dismiss (do nothing for now)">
-      <span aria-hidden="true">&times;</span>
+    <button type="button" class="close" v-on:click="dismiss">
+      <span aria-hidden="true" title="Dismiss">&times;</span>
     </button>
     <div class="btn-group pull-right" role="group">
       <a class="btn btn-default" :href="notification.actor_url">View bucket</a>
@@ -17,11 +17,33 @@
 </template>
 
 <script>
+import { errorParser } from "../../helpers";
+import * as api from "../../api";
+
 export default {
   props: {
     notification: {
       type: Object,
       required: true,
+    },
+  },
+  data: () => ({
+    dismissError: null,
+  }),
+  methods: {
+    async dismiss() {
+      this.dismissError = null;
+      try {
+        await api.dismissNotification(this.notification.id);
+        this.$emit("remove-notification", this.notification.id);
+      } catch (err) {
+        this.$emit(
+          "update-dismiss-error",
+          `An error occurred while marking notification ${
+            this.notification.id
+          } as read: ${errorParser(err)}`
+        );
+      }
     },
   },
 };
