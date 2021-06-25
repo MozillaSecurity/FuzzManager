@@ -10,7 +10,6 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 from __future__ import unicode_literals
-from django.contrib.auth.models import User
 from django.urls import reverse
 from notifications.models import Notification
 from notifications.signals import notify
@@ -19,7 +18,7 @@ import logging
 import pytest
 import requests
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, \
-    Product, Tool, User as cmUser
+    Product, Tool
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
@@ -89,13 +88,12 @@ def test_rest_notifications_list_unread(api_client, user, cm):
                 "product": Product.objects.create(),
                 "tool": Tool.objects.create()}
     entry = CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
-    user, _ = cmUser.objects.get_or_create(user=User.objects.create(username="testnotifications"))
 
-    notify.send(bug, recipient=user.user, actor=bug, verb="inaccessible_bug",
+    notify.send(bug, recipient=user, actor=bug, verb="inaccessible_bug",
                 target=bug, level="info", description="Notification 1")
-    notify.send(bucket, recipient=user.user, actor=bucket, verb="bucket_hit",
+    notify.send(bucket, recipient=user, actor=bucket, verb="bucket_hit",
                 target=entry, level="info", description="Notification 2")
-    notify.send(bucket, recipient=user.user, actor=bucket, verb="bucket_hit",
+    notify.send(bucket, recipient=user, actor=bucket, verb="bucket_hit",
                 target=entry, level="info", description="Notification 3")
     n3 = Notification.objects.get(description="Notification 3")
     n3.unread = False

@@ -1080,8 +1080,10 @@ class NotificationViewSet(mixins.ListModelMixin,
     API endpoint that allows listing unread Notifications
     """
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    queryset = Notification.objects.unread()
     serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.unread().filter(recipient=self.request.user)
 
 
 def json_to_query(json_str):
