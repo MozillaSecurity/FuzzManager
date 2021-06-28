@@ -328,6 +328,7 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 #BUGZILLA_PASSWORD = "secret"
 #CLEANUP_CRASHES_AFTER_DAYS = 14
 #CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
+ALLOW_EMAIL_EDITION = True
 
 # This is the base directory where the tests/ subdirectory will
 # be created for storing submitted test files.

@@ -1,8 +1,11 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
-from django.forms import CharField, ModelForm, Textarea, TextInput
+from django.conf import settings
+from django.forms import CharField, CheckboxSelectMultiple, ChoiceField, EmailField, \
+    ModelChoiceField, ModelMultipleChoiceField, ModelForm, Textarea, TextInput
+from rest_framework.exceptions import ValidationError
 
-from .models import BugzillaTemplate
+from .models import BugProvider, BugzillaTemplate, Tool, User
 
 
 class Row(Div):
@@ -136,3 +139,75 @@ class BugzillaTemplateCommentForm(ModelForm):
             'name': TextInput(),
             'comment': Textarea(attrs={'rows': 6})
         }
+
+
+class UserSettingsForm(ModelForm):
+    helper = FormHelper()
+    helper.layout = Layout(
+        'defaultToolsFilter',
+        Row(
+            Field('defaultProviderId', wrapper_class='col-md-6'),
+            Field('defaultTemplateId', wrapper_class='col-md-6'),
+        ),
+        'email',
+        HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
+        'inaccessible_bug',
+        'bucket_hit',
+        Submit('submit', 'Save settings', css_class='btn btn-danger'),
+    )
+    defaultToolsFilter = ModelMultipleChoiceField(
+        queryset=Tool.objects.all(),
+        label='Select the tools you would like to include in your default views:',
+        widget=CheckboxSelectMultiple(),
+        required=False
+    )
+    defaultProviderId = ModelChoiceField(
+        queryset=BugProvider.objects.all(),
+        label='Default Provider:',
+        empty_label=None
+    )
+    defaultTemplateId = ChoiceField(label='Default Template:')
+    email = EmailField(label='Email:')
+
+    class Meta:
+        model = User
+        fields = [
+            'defaultToolsFilter',
+            'defaultProviderId',
+            'defaultTemplateId',
+            'inaccessible_bug',
+            'bucket_hit'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['defaultTemplateId'].choices = list(dict.fromkeys([
+            (t.pk, f"{p.classname}: {t}")
+            for p in BugProvider.objects.all()
+            for t in p.getInstance().getTemplateList()
+        ]))
+
+        instance = kwargs.get('instance', None)
+        if instance:
+            self.initial['email'] = instance.user.email
+
+        if not settings.ALLOW_EMAIL_EDITION:
+            self.fields['email'].required = False
+            self.fields['email'].widget.attrs['readonly'] = True
+
+    def clean_defaultToolsFilter(self):
+        data = self.cleaned_data['defaultToolsFilter']
+        if self.user and list(self.user.defaultToolsFilter.all()) != list(data) and self.user.restricted:
+            raise ValidationError("You don't have permission to change your tools filter.")
+        return data
+
+    def clean_defaultProviderId(self):
+        data = self.cleaned_data['defaultProviderId'].id
+        return data
+
+    def save(self, *args, **kwargs):
+        self.instance.user.email = self.cleaned_data['email']
+        self.instance.user.save()
+        return super().save(*args, **kwargs)

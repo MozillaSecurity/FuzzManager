@@ -25,7 +25,7 @@ from wsgiref.util import FileWrapper
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm
+from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm, UserSettingsForm
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
@@ -771,57 +771,6 @@ def createBugProvider(request):
         raise SuspiciousOperation
 
 
-def userSettings(request):
-    user = User.get_or_create_restricted(request.user)[0]
-
-    def createUserSettingsData(user, msg=None):
-        tools = Tool.objects.all()
-        currentToolsFilter = user.defaultToolsFilter.all()
-
-        for tool in tools:
-            tool.checked = tool in currentToolsFilter
-
-        providers = BugProvider.objects.all()
-        provider = providers.filter(pk=user.defaultProviderId)
-        templates = None
-        if provider:
-            provider = provider[0]
-            templates = provider.getInstance().getTemplateList()
-
-        return {
-            "user": user,
-            "tools": tools,
-            "providers": providers,
-            "bugzilla_providers": providers.filter(classname="BugzillaProvider"),
-            "templates": templates,
-            "defaultProviderId": user.defaultProviderId,
-            "defaultTemplateId": user.defaultTemplateId,
-            "msg": msg,
-        }
-
-    if request.method == 'POST':
-        if "changefilter" in request.POST:
-            if user.restricted:
-                raise PermissionDenied({"message": "You don't have permission to change your tools filter."})
-            user.defaultToolsFilter.set([Tool.objects.get(
-                name=x.replace("tool_", "", 1)) for x in request.POST if x.startswith("tool_")],
-                clear=True)
-            data = createUserSettingsData(user, msg="Tools filter updated successfully.")
-        elif "changetemplate" in request.POST:
-            user.defaultProviderId = int(request.POST['defaultProvider'])
-            user.defaultTemplateId = int(request.POST['defaultTemplate'])
-            user.save()
-            data = createUserSettingsData(user, msg="Default provider/template updated successfully.")
-        else:
-            raise SuspiciousOperation
-
-        return render(request, 'usersettings.html', data)
-    elif request.method == 'GET':
-        return render(request, 'usersettings.html', createUserSettingsData(user))
-    else:
-        raise SuspiciousOperation
-
-
 class JsonQueryFilterBackend(BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
@@ -1294,3 +1243,24 @@ class BugzillaTemplateCommentCreateView(CreateView):
     def form_valid(self, form):
         form.instance.mode = BugzillaTemplateMode.Comment
         return super(BugzillaTemplateCommentCreateView, self).form_valid(form)
+
+
+class UserSettingsEditView(UpdateView):
+    model = User
+    template_name = 'usersettings.html'
+    form_class = UserSettingsForm
+    success_url = reverse_lazy('crashmanager:usersettings')
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super(UserSettingsEditView, self).get_form_kwargs(**kwargs)
+        kwargs['user'] = self.get_queryset().get(user=self.request.user)
+        return kwargs
+
+    def get_object(self):
+        return self.get_queryset().get(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bugzilla_providers'] = BugProvider.objects.filter(classname="BugzillaProvider")
+        context['user'] = self.request.user
+        return context
