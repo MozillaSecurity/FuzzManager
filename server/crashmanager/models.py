@@ -24,6 +24,9 @@ if getattr(settings, 'USE_CELERY', None):
 class Tool(models.Model):
     name = models.CharField(max_length=63)
 
+    def __str__(self):
+        return self.name
+
 
 class Platform(models.Model):
     name = models.CharField(max_length=63)
@@ -85,6 +88,9 @@ class BugProvider(models.Model):
         providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
+
+    def __str__(self):
+        return self.hostname
 
 
 class Bug(models.Model):
@@ -478,6 +484,9 @@ class BugzillaTemplate(models.Model):
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.name
+
 
 class User(models.Model):
     class Meta:
@@ -496,6 +505,10 @@ class User(models.Model):
     defaultToolsFilter = models.ManyToManyField(Tool)
     restricted = models.BooleanField(blank=False, default=False)
     bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
+
+    # Notifications
+    inaccessible_bug = models.BooleanField(blank=False, default=False)
+    bucket_hit = models.BooleanField(blank=False, default=False)
 
     @staticmethod
     def get_or_create_restricted(request_user):

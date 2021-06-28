@@ -54,7 +54,7 @@ urlpatterns = [
 
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
-    url(r'^usersettings/$', views.userSettings, name='usersettings'),
+    url(r'^usersettings/$', views.UserSettingsEditView.as_view(), name='usersettings'),
 
     url(r'^rest/', include(router.urls)),
 ]
