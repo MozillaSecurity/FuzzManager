@@ -1,3 +1,4 @@
+{% load notifications_tags %}
 
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container-fluid">
@@ -59,7 +60,10 @@
                     </form>
                 </li>
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'crashmanager:inbox' %}"><i class="glyphicon glyphicon-bell"></i></a></li>
+                <li><a href="{% url 'crashmanager:inbox' %}">
+                    <i class="glyphicon glyphicon-bell"></i>
+                    {% live_notify_badge badge_class="badge" %}
+                </a></li>
                 {% endif %}
                 {% endif %}
                 <li class="dropdown">

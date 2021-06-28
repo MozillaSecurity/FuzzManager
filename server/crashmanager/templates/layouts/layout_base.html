@@ -1,4 +1,5 @@
 {% load static %}
+{% load notifications_tags %}
 {% block layout.base %}
 <!DOCTYPE html>
 <html lang="en">
@@ -41,7 +42,11 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-c.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-cpp.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-bash.min.js"></script>
-	{% block js.shared %}{% endblock js.shared %}
+	
+  <script src="{% static 'notifications/notify.js' %}" type="text/javascript"></script>
+  {% register_notify_callbacks callbacks='fill_notification_badge' refresh_period='60' badge_class='badge' api_name='count' %}
+
+  {% block js.shared %}{% endblock js.shared %}
 	{% block js.custom %}{% endblock js.custom %}
     {% endblock js%}
     {% if debug %}
