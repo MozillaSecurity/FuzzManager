@@ -1,0 +1,9 @@
+{% autoescape off %}
+Hello {{ user.user.username }},
+
+You received a new notification on FuzzManager.
+Notification: {{ notification.description }}
+
+-----------
+FuzzManager
+{% endautoescape %}
