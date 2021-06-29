@@ -35,3 +35,8 @@ def export_signatures():
         shutil.copy(tmpf, SIGNATURES_ZIP)
     finally:
         os.unlink(tmpf)
+
+
+@app.task(ignore_result=True)
+def notify_by_email():
+    call_command('notify_by_email')
