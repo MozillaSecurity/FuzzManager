@@ -7,8 +7,10 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from notifications.models import Notification
 import functools
 import json
 import operator
@@ -29,7 +31,8 @@ from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm, UserSet
 from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
-    BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, BugProviderSerializer
+    BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, \
+    BugProviderSerializer, NotificationSerializer
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
@@ -1068,6 +1071,18 @@ class BugzillaTemplateViewSet(mixins.ListModelMixin,
     serializer_class = BugzillaTemplateSerializer
 
 
+class NotificationViewSet(mixins.ListModelMixin,
+                          viewsets.GenericViewSet):
+    """
+    API endpoint that allows listing unread Notifications
+    """
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.unread().filter(recipient=self.request.user)
+
+
 def json_to_query(json_str):
     """
     This method converts JSON objects into trees of Django Q objects.
@@ -1264,3 +1279,7 @@ class UserSettingsEditView(UpdateView):
         context['bugzilla_providers'] = BugProvider.objects.filter(classname="BugzillaProvider")
         context['user'] = self.request.user
         return context
+
+
+class InboxView(TemplateView):
+    template_name = 'inbox.html'

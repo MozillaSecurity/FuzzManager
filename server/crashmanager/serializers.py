@@ -3,13 +3,14 @@ from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
 from django.urls import reverse
+from notifications.models import Notification
 import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from crashmanager.models import CrashEntry, Bucket, BugProvider, BugzillaTemplate, \
+from crashmanager.models import Bug, CrashEntry, Bucket, BugProvider, BugzillaTemplate, \
     Platform, Product, OS, TestCase, Client, Tool
 
 
@@ -260,3 +261,28 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
 
     def get_mode(self, obj):
         return obj.mode.value
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    actor_url = serializers.SerializerMethodField()
+    target_url = serializers.SerializerMethodField()
+    external_bug_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = ('description', 'verb', 'actor_url', 'target_url', 'external_bug_url',)
+
+    def get_actor_url(self, notification):
+        if isinstance(notification.actor, Bucket):
+            return reverse('crashmanager:sigview', kwargs={'sigid': notification.actor.id})
+        return None
+
+    def get_target_url(self, notification):
+        if isinstance(notification.target, CrashEntry):
+            return reverse('crashmanager:crashview', kwargs={'crashid': notification.target.id})
+        return None
+
+    def get_external_bug_url(self, notification):
+        if isinstance(notification.target, Bug):
+            return f"https://{notification.target.externalType.hostname}/{notification.target.externalId}"
+        return None

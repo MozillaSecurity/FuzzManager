@@ -58,6 +58,9 @@
                         </div>
                     </form>
                 </li>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'crashmanager:inbox' %}"><i class="glyphicon glyphicon-bell"></i></a></li>
+                {% endif %}
                 {% endif %}
                 <li class="dropdown">
                     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">
