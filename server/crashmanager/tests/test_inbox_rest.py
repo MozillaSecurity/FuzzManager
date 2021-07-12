@@ -109,15 +109,73 @@ def test_rest_notifications_list_unread(api_client, user, cm):
     assert resp["previous"] is None
     assert len(resp["results"]) == 2
     assert resp["results"] == [{
+        "id": 2,
         "actor_url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.id}),
         "description": "Notification 2",
         "external_bug_url": None,
         "target_url": reverse("crashmanager:crashview", kwargs={"crashid": entry.id}),
         "verb": "bucket_hit"
     }, {
+        "id": 1,
         "actor_url": None,
         "description": "Notification 1",
         "external_bug_url": f"https://{bug.externalType.hostname}/{bug.externalId}",
         "target_url": None,
         "verb": "inaccessible_bug"
     }]
+
+
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+def test_rest_notifications_mark_as_read(api_client, user, cm):
+    """test that mark_as_read only marks the targetted notification as read"""
+    bucket = Bucket.objects.create(signature=json.dumps(
+        {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+    ))
+    defaults = {"client": Client.objects.create(),
+                "os": OS.objects.create(),
+                "platform": Platform.objects.create(),
+                "product": Product.objects.create(),
+                "tool": Tool.objects.create()}
+    entry = CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
+
+    expected = 10
+    [notify.send(bucket, recipient=user, actor=bucket, verb="bucket_hit",
+                 target=entry, level="info", description="Notification %d" % (i + 1))
+     for i in range(expected)]
+    notification = Notification.objects.first()
+
+    resp = api_client.patch(f"/crashmanager/rest/inbox/{notification.id}/mark_as_read/")
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes["ok"]
+    assert Notification.objects.count() == expected
+    for n in Notification.objects.all():
+        if n.id == notification.id:
+            assert not n.unread
+        else:
+            assert n.unread
+
+
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+def test_rest_notifications_mark_all_as_read(api_client, user, cm):
+    """test that mark_all_as_read marks all user notifications as read"""
+    bucket = Bucket.objects.create(signature=json.dumps(
+        {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+    ))
+    defaults = {"client": Client.objects.create(),
+                "os": OS.objects.create(),
+                "platform": Platform.objects.create(),
+                "product": Product.objects.create(),
+                "tool": Tool.objects.create()}
+    entry = CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
+
+    expected = 10
+    [notify.send(bucket, recipient=user, actor=bucket, verb="bucket_hit",
+                 target=entry, level="info", description="Notification %d" % (i + 1))
+     for i in range(expected)]
+
+    resp = api_client.patch("/crashmanager/rest/inbox/mark_all_as_read/")
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes["ok"]
+    assert Notification.objects.count() == expected
+    for n in Notification.objects.all():
+        assert not n.unread

@@ -36,3 +36,9 @@ export const listTemplates = async () =>
 
 export const listUnreadNotifications = async () =>
   (await mainAxios.get("/crashmanager/rest/inbox/")).data;
+
+export const dismissNotification = async (id) =>
+  (await mainAxios.patch(`/crashmanager/rest/inbox/${id}/mark_as_read/`)).data;
+
+export const dismissAllNotifications = async () =>
+  (await mainAxios.patch("/crashmanager/rest/inbox/mark_all_as_read/")).data;
