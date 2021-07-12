@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     'chartjs',
     #'mozilla_django_oidc',
     'crispy_forms',
+    'notifications',
 )
 
 

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
+from notifications.signals import notify
 
 from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import Bug, BugProvider
@@ -58,3 +59,18 @@ class Command(BaseCommand):
                     elif bug.closed is None:
                         bug.closed = bugStatus[bugId]
                         bug.save()
+
+            for bugId in bugIds:
+                if bugId not in bugStatus:
+                    bugs = providerBugs.filter(externalId=bugId)
+                    for bug in bugs:
+                        notify.send(
+                            bug,
+                            recipient=bug.tools_filter_users,
+                            actor=bug,
+                            verb="inaccessible_bug",
+                            target=bug,
+                            level="info",
+                            description=f"The bug {bug.pk} pointing to the external bug {bug.externalId}"
+                                        f" on {provider.hostname} has become inaccessible"
+                        )
