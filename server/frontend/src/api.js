@@ -33,3 +33,6 @@ export const listBugProviders = async () =>
 
 export const listTemplates = async () =>
   (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;
+
+export const listUnreadNotifications = async () =>
+  (await mainAxios.get("/crashmanager/rest/inbox/")).data;
