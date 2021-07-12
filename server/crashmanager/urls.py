@@ -56,7 +56,7 @@ urlpatterns = [
     url(r'^stats/$', views.stats, name='stats'),
     url(r'^settings/$', views.settings, name='settings'),
     url(r'^usersettings/$', views.UserSettingsEditView.as_view(), name='usersettings'),
-    url(r'^inbox/$', views.inbox, name='inbox'),
+    url(r'^inbox/$', views.InboxView.as_view(), name='inbox'),
 
     url(r'^rest/', include(router.urls)),
 ]

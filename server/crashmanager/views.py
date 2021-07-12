@@ -7,6 +7,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from notifications.models import Notification
@@ -145,10 +146,6 @@ def stats(request):
 
 def settings(request):
     return render(request, 'settings.html')
-
-
-def inbox(request):
-    return render(request, 'inbox.html')
 
 
 def watchedSignatures(request):
@@ -1282,3 +1279,7 @@ class UserSettingsEditView(UpdateView):
         context['bugzilla_providers'] = BugProvider.objects.filter(classname="BugzillaProvider")
         context['user'] = self.request.user
         return context
+
+
+class InboxView(TemplateView):
+    template_name = 'inbox.html'
