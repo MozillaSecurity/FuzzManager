@@ -44,22 +44,45 @@ class Command(BaseCommand):
             "and schedule celery tasks to handle them")
 
     def callback(self, body, msg):
-        LOG.info("got %s", msg.delivery_info["exchange"])
         if msg.delivery_info["exchange"].startswith("exchange/taskcluster-queue/v1/task-"):
+            LOG.info(
+                "%s on %s for %s",
+                msg.delivery_info["routing_key"],
+                msg.delivery_info["exchange"],
+                body["status"]["taskId"],
+            )
             update_task.delay(body)
             msg.ack()
             return
         if msg.delivery_info["exchange"] == "exchange/taskcluster-github/v1/push":
+            LOG.info(
+                "%s on %s for %s",
+                msg.delivery_info["routing_key"],
+                msg.delivery_info["exchange"],
+                body["body"]["ref"],
+            )
             if body["body"]["ref"] == "refs/heads/master":
                 update_pool_defns.delay()
             msg.ack()
             return
-        raise RuntimeError("Unhandled message: %s" % (msg.delivery_info["exchange"],))
+        raise RuntimeError(
+            "Unhandled message: %s on %s" % (
+                msg.delivery_info["routing_key"],
+                msg.delivery_info["exchange"],
+            )
+        )
 
     def handle(self, *args, **options):
-        TaskClusterConsumer(
-            vhost=settings.TC_PULSE_VHOST,
-            user=settings.TC_PULSE_USERNAME,
-            password=settings.TC_PULSE_PASSWORD,
-            callback=self.callback,
-        ).listen()
+        LOG.info("pulse listener starting")
+        try:
+            TaskClusterConsumer(
+                vhost=settings.TC_PULSE_VHOST,
+                user=settings.TC_PULSE_USERNAME,
+                password=settings.TC_PULSE_PASSWORD,
+                callback=self.callback,
+            ).listen()
+        except Exception:
+            LOG.exception()
+            raise
+        finally:
+            LOG.warning("pulse listener stopped")

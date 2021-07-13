@@ -240,6 +240,13 @@ LOGGING = {
             'maxBytes': 16777216,
             'formatter': 'simple'
         },
+        'taskmanager_logfile': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'taskmanager.log'),
+            'maxBytes': 16777216,
+            'formatter': 'simple'
+        },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
@@ -267,6 +274,11 @@ LOGGING = {
         },
         'ec2spotmanager': {
             'handlers': ['ec2spotmanager_logfile'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'taskmanager': {
+            'handlers': ['taskmanager_logfile'],
             'propagate': True,
             'level': 'INFO',
         },
