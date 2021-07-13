@@ -61,7 +61,7 @@ class Command(BaseCommand):
                         bug.save()
 
             for bugId in bugIds:
-                if bugId not in bugStatus:
+                if int(bugId) not in bugStatus:
                     bugs = providerBugs.filter(externalId=bugId)
                     for bug in bugs:
                         notify.send(
