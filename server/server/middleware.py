@@ -75,7 +75,7 @@ class CheckAppPermissionsMiddleware(object):
         # Get the app name
         app = view_func.__module__.split('.', 1)[0]
 
-        if app == 'server':
+        if app in {'notifications', 'server'}:
             return None
 
         # If no login is required for this path, we can't check permissions
