@@ -50,7 +50,10 @@ LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
 def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
-    attributes = {'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size'}
+    attributes = {
+        'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
+        'has_optimization',
+    }
     if vue:
         attributes.update({'view_url', 'link_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
 
@@ -59,6 +62,7 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
     assert result["best_quality"] == quality
     assert result["bug"] == bucket.bug_id
     assert result["frequent"] == bucket.frequent
+    assert result["has_optimization"] == bool(bucket.optimizedSignature)
     assert result["permanent"] == bucket.permanent
     assert result["shortDescription"] == bucket.shortDescription
     assert result["signature"] == bucket.signature

@@ -934,7 +934,7 @@ class BucketViewSet(mixins.ListModelMixin,
     queryset = Bucket.objects.all().select_related('bug')
     serializer_class = BucketSerializer
     filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
-    ordering_fields = ['id', 'shortDescription', 'size']
+    ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
 
     def get_serializer(self, *args, **kwds):
         vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')

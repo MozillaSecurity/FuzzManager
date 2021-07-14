@@ -134,12 +134,13 @@ class BucketSerializer(serializers.ModelSerializer):
     bug_provider = serializers.PrimaryKeyRelatedField(
         write_only=True, required=False, queryset=BugProvider.objects.all()
     )
+    has_optimization = serializers.BooleanField(write_only=True, required=False)
 
     class Meta:
         model = Bucket
         fields = (
             'best_quality', 'bug', 'frequent', 'id', 'permanent', 'bug_provider',
-            'shortDescription', 'signature', 'size',
+            'shortDescription', 'signature', 'size', 'has_optimization',
         )
         ordering = ['-id']
         read_only_fields = ('id', )
@@ -148,6 +149,7 @@ class BucketSerializer(serializers.ModelSerializer):
         serialized = super(BucketSerializer, self).to_representation(obj)
         serialized['size'] = obj.size
         serialized['best_quality'] = obj.quality
+        serialized['has_optimization'] = bool(obj.optimizedSignature)
         # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
         # see note in BucketAnnotateFilterBackend
         return serialized

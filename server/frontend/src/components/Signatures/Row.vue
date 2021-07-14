@@ -26,7 +26,7 @@
     </td>
     <td>
       <a
-        v-if="signature.optimizedSignature"
+        v-if="signature.has_optimization"
         :href="signature.opt_pre_url"
         class="btn btn-default"
       >

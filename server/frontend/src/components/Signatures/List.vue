@@ -97,9 +97,27 @@
           >
             Bucket Size
           </th>
-          <th width="25px">Best Test Quality</th>
-          <th width="50px">External Bug</th>
-          <th width="30px">Pending Optimization</th>
+          <th
+            v-on:click="sortBy('quality')"
+            :class="{ active: sortKey === 'quality' }"
+            width="25px"
+          >
+            Best Test Quality
+          </th>
+          <th
+            v-on:click="sortBy('bug__externalId')"
+            :class="{ active: sortKey === 'bug__externalId' }"
+            width="50px"
+          >
+            External Bug
+          </th>
+          <th
+            v-on:click="sortBy('optimizedSignature')"
+            :class="{ active: sortKey === 'optimizedSignature' }"
+            width="30px"
+          >
+            Pending Optimization
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -120,7 +138,14 @@ import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 
-const validSortKeys = ["id", "shortDescription", "size"];
+const validSortKeys = [
+  "id",
+  "shortDescription",
+  "size",
+  "quality",
+  "optimizedSignature",
+  "bug__externalId",
+];
 const defaultReverse = true;
 const defaultSortKey = "id";
 const pageSize = 100;
