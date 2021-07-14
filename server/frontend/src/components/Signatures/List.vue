@@ -43,13 +43,35 @@
       </div>
       <br />
       <p v-if="showAll">
-        Displaying all {{ signatures.length }} signature entries in the
-        database.
+        Displaying {{ currentEntries }}/{{ totalEntries }} of all signature
+        entries in the database.
       </p>
       <p v-else>
-        Displaying {{ signatures.length }} unreported signature entries from the
-        database.
+        Displaying {{ currentEntries }}/{{ totalEntries }} unreported signature
+        entries from the database.
       </p>
+
+      <div class="pagination">
+        <span class="step-links">
+          <a
+            v-on:click="prevPage"
+            v-show="currentPage > 1"
+            class="glyphicon glyphicon-chevron-left"
+          ></a>
+          <span class="current">
+            Page {{ currentPage }} of {{ totalPages }}.
+          </span>
+          <a
+            v-on:click="nextPage"
+            v-show="currentPage < totalPages"
+            data-toggle="tooltip"
+            data-placement="top"
+            title=""
+            class="glyphicon glyphicon-chevron-right dimgray"
+            data-original-title="Next"
+          ></a>
+        </span>
+      </div>
     </div>
     <table class="table table-condensed table-hover table-bordered table-db">
       <thead>
@@ -101,6 +123,7 @@ import Row from "./Row.vue";
 const validSortKeys = ["id", "shortDescription", "size"];
 const defaultReverse = true;
 const defaultSortKey = "id";
+const pageSize = 100;
 
 export default {
   components: {
@@ -120,6 +143,10 @@ export default {
     queryError: "",
     ignoreToolFilter: false,
     searchStr: "",
+    currentPage: 1,
+    currentEntries: "?",
+    totalEntries: "?",
+    totalPages: 1,
   }),
   watch: {
     queryStr() {
@@ -141,6 +168,14 @@ export default {
     this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
+      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
+        try {
+          this.currentPage = Number.parseInt(hash.page, 10);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.debug(`parsing '#page=\\d+': ${e}`);
+        }
+      }
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
         let hashSortKey = hash.sort;
         let hashReverse = false;
@@ -194,6 +229,8 @@ export default {
     buildParams() {
       return {
         vue: "1",
+        limit: pageSize,
+        offset: `${(this.currentPage - 1) * pageSize}`,
         ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.queryStr,
@@ -205,6 +242,17 @@ export default {
         try {
           const data = await api.listBuckets(this.buildParams());
           this.signatures = data.results;
+          this.currentEntries = this.signatures.length;
+          this.totalEntries = data.count;
+          this.totalPages = Math.max(
+            Math.ceil(this.totalEntries / pageSize),
+            1
+          );
+          if (this.currentPage > this.totalPages) {
+            this.currentPage = this.totalPages;
+            this.fetch();
+            return;
+          }
           this.updateHash();
         } catch (err) {
           if (
@@ -225,8 +273,23 @@ export default {
       500,
       { trailing: true }
     ),
+    nextPage: function () {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        this.fetch();
+      }
+    },
+    prevPage: function () {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.fetch();
+      }
+    },
     updateHash() {
       let hash = {};
+      if (this.currentPage !== 1) {
+        hash.page = this.currentPage;
+      }
       if (this.sortKey !== defaultSortKey || this.reverse !== defaultReverse) {
         hash.sort = (this.reverse ? "-" : "") + this.sortKey;
       }
