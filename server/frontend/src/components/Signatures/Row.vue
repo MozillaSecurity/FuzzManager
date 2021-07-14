@@ -7,7 +7,7 @@
     </td>
     <td>{{ signature.shortDescription }}</td>
     <td>{{ signature.size }}</td>
-    <td>{{ signature.quality }}</td>
+    <td>{{ signature.best_quality }}</td>
     <td>
       <a
         v-if="signature.bug && signature.bug_urltemplate"
