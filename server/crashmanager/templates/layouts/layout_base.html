@@ -32,9 +32,9 @@
 	<script src="{{STATIC_URL}}js/vuejs-slider.js"/></script>
 	<script src="{{STATIC_URL}}js/vue-chartjs.full.min.js"></script>
 	<script src="{{STATIC_URL}}js/d3.v4.min.js"/></script>
-
+  {% block vue.frontend %}
   <script type="text/javascript" src="{% static 'main.js' %}"></script>
-
+  {% endblock vue.frontend %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.common.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
