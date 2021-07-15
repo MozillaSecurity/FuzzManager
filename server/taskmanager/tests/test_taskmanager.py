@@ -54,7 +54,8 @@ def test_detail_view_no_login(client):
     assert response.url == "/login/?next=" + path
 
 
-def test_detail_view_simple_get(client):
+def test_detail_view_simple_get(client, settings):
+    settings.TC_EXTRA_POOLS = ["extra"]
     pool = create_pool()
     path = reverse("taskmanager:pool-view-ui", args=(pool.pk,))
     client.login(username='test', password='test')
