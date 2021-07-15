@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
+from django.conf import settings
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 from rest_framework import serializers
 from .models import Pool, Task
@@ -67,6 +69,27 @@ class PoolSerializer(serializers.ModelSerializer):
         return ret
 
 
+class PoolVueSerializer(PoolSerializer):
+    hook_url = serializers.SerializerMethodField()
+    view_url = serializers.SerializerMethodField()
+
+    class Meta(PoolSerializer.Meta):
+        read_only_fields = (
+            'hook_url',
+            'view_url',
+        )
+
+    def get_hook_url(self, pool):
+        if pool.pool_id in settings.TC_EXTRA_POOLS:
+            hook = pool.pool_id
+        else:
+            hook = f"{pool.platform}-{pool.pool_id}"
+        return f"{settings.TC_ROOT_URL}hooks/project-{settings.TC_PROJECT}/{hook}"
+
+    def get_view_url(self, pool):
+        return reverse('taskmanager:pool-view-ui', kwargs={'pk': pool.id})
+
+
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
@@ -76,3 +99,15 @@ class TaskSerializer(serializers.ModelSerializer):
             "pool_id", "task_id", "decision_id", "run_id", "state", "created",
             "started", "resolved", "expires",
         )
+
+
+class TaskVueSerializer(TaskSerializer):
+    task_url = serializers.SerializerMethodField()
+
+    class Meta(TaskSerializer.Meta):
+        read_only_fields = TaskSerializer.Meta.read_only_fields + (
+            'task_url',
+        )
+
+    def get_task_url(self, task):
+        return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"

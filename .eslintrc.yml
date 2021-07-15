@@ -23,7 +23,9 @@ rules:
   vue/array-bracket-spacing: 1
   vue/arrow-spacing: 1
   vue/block-spacing: 1
-  vue/comma-dangle: 1
+  vue/comma-dangle:
+    - error
+    - only-multiline
   vue/component-definition-name-casing: 2
   vue/component-name-in-template-casing: 2
   vue/eqeqeq: 1

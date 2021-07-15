@@ -42,3 +42,9 @@ export const dismissNotification = async (id) =>
 
 export const dismissAllNotifications = async () =>
   (await mainAxios.patch("/crashmanager/rest/inbox/mark_all_as_read/")).data;
+
+export const listPools = async (params) =>
+  (await mainAxios.get("/taskmanager/rest/pools/", { params })).data;
+
+export const listTasks = async (params) =>
+  (await mainAxios.get("/taskmanager/rest/tasks/", { params })).data;
