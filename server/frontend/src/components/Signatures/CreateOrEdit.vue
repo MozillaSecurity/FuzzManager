@@ -154,15 +154,12 @@ export default {
     outListCount: 0,
   }),
   async mounted() {
-    if (this.bucketId) {
-      this.bucket = await api.retrieveBucket(this.bucketId);
-    } else {
-      if (this.proposedSignature)
-        this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2);
-      if (this.proposedDescription)
-        this.bucket.shortDescription = this.proposedDescription;
-      if (this.warningMessage) this.warning = this.warningMessage;
-    }
+    if (this.bucketId) this.bucket = await api.retrieveBucket(this.bucketId);
+    if (this.proposedSignature)
+      this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2);
+    if (this.proposedDescription)
+      this.bucket.shortDescription = this.proposedDescription;
+    if (this.warningMessage) this.warning = this.warningMessage;
   },
   methods: {
     async create(save) {
