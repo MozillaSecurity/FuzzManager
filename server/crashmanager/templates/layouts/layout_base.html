@@ -1,40 +1,38 @@
+{% block layout.base %}<!DOCTYPE html>
+<html lang="en">
 {% load static %}
 {% load notifications_tags %}
-{% block layout.base %}
-<!DOCTYPE html>
-<html lang="en">
 {% block head %}
 <head>
-	{% block meta %}
+{% block meta %}
   <meta http-equiv="content-type" content="{% block meta.content-type %}text/html;charset=UTF-8{% endblock meta.content-type %}" />
   <meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
   <meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-	{% endblock meta %}
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% endblock meta %}
   <title>{% block title %}{% endblock title %}</title>
-  <link rel="shortcut icon" type="image/png" href="{{STATIC_URL}}img/logo.png"/>
-	{% block css %}
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/logo.png' %}"/>
+{% block css %}
   <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans:400,600,700'>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.css">
   <link rel='stylesheet' href='//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css'>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism.css">
-  <link rel="stylesheet" href="/static/css/default.css">
+  <link rel="stylesheet" href="{% static 'css/default.css' %}">
   <link rel="stylesheet" href="{% static 'main.css' %}">
-	{% block css.shared %}{% endblock css.shared %}
-	{% block css.custom %}{% endblock css.custom %}
-	{% endblock css%}
-	{% block js %}
+{% block css.shared %}{% endblock css.shared %}
+{% block css.custom %}{% endblock css.custom %}
+{% endblock css%}
+{% block js %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
-	<script src="{{STATIC_URL}}js/params.js"/></script>
-	<script src="{{STATIC_URL}}js/cookie-csrf.js"/></script>
-	<script src="{{STATIC_URL}}js/vuejs-slider.js"/></script>
-	<script src="{{STATIC_URL}}js/vue-chartjs.full.min.js"></script>
-	<script src="{{STATIC_URL}}js/d3.v4.min.js"/></script>
-  {% block vue.frontend %}
+  <script src="{% static 'js/params.js' %}"/></script>
+  <script src="{% static 'js/cookie-csrf.js' %}"/></script>
+  <script src="{% static 'js/vuejs-slider.js' %}"/></script>
+  <script src="{% static 'js/vue-chartjs.full.min.js' %}"></script>
+  <script src="{% static 'js/d3.v4.min.js' %}"/></script>
+{% block vue.frontend %}
   <script type="text/javascript" src="{% static 'main.js' %}"></script>
-  {% endblock vue.frontend %}
+{% endblock vue.frontend %}
   <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.common.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
@@ -46,107 +44,46 @@
   <script src="{% static 'notifications/notify.js' %}" type="text/javascript"></script>
   {% register_notify_callbacks callbacks='fill_notification_badge' refresh_period='60' badge_class='badge' api_name='count' %}
 
-  {% block js.shared %}{% endblock js.shared %}
-	{% block js.custom %}{% endblock js.custom %}
-    {% endblock js%}
-    {% if debug %}
-    <script>
-        Vue.options.debug = true
-    </script>
-    {% endif %}
-    <script>
-        $(function(){
-            $('[data-toggle="popover"]').popover({trigger: 'hover','placement': 'top'});
-        });
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        });
 
-        Vue.options.delimiters = ['!{', '}!']
-        Vue.options.productionTip = false
-
-        function formatMonthly(d) {
-          let months = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-          ];
-
-          let date = new Date(d)
-          return months[date.getMonth()]  + " " + date.getFullYear()
-        }
-
-        function formatQuarterly(d) {
-          let quarters = [
-            "Q1", "Q2", "Q3", "Q4"
-          ];
-
-          let date = new Date(d)
-          return quarters[Math.floor(date.getMonth() / 3)] + " " + date.getFullYear()
-        }
-
-        String.prototype.escape_code = function() {
-          let tagsToReplace = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            ' ': '&nbsp;'
-          }
-          return this.replace(/[&<>]/g, function(tag) {
-            return tagsToReplace[tag] || tag
-          })
-        }
-    </script>
+{% block js.shared %}{% endblock js.shared %}
+{% block js.custom %}{% endblock js.custom %}
+{% endblock js%}
+{% if debug %}
+  <script>
+    Vue.options.debug = true
+  </script>
+{% endif %}
+  <script>
+    $(function(){
+      $('[data-toggle="popover"]').popover({trigger: 'hover','placement': 'top'});
+    });
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+    });
+  </script>
 </head>
 {% endblock head %}
 
 <body>
-    <div id="app">
-		{% block header %}
-        <div id="hd">
-            {% block header_content %}{% include 'shared/header.html' %}{% endblock header_content %}
-        </div>
-		{% endblock header %}
-
-		{% block body %}
-        <div id="bd" style="padding-top:15px; padding-bottom: 20px">
-            {% block body_content %}{% endblock body_content %}
-        </div>
-		{% endblock body %}
-
-		{% block footer %}
-        <div id="ft">
-            {% block footer_content %}{% include 'shared/footer.html' %}{% endblock footer_content %}
-        </div>
-		{% endblock footer %}
-
-		{% block sql_debug %}
-		{% if debug %}
-        <div id="debug">
-            <h2>Queries</h2>
-            <p>{{ sql_queries|length }} Queries {% ifnotequal sql_queries|length 0 %} (<span style="cursor: pointer;" onclick="document.getElementById('debugQueryTable').style.display='';">Show</span>) {% endifnotequal %}</p>
-            <table id="debugQueryTable" style="display: none;">
-                <col width="1"></col>
-                <col></col>
-                <col width="1"></col>
-                <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">SQL</th>
-                        <th scope="col">Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for query in sql_queries %}<tr class="{% cycle 'odd' 'even' %}">
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ query.sql|escape }}</td>
-                    <td>{{ query.time }}</td>
-                    </tr>{% endfor %}
-                </tbody>
-            </table>
-        </div>
-		{% endif %}
-		{% endblock sql_debug %}
+  <div id="app">
+{% block header %}
+    <div id="hd">
+      {% block header_content %}{% include 'shared/header.html' %}{% endblock header_content %}
     </div>
+{% endblock header %}
+
+{% block body %}
+    <div id="bd" style="padding-top:15px; padding-bottom: 20px">
+      {% block body_content %}{% endblock body_content %}
+    </div>
+{% endblock body %}
+
+{% block footer %}
+    <div id="ft">
+      {% block footer_content %}{% include 'shared/footer.html' %}{% endblock footer_content %}
+    </div>
+{% endblock footer %}
+  </div>
 </body>
 
 </html>

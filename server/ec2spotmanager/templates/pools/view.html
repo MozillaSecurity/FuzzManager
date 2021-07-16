@@ -2,6 +2,7 @@
 
 {% load recursetags %}
 {% load datetags %}
+{% load static %}
 
 {% block body_content %}
 <div class="panel panel-default">
@@ -14,7 +15,7 @@
         <canvas id="detailedChart" style="height: 300px; width: 100%;"></canvas>
         <canvas id="accumulatedChart" style="height: 300px; width: 100%;"></canvas>
 
-	<script type="text/javascript" src="{{STATIC_URL}}js/Chart.min.js"></script>
+	<script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
         <script type="text/javascript">
             $.get("{% url 'ec2spotmanager:line_chart_json_detailed' pool.pk %}", function(data) {
                 var ctx = $("#detailedChart").get(0).getContext("2d");

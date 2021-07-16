@@ -1,11 +1,12 @@
 {% load notifications_tags %}
+{% load static %}
 
 <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
             <ul class="nav navbar-nav">
                 <li class="dropdown">
-                    <a class="navbar-brand" href="#"><img alt="Mozilla" width="20" height="20" src="{{STATIC_URL}}img/logo.png"></a>
+                    <a class="navbar-brand" href="#"><img alt="Mozilla" width="20" height="20" src="{% static 'img/logo.png' %}"></a>
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
                         <span class="sr-only">Toggle navigation</span>
                         <span class="icon-bar"></span>
