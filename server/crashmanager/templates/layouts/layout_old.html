@@ -1,10 +1,13 @@
 {% extends 'layouts/layout_base.html' %}
 {% block vue.frontend %}{% endblock vue.frontend %}
 {% block js.shared %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.4.2/vue.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
   <script>
-    let E_SERVER_ERROR = 'Error while communicating with the server.'
+    const E_SERVER_ERROR = 'Error while communicating with the server.'
+
+    Vue.options.delimiters = ['!{', '}!']
 
     function formatClientTimestamp(datetime) {
       return new Intl.DateTimeFormat('en-US', {
@@ -13,6 +16,25 @@
         hour12: false,
         timeZoneName: 'short'
       }).format(new Date(datetime))
+    }
+
+    function formatMonthly(d) {
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      const date = new Date(d)
+      return `${months[date.getMonth()]} ${date.getFullYear()}`
+    }
+
+    function formatQuarterly(d) {
+      const quarters = [
+        "Q1", "Q2", "Q3", "Q4"
+      ];
+
+      const date = new Date(d)
+      return `${quarters[Math.floor(date.getMonth() / 3)]} ${date.getFullYear()}`
     }
   </script>
 {% endblock js.shared %}
