@@ -417,15 +417,12 @@ def editSignature(request, sigid):
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
 
+    proposedSignature = None
     if 'fit' in request.GET:
         entry = get_object_or_404(CrashEntry, pk=request.GET['fit'])
-        bucket.signature = bucket.getSignature().fit(entry.getCrashInfo())
-    else:
-        # standardize formatting of the signature
-        # this is the same format returned by `fit()`
-        bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
+        proposedSignature = bucket.getSignature().fit(entry.getCrashInfo())
 
-    return render(request, 'signatures/edit.html', {'bucketId': bucket.pk})
+    return render(request, 'signatures/edit.html', {'bucketId': bucket.pk, 'proposedSig': proposedSignature})
 
 
 def linkSignature(request, sigid):
