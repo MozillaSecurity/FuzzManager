@@ -1,5 +1,7 @@
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError
+from notifications.models import Notification
 from notifications.signals import notify
 
 from crashmanager.management.common import mgmt_lock_required
@@ -60,13 +62,24 @@ class Command(BaseCommand):
                         bug.closed = bugStatus[bugId]
                         bug.save()
 
+            bug_content_type = ContentType.objects.get(model="bug")
             for bugId in bugIds:
                 if int(bugId) not in bugStatus:
                     bugs = providerBugs.filter(externalId=bugId)
                     for bug in bugs:
+                        # Listing all notifications sent to alert that this specific bug is inaccessible
+                        sent_notifications_ids = Notification.objects.filter(
+                            verb="inaccessible_bug",
+                            actor_content_type=bug_content_type,
+                            actor_object_id=bug.id,
+                            target_content_type=bug_content_type,
+                            target_object_id=bug.id,
+                        ).values_list('id', flat=True)
+                        # Exluding users who have already receive this notification
+                        recipient = bug.tools_filter_users.exclude(notifications__id__in=sent_notifications_ids)
                         notify.send(
                             bug,
-                            recipient=bug.tools_filter_users,
+                            recipient=recipient,
                             actor=bug,
                             verb="inaccessible_bug",
                             target=bug,
