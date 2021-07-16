@@ -5,6 +5,9 @@
       {{ bucketId ? "Edit Signature" : "New Signature" }}
     </div>
     <div class="panel-body">
+      <div class="alert alert-info" role="alert" v-if="loading === 'preview'">
+        Loading preview...
+      </div>
       <div class="alert alert-warning" role="alert" v-if="warning">
         {{ warning }}
       </div>
@@ -62,15 +65,17 @@
             type="submit"
             class="btn btn-success"
             v-on:click="update(true)"
+            :disabled="loading"
           >
-            Save
+            {{ loading === "save" ? "Saving..." : "Save" }}
           </button>
           <button
             type="submit"
             class="btn btn-default"
             v-on:click="update(false)"
+            :disabled="loading"
           >
-            Preview
+            {{ loading === "preview" ? "Loading preview..." : "Preview" }}
           </button>
         </div>
         <div class="btn-group" v-else>
@@ -78,15 +83,17 @@
             type="submit"
             class="btn btn-success"
             v-on:click="create(true)"
+            :disabled="loading"
           >
-            Create
+            {{ loading === "create" ? "Creating..." : "Create" }}
           </button>
           <button
             type="submit"
             class="btn btn-default"
             v-on:click="create(false)"
+            :disabled="loading"
           >
-            Preview
+            {{ loading === "preview" ? "Loading preview..." : "Preview" }}
           </button>
         </div>
       </form>
@@ -152,6 +159,7 @@ export default {
     inListCount: 0,
     outList: [],
     outListCount: 0,
+    loading: null,
   }),
   async mounted() {
     if (this.bucketId) {
@@ -166,6 +174,7 @@ export default {
   },
   methods: {
     async create(save) {
+      this.loading = save ? "create" : "preview";
       const payload = {
         signature: this.bucket.signature,
         shortDescription: this.bucket.shortDescription,
@@ -188,9 +197,12 @@ export default {
         this.outListCount = data.outListCount;
       } catch (err) {
         this.warning = errorParser(err);
+      } finally {
+        this.loading = null;
       }
     },
     async update(save) {
+      this.loading = save ? "save" : "preview";
       const payload = {
         signature: this.bucket.signature,
         shortDescription: this.bucket.shortDescription,
@@ -214,6 +226,8 @@ export default {
         this.outListCount = data.outListCount;
       } catch (err) {
         this.warning = errorParser(err);
+      } finally {
+        this.loading = null;
       }
     },
   },
