@@ -65,7 +65,7 @@
 import _throttle from "lodash/throttle";
 import _orderBy from "lodash/orderBy";
 import sweetAlert from "sweetalert";
-import { errorParser, E_SERVER_ERROR } from "../../helpers";
+import { E_SERVER_ERROR } from "../../helpers";
 import * as api from "../../api";
 
 const defaultReverse = false;
@@ -78,15 +78,10 @@ export default {
       pools: null,
       reverse: defaultReverse,
       sortKey: defaultSortKey,
-      timer: "",
     };
   },
   created: function () {
     this.fetch();
-    this.timer = setInterval(this.fetch, 60000);
-  },
-  beforeDestroy: function () {
-    clearInterval(this.timer);
   },
   computed: {
     ordered_pools: function () {
@@ -119,12 +114,6 @@ export default {
             console.debug(err.response.data);
             sweetAlert("Oops", E_SERVER_ERROR, "error");
             this.loading = false;
-          } else {
-            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-            // eslint-disable-next-line no-console
-            console.debug(errorParser(err));
-            this.$router.go(0);
-            return;
           }
         }
         this.loading = false;

@@ -187,7 +187,6 @@ import * as api from "../../api";
 import {
   formatClientTimestamp,
   formatDateRelative,
-  errorParser,
   E_SERVER_ERROR,
   parseHash,
 } from "../../helpers";
@@ -204,7 +203,6 @@ const validSortKeys = [
 ];
 const defaultReverse = true;
 const defaultSortKey = "created";
-const tasksRefreshInterval = 60;
 
 export default {
   data: function () {
@@ -215,7 +213,6 @@ export default {
       reverse: defaultReverse,
       sortKey: defaultSortKey,
       tasks: null,
-      timer: "",
       totalEntries: "?",
       totalPages: 1,
     };
@@ -256,10 +253,6 @@ export default {
       }
     }
     this.fetch();
-    this.timer = setInterval(this.fetch, tasksRefreshInterval * 1000);
-  },
-  beforeDestroy: function () {
-    clearInterval(this.timer);
   },
   filters: {
     formatDate: formatClientTimestamp,
@@ -306,12 +299,6 @@ export default {
             console.debug(err.response.data);
             sweetAlert("Oops", E_SERVER_ERROR, "error");
             this.loading = false;
-          } else {
-            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-            // eslint-disable-next-line no-console
-            console.debug(errorParser(err));
-            this.$router.go(0);
-            return;
           }
         }
         this.loading = false;
