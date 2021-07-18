@@ -1056,6 +1056,8 @@ class GDBCrashInfo(CrashInfo):
         if self.crashInstruction is not None:
             # Remove any leading/trailing whitespaces
             self.crashInstruction = self.crashInstruction.strip()
+            if 'Error in sourced command file' in self.crashInstruction:
+                self.crashInstruction = None
 
         # If we have no crash address but the instruction, try to calculate the crash address
         if self.crashAddress is None and self.crashInstruction is not None:
