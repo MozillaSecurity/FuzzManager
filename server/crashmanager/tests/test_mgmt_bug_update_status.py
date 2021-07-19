@@ -67,3 +67,8 @@ def test_fake_with_notification(mock_get_bug_status):
     assert notification.description == f"The bug {bug.pk} pointing to the external bug {bug.externalId}" \
                                        f" on {bug.externalType.hostname} has become inaccessible"
     assert notification.target == bug
+
+    # Calling the command again should not generate a duplicate notification
+    call_command("bug_update_status")
+
+    assert Notification.objects.count() == 1
