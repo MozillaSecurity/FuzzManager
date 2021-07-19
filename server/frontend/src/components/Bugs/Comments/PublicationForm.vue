@@ -441,7 +441,7 @@ export default {
         let content = this.testCaseContent;
         // If the testcase is binary we need to download it first
         if (this.entry.testcase_isbinary) {
-          content = await api.retrieveCrashTestCase(this.entry.id);
+          content = await api.retrieveCrashTestCaseBinary(this.entry.id);
         }
 
         /*
@@ -454,7 +454,9 @@ export default {
 
         payload = {
           ids: [this.externalBugId],
-          data: Base64.encode(content),
+          data: this.entry.testcase_isbinary
+            ? Base64.fromUint8Array(content)
+            : Base64.encode(content),
           file_name: this.entry.testcase,
           summary: `Testcase for ${comment}`,
           content_type: this.entry.testcase_isbinary

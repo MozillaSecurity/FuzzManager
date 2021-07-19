@@ -25,6 +25,16 @@ export const retrieveCrash = async (id) =>
 export const retrieveCrashTestCase = async (id) =>
   (await mainAxios.get(`/crashmanager/rest/crashes/${id}/download/`)).data;
 
+export const retrieveCrashTestCaseBinary = async (id) =>
+  new Uint8Array(
+    (
+      await mainAxios.request({
+        url: `/crashmanager/rest/crashes/${id}/download/`,
+        responseType: "arraybuffer",
+      })
+    ).data
+  );
+
 export const listCrashes = async (params) =>
   (await mainAxios.get("/crashmanager/rest/crashes/", { params })).data;
 
