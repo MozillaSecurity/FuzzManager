@@ -4,7 +4,7 @@
 <createoredit
     {% if bucketId != None %} :bucket-id="{{ bucketId }}" {% endif %}
     {% if proposedSig != None %} :proposed-signature="{{ proposedSig }}" {% endif %}
-    {% if proposedDesc != None %} :proposed-description="'{{ proposedDesc }}'" {% endif %}
-    {% if warningMessage != None %} :warning-message="'{{ warningMessage }}'" {% endif %}
+    {% if proposedDesc != None %} proposed-description="{{ proposedDesc }}" {% endif %}
+    {% if warningMessage != None %} warning-message="{{ warningMessage }}" {% endif %}
 />
 {% endblock body_content %}
