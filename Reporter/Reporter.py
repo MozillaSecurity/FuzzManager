@@ -114,7 +114,10 @@ class Reporter():
 
         # Now search for the global configuration file. If it exists, read its contents
         # and set all Collector settings that haven't been explicitely set by the user.
-        globalConfigFile = os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf")
+        globalConfigFile = os.getenv(
+            "FM_CONFIG_PATH",
+            os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf"),
+        )
         if os.path.exists(globalConfigFile):
             configInstance = ConfigurationFiles([globalConfigFile])
             globalConfig = configInstance.mainConfig
