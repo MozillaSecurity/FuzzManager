@@ -232,6 +232,10 @@ def signatures(request):
     return render(request, 'signatures/index.html')
 
 
+def index(request):
+    return redirect('crashmanager:crashes')
+
+
 def crashes(request):
     user = User.get_or_create_restricted(request.user)[0]
     return render(request, 'crashes/index.html', {'restricted': user.restricted})
