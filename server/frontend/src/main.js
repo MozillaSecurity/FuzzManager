@@ -1,10 +1,7 @@
-import _ from "lodash"; // eslint-disable-line no-unused-vars
-import sweetAlert from "sweetalert"; // eslint-disable-line no-unused-vars
-
 import Vue from "vue";
 import VueRouter from "vue-router";
-import router from "./router.js";
 
+import router from "./router.js";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
 import CommentPublicationForm from "./components/Bugs/Comments/PublicationForm.vue";
 import CrashesList from "./components/Crashes/List.vue";
@@ -16,9 +13,11 @@ import PoolsList from "./components/Pools/List.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import SignaturesList from "./components/Signatures/List.vue";
 
+import "sweetalert/dist/sweetalert.css";
+
 Vue.use(VueRouter);
 
-window.onload = function () {
+document.addEventListener("DOMContentLoaded", function () {
   new Vue({
     el: "#app",
     components: {
@@ -35,4 +34,4 @@ window.onload = function () {
     },
     router,
   });
-};
+});
