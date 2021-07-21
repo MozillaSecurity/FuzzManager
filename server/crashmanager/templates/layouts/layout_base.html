@@ -13,32 +13,30 @@
   <link rel="shortcut icon" type="image/png" href="{% static 'img/logo.png' %}"/>
 {% block css %}
   <link rel='stylesheet' href='//fonts.googleapis.com/css?family=Open+Sans:400,600,700'>
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.css">
-  <link rel='stylesheet' href='//cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css'>
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/themes/prism.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha512-Dop/vW3iOtayerlYAqCgkVr2aTr2ErwwTYOvRFUpzl2VhCMJyjQF0Q9TjUXIo6JhuM/3i0vVEt2e/7QQmnHQqw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.4.2/bootstrap-vue.min.css" integrity="sha512-UvMFR4bP1NuYl34MonQQInQ6Z0Gy91dO7kKk63XmiMDUT6FjRv6QQwU9hHJeZPaSCKecUta8MMcK+QKrrAjtfg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/themes/prism.min.css" integrity="sha512-zpEXay1ygEa8Bjw1KCXJwsP2BvHNwiB9kYH+fnZmesHI6ixnaN49rcR8X9gx7SfzOW1lybh/TKvcqldC+SLc2w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="{% static 'css/default.css' %}">
   <link rel="stylesheet" href="{% static 'main.css' %}">
 {% block css.shared %}{% endblock css.shared %}
 {% block css.custom %}{% endblock css.custom %}
 {% endblock css%}
 {% block js %}
-  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="{% static 'js/params.js' %}"/></script>
-  <script src="{% static 'js/cookie-csrf.js' %}"/></script>
-  <script src="{% static 'js/vuejs-slider.js' %}"/></script>
-  <script src="{% static 'js/vue-chartjs.full.min.js' %}"></script>
-  <script src="{% static 'js/d3.v4.min.js' %}"/></script>
 {% block vue.frontend %}
   <script type="text/javascript" src="{% static 'main.js' %}"></script>
 {% endblock vue.frontend %}
-  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.common.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/prism.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-clike.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-c.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-cpp.min.js"></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.6.0/components/prism-bash.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.slim.min.js" integrity="sha512-6ORWJX/LrnSjBzwefdNUyLCMTIsGoNP6NftMy2UAm1JBm6PRZCO1d7OHBStWpVFZLO+RerTvqX/Z9mBFfCJZ4A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha512-oBTprMeNEKCnqfuqKd6sbvFzmFQtlXS3e0C/RGFV0hD6QzhHV+ODfaQbAlmY6/q0ubbwlAM/nCJjkrgA3waLzg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="{% static 'js/params.js' %}"/></script>
+  <script src="{% static 'js/cookie-csrf.js' %}"/></script>
+  <script src="{% static 'js/vuejs-slider.js' %}"/></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vue-chartjs/2.6.0/vue-chartjs.min.js" integrity="sha512-62AG4gmTkZughANagjCnsa88bi1ZjfeJaLx5ZPw/vlSIRe+GXDHyNHpF8k9Ujr/YENLbWzgSSZ64lPq4UrXFjQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" integrity="sha512-RJJ1NNC88QhN7dwpCY8rm/6OxI+YdQP48DrLGe/eSAd+n+s1PXwQkkpzzAgoJe4cZFW2GALQoxox61gSY2yQfg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/prism.min.js" integrity="sha512-b6x3q+bsDBUcTzuCP9rsvFzqb/LJgkSxy7J0K3M+BFubzcLFkJTOoLG/GYfZr4W65qFV25PIxn+KmlQnoZPAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-clike.min.js" integrity="sha512-qXIIGlBQd75o+/1YMrq821fMU76wcAvgYKEtxtxJzJfU0QWfOPlIr1q8EGBwkYgmJzT3IYbg/a1iA2nET5Uk0g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-c.min.js" integrity="sha512-1tbyqESbdgIRPIYkuVK6Yv2OfBRQpCfs0ZwAVQSgwLpxaPTEcTDNwwv9e8hecmB57GMZGWLsXybyA96WmBolog==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-cpp.min.js" integrity="sha512-M8fABkXb29VQLyifqJfWfTvO4t75nmHIxrE+geUlFxbQw+MwAC+RmaofScwcoYKCMYuc9epQwdqrulZZTPPa4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/components/prism-bash.min.js" integrity="sha512-OqRf2KyB9O5Gy51zO18sn5uXRkVIcWETi93YrbMwv4e3527Qz5oj8yxKpls9oCkjjFEsyrsN98IfpBczVicXTw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
   (() => {
@@ -82,6 +80,7 @@
 
 {% block js.shared %}{% endblock js.shared %}
 {% block js.custom %}{% endblock js.custom %}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.4.2/bootstrap-vue.min.js" integrity="sha512-1qfIh9meb1zaCdssZjWByH/3tEpO18bb+3LJeluOpDH4an1q+StF/iPZb5aVxlYTpWdfrmmrtY8GDQbc3z5aQw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 {% endblock js%}
 {% if debug %}
   <script>
