@@ -80,6 +80,44 @@ tasks:
               description: FuzzManager ${build.name}
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - $map:
+          - {image: ci-node-14, slug: node14, name: 'build frontend node 14'}
+          each(build):
+            taskId: {$eval: as_slugid(build.slug)}
+            provisionerId: proj-fuzzing
+            workerType: ci
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '1 hour'}
+            payload:
+              maxRunTime: 3600
+              image: mozillasecurity/${build.image}:latest
+              features:
+                taskclusterProxy: true
+              command:
+                - /bin/bash
+                - '--login'
+                - '-x'
+                - '-c'
+                - >-
+                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
+                  git init repo &&
+                  cd repo &&
+                  git remote add origin ${http_repo} &&
+                  retry git fetch -q --depth=1 origin "${fetch_ref}" &&
+                  git -c advice.detachedHead=false checkout ${fetch_rev} &&
+                  cd server/frontend &&
+                  retry npm install &&
+                  npm run production
+              artifacts:
+                public/dist:
+                  expires: {$fromNow: '6 months'}
+                  path: /home/worker/repo/server/frontend/dist/
+                  type: directory
+            metadata:
+              name: FuzzManager ${build.name}
+              description: FuzzManager ${build.name}
+              owner: '${user}@users.noreply.github.com'
+              source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - taskId: {$eval: as_slugid("linting")}
           provisionerId: proj-fuzzing
           workerType: ci
@@ -114,6 +152,7 @@ tasks:
           workerType: ci
           dependencies:
             - {$eval: as_slugid("linting")}
+            - {$eval: as_slugid("node14")}
             - {$eval: as_slugid("py36")}
             - {$eval: as_slugid("py37")}
             - {$eval: as_slugid("py38")}
@@ -154,6 +193,7 @@ tasks:
               workerType: ci
               dependencies:
                 - {$eval: as_slugid("linting")}
+                - {$eval: as_slugid("node14")}
                 - {$eval: as_slugid("py36")}
                 - {$eval: as_slugid("py37")}
                 - {$eval: as_slugid("py38")}
