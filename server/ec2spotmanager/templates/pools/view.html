@@ -15,7 +15,7 @@
         <canvas id="detailedChart" style="height: 300px; width: 100%;"></canvas>
         <canvas id="accumulatedChart" style="height: 300px; width: 100%;"></canvas>
 
-	<script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js" integrity="sha512-XYCKHbo5QmBRv8QwuQIlXqemaOB4edxoQO0Io3jZQt9Zarms1O4wMRrkKhx0IZdBneph+oYmKznIOpM3/As3eA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script type="text/javascript">
             $.get("{% url 'ec2spotmanager:line_chart_json_detailed' pool.pk %}", function(data) {
                 var ctx = $("#detailedChart").get(0).getContext("2d");
