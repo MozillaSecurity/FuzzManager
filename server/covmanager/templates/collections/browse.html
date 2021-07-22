@@ -137,7 +137,7 @@ const URLS = {
 /* End of Django */
 
 Vue.component('line-chart', {
-  extends: VueChartJs.Line,
+  mixins: [VueChartJs.Line],
   methods: {
     renderLineChart: function() {
       this.renderChart({
@@ -506,7 +506,7 @@ let covmanager = new Vue({
             }
           }
 
-          this.chart._chart.update()
+          this.chart.$data._chart.update()
         }
       })
     },
