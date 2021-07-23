@@ -1,3 +1,7 @@
+import json
+import logging
+import re
+
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -7,10 +11,7 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from enumfields import Enum, EnumField
-import json
-import logging
-import re
-
+from notifications.signals import notify
 import six
 
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -315,7 +316,9 @@ class CrashEntry(models.Model):
         # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
 
-        super(CrashEntry, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
+        self.__original_bucket = self.bucket_id
 
     def save(self, *args, **kwargs):
         if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
@@ -363,7 +366,18 @@ class CrashEntry(models.Model):
         if len(self.shortSignature) > 255:
             self.shortSignature = self.shortSignature[0:255]
 
-        super(CrashEntry, self).save(*args, **kwargs)
+        if self.bucket is not None and self.bucket_id != self.__original_bucket:
+            notify.send(
+                self.bucket,
+                recipient=self.bucket.watchers,
+                actor=self.bucket,
+                verb="bucket_hit",
+                target=self,
+                level="info",
+                description=f"The bucket {self.bucket_id} received a new crash entry {self.pk}"
+            )
+
+        super().save(*args, **kwargs)
 
     def deserializeFields(self):
         if self.args:

@@ -1,8 +1,7 @@
-from django.core.management import BaseCommand, CommandError  # noqa
-from notifications.signals import notify
+from django.core.management import BaseCommand, call_command
 
 from crashmanager.management.common import mgmt_lock_required
-from crashmanager.models import CrashEntry, Bucket
+from crashmanager.models import CrashEntry
 
 
 class Command(BaseCommand):
@@ -12,41 +11,9 @@ class Command(BaseCommand):
     @mgmt_lock_required
     def handle(self, *args, **options):
         entries = CrashEntry.objects.filter(triagedOnce=False, bucket=None)
-        buckets = Bucket.objects.all()
-
-        signatureCache = {}
 
         for entry in entries:
-            # Benchmarks have shown that always attaching the testcase
-            # is faster than recreating the crash info in every iteration
-            # when signatures can be cached.
-            crashInfo = entry.getCrashInfo(attachTestcase=True)
-
-            for bucket in buckets:
-                if bucket.pk not in signatureCache:
-                    signatureCache[bucket.pk] = bucket.getSignature()
-
-                signature = signatureCache[bucket.pk]
-                matched = False
-
-                if signature.matches(crashInfo):
-                    entry.bucket = bucket
-                    matched = True
-
-                entry.triagedOnce = True
-                entry.save()
-
-                if matched:
-                    notify.send(
-                        bucket,
-                        recipient=bucket.watchers,
-                        actor=bucket,
-                        verb="bucket_hit",
-                        target=entry,
-                        level="info",
-                        description=f"The bucket {bucket.pk} received a new crash entry {entry.pk}"
-                    )
-                    break
+            call_command('triage_new_crash', entry.id)
 
         # This query ensures that all issues that have been bucketed manually before
         # the server had a chance to triage them will have their triageOnce flag set,
