@@ -15,16 +15,17 @@
     <canvas id="detailedChart" style="height: 300px; width: 100%;"></canvas>
     <canvas id="accumulatedChart" style="height: 300px; width: 100%;"></canvas>
 
-    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js" integrity="sha512-XYCKHbo5QmBRv8QwuQIlXqemaOB4edxoQO0Io3jZQt9Zarms1O4wMRrkKhx0IZdBneph+oYmKznIOpM3/As3eA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- use Chart.min.js bundled with django-chartjs -->
+    <script type="text/javascript" src="{% static 'js/Chart.min.js' %}"></script>
     <script type="text/javascript">
     fetch("{% url 'ec2spotmanager:line_chart_json_detailed' pool.pk %}", {credentials: "same-origin"})
     .then(response => {
       if (response.ok) {
         response.json()
         .then(data => {
-          var ctx = $("#detailedChart").get(0).getContext("2d");
+          let ctx = document.getElementById("detailedChart").getContext("2d");
           barChart = new Chart(ctx).Bar(data, data.options);
-          for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {
+          for (let i = 0; i < barChart.datasets[0].bars.length; ++i) {
             barChart.datasets[0].bars[i]._saved.fillColor = data.datasets[0].fillColor[i];
             barChart.datasets[0].bars[i].fillColor = data.datasets[0].fillColor[i];
             barChart.datasets[0].bars[i].highlightFill = data.datasets[0].fillColor[i];
@@ -38,9 +39,9 @@
       if (response.ok) {
         response.json()
         .then(data => {
-          var ctx = $("#accumulatedChart").get(0).getContext("2d");
+          let ctx = document.getElementById("accumulatedChart").getContext("2d");
           barChart = new Chart(ctx).Bar(data, data.options);
-          for (var i = 0; i < barChart.datasets[0].bars.length; ++i) {
+          for (let i = 0; i < barChart.datasets[0].bars.length; ++i) {
             barChart.datasets[0].bars[i]._saved.fillColor = data.datasets[0].fillColor[i];
             barChart.datasets[0].bars[i].fillColor = data.datasets[0].fillColor[i];
             barChart.datasets[0].bars[i].highlightFill = data.datasets[0].fillColor[i];
