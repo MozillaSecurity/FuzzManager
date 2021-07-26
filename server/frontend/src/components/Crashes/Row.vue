@@ -141,7 +141,7 @@ export default {
 
 <style scoped>
 .add-filter {
-  cursor: crosshair;
+  cursor: cell;
 }
 .dimgray {
   color: dimgray;
