@@ -84,6 +84,6 @@ class Command(BaseCommand):
                             verb="inaccessible_bug",
                             target=bug,
                             level="info",
-                            description=f"The bug {bug.pk} pointing to the external bug {bug.externalId}"
-                                        f" on {provider.hostname} has become inaccessible"
+                            description=f"The bucket {bug.bucket_set.get().id} assigned to the external bug "
+                                        f"{bug.externalId} on {provider.hostname} has become inaccessible"
                         )
