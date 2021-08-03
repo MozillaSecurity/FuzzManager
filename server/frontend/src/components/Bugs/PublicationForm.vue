@@ -665,17 +665,13 @@ export default {
 
       // OpSys
       this.opSys = this.template.op_sys;
-      // FIXME: Maybe the best way would be to actually provide the OS as it is in the bugtracker
       if (!this.template.op_sys) {
-        if (this.entry.os == "linux") this.opSys = "Linux";
-        else if (this.entry.os == "macosx") this.opSys = "Mac OS X";
-        else if (this.entry.os.startsWith("win")) {
-          /*
-           * Translate win7 -> Windows 7, win8 -> Windows 8
-           * Doesn't work for Vista, XP, needs to be improved
-           */
-          this.opSys = this.entry.os.replaceAll("win", "Windows ");
-        }
+        // Try to match the supplied os with the Bugzilla equivalent
+        const os = this.entry.os.toLowerCase();
+        if (os === "linux") this.opSys = "Linux";
+        else if (os === "macosx") this.opSys = "macOS";
+        else if (os === "windows") this.opSys = "Windows";
+        else if (os === "android") this.opSys = "Android";
       }
 
       // Platform
