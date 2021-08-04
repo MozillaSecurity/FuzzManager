@@ -23,6 +23,13 @@ logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger("fm.tests")
 
 
+@pytest.fixture(autouse=True)
+def dj_static_tmp(tmp_path, settings):
+    dj_static = tmp_path / "dj-static"
+    dj_static.mkdir()
+    settings.STATIC_ROOT = str(dj_static)
+
+
 @pytest.fixture
 def api_client():
     return APIClient()
