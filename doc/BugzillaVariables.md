@@ -1,21 +1,21 @@
-# Bugzilla - Mustache.js variables
-In the Bugzilla Bug and Comment publication forms, we use [Mustache.js](https://github.com/janl/mustache.js/) to dynamically render variables in the following fields:
+# Bugzilla - Handlebars.js variables
+In the Bugzilla Bug and Comment publication forms, we use [Handlebars.js](https://handlebarsjs.com/) to dynamically render variables in the following fields:
 - For bug publication: ***Custom fields*** & ***Description***.
 - For comment publication: ***Comment***.
 
-## How to use Mustache variables
-To use a Mustache variable (as the ones listed below), you have to surround your variable with double curly brackets:
+## How to use Handlebars variables
+To use a Handlebars variable (as the ones listed below), you have to surround your variable with double curly brackets:
 ```
 {{myvariable}}
 ```
 
-By default, Mustache will HTML escape the text to be rendered. If you want to render your variable as unescaped HTML, you can surround it with triple curly brackets or append a `&` character before its name:
+By default, Handlebars will HTML escape the text to be rendered. If you want to render your variable as unescaped HTML, you can surround it with triple curly brackets or append a `&` character before its name:
 ```
 {{{myvariable}}}
 {{&myvariable}}
 ```
 
-If you **don't** want Mustache to render your variable, you can change the default delimiter (`{{}}`), and restore it immediately after:
+If you **don't** want Handlebars to render your variable, you can change the default delimiter (`{{}}`), and restore it immediately after:
 ```
 {{=<% %>=}}
 {{myvariable}}
@@ -23,7 +23,7 @@ If you **don't** want Mustache to render your variable, you can change the defau
 ```
 
 ### Example
-Presuming that `var` is a Mustache variable and that its stored value is:
+Presuming that `var` is a Handlebars variable and that its stored value is:
 ```
 <h1>
   My beautiful variable
@@ -60,7 +60,7 @@ Will render as this **output**:
 {{var}}
 ```
 
-> To learn more about Mustache variables, please read the [documentation](https://github.com/janl/mustache.js/#variables).
+> To learn more about Handlebars variables, please read the [documentation](https://handlebarsjs.com/guide/).
 
 ## Bug - Available variables
 > *Note: All fields are immutable unless otherwise specified.*
