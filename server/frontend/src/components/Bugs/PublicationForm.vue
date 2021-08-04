@@ -469,7 +469,7 @@
 </template>
 
 <script>
-var Mustache = require("mustache");
+import Handlebars from "handlebars";
 import { Base64 } from "js-base64";
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
@@ -589,7 +589,8 @@ export default {
     renderedAttrs() {
       if (!this.template || !this.entry) return "";
       try {
-        let rendered = Mustache.render(this.template.attrs, {
+        const compiled = Handlebars.compile(this.template.attrs);
+        let rendered = compiled({
           ...this.metadataExtension(this.template.attrs),
         });
         if (
@@ -605,7 +606,8 @@ export default {
     renderedDescription() {
       if (!this.template || !this.entry) return "";
       try {
-        let rendered = Mustache.render(this.template.description, {
+        const compiled = Handlebars.compile(this.template.description);
+        let rendered = compiled({
           summary: this.summary,
           shortsig: this.entry.shortSignature,
           product: this.entry.product,

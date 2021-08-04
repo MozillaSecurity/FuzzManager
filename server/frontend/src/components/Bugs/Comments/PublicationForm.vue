@@ -204,7 +204,7 @@
 </template>
 
 <script>
-var Mustache = require("mustache");
+import Handlebars from "handlebars";
 import { Base64 } from "js-base64";
 import { errorParser } from "../../../helpers";
 import * as api from "../../../api";
@@ -323,7 +323,8 @@ export default {
     renderedComment() {
       if (!this.template || !this.entry) return "";
       try {
-        let rendered = Mustache.render(this.template.comment, {
+        const compiled = Handlebars.compile(this.template.comment);
+        let rendered = compiled({
           summary: this.summary,
           shortsig: this.entry.shortSignature,
           product: this.entry.product,
