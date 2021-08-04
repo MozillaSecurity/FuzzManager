@@ -15,13 +15,6 @@ By default, Handlebars will HTML escape the text to be rendered. If you want to 
 {{&myvariable}}
 ```
 
-If you **don't** want Handlebars to render your variable, you can change the default delimiter (`{{}}`), and restore it immediately after:
-```
-{{=<% %>=}}
-{{myvariable}}
-<%={{ }}=%>
-```
-
 ### Example
 Presuming that `var` is a Handlebars variable and that its stored value is:
 ```
