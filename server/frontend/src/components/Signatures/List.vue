@@ -77,43 +77,68 @@
       <thead>
         <tr>
           <th
-            v-on:click="sortBy('id')"
-            :class="{ active: sortKey === 'id' }"
+            v-on:click.exact="sortBy('id')"
+            v-on:click.ctrl.exact="addSort('id')"
+            :class="{
+              active: sortKeys.includes('id') || sortKeys.includes('-id'),
+            }"
             width="20px"
           >
             ID
           </th>
           <th
-            v-on:click="sortBy('shortDescription')"
-            :class="{ active: sortKey === 'shortDescription' }"
+            v-on:click.exact="sortBy('shortDescription')"
+            v-on:click.ctrl.exact="addSort('shortDescription')"
+            :class="{
+              active:
+                sortKeys.includes('shortDescription') ||
+                sortKeys.includes('-shortDescription'),
+            }"
             width="150px"
           >
             Short Description
           </th>
           <th
-            v-on:click="sortBy('size')"
-            :class="{ active: sortKey === 'size' }"
+            v-on:click.exact="sortBy('size')"
+            v-on:click.ctrl.exact="addSort('size')"
+            :class="{
+              active: sortKeys.includes('size') || sortKeys.includes('-size'),
+            }"
             width="20px"
           >
             Bucket Size
           </th>
           <th
-            v-on:click="sortBy('quality')"
-            :class="{ active: sortKey === 'quality' }"
+            v-on:click.exact="sortBy('quality')"
+            v-on:click.ctrl.exact="addSort('quality')"
+            :class="{
+              active:
+                sortKeys.includes('quality') || sortKeys.includes('-quality'),
+            }"
             width="25px"
           >
             Best Test Quality
           </th>
           <th
-            v-on:click="sortBy('bug__externalId')"
-            :class="{ active: sortKey === 'bug__externalId' }"
+            v-on:click.exact="sortBy('bug__externalId')"
+            v-on:click.ctrl.exact="addSort('bug__externalId')"
+            :class="{
+              active:
+                sortKeys.includes('bug__externalId') ||
+                sortKeys.includes('-bug__externalId'),
+            }"
             width="50px"
           >
             External Bug
           </th>
           <th
-            v-on:click="sortBy('optimizedSignature')"
-            :class="{ active: sortKey === 'optimizedSignature' }"
+            v-on:click.exact="sortBy('optimizedSignature')"
+            v-on:click.ctrl.exact="addSort('optimizedSignature')"
+            :class="{
+              active:
+                sortKeys.includes('optimizedSignature') ||
+                sortKeys.includes('-optimizedSignature'),
+            }"
             width="30px"
           >
             Pending Optimization
@@ -146,8 +171,7 @@ const validSortKeys = [
   "optimizedSignature",
   "bug__externalId",
 ];
-const defaultReverse = true;
-const defaultSortKey = "id";
+const defaultSortKey = "-id";
 const pageSize = 100;
 
 export default {
@@ -162,8 +186,7 @@ export default {
   },
   data: () => ({
     signatures: [],
-    reverse: defaultReverse,
-    sortKey: defaultSortKey,
+    sortKeys: [defaultSortKey],
     queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
     queryError: "",
     ignoreToolFilter: false,
@@ -202,20 +225,17 @@ export default {
         }
       }
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        let hashSortKey = hash.sort;
-        let hashReverse = false;
-        if (hashSortKey.startsWith("-")) {
-          hashSortKey = hashSortKey.substring(1);
-          hashReverse = true;
-        }
-        if (validSortKeys.includes(hashSortKey)) {
-          this.sortKey = hashSortKey;
-          this.reverse = hashReverse;
-        } else {
+        const sortKeys = hash.sort.split(",").filter((key) => {
+          const realKey = key.startsWith("-") ? key.substring(1) : key;
+          if (validSortKeys.includes(realKey)) {
+            return true;
+          }
           // eslint-disable-next-line no-console
-          console.debug(
-            `parsing '#sort=\\s+': unrecognized key '${hashSortKey}'`
-          );
+          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
+          return false;
+        });
+        if (sortKeys.length > 0) {
+          this.sortKeys = sortKeys;
         }
       }
       this.ignoreToolFilter = hash.alltools === "1";
@@ -245,10 +265,40 @@ export default {
       }
       this.fetch();
     },
+    addSort(sortKey) {
+      /*
+       * add sort by sortKey to existing sort keys
+       * if already sorting, by sortKey,
+       *   reverse the sort order without changing the priority of sort keys
+       * if not sorting by sortKey yet,
+       *   sort first by this sortKey and then by existing sort keys
+       */
+      const index = this.sortKeys.indexOf(sortKey);
+      if (index >= 0) {
+        this.sortKeys[index] = `-${sortKey}`;
+      } else {
+        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
+        if (revIndex >= 0) {
+          this.sortKeys[revIndex] = sortKey;
+        } else {
+          this.sortKeys.unshift(`-${sortKey}`);
+        }
+      }
+      this.fetch();
+    },
     sortBy(sortKey) {
-      const keyChange = this.sortKey !== sortKey;
-      this.reverse = !keyChange ? !this.reverse : false;
-      this.sortKey = sortKey;
+      /*
+       * reset sort by sortKey
+       * if the display is already sorted by sortKey (alone or in concert),
+       *   then reverse the sort order, but always remove other sort keys
+       */
+      if (this.sortKeys.includes(sortKey)) {
+        this.sortKeys = [`-${sortKey}`];
+      } else if (this.sortKeys.includes(`-${sortKey}`)) {
+        this.sortKeys = [sortKey];
+      } else {
+        this.sortKeys = [`-${sortKey}`];
+      }
       this.fetch();
     },
     buildParams() {
@@ -256,7 +306,7 @@ export default {
         vue: "1",
         limit: pageSize,
         offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ordering: this.sortKeys.join(),
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.queryStr,
       };
@@ -315,8 +365,8 @@ export default {
       if (this.currentPage !== 1) {
         hash.page = this.currentPage;
       }
-      if (this.sortKey !== defaultSortKey || this.reverse !== defaultReverse) {
-        hash.sort = (this.reverse ? "-" : "") + this.sortKey;
+      if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
+        hash.sort = this.sortKeys.join();
       }
       if (this.queryStr) hash.query = encodeURIComponent(this.queryStr);
       if (this.ignoreToolFilter) hash.alltools = "1";
@@ -325,7 +375,7 @@ export default {
           "#" +
           Object.entries(hash)
             .map((kv) => kv.join("="))
-            .join();
+            .join("&");
         if (this.$route.hash !== routeHash)
           this.$router.push({ path: this.$route.path, hash: routeHash });
       } else {

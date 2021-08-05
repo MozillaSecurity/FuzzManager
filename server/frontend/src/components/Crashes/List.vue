@@ -119,78 +119,128 @@
       <thead>
         <tr>
           <th
-            v-on:click="sortBy('id')"
-            :class="{ active: sortKey === 'id' }"
+            v-on:click.exact="sortBy('id')"
+            v-on:click.ctrl.exact="addSort('id')"
+            :class="{
+              active: sortKeys.includes('id') || sortKeys.includes('-id'),
+            }"
             width="25px"
           >
             ID
           </th>
           <th
-            v-on:click="sortBy('created')"
-            :class="{ active: sortKey === 'created' }"
+            v-on:click.exact="sortBy('created')"
+            v-on:click.ctrl.exact="addSort('created')"
+            :class="{
+              active:
+                sortKeys.includes('created') || sortKeys.includes('-created'),
+            }"
             width="50px"
           >
             Date Added
           </th>
           <th
-            v-on:click="sortBy('bucket')"
-            :class="{ active: sortKey === 'bucket' }"
+            v-on:click.exact="sortBy('bucket')"
+            v-on:click.ctrl.exact="addSort('bucket')"
+            :class="{
+              active:
+                sortKeys.includes('bucket') || sortKeys.includes('-bucket'),
+            }"
             width="25px"
           >
             Bucket
           </th>
           <th
-            v-on:click="sortBy('shortSignature')"
-            :class="{ active: sortKey === 'shortSignature' }"
+            v-on:click.exact="sortBy('shortSignature')"
+            v-on:click.ctrl.exact="addSort('shortSignature')"
+            :class="{
+              active:
+                sortKeys.includes('shortSignature') ||
+                sortKeys.includes('-shortSignature'),
+            }"
             width="100px"
           >
             Short Signature
           </th>
           <th
-            v-on:click="sortBy('crashAddress')"
-            :class="{ active: sortKey === 'crashAddress' }"
+            v-on:click.exact="sortBy('crashAddress')"
+            v-on:click.ctrl.exact="addSort('crashAddress')"
+            :class="{
+              active:
+                sortKeys.includes('crashAddress') ||
+                sortKeys.includes('-crashAddress'),
+            }"
             width="40px"
           >
             Crash Address
           </th>
           <th
-            v-on:click="sortBy('testcase__quality')"
-            :class="{ active: sortKey === 'testcase__quality' }"
+            v-on:click.exact="sortBy('testcase__quality')"
+            v-on:click.ctrl.exact="addSort('testcase__quality')"
+            :class="{
+              active:
+                sortKeys.includes('testcase__quality') ||
+                sortKeys.includes('-testcase__quality'),
+            }"
             width="50px"
           >
             Test Status
           </th>
           <th
-            v-on:click="sortBy('product__name')"
-            :class="{ active: sortKey === 'product__name' }"
+            v-on:click.exact="sortBy('product__name')"
+            v-on:click.ctrl.exact="addSort('product__name')"
+            :class="{
+              active:
+                sortKeys.includes('product__name') ||
+                sortKeys.includes('-product__name'),
+            }"
             width="50px"
           >
             Product
           </th>
           <th
-            v-on:click="sortBy('product__version')"
-            :class="{ active: sortKey === 'product__version' }"
+            v-on:click.exact="sortBy('product__version')"
+            v-on:click.ctrl.exact="addSort('product__version')"
+            :class="{
+              active:
+                sortKeys.includes('product__version') ||
+                sortKeys.includes('-product__version'),
+            }"
             width="50px"
           >
             Version
           </th>
           <th
-            v-on:click="sortBy('platform__name')"
-            :class="{ active: sortKey === 'platform__name' }"
+            v-on:click.exact="sortBy('platform__name')"
+            v-on:click.ctrl.exact="addSort('platform__name')"
+            :class="{
+              active:
+                sortKeys.includes('platform__name') ||
+                sortKeys.includes('-platform__name'),
+            }"
             width="25px"
           >
             Platform
           </th>
           <th
-            v-on:click="sortBy('os__name')"
-            :class="{ active: sortKey === 'os__name' }"
+            v-on:click.exact="sortBy('os__name')"
+            v-on:click.ctrl.exact="addSort('os__name')"
+            :class="{
+              active:
+                sortKeys.includes('os__name') || sortKeys.includes('-os__name'),
+            }"
             width="25px"
           >
             OS
           </th>
           <th
-            v-on:click="sortBy('tool__name')"
-            :class="{ active: sortKey === 'tool__name' }"
+            v-on:click.exact="sortBy('tool__name')"
+            v-on:click.ctrl.exact="addSort('tool__name')"
+            :class="{
+              active:
+                sortKeys.includes('tool__name') ||
+                sortKeys.includes('-tool__name'),
+            }"
             width="40px"
           >
             Tool
@@ -245,8 +295,7 @@ const validFilters = {
   tool__name: "Tool",
   tool__name__contains: "Tool (sub-string match)",
 };
-const defaultReverse = true;
-const defaultSortKey = "id";
+const defaultSortKey = "-id";
 
 export default {
   components: {
@@ -274,10 +323,9 @@ export default {
     filters: {},
     ignoreToolFilter: false,
     loading: true,
-    reverse: defaultReverse,
     searchStr: "",
     showBucketed: false,
-    sortKey: defaultSortKey,
+    sortKeys: [defaultSortKey],
     totalEntries: "?",
     totalPages: 1,
     validFilters: validFilters,
@@ -311,20 +359,17 @@ export default {
         }
       }
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        let hashSortKey = hash.sort;
-        let hashReverse = false;
-        if (hashSortKey.startsWith("-")) {
-          hashSortKey = hashSortKey.substring(1);
-          hashReverse = true;
-        }
-        if (validSortKeys.includes(hashSortKey)) {
-          this.sortKey = hashSortKey;
-          this.reverse = hashReverse;
-        } else {
+        const sortKeys = hash.sort.split(",").filter((key) => {
+          const realKey = key.startsWith("-") ? key.substring(1) : key;
+          if (validSortKeys.includes(realKey)) {
+            return true;
+          }
           // eslint-disable-next-line no-console
-          console.debug(
-            `parsing '#sort=\\s+': unrecognized key '${hashSortKey}'`
-          );
+          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
+          return false;
+        });
+        if (sortKeys.length > 0) {
+          this.sortKeys = sortKeys;
         }
       }
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
@@ -369,7 +414,7 @@ export default {
         include_raw: "0",
         limit: pageSize,
         offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ordering: this.sortKeys.join(),
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.advancedQuery
           ? this.advancedQueryStr
@@ -487,10 +532,40 @@ export default {
       this.canUnshowBucketed = true;
       this.fetch();
     },
+    addSort: function (sortKey) {
+      /*
+       * add sort by sortKey to existing sort keys
+       * if already sorting, by sortKey,
+       *   reverse the sort order without changing the priority of sort keys
+       * if not sorting by sortKey yet,
+       *   sort first by this sortKey and then by existing sort keys
+       */
+      const index = this.sortKeys.indexOf(sortKey);
+      if (index >= 0) {
+        this.sortKeys[index] = `-${sortKey}`;
+      } else {
+        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
+        if (revIndex >= 0) {
+          this.sortKeys[revIndex] = sortKey;
+        } else {
+          this.sortKeys.unshift(`-${sortKey}`);
+        }
+      }
+      this.fetch();
+    },
     sortBy: function (sortKey) {
-      const keyChange = this.sortKey !== sortKey;
-      this.reverse = !keyChange ? !this.reverse : false;
-      this.sortKey = sortKey;
+      /*
+       * reset sort by sortKey
+       * if the display is already sorted by sortKey (alone or in concert),
+       *   then reverse the sort order, but always remove other sort keys
+       */
+      if (this.sortKeys.includes(sortKey)) {
+        this.sortKeys = [`-${sortKey}`];
+      } else if (this.sortKeys.includes(`-${sortKey}`)) {
+        this.sortKeys = [sortKey];
+      } else {
+        this.sortKeys = [`-${sortKey}`];
+      }
       this.fetch();
     },
     updateHash: function () {
@@ -498,8 +573,8 @@ export default {
       if (this.currentPage !== 1) {
         hash.page = this.currentPage;
       }
-      if (this.sortKey !== defaultSortKey || this.reverse !== defaultReverse) {
-        hash.sort = (this.reverse ? "-" : "") + this.sortKey;
+      if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
+        hash.sort = this.sortKeys.join();
       }
       if (this.ignoreToolFilter) hash.alltools = "1";
       if (this.filters["bucket"] !== undefined)
@@ -519,7 +594,7 @@ export default {
           "#" +
           Object.entries(hash)
             .map((kv) => kv.join("="))
-            .join();
+            .join("&");
         if (this.$route.hash !== routeHash)
           this.$router.push({ path: this.$route.path, hash: routeHash });
       } else {

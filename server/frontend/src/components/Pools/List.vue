@@ -7,29 +7,46 @@
       <thead>
         <tr>
           <th
-            v-on:click="sortBy('pool_id')"
-            :class="{ active: sortKey === 'pool_id' }"
+            v-on:click.exact="sortBy('pool_id')"
+            v-on:click.ctrl.exact="addSort('pool_id')"
+            :class="{
+              active:
+                sortKeys.includes('pool_id') || sortKeys.includes('-pool_id'),
+            }"
             width="25px"
           >
             ID
           </th>
           <th
-            v-on:click="sortBy('pool_name')"
-            :class="{ active: sortKey === 'pool_name' }"
+            v-on:click.exact="sortBy('pool_name')"
+            v-on:click.ctrl.exact="addSort('pool_name')"
+            :class="{
+              active:
+                sortKeys.includes('pool_name') ||
+                sortKeys.includes('-pool_name'),
+            }"
             width="100px"
           >
             Name
           </th>
           <th
-            v-on:click="sortBy('running')"
-            :class="{ active: sortKey === 'running' }"
+            v-on:click.exact="sortBy('running')"
+            v-on:click.ctrl.exact="addSort('running')"
+            :class="{
+              active:
+                sortKeys.includes('running') || sortKeys.includes('-running'),
+            }"
             width="75px"
           >
             # of Tasks (Running/Requested)
           </th>
           <th
-            v-on:click="sortBy('status')"
-            :class="{ active: sortKey === 'status' }"
+            v-on:click.exact="sortBy('status')"
+            v-on:click.ctrl.exact="addSort('status')"
+            :class="{
+              active:
+                sortKeys.includes('status') || sortKeys.includes('-status'),
+            }"
             width="150px"
           >
             Status
@@ -68,7 +85,6 @@ import sweetAlert from "sweetalert";
 import { E_SERVER_ERROR } from "../../helpers";
 import * as api from "../../api";
 
-const defaultReverse = false;
 const defaultSortKey = "pool_name";
 
 export default {
@@ -76,8 +92,7 @@ export default {
     return {
       loading: true,
       pools: null,
-      reverse: defaultReverse,
-      sortKey: defaultSortKey,
+      sortKeys: [defaultSortKey],
     };
   },
   created: function () {
@@ -87,8 +102,10 @@ export default {
     ordered_pools: function () {
       return _orderBy(
         this.pools,
-        [this.sortKey],
-        [this.reverse ? "desc" : "asc"]
+        this.sortKeys.map((key) =>
+          key.startsWith("-") ? key.substring(1) : key
+        ),
+        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc"))
       );
     },
   },
@@ -121,9 +138,39 @@ export default {
       500,
       { trailing: true }
     ),
+    addSort: function (sortKey) {
+      /*
+       * add sort by sortKey to existing sort keys
+       * if already sorting, by sortKey,
+       *   reverse the sort order without changing the priority of sort keys
+       * if not sorting by sortKey yet,
+       *   sort first by this sortKey and then by existing sort keys
+       */
+      const index = this.sortKeys.indexOf(sortKey);
+      if (index >= 0) {
+        this.sortKeys[index] = `-${sortKey}`;
+      } else {
+        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
+        if (revIndex >= 0) {
+          this.sortKeys[revIndex] = sortKey;
+        } else {
+          this.sortKeys.unshift(sortKey);
+        }
+      }
+    },
     sortBy: function (sortKey) {
-      this.reverse = this.sortKey === sortKey ? !this.reverse : false;
-      this.sortKey = sortKey;
+      /*
+       * reset sort by sortKey
+       * if the display is already sorted by sortKey (alone or in concert),
+       *   then reverse the sort order, but always remove other sort keys
+       */
+      if (this.sortKeys.includes(sortKey)) {
+        this.sortKeys = [`-${sortKey}`];
+      } else if (this.sortKeys.includes(`-${sortKey}`)) {
+        this.sortKeys = [sortKey];
+      } else {
+        this.sortKeys = [sortKey];
+      }
     },
   },
 };

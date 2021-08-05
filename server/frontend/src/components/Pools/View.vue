@@ -342,7 +342,7 @@ export default {
           "#" +
           Object.entries(hash)
             .map((kv) => kv.join("="))
-            .join();
+            .join("&");
       } else {
         location.hash = "";
       }
