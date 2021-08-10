@@ -16,15 +16,15 @@ from __future__ import print_function
 
 
 def is64bit():
-    return not str(gdb.parse_and_eval("$rax")) == "void"  # noqa @UndefinedVariable
+    return not str(gdb.parse_and_eval("$rax")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def isARM():
-    return not str(gdb.parse_and_eval("$r0")) == "void"  # noqa @UndefinedVariable
+    return not str(gdb.parse_and_eval("$r0")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def isARM64():
-    return not str(gdb.parse_and_eval("$x0")) == "void"  # noqa @UndefinedVariable
+    return not str(gdb.parse_and_eval("$x0")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def regAsHexStr(reg):
@@ -32,15 +32,15 @@ def regAsHexStr(reg):
         mask = 0xffffffffffffffff
     else:
         mask = 0xffffffff
-    return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # noqa @UndefinedVariable
+    return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def regAsIntStr(reg):
-    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # noqa @UndefinedVariable
+    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def regAsRaw(reg):
-    return str(gdb.parse_and_eval("$" + reg))  # noqa @UndefinedVariable
+    return str(gdb.parse_and_eval("$" + reg))  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
 def printImportantRegisters() -> None:
