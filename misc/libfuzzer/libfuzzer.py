@@ -42,7 +42,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.inTrace = False
         self.testcase = None
 
-    def run(self):
+    def run(self) -> None:
         while True:
             line = self.fd.readline(4096)
 

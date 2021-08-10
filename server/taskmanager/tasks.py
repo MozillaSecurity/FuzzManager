@@ -42,7 +42,7 @@ def get_or_create_pool(worker_type):
 
 
 @app.task(ignore_result=True)
-def update_pool_defns():
+def update_pool_defns() -> None:
     from fuzzing_decision.common.pool import PoolConfigLoader
     from .models import Pool, Task
 

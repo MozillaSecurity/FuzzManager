@@ -9,7 +9,7 @@ import sys
 import django
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--username', dest='username', type=str, required=True)
     parser.add_argument('--email', dest='email', type=str, required=True)

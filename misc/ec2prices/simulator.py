@@ -158,7 +158,7 @@ class ConfigurationFile():
         return ret
 
 
-def main():
+def main() -> None:
     '''Command line options.'''
 
     # setup argparser

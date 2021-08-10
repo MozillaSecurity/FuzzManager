@@ -67,7 +67,7 @@ class SourceCodeProvider():
         return
 
     @abstractmethod
-    def update(self):
+    def update(self) -> None:
         """
         Update the resource associated with this provider.
 

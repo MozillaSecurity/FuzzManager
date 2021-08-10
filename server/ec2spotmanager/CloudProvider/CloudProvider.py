@@ -192,7 +192,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_cores_per_instance():
+    def get_cores_per_instance() -> None:
         '''
         returns dictionary of instance types and their number of cores
 
@@ -273,7 +273,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_name():
+    def get_name() -> None:
         '''
         used to return name of cloud provider
 

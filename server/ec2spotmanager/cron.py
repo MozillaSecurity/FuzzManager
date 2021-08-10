@@ -24,7 +24,7 @@ CHECK_POOL_LOCK_EXPIRY = 30 * 60
 
 
 @app.task(ignore_result=True)
-def update_stats():
+def update_stats() -> None:
     from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry, InstancePool, Instance
 
     instance_pools = InstancePool.objects.all()
@@ -115,7 +115,7 @@ def _release_lock(lock_key):
 
 
 @app.task(ignore_result=True)
-def check_instance_pools():
+def check_instance_pools() -> None:
     """EC2SpotManager daemon.
 
     - checks all instance pools
@@ -241,7 +241,7 @@ def check_instance_pools():
 
 
 @app.task(ignore_result=True)
-def update_prices():
+def update_prices() -> None:
     """Periodically refresh spot price history and store it in redis to be consumed when spot instances are created.
 
     Prices are stored in redis, with keys like:

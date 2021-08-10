@@ -29,7 +29,7 @@ pytestmark = pytest.mark.usefixtures('ec2spotmanager_test', 'raise_on_status')  
 
 
 @pytest.mark.usefixtures('mock_provider')
-def test_nothing_to_do():
+def test_nothing_to_do() -> None:
     """nothing is done if no pools are enabled"""
 
     config = create_config(name='config #1', size=1, cycle_interval=1, ec2_key_name='a', ec2_image_name='a',
@@ -41,7 +41,7 @@ def test_nothing_to_do():
     assert not Instance.objects.exists()
 
 
-def test_bad_config():
+def test_bad_config() -> None:
     """invalid configs create a pool status entry"""
     config = create_config(name='config #1')
     pool = create_pool(config=config)
@@ -391,7 +391,7 @@ def test_pool_disabled(mocker):
     mock_term_request.delay.assert_called_once_with('EC2Spot', 'redmond', ['r-456'])
 
 
-def test_pool_trim():
+def test_pool_trim() -> None:
     """check that pool down-size trims older instances until we meet the requirement"""
     # create database state
     config = create_config(name='config #1', size=4, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',

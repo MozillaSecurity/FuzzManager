@@ -458,7 +458,7 @@ testAssertionPathFwSlashes = 'Assertion failure: false, at /srv/repos/mozilla-ce
 testAssertionPathBwSlashes = r'Assertion failure: false, at c:\srv\repos\mozilla-central\js\src\vm\SelfHosting.cpp:362'
 
 
-def test_SignatureCreateTest():
+def test_SignatureCreateTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -480,7 +480,7 @@ def test_SignatureCreateTest():
     assert json.loads(str(crashSig3)) == json.loads(testSignature3)
 
 
-def test_SignatureTestCaseMatchTest():
+def test_SignatureTestCaseMatchTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -510,7 +510,7 @@ def test_SignatureTestCaseMatchTest():
     assert not testSig6.matches(crashInfo)
 
 
-def test_SignatureStackFramesTest():
+def test_SignatureStackFramesTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -528,7 +528,7 @@ def test_SignatureStackFramesTest():
     assert not testSig5.matches(crashInfo)
 
 
-def test_SignatureStackFramesAlgorithmsTest():
+def test_SignatureStackFramesAlgorithmsTest() -> None:
     # Do some direct matcher tests on edge cases
     assert StackFramesSymptom._match([], [StringMatch('???')])
     assert not StackFramesSymptom._match([], [StringMatch('???'), StringMatch('a')])
@@ -552,7 +552,7 @@ def test_SignatureStackFramesAlgorithmsTest():
             assert expectedSig == [str(x) for x in actualSig]
 
 
-def test_SignaturePCREShortTest():
+def test_SignaturePCREShortTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace1.splitlines())
@@ -564,7 +564,7 @@ def test_SignaturePCREShortTest():
     assert not testSig2.matches(crashInfo)
 
 
-def test_SignatureStackFramesWildcardTailTest():
+def test_SignatureStackFramesWildcardTailTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace2.splitlines())
@@ -578,7 +578,7 @@ def test_SignatureStackFramesWildcardTailTest():
     assert len(testSig.symptoms[0].functionNames) == 7
 
 
-def test_SignatureStackFramesRegressionTest():
+def test_SignatureStackFramesRegressionTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
     crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
                                               auxCrashData=testTraceHeapWithCrashAddress.splitlines())
@@ -591,7 +591,7 @@ def test_SignatureStackFramesRegressionTest():
     assert not testSigEmptyCrashAddress.matches(crashInfoNeg)
 
 
-def test_SignatureStackFramesAuxMessagesTest():
+def test_SignatureStackFramesAuxMessagesTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceWithAuxMessage.splitlines())
     crashInfoNeg = CrashInfo.fromRawCrashData([], [], config,
@@ -614,7 +614,7 @@ def test_SignatureStackFramesAuxMessagesTest():
     assert crashSignatureNeg.matches(crashInfoNeg)
 
 
-def test_SignatureStackFramesNegativeSizeParamTest():
+def test_SignatureStackFramesNegativeSizeParamTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceNegativeSizeParam.splitlines())
 
@@ -625,7 +625,7 @@ def test_SignatureStackFramesNegativeSizeParamTest():
     assert isinstance(testSig.symptoms[1], StackFramesSymptom)
 
 
-def test_SignatureAsanStackOverflowTest():
+def test_SignatureAsanStackOverflowTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanStackOverflow.splitlines())
 
@@ -635,7 +635,7 @@ def test_SignatureAsanStackOverflowTest():
     assert testSig.matches(crashInfoPos)
 
 
-def test_SignatureAsanAccessViolationTest():
+def test_SignatureAsanAccessViolationTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanAccessViolation.splitlines())
 
@@ -646,7 +646,7 @@ def test_SignatureAsanAccessViolationTest():
     assert isinstance(testSig.symptoms[0], StackFramesSymptom)
 
 
-def test_SignatureStackSizeTest():
+def test_SignatureStackSizeTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanLongTrace.splitlines())
 
@@ -656,7 +656,7 @@ def test_SignatureStackSizeTest():
     assert testSig.matches(crashInfoPos)
 
 
-def test_SignatureAsanFailedAllocTest():
+def test_SignatureAsanFailedAllocTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanFailedAlloc.splitlines())
 
@@ -666,7 +666,7 @@ def test_SignatureAsanFailedAllocTest():
     assert isinstance(testSig.symptoms[1], StackFramesSymptom)
 
 
-def test_SignatureGenerationTSanLeakTest():
+def test_SignatureGenerationTSanLeakTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     with open(os.path.join(CWD, 'resources', 'tsan-simple-leak-report.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
@@ -683,7 +683,7 @@ def test_SignatureGenerationTSanLeakTest():
     assert found, "Expected correct OutputSymptom in signature"
 
 
-def test_SignatureGenerationTSanRaceTest():
+def test_SignatureGenerationTSanRaceTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     with open(os.path.join(CWD, 'resources', 'tsan-simple-race-report.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
@@ -714,7 +714,7 @@ def test_SignatureGenerationTSanRaceTest():
         assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
 
 
-def test_SignatureGenerationTSanRaceTestComplex1():
+def test_SignatureGenerationTSanRaceTestComplex1() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     with open(os.path.join(CWD, 'resources', 'tsan-report2.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
@@ -745,7 +745,7 @@ def test_SignatureGenerationTSanRaceTestComplex1():
         assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
 
 
-def test_SignatureGenerationTSanRaceTestAtomic():
+def test_SignatureGenerationTSanRaceTestAtomic() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     for fn in ['tsan-report-atomic.txt', 'tsan-report-atomic-swapped.txt']:
         with open(os.path.join(CWD, 'resources', fn), 'r') as f:
@@ -780,14 +780,14 @@ def test_SignatureGenerationTSanRaceTestAtomic():
             assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
 
 
-def test_SignatureMatchWithUnicode():
+def test_SignatureMatchWithUnicode() -> None:
     config = ProgramConfiguration('test', 'x86-64', 'linux')
     crashInfo = CrashInfo.fromRawCrashData(["(Â«f => (generator.throw(f))Â», Â«undefinedÂ»)"], [], config)
     testSignature = CrashSignature('{"symptoms": [{"src": "stdout", "type": "output", "value": "x"}]}')
     assert not testSignature.matches(crashInfo)
 
 
-def test_SignatureMatchAssertionSlashes():
+def test_SignatureMatchAssertionSlashes() -> None:
     # test that a forward slash assertion signature matches a backwards slash crash, but only on windows
     cfg_linux = ProgramConfiguration('test', 'x86-64', 'linux')
     cfg_windows = ProgramConfiguration('test', 'x86-64', 'windows')

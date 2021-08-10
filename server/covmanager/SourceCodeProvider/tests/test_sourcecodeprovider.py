@@ -93,14 +93,14 @@ def test_HGSourceCodeProvider(hg_repo):
 
 
 @pytest.mark.skipif(not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"), reason="not decoder")
-def test_HGDiff():
+def test_HGDiff() -> None:
     provider = HGSourceCodeProvider("/home/decoder/Mozilla/repos/mozilla-central-fm")
     diff = provider.getUnifiedDiff("4f8e0cb21016")
 
     print(Utils.getDiffLocations(diff))
 
 
-def test_HGRevisionEquivalence():
+def test_HGRevisionEquivalence() -> None:
     provider = HGSourceCodeProvider("")
 
     # Simple equality for short and long revision formats

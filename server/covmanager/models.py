@@ -65,7 +65,7 @@ class Collection(models.Model):
 
         super(Collection, self).__init__(*args, **kwargs)
 
-    def loadCoverage(self):
+    def loadCoverage(self) -> None:
         self.coverage.file.open(mode='rb')
         self.content = json.load(codecs.getreader('utf-8')(self.coverage.file))
         self.coverage.file.close()

@@ -21,19 +21,19 @@ import sys
 import time
 
 
-def crash():
+def crash() -> None:
     import ctypes
 
     # Causes a NULL deref
     ctypes.string_at(0)
 
 
-def hang():
+def hang() -> None:
     while True:
         time.sleep(1)
 
 
-def stop():
+def stop() -> None:
     os.kill(os.getpid(), signal.SIGSTOP)
 
 

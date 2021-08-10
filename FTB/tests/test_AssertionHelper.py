@@ -114,14 +114,14 @@ def _check_regex_matches(error_lines, sanitized_message):
     raise AssertionError("sanitized message did not match input: %r" % (sanitized_message,))
 
 
-def test_AssertionHelperTestASanFFAbort():
+def test_AssertionHelperTestASanFFAbort() -> None:
     err = asanFFAbort.splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
     assert AssertionHelper.getAuxiliaryAbortMessage(err) is None
 
 
-def test_AssertionHelperTestASanNegativeSize():
+def test_AssertionHelperTestASanNegativeSize() -> None:
     err = asanNegativeSize.splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
@@ -130,7 +130,7 @@ def test_AssertionHelperTestASanNegativeSize():
     assert assertMsg == expectedAssertMsg
 
 
-def test_AssertionHelperTestASanStackOverflow():
+def test_AssertionHelperTestASanStackOverflow() -> None:
     err = asanStackOverflow.splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
@@ -139,7 +139,7 @@ def test_AssertionHelperTestASanStackOverflow():
     assert assertMsg == expectedAssertMsg
 
 
-def test_AssertionHelperTestMozCrash():
+def test_AssertionHelperTestMozCrash() -> None:
     err = jsshellMozCrash.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -149,7 +149,7 @@ def test_AssertionHelperTestMozCrash():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashMultiLine():
+def test_AssertionHelperTestMozCrashMultiLine() -> None:
     err = mozCrashMultiLine.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -160,7 +160,7 @@ def test_AssertionHelperTestMozCrashMultiLine():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashWithPath():
+def test_AssertionHelperTestMozCrashWithPath() -> None:
     err = mozCrashWithPath.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -170,7 +170,7 @@ def test_AssertionHelperTestMozCrashWithPath():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMultiMozCrash():
+def test_AssertionHelperTestMultiMozCrash() -> None:
     err = multiMozCrash.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -180,7 +180,7 @@ def test_AssertionHelperTestMultiMozCrash():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestJSSelfHosted():
+def test_AssertionHelperTestJSSelfHosted() -> None:
     err = jsSelfHostedAssert.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -191,7 +191,7 @@ def test_AssertionHelperTestJSSelfHosted():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestV8Abort():
+def test_AssertionHelperTestV8Abort() -> None:
     err = v8Abort.splitlines()
 
     sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -208,7 +208,7 @@ def test_AssertionHelperTestV8Abort():
     _check_regex_matches(err, sanitizedMsgs)
 
 
-def test_AssertionHelperTestChakraAssert():
+def test_AssertionHelperTestChakraAssert() -> None:
     err = chakraAssert.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -219,7 +219,7 @@ def test_AssertionHelperTestChakraAssert():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestWindowsPathSanitizing():
+def test_AssertionHelperTestWindowsPathSanitizing() -> None:
     err1 = windowsPathAssertFwdSlashes.splitlines()
     err2 = windowsPathAssertBwSlashes.splitlines()
 
@@ -245,7 +245,7 @@ def test_AssertionHelperTestWindowsPathSanitizing():
     #_check_regex_matches(err2, sanitizedMsg2)
 
 
-def test_AssertionHelperTestAuxiliaryAbortASan():
+def test_AssertionHelperTestAuxiliaryAbortASan() -> None:
     err = asanOverflow.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAuxiliaryAbortMessage(err))
@@ -258,7 +258,7 @@ def test_AssertionHelperTestAuxiliaryAbortASan():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestCPPUnhandledException():
+def test_AssertionHelperTestCPPUnhandledException() -> None:
     err = cppUnhandledException.splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
@@ -268,7 +268,7 @@ def test_AssertionHelperTestCPPUnhandledException():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic01():
+def test_AssertionHelperTestRustPanic01() -> None:
     err = rustPanic1.splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
     expectedMsg = (r"thread 'StyleThread#[0-9]+' panicked at 'assertion failed: self\.get_data\(\)\.is_some\(\)', "
@@ -278,7 +278,7 @@ def test_AssertionHelperTestRustPanic01():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic02():
+def test_AssertionHelperTestRustPanic02() -> None:
     err = rustPanic2.splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
     expectedMsg = (r"thread 'RenderBackend' panicked at 'called `Option::unwrap\(\)` on a `None` value', "
@@ -288,7 +288,7 @@ def test_AssertionHelperTestRustPanic02():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic03():
+def test_AssertionHelperTestRustPanic03() -> None:
     err = rustPanic3.splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(AssertionHelper.getAssertion(err))
 

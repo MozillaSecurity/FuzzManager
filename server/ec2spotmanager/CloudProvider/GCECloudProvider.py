@@ -73,7 +73,7 @@ class GCECloudProvider(CloudProvider):
         "UNKNOWN": INSTANCE_STATE["pending"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("ec2spotmanager.gce")
         self.cluster = None
 

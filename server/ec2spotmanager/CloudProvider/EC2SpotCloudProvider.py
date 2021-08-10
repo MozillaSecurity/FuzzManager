@@ -15,7 +15,7 @@ from ..common.ec2 import CORES_PER_INSTANCE
 
 
 class EC2SpotCloudProvider(CloudProvider):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("ec2spotmanager")
         self.cluster = None
         self.connected_region = None

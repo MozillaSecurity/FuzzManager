@@ -51,7 +51,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
             return False
         return True
 
-    def update(self):
+    def update(self) -> None:
         # TODO: This will fail without remotes
         subprocess.check_call(["hg", "pull"], cwd=self.location)
 

@@ -19,12 +19,12 @@ import pytest
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: Enter at least one label."):
         call_command("get_auth_token")
 
 
-def test_no_such_user():
+def test_no_such_user() -> None:
     with pytest.raises(User.DoesNotExist):
         call_command("get_auth_token", "user")
 

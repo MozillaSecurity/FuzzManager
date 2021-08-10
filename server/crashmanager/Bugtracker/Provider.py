@@ -31,7 +31,7 @@ class Provider():
         self.hostname = hostname
 
     @abstractmethod
-    def getTemplateList(self):
+    def getTemplateList(self) -> None:
         return
 
     @abstractmethod

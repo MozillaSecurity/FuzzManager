@@ -45,7 +45,7 @@ __updated__ = '2014-10-01'
 class Collector(Reporter):
     @remote_checks
     @signature_checks
-    def refresh(self):
+    def refresh(self) -> None:
         '''
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.

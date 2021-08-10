@@ -135,7 +135,7 @@ def get_instance_types(regions=True, index_json=None):
     return instance_types
 
 
-def main():
+def main() -> None:
     index_json = None
     if len(sys.argv) > 1:
         with open(sys.argv[1]) as data_fp:

@@ -12,7 +12,7 @@ LOG = getLogger("taskmanager.cron")
 
 
 @app.task(ignore_result=True)
-def update_tasks():
+def update_tasks() -> None:
     import taskcluster
     from .models import Task
     from .tasks import update_task
@@ -60,7 +60,7 @@ def update_tasks():
 
 
 @app.task(ignore_result=True)
-def delete_expired():
+def delete_expired() -> None:
     from .models import Task
 
     # if the tasks no longer exist, or are expired, remove them from our DB too

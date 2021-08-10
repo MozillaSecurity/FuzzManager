@@ -19,7 +19,7 @@ from . import create_config, create_pool
 pytestmark = pytest.mark.usefixtures('ec2spotmanager_test')  # pylint: disable=invalid-name
 
 
-def test_update_pool_status():
+def test_update_pool_status() -> None:
     """test that update_pool_status utility function works"""
     config = create_config(name='config #1', size=4, cycle_interval=3600, ec2_key_name='fredsRefurbishedSshKey',
                            ec2_security_groups='mostlysecure', ec2_instance_types=['80286'], ec2_image_name='os/2',
@@ -32,7 +32,7 @@ def test_update_pool_status():
     assert not entry.isCritical
 
 
-def test_update_provider_status():
+def test_update_provider_status() -> None:
     """test that update_provider_status utility function works"""
     _update_provider_status('EC2Spot', 'price-too-low', 'testing')
     entry = ProviderStatusEntry.objects.get()

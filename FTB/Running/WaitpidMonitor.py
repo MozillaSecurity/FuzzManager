@@ -31,6 +31,6 @@ class WaitpidMonitor(threading.Thread):
         self.childPid = None
         self.childExit = None
 
-    def run(self):
+    def run(self) -> None:
         while not self.childPid:
             (self.childPid, self.childExit) = os.waitpid(self.pid, self.options)

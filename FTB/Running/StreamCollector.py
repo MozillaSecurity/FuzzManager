@@ -35,7 +35,7 @@ class StreamCollector(threading.Thread):
         self.logResponses = logResponses
         self.maxBacklog = maxBacklog
 
-    def run(self):
+    def run(self) -> None:
         while True:
             line = self.fd.readline(4096)
 

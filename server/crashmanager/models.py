@@ -60,12 +60,12 @@ class TestCase(models.Model):
 
         super(TestCase, self).__init__(*args, **kwargs)
 
-    def loadTest(self):
+    def loadTest(self) -> None:
         self.test.open(mode='rb')
         self.content = self.test.read()
         self.test.close()
 
-    def storeTestAndSave(self):
+    def storeTestAndSave(self) -> None:
         self.size = len(self.content)
         self.test.open(mode='w')
         self.test.write(self.content)
@@ -379,7 +379,7 @@ class CrashEntry(models.Model):
 
         super().save(*args, **kwargs)
 
-    def deserializeFields(self):
+    def deserializeFields(self) -> None:
         if self.args:
             self.argsList = json.loads(self.args)
 

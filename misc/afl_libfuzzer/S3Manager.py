@@ -231,7 +231,7 @@ class S3Manager():
 
             os.rename(tmp_file, os.path.join(download_dir, hash_name))
 
-    def clean_queue_dirs(self):
+    def clean_queue_dirs(self) -> None:
         '''
         Delete all closed remote queues.
         '''

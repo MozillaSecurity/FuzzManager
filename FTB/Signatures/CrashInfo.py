@@ -124,7 +124,7 @@ class CrashInfo(object):
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
     '''
-    def __init__(self):
+    def __init__(self) -> None:
         # Store the raw data
         self.rawStdout = []
         self.rawStderr = []

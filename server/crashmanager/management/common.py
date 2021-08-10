@@ -12,10 +12,10 @@ LOCK_PATH = os.path.realpath(os.path.join(settings.BASE_DIR, 'mgmt'))
 
 class ManagementLock(object):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lock = None
 
-    def acquire(self):
+    def acquire(self) -> None:
         self.lock = InterProcessLock(LOCK_PATH)
 
         # Attempt to obtain a lock, retry every 10 seconds. Wait at most 5 minutes.
@@ -31,7 +31,7 @@ class ManagementLock(object):
         self.lock = None
         raise RuntimeError("Failed to acquire lock.")
 
-    def release(self):
+    def release(self) -> None:
         if self.lock is not None:
             self.lock.release()
 

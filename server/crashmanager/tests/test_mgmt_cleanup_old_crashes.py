@@ -29,12 +29,12 @@ def _crashentry_create(**kwds):
     return CrashEntry.objects.create(**defaults)
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: unrecognized arguments: "):
         call_command("cleanup_old_crashes", "")
 
 
-def test_bug_cleanup():
+def test_bug_cleanup() -> None:
     prov = BugProvider.objects.create()
     Bug.objects.create(externalType=prov)
     call_command("cleanup_old_crashes")

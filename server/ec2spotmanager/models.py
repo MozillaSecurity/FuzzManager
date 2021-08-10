@@ -234,7 +234,7 @@ class PoolConfiguration(models.Model):
 
         super(PoolConfiguration, self).save(*args, **kwargs)
 
-    def deserializeFields(self):
+    def deserializeFields(self) -> None:
         for field in self.dict_config_fields:
             sobj = getattr(self, field) or ''
             setattr(self, field + '_override', sobj.startswith('!'))
@@ -254,7 +254,7 @@ class PoolConfiguration(models.Model):
             self.ec2_userdata = self.ec2_userdata_file.read()
             self.ec2_userdata_file.close()
 
-    def storeTestAndSave(self):
+    def storeTestAndSave(self) -> None:
         if self.ec2_userdata:
             # Save the file using save() to avoid problems when initially
             # creating the directory. We use os.path.split to keep the

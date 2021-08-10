@@ -47,13 +47,13 @@ coverallsAddData = json.loads("""
 }""")  # noqa
 
 
-def test_CovReporterCoverallsVersionData():
+def test_CovReporterCoverallsVersionData() -> None:
     ret = CovReporter.version_info_from_coverage_data(coverallsData)
     assert ret["revision"] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
     assert ret["branch"] == "master"
 
 
-def test_CovReporterPreprocessData():
+def test_CovReporterPreprocessData() -> None:
     result = CovReporter.preprocess_coverage_data(coverallsData)
 
     children = "children"
@@ -111,7 +111,7 @@ def test_CovReporterPreprocessData():
     assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0] == -1
 
 
-def test_CovReporterMergeData():
+def test_CovReporterMergeData() -> None:
     #result = CovReporter.preprocess_coverage_data(coverallsData)
     #result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
 

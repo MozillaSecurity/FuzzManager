@@ -115,13 +115,13 @@ class PersistentApplication():
     def start(self, test=None):
         pass
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
     def runTest(self, test):
         pass
 
-    def status(self):
+    def status(self) -> None:
         pass
 
     def _crashed(self):
@@ -281,7 +281,7 @@ class SimplePersistentApplication(PersistentApplication):
 
             return ret
 
-    def stop(self):
+    def stop(self) -> None:
         self._terminateProcess()
 
         # Ensure we leave no dangling threads when stopping
@@ -370,7 +370,7 @@ class SimplePersistentApplication(PersistentApplication):
 
             return ApplicationStatus.OK
 
-    def _terminateProcess(self):
+    def _terminateProcess(self) -> None:
         if self.process:
             if self.process.poll() is None:
                 # Try to terminate the process gracefully first

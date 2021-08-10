@@ -83,7 +83,7 @@ class LibFuzzerMonitor(threading.Thread):
         # Store potential exceptions
         self.exc = None
 
-    def run(self):
+    def run(self) -> None:
         assert(not self.hitThreadLimit)
         assert(not self.hadOOM)
 
@@ -167,7 +167,7 @@ class LibFuzzerMonitor(threading.Thread):
     def getStderr(self):
         return list(self.stderr)
 
-    def terminate(self):
+    def terminate(self) -> None:
         print("[Job %s] Received terminate request..." % self.mid, file=sys.stderr)
 
         # Avoid sending anything through the queue when the run() loop exits
@@ -799,7 +799,7 @@ def main(argv=None):
                           help="Deprecated, use --stats instead", metavar="FILE")
     aflGroup.add_argument('rargs', nargs=argparse.REMAINDER)
 
-    def warn_local():
+    def warn_local() -> None:
         if not opts.fuzzmanager and not opts.local:
             # User didn't specify --fuzzmanager but also didn't specify --local explicitly, so we should warn them
             # that their crash results won't end up anywhere except on the local machine. This method is called for

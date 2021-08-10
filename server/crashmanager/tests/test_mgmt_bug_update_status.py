@@ -26,12 +26,12 @@ pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: unrecognized arguments: "):
         call_command("bug_update_status", "")
 
 
-def test_none():
+def test_none() -> None:
     call_command("bug_update_status")
 
 

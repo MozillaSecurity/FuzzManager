@@ -65,7 +65,7 @@ def create_weekly_report_mc(revision):
 
 
 @app.task(ignore_result=True)
-def create_current_weekly_report_mc():
+def create_current_weekly_report_mc() -> None:
     COVERAGE_REVISION_URL = getattr(settings, 'COVERAGE_REVISION_URL', None)
 
     if not COVERAGE_REVISION_URL:

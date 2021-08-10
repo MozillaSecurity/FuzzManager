@@ -18,7 +18,7 @@ def assert_contains(response, text):
 
     class _(DjangoTestCase):
 
-        def runTest(self):
+        def runTest(self) -> None:
             pass
 
     _().assertContains(response, text)
@@ -30,7 +30,7 @@ def assert_not_contains(response, text):
 
     class _(DjangoTestCase):
 
-        def runTest(self):
+        def runTest(self) -> None:
             pass
 
     _().assertNotContains(response, text)

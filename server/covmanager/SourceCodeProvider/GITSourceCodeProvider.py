@@ -43,7 +43,7 @@ class GITSourceCodeProvider(SourceCodeProvider):
             return False
         return True
 
-    def update(self):
+    def update(self) -> None:
         # TODO: This will fail without remotes
         subprocess.check_call(["git", "fetch"], cwd=self.location)
 

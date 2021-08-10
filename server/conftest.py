@@ -75,7 +75,7 @@ def migration_hook(request):
             # Reverse to the original migration
             executor.migrate(_from)
 
-        def __call__(self):
+        def __call__(self) -> None:
             # Run the migration to test
             executor = MigrationExecutor(connection)
             executor.loader.build_graph()  # reload.

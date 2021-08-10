@@ -22,16 +22,16 @@ pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: unrecognized arguments: "):
         call_command("triage_new_crashes", "")
 
 
-def test_none():
+def test_none() -> None:
     call_command("triage_new_crashes")
 
 
-def test_some():
+def test_some() -> None:
     buckets = [Bucket.objects.create(signature=json.dumps({"symptoms": [
                {'src': 'stderr',
                 'type': 'output',
@@ -63,7 +63,7 @@ def test_some():
     assert crashes[2].bucket is None
 
 
-def test_some_with_notification():
+def test_some_with_notification() -> None:
     buckets = [Bucket.objects.create(signature=json.dumps({"symptoms": [
                {'src': 'stderr',
                 'type': 'output',
