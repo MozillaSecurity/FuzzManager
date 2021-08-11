@@ -248,11 +248,17 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-if="loading">
+          <td colspan="11">
+            <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+          </td>
+        </tr>
         <Row
           v-for="crash in crashes"
           :key="crash.id"
           :crash="crash"
           v-on:add-filter="addFilter"
+          v-else
         />
       </tbody>
     </table>
@@ -263,6 +269,7 @@
 import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
 import sweetAlert from "sweetalert";
+import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
@@ -300,6 +307,7 @@ const defaultSortKey = "-id";
 export default {
   components: {
     Row,
+    ClipLoader,
   },
   props: {
     restricted: {
@@ -455,6 +463,11 @@ export default {
     fetch: _throttle(
       async function () {
         this.loading = true;
+        this.crashes = null;
+        this.currentEntries = "?";
+        this.totalEntries = "?";
+        this.currentPage = 1;
+        this.totalPages = 1;
         this.advancedQueryError = "";
         try {
           const data = await api.listCrashes(this.buildParams());
@@ -612,5 +625,9 @@ export default {
 }
 .monospace {
   font-family: monospace;
+}
+.m-strong {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 </style>

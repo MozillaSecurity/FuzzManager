@@ -146,10 +146,16 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-if="loading">
+          <td colspan="6">
+            <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+          </td>
+        </tr>
         <Row
           v-for="signature in signatures"
           :key="signature.id"
           :signature="signature"
+          v-else
         />
       </tbody>
     </table>
@@ -159,6 +165,7 @@
 <script>
 import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
+import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
@@ -177,6 +184,7 @@ const pageSize = 100;
 export default {
   components: {
     Row,
+    ClipLoader,
   },
   props: {
     watchUrl: {
@@ -195,6 +203,7 @@ export default {
     currentEntries: "?",
     totalEntries: "?",
     totalPages: 1,
+    loading: false,
   }),
   watch: {
     queryStr() {
@@ -313,6 +322,12 @@ export default {
     },
     fetch: _throttle(
       async function () {
+        this.loading = true;
+        this.signatures = null;
+        this.currentEntries = "?";
+        this.totalEntries = "?";
+        this.currentPage = 1;
+        this.totalPages = 1;
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());
@@ -336,6 +351,7 @@ export default {
             err.response.data
           ) {
             this.queryError = err.response.data.detail;
+            this.loading = false;
           } else {
             // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
             // eslint-disable-next-line no-console
@@ -344,6 +360,7 @@ export default {
             return;
           }
         }
+        this.loading = false;
       },
       500,
       { trailing: true }
@@ -387,4 +404,9 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.m-strong {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+</style>
