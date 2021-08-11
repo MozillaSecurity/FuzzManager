@@ -40,6 +40,7 @@
                 <td>{{ template.mode }}</td>
                 <td>
                     <a title="Edit template" href="{% url 'crashmanager:templateedit' template.pk %}" class="btn btn-sm btn-success"><i class="glyphicon glyphicon-pencil"></i></a>
+                    <a title="Clone template" href="{% url 'crashmanager:templatedup' template.pk %}" class="btn btn-sm btn-primary"><i class="glyphicon glyphicon-duplicate"></i></a>
                     <a title="Delete template" href="{% url 'crashmanager:templatedel' template.pk %}" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-trash"></i></a>
                 </td>
             </tr>

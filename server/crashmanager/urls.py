@@ -50,6 +50,7 @@ urlpatterns = [
     url(r'^bugzilla/templates/create-comment/$', views.BugzillaTemplateCommentCreateView.as_view(),
         name='templatecreatecomment'),
     url(r'^bugzilla/templates/(?P<templateId>\d+)/$', views.BugzillaTemplateEditView.as_view(), name='templateedit'),
+    url(r'^bugzilla/templates/(?P<templateId>\d+)/duplicate/$', views.duplicateBugzillaTemplate, name='templatedup'),
     url(r'^bugzilla/templates/(?P<templateId>\d+)/delete/$', views.BugzillaTemplateDeleteView.as_view(),
         name='templatedel'),
 

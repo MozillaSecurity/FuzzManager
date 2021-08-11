@@ -41,6 +41,7 @@ def test_bug_providers_no_login(client, name, kwargs):
                           ("crashmanager:templatecreatebug", {}),
                           ("crashmanager:templatecreatecomment", {}),
                           ("crashmanager:templateedit", {'templateId': 0}),
+                          ("crashmanager:templatedup", {'templateId': 0}),
                           ("crashmanager:templatedel", {'templateId': 0})])
 def test_bugzilla_templates_no_login(client, name, kwargs):
     """Request without login hits the login redirect"""
@@ -129,6 +130,28 @@ def test_template_edit(client, cm):
     assert template.product == "Test product"
     assert template.component == "Test component"
     assert template.version == "1.0"
+
+
+def test_template_dup(client, cm):
+    """No errors are thrown in template"""
+    pk = cm.create_template().pk
+    assert len(BugzillaTemplate.objects.all()) == 1
+    client.login(username='test', password='test')
+    response = client.delete(reverse("crashmanager:templatedup", kwargs={'templateId': pk}))
+    LOG.debug(response)
+    # Redirecting to template list when the action is successful
+    assert response.status_code == requests.codes['found']
+    assert response.url == '/crashmanager/bugzilla/templates/'
+    assert len(BugzillaTemplate.objects.all()) == 2
+    template = BugzillaTemplate.objects.get(pk=pk)
+    clone = BugzillaTemplate.objects.get(pk=pk + 1)
+    assert "Clone of " + template.name == clone.name
+    for field in (
+        "mode", "product", "component", "version", "summary", "description", "whiteboard", "keywords",
+        "op_sys", "platform", "priority", "severity", "alias", "cc", "assigned_to", "qa_contact",
+        "target_milestone", "attrs", "security", "security_group", "testcase_filename", "comment"
+    ):
+        assert getattr(template, field) == getattr(clone, field)
 
 
 def test_template_del(client, cm):
