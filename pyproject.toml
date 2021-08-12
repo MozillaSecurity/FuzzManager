@@ -1,14 +1,4 @@
 [tool.mypy]
-files = [
-    "Collector/**/*.py",
-    "CovReporter/**/*.py",
-    "EC2Reporter/**/*.py",
-    "FTB/**/*.py",
-    "Reporter/**/*.py",
-    "TaskStatusReporter/**/*.py",
-    "misc/**/*.py",
-    "server/**/*.py",
-]
 strict = true
 ignore_missing_imports = true
 show_error_codes = true
