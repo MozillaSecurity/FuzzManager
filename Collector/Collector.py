@@ -28,6 +28,8 @@ import os
 import shutil
 import sys
 from tempfile import mkstemp
+from typing import Generator
+from typing import Tuple
 from zipfile import ZipFile
 
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
@@ -259,14 +261,11 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, bucketId: int) -> Generator[str]:
         '''
         Download all testcases for the specified bucketId.
 
-        @type bucketId: int
         @param bucketId: ID of the requested bucket on the server side
-
-        @rtype: generator
         @return: generator of filenames where tests were stored.
         '''
         params = {
@@ -305,16 +304,12 @@ class Collector(Reporter):
 
                 yield local_filename
 
-    def __store_signature_hashed(self, signature):
+    def __store_signature_hashed(self, signature: CrashSignature) -> str:
         '''
         Store a signature, using the sha1 hash hex representation as filename.
 
-        @type signature: CrashSignature
         @param signature: CrashSignature to store
-
-        @rtype: string
         @return: Name of the file that the signature was written to
-
         '''
         h = hashlib.new('sha1')
         if str is bytes:
@@ -328,16 +323,12 @@ class Collector(Reporter):
         return sigfile
 
     @staticmethod
-    def read_testcase(testCase):
+    def read_testcase(testCase: str) -> Tuple[str, bool]:
         '''
         Read a testcase file, return the content and indicate if it is binary or not.
 
-        @type testCase: string
         @param testCase: Filename of the file to open
-
-        @rtype: tuple(string, bool)
         @return: Tuple containing the file contents and a boolean indicating if the content is binary
-
         '''
         with open(testCase, 'rb') as f:
             testCaseData = f.read()
