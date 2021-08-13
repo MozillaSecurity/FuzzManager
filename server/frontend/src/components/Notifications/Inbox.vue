@@ -2,8 +2,14 @@
   <div class="panel panel-default">
     <div class="panel-heading">
       <i class="glyphicon glyphicon-bell"></i>
-      Unread notifications ({{ currentEntries }}/{{ totalEntries }})
-      <span class="step-links ml-5">
+      Unread notifications
+      <span v-if="notifications && notifications.length">
+        ({{ currentEntries }}/{{ totalEntries }})
+      </span>
+      <span
+        class="step-links ml-5"
+        v-if="notifications && notifications.length"
+      >
         <a
           v-on:click="prevPage"
           v-show="currentPage > 1"
@@ -52,9 +58,7 @@
           <template v-if="notification.verb === 'bucket_hit'">
             <BucketHit
               :notification="notification"
-              v-on:remove-notification="
-                notifications = notifications.filter((n) => n.id !== $event)
-              "
+              v-on:remove-notification="removeNotification($event)"
               v-on:update-dismiss-error="dismissError = $event"
             />
             <hr />
@@ -62,9 +66,7 @@
           <template v-else-if="notification.verb === 'inaccessible_bug'">
             <InaccessibleBug
               :notification="notification"
-              v-on:remove-notification="
-                notifications = notifications.filter((n) => n.id !== $event)
-              "
+              v-on:remove-notification="removeNotification($event)"
               v-on:update-dismiss-error="dismissError = $event"
             />
             <hr />
@@ -138,9 +140,18 @@ export default {
       try {
         await api.dismissAllNotifications();
         this.notifications = [];
+        this.currentEntries = this.totalEntries = 0;
+        this.currentPage = this.totalPages = 1;
       } catch (err) {
         this.dismissAllError = errorParser(err);
       }
+    },
+    removeNotification(notification) {
+      this.notifications = this.notifications.filter(
+        (n) => n.id !== notification
+      );
+      this.currentEntries--;
+      this.totalEntries--;
     },
   },
 };
