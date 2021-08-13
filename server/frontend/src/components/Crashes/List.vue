@@ -101,6 +101,13 @@
           >Advanced query</a
         ><br />
       </span>
+      <button
+        v-on:click="fetch"
+        :disabled="!modified || loading"
+        :title="queryButtonTitle"
+      >
+        Query
+      </button>
     </div>
     <div class="panel-body">
       <p
@@ -295,8 +302,8 @@
 </template>
 
 <script>
-import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
+import _isEqual from "lodash/isEqual";
 import sweetAlert from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
@@ -352,6 +359,7 @@ export default {
     },
   },
   data: () => ({
+    modifiedCache: {},
     advancedQuery: false,
     advancedQueryError: "",
     advancedQueryStr: "",
@@ -369,24 +377,9 @@ export default {
     totalPages: 1,
     validFilters: validFilters,
   }),
-  watch: {
-    advancedQueryStr: function () {
-      if (this.advancedQuery) this.debouncedFetch();
-    },
-    ignoreToolFilter: function () {
-      this.fetch();
-    },
-    searchStr: function () {
-      if (!this.advancedQuery) this.debouncedFetch();
-    },
-    showBucketed: function () {
-      this.fetch();
-    },
-  },
   created: function () {
     this.showBucketed = this.watchId !== null;
     if (this.$route.query.q) this.searchStr = this.$route.query.q;
-    this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "page")) {
@@ -416,13 +409,11 @@ export default {
       this.ignoreToolFilter = hash.alltools === "1";
       if (hash.advanced === "1") {
         this.advancedQuery = true;
-        // setting advancedQueryStr will trigger fetch
         this.advancedQueryStr = JSON.stringify(
           JSON.parse(hash.query || ""),
           null,
           2
         );
-        return;
       } else {
         this.showBucketed = hash.bucketed === "1";
         for (const filter of Object.keys(validFilters)) {
@@ -437,6 +428,29 @@ export default {
       }
     }
     this.fetch();
+  },
+  computed: {
+    modified() {
+      if (this.ignoreToolFilter !== this.modifiedCache.ignoreToolFilter)
+        return true;
+      if (this.advancedQuery) {
+        const queryStr = (() => {
+          try {
+            return JSON.parse(this.advancedQueryStr);
+          } catch (e) {} // eslint-disable-line no-empty
+        })();
+        return !_isEqual(queryStr, this.modifiedCache.advancedQueryStr);
+      }
+      return (
+        this.showBucketed !== this.modifiedCache.showBucketed ||
+        this.searchStr.trim() !== this.modifiedCache.searchStr
+      );
+    },
+    queryButtonTitle() {
+      if (this.loading) return "Query in progress";
+      if (!this.modified) return "Results match current query";
+      return "Submit query";
+    },
   },
   methods: {
     addFilter: function (key, value) {
@@ -460,6 +474,15 @@ export default {
           : JSON.stringify(this.buildSimpleQuery()),
         watch: this.watchId === null ? false : this.watchId,
       };
+    },
+    updateModifiedCache() {
+      try {
+        // ignore query errors
+        this.modifiedCache.advancedQueryStr = JSON.parse(this.advancedQueryStr);
+      } catch (e) {} // eslint-disable-line no-empty
+      this.modifiedCache.ignoreToolFilter = this.ignoreToolFilter;
+      this.modifiedCache.searchStr = this.searchStr.trim();
+      this.modifiedCache.showBucketed = this.showBucketed;
     },
     buildSimpleQuery: function () {
       let query = Object.assign({ op: "AND" }, this.filters);
@@ -494,6 +517,7 @@ export default {
     fetch: _throttle(
       async function () {
         this.loading = true;
+        this.updateModifiedCache();
         this.crashes = null;
         this.currentEntries = "?";
         this.totalEntries = "?";
