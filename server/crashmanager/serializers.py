@@ -272,7 +272,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ('id', 'description', 'verb', 'actor_url', 'target_url', 'external_bug_url',)
+        fields = ('id', 'timestamp', 'description', 'verb', 'actor_url', 'target_url', 'external_bug_url',)
 
     def get_actor_url(self, notification):
         if isinstance(notification.actor, Bucket):
