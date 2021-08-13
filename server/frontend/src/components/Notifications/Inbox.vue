@@ -1,7 +1,27 @@
 <template>
   <div class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-bell"></i> Unread notifications
+      <i class="glyphicon glyphicon-bell"></i>
+      Unread notifications ({{ currentEntries }}/{{ totalEntries }})
+      <span class="step-links ml-5">
+        <a
+          v-on:click="prevPage"
+          v-show="currentPage > 1"
+          class="glyphicon glyphicon-chevron-left"
+        ></a>
+        <span class="current">
+          Page {{ currentPage }} of {{ totalPages }}.
+        </span>
+        <a
+          v-on:click="nextPage"
+          v-show="currentPage < totalPages"
+          data-toggle="tooltip"
+          data-placement="top"
+          title=""
+          class="glyphicon glyphicon-chevron-right dimgray"
+          data-original-title="Next"
+        ></a>
+      </span>
       <a
         v-if="notifications && notifications.length"
         type="button"
@@ -61,6 +81,8 @@ import * as api from "../../api";
 import BucketHit from "./BucketHit.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
 
+const pageSize = 25;
+
 export default {
   components: {
     BucketHit,
@@ -71,16 +93,46 @@ export default {
     error: null,
     dismissError: null,
     dismissAllError: null,
+    currentEntries: "?",
+    currentPage: 1,
+    totalEntries: "?",
+    totalPages: 1,
   }),
   async created() {
-    try {
-      const data = await api.listUnreadNotifications();
-      this.notifications = data.results;
-    } catch (err) {
-      this.error = errorParser(err);
-    }
+    await this.fetchUnread();
   },
   methods: {
+    async fetchUnread() {
+      try {
+        const data = await api.listUnreadNotifications({
+          limit: pageSize,
+          offset: `${(this.currentPage - 1) * pageSize}`,
+        });
+        this.notifications = data.results;
+        this.currentEntries = this.notifications.length;
+        this.totalEntries = data.count;
+        this.totalPages = Math.max(Math.ceil(this.totalEntries / pageSize), 1);
+        if (this.currentPage > this.totalPages) {
+          this.currentPage = this.totalPages;
+          await this.fetchUnread();
+          return;
+        }
+      } catch (err) {
+        this.error = errorParser(err);
+      }
+    },
+    async nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        await this.fetchUnread();
+      }
+    },
+    async prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        await this.fetchUnread();
+      }
+    },
     async dismissAll() {
       this.dismissAllError = null;
       try {
@@ -101,6 +153,9 @@ div.panel-body {
 }
 .mb-2 {
   margin-bottom: 2rem !important;
+}
+.ml-5 {
+  margin-left: 5rem;
 }
 div.alert {
   margin-bottom: 0;

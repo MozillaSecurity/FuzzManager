@@ -44,8 +44,8 @@ export const listBugProviders = async () =>
 export const listTemplates = async () =>
   (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;
 
-export const listUnreadNotifications = async () =>
-  (await mainAxios.get("/crashmanager/rest/inbox/")).data;
+export const listUnreadNotifications = async (params) =>
+  (await mainAxios.get("/crashmanager/rest/inbox/", { params })).data;
 
 export const dismissNotification = async (id) =>
   (await mainAxios.patch(`/crashmanager/rest/inbox/${id}/mark_as_read/`)).data;
