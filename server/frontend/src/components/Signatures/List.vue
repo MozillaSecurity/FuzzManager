@@ -40,6 +40,14 @@
           name="alltools"
           v-model="ignoreToolFilter"
         />
+        <br />
+        <button
+          v-on:click="fetch"
+          :disabled="!modified || loading"
+          :title="queryButtonTitle"
+        >
+          Query
+        </button>
       </div>
       <br />
       <p v-if="showAll">
@@ -163,8 +171,8 @@
 </template>
 
 <script>
-import _debounce from "lodash/debounce";
 import _throttle from "lodash/throttle";
+import _isEqual from "lodash/isEqual";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
@@ -193,6 +201,7 @@ export default {
     },
   },
   data: () => ({
+    modifiedCache: {},
     signatures: [],
     sortKeys: [defaultSortKey],
     queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
@@ -205,14 +214,6 @@ export default {
     totalPages: 1,
     loading: false,
   }),
-  watch: {
-    queryStr() {
-      this.debouncedFetch();
-    },
-    ignoreToolFilter() {
-      this.fetch();
-    },
-  },
   created() {
     if (this.$route.query.all)
       this.queryStr = JSON.stringify({ op: "AND" }, null, 2);
@@ -222,7 +223,6 @@ export default {
         null,
         2
       );
-    this.debouncedFetch = _debounce(this.fetch, 1000);
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "page")) {
@@ -255,6 +255,21 @@ export default {
     this.fetch();
   },
   computed: {
+    modified() {
+      if (this.ignoreToolFilter !== this.modifiedCache.ignoreToolFilter)
+        return true;
+      const queryStr = (() => {
+        try {
+          return JSON.parse(this.queryStr);
+        } catch (e) {} // eslint-disable-line no-empty
+      })();
+      return !_isEqual(queryStr, this.modifiedCache.queryStr);
+    },
+    queryButtonTitle() {
+      if (this.loading) return "Query in progress";
+      if (!this.modified) return "Results match current query";
+      return "Submit query";
+    },
     showAll() {
       return !this.queryStr.includes('"bug__isnull": true');
     },
@@ -320,9 +335,17 @@ export default {
         query: this.queryStr,
       };
     },
+    updateModifiedCache() {
+      this.modifiedCache.ignoreToolFilter = this.ignoreToolFilter;
+      try {
+        // ignore query errors
+        this.modifiedCache.queryStr = JSON.parse(this.queryStr);
+      } catch (e) {} // eslint-disable-line no-empty
+    },
     fetch: _throttle(
       async function () {
         this.loading = true;
+        this.updateModifiedCache();
         this.signatures = null;
         this.currentEntries = "?";
         this.totalEntries = "?";
