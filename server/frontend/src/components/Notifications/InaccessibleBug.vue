@@ -1,5 +1,8 @@
 <template>
   <div class="row override-row">
+    <small class="col-md-1">
+      Received {{ notification.timestamp | formatDate }}
+    </small>
     <span class="label label-danger">Inaccessible bug</span>
     <span class="description">
       {{ notification.description }}
@@ -18,7 +21,7 @@
 </template>
 
 <script>
-import { errorParser } from "../../helpers";
+import { errorParser, formatClientTimestamp } from "../../helpers";
 import * as api from "../../api";
 
 export default {
@@ -31,6 +34,9 @@ export default {
   data: () => ({
     dismissError: null,
   }),
+  filters: {
+    formatDate: formatClientTimestamp,
+  },
   methods: {
     async dismiss() {
       this.dismissError = null;
@@ -61,5 +67,10 @@ export default {
 }
 button.close {
   margin-left: 3rem;
+}
+small {
+  padding-left: 0rem;
+  padding-right: 0rem;
+  margin-right: 1rem;
 }
 </style>
