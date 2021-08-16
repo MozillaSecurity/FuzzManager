@@ -15,19 +15,19 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
 
-def is64bit():
+def is64bit() -> bool:
     return not str(gdb.parse_and_eval("$rax")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
-def isARM():
+def isARM() -> bool:
     return not str(gdb.parse_and_eval("$r0")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
-def isARM64():
+def isARM64() -> bool:
     return not str(gdb.parse_and_eval("$x0")) == "void"  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
-def regAsHexStr(reg):
+def regAsHexStr(reg: str) -> str:
     if is64bit():
         mask = 0xffffffffffffffff
     else:
@@ -35,11 +35,11 @@ def regAsHexStr(reg):
     return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
-def regAsIntStr(reg):
+def regAsIntStr(reg: str) -> str:
     return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 
-def regAsRaw(reg):
+def regAsRaw(reg: str) -> str:
     return str(gdb.parse_and_eval("$" + reg))  # type: ignore[name-defined]  # noqa @UndefinedVariable
 
 

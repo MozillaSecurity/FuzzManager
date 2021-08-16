@@ -198,7 +198,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return ami
 
     @staticmethod
-    def get_cores_per_instance():
+    def get_cores_per_instance() -> int:
         return CORES_PER_INSTANCE
 
     @staticmethod
@@ -222,7 +222,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return config.instance_tags
 
     @staticmethod
-    def get_name():
+    def get_name() -> str:
         return 'EC2Spot'
 
     @staticmethod

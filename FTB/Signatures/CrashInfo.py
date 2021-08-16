@@ -1789,9 +1789,8 @@ class TSanCrashInfo(CrashInfo):
             self.tsanIndexZero.append(backtrace[0])
             self.backtrace.extend(backtrace)
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
         if self.tsanWarnLine:
@@ -1893,9 +1892,8 @@ class ValgrindCrashInfo(CrashInfo):
                     # done parsing
                     break
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
 

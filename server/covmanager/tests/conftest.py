@@ -24,7 +24,7 @@ from crashmanager.models import Client, Tool, User as cmUser
 LOG = logging.getLogger("fm.covmanager.tests")
 
 
-def _check_git():
+def _check_git() -> bool:
     try:
         proc = subprocess.Popen(["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.communicate()
@@ -35,7 +35,7 @@ def _check_git():
     return False
 
 
-def _check_hg():
+def _check_hg() -> bool:
     try:
         proc = subprocess.Popen(["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.communicate()

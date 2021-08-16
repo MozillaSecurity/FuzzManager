@@ -94,7 +94,7 @@ def processInput(mode, inputFd):
         sys.exit(0)
 
 
-def main():
+def main() -> int:
     if len(sys.argv) < 2:
         print("Need at least one argument (mode)", file=sys.stderr)
         sys.exit(1)

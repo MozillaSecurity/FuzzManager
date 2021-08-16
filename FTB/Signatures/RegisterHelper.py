@@ -33,7 +33,7 @@ validRegisters = {
 }
 
 
-def getRegisterPattern():
+def getRegisterPattern() -> str:
     '''
         Return a pattern including all register names that are considered valid
     '''

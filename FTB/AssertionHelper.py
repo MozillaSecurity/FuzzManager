@@ -302,15 +302,12 @@ def getSanitizedAssertionPattern(msgs):
     return sanitizedMsgs
 
 
-def escapePattern(msg):
+def escapePattern(msg: str) -> str:
     '''
     This method escapes regular expression characters in the string.
     And no, this is not re.escape, which would escape many more characters.
 
-    @type msg: string
     @param msg: String that needs to be quoted
-
-    @rtype: string
     @return: Escaped string for use in regular expressions
     '''
 
