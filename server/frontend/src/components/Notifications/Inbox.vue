@@ -1,7 +1,33 @@
 <template>
   <div class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-bell"></i> Unread notifications
+      <i class="glyphicon glyphicon-bell"></i>
+      Unread notifications
+      <span v-if="notifications && notifications.length">
+        ({{ currentEntries }}/{{ totalEntries }})
+      </span>
+      <span
+        class="step-links ml-5"
+        v-if="notifications && notifications.length"
+      >
+        <a
+          v-on:click="prevPage"
+          v-show="currentPage > 1"
+          class="glyphicon glyphicon-chevron-left"
+        ></a>
+        <span class="current">
+          Page {{ currentPage }} of {{ totalPages }}.
+        </span>
+        <a
+          v-on:click="nextPage"
+          v-show="currentPage < totalPages"
+          data-toggle="tooltip"
+          data-placement="top"
+          title=""
+          class="glyphicon glyphicon-chevron-right dimgray"
+          data-original-title="Next"
+        ></a>
+      </span>
       <a
         v-if="notifications && notifications.length"
         type="button"
@@ -32,9 +58,7 @@
           <template v-if="notification.verb === 'bucket_hit'">
             <BucketHit
               :notification="notification"
-              v-on:remove-notification="
-                notifications = notifications.filter((n) => n.id !== $event)
-              "
+              v-on:remove-notification="removeNotification($event)"
               v-on:update-dismiss-error="dismissError = $event"
             />
             <hr />
@@ -42,9 +66,7 @@
           <template v-else-if="notification.verb === 'inaccessible_bug'">
             <InaccessibleBug
               :notification="notification"
-              v-on:remove-notification="
-                notifications = notifications.filter((n) => n.id !== $event)
-              "
+              v-on:remove-notification="removeNotification($event)"
               v-on:update-dismiss-error="dismissError = $event"
             />
             <hr />
@@ -61,6 +83,8 @@ import * as api from "../../api";
 import BucketHit from "./BucketHit.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
 
+const pageSize = 25;
+
 export default {
   components: {
     BucketHit,
@@ -71,24 +95,63 @@ export default {
     error: null,
     dismissError: null,
     dismissAllError: null,
+    currentEntries: "?",
+    currentPage: 1,
+    totalEntries: "?",
+    totalPages: 1,
   }),
   async created() {
-    try {
-      const data = await api.listUnreadNotifications();
-      this.notifications = data.results;
-    } catch (err) {
-      this.error = errorParser(err);
-    }
+    await this.fetchUnread();
   },
   methods: {
+    async fetchUnread() {
+      try {
+        const data = await api.listUnreadNotifications({
+          limit: pageSize,
+          offset: `${(this.currentPage - 1) * pageSize}`,
+        });
+        this.notifications = data.results;
+        this.currentEntries = this.notifications.length;
+        this.totalEntries = data.count;
+        this.totalPages = Math.max(Math.ceil(this.totalEntries / pageSize), 1);
+        if (this.currentPage > this.totalPages) {
+          this.currentPage = this.totalPages;
+          await this.fetchUnread();
+          return;
+        }
+      } catch (err) {
+        this.error = errorParser(err);
+      }
+    },
+    async nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        await this.fetchUnread();
+      }
+    },
+    async prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        await this.fetchUnread();
+      }
+    },
     async dismissAll() {
       this.dismissAllError = null;
       try {
         await api.dismissAllNotifications();
         this.notifications = [];
+        this.currentEntries = this.totalEntries = 0;
+        this.currentPage = this.totalPages = 1;
       } catch (err) {
         this.dismissAllError = errorParser(err);
       }
+    },
+    removeNotification(notification) {
+      this.notifications = this.notifications.filter(
+        (n) => n.id !== notification
+      );
+      this.currentEntries--;
+      this.totalEntries--;
     },
   },
 };
@@ -101,6 +164,9 @@ div.panel-body {
 }
 .mb-2 {
   margin-bottom: 2rem !important;
+}
+.ml-5 {
+  margin-left: 5rem;
 }
 div.alert {
   margin-bottom: 0;

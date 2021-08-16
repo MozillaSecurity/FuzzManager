@@ -108,6 +108,9 @@ def test_rest_notifications_list_unread(api_client, user, cm):
     assert resp["next"] is None
     assert resp["previous"] is None
     assert len(resp["results"]) == 2
+    # Popping out timestamps
+    for r in resp["results"]:
+        del r["timestamp"]
     assert resp["results"] == [{
         "id": 2,
         "actor_url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.id}),

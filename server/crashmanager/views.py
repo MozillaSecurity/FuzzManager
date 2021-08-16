@@ -776,6 +776,14 @@ def createBugProvider(request):
         raise SuspiciousOperation
 
 
+def duplicateBugzillaTemplate(request, templateId):
+    clone = get_object_or_404(BugzillaTemplate, pk=templateId)
+    clone.pk = None  # to autogen a new pk on save()
+    clone.name = "Clone of " + clone.name
+    clone.save()
+    return redirect('crashmanager:templates')
+
+
 class JsonQueryFilterBackend(BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
@@ -1080,6 +1088,7 @@ class NotificationViewSet(mixins.ListModelMixin,
     """
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     serializer_class = NotificationSerializer
+    filter_backends = [JsonQueryFilterBackend, ]
 
     def get_queryset(self):
         return Notification.objects.unread().filter(recipient=self.request.user)
