@@ -270,12 +270,11 @@
         <div class="row">
           <div class="form-group col-md-6">
             <label for="attrs">Custom fields</label>
-            <i
-              class="glyphicon glyphicon-question-sign"
-              data-toggle="popover"
-              title="Custom Fields"
-              data-content="name=value pairs"
-            ></i>
+            <HelpPopover
+              field="custom-fields"
+              :variables="['metadata*']"
+              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+            />
             <textarea
               id="id_attrs"
               class="form-control"
@@ -297,6 +296,24 @@
         <div class="row">
           <div class="form-group col-md-6">
             <label for="description">Bug description</label>
+            <HelpPopover
+              field="description"
+              :variables="[
+                'summary',
+                'shortsig',
+                'product',
+                'version',
+                'args',
+                'os',
+                'platform',
+                'client',
+                'testcase',
+                'crashdata',
+                'crashdataattached',
+                'metadata*',
+              ]"
+              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-description-field"
+            />
             <textarea
               id="id_description"
               class="form-control"
@@ -480,6 +497,7 @@ import ProductComponentSelect from "./ProductComponentSelect.vue";
 import UserDropdown from "./UserDropdown.vue";
 import CrashDataSection from "./CrashDataSection.vue";
 import TestCaseSection from "./TestCaseSection.vue";
+import HelpPopover from "./HelpPopover.vue";
 
 // Apply Handlebars helpers
 Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
@@ -493,6 +511,7 @@ export default {
     UserDropdown,
     CrashDataSection,
     TestCaseSection,
+    HelpPopover,
   },
   props: {
     providerId: {
