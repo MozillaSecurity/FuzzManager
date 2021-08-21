@@ -29,6 +29,7 @@ import shutil
 import sys
 from tempfile import mkstemp
 from typing import Generator
+from typing import List
 from typing import Tuple
 from zipfile import ZipFile
 
@@ -66,7 +67,7 @@ class Collector(Reporter):
         os.remove(zipFileName)
 
     @signature_checks
-    def refreshFromZip(self, zipFileName):
+    def refreshFromZip(self, zipFileName: str) -> None:
         '''
         Refresh signatures from a local zip file, adding new signatures
         and invalidating old ones. (This is a non-standard use case;
@@ -340,7 +341,7 @@ class Collector(Reporter):
         return (testCaseData, isBinary)
 
 
-def main(args=None):
+def main(args=None) -> int:
     '''Command line options.'''
 
     # setup argparser

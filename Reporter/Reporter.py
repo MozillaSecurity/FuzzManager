@@ -193,6 +193,6 @@ class Reporter():
         return requests_retry(self._session.patch)(*args, **kwds)
 
     @staticmethod
-    def serverError(response):
+    def serverError(response) -> RuntimeError:
         return RuntimeError("Server unexpectedly responded with status code %s: %s" %
                             (response.status_code, response.text))
