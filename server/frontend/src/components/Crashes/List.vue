@@ -5,7 +5,81 @@
     </div>
     <div class="panel-body">
       <span v-if="advancedQuery">
-        <label for="id_query">Search Query</label><br />
+        <label for="id_query">Search Query</label>
+        <span id="help-hint-query">
+          <i class="glyphicon glyphicon-question-sign"></i>
+        </span>
+        <b-popover target="help-hint-query" triggers="hover" placement="top">
+          <div class="pop-header">Available query parameters</div>
+          <div class="pop-body">
+            <h4>
+              Available parameters
+              <button
+                class="btn btn-default btn-xs pull-right ml-5"
+                v-on:click="showParams = !showParams"
+              >
+                <i class="glyphicon glyphicon-minus" v-if="showParams"></i>
+                <i class="glyphicon glyphicon-plus" v-else></i>
+              </button>
+            </h4>
+            <div class="pop-list mt-1" v-if="showParams">
+              <p><code>id</code>: Integer (ID)</p>
+              <p><code>created</code>: Date</p>
+              <p><code>tool</code>: Integer (ID)</p>
+              <p><code>tool__name</code>: String</p>
+              <p><code>platform</code>: Integer (ID)</p>
+              <p><code>platform__name</code>: String</p>
+              <p><code>product</code>: Integer (ID)</p>
+              <p><code>product__name</code>: String</p>
+              <p><code>os</code>: Integer (ID)</p>
+              <p><code>os__name</code>: String</p>
+              <p><code>testcase</code>: Integer (ID)</p>
+              <p><code>testcase__test</code>: String</p>
+              <p><code>testcase__quality</code>: Integer</p>
+              <p><code>bucket</code>: Integer (ID)</p>
+              <p><code>bucket__signature</code>: String</p>
+              <p><code>bucket__shortDescription</code>: String</p>
+              <p><code>bucket__bug__externalId</code>: String</p>
+              <p><code>rawStdout</code>: String</p>
+              <p><code>rawStderr</code>: String</p>
+              <p><code>rawCrashData</code>: String</p>
+              <p><code>metadata</code>: String</p>
+              <p><code>env</code>: String</p>
+              <p><code>args</code>: String</p>
+              <p><code>crashAddress</code>: String</p>
+              <p><code>shortSignature</code>: String</p>
+            </div>
+            <hr />
+            <h4>
+              Usable operations
+              <button
+                class="btn btn-default btn-xs pull-right ml-5"
+                v-on:click="showOps = !showOps"
+              >
+                <i class="glyphicon glyphicon-minus" v-if="showOps"></i>
+                <i class="glyphicon glyphicon-plus" v-else></i>
+              </button>
+            </h4>
+            <div class="pop-list mt-1" v-if="showOps">
+              <p><code>__contains</code>: String</p>
+              <p><code>__in</code>: Iterable</p>
+              <p><code>__gt</code>: Integer</p>
+              <p><code>__gte</code>: Integer</p>
+              <p><code>__lt</code>: Integer</p>
+              <p><code>__lte</code>: Integer</p>
+              <p><code>__startswith</code>: String</p>
+              <p><code>__endswith</code>: String</p>
+              <p><code>__isnull</code>: Boolean</p>
+              <a
+                class="pull-right"
+                target="_blank"
+                href="https://docs.djangoproject.com/fr/3.2/ref/models/querysets/#field-lookups"
+              >
+                More operations
+              </a>
+            </div>
+          </div>
+        </b-popover>
         <textarea
           id="id_query"
           class="form-control"
@@ -337,6 +411,8 @@ export default {
     totalEntries: "?",
     totalPages: 1,
     validFilters: validFilters,
+    showParams: true,
+    showOps: false,
   }),
   watch: {
     advancedQueryStr: function () {
@@ -629,5 +705,29 @@ export default {
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+}
+.ml-5 {
+  margin-left: 5rem;
+}
+.mt-1 {
+  margin-top: 1rem;
+}
+.pop-header {
+  padding: 1rem;
+  margin-bottom: 0;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ebebeb;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.pop-body {
+  padding: 1rem;
+  color: #212529;
+}
+.pop-body a {
+  margin-bottom: 1rem;
+}
+.pop-list p {
+  margin-bottom: 0.25rem;
 }
 </style>
