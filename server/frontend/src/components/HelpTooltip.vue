@@ -1,15 +1,12 @@
 <template>
-  <span>
-    <span id="help-hint-query">
-      <i class="glyphicon glyphicon-question-sign"></i>
-    </span>
-    <b-popover target="help-hint-query" triggers="hover" placement="top">
+  <Popper trigger="hover" :options="{ placement: 'right' }">
+    <div class="popper">
       <div class="pop-header">Available query parameters</div>
       <div class="pop-body">
         <h4>
           Available parameters
           <button
-            class="btn btn-default btn-xs pull-right ml-5"
+            class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showParams = !showParams"
           >
             <i class="glyphicon glyphicon-minus" v-if="showParams"></i>
@@ -26,7 +23,7 @@
         <h4>
           Usable operations
           <button
-            class="btn btn-default btn-xs pull-right ml-5"
+            class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showOps = !showOps"
           >
             <i class="glyphicon glyphicon-minus" v-if="showOps"></i>
@@ -52,12 +49,21 @@
           </a>
         </div>
       </div>
-    </b-popover>
-  </span>
+    </div>
+    <!-- eslint-disable-next-line -->
+    <span slot="reference">
+      <i class="glyphicon glyphicon-question-sign"></i>
+    </span>
+  </Popper>
 </template>
 
 <script>
+import Popper from "vue-popperjs";
+
 export default {
+  components: {
+    Popper,
+  },
   props: {
     parameters: {
       type: Array,
@@ -72,8 +78,8 @@ export default {
 </script>
 
 <style scoped>
-.ml-5 {
-  margin-left: 5rem;
+.ml-8 {
+  margin-left: 8rem;
 }
 .mt-1 {
   margin-top: 1rem;
@@ -95,5 +101,8 @@ export default {
 }
 .pop-list p {
   margin-bottom: 0.25rem;
+}
+.popper {
+  text-align: left;
 }
 </style>
