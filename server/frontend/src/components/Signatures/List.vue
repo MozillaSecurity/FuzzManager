@@ -19,67 +19,22 @@
       <br />
       <div>
         <label for="id_query">Search Query</label>
-        <span id="help-hint-query">
-          <i class="glyphicon glyphicon-question-sign"></i>
-        </span>
-        <b-popover target="help-hint-query" triggers="hover" placement="top">
-          <div class="pop-header">Available query parameters</div>
-          <div class="pop-body">
-            <h4>
-              Available parameters
-              <button
-                class="btn btn-default btn-xs pull-right ml-5"
-                v-on:click="showParams = !showParams"
-              >
-                <i class="glyphicon glyphicon-minus" v-if="showParams"></i>
-                <i class="glyphicon glyphicon-plus" v-else></i>
-              </button>
-            </h4>
-            <div class="pop-list mt-1" v-if="showParams">
-              <p><code>id</code>: Integer (ID)</p>
-              <p><code>signature</code>: String</p>
-              <p><code>optimizedSignature</code>: String</p>
-              <p><code>shortDescription</code>: String</p>
-              <p><code>frequent</code>: Boolean</p>
-              <p><code>permanent</code>: Boolean</p>
-              <p><code>bug</code>: Integer (ID)</p>
-              <p><code>bug__externalId</code>: String</p>
-              <p><code>bug__closed</code>: Date</p>
-              <p><code>bug__externalType</code>: Integer (ID)</p>
-              <p><code>bug__externalType__classname</code>: String</p>
-              <p><code>bug__externalType__hostname</code>: String</p>
-            </div>
-            <hr />
-            <h4>
-              Usable operations
-              <button
-                class="btn btn-default btn-xs pull-right ml-5"
-                v-on:click="showOps = !showOps"
-              >
-                <i class="glyphicon glyphicon-minus" v-if="showOps"></i>
-                <i class="glyphicon glyphicon-plus" v-else></i>
-              </button>
-            </h4>
-            <div class="pop-list mt-1" v-if="showOps">
-              <p><code>__contains</code>: String</p>
-              <p><code>__in</code>: Iterable</p>
-              <p><code>__gt</code>: Integer</p>
-              <p><code>__gte</code>: Integer</p>
-              <p><code>__lt</code>: Integer</p>
-              <p><code>__lte</code>: Integer</p>
-              <p><code>__startswith</code>: String</p>
-              <p><code>__endswith</code>: String</p>
-              <p><code>__isnull</code>: Boolean</p>
-              <a
-                class="pull-right"
-                target="_blank"
-                href="https://docs.djangoproject.com/fr/3.2/ref/models/querysets/#field-lookups"
-              >
-                More operations
-              </a>
-            </div>
-          </div>
-        </b-popover>
+        <HelpTooltip
+          :parameters="[
+            { name: 'id', type: 'Integer (ID)' },
+            { name: 'signature', type: 'String' },
+            { name: 'optimizedSignature', type: 'String' },
+            { name: 'shortDescription', type: 'String' },
+            { name: 'frequent', type: 'Boolean' },
+            { name: 'permanent', type: 'Boolean' },
+            { name: 'bug', type: 'Integer (ID)' },
+            { name: 'bug__externalId', type: 'String' },
+            { name: 'bug__closed', type: 'Date' },
+            { name: 'bug__externalType', type: 'Integer (ID)' },
+            { name: 'bug__externalType__classname', type: 'String' },
+            { name: 'bug__externalType__hostname', type: 'String' },
+          ]"
+        />
         <textarea
           id="id_query"
           class="form-control"
@@ -230,6 +185,7 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
+import HelpTooltip from "../HelpTooltip.vue";
 
 const validSortKeys = [
   "id",
@@ -246,6 +202,7 @@ export default {
   components: {
     Row,
     ClipLoader,
+    HelpTooltip,
   },
   props: {
     watchUrl: {
@@ -265,8 +222,6 @@ export default {
     totalEntries: "?",
     totalPages: 1,
     loading: false,
-    showParams: true,
-    showOps: false,
   }),
   watch: {
     queryStr() {
@@ -471,29 +426,5 @@ export default {
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
-}
-.ml-5 {
-  margin-left: 5rem;
-}
-.mt-1 {
-  margin-top: 1rem;
-}
-.pop-header {
-  padding: 1rem;
-  margin-bottom: 0;
-  background-color: #f7f7f7;
-  border-bottom: 1px solid #ebebeb;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-.pop-body {
-  padding: 1rem;
-  color: #212529;
-}
-.pop-body a {
-  margin-bottom: 1rem;
-}
-.pop-list p {
-  margin-bottom: 0.25rem;
 }
 </style>
