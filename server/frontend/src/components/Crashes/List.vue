@@ -5,7 +5,36 @@
     </div>
     <div class="panel-body">
       <span v-if="advancedQuery">
-        <label for="id_query">Search Query</label><br />
+        <label for="id_query">Search Query</label>
+        <HelpTooltip
+          :parameters="[
+            { name: 'id', type: 'Integer (ID)' },
+            { name: 'created', type: 'Date' },
+            { name: 'tool', type: 'Integer (ID)' },
+            { name: 'tool__name', type: 'String' },
+            { name: 'platform', type: 'Integer (ID)' },
+            { name: 'platform__name', type: 'String' },
+            { name: 'product', type: 'Integer (ID)' },
+            { name: 'product__name', type: 'String' },
+            { name: 'os', type: 'Integer (ID)' },
+            { name: 'os__name', type: 'String' },
+            { name: 'testcase', type: 'Integer (ID)' },
+            { name: 'testcase__test', type: 'String' },
+            { name: 'testcase__quality', type: 'Integer' },
+            { name: 'bucket', type: 'Integer (ID)' },
+            { name: 'bucket__signature', type: 'String' },
+            { name: 'bucket__shortDescription', type: 'String' },
+            { name: 'bucket__bug__externalId', type: 'String' },
+            { name: 'rawStdout', type: 'String' },
+            { name: 'rawStderr', type: 'String' },
+            { name: 'rawCrashData', type: 'String' },
+            { name: 'metadata', type: 'String' },
+            { name: 'env', type: 'String' },
+            { name: 'args', type: 'String' },
+            { name: 'crashAddress', type: 'String' },
+            { name: 'shortSignature', type: 'String' },
+          ]"
+        />
         <textarea
           id="id_query"
           class="form-control"
@@ -273,6 +302,7 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
+import HelpTooltip from "../HelpTooltip.vue";
 
 const pageSize = 100;
 const validSortKeys = [
@@ -308,6 +338,7 @@ export default {
   components: {
     Row,
     ClipLoader,
+    HelpTooltip,
   },
   props: {
     restricted: {

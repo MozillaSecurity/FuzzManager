@@ -19,6 +19,22 @@
       <br />
       <div>
         <label for="id_query">Search Query</label>
+        <HelpTooltip
+          :parameters="[
+            { name: 'id', type: 'Integer (ID)' },
+            { name: 'signature', type: 'String' },
+            { name: 'optimizedSignature', type: 'String' },
+            { name: 'shortDescription', type: 'String' },
+            { name: 'frequent', type: 'Boolean' },
+            { name: 'permanent', type: 'Boolean' },
+            { name: 'bug', type: 'Integer (ID)' },
+            { name: 'bug__externalId', type: 'String' },
+            { name: 'bug__closed', type: 'Date' },
+            { name: 'bug__externalType', type: 'Integer (ID)' },
+            { name: 'bug__externalType__classname', type: 'String' },
+            { name: 'bug__externalType__hostname', type: 'String' },
+          ]"
+        />
         <textarea
           id="id_query"
           class="form-control"
@@ -169,6 +185,7 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
+import HelpTooltip from "../HelpTooltip.vue";
 
 const validSortKeys = [
   "id",
@@ -185,6 +202,7 @@ export default {
   components: {
     Row,
     ClipLoader,
+    HelpTooltip,
   },
   props: {
     watchUrl: {
