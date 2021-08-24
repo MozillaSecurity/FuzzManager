@@ -14,6 +14,7 @@ import ProviderKey from "./components/ProviderKey.vue";
 import SignaturesList from "./components/Signatures/List.vue";
 
 import "sweetalert/dist/sweetalert.css";
+import "vue-popperjs/dist/vue-popper.css";
 
 Vue.use(VueRouter);
 
