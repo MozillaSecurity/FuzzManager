@@ -1,6 +1,5 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import { BootstrapVue } from "bootstrap-vue";
 
 import router from "./router.js";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
@@ -15,9 +14,9 @@ import ProviderKey from "./components/ProviderKey.vue";
 import SignaturesList from "./components/Signatures/List.vue";
 
 import "sweetalert/dist/sweetalert.css";
+import "vue-popperjs/dist/vue-popper.css";
 
 Vue.use(VueRouter);
-Vue.use(BootstrapVue);
 
 document.addEventListener("DOMContentLoaded", function () {
   new Vue({

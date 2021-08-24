@@ -1,9 +1,6 @@
 <template>
-  <span>
-    <span :id="'help-hint-' + field">
-      <i class="glyphicon glyphicon-question-sign"></i>
-    </span>
-    <b-popover :target="'help-hint-' + field" triggers="hover" placement="top">
+  <Popper trigger="hover" :options="{ placement: 'right' }">
+    <div class="popper">
       <div class="pop-header">Available substitution variables</div>
       <div class="pop-body">
         <ul>
@@ -13,19 +10,28 @@
         </ul>
         <p>
           Render them using
-          <code v-pre>{{ myvariable }}</code> (escaped HTML) or
-          <code v-pre>{{{ myvariable }}}</code> (unescaped HTML).
+          <code v-pre>{{ myvariable }}</code> (escaped HTML) <br />
+          or <code v-pre>{{{ myvariable }}}</code> (unescaped HTML).
         </p>
         <a class="pull-right" target="_blank" :href="documentationLink">
           See documentation
         </a>
       </div>
-    </b-popover>
-  </span>
+    </div>
+    <!-- eslint-disable-next-line -->
+    <span slot="reference">
+      <i class="glyphicon glyphicon-question-sign"></i>
+    </span>
+  </Popper>
 </template>
 
 <script>
+import Popper from "vue-popperjs";
+
 export default {
+  components: {
+    Popper,
+  },
   props: {
     field: {
       type: String,
@@ -61,5 +67,8 @@ export default {
 }
 .pop-body a {
   margin-bottom: 1rem;
+}
+.popper {
+  text-align: left;
 }
 </style>
