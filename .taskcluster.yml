@@ -107,6 +107,7 @@ tasks:
                   git -c advice.detachedHead=false checkout ${fetch_rev} &&
                   cd server/frontend &&
                   retry npm install &&
+                  npm run test &&
                   npm run production
               artifacts:
                 public/dist:
