@@ -1,8 +1,41 @@
 <template>
   <Popper trigger="hover" :options="{ placement: 'right' }">
     <div class="popper">
-      <div class="pop-header">Available query parameters</div>
+      <div class="pop-header">Advanced Query</div>
       <div class="pop-body">
+        <h4>
+          Query Structure
+          <button
+            class="btn btn-default btn-xs pull-right ml-8"
+            v-on:click="showQuery = !showQuery"
+          >
+            <i class="glyphicon glyphicon-minus" v-if="showQuery"></i>
+            <i class="glyphicon glyphicon-plus" v-else></i>
+          </button>
+        </h4>
+        <div class="pop-list mt-1" v-if="showQuery">
+          <p>
+            Queries are JSON objects representing an SQL
+            <code>WHERE</code> clause. Each query object can have these
+            key/values:
+          </p>
+          <ul>
+            <li>
+              <code>op</code> (required), the logical operation to apply between
+              other key/values in this object. Value must be one of:
+              <code>AND</code>, <code>OR</code>, or
+              <code>NOT</code>
+            </li>
+            <li>
+              available parameters (below), with an appropriate value type
+            </li>
+            <li>sub-query objects as value (key is ignored)</li>
+          </ul>
+          <p>
+            <code>NOT</code> operations must have exactly one other key/value
+            specified.
+          </p>
+        </div>
         <h4>
           Available parameters
           <button
@@ -21,7 +54,7 @@
         </div>
         <hr />
         <h4>
-          Usable operations
+          Parameter suffixes
           <button
             class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showOps = !showOps"
@@ -43,9 +76,9 @@
           <a
             class="pull-right"
             target="_blank"
-            href="https://docs.djangoproject.com/fr/3.2/ref/models/querysets/#field-lookups"
+            href="https://docs.djangoproject.com/en/3.2/ref/models/querysets/#field-lookups"
           >
-            More operations
+            More suffixes
           </a>
         </div>
       </div>
@@ -71,6 +104,7 @@ export default {
     },
   },
   data: () => ({
+    showQuery: true,
     showParams: true,
     showOps: false,
   }),

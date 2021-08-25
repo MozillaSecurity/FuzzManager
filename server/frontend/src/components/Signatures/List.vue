@@ -19,7 +19,7 @@
       <br />
       <div>
         <label for="id_query">Search Query</label>
-        <HelpTooltip
+        <HelpJSONQueryPopover
           :parameters="[
             { name: 'id', type: 'Integer (ID)' },
             { name: 'signature', type: 'String' },
@@ -193,7 +193,7 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
-import HelpTooltip from "../HelpTooltip.vue";
+import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 
 const validSortKeys = [
   "id",
@@ -210,7 +210,7 @@ export default {
   components: {
     Row,
     ClipLoader,
-    HelpTooltip,
+    HelpJSONQueryPopover,
   },
   props: {
     watchUrl: {

@@ -6,7 +6,7 @@
     <div class="panel-body">
       <span v-if="advancedQuery">
         <label for="id_query">Search Query</label>
-        <HelpTooltip
+        <HelpJSONQueryPopover
           :parameters="[
             { name: 'id', type: 'Integer (ID)' },
             { name: 'created', type: 'Date' },
@@ -309,7 +309,7 @@ import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
-import HelpTooltip from "../HelpTooltip.vue";
+import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 
 const pageSize = 100;
 const validSortKeys = [
@@ -345,7 +345,7 @@ export default {
   components: {
     Row,
     ClipLoader,
-    HelpTooltip,
+    HelpJSONQueryPopover,
   },
   props: {
     restricted: {
