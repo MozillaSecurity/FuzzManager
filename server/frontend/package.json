@@ -50,7 +50,6 @@
             ".*\\.(js)$": "babel-jest"
         },
         "testEnvironment": "jsdom"
-
     },
     "babel": {
         "presets": [
