@@ -30,15 +30,11 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    dismissError: null,
-  }),
   filters: {
     formatDate: formatClientTimestamp,
   },
   methods: {
     async dismiss() {
-      this.dismissError = null;
       try {
         await api.dismissNotification(this.notification.id);
         this.$emit("remove-notification", this.notification.id);
