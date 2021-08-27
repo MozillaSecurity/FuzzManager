@@ -9,16 +9,12 @@ import "lodash/throttle";
 
 const localVue = createLocalVue();
 localVue.use(VueRouter);
-let router;
+const router = new VueRouter();
 
 // This line will mock all calls to functions in ../src/api.js
 jest.mock("../src/api.js");
 // Mocking calls to lodash._throttle during tests
 jest.mock("lodash/throttle", () => jest.fn((fn) => fn));
-
-beforeEach(() => {
-  router = new VueRouter();
-});
 
 afterEach(jest.resetAllMocks);
 
