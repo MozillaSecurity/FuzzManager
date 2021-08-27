@@ -32,3 +32,52 @@ export const unreadNotifications = {
   previous: null,
   results: [bucketHitNotification, inaccessibleBugNotification],
 };
+
+export const emptyBuckets = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+};
+
+export const buckets = {
+  count: 2,
+  next: null,
+  previous: null,
+  results: [
+    {
+      best_quality: 0,
+      bug: "1630739",
+      bug_closed: null,
+      bug_hostname: "bugzilla-dev.allizom.org",
+      bug_urltemplate: "https://bugzilla-dev.allizom.org/1630739",
+      frequent: false,
+      has_optimization: false,
+      id: 1,
+      link_url: "/crashmanager/signatures/1/link/",
+      opt_pre_url: "/crashmanager/signatures/1/preoptimized/",
+      permanent: false,
+      shortDescription: "A short description for bucket 1",
+      signature: "{ symptoms: 'some symptoms' }",
+      size: 3,
+      view_url: "/crashmanager/signatures/1/",
+    },
+    {
+      best_quality: 0,
+      bug: null,
+      bug_closed: null,
+      bug_hostname: null,
+      bug_urltemplate: null,
+      frequent: false,
+      has_optimization: false,
+      id: 2,
+      link_url: "/crashmanager/signatures/2/link/",
+      opt_pre_url: "/crashmanager/signatures/2/preoptimized/",
+      permanent: false,
+      shortDescription: "A short description for bucket 2",
+      signature: "{ symptoms: 'some symptoms' }",
+      size: 5,
+      view_url: "/crashmanager/signatures/2/",
+    },
+  ],
+};

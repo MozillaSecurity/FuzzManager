@@ -14,6 +14,7 @@ import {
   inaccessibleBugNotification,
   unreadNotifications,
 } from "./fixtures.js";
+// This line will mock all calls to functions in ../src/api.js
 jest.mock("../src/api.js");
 
 afterEach(jest.resetAllMocks);

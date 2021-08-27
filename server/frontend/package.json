@@ -4,7 +4,7 @@
     "description": "FuzzManager frontend project",
     "main": "index.js",
     "scripts": {
-        "test": "jest",
+        "test": "jest --verbose",
         "build": "webpack --config webpack.dev.js",
         "start": "webpack --config webpack.dev.js --watch",
         "production": "webpack --config webpack.prod.js"
@@ -44,6 +44,9 @@
             "js",
             "json",
             "vue"
+        ],
+        "transformIgnorePatterns": [
+            "/node_modules/(?!vue-spinner)"
         ],
         "transform": {
             ".*\\.(vue)$": "vue-jest",
