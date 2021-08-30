@@ -47,6 +47,14 @@
             "json",
             "vue"
         ],
+        "collectCoverageFrom": [
+             "**/*.{js,jsx}",
+             "**/*.vue",
+             "!**/tests/**",
+             "!**/coverage/**",
+             "!**/dist/**",
+             "!**/webpack.*.js"
+        ],
         "transformIgnorePatterns": [
             "/node_modules/(?!vue-spinner)"
         ],
