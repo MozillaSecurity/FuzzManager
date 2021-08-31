@@ -70,6 +70,24 @@
         <div class="row">
           <div class="form-group col-md-6">
             <label for="comment">Comment</label>
+            <HelpPopover
+              field="comment"
+              :variables="[
+                'summary',
+                'shortsig',
+                'product',
+                'version',
+                'args',
+                'os',
+                'platform',
+                'client',
+                'testcase',
+                'crashdata',
+                'crashdataattached',
+                'metadata*',
+              ]"
+              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-comment-field"
+            />
             <textarea
               id="id_comment"
               class="form-control"
@@ -212,6 +230,7 @@ import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
 import CrashDataSection from "../CrashDataSection.vue";
 import TestCaseSection from "../TestCaseSection.vue";
+import HelpPopover from "../HelpPopover.vue";
 
 // Apply Handlebars helpers
 Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
@@ -222,6 +241,7 @@ export default {
   components: {
     CrashDataSection,
     TestCaseSection,
+    HelpPopover,
   },
   props: {
     providerId: {

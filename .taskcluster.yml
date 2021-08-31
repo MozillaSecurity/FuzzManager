@@ -88,6 +88,8 @@ tasks:
             workerType: ci
             created: {$fromNow: ''}
             deadline: {$fromNow: '1 hour'}
+            scopes:
+              - secrets:get:project/fuzzing/codecov-fuzzmanager
             payload:
               maxRunTime: 3600
               image: mozillasecurity/${build.image}:latest
@@ -107,7 +109,12 @@ tasks:
                   git -c advice.detachedHead=false checkout ${fetch_rev} &&
                   cd server/frontend &&
                   retry npm install &&
-                  npm run production
+                  npm run test &&
+                  npm run production &&
+                  set +x &&
+                  export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
+                  set -x &&
+                  npm run codecov
               artifacts:
                 public/dist:
                   expires: {$fromNow: '6 months'}

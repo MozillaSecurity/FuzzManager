@@ -4,6 +4,8 @@
     "description": "FuzzManager frontend project",
     "main": "index.js",
     "scripts": {
+        "codecov": "codecov -X gcov -p ../..",
+        "test": "jest --verbose --coverage",
         "build": "webpack --config webpack.dev.js",
         "start": "webpack --config webpack.dev.js --watch",
         "production": "webpack --config webpack.prod.js"
@@ -15,17 +17,56 @@
         "lodash": "^4.17.21",
         "sweetalert": "^1.1.3",
         "vue": "^2.6.14",
+        "vue-popperjs": "^2.3.0",
         "vue-router": "^3.5.1",
         "vue-spinner": "^1.0.4"
     },
     "devDependencies": {
+        "@babel/core": "^7.15.0",
+        "@babel/preset-env": "^7.15.0",
+        "@testing-library/dom": "^8.1.0",
+        "@testing-library/vue": "^5.8.2",
+        "@vue/test-utils": "^1.2.2",
+        "babel-core": "^7.0.0-bridge.0",
+        "babel-jest": "^27.0.6",
+        "codecov": "^3.8.3",
         "css-loader": "^5.2.4",
+        "jest": "^27.0.6",
         "mini-css-extract-plugin": "^1.6.0",
         "postcss": "^8.3.5",
+        "vue-jest": "^3.0.7",
         "vue-loader": "^15.9.6",
         "vue-template-compiler": "^2.6.14",
         "webpack": "^5.36.0",
         "webpack-cli": "^4.6.0",
         "webpack-merge": "^5.7.3"
+    },
+    "jest": {
+        "moduleFileExtensions": [
+            "js",
+            "json",
+            "vue"
+        ],
+        "collectCoverageFrom": [
+             "**/*.{js,jsx}",
+             "**/*.vue",
+             "!**/tests/**",
+             "!**/coverage/**",
+             "!**/dist/**",
+             "!**/webpack.*.js"
+        ],
+        "transformIgnorePatterns": [
+            "/node_modules/(?!vue-spinner)"
+        ],
+        "transform": {
+            ".*\\.(vue)$": "vue-jest",
+            ".*\\.(js)$": "babel-jest"
+        },
+        "testEnvironment": "jsdom"
+    },
+    "babel": {
+        "presets": [
+            "@babel/preset-env"
+        ]
     }
 }
