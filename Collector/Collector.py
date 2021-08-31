@@ -29,7 +29,6 @@ import shutil
 import sys
 from tempfile import mkstemp
 from typing import Generator
-from typing import List
 from typing import Tuple
 from zipfile import ZipFile
 
