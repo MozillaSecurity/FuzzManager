@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
 from django.conf import settings

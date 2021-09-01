@@ -12,6 +12,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
+
+from __future__ import annotations
+
 import pytest
 import requests
 from six.moves.urllib.parse import urlsplit

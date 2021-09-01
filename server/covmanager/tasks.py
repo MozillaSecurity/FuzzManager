@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings  # noqa
 from django.core.files.base import ContentFile
 

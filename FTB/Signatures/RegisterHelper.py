@@ -12,6 +12,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
+from __future__ import annotations
+
 x86Registers = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "eip"]
 
 x64Registers = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8",

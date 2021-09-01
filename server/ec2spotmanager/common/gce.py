@@ -1,5 +1,7 @@
 # extracted from https://cloud.google.com/compute/docs/machine-types
 
+from __future__ import annotations
+
 import collections
 
 

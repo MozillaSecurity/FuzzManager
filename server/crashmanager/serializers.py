@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile

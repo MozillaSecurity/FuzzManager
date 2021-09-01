@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
+from __future__ import annotations
+
 from datetime import datetime
 from logging import getLogger
 from django.conf import settings

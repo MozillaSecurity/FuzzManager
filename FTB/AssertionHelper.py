@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
+from __future__ import annotations
+
 import re
 
 

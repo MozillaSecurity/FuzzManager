@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import annotations
 
 from django.core.management import BaseCommand
 from django.contrib.contenttypes.models import ContentType

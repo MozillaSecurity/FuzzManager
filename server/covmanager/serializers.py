@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 import hashlib

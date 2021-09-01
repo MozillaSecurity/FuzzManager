@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
 from django.conf import settings

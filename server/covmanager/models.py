@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
 from django.core.files.storage import FileSystemStorage

@@ -1,5 +1,4 @@
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
+from __future__ import annotations
 
 import functools
 from django.conf import settings

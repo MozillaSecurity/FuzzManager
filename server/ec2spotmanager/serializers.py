@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 from django.http.response import Http404  # noqa
 from rest_framework import serializers

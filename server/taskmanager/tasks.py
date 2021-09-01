@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
 from datetime import timedelta
 from logging import getLogger
 from pathlib import Path

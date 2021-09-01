@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.core.management import BaseCommand, call_command
 
 from crashmanager.management.common import mgmt_lock_required

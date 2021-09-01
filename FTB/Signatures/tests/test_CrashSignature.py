@@ -4,6 +4,9 @@ Created on Oct 9, 2014
 
 @author: decoder
 '''
+
+from __future__ import annotations
+
 import json
 import os
 

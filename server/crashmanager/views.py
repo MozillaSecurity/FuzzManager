@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 from datetime import timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied

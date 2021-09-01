@@ -13,6 +13,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
+from __future__ import annotations
+
 
 def get_prices(regions, cloud_provider, instance_types=None, use_multiprocess=False):
     if use_multiprocess:

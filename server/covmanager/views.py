@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.db.models import Q

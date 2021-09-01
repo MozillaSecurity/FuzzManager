@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import annotations
+
 from django.core.management import BaseCommand  # noqa
 
 from ...models import Pool

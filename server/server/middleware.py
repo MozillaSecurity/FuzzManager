@@ -1,4 +1,5 @@
-from __future__ import print_function
+from __future__ import annotations
+
 import re
 import traceback
 

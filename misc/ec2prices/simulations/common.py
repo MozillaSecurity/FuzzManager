@@ -13,7 +13,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 '''
-from __future__ import print_function
+
+from __future__ import annotations
 
 
 def select_better(data, current_price=None, region=None, zone=None, instance_type=None, instance_time=None, indent=1,

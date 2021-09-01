@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import annotations
 
 from django.core.management.base import LabelCommand
 from django.contrib.auth.models import User

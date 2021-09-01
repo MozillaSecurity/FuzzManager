@@ -14,8 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 '''
 
-# Ensure print() compatibility with Python 3
-from __future__ import print_function, unicode_literals
+from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 import numbers
