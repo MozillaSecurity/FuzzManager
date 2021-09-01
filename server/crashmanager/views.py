@@ -11,9 +11,7 @@ from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from notifications.models import Notification
-import functools
 import json
-import operator
 import os
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
@@ -58,7 +56,7 @@ def check_authorized_for_signature(request, signature):
 
         entries = CrashEntry.objects.filter(bucket=signature)
         entries = CrashEntry.deferRawFields(entries)
-        entries = entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        entries = entries.filter(tool__in=defaultToolsFilter)
         if not entries:
             raise PermissionDenied({"message": "You don't have permission to access this signature."})
 
@@ -79,7 +77,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        return entries.filter(tool__in=defaultToolsFilter)
     elif user.restricted:
         return CrashEntry.objects.none()
 
@@ -856,8 +854,6 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
 class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
     def filter_queryset(self, request, queryset, view):
-        # we should use a subquery to get best_quality which would allow us to also get the corresponding crash
-        # Subquery was added in Django 1.11
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 
@@ -956,15 +952,28 @@ class BucketViewSet(mixins.ListModelMixin,
         user = User.get_or_create_restricted(request.user)[0]
         instance = self.get_object()
         ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
+
+        crashes_in_filter = filter_crash_entries_by_toolfilter(
+            request, instance.crashentry_set,
+            restricted_only=bool(ignore_toolfilter),
+        )
+
         if not ignore_toolfilter and not user.restricted:
-            # if a normal user requested toolfilter, we ignored it...
+            # if a non-restricted user requested toolfilter, we ignored it...
+            # otherwise if the bucket had no crashes in toolfilter, it would 404
             # recalculate size and quality using toolfilter
             # even if the result is 0
-            defaultToolsFilter = user.defaultToolsFilter.all()
-            crashes_in_filter = instance.crashentry_set.filter(tool__in=defaultToolsFilter)
             agg = crashes_in_filter.aggregate(quality=Min("testcase__quality"), size=Count("id"))
             instance.size = agg["size"]
             instance.quality = agg["quality"]
+
+        instance.best_entry = None
+        if instance.quality is not None:
+            best_crash = crashes_in_filter.filter(testcase__quality=instance.quality).order_by(
+                "testcase__size", "-id"
+            ).first()
+            instance.best_entry = best_crash.id
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 

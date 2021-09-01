@@ -49,9 +49,9 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
+def _compare_rest_result_to_bucket(result, bucket, size, quality, entry, vue=False):
     attributes = {
-        'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
+        'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
         'has_optimization',
     }
     if vue:
@@ -60,6 +60,7 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
     assert set(result) == attributes
     assert result["id"] == bucket.pk
     assert result["best_quality"] == quality
+    assert result["best_entry"] == entry
     assert result["bug"] == bucket.bug_id
     assert result["frequent"] == bucket.frequent
     assert result["has_optimization"] == bool(bucket.optimizedSignature)
@@ -153,10 +154,10 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, vue=vue)
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, vue=vue)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, None, vue=vue)
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, None, vue=vue)
     else:
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, vue=vue)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, None, vue=vue)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -171,7 +172,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
              cm.create_testcase("test4.txt", quality=3)]
     buckets = [bucket1, bucket1, bucket2, bucket2]
     tools = ["tool1", "tool2", "tool2", "tool3"]
-    for i in range(4):
+    crashes = [
         cm.create_crash(shortSignature="crash #%d" % (i + 1),
                         client="client #%d" % (i + 1),
                         os="os #%d" % (i + 1),
@@ -181,6 +182,8 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
                         tool=tools[i],
                         testcase=tests[i],
                         bucket=buckets[i])
+        for i in range(4)
+    ]
     cm.create_toolfilter('tool1', user=user.username)
     params = {}
     if ignore_toolfilter:
@@ -197,12 +200,12 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             assert status_code == requests.codes['ok'], resp['detail']
             if user.username == "test":
                 if ignore_toolfilter:
-                    size, quality = [(2, 9), (2, 2)][i]
+                    size, quality, entry = [(2, 9, crashes[0].id), (2, 2, crashes[2].id)][i]
                 else:
-                    size, quality = [(1, 9), (0, None)][i]
+                    size, quality, entry = [(1, 9, crashes[0].id), (0, None, None)][i]
             else:
-                size, quality = (1, 9)
-            _compare_rest_result_to_bucket(resp, bucket, size, quality)
+                size, quality, entry = (1, 9, crashes[0].id)
+            _compare_rest_result_to_bucket(resp, bucket, size, quality, entry)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
