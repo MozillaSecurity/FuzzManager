@@ -26,6 +26,11 @@
 			    <a href="{% url 'crashmanager:createbug' entry.pk %}" class="btn btn-danger">File a bug</a>
 			    <a href="{% url 'crashmanager:siglink' entry.bucket.pk %}" class="btn btn-default">Assign an existing bug</a>
 			</div>
+            {% else %}
+            <br/><br/>
+            <div class="btn-group">
+                <a href="{% url 'crashmanager:createbugcomment' entry.pk %}" class="btn btn-danger">Post a bug comment</a>
+			</div>
 			{% endif %}
 		{% else %}
 		<br/><br/>
