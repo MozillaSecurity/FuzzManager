@@ -28,7 +28,6 @@ import shutil
 import sys
 from tempfile import mkstemp
 from typing import Generator
-from typing import Tuple
 from zipfile import ZipFile
 
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
@@ -322,7 +321,7 @@ class Collector(Reporter):
         return sigfile
 
     @staticmethod
-    def read_testcase(testCase: str) -> Tuple[str, bool]:
+    def read_testcase(testCase: str) -> tuple[str, bool]:
         '''
         Read a testcase file, return the content and indicate if it is binary or not.
 
