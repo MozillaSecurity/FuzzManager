@@ -182,7 +182,7 @@
 
 <script>
 import _throttle from "lodash/throttle";
-import sweetAlert from "sweetalert";
+import swal from "sweetalert";
 import * as api from "../../api";
 import {
   formatClientTimestamp,
@@ -297,7 +297,7 @@ export default {
           ) {
             // eslint-disable-next-line no-console
             console.debug(err.response.data);
-            sweetAlert("Oops", E_SERVER_ERROR, "error");
+            swal("Oops", E_SERVER_ERROR, "error");
             this.loading = false;
           }
         }

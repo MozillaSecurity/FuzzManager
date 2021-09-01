@@ -207,7 +207,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
         this.loading = false
       }).then(json => {
         this.collections = json["results"]
@@ -248,7 +248,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.suggestions[key].value = json["results"]
       })
@@ -270,14 +270,13 @@ let covmanager = new Vue({
       }
 
       if (ids) {
-        sweetAlert({
+        swal({
           title: "Create Collection Aggregation",
           text: 'Enter optional new description for result collection',
-          type: 'input',
-          showCancelButton: true,
-          animation: "slide-from-top"
-        }, function(description){
-          if (description === false) {
+          content: 'input',
+          buttons: true,
+        }).then(description => {
+          if (!description) {
             /* User pressed cancel button */
             return;
           }
@@ -306,14 +305,14 @@ let covmanager = new Vue({
             if (response.ok) {
               return response.json()
             }
-            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+            swal('Oops', E_SERVER_ERROR, 'error')
           })
           .then(json => {
             let newid = json["newid"]
             if (newid) {
               window.open(json["newid"] + "/browse", '_self');
             } else {
-              sweetAlert('Oops', E_SERVER_ERROR, 'error')
+              swal('Oops', E_SERVER_ERROR, 'error')
             }
           })
         })
@@ -327,7 +326,7 @@ let covmanager = new Vue({
       } else if (this.collections.length == 1) {
         target_collection = this.collections[0].pk
       } else {
-        sweetAlert('Error', "Function requires exactly one collection to be selected.", 'error')
+        swal('Error', "Function requires exactly one collection to be selected.", 'error')
         return
       }
 

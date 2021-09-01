@@ -81,7 +81,7 @@
 <script>
 import _throttle from "lodash/throttle";
 import _orderBy from "lodash/orderBy";
-import sweetAlert from "sweetalert";
+import swal from "sweetalert";
 import { E_SERVER_ERROR } from "../../helpers";
 import * as api from "../../api";
 
@@ -129,7 +129,7 @@ export default {
           ) {
             // eslint-disable-next-line no-console
             console.debug(err.response.data);
-            sweetAlert("Oops", E_SERVER_ERROR, "error");
+            swal("Oops", E_SERVER_ERROR, "error");
             this.loading = false;
           }
         }

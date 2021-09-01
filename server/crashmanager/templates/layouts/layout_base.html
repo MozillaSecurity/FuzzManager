@@ -66,7 +66,7 @@
             setTimeout(fetch_api_data, notify_refresh_period);
           }
         } else {
-          sweetAlert('Oops', E_SERVER_ERROR, 'error');
+          swal('Oops', E_SERVER_ERROR, 'error');
           console.debug(response);
         }
       })

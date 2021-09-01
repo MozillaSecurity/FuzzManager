@@ -304,7 +304,7 @@
 <script>
 import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
-import sweetAlert from "sweetalert";
+import swal from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
@@ -550,7 +550,7 @@ export default {
             } else {
               // eslint-disable-next-line no-console
               console.debug(err.response.data);
-              sweetAlert("Oops", E_SERVER_ERROR, "error");
+              swal("Oops", E_SERVER_ERROR, "error");
             }
             this.loading = false;
           } else {

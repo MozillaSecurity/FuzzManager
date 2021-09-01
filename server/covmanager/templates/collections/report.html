@@ -177,7 +177,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
         this.loading = false
       }).then(json => {
         this.reports = json["results"]
@@ -270,19 +270,18 @@ let covmanager = new Vue({
     update: function (url, data, desc) {
       let self = this
 
-      sweetAlert({
+      swal({
         title: "Confirm Action",
-        text: 'Would you really like to ' + desc + "?",
-        type: 'warning',
-        showCancelButton: true,
-        animation: "slide-from-top"
-      }, function(confirmed) {
+        text: `Would you really like to ${desc}?`,
+        icon: 'warning',
+        buttons: true,
+      }).then(confirmed => {
         if (!confirmed) {
           /* User pressed cancel button */
           return;
         }
 
-        return fetch(url, {
+        fetch(url, {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -297,7 +296,7 @@ let covmanager = new Vue({
             if (response.ok) {
               return response.json()
             }
-            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+            swal('Oops', E_SERVER_ERROR, 'error')
           })
           .then(() => {
             self.fetch()
@@ -306,7 +305,7 @@ let covmanager = new Vue({
     },
     summary_diff: function() {
       if (this.selected_reports.length != 2) {
-        sweetAlert('Oops', "Summarized diff requires exactly 2 reports to be selected", 'error')
+        swal('Oops', "Summarized diff requires exactly 2 reports to be selected", 'error')
         return
       }
 

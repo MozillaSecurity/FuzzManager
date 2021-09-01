@@ -160,7 +160,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
         this.loading = false
       }).then(json => {
         this.rc_list = json['results']
@@ -274,7 +274,7 @@ let covmanager = new Vue({
           if (response.ok) {
             return response.json()
           }
-          sweetAlert('Oops', E_SERVER_ERROR, 'error')
+          swal('Oops', E_SERVER_ERROR, 'error')
         })
         .then(() => {
           self.fetch()

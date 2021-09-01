@@ -115,7 +115,7 @@ let covmanager = new Vue({
     if (ids != "") {
       self.collection_ids = ids.split(",")
     } else {
-      sweetAlert('Oops', "Patch analysis requires an ID list from search", 'error')
+      swal('Oops', "Patch analysis requires an ID list from search", 'error')
     }
   },
   watch: {
@@ -143,7 +143,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.repository_suggestions = json["results"]
 
@@ -177,7 +177,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.collections = json["results"]
         analysis_results = []
@@ -192,7 +192,7 @@ let covmanager = new Vue({
             if (response.ok) {
               return response.json()
             }
-            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+            swal('Oops', E_SERVER_ERROR, 'error')
           }).then(json => {
             analysis_result = {
               collection: collection,
