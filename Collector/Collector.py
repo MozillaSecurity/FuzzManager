@@ -195,22 +195,18 @@ class Collector(Reporter):
         return (None, None)
 
     @signature_checks
-    def generate(self, crashInfo, forceCrashAddress=None, forceCrashInstruction=None, numFrames=None):
+    def generate(self, crashInfo: CrashInfo, forceCrashAddress: bool = False,
+                 forceCrashInstruction: bool = False, numFrames: int = 8) -> str | None:
         '''
         Generates a signature in the local cache directory. It will be deleted when L{refresh} is called
         on the same local cache directory.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
 
-        @type forceCrashAddress: bool
         @param forceCrashAddress: Force including the crash address into the signature
-        @type forceCrashInstruction: bool
         @param forceCrashInstruction: Force including the crash instruction into the signature (GDB only)
-        @type numFrames: int
         @param numFrames: How many frames to include in the signature
 
-        @rtype: string
         @return: File containing crash signature in JSON format
         '''
 
