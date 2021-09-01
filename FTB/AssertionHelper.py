@@ -179,16 +179,14 @@ def getAuxiliaryAbortMessage(output):
     return lastLine
 
 
-def getSanitizedAssertionPattern(msgs):
+def getSanitizedAssertionPattern(msgs: list[str] | str) -> list[str] | str:
     '''
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.
     for use in signature matching.
 
-    @type msgs: string or list
     @param msgs: Assertion message(s) to be sanitized
 
-    @rtype: string
     @return: Sanitized assertion message (regular expression)
     '''
     assert msgs is not None
@@ -202,7 +200,7 @@ def getSanitizedAssertionPattern(msgs):
 
     for msg in msgs:
         # remember the position of all backslashes in the input
-        bsPositions = []
+        bsPositions: list[int] = []
         for chunk in msg.split("\\"):
             if not bsPositions:
                 bsPositions.append(len(chunk))
@@ -259,7 +257,7 @@ def getSanitizedAssertionPattern(msgs):
         replacementPatterns.append("[0-9]{2,}")
 
         for replacementPattern in replacementPatterns:
-            def _handleMatch(match):
+            def _handleMatch(match: re.Match[str]) -> str:
                 start = match.start(0)
                 end = match.end(0)
                 lengthDiff = len(replacementPattern) - len(match.group(0))
