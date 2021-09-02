@@ -49,10 +49,10 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality, entry, vue=False):
+def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=None, latest=None, vue=False):
     attributes = {
         'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
-        'has_optimization',
+        'has_optimization', 'latest_entry',
     }
     if vue:
         attributes.update({'view_url', 'link_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
@@ -60,7 +60,8 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, entry, vue=Fal
     assert set(result) == attributes
     assert result["id"] == bucket.pk
     assert result["best_quality"] == quality
-    assert result["best_entry"] == entry
+    assert result["best_entry"] == best_entry
+    assert result["latest_entry"] == latest
     assert result["bug"] == bucket.bug_id
     assert result["frequent"] == bucket.frequent
     assert result["has_optimization"] == bool(bucket.optimizedSignature)
@@ -154,10 +155,10 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, None, vue=vue)
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, None, vue=vue)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, vue=vue)
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, vue=vue)
     else:
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, None, vue=vue)
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, vue=vue)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -200,12 +201,15 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             assert status_code == requests.codes['ok'], resp['detail']
             if user.username == "test":
                 if ignore_toolfilter:
-                    size, quality, entry = [(2, 9, crashes[0].id), (2, 2, crashes[2].id)][i]
+                    size, quality, best, latest = [
+                        (2, 9, crashes[0].id, crashes[1].id),
+                        (2, 2, crashes[2].id, crashes[3].id),
+                    ][i]
                 else:
-                    size, quality, entry = [(1, 9, crashes[0].id), (0, None, None)][i]
+                    size, quality, best, latest = [(1, 9, crashes[0].id, crashes[0].id), (0, None, None, None)][i]
             else:
-                size, quality, entry = (1, 9, crashes[0].id)
-            _compare_rest_result_to_bucket(resp, bucket, size, quality, entry)
+                size, quality, best, latest = (1, 9, crashes[0].id, crashes[0].id)
+            _compare_rest_result_to_bucket(resp, bucket, size, quality, best, latest)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)

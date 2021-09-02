@@ -974,6 +974,11 @@ class BucketViewSet(mixins.ListModelMixin,
             ).first()
             instance.best_entry = best_crash.id
 
+        instance.latest_entry = None
+        if instance.size:
+            latest_crash = crashes_in_filter.order_by("id").last()
+            instance.latest_entry = latest_crash.id
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
