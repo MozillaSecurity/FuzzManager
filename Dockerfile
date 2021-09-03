@@ -28,4 +28,4 @@ RUN python manage.py collectstatic --no-input
 # Run with gunicorn, using container's port 80
 ENV PORT 80
 EXPOSE 80
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "server.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "--access-logfile", "-", "server.wsgi"]
