@@ -19,8 +19,7 @@
 </template>
 
 <script>
-import { errorParser } from "../../../helpers";
-import * as api from "../../../api";
+import { assignExternalBug, errorParser } from "../../../helpers";
 
 export default {
   props: {
@@ -38,23 +37,15 @@ export default {
     },
   },
   methods: {
-    async assignExternalBug() {
+    assignExternalBug() {
       this.$emit("error", null);
-      const payload = {
-        bug: this.bug.id,
-        bug_provider: this.providerId,
-      };
-
-      try {
-        const data = await api.updateBucket({
-          id: this.bucketId,
-          params: { reassign: false },
-          ...payload,
+      assignExternalBug(this.bucketId, this.bug.id, this.providerId)
+        .then((data) => {
+          window.location.href = data.url;
+        })
+        .catch((err) => {
+          this.$emit("error", errorParser(err));
         });
-        window.location.href = data.url;
-      } catch (err) {
-        this.$emit("error", errorParser(err));
-      }
     },
   },
 };

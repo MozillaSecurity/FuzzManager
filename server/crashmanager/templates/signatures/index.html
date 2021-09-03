@@ -3,5 +3,8 @@
 {% load extratags %}
 
 {% block body_content %}
-<signatureslist watch-url="{% url 'crashmanager:sigwatch' %}"/>
+<signatureslist
+  :providers="{{ providers }}"
+  watch-url="{% url 'crashmanager:sigwatch' %}"
+  />
 {% endblock body_content %}

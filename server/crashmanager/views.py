@@ -2,7 +2,7 @@ from collections import OrderedDict
 from datetime import timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
 from django.db.models import F, Q
-from django.db.models.aggregates import Count, Min, Max
+from django.db.models.aggregates import Count, Min
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -140,7 +140,13 @@ def stats(request):
             obj.rph = freq
             frequentBuckets.append(obj)
 
-    return render(request, 'stats.html', {'total_reports_per_hour': len(entries), 'frequentBuckets': frequentBuckets})
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+
+    return render(request, 'stats.html', {
+        'total_reports_per_hour': len(entries),
+        'frequentBuckets': frequentBuckets,
+        'providers': json.dumps(providers),
+    })
 
 
 def settings(request):
@@ -227,7 +233,8 @@ def bucketWatchCrashes(request, sigid):
 
 
 def signatures(request):
-    return render(request, 'signatures/index.html')
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+    return render(request, 'signatures/index.html', {'providers': json.dumps(providers)})
 
 
 def index(request):
@@ -247,7 +254,9 @@ def viewCrashEntry(request, crashid):
     if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.loadTest()
 
-    return render(request, 'crashes/view.html', {'entry': entry})
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+
+    return render(request, 'crashes/view.html', {'entry': entry, 'providers': json.dumps(providers)})
 
 
 def editCrashEntry(request, crashid):
@@ -385,31 +394,20 @@ def deleteSignature(request, sigid):
 
 
 def viewSignature(request, sigid):
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),
-                                                      quality=Min('crashentry__testcase__quality'))
+    bucket = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid).data
+    if bucket['best_entry'] is not None:
+        best_entry_size = get_object_or_404(CrashEntry, pk=bucket['best_entry']).testcase.size
+    else:
+        best_entry_size = None
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
-    if not bucket:
-        raise Http404
-
-    bucket = bucket[0]
-
-    check_authorized_for_signature(request, bucket)
-
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(
-        testcase__quality=bucket.quality).order_by('testcase__size', '-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
-    entries = entries.values_list('pk', flat=True)[:1]
-
-    bucket.bestEntry = None
-    if entries:
-        bucket.bestEntry = CrashEntry.objects.select_related('testcase').get(pk=entries[0])
-
-    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
-
-    # standardize formatting of the signature
-    bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
-
-    return render(request, 'signatures/view.html', {'bucket': bucket, 'latestCrash': latestCrash})
+    return render(request, 'signatures/view.html', {
+        'bucket': json.dumps(bucket),
+        'bucket_id': bucket['id'],
+        'best_entry': bucket['best_entry'],
+        'best_entry_size': json.dumps(best_entry_size),
+        'providers': json.dumps(providers),
+    })
 
 
 def editSignature(request, sigid):
@@ -425,66 +423,6 @@ def editSignature(request, sigid):
         proposedSignature = bucket.getSignature().fit(entry.getCrashInfo())
 
     return render(request, 'signatures/edit.html', {'bucketId': bucket.pk, 'proposedSig': proposedSignature})
-
-
-def linkSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    check_authorized_for_signature(request, bucket)
-
-    providers = BugProvider.objects.all()
-
-    data = {'bucket': bucket, 'providers': providers}
-
-    if request.method == 'POST':
-        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        bugId = request.POST['bugId']
-        username = request.POST['username']
-        password = request.POST['password']
-
-        bug = Bug.objects.filter(externalId=bugId, externalType=provider)
-
-        if 'submit_save' in request.POST:
-            if not bug:
-                bug = Bug(externalId=bugId, externalType=provider)
-                bug.save()
-            else:
-                bug = bug[0]
-
-            bucket.bug = bug
-            bucket.save()
-            return redirect('crashmanager:sigview', sigid=bucket.pk)
-        else:
-            # This is a preview request
-            bugData = provider.getInstance().getBugData(bugId, username, password)
-
-            if bugData is None:
-                data['error_message'] = 'Bug not found in external database.'
-            else:
-                data['summary'] = bugData['summary']
-
-            data['provider'] = provider
-            data['bugId'] = bugId
-            data['username'] = username
-
-            return render(request, 'signatures/link.html', data)
-    elif request.method == 'GET':
-        return render(request, 'signatures/link.html', data)
-    else:
-        raise SuspiciousOperation
-
-
-def unlinkSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    check_authorized_for_signature(request, bucket)
-
-    if request.method == 'POST':
-        bucket.bug = None
-        bucket.save(update_fields=['bug'])
-        return redirect('crashmanager:sigview', sigid=bucket.pk)
-    elif request.method == 'GET':
-        return render(request, 'signatures/unlink.html', {'bucket': bucket})
-    else:
-        raise SuspiciousOperation
 
 
 def trySignature(request, sigid, crashid):

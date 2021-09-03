@@ -55,7 +55,7 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=Non
         'has_optimization', 'latest_entry',
     }
     if vue:
-        attributes.update({'view_url', 'link_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
+        attributes.update({'view_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
 
     assert set(result) == attributes
     assert result["id"] == bucket.pk
@@ -71,7 +71,6 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=Non
     assert result["size"] == size
     if vue:
         assert result["view_url"] == reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
-        assert result["link_url"] == reverse('crashmanager:siglink', kwargs={'sigid': bucket.pk})
         assert result["opt_pre_url"] == reverse('crashmanager:sigoptpre', kwargs={'sigid': bucket.pk})
         assert result["bug_closed"] is None
         assert result["bug_urltemplate"] is None

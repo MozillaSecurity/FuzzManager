@@ -28,7 +28,7 @@ test("signature list has no buckets", async () => {
   await render(List, {
     localVue,
     router,
-    props: { watchUrl: "/crashmanager/signatures/watch/" },
+    props: { watchUrl: "/crashmanager/signatures/watch/", providers: [] },
   });
   await Vue.nextTick();
 
@@ -49,10 +49,10 @@ test("signature list has no buckets", async () => {
 
 test("signature list has two buckets", async () => {
   listBuckets.mockResolvedValue(buckets);
-  const { getByText, getByTitle } = await render(List, {
+  const { getByText } = await render(List, {
     localVue,
     router,
-    props: { watchUrl: "/crashmanager/signatures/watch/" },
+    props: { watchUrl: "/crashmanager/signatures/watch/", providers: [] },
   });
   await Vue.nextTick();
 
@@ -74,5 +74,5 @@ test("signature list has two buckets", async () => {
   expect(buttonLink).toHaveProperty("href", buckets.results[0].bug_urltemplate);
   expect(buttonLink).toHaveProperty("target", "_blank");
   getByText("A short description for bucket 2");
-  getByTitle("Assign an external bug");
+  getByText("Assign an existing bug");
 });

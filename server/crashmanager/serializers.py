@@ -164,43 +164,36 @@ class BucketSerializer(serializers.ModelSerializer):
 
 
 class BucketVueSerializer(BucketSerializer):
-    view_url = serializers.SerializerMethodField()
-    link_url = serializers.SerializerMethodField()
-    opt_pre_url = serializers.SerializerMethodField()
     bug_closed = serializers.SerializerMethodField()
-    bug_urltemplate = serializers.SerializerMethodField()
     bug_hostname = serializers.SerializerMethodField()
+    bug_urltemplate = serializers.SerializerMethodField()
+    opt_pre_url = serializers.SerializerMethodField()
+    view_url = serializers.SerializerMethodField()
 
     class Meta(BucketSerializer.Meta):
         fields = BucketSerializer.Meta.fields + (
-            'view_url',
-            'link_url',
-            'opt_pre_url',
             'bug_closed',
-            'bug_urltemplate',
             'bug_hostname',
+            'bug_urltemplate',
+            'opt_pre_url',
+            'view_url',
         )
         read_only_fields = BucketSerializer.Meta.read_only_fields + (
-            'view_url',
-            'link_url',
-            'opt_pre_url',
             'bug_closed',
-            'bug_urltemplate',
             'bug_hostname',
+            'bug_urltemplate',
+            'opt_pre_url',
+            'view_url',
         )
-
-    def get_view_url(self, sig):
-        return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
-
-    def get_link_url(self, sig):
-        return reverse('crashmanager:siglink', kwargs={'sigid': sig.id})
-
-    def get_opt_pre_url(self, sig):
-        return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
 
     def get_bug_closed(self, sig):
         if sig.bug:
             return sig.bug.closed
+        return None
+
+    def get_bug_hostname(self, sig):
+        if sig.bug and sig.bug.externalType:
+            return sig.bug.externalType.hostname
         return None
 
     def get_bug_urltemplate(self, sig):
@@ -211,10 +204,11 @@ class BucketVueSerializer(BucketSerializer):
                 return None
         return None
 
-    def get_bug_hostname(self, sig):
-        if sig.bug and sig.bug.externalType:
-            return sig.bug.externalType.hostname
-        return None
+    def get_opt_pre_url(self, sig):
+        return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
+
+    def get_view_url(self, sig):
+        return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
 
 
 class CrashEntryVueSerializer(CrashEntrySerializer):

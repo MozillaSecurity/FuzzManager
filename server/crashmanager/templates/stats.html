@@ -29,7 +29,7 @@
                 {% if entry.bug %}
                 <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
                 {% else %}
-                <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
+                <assignbutton :bucket="{{ entry.pk }}" :providers="{{ providers }}" />
                 {% endif %}
             </td>
         </tr>

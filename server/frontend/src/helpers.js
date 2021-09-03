@@ -1,3 +1,5 @@
+import * as api from "./api";
+
 /**
  * A helper method to try to parse errors into human-readable strings.
  * This also parses anything that is not an Error, since JavaScript allows throwing anything, not just errors.
@@ -46,6 +48,25 @@ export const formatClientTimestamp = (datetime) => {
     hour12: false,
     timeZoneName: "short",
   }).format(new Date(datetime));
+};
+
+export const assignExternalBug = (bucketId, bugId, providerId) => {
+  const payload = {
+    bug: bugId,
+    bug_provider: providerId,
+  };
+
+  try {
+    return Promise.resolve(
+      api.updateBucket({
+        id: bucketId,
+        params: { reassign: false },
+        ...payload,
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
 export const formatDateRelative = (datetime, relative_to, suffix) => {

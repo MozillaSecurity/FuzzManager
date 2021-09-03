@@ -20,9 +20,7 @@
       <p v-else-if="signature.bug">
         {{ signature.bug }} on {{ signature.bug_hostname }}
       </p>
-      <a v-else title="Assign an external bug" :href="signature.link_url">
-        Assign
-      </a>
+      <assignbutton v-else :bucket="signature.id" :providers="providers" />
     </td>
     <td>
       <a
@@ -37,10 +35,19 @@
 </template>
 
 <script>
+import AssignBtn from "./AssignBtn.vue";
+
 export default {
+  components: {
+    assignbutton: AssignBtn,
+  },
   props: {
     signature: {
       type: Object,
+      required: true,
+    },
+    providers: {
+      type: Array,
       required: true,
     },
   },

@@ -178,6 +178,7 @@
         <Row
           v-for="signature in signatures"
           :key="signature.id"
+          :providers="providers"
           :signature="signature"
           v-else
         />
@@ -215,6 +216,10 @@ export default {
   props: {
     watchUrl: {
       type: String,
+      required: true,
+    },
+    providers: {
+      type: Array,
       required: true,
     },
   },
