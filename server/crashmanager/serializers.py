@@ -126,7 +126,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 class BucketSerializer(serializers.ModelSerializer):
     signature = serializers.CharField(style={'base_template': 'textarea.html'}, required=False)
-    bug = serializers.CharField(source='bug.externalId', default=None)
+    bug = serializers.CharField(source='bug.externalId', default=None, allow_null=True)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
@@ -134,7 +134,7 @@ class BucketSerializer(serializers.ModelSerializer):
     latest_entry = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
     bug_provider = serializers.PrimaryKeyRelatedField(
-        write_only=True, required=False, queryset=BugProvider.objects.all()
+        write_only=True, required=False, queryset=BugProvider.objects.all(), allow_null=True
     )
     has_optimization = serializers.BooleanField(write_only=True, required=False)
 
@@ -147,8 +147,14 @@ class BucketSerializer(serializers.ModelSerializer):
         ordering = ['-id']
         read_only_fields = ('id', )
 
+    def to_internal_value(self, data):
+        result = super().to_internal_value(data)
+        if 'bug' in result and result['bug']['externalId'] is None:
+            result['bug'] = None
+        return result
+
     def to_representation(self, obj):
-        serialized = super(BucketSerializer, self).to_representation(obj)
+        serialized = super().to_representation(obj)
         serialized['size'] = obj.size
         serialized['best_entry'] = getattr(obj, "best_entry", None)
         serialized['latest_entry'] = getattr(obj, "latest_entry", None)

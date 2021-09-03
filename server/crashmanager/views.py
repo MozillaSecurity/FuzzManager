@@ -967,14 +967,12 @@ class BucketViewSet(mixins.ListModelMixin,
             instance.size = agg["size"]
             instance.quality = agg["quality"]
 
-        instance.best_entry = None
         if instance.quality is not None:
             best_crash = crashes_in_filter.filter(testcase__quality=instance.quality).order_by(
                 "testcase__size", "-id"
             ).first()
             instance.best_entry = best_crash.id
 
-        instance.latest_entry = None
         if instance.size:
             latest_crash = crashes_in_filter.order_by("id").last()
             instance.latest_entry = latest_crash.id
@@ -990,6 +988,15 @@ class BucketViewSet(mixins.ListModelMixin,
 
         # Only save if we hit "save" (not e.g. "preview")
         if submitSave:
+            if bucket.bug is not None:
+                bucket.bug.save()
+                # this is not a no-op!
+                # if the bug was just created by .save(),
+                # it must be re-assigned to the model
+                # ref: https://docs.djangoproject.com/en/3.1/topics/db/examples/many_to_one/
+                # "Note that you must save an object before it can be
+                #  assigned to a foreign key relationship."
+                bucket.bug = bucket.bug
             bucket.save()
 
         inList, outList = [], []
@@ -1021,31 +1028,41 @@ class BucketViewSet(mixins.ListModelMixin,
         if user.restricted:
             raise MethodNotAllowed(request.method)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
         check_authorized_for_signature(request, bucket)
 
-        # Either we are assigning an external bug to this bucket
-        if serializer.initial_data.get('bug') is not None:
-            extBug, _ = Bug.objects.get_or_create(
-                externalId=serializer.validated_data.get('bug')['externalId'],
-                defaults={
-                    "externalType": serializer.validated_data.get('bug_provider')
-                }
-            )
-            bucket.bug = extBug
-        # Or updating its values
-        else:
-            bucket.signature = serializer.validated_data.get('signature')
-            bucket.shortDescription = serializer.validated_data.get('shortDescription')
-            bucket.frequent = serializer.validated_data.get('frequent')
-            bucket.permanent = serializer.validated_data.get('permanent')
+        if 'bug' in serializer.validated_data:
+            if serializer.validated_data['bug'] is None:
+                bug = None
+            else:
+                bug = Bug.objects.filter(
+                    externalId=serializer.validated_data.get('bug')['externalId'],
+                    externalType=serializer.validated_data.get('bug_provider'),
+                )
+                if not bug.exists():
+                    bug = Bug(
+                        externalId=serializer.validated_data.get('bug')['externalId'],
+                        externalType=serializer.validated_data.get('bug_provider'),
+                    )
+                else:
+                    bug = bug.first()
+
+            bucket.bug = bug
+
+        if 'signature' in serializer.validated_data:
+            bucket.signature = serializer.validated_data['signature']
+        if 'shortDescription' in serializer.validated_data:
+            bucket.shortDescription = serializer.validated_data['shortDescription']
+        if 'frequent' in serializer.validated_data:
+            bucket.frequent = serializer.validated_data['frequent']
+        if 'permanent' in serializer.validated_data:
+            bucket.permanent = serializer.validated_data['permanent']
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
-        # TODO: FIXME: Update bug here as well
         data = self.__validate(request, bucket, save, reassign)
         return Response(
             status=status.HTTP_200_OK,
@@ -1065,13 +1082,18 @@ class BucketViewSet(mixins.ListModelMixin,
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
-        # TODO: FIXME: Update bug here as well
         data = self.__validate(request, bucket, save, reassign)
         response_status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
         return Response(
             status=response_status,
             data=data,
         )
+
+
+class BucketVueViewSet(BucketViewSet):
+    """API endpoint that allows viewing Buckets and always uses Vue serializer"""
+    def get_serializer(self, *args, **kwds):
+        return BucketVueSerializer(*args, **kwds)
 
 
 class BugProviderViewSet(mixins.ListModelMixin,

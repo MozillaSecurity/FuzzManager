@@ -485,6 +485,50 @@ def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: dis
         assert in_list[0]['id'] == crash2.pk
 
 
+def test_edit_signature_set_frequent(api_client, cm, user_normal):
+    """test that partial_update action marks a signature frequent without touching anything else"""
+    bug = cm.create_bug('123')
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig, bug=bug)
+    assert not bucket.frequent
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'frequent': True,
+    }, format='json')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    assert resp.json() == {"url": reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})}
+    bucket.refresh_from_db()
+    assert bucket.frequent
+    assert bucket.bug == bug
+
+
+def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
+    """test that partial_update action marks a signature frequent without touching anything else"""
+    bug = cm.create_bug('123')
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig, bug=bug)
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'bug': None,
+    }, format='json')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    assert resp.json() == {"url": reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})}
+    bucket.refresh_from_db()
+    assert bucket.bug is None
+
+
 def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     """test that partial_update action create a new Bug and assign it to this Bucket"""
     provider = cm.create_bugprovider(hostname='test-provider.com', urlTemplate='test-provider.com/template')
