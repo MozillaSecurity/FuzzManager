@@ -409,6 +409,7 @@ export default {
       const payload = {
         id: this.externalBugId,
         comment: this.renderedComment,
+        is_markdown: true,
         is_private: this.isPrivate,
       };
 
