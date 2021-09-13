@@ -49,6 +49,10 @@ class BugzillaTemplateBugForm(ModelForm):
             Field('version', wrapper_class='col-md-6'),
             Field('target_milestone', wrapper_class='col-md-6'),
         ),
+        Row(
+            Field('blocks', wrapper_class='col-md-6'),
+            Field('dependson', wrapper_class='col-md-6'),
+        ),
         'attrs',
         'description',
         'security',
@@ -85,6 +89,8 @@ class BugzillaTemplateBugForm(ModelForm):
             'security',
             'security_group',
             'testcase_filename',
+            'blocks',
+            'dependson',
         ]
 
         labels = {
@@ -107,6 +113,8 @@ class BugzillaTemplateBugForm(ModelForm):
             'security': 'This is a security bug',
             'security_group': 'Security group',
             'testcase_filename': 'Filename that will be used for the testcase',
+            'blocks': 'Blocks',
+            'dependson': 'Depends On'
         }
 
         widgets = {}

@@ -269,6 +269,30 @@
         </div>
         <div class="row">
           <div class="form-group col-md-6">
+            <label for="dependson">Depends On</label>
+            <input
+              id="id_dependson"
+              class="form-control"
+              maxlength="1023"
+              name="dependson"
+              type="text"
+              v-model="template.dependson"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="blocks">Blocks</label>
+            <input
+              id="id_blocks"
+              class="form-control"
+              maxlength="1023"
+              name="blocks"
+              type="text"
+              v-model="template.blocks"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6">
             <label for="attrs">Custom fields</label>
             <HelpPopover
               field="custom-fields"
@@ -748,6 +772,8 @@ export default {
         whiteboard: this.template.whiteboard,
         keywords: this.template.keywords,
         groups: groups.length ? groups : "",
+        blocks: this.template.blocks.split(","),
+        dependson: this.template.dependson.split(","),
         ...attrs,
       };
 

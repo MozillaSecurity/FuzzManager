@@ -513,6 +513,8 @@ class BugzillaTemplate(models.Model):
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
+    blocks = models.TextField(blank=True)
+    dependson = models.TextField(blank=True)
 
     def __str__(self):
         return self.name

@@ -260,7 +260,8 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
         fields = ('id', 'mode', 'name', 'comment', 'product', 'component', 'summary', 'version',
                   'description', 'op_sys', 'platform', 'priority', 'severity', 'alias',
                   'cc', 'assigned_to', 'qa_contact', 'target_milestone', 'whiteboard',
-                  'keywords', 'attrs', 'security_group', 'testcase_filename', 'security',)
+                  'keywords', 'attrs', 'security_group', 'testcase_filename', 'security',
+                  'blocks', 'dependson',)
         read_only_fields = ('id', 'mode')
 
     def get_mode(self, obj):
