@@ -191,7 +191,9 @@ def cm():
                             security=False,
                             security_group="",
                             comment="",
-                            testcase_filename=""):
+                            testcase_filename="",
+                            blocks="",
+                            dependson=""):
             result = BugzillaTemplate.objects.create(mode=mode,
                                                      name=name,
                                                      product=product,

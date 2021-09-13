@@ -50,7 +50,7 @@ def _compare_rest_result_to_template(result, template):
         "id", "mode", "name", "comment", "product", "component", "summary", "version",
         "description", "op_sys", "platform", "priority", "severity", "alias", "cc",
         "assigned_to", "qa_contact", "target_milestone", "whiteboard", "keywords",
-        "attrs", "security_group", "testcase_filename", "security",
+        "attrs", "security_group", "testcase_filename", "security", "blocks", "dependson",
     }
     assert set(result) == expected_fields
     for key, value in result.items():
