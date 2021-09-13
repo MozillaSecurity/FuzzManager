@@ -402,6 +402,7 @@
           :initial-not-attach-test="notAttachTest"
           v-on:update-not-attach-test="notAttachTest = $event"
           :entry="entry"
+          :template="template"
           v-on:update-filename="entry.testcase = $event"
           v-on:update-content="testCaseContent = $event"
         />
