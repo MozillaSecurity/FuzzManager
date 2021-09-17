@@ -8,14 +8,18 @@ RUN npm run production
 
 FROM python:3.8
 
+# Install dependencies before copying src, so pip is only run when needed
+COPY ./server/requirements3.0.txt ./server/requirements-docker.txt /tmp/
+RUN pip install -q -r /tmp/requirements3.0.txt -r /tmp/requirements-docker.txt
+
 # Embed full source code
 COPY . /src/
 
 # Retrieve previous Javascript build
 COPY --from=frontend /src/dist/ /src/server/frontend/dist/
 
-# Install dependencies
-RUN pip install -q /src -r /src/server/requirements3.0.txt -r /src/server/requirements-docker.txt
+# Install FM
+RUN pip install -q /src
 
 # Use a custom settings file that can be overwritten
 ENV DJANGO_SETTINGS_MODULE "server.settings_docker"
