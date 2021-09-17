@@ -3,6 +3,7 @@
 {% block body_content %}
 {% csrf_token %}
 <signatureview
+  :activity-range="{{ activity_range }}"
   :bucket="{{ bucket }}"
   :best-entry-size="{{ best_entry_size }}"
   :providers="{{ providers }}"

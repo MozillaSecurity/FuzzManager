@@ -7,6 +7,9 @@
     </td>
     <td>{{ signature.shortDescription }}</td>
     <td>{{ signature.size }}</td>
+    <td>
+      <activitygraph :data="signature.crash_history" :range="activityRange" />
+    </td>
     <td>{{ signature.best_quality }}</td>
     <td>
       <a
@@ -36,18 +39,24 @@
 
 <script>
 import AssignBtn from "./AssignBtn.vue";
+import ActivityGraph from "../ActivityGraph.vue";
 
 export default {
   components: {
+    activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
   },
   props: {
-    signature: {
-      type: Object,
+    activityRange: {
+      type: Number,
       required: true,
     },
     providers: {
       type: Array,
+      required: true,
+    },
+    signature: {
+      type: Object,
       required: true,
     },
   },

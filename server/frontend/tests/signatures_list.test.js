@@ -28,7 +28,11 @@ test("signature list has no buckets", async () => {
   await render(List, {
     localVue,
     router,
-    props: { watchUrl: "/crashmanager/signatures/watch/", providers: [] },
+    props: {
+      watchUrl: "/crashmanager/signatures/watch/",
+      providers: [],
+      activityRange: 14,
+    },
   });
   await Vue.nextTick();
 
@@ -52,7 +56,11 @@ test("signature list has two buckets", async () => {
   const { getByText } = await render(List, {
     localVue,
     router,
-    props: { watchUrl: "/crashmanager/signatures/watch/", providers: [] },
+    props: {
+      watchUrl: "/crashmanager/signatures/watch/",
+      providers: [],
+      activityRange: 14,
+    },
   });
   await Vue.nextTick();
 

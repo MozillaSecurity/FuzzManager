@@ -49,13 +49,13 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=None, latest=None, vue=False):
+def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=None, latest=None, hist=[], vue=False):
     attributes = {
         'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
         'has_optimization', 'latest_entry',
     }
     if vue:
-        attributes.update({'view_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
+        attributes.update({'view_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname', 'crash_history'})
 
     assert set(result) == attributes
     assert result["id"] == bucket.pk
@@ -75,6 +75,7 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=Non
         assert result["bug_closed"] is None
         assert result["bug_urltemplate"] is None
         assert result["bug_hostname"] is None
+        assert result["crash_history"] == hist
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])

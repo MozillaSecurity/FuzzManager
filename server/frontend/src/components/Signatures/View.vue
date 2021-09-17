@@ -57,7 +57,11 @@
           <tr>
             <td>Crashes covered by this signature</td>
             <td>
-              {{ bucket.size }} <br /><br />
+              {{ bucket.size }}
+              <activitygraph
+                :data="bucket.crash_history"
+                :range="activityRange"
+              />
               <form :action="sigWatchUrl" ref="sigWatchForm" method="post">
                 <input type="hidden" name="bucket" :value="bucket.id" />
                 <input
@@ -106,11 +110,13 @@
 
 <script>
 import { assignExternalBug, errorParser } from "../../helpers";
+import ActivityGraph from "../ActivityGraph.vue";
 import AssignBtn from "./AssignBtn.vue";
 import swal from "sweetalert";
 
 export default {
   components: {
+    activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
   },
   data: () => ({
@@ -119,6 +125,10 @@ export default {
     shortDescription: "",
   }),
   props: {
+    activityRange: {
+      type: Number,
+      required: true,
+    },
     bestEntrySize: {
       type: Number,
       required: true,
@@ -186,3 +196,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+form {
+  display: inline;
+}
+</style>
