@@ -75,7 +75,11 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=Non
         assert result["bug_closed"] is None
         assert result["bug_urltemplate"] is None
         assert result["bug_hostname"] is None
-        assert result["crash_history"] == hist
+        # sanitize timestamp before comparing
+        result_crash_history = [entry.copy() for entry in result["crash_history"]]
+        for idx, entry in enumerate(result_crash_history):
+            entry["begin"] = f"ts{idx}"
+        assert result_crash_history == hist
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
@@ -155,10 +159,19 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, vue=vue)
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 1}, {"begin": "ts1", "count": 2}]
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, hist=hist, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 1}]
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, hist=hist, vue=vue)
     else:
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 2}]
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, hist=hist, vue=vue)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
