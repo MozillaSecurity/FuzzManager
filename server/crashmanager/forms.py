@@ -131,6 +131,7 @@ class BugzillaTemplateCommentForm(ModelForm):
         HTML("""<div v-pre>"""),
         'name',
         'comment',
+        Row(Field('testcase_filename', wrapper_class='col-md-6')),
         Submit('submit', 'Save', css_class='btn btn-danger'),
         HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>"""),
         HTML("""</div>""")
@@ -138,14 +139,20 @@ class BugzillaTemplateCommentForm(ModelForm):
 
     class Meta:
         model = BugzillaTemplate
-        fields = ['name', 'comment']
+        fields = [
+            'name',
+            'comment',
+            'testcase_filename',
+        ]
         labels = {
             'name': 'Template name',
             'comment': 'Comment',
+            'testcase_filename': 'Filename that will be used for the testcase',
         }
         widgets = {
             'name': TextInput(),
-            'comment': Textarea(attrs={'rows': 6})
+            'comment': Textarea(attrs={'rows': 6}),
+            'testcase_filename': TextInput(),
         }
 
 
