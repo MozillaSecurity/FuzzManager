@@ -928,11 +928,21 @@ class BucketViewSet(mixins.CreateModelMixin,
                 BucketHit.objects.all(),
                 restricted_only=bool(ignore_toolfilter),
             ).filter(
-                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14))
+                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
+                bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
             ).order_by("begin")
 
+            bucket_hits = {}
+            for bucket, begin, count in hits.values_list("bucket_id", "begin", "count"):
+                bucket_hits.setdefault(bucket, {})
+                bucket_hits[bucket].setdefault(begin, 0)
+                bucket_hits[bucket][begin] += count
+
             for bucket in response.data["results"]:
-                bucket["crash_history"] = list(hits.filter(bucket_id=bucket["id"]).values("begin", "count"))
+                bucket["crash_history"] = [
+                    {"begin": begin, "count": count}
+                    for begin, count in bucket_hits.get(bucket["id"], {}).items()
+                ]
 
         return response
 
@@ -945,6 +955,7 @@ class BucketViewSet(mixins.CreateModelMixin,
             request, instance.crashentry_set,
             restricted_only=bool(ignore_toolfilter),
         )
+        crashes_in_filter = CrashEntry.deferRawFields(crashes_in_filter)
 
         if not ignore_toolfilter and not user.restricted:
             # if a non-restricted user requested toolfilter, we ignored it...

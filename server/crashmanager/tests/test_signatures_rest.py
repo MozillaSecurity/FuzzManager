@@ -161,7 +161,7 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     if ignore_toolfilter and user.username == "test":
         hist = []
         if vue:
-            hist = [{"begin": "ts0", "count": 1}, {"begin": "ts1", "count": 2}]
+            hist = [{"begin": "ts0", "count": 3}]
         _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, hist=hist, vue=vue)
         hist = []
         if vue:

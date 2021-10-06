@@ -9,15 +9,19 @@ def add_crash_bucket_hits(apps, schema_editor):
     BucketHit = apps.get_model('crashmanager', 'BucketHit')
     CrashEntry = apps.get_model('crashmanager', 'CrashEntry')
 
-    for crash in CrashEntry.objects.filter(bucket__isnull=False):
-        range_begin = crash.created.replace(microsecond=0, second=0, minute=0)
+    bucket_hits = {}
+    crashes = CrashEntry.objects.filter(bucket__isnull=False)
+    for bucket, tool, created in crashes.values_list("bucket_id", "tool_id", "created"):
+        bucket_hits.setdefault((bucket, tool), {})
+        begin = created.replace(microsecond=0, second=0, minute=0)
+        bucket_hits[(bucket, tool)].setdefault(begin, 0)
+        bucket_hits[(bucket, tool)][begin] += 1
 
-        # add BucketHit for new bucket
-        counter, _ = BucketHit.objects.get_or_create(
-            bucket=crash.bucket, begin=range_begin, tool=crash.tool
-        )
-        counter.count += 1
-        counter.save()
+    for (bucket, tool), hits in bucket_hits.items():
+        for begin, count in hits.items():
+            obj, _ = BucketHit.objects.get_or_create(bucket_id=bucket, tool_id=tool, begin=begin)
+            obj.count += count
+            obj.save()
 
 
 class Migration(migrations.Migration):
