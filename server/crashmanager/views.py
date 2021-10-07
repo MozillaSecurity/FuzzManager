@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
@@ -27,7 +27,7 @@ from wsgiref.util import FileWrapper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm, UserSettingsForm
-from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
+from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, BucketHit, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
     BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, \
@@ -35,6 +35,14 @@ from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
+
+
+class JSONDateEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat().replace("+00:00", "Z")
+        return super().default(obj)
 
 
 def check_authorized_for_crash_entry(request, entry):
@@ -110,6 +118,21 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, 
         return Bucket.objects.none()
 
     return signatures
+
+
+def filter_bucket_hits_by_toolfilter(request, hits, restricted_only=False):
+    user = User.get_or_create_restricted(request.user)[0]
+
+    if restricted_only and not user.restricted:
+        return hits
+
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        return hits.filter(tool__in=defaultToolsFilter)
+    elif user.restricted:
+        return BucketHit.objects.none()
+
+    return hits
 
 
 def renderError(request, err):
@@ -234,7 +257,14 @@ def bucketWatchCrashes(request, sigid):
 
 def signatures(request):
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
-    return render(request, 'signatures/index.html', {'providers': json.dumps(providers)})
+    return render(
+        request,
+        'signatures/index.html',
+        {
+            'providers': json.dumps(providers),
+            'activity_range': getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14),
+        },
+    )
 
 
 def index(request):
@@ -402,7 +432,8 @@ def viewSignature(request, sigid):
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
     return render(request, 'signatures/view.html', {
-        'bucket': json.dumps(bucket),
+        'activity_range': getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14),
+        'bucket': json.dumps(bucket, cls=JSONDateEncoder),
         'bucket_id': bucket['id'],
         'best_entry': bucket['best_entry'],
         'best_entry_size': json.dumps(best_entry_size),
@@ -868,8 +899,8 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         return Response(CrashEntrySerializer(obj).data)
 
 
-class BucketViewSet(mixins.ListModelMixin,
-                    mixins.CreateModelMixin,
+class BucketViewSet(mixins.CreateModelMixin,
+                    mixins.ListModelMixin,
                     mixins.UpdateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
@@ -880,11 +911,40 @@ class BucketViewSet(mixins.ListModelMixin,
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
 
     def get_serializer(self, *args, **kwds):
-        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
-        if vue:
+        self.vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        if self.vue:
             return BucketVueSerializer(*args, **kwds)
         else:
             return super(BucketViewSet, self).get_serializer(*args, **kwds)
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        if self.vue and response.status_code == 200:
+            # no need to sanity check, this was already checked in ToolFilterSignaturesBackend filter
+            ignore_toolfilter = int(request.query_params.get('ignore_toolfilter', '0'))
+            hits = filter_bucket_hits_by_toolfilter(
+                request,
+                BucketHit.objects.all(),
+                restricted_only=bool(ignore_toolfilter),
+            ).filter(
+                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
+                bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
+            ).order_by("begin")
+
+            bucket_hits = {}
+            for bucket, begin, count in hits.values_list("bucket_id", "begin", "count"):
+                bucket_hits.setdefault(bucket, {})
+                bucket_hits[bucket].setdefault(begin, 0)
+                bucket_hits[bucket][begin] += count
+
+            for bucket in response.data["results"]:
+                bucket["crash_history"] = [
+                    {"begin": begin, "count": count}
+                    for begin, count in bucket_hits.get(bucket["id"], {}).items()
+                ]
+
+        return response
 
     def retrieve(self, request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]
@@ -895,6 +955,7 @@ class BucketViewSet(mixins.ListModelMixin,
             request, instance.crashentry_set,
             restricted_only=bool(ignore_toolfilter),
         )
+        crashes_in_filter = CrashEntry.deferRawFields(crashes_in_filter)
 
         if not ignore_toolfilter and not user.restricted:
             # if a non-restricted user requested toolfilter, we ignored it...
@@ -916,7 +977,21 @@ class BucketViewSet(mixins.ListModelMixin,
             instance.latest_entry = latest_crash.id
 
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        response = Response(serializer.data)
+
+        if self.vue and response.status_code == 200:
+            hits = filter_bucket_hits_by_toolfilter(
+                request,
+                BucketHit.objects.all(),
+                restricted_only=bool(ignore_toolfilter),
+            ).filter(
+                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
+                bucket_id=response.data["id"],
+            ).order_by("begin")
+
+            response.data["crash_history"] = list(hits.values("begin", "count"))
+
+        return response
 
     def __validate(self, request, bucket, submitSave, reassign):
         try:
@@ -1031,6 +1106,7 @@ class BucketViewSet(mixins.ListModelMixin,
 class BucketVueViewSet(BucketViewSet):
     """API endpoint that allows viewing Buckets and always uses Vue serializer"""
     def get_serializer(self, *args, **kwds):
+        self.vue = True
         return BucketVueSerializer(*args, **kwds)
 
 

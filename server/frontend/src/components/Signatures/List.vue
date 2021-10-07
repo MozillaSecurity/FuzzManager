@@ -132,6 +132,7 @@
           >
             Bucket Size
           </th>
+          <th width="25px">Activity</th>
           <th
             v-on:click.exact="sortBy('quality')"
             v-on:click.ctrl.exact="addSort('quality')"
@@ -171,12 +172,13 @@
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td colspan="6">
+          <td colspan="7">
             <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
           </td>
         </tr>
         <Row
           v-for="signature in signatures"
+          :activity-range="activityRange"
           :key="signature.id"
           :providers="providers"
           :signature="signature"
@@ -214,6 +216,10 @@ export default {
     HelpJSONQueryPopover,
   },
   props: {
+    activityRange: {
+      type: Number,
+      required: true,
+    },
     watchUrl: {
       type: String,
       required: true,

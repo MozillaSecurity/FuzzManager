@@ -60,6 +60,7 @@ export const buckets = {
       signature: "{ symptoms: 'some symptoms' }",
       size: 3,
       view_url: "/crashmanager/signatures/1/",
+      crash_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
     },
     {
       best_quality: 0,
@@ -76,6 +77,7 @@ export const buckets = {
       signature: "{ symptoms: 'some symptoms' }",
       size: 5,
       view_url: "/crashmanager/signatures/2/",
+      crash_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
     },
   ],
 };
