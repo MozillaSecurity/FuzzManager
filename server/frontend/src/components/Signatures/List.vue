@@ -95,95 +95,91 @@
         </span>
       </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-      <thead>
-        <tr>
-          <th
-            v-on:click.exact="sortBy('id')"
-            v-on:click.ctrl.exact="addSort('id')"
-            :class="{
-              active: sortKeys.includes('id') || sortKeys.includes('-id'),
-            }"
-            width="20px"
-          >
-            ID
-          </th>
-          <th
-            v-on:click.exact="sortBy('shortDescription')"
-            v-on:click.ctrl.exact="addSort('shortDescription')"
-            :class="{
-              active:
-                sortKeys.includes('shortDescription') ||
-                sortKeys.includes('-shortDescription'),
-            }"
-            width="150px"
-          >
-            Short Description
-          </th>
-          <th
-            v-on:click.exact="sortBy('size')"
-            v-on:click.ctrl.exact="addSort('size')"
-            :class="{
-              active: sortKeys.includes('size') || sortKeys.includes('-size'),
-            }"
-            width="20px"
-          >
-            Bucket Size
-          </th>
-          <th width="25px">Activity</th>
-          <th
-            v-on:click.exact="sortBy('quality')"
-            v-on:click.ctrl.exact="addSort('quality')"
-            :class="{
-              active:
-                sortKeys.includes('quality') || sortKeys.includes('-quality'),
-            }"
-            width="25px"
-          >
-            Best Test Quality
-          </th>
-          <th
-            v-on:click.exact="sortBy('bug__externalId')"
-            v-on:click.ctrl.exact="addSort('bug__externalId')"
-            :class="{
-              active:
-                sortKeys.includes('bug__externalId') ||
-                sortKeys.includes('-bug__externalId'),
-            }"
-            width="50px"
-          >
-            External Bug
-          </th>
-          <th
-            v-on:click.exact="sortBy('optimizedSignature')"
-            v-on:click.ctrl.exact="addSort('optimizedSignature')"
-            :class="{
-              active:
-                sortKeys.includes('optimizedSignature') ||
-                sortKeys.includes('-optimizedSignature'),
-            }"
-            width="30px"
-          >
-            Pending Optimization
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="loading">
-          <td colspan="7">
-            <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
-          </td>
-        </tr>
-        <Row
-          v-for="signature in signatures"
-          :activity-range="activityRange"
-          :key="signature.id"
-          :providers="providers"
-          :signature="signature"
-          v-else
-        />
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-condensed table-hover table-bordered table-db">
+        <thead>
+          <tr>
+            <th
+              v-on:click.exact="sortBy('id')"
+              v-on:click.ctrl.exact="addSort('id')"
+              :class="{
+                active: sortKeys.includes('id') || sortKeys.includes('-id'),
+              }"
+            >
+              ID
+            </th>
+            <th
+              v-on:click.exact="sortBy('shortDescription')"
+              v-on:click.ctrl.exact="addSort('shortDescription')"
+              :class="{
+                active:
+                  sortKeys.includes('shortDescription') ||
+                  sortKeys.includes('-shortDescription'),
+              }"
+            >
+              Short Description
+            </th>
+            <th
+              v-on:click.exact="sortBy('size')"
+              v-on:click.ctrl.exact="addSort('size')"
+              :class="{
+                active: sortKeys.includes('size') || sortKeys.includes('-size'),
+              }"
+            >
+              Bucket Size
+            </th>
+            <th>Activity</th>
+            <th
+              v-on:click.exact="sortBy('quality')"
+              v-on:click.ctrl.exact="addSort('quality')"
+              :class="{
+                active:
+                  sortKeys.includes('quality') || sortKeys.includes('-quality'),
+              }"
+            >
+              Best Test Quality
+            </th>
+            <th
+              v-on:click.exact="sortBy('bug__externalId')"
+              v-on:click.ctrl.exact="addSort('bug__externalId')"
+              :class="{
+                active:
+                  sortKeys.includes('bug__externalId') ||
+                  sortKeys.includes('-bug__externalId'),
+              }"
+            >
+              External Bug
+            </th>
+            <th
+              v-on:click.exact="sortBy('optimizedSignature')"
+              v-on:click.ctrl.exact="addSort('optimizedSignature')"
+              :class="{
+                active:
+                  sortKeys.includes('optimizedSignature') ||
+                  sortKeys.includes('-optimizedSignature'),
+              }"
+            >
+              Pending Optimization
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading">
+            <td colspan="7">
+              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+            </td>
+          </tr>
+          <Row
+            v-for="signature in signatures"
+            :activity-range="activityRange"
+            :key="signature.id"
+            :providers="providers"
+            :signature="signature"
+            v-else
+          />
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 

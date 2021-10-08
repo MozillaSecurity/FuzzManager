@@ -10,31 +10,33 @@
             Total reports in the last hour: {{ total_reports_per_hour }}
         </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-        <thead>
-        <tr>
-            <th style="width: 25px;">Bucket</th>
-            <th style="width: 150px;">Short Description</th>
-            <th style="width: 25px;">Reports < 1h</th>
-            <th style="width: 50px;">External Bug</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for entry in frequentBuckets %}
-        <tr class="{% cycle 'odd' 'even' %}">
-            <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-            <td>{{ entry.shortDescription|escape }}</td>
-            <td>{{ entry.rph }}</td>
-            <td>
-                {% if entry.bug %}
-                <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
-                {% else %}
-                <assignbutton :bucket="{{ entry.pk }}" :providers="{{ providers }}" />
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-bordered table-db">
+            <thead>
+            <tr>
+                <th>Bucket</th>
+                <th>Short Description</th>
+                <th>Reports < 1h</th>
+                <th>External Bug</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for entry in frequentBuckets %}
+            <tr class="{% cycle 'odd' 'even' %}">
+                <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+                <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                <td>{{ entry.rph }}</td>
+                <td>
+                    {% if entry.bug %}
+                    <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
+                    {% else %}
+                    <assignbutton :bucket="{{ entry.pk }}" :providers="{{ providers }}" />
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock body_content %}

@@ -62,12 +62,37 @@ a.fixedbug:active {
 /* database tables */
 
 .table-db {
-  table-layout: fixed;
-  word-wrap: break-word;
+  white-space: nowrap
 }
 
 .table-db th {
   background: #eee;
+}
+
+.table tbody td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* limit display size of short signature column */
+
+.short-sig {
+  max-width: 68ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media only screen and (min-width : 992px) {
+  .short-sig {
+      max-width: 68ch;
+  }
+}
+
+@media only screen and (min-width : 1200px) {
+  .short-sig {
+      max-width: 90ch;
+  }
 }
 
 /* sticky footer */
