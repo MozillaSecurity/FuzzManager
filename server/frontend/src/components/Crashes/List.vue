@@ -145,153 +145,145 @@
         </span>
       </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-      <thead>
-        <tr>
-          <th
-            v-on:click.exact="sortBy('id')"
-            v-on:click.ctrl.exact="addSort('id')"
-            :class="{
-              active: sortKeys.includes('id') || sortKeys.includes('-id'),
-            }"
-            width="25px"
-          >
-            ID
-          </th>
-          <th
-            v-on:click.exact="sortBy('created')"
-            v-on:click.ctrl.exact="addSort('created')"
-            :class="{
-              active:
-                sortKeys.includes('created') || sortKeys.includes('-created'),
-            }"
-            width="50px"
-          >
-            Date Added
-          </th>
-          <th
-            v-on:click.exact="sortBy('bucket')"
-            v-on:click.ctrl.exact="addSort('bucket')"
-            :class="{
-              active:
-                sortKeys.includes('bucket') || sortKeys.includes('-bucket'),
-            }"
-            width="25px"
-          >
-            Bucket
-          </th>
-          <th
-            v-on:click.exact="sortBy('shortSignature')"
-            v-on:click.ctrl.exact="addSort('shortSignature')"
-            :class="{
-              active:
-                sortKeys.includes('shortSignature') ||
-                sortKeys.includes('-shortSignature'),
-            }"
-            width="100px"
-          >
-            Short Signature
-          </th>
-          <th
-            v-on:click.exact="sortBy('crashAddress')"
-            v-on:click.ctrl.exact="addSort('crashAddress')"
-            :class="{
-              active:
-                sortKeys.includes('crashAddress') ||
-                sortKeys.includes('-crashAddress'),
-            }"
-            width="40px"
-          >
-            Crash Address
-          </th>
-          <th
-            v-on:click.exact="sortBy('testcase__quality')"
-            v-on:click.ctrl.exact="addSort('testcase__quality')"
-            :class="{
-              active:
-                sortKeys.includes('testcase__quality') ||
-                sortKeys.includes('-testcase__quality'),
-            }"
-            width="50px"
-          >
-            Test Status
-          </th>
-          <th
-            v-on:click.exact="sortBy('product__name')"
-            v-on:click.ctrl.exact="addSort('product__name')"
-            :class="{
-              active:
-                sortKeys.includes('product__name') ||
-                sortKeys.includes('-product__name'),
-            }"
-            width="50px"
-          >
-            Product
-          </th>
-          <th
-            v-on:click.exact="sortBy('product__version')"
-            v-on:click.ctrl.exact="addSort('product__version')"
-            :class="{
-              active:
-                sortKeys.includes('product__version') ||
-                sortKeys.includes('-product__version'),
-            }"
-            width="50px"
-          >
-            Version
-          </th>
-          <th
-            v-on:click.exact="sortBy('platform__name')"
-            v-on:click.ctrl.exact="addSort('platform__name')"
-            :class="{
-              active:
-                sortKeys.includes('platform__name') ||
-                sortKeys.includes('-platform__name'),
-            }"
-            width="25px"
-          >
-            Platform
-          </th>
-          <th
-            v-on:click.exact="sortBy('os__name')"
-            v-on:click.ctrl.exact="addSort('os__name')"
-            :class="{
-              active:
-                sortKeys.includes('os__name') || sortKeys.includes('-os__name'),
-            }"
-            width="25px"
-          >
-            OS
-          </th>
-          <th
-            v-on:click.exact="sortBy('tool__name')"
-            v-on:click.ctrl.exact="addSort('tool__name')"
-            :class="{
-              active:
-                sortKeys.includes('tool__name') ||
-                sortKeys.includes('-tool__name'),
-            }"
-            width="40px"
-          >
-            Tool
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="loading">
-          <td colspan="11">
-            <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
-          </td>
-        </tr>
-        <Row
-          v-for="crash in crashes"
-          :key="crash.id"
-          :crash="crash"
-          v-on:add-filter="addFilter"
-          v-else
-        />
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-condensed table-hover table-bordered table-db">
+        <thead>
+          <tr>
+            <th
+              v-on:click.exact="sortBy('id')"
+              v-on:click.ctrl.exact="addSort('id')"
+              :class="{
+                active: sortKeys.includes('id') || sortKeys.includes('-id'),
+              }"
+            >
+              ID
+            </th>
+            <th
+              v-on:click.exact="sortBy('created')"
+              v-on:click.ctrl.exact="addSort('created')"
+              :class="{
+                active:
+                  sortKeys.includes('created') || sortKeys.includes('-created'),
+              }"
+            >
+              Date Added
+            </th>
+            <th
+              v-on:click.exact="sortBy('bucket')"
+              v-on:click.ctrl.exact="addSort('bucket')"
+              :class="{
+                active:
+                  sortKeys.includes('bucket') || sortKeys.includes('-bucket'),
+              }"
+            >
+              Bucket
+            </th>
+            <th
+              v-on:click.exact="sortBy('shortSignature')"
+              v-on:click.ctrl.exact="addSort('shortSignature')"
+              :class="{
+                active:
+                  sortKeys.includes('shortSignature') ||
+                  sortKeys.includes('-shortSignature'),
+              }"
+            >
+              Short Signature
+            </th>
+            <th
+              v-on:click.exact="sortBy('crashAddress')"
+              v-on:click.ctrl.exact="addSort('crashAddress')"
+              :class="{
+                active:
+                  sortKeys.includes('crashAddress') ||
+                  sortKeys.includes('-crashAddress'),
+              }"
+            >
+              Crash Address
+            </th>
+            <th
+              v-on:click.exact="sortBy('testcase__quality')"
+              v-on:click.ctrl.exact="addSort('testcase__quality')"
+              :class="{
+                active:
+                  sortKeys.includes('testcase__quality') ||
+                  sortKeys.includes('-testcase__quality'),
+              }"
+            >
+              Test Status
+            </th>
+            <th
+              v-on:click.exact="sortBy('product__name')"
+              v-on:click.ctrl.exact="addSort('product__name')"
+              :class="{
+                active:
+                  sortKeys.includes('product__name') ||
+                  sortKeys.includes('-product__name'),
+              }"
+            >
+              Product
+            </th>
+            <th
+              v-on:click.exact="sortBy('product__version')"
+              v-on:click.ctrl.exact="addSort('product__version')"
+              :class="{
+                active:
+                  sortKeys.includes('product__version') ||
+                  sortKeys.includes('-product__version'),
+              }"
+            >
+              Version
+            </th>
+            <th
+              v-on:click.exact="sortBy('platform__name')"
+              v-on:click.ctrl.exact="addSort('platform__name')"
+              :class="{
+                active:
+                  sortKeys.includes('platform__name') ||
+                  sortKeys.includes('-platform__name'),
+              }"
+            >
+              Platform
+            </th>
+            <th
+              v-on:click.exact="sortBy('os__name')"
+              v-on:click.ctrl.exact="addSort('os__name')"
+              :class="{
+                active:
+                  sortKeys.includes('os__name') ||
+                  sortKeys.includes('-os__name'),
+              }"
+            >
+              OS
+            </th>
+            <th
+              v-on:click.exact="sortBy('tool__name')"
+              v-on:click.ctrl.exact="addSort('tool__name')"
+              :class="{
+                active:
+                  sortKeys.includes('tool__name') ||
+                  sortKeys.includes('-tool__name'),
+              }"
+            >
+              Tool
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading">
+            <td colspan="11">
+              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+            </td>
+          </tr>
+          <Row
+            v-for="crash in crashes"
+            :key="crash.id"
+            :crash="crash"
+            v-on:add-filter="addFilter"
+            v-else
+          />
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 

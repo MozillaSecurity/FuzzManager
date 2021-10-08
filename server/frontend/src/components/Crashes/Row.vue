@@ -30,7 +30,7 @@
         class="bi bi-search dimgray"
       ></a>
     </td>
-    <td>{{ crash.shortSignature }}</td>
+    <td class="short-sig">{{ crash.shortSignature }}</td>
     <td>{{ crash.crashAddress }}</td>
     <td v-if="crash.testcase">
       <a

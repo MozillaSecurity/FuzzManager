@@ -8,25 +8,27 @@
             Displaying {{ siglist|length }} watched signature entries from the database.
         </p>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-        <thead>
-        <tr>
-            <th style="width: 20px;">ID</th>
-            <th style="width: 150px;">Short Description</th>
-            <th style="width: 20px;">New Crashes</th>
-            <th style="width: 20px;">Watch</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for entry in siglist %}
-        <tr class="{% cycle 'odd' 'even' %}">
-            <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-            <td>{{ entry.shortDescription|escape }}</td>
-            <td><a title="View new crashes" href="{% url 'crashmanager:sigwatchcrashes' entry.pk %}">{{ entry.newCrashes }}</a></td>
-            <td><a title="Remove watch" href="{% url 'crashmanager:sigwatchdel' entry.pk %}" data-toggle="tooltip" data-placement="top" class="bi bi-trash-fill" style="color:dimgray"></a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-bordered table-db">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Short Description</th>
+                <th>New Crashes</th>
+                <th>Watch</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for entry in siglist %}
+            <tr class="{% cycle 'odd' 'even' %}">
+                <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+                <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                <td><a title="View new crashes" href="{% url 'crashmanager:sigwatchcrashes' entry.pk %}">{{ entry.newCrashes }}</a></td>
+                <td><a title="Remove watch" href="{% url 'crashmanager:sigwatchdel' entry.pk %}" data-toggle="tooltip" data-placement="top" class="bi bi-trash-fill" style="color:dimgray"></a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock body_content %}

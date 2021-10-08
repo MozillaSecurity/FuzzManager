@@ -19,49 +19,51 @@
 		</p>
 	</div>
 	{% if buckets %}
-	<table class="table table-condensed table-hover table-bordered table-db">
-		<thead>
-			<tr>
-				<th style="width: 20px;">ID</th>
-				<th style="width: 150px;">Short Description</th>
-				<th style="width: 150px;">Difference Count</th>
-				<th style="width: 150px;">Foreign Matches
-					<i class="bi bi-question-circle-fill" data-toggle="popover" title="Foreign Matches" data-content="% / count"></i>
-				</th>
-				<th style="width: 50px;">External Bug</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for entry in buckets %}
-			<tr class="{% cycle 'odd' 'even' %}">
-				<td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-				<td>{{ entry.shortDescription|escape }}</td>
-				<td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>
-				<td>
-					{% if entry.foreignColor == "green" %}
-						<span class="label label-success">{{ entry.foreignMatchPercentage }} %</span>
-					{% endif %}
-					{% if entry.foreignColor == "yellow" %}
-						<span class="label label-warning">{{ entry.foreignMatchPercentage }} %</span>
-					{% endif %}
-					{% if entry.foreignColor == "red" %}
-						<span class="label label-danger">{{ entry.foreignMatchPercentage }} %</span>
-					{% endif %}
-					-
-					{% if entry.linkToOthers %}
-					<a title="Show differences" href="{% url 'crashmanager:signatures' %}?all=1&ids={{ entry.linkToOthers }}">{{ entry.foreignMatchCount }} other buckets</a>
-					{% else %}
-						{{ entry.foreignMatchCount }}{% if entry.foreignMatchLimitExceeded %}+{% endif %} other buckets
-					{% endif %}
-				</td>
-				<td>
-					{% if entry.bug %}
-					<a {% if entry.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
-					{% endif %}
-				</td>
-			</tr>{% endfor %}
-		</tbody>
-	</table>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-bordered table-db">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Short Description</th>
+                    <th>Difference Count</th>
+                    <th>Foreign Matches
+                        <i class="bi bi-question-circle-fill" data-toggle="popover" title="Foreign Matches" data-content="% / count"></i>
+                    </th>
+                    <th>External Bug</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in buckets %}
+                <tr class="{% cycle 'odd' 'even' %}">
+                    <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+                    <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                    <td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>
+                    <td>
+                        {% if entry.foreignColor == "green" %}
+                            <span class="label label-success">{{ entry.foreignMatchPercentage }} %</span>
+                        {% endif %}
+                        {% if entry.foreignColor == "yellow" %}
+                            <span class="label label-warning">{{ entry.foreignMatchPercentage }} %</span>
+                        {% endif %}
+                        {% if entry.foreignColor == "red" %}
+                            <span class="label label-danger">{{ entry.foreignMatchPercentage }} %</span>
+                        {% endif %}
+                        -
+                        {% if entry.linkToOthers %}
+                        <a title="Show differences" href="{% url 'crashmanager:signatures' %}?all=1&ids={{ entry.linkToOthers }}">{{ entry.foreignMatchCount }} other buckets</a>
+                        {% else %}
+                            {{ entry.foreignMatchCount }}{% if entry.foreignMatchLimitExceeded %}+{% endif %} other buckets
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.bug %}
+                        <a {% if entry.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
+                        {% endif %}
+                    </td>
+                </tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
 	{% endif %}
 	</div>
 </div>
