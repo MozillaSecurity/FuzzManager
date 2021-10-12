@@ -214,7 +214,7 @@ class CovReporter(Reporter):
             raise RuntimeError("Unknown coverage format")
 
     @staticmethod
-    def create_combined_coverage(coverage_files):
+    def create_combined_coverage(coverage_files, version=None):
         '''
         Read coverage data from multiple files and return a single dictionary
         containing the merged data (already preprocessed).
@@ -226,7 +226,6 @@ class CovReporter(Reporter):
         @rtype tuple(dict,dict,dict)
         '''
         ret = None
-        version = None
         stats = None
 
         for coverage_file in coverage_files:
@@ -279,11 +278,23 @@ def main(argv=None):
     # Coverage specific settings
     parser.add_argument("--repository", help="Name of the repository this coverage was measured on", metavar="NAME")
     parser.add_argument("--description", default="", help="Description for this coverage collection", metavar="NAME")
+    parser.add_argument("--preprocessed", help="Coverage report is already preprocessed", action="store_true")
+
+    parser.add_argument("--branch", help="Name of the branch this coverage was measured on", metavar="NAME")
+    parser.add_argument("--revision", help="Revision this coverage was measured on", metavar="NAME")
 
     parser.add_argument('rargs', nargs=argparse.REMAINDER)
 
     # process options
     opts = parser.parse_args(argv)
+
+    version = None
+    if opts.preprocessed:
+        if None in (opts.branch, opts.revision):
+            print("Error: Must specify --branch and --revision when disabling the preprocessor", file=sys.stderr)
+            return 2
+
+        version = {"revision": opts.revision, "branch": opts.branch}
 
     serverauthtoken = None
     if opts.serverauthtokenfile:
@@ -298,17 +309,28 @@ def main(argv=None):
             print("Error: Must specify --repository when submitting coverage", file=sys.stderr)
             return 2
 
+        preprocessed = opts.preprocessed is not None
+
         if opts.submit:
             with open(opts.submit) as f:
                 coverage = json.load(f)
-            reporter.submit(coverage, description=opts.description)
+            reporter.submit(coverage,
+                            preprocessed,
+                            version=version,
+                            description=opts.description,
+                            )
         else:
             if not opts.rargs:
                 print("Error: Must specify at least one file with --multi-submit", file=sys.stderr)
                 return 2
 
-            (coverage, version, stats) = CovReporter.create_combined_coverage(opts.rargs)
-            reporter.submit(coverage, preprocessed=True, version=version, description=opts.description, stats=stats)
+            (coverage, version, stats) = CovReporter.create_combined_coverage(opts.rargs, version)
+            reporter.submit(coverage,
+                            preprocessed,
+                            version=version,
+                            description=opts.description,
+                            stats=stats,
+                            )
 
     return 0
 
