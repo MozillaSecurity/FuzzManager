@@ -1,7 +1,7 @@
 <template>
   <div class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-list-alt"></i> Create an external comment
+      <i class="bi bi-card-list"></i> Create an external comment
     </div>
     <div class="panel-body">
       <h3>Configuration</h3>

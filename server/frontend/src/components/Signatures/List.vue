@@ -1,8 +1,6 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="glyphicon glyphicon-tag"></i> Signatures
-    </div>
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signatures</div>
     <div class="panel-body">
       <div>
         <div class="btn-group" role="group">
@@ -80,7 +78,7 @@
           <a
             v-on:click="prevPage"
             v-show="currentPage > 1"
-            class="glyphicon glyphicon-chevron-left"
+            class="bi bi-carot-left-fill"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
@@ -91,7 +89,7 @@
             data-toggle="tooltip"
             data-placement="top"
             title=""
-            class="glyphicon glyphicon-chevron-right dimgray"
+            class="bi bi-carot-right-fill dimgray"
             data-original-title="Next"
           ></a>
         </span>

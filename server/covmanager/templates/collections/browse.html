@@ -8,10 +8,10 @@
 <div id="main" class="panel panel-default">
   <div class="panel-heading">
     <div>
-      <i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser
+      <i class="bi bi-clipboard-data"></i> Coverage Collection Browser
       <form class="form-inline pull-right" style="transform: translateY(-22%);">
         <label for="rc_select">
-          <i class="glyphicon glyphicon-filter"></i>
+          <i class="bi bi-funnel-fill"></i>
         </label>
         <select id="rc_select" class="form-control" @change="set_rc($event)">
           <option disabled selected value style="display:none;">!{ rc_name }!</option>
@@ -65,7 +65,7 @@
           <th style="width: 50%" @click="sortBy('name')" :class="{ active: sortKey == 'name' }">Files</th>
           <th @click="sortBy('linesTotal')" :class="{ active: sortKey == 'linesTotal' }">
             <span data-toggle="tooltip" data-placement="top" title="Tracked Lines">
-              <i class="glyphicon glyphicon-menu-hamburger"></i>
+              <i class="bi bi-list"></i>
             </span>
           </th>
           <th @click="sortBy('linesCovered')" :class="{ active: sortKey == 'linesCovered' }">Lines Covered</th>
@@ -80,14 +80,14 @@
         </tr>
         <tr v-if="show_top_nav">
           <td @click="navigate_top">
-            <i class="glyphicon glyphicon-arrow-up"></i> <span class="path">..</span>
+            <i class="bi bi-arrow-up"></i> <span class="path">..</span>
           </td>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(value, path) in ordered_collection">
           <td @click="navigate(value)">
-            <i :class="['glyphicon', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name
+            <i :class="['bi', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name
               }!</span>
           </td>
           <td>!{ value.linesTotal | formatNumber }!</td>
@@ -607,9 +607,9 @@ let covmanager = new Vue({
     add_path_class: function (value) {
       let classArray = this.class ? this.class.split(' ') : []
       if ('children' in value) {
-        classArray.push('glyphicon-folder-close')
+        classArray.push('bi-folder')
       } else {
-        classArray.push('glyphicon-file')
+        classArray.push('bi-file-earmark')
       }
       return classArray
     },

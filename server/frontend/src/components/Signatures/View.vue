@@ -1,8 +1,6 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="glyphicon glyphicon-tag"></i> Signature
-    </div>
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signature</div>
     <div class="panel-body">
       <table class="table">
         <tbody>

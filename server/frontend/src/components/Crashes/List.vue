@@ -1,8 +1,6 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="glyphicon glyphicon-list-alt"></i> Crashes
-    </div>
+    <div class="panel-heading"><i class="bi bi-card-list"></i> Crashes</div>
     <div class="panel-body">
       <span v-if="advancedQuery">
         <label for="id_query">Search Query</label>
@@ -89,11 +87,7 @@
         <span v-for="(value, key) in filters" :key="key">
           {{ validFilters[key] }}:
           <span class="monospace">{{ value }}</span>
-          <i
-            v-on:click="removeFilter(key)"
-            class="glyphicon glyphicon-remove"
-          ></i
-          ><br />
+          <i v-on:click="removeFilter(key)" class="bi bi-x"></i><br />
         </span>
         <a
           title="Show the full query for the current search/filters"
@@ -134,7 +128,7 @@
           <a
             v-on:click="prevPage"
             v-show="currentPage > 1"
-            class="glyphicon glyphicon-chevron-left"
+            class="bi bi-carot-left-fill"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
@@ -145,7 +139,7 @@
             data-toggle="tooltip"
             data-placement="top"
             title=""
-            class="glyphicon glyphicon-chevron-right dimgray"
+            class="bi bi-carot-right-fill dimgray"
             data-original-title="Next"
           ></a>
         </span>

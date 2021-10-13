@@ -6,10 +6,10 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-  <div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Aggregated Reports</div>
+  <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Aggregated Reports</div>
   <div class="panel-body">
     <div class="panel panel-default" style="float: right;">
-    <div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
+    <div class="panel-heading"><i class="bi bi-lightning-charge-fill"></i> Actions</div>
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
       <button @click="summary_diff()" v-if="unrestricted" class="btn btn-default">View Summarized Diff</button>

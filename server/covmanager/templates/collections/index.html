@@ -6,10 +6,10 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-  <div class="panel-heading"><i class="glyphicon glyphicon-hdd"></i> Coverage Collections</div>
+  <div class="panel-heading"><i class="bi bi-clipboard-data"></i> Coverage Collections</div>
   <div class="panel-body">
     <div class="panel panel-default" style="float: left;">
-    <div class="panel-heading"><i class="glyphicon glyphicon-book"></i> Repository Filters</div>
+    <div class="panel-heading"><i class="bi bi-archive-fill"></i> Repository Filters</div>
     <div class="panel-body">
       <div>
         <label>Repository:</label><input type="text" class="form-control" v-model="search.repository.value"
@@ -24,7 +24,7 @@
     </div>
 
     <div class="panel panel-default" style="float: left;">
-    <div class="panel-heading"><i class="glyphicon glyphicon-filter"></i> Misc Filters</div>
+    <div class="panel-heading"><i class="bi bi-funnel-fill"></i> Misc Filters</div>
     <div class="panel-body">
       <div>
         <label>Tool:</label> <input type="text" class="form-control" v-model="search.tools.value"
@@ -39,7 +39,7 @@
     </div>
 
     <div class="panel panel-default" style="float: left;">
-    <div class="panel-heading"><i class="glyphicon glyphicon-filter"></i> Date Filters</div>
+    <div class="panel-heading"><i class="bi bi-calendar-range"></i> Date Filters</div>
     <div class="panel-body">
       <!--
       <label>Newer than:</label><datepicker placeholder="Select Date"></datepicker>
@@ -49,7 +49,7 @@
     </div>
 
     <div class="panel panel-default" style="float: right;">
-    <div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Actions</div>
+    <div class="panel-heading"><i class="bi bi-lightning-charge-fill"></i> Actions</div>
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
       <button @click="aggregate()" class="btn btn-default">Aggregate</button>

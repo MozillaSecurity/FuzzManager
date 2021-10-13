@@ -10,7 +10,7 @@
     <td v-else>
       <span
         v-if="!crash.triagedOnce"
-        class="glyphicon glyphicon-hourglass"
+        class="bi bi-hourglass"
         data-toggle="tooltip"
         data-placement="top"
         title="This item hasn't been triaged yet by the server."
@@ -20,14 +20,14 @@
         data-toggle="tooltip"
         data-placement="top"
         title="Add"
-        class="glyphicon glyphicon-oil dimgray"
+        class="bi bi-tag-fill dimgray"
       ></a>
       <a
         :href="crash.find_sigs_url"
         data-toggle="tooltip"
         data-placement="top"
         title="Search"
-        class="glyphicon glyphicon-search dimgray"
+        class="bi bi-search dimgray"
       ></a>
     </td>
     <td>{{ crash.shortSignature }}</td>

@@ -1,7 +1,7 @@
 <template>
   <div id="main" class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-tasks"></i> Fuzzing Pools
+      <i class="bi bi-card-list"></i> Fuzzing Pools
     </div>
     <table class="table table-condensed table-hover table-bordered table-db">
       <thead>

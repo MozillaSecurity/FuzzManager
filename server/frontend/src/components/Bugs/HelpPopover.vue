@@ -20,7 +20,7 @@
     </div>
     <!-- eslint-disable-next-line -->
     <span slot="reference">
-      <i class="glyphicon glyphicon-question-sign"></i>
+      <i class="bi bi-question-circle-fill"></i>
     </span>
   </Popper>
 </template>

@@ -26,7 +26,7 @@
         v-on:click="removeKey"
         title="Remove key"
       >
-        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+        <span class="bi bi-trash-fill" aria-hidden="true"></span>
       </button>
       <br />
       <div
