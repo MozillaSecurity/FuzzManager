@@ -221,6 +221,8 @@ class CovReporter(Reporter):
 
         @type coverage_files: list
         @param coverage_files: List of filenames containing coverage data
+        @type version: dict
+        @param version: Dictionary containing branch and revision
 
         @return Dictionary with combined coverage data, version information and debug statistics
         @rtype tuple(dict,dict,dict)
@@ -228,14 +230,18 @@ class CovReporter(Reporter):
         ret = None
         stats = None
 
+        # Only preprocess report if version was not supplied
+        needs_preprocess = version is None
+
         for coverage_file in coverage_files:
             with open(coverage_file) as f:
                 coverage = json.load(f)
 
-                if version is None:
-                    version = CovReporter.version_info_from_coverage_data(coverage)
+                if needs_preprocess:
+                    if version is None:
+                        version = CovReporter.version_info_from_coverage_data(coverage)
 
-                coverage = CovReporter.preprocess_coverage_data(coverage)
+                    coverage = CovReporter.preprocess_coverage_data(coverage)
 
                 if ret is None:
                     ret = coverage
@@ -314,23 +320,22 @@ def main(argv=None):
         if opts.submit:
             with open(opts.submit) as f:
                 coverage = json.load(f)
-            reporter.submit(coverage,
-                            preprocessed,
-                            version=version,
-                            description=opts.description,
-                            )
+            reporter.submit(
+                coverage, preprocessed, version=version, description=opts.description,
+            )
         else:
             if not opts.rargs:
                 print("Error: Must specify at least one file with --multi-submit", file=sys.stderr)
                 return 2
 
             (coverage, version, stats) = CovReporter.create_combined_coverage(opts.rargs, version)
-            reporter.submit(coverage,
-                            preprocessed,
-                            version=version,
-                            description=opts.description,
-                            stats=stats,
-                            )
+            reporter.submit(
+                coverage,
+                preprocessed=True,
+                version=version,
+                description=opts.description,
+                stats=stats,
+            )
 
     return 0
 
