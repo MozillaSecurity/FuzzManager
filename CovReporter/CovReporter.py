@@ -237,10 +237,10 @@ class CovReporter(Reporter):
             with open(coverage_file) as f:
                 coverage = json.load(f)
 
-                if needs_preprocess:
-                    if version is None:
-                        version = CovReporter.version_info_from_coverage_data(coverage)
+                if version is None:
+                    version = CovReporter.version_info_from_coverage_data(coverage)
 
+                if needs_preprocess:
                     coverage = CovReporter.preprocess_coverage_data(coverage)
 
                 if ret is None:
