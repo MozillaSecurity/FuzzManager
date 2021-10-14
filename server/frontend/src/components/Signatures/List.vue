@@ -374,10 +374,6 @@ export default {
         this.loading = true;
         this.updateModifiedCache();
         this.signatures = null;
-        this.currentEntries = "?";
-        this.totalEntries = "?";
-        this.currentPage = 1;
-        this.totalPages = 1;
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());

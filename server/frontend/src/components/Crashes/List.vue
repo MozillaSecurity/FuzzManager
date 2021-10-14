@@ -513,10 +513,6 @@ export default {
         this.loading = true;
         this.updateModifiedCache();
         this.crashes = null;
-        this.currentEntries = "?";
-        this.totalEntries = "?";
-        this.currentPage = 1;
-        this.totalPages = 1;
         this.advancedQueryError = "";
         try {
           const data = await api.listCrashes(this.buildParams());
