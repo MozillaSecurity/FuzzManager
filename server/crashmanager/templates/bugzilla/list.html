@@ -15,11 +15,11 @@
         <div class="pagination">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <a title="Previous" href="?page={{ page_obj.previous_page_number }}" class="bi bi-carot-left-fill"></a>
+                    <a title="Previous" href="?page={{ page_obj.previous_page_number }}" class="bi bi-caret-left-fill"></a>
                 {% endif %}
                 <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
                 {% if page_obj.has_next %}
-                    <a title="Next" href="?page={{ page_obj.next_page_number }}" data-placement="top" class="bi bi-carot-right-fill"></a>
+                    <a title="Next" href="?page={{ page_obj.next_page_number }}" data-placement="top" class="bi bi-caret-right-fill"></a>
                 {% endif %}
             </span>
         </div>

@@ -78,7 +78,7 @@
           <a
             v-on:click="prevPage"
             v-show="currentPage > 1"
-            class="bi bi-carot-left-fill"
+            class="bi bi-caret-left-fill"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
@@ -89,7 +89,7 @@
             data-toggle="tooltip"
             data-placement="top"
             title=""
-            class="bi bi-carot-right-fill dimgray"
+            class="bi bi-caret-right-fill dimgray"
             data-original-title="Next"
           ></a>
         </span>
