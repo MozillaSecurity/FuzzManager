@@ -6,10 +6,10 @@
       </a>
     </td>
     <td class="short-sig">{{ signature.shortDescription }}</td>
-    <td>{{ signature.size }}</td>
     <td>
       <activitygraph :data="signature.crash_history" :range="activityRange" />
     </td>
+    <td>{{ signature.size }}</td>
     <td>{{ signature.best_quality }}</td>
     <td>
       <a
