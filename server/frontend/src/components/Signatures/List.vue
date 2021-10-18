@@ -119,6 +119,7 @@
             >
               Description
             </th>
+            <th>Activity</th>
             <th
               v-on:click.exact="sortBy('size')"
               v-on:click.ctrl.exact="addSort('size')"
@@ -128,7 +129,6 @@
             >
               Size
             </th>
-            <th>Activity</th>
             <th
               v-on:click.exact="sortBy('quality')"
               v-on:click.ctrl.exact="addSort('quality')"
