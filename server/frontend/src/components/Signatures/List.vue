@@ -117,7 +117,7 @@
                   sortKeys.includes('-shortDescription'),
               }"
             >
-              Short Description
+              Description
             </th>
             <th
               v-on:click.exact="sortBy('size')"
@@ -126,7 +126,7 @@
                 active: sortKeys.includes('size') || sortKeys.includes('-size'),
               }"
             >
-              Bucket Size
+              Size
             </th>
             <th>Activity</th>
             <th
@@ -137,7 +137,7 @@
                   sortKeys.includes('quality') || sortKeys.includes('-quality'),
               }"
             >
-              Best Test Quality
+              Best Quality
             </th>
             <th
               v-on:click.exact="sortBy('bug__externalId')"
