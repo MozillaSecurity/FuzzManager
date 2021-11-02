@@ -152,132 +152,17 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('id')"
-              v-on:click.ctrl.exact="addSort('id')"
-              :class="{
-                active: sortKeys.includes('id') || sortKeys.includes('-id'),
-              }"
-            >
-              ID
-            </th>
-            <th
-              v-on:click.exact="sortBy('created')"
-              v-on:click.ctrl.exact="addSort('created')"
+              v-for="(column, index) in columns"
+              :key="index"
+              v-on:click.exact="sortBy(column.sortKey)"
+              v-on:click.ctrl.exact="addSort(column.sortKey)"
               :class="{
                 active:
-                  sortKeys.includes('created') || sortKeys.includes('-created'),
+                  sortKeys.includes(column.sortKey) ||
+                  sortKeys.includes(`-${column.sortKey}`),
               }"
             >
-              Date Added
-            </th>
-            <th
-              v-on:click.exact="sortBy('bucket')"
-              v-on:click.ctrl.exact="addSort('bucket')"
-              :class="{
-                active:
-                  sortKeys.includes('bucket') || sortKeys.includes('-bucket'),
-              }"
-            >
-              Bucket
-            </th>
-            <th
-              v-on:click.exact="sortBy('shortSignature')"
-              v-on:click.ctrl.exact="addSort('shortSignature')"
-              :class="{
-                active:
-                  sortKeys.includes('shortSignature') ||
-                  sortKeys.includes('-shortSignature'),
-              }"
-            >
-              Short Signature
-            </th>
-            <th
-              v-on:click.exact="sortBy('crashAddress')"
-              v-on:click.ctrl.exact="addSort('crashAddress')"
-              :class="{
-                active:
-                  sortKeys.includes('crashAddress') ||
-                  sortKeys.includes('-crashAddress'),
-              }"
-            >
-              Crash Address
-            </th>
-            <th
-              v-on:click.exact="sortBy('testcase__size')"
-              v-on:click.ctrl.exact="addSort('testcase__size')"
-              :class="{
-                active:
-                  sortKeys.includes('testcase__size') ||
-                  sortKeys.includes('-testcase__size'),
-              }"
-            >
-              Test Size
-            </th>
-            <th
-              v-on:click.exact="sortBy('testcase__quality')"
-              v-on:click.ctrl.exact="addSort('testcase__quality')"
-              :class="{
-                active:
-                  sortKeys.includes('testcase__quality') ||
-                  sortKeys.includes('-testcase__quality'),
-              }"
-            >
-              Test Info
-            </th>
-            <th
-              v-on:click.exact="sortBy('product__name')"
-              v-on:click.ctrl.exact="addSort('product__name')"
-              :class="{
-                active:
-                  sortKeys.includes('product__name') ||
-                  sortKeys.includes('-product__name'),
-              }"
-            >
-              Product
-            </th>
-            <th
-              v-on:click.exact="sortBy('product__version')"
-              v-on:click.ctrl.exact="addSort('product__version')"
-              :class="{
-                active:
-                  sortKeys.includes('product__version') ||
-                  sortKeys.includes('-product__version'),
-              }"
-            >
-              Version
-            </th>
-            <th
-              v-on:click.exact="sortBy('platform__name')"
-              v-on:click.ctrl.exact="addSort('platform__name')"
-              :class="{
-                active:
-                  sortKeys.includes('platform__name') ||
-                  sortKeys.includes('-platform__name'),
-              }"
-            >
-              Platform
-            </th>
-            <th
-              v-on:click.exact="sortBy('os__name')"
-              v-on:click.ctrl.exact="addSort('os__name')"
-              :class="{
-                active:
-                  sortKeys.includes('os__name') ||
-                  sortKeys.includes('-os__name'),
-              }"
-            >
-              OS
-            </th>
-            <th
-              v-on:click.exact="sortBy('tool__name')"
-              v-on:click.ctrl.exact="addSort('tool__name')"
-              :class="{
-                active:
-                  sortKeys.includes('tool__name') ||
-                  sortKeys.includes('-tool__name'),
-              }"
-            >
-              Tool
+              {{ column.desc }}
             </th>
           </tr>
         </thead>
@@ -311,20 +196,7 @@ import Row from "./Row.vue";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 
 const pageSize = 100;
-const validSortKeys = [
-  "bucket",
-  "crashAddress",
-  "created",
-  "id",
-  "os__name",
-  "platform__name",
-  "product__name",
-  "product__version",
-  "shortSignature",
-  "testcase__quality",
-  "testcase__size",
-  "tool__name",
-];
+
 const validFilters = {
   bucket: "Bucket",
   client__name: "Client name",
@@ -342,6 +214,22 @@ const validFilters = {
   tool__name: "Tool",
   tool__name__contains: "Tool (sub-string match)",
 };
+
+const columns = [
+  { desc: "ID", sortKey: "id" },
+  { desc: "Date Added", sortKey: "created" },
+  { desc: "Bucket", sortKey: "bucket" },
+  { desc: "Short Signature", sortKey: "shortSignature" },
+  { desc: "Crash Address", sortKey: "crashAddress" },
+  { desc: "Test Size", sortKey: "testcase__size" },
+  { desc: "Test Info", sortKey: "testcase__quality" },
+  { desc: "Product", sortKey: "product__name" },
+  { desc: "Version", sortKey: "product__version" },
+  { desc: "Platform", sortKey: "platform__name" },
+  { desc: "OS", sortKey: "os__name" },
+  { desc: "Tool", sortKey: "tool__name" },
+];
+
 const defaultSortKey = "-id";
 
 export default {
@@ -367,6 +255,7 @@ export default {
     advancedQueryError: "",
     advancedQueryStr: "",
     canUnshowBucketed: true,
+    columns: columns,
     crashes: null,
     currentEntries: "?",
     currentPage: 1,
@@ -396,7 +285,7 @@ export default {
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
         const sortKeys = hash.sort.split(",").filter((key) => {
           const realKey = key.startsWith("-") ? key.substring(1) : key;
-          if (validSortKeys.includes(realKey)) {
+          if (columns.some((c) => c.sortKey === realKey)) {
             return true;
           }
           // eslint-disable-next-line no-console
