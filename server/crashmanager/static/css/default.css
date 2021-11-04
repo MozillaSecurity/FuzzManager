@@ -60,39 +60,17 @@ a.fixedbug:active {
 }
 
 /* database tables */
-
 .table-db {
-  white-space: nowrap
+  width: 100%;
+  word-break: normal;
 }
 
 .table-db th {
   background: #eee;
 }
 
-.table tbody td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* limit display size of short signature column */
-
 .short-sig {
-  max-width: 68ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@media only screen and (min-width : 992px) {
-  .short-sig {
-      max-width: 68ch;
-  }
-}
-
-@media only screen and (min-width : 1200px) {
-  .short-sig {
-      max-width: 90ch;
-  }
+  word-break: normal;
 }
 
 /* sticky footer */
