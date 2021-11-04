@@ -68,115 +68,117 @@
         </span>
       </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-      <thead>
-        <tr>
-          <th
-            v-on:click="sortBy('task_id')"
-            :class="{ active: sortKey === 'task_id' }"
-            width="50px"
-          >
-            Task
-          </th>
-          <th
-            v-on:click="sortBy('run_id')"
-            :class="{ active: sortKey === 'run_id' }"
-            width="15px"
-          >
-            Run
-          </th>
-          <th
-            v-on:click="sortBy('state')"
-            :class="{ active: sortKey === 'state' }"
-            width="25px"
-          >
-            State
-          </th>
-          <th
-            v-on:click="sortBy('created')"
-            :class="{ active: sortKey === 'created' }"
-            width="60px"
-          >
-            Created
-          </th>
-          <th
-            v-on:click="sortBy('started')"
-            :class="{ active: sortKey === 'started' }"
-            width="60px"
-          >
-            Started
-          </th>
-          <th
-            v-on:click="sortBy('resolved')"
-            :class="{ active: sortKey === 'resolved' }"
-            width="60px"
-          >
-            Resolved
-          </th>
-          <th
-            v-on:click="sortBy('expires')"
-            :class="{ active: sortKey === 'expires' }"
-            width="60px"
-          >
-            Expires
-          </th>
-          <th width="150px">Status Data</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="task in tasks" :key="task.id">
-          <td>
-            <a :href="task.task_url">{{ task.task_id }}</a>
-          </td>
-          <td>{{ task.run_id }}</td>
-          <td>
-            <span
-              class="label"
-              :class="{
-                'label-default': task.state === 'pending',
-                'label-warning': task.state === 'exception',
-                'label-primary': task.state === 'running',
-                'label-danger': task.state === 'failed',
-                'label-success': task.state === 'completed',
-              }"
-              >{{ task.state }}</span
+    <div class="table-responsive">
+      <table class="table table-condensed table-hover table-bordered table-db">
+        <thead>
+          <tr>
+            <th
+              v-on:click="sortBy('task_id')"
+              :class="{ active: sortKey === 'task_id' }"
+              width="50px"
             >
-          </td>
-          <td>
-            {{ task.created | formatDate }}<br />{{
-              task.created | formatDateAgo
-            }}
-          </td>
-          <td v-if="task.started !== null">
-            {{ task.started | formatDate }}<br />{{
-              formatDateRelative(task.created, task.started, "later")
-            }}
-          </td>
-          <td v-else>N/A</td>
-          <td v-if="task.resolved !== null">
-            {{ task.resolved | formatDate }}<br />{{
-              formatDateRelative(
-                task.started !== null ? task.started : task.created,
-                task.resolved,
-                "later"
-              )
-            }}
-          </td>
-          <td v-else>N/A</td>
-          <td>
-            {{ task.expires | formatDate }}<br />{{
-              new Date(task.expires) > new Date()
-                ? formatDateRelative(new Date(), task.expires, "from now")
-                : formatDateRelative(task.expires)
-            }}
-          </td>
-          <td v-if="task.status_data">
-            <pre>{{ task.status_data }}</pre>
-          </td>
-          <td v-else>N/A</td>
-        </tr>
-      </tbody>
-    </table>
+              Task
+            </th>
+            <th
+              v-on:click="sortBy('run_id')"
+              :class="{ active: sortKey === 'run_id' }"
+              width="15px"
+            >
+              Run
+            </th>
+            <th
+              v-on:click="sortBy('state')"
+              :class="{ active: sortKey === 'state' }"
+              width="25px"
+            >
+              State
+            </th>
+            <th
+              v-on:click="sortBy('created')"
+              :class="{ active: sortKey === 'created' }"
+              width="60px"
+            >
+              Created
+            </th>
+            <th
+              v-on:click="sortBy('started')"
+              :class="{ active: sortKey === 'started' }"
+              width="60px"
+            >
+              Started
+            </th>
+            <th
+              v-on:click="sortBy('resolved')"
+              :class="{ active: sortKey === 'resolved' }"
+              width="60px"
+            >
+              Resolved
+            </th>
+            <th
+              v-on:click="sortBy('expires')"
+              :class="{ active: sortKey === 'expires' }"
+              width="60px"
+            >
+              Expires
+            </th>
+            <th width="150px">Status Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="task in tasks" :key="task.id">
+            <td>
+              <a :href="task.task_url">{{ task.task_id }}</a>
+            </td>
+            <td>{{ task.run_id }}</td>
+            <td>
+              <span
+                class="label"
+                :class="{
+                  'label-default': task.state === 'pending',
+                  'label-warning': task.state === 'exception',
+                  'label-primary': task.state === 'running',
+                  'label-danger': task.state === 'failed',
+                  'label-success': task.state === 'completed',
+                }"
+                >{{ task.state }}</span
+              >
+            </td>
+            <td>
+              {{ task.created | formatDate }}<br />{{
+                task.created | formatDateAgo
+              }}
+            </td>
+            <td v-if="task.started !== null">
+              {{ task.started | formatDate }}<br />{{
+                formatDateRelative(task.created, task.started, "later")
+              }}
+            </td>
+            <td v-else>N/A</td>
+            <td v-if="task.resolved !== null">
+              {{ task.resolved | formatDate }}<br />{{
+                formatDateRelative(
+                  task.started !== null ? task.started : task.created,
+                  task.resolved,
+                  "later"
+                )
+              }}
+            </td>
+            <td v-else>N/A</td>
+            <td>
+              {{ task.expires | formatDate }}<br />{{
+                new Date(task.expires) > new Date()
+                  ? formatDateRelative(new Date(), task.expires, "from now")
+                  : formatDateRelative(task.expires)
+              }}
+            </td>
+            <td v-if="task.status_data">
+              <pre>{{ task.status_data }}</pre>
+            </td>
+            <td v-else>N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
