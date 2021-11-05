@@ -38,6 +38,14 @@ export const errorParser = (error) => {
 
 export const E_SERVER_ERROR = "Error while communicating with the server.";
 
+export const formatSizeFriendly = (sz) => {
+  if (sz >= 1024 * 1024 * 1024)
+    return Math.round(sz / 1024 / 1024 / 1024) + "G";
+  if (sz >= 1024 * 1024) return Math.round(sz / 1024 / 1024) + "M";
+  if (sz >= 1024) return Math.round(sz / 1024) + "K";
+  return sz + "";
+};
+
 export const formatClientTimestamp = (datetime) => {
   const date = new Intl.DateTimeFormat(undefined, {
     year: "numeric",
