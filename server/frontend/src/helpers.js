@@ -39,15 +39,17 @@ export const errorParser = (error) => {
 export const E_SERVER_ERROR = "Error while communicating with the server.";
 
 export const formatClientTimestamp = (datetime) => {
-  return new Intl.DateTimeFormat(undefined, {
+  const date = new Intl.DateTimeFormat(undefined, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
     hour12: false,
-    timeZoneName: "short",
-  }).format(new Date(datetime));
+  }).formatToParts(new Date(datetime));
+  return Object.values(date)
+    .map(({ value }) => (value === ", " ? " " : value))
+    .join("");
 };
 
 export const assignExternalBug = (bucketId, bugId, providerId) => {
