@@ -146,7 +146,9 @@
       </div>
     </div>
     <div class="table-responsive">
-      <table class="table table-condensed table-hover table-bordered table-db">
+      <table
+        class="table table-condensed table-hover table-bordered table-db wrap-none"
+      >
         <thead>
           <tr>
             <th
