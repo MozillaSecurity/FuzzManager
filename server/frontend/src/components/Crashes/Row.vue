@@ -3,7 +3,7 @@
     <td>
       <a :href="crash.view_url">{{ crash.id }}</a>
     </td>
-    <td>{{ crash.created | formatDate }}</td>
+    <td class="wrap-normal">{{ crash.created | formatDate }}</td>
     <td v-if="crash.bucket">
       <a :href="crash.sig_view_url">{{ crash.bucket }} </a>
     </td>
@@ -30,7 +30,7 @@
         class="bi bi-search dimgray"
       ></a>
     </td>
-    <td class="short-sig">{{ crash.shortSignature }}</td>
+    <td class="wrap-anywhere">{{ crash.shortSignature }}</td>
     <td>{{ crash.crashAddress }}</td>
     <td v-if="crash.testcase">
       <a
@@ -51,7 +51,7 @@
         >{{ crash.product }}</a
       >
     </td>
-    <td>
+    <td class="wrap-anywhere">
       <a
         title="Add to search"
         class="add-filter"

@@ -62,15 +62,23 @@ a.fixedbug:active {
 /* database tables */
 .table-db {
   width: 100%;
-  word-break: normal;
 }
 
 .table-db th {
   background: #eee;
 }
 
-.short-sig {
-  word-break: normal;
+.wrap-none {
+  white-space: nowrap;
+}
+
+.wrap-normal {
+  white-space: normal;
+}
+
+.wrap-anywhere {
+  word-break: break-all;
+  white-space: normal;
 }
 
 /* sticky footer */

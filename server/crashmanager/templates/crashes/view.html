@@ -42,7 +42,7 @@
             </td></tr>
             <tr><td>Created</td><td>{{ entry.created|date:"r" }}</td></tr>
             <tr><td>Client</td><td>{{ entry.client.name|escape }}</td></tr>
-            <tr><td>Short Signature</td><td>{{ entry.shortSignature|escape }}</td></tr>
+            <tr><td>Short Signature</td><td class="wrap-anywhere">{{ entry.shortSignature|escape }}</td></tr>
             <tr><td>Product</td><td>{{ entry.product.name }}</td></tr>
             <tr><td>Version</td><td>{{ entry.product.version }}</td></tr>
             <tr><td>Platform</td><td>{{ entry.platform.name }}</td></tr>
