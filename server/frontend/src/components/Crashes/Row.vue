@@ -39,8 +39,8 @@
         v-on:click="addFilter('testcase__quality', crash.testcase_quality)"
         >Q{{ crash.testcase_quality }}</a
       >
-      {{ crash.testcase_size }}
-      <span v-if="crash.testcase_isbinary">(binary)</span>
+      {{ crash.testcase_size | formatSize }}
+      <i class="bi bi-file-binary" v-if="crash.testcase_isbinary"></i>
     </td>
     <td v-else>No test</td>
     <td>
@@ -116,7 +116,7 @@
 </template>
 
 <script>
-import { formatClientTimestamp } from "../../helpers";
+import { formatClientTimestamp, formatSizeFriendly } from "../../helpers";
 
 export default {
   props: {
@@ -127,6 +127,7 @@ export default {
   },
   filters: {
     formatDate: formatClientTimestamp,
+    formatSize: formatSizeFriendly,
   },
   methods: {
     addFilter(key, value) {

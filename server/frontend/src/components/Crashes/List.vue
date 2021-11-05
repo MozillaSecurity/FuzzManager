@@ -209,7 +209,7 @@
                   sortKeys.includes('-testcase__quality'),
               }"
             >
-              Test Status
+              Test Info
             </th>
             <th
               v-on:click.exact="sortBy('product__name')"
