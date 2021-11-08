@@ -81,6 +81,13 @@ a.fixedbug:active {
   white-space: normal;
 }
 
+.two-line-limit {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 /* sticky footer */
 
 .footer {
