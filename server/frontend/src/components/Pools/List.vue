@@ -18,12 +18,12 @@
             ID
           </th>
           <th
-            v-on:click.exact="sortBy('pool_name')"
-            v-on:click.ctrl.exact="addSort('pool_name')"
+            v-on:click.exact="sortBy('pool_name_isort')"
+            v-on:click.ctrl.exact="addSort('pool_name_isort')"
             :class="{
               active:
-                sortKeys.includes('pool_name') ||
-                sortKeys.includes('-pool_name'),
+                sortKeys.includes('pool_name_isort') ||
+                sortKeys.includes('-pool_name_isort'),
             }"
             width="100px"
           >
@@ -85,7 +85,7 @@ import swal from "sweetalert";
 import { E_SERVER_ERROR } from "../../helpers";
 import * as api from "../../api";
 
-const defaultSortKey = "pool_name";
+const defaultSortKey = "pool_name_isort";
 
 export default {
   data: function () {
@@ -120,7 +120,10 @@ export default {
         this.loading = true;
         try {
           const data = await api.listPools(this.buildParams());
-          this.pools = data.results;
+          this.pools = data.results.map((pool) => {
+            pool.pool_name_isort = pool.pool_name.toLowerCase();
+            return pool;
+          });
         } catch (err) {
           if (
             err.response &&
