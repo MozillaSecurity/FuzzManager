@@ -30,7 +30,9 @@
         class="bi bi-search dimgray"
       ></a>
     </td>
-    <td class="wrap-anywhere">{{ crash.shortSignature }}</td>
+    <td class="wrap-anywhere">
+      <span class="two-line-limit">{{ crash.shortSignature }}</span>
+    </td>
     <td>{{ crash.crashAddress }}</td>
     <td v-if="crash.testcase">
       <a
@@ -52,12 +54,14 @@
       >
     </td>
     <td class="wrap-anywhere">
-      <a
-        title="Add to search"
-        class="add-filter"
-        v-on:click="addFilter('product__version', crash.product_version)"
-        >{{ crash.product_version }}</a
-      >
+      <span class="two-line-limit">
+        <a
+          title="Add to search"
+          class="add-filter"
+          v-on:click="addFilter('product__version', crash.product_version)"
+          >{{ crash.product_version }}</a
+        >
+      </span>
     </td>
     <td>
       <a
