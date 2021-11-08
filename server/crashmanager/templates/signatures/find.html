@@ -36,7 +36,7 @@
                 {% for entry in buckets %}
                 <tr class="{% cycle 'odd' 'even' %}">
                     <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-                    <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                    <td class="wrap-anywhere"><span class="two-line-limit">{{ entry.shortDescription|escape }}</span></td>
                     <td>{{ entry.offCount }} <a title="Show differences" href="{% url 'crashmanager:sigtry' sigid=entry.pk crashid=crashentry.pk %}">(diff)</a>  </td>
                     <td>
                         {% if entry.foreignColor == "green" %}

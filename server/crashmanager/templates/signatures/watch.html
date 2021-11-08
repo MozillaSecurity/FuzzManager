@@ -22,7 +22,7 @@
             {% for entry in siglist %}
             <tr class="{% cycle 'odd' 'even' %}">
                 <td><a title="View signature" href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-                <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                <td class="wrap-anywhere"><span class="two-line-limit">{{ entry.shortDescription|escape }}</span></td>
                 <td><a title="View new crashes" href="{% url 'crashmanager:sigwatchcrashes' entry.pk %}">{{ entry.newCrashes }}</a></td>
                 <td><a title="Remove watch" href="{% url 'crashmanager:sigwatchdel' entry.pk %}" data-toggle="tooltip" data-placement="top" class="bi bi-trash-fill" style="color:dimgray"></a></td>
             </tr>
