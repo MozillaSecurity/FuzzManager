@@ -203,6 +203,17 @@
               Crash Address
             </th>
             <th
+              v-on:click.exact="sortBy('testcase__size')"
+              v-on:click.ctrl.exact="addSort('testcase__size')"
+              :class="{
+                active:
+                  sortKeys.includes('testcase__size') ||
+                  sortKeys.includes('-testcase__size'),
+              }"
+            >
+              Test Size
+            </th>
+            <th
               v-on:click.exact="sortBy('testcase__quality')"
               v-on:click.ctrl.exact="addSort('testcase__quality')"
               :class="{
@@ -311,6 +322,7 @@ const validSortKeys = [
   "product__version",
   "shortSignature",
   "testcase__quality",
+  "testcase__size",
   "tool__name",
 ];
 const validFilters = {
@@ -324,6 +336,9 @@ const validFilters = {
   testcase__quality: "Testcase Quality",
   testcase__quality__gt: "Testcase Quality (greater than)",
   testcase__quality__lt: "Testcase Quality (lesser than)",
+  testcase__size__gt: "Testcase Size (greater than)",
+  testcase__size__lt: "Testcase Size (lesser than)",
+  testcase__size: "Testcase Size",
   tool__name: "Tool",
   tool__name__contains: "Tool (sub-string match)",
 };

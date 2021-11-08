@@ -35,16 +35,23 @@
     </td>
     <td>{{ crash.crashAddress }}</td>
     <td v-if="crash.testcase">
+      {{ crash.testcase_size | formatSize }}
+    </td>
+    <td v-else>N/A</td>
+    <td v-if="crash.testcase">
       <a
         title="Add to search"
         class="add-filter"
         v-on:click="addFilter('testcase__quality', crash.testcase_quality)"
         >Q{{ crash.testcase_quality }}</a
       >
-      {{ crash.testcase_size | formatSize }}
-      <i class="bi bi-file-binary" v-if="crash.testcase_isbinary"></i>
+      <i
+        title="test is binary"
+        class="bi bi-file-binary"
+        v-if="crash.testcase_isbinary"
+      ></i>
     </td>
-    <td v-else>No test</td>
+    <td v-else>N/A</td>
     <td>
       <a
         title="Add to search"
