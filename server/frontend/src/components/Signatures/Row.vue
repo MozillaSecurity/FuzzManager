@@ -5,7 +5,9 @@
         {{ signature.id }}
       </a>
     </td>
-    <td class="short-sig">{{ signature.shortDescription }}</td>
+    <td class="wrap-anywhere">
+      <span class="two-line-limit">{{ signature.shortDescription }}</span>
+    </td>
     <td>
       <activitygraph :data="signature.crash_history" :range="activityRange" />
     </td>

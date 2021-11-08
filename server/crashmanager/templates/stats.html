@@ -16,7 +16,7 @@
             <tr>
                 <th>Bucket</th>
                 <th>Short Description</th>
-                <th>Reports < 1h</th>
+                <th>Reports &lt; 1h</th>
                 <th>External Bug</th>
             </tr>
             </thead>
@@ -24,7 +24,7 @@
             {% for entry in frequentBuckets %}
             <tr class="{% cycle 'odd' 'even' %}">
                 <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-                <td class="short-sig">{{ entry.shortDescription|escape }}</td>
+                <td class="wrap-anywhere"><span class="two-line-limit">{{ entry.shortDescription|escape }}</span></td>
                 <td>{{ entry.rph }}</td>
                 <td>
                     {% if entry.bug %}
