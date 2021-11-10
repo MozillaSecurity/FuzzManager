@@ -315,13 +315,11 @@ def main(argv=None):
             print("Error: Must specify --repository when submitting coverage", file=sys.stderr)
             return 2
 
-        preprocessed = opts.preprocessed is not None
-
         if opts.submit:
             with open(opts.submit) as f:
                 coverage = json.load(f)
             reporter.submit(
-                coverage, preprocessed, version=version, description=opts.description,
+                coverage, opts.preprocessed, version=version, description=opts.description,
             )
         else:
             if not opts.rargs:
