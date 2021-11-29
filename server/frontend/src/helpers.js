@@ -1,3 +1,5 @@
+import * as api from "./api";
+
 /**
  * A helper method to try to parse errors into human-readable strings.
  * This also parses anything that is not an Error, since JavaScript allows throwing anything, not just errors.
@@ -36,16 +38,45 @@ export const errorParser = (error) => {
 
 export const E_SERVER_ERROR = "Error while communicating with the server.";
 
+export const formatSizeFriendly = (sz) => {
+  if (sz >= 1024 * 1024 * 1024)
+    return Math.round(sz / 1024 / 1024 / 1024) + "G";
+  if (sz >= 1024 * 1024) return Math.round(sz / 1024 / 1024) + "M";
+  if (sz >= 1024) return Math.round(sz / 1024) + "K";
+  return sz + "";
+};
+
 export const formatClientTimestamp = (datetime) => {
-  return new Intl.DateTimeFormat(undefined, {
+  const date = new Intl.DateTimeFormat(undefined, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
     hour12: false,
-    timeZoneName: "short",
-  }).format(new Date(datetime));
+  }).formatToParts(new Date(datetime));
+  return Object.values(date)
+    .map(({ value }) => (value === ", " ? " " : value))
+    .join("");
+};
+
+export const assignExternalBug = (bucketId, bugId, providerId) => {
+  const payload = {
+    bug: bugId,
+    bug_provider: providerId,
+  };
+
+  try {
+    return Promise.resolve(
+      api.updateBucket({
+        id: bucketId,
+        params: { reassign: false },
+        ...payload,
+      })
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
 export const formatDateRelative = (datetime, relative_to, suffix) => {

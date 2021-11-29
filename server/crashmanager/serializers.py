@@ -128,73 +128,74 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
 class BucketSerializer(serializers.ModelSerializer):
     signature = serializers.CharField(style={'base_template': 'textarea.html'}, required=False)
-    bug = serializers.CharField(source='bug.externalId', default=None)
+    bug = serializers.CharField(source='bug.externalId', default=None, allow_null=True)
     # write_only here means don't try to read it automatically in super().to_representation()
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
+    best_entry = serializers.IntegerField(write_only=True, required=False)
+    latest_entry = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
     bug_provider = serializers.PrimaryKeyRelatedField(
-        write_only=True, required=False, queryset=BugProvider.objects.all()
+        write_only=True, required=False, queryset=BugProvider.objects.all(), allow_null=True
     )
     has_optimization = serializers.BooleanField(write_only=True, required=False)
 
     class Meta:
         model = Bucket
         fields = (
-            'best_quality', 'bug', 'frequent', 'id', 'permanent', 'bug_provider',
-            'shortDescription', 'signature', 'size', 'has_optimization',
+            'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'bug_provider',
+            'shortDescription', 'signature', 'size', 'has_optimization', 'latest_entry',
         )
         ordering = ['-id']
         read_only_fields = ('id', )
 
+    def to_internal_value(self, data):
+        result = super().to_internal_value(data)
+        if 'bug' in result and result['bug']['externalId'] is None:
+            result['bug'] = None
+        return result
+
     def to_representation(self, obj):
-        serialized = super(BucketSerializer, self).to_representation(obj)
+        serialized = super().to_representation(obj)
         serialized['size'] = obj.size
+        serialized['best_entry'] = getattr(obj, "best_entry", None)
+        serialized['latest_entry'] = getattr(obj, "latest_entry", None)
         serialized['best_quality'] = obj.quality
         serialized['has_optimization'] = bool(obj.optimizedSignature)
-        # setting best_crash requires knowing whether the bucket query was restricted eg. by tool
-        # see note in BucketAnnotateFilterBackend
         return serialized
 
 
 class BucketVueSerializer(BucketSerializer):
-    view_url = serializers.SerializerMethodField()
-    link_url = serializers.SerializerMethodField()
-    opt_pre_url = serializers.SerializerMethodField()
     bug_closed = serializers.SerializerMethodField()
-    bug_urltemplate = serializers.SerializerMethodField()
     bug_hostname = serializers.SerializerMethodField()
+    bug_urltemplate = serializers.SerializerMethodField()
+    opt_pre_url = serializers.SerializerMethodField()
+    view_url = serializers.SerializerMethodField()
 
     class Meta(BucketSerializer.Meta):
         fields = BucketSerializer.Meta.fields + (
-            'view_url',
-            'link_url',
-            'opt_pre_url',
             'bug_closed',
-            'bug_urltemplate',
             'bug_hostname',
+            'bug_urltemplate',
+            'opt_pre_url',
+            'view_url',
         )
         read_only_fields = BucketSerializer.Meta.read_only_fields + (
-            'view_url',
-            'link_url',
-            'opt_pre_url',
             'bug_closed',
-            'bug_urltemplate',
             'bug_hostname',
+            'bug_urltemplate',
+            'opt_pre_url',
+            'view_url',
         )
-
-    def get_view_url(self, sig):
-        return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
-
-    def get_link_url(self, sig):
-        return reverse('crashmanager:siglink', kwargs={'sigid': sig.id})
-
-    def get_opt_pre_url(self, sig):
-        return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
 
     def get_bug_closed(self, sig):
         if sig.bug:
             return sig.bug.closed
+        return None
+
+    def get_bug_hostname(self, sig):
+        if sig.bug and sig.bug.externalType:
+            return sig.bug.externalType.hostname
         return None
 
     def get_bug_urltemplate(self, sig):
@@ -205,10 +206,11 @@ class BucketVueSerializer(BucketSerializer):
                 return None
         return None
 
-    def get_bug_hostname(self, sig):
-        if sig.bug and sig.bug.externalType:
-            return sig.bug.externalType.hostname
-        return None
+    def get_opt_pre_url(self, sig):
+        return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
+
+    def get_view_url(self, sig):
+        return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
 
 
 class CrashEntryVueSerializer(CrashEntrySerializer):
@@ -260,7 +262,8 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
         fields = ('id', 'mode', 'name', 'comment', 'product', 'component', 'summary', 'version',
                   'description', 'op_sys', 'platform', 'priority', 'severity', 'alias',
                   'cc', 'assigned_to', 'qa_contact', 'target_milestone', 'whiteboard',
-                  'keywords', 'attrs', 'security_group', 'testcase_filename', 'security',)
+                  'keywords', 'attrs', 'security_group', 'testcase_filename', 'security',
+                  'blocks', 'dependson',)
         read_only_fields = ('id', 'mode')
 
     def get_mode(self, obj):

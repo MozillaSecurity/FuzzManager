@@ -52,17 +52,19 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
+def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=None, latest=None, hist=[], vue=False):
     attributes = {
-        'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
-        'has_optimization',
+        'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
+        'has_optimization', 'latest_entry',
     }
     if vue:
-        attributes.update({'view_url', 'link_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname'})
+        attributes.update({'view_url', 'opt_pre_url', 'bug_closed', 'bug_urltemplate', 'bug_hostname', 'crash_history'})
 
     assert set(result) == attributes
     assert result["id"] == bucket.pk
     assert result["best_quality"] == quality
+    assert result["best_entry"] == best_entry
+    assert result["latest_entry"] == latest
     assert result["bug"] == bucket.bug_id
     assert result["frequent"] == bucket.frequent
     assert result["has_optimization"] == bool(bucket.optimizedSignature)
@@ -72,11 +74,15 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, vue=False):
     assert result["size"] == size
     if vue:
         assert result["view_url"] == reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})
-        assert result["link_url"] == reverse('crashmanager:siglink', kwargs={'sigid': bucket.pk})
         assert result["opt_pre_url"] == reverse('crashmanager:sigoptpre', kwargs={'sigid': bucket.pk})
         assert result["bug_closed"] is None
         assert result["bug_urltemplate"] is None
         assert result["bug_hostname"] is None
+        # sanitize timestamp before comparing
+        result_crash_history = [entry.copy() for entry in result["crash_history"]]
+        for idx, entry in enumerate(result_crash_history):
+            entry["begin"] = f"ts{idx}"
+        assert result_crash_history == hist
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
@@ -156,10 +162,19 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, vue=vue)
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 3}]
+        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, hist=hist, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 1}]
+        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, hist=hist, vue=vue)
     else:
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, vue=vue)
+        hist = []
+        if vue:
+            hist = [{"begin": "ts0", "count": 2}]
+        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, hist=hist, vue=vue)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -174,7 +189,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
              cm.create_testcase("test4.txt", quality=3)]
     buckets = [bucket1, bucket1, bucket2, bucket2]
     tools = ["tool1", "tool2", "tool2", "tool3"]
-    for i in range(4):
+    crashes = [
         cm.create_crash(shortSignature="crash #%d" % (i + 1),
                         client="client #%d" % (i + 1),
                         os="os #%d" % (i + 1),
@@ -184,6 +199,8 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
                         tool=tools[i],
                         testcase=tests[i],
                         bucket=buckets[i])
+        for i in range(4)
+    ]
     cm.create_toolfilter('tool1', user=user.username)
     params = {}
     if ignore_toolfilter:
@@ -200,12 +217,15 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             assert status_code == requests.codes['ok'], resp['detail']
             if user.username == "test":
                 if ignore_toolfilter:
-                    size, quality = [(2, 9), (2, 2)][i]
+                    size, quality, best, latest = [
+                        (2, 9, crashes[0].id, crashes[1].id),
+                        (2, 2, crashes[2].id, crashes[3].id),
+                    ][i]
                 else:
-                    size, quality = [(1, 9), (0, None)][i]
+                    size, quality, best, latest = [(1, 9, crashes[0].id, crashes[0].id), (0, None, None, None)][i]
             else:
-                size, quality = (1, 9)
-            _compare_rest_result_to_bucket(resp, bucket, size, quality)
+                size, quality, best, latest = (1, 9, crashes[0].id, crashes[0].id)
+            _compare_rest_result_to_bucket(resp, bucket, size, quality, best, latest)
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -479,6 +499,50 @@ def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: dis
         assert crash2.bucket is None
         assert out_list[0]['id'] == crash1.pk
         assert in_list[0]['id'] == crash2.pk
+
+
+def test_edit_signature_set_frequent(api_client, cm, user_normal):
+    """test that partial_update action marks a signature frequent without touching anything else"""
+    bug = cm.create_bug('123')
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig, bug=bug)
+    assert not bucket.frequent
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'frequent': True,
+    }, format='json')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    assert resp.json() == {"url": reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})}
+    bucket.refresh_from_db()
+    assert bucket.frequent
+    assert bucket.bug == bug
+
+
+def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
+    """test that partial_update action marks a signature frequent without touching anything else"""
+    bug = cm.create_bug('123')
+    sig = json.dumps({
+        'symptoms': [
+            {"src": "stderr",
+             "type": "output",
+             "value": "/^blah/"}
+        ]
+    })
+    bucket = cm.create_bucket(shortDescription='bucket #1', signature=sig, bug=bug)
+    resp = api_client.patch('/crashmanager/rest/buckets/%d/?reassign=false' % bucket.pk, data={
+        'bug': None,
+    }, format='json')
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes['ok']
+    assert resp.json() == {"url": reverse('crashmanager:sigview', kwargs={'sigid': bucket.pk})}
+    bucket.refresh_from_db()
+    assert bucket.bug is None
 
 
 def test_edit_signature_assign_external_bug(api_client, cm, user_normal):

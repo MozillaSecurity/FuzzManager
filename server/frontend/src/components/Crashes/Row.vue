@@ -3,14 +3,14 @@
     <td>
       <a :href="crash.view_url">{{ crash.id }}</a>
     </td>
-    <td>{{ crash.created | formatDate }}</td>
+    <td class="wrap-normal">{{ crash.created | formatDate }}</td>
     <td v-if="crash.bucket">
       <a :href="crash.sig_view_url">{{ crash.bucket }} </a>
     </td>
     <td v-else>
       <span
         v-if="!crash.triagedOnce"
-        class="glyphicon glyphicon-hourglass"
+        class="bi bi-hourglass"
         data-toggle="tooltip"
         data-placement="top"
         title="This item hasn't been triaged yet by the server."
@@ -20,18 +20,24 @@
         data-toggle="tooltip"
         data-placement="top"
         title="Add"
-        class="glyphicon glyphicon-oil dimgray"
+        class="bi bi-tag-fill dimgray"
       ></a>
       <a
         :href="crash.find_sigs_url"
         data-toggle="tooltip"
         data-placement="top"
         title="Search"
-        class="glyphicon glyphicon-search dimgray"
+        class="bi bi-search dimgray"
       ></a>
     </td>
-    <td>{{ crash.shortSignature }}</td>
+    <td class="wrap-anywhere">
+      <span class="two-line-limit">{{ crash.shortSignature }}</span>
+    </td>
     <td>{{ crash.crashAddress }}</td>
+    <td v-if="crash.testcase">
+      {{ crash.testcase_size | formatSize }}
+    </td>
+    <td v-else>N/A</td>
     <td v-if="crash.testcase">
       <a
         title="Add to search"
@@ -39,10 +45,13 @@
         v-on:click="addFilter('testcase__quality', crash.testcase_quality)"
         >Q{{ crash.testcase_quality }}</a
       >
-      {{ crash.testcase_size }}
-      <span v-if="crash.testcase_isbinary">(binary)</span>
+      <i
+        title="test is binary"
+        class="bi bi-file-binary"
+        v-if="crash.testcase_isbinary"
+      ></i>
     </td>
-    <td v-else>No test</td>
+    <td v-else>N/A</td>
     <td>
       <a
         title="Add to search"
@@ -51,13 +60,15 @@
         >{{ crash.product }}</a
       >
     </td>
-    <td>
-      <a
-        title="Add to search"
-        class="add-filter"
-        v-on:click="addFilter('product__version', crash.product_version)"
-        >{{ crash.product_version }}</a
-      >
+    <td class="wrap-anywhere">
+      <span class="two-line-limit">
+        <a
+          title="Add to search"
+          class="add-filter"
+          v-on:click="addFilter('product__version', crash.product_version)"
+          >{{ crash.product_version }}</a
+        >
+      </span>
     </td>
     <td>
       <a
@@ -116,7 +127,7 @@
 </template>
 
 <script>
-import { formatClientTimestamp } from "../../helpers";
+import { formatClientTimestamp, formatSizeFriendly } from "../../helpers";
 
 export default {
   props: {
@@ -127,6 +138,7 @@ export default {
   },
   filters: {
     formatDate: formatClientTimestamp,
+    formatSize: formatSizeFriendly,
   },
   methods: {
     addFilter(key, value) {
@@ -141,7 +153,7 @@ export default {
 
 <style scoped>
 .add-filter {
-  cursor: crosshair;
+  cursor: cell;
 }
 .dimgray {
   color: dimgray;

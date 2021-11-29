@@ -120,7 +120,9 @@ def test_template_edit(client, cm):
         "security": False,
         "security_group": "",
         "testcase_filename": "",
-        "comment": ""
+        "comment": "",
+        "blocks": "",
+        "dependson": "",
     })
     LOG.debug(response)
     # Redirecting to template list when the action is successful

@@ -1,7 +1,7 @@
 <template>
   <div id="main" class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-tasks"></i> Fuzzing Pools
+      <i class="bi bi-card-list"></i> Fuzzing Pools
     </div>
     <table class="table table-condensed table-hover table-bordered table-db">
       <thead>
@@ -18,12 +18,12 @@
             ID
           </th>
           <th
-            v-on:click.exact="sortBy('pool_name')"
-            v-on:click.ctrl.exact="addSort('pool_name')"
+            v-on:click.exact="sortBy('pool_name_isort')"
+            v-on:click.ctrl.exact="addSort('pool_name_isort')"
             :class="{
               active:
-                sortKeys.includes('pool_name') ||
-                sortKeys.includes('-pool_name'),
+                sortKeys.includes('pool_name_isort') ||
+                sortKeys.includes('-pool_name_isort'),
             }"
             width="100px"
           >
@@ -81,11 +81,11 @@
 <script>
 import _throttle from "lodash/throttle";
 import _orderBy from "lodash/orderBy";
-import sweetAlert from "sweetalert";
+import swal from "sweetalert";
 import { E_SERVER_ERROR } from "../../helpers";
 import * as api from "../../api";
 
-const defaultSortKey = "pool_name";
+const defaultSortKey = "pool_name_isort";
 
 export default {
   data: function () {
@@ -120,7 +120,10 @@ export default {
         this.loading = true;
         try {
           const data = await api.listPools(this.buildParams());
-          this.pools = data.results;
+          this.pools = data.results.map((pool) => {
+            pool.pool_name_isort = pool.pool_name.toLowerCase();
+            return pool;
+          });
         } catch (err) {
           if (
             err.response &&
@@ -129,7 +132,7 @@ export default {
           ) {
             // eslint-disable-next-line no-console
             console.debug(err.response.data);
-            sweetAlert("Oops", E_SERVER_ERROR, "error");
+            swal("Oops", E_SERVER_ERROR, "error");
             this.loading = false;
           }
         }

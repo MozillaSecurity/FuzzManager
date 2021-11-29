@@ -94,6 +94,8 @@ class PoolVueSerializer(PoolSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    status_data = serializers.CharField(trim_whitespace=False)
+
     class Meta:
         model = Task
         fields = "__all__"

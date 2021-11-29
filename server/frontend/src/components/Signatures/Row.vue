@@ -5,7 +5,12 @@
         {{ signature.id }}
       </a>
     </td>
-    <td>{{ signature.shortDescription }}</td>
+    <td class="wrap-anywhere">
+      <span class="two-line-limit">{{ signature.shortDescription }}</span>
+    </td>
+    <td>
+      <activitygraph :data="signature.crash_history" :range="activityRange" />
+    </td>
     <td>{{ signature.size }}</td>
     <td>{{ signature.best_quality }}</td>
     <td>
@@ -20,9 +25,7 @@
       <p v-else-if="signature.bug">
         {{ signature.bug }} on {{ signature.bug_hostname }}
       </p>
-      <a v-else title="Assign an external bug" :href="signature.link_url">
-        Assign
-      </a>
+      <assignbutton v-else :bucket="signature.id" :providers="providers" />
     </td>
     <td>
       <a
@@ -37,8 +40,23 @@
 </template>
 
 <script>
+import AssignBtn from "./AssignBtn.vue";
+import ActivityGraph from "../ActivityGraph.vue";
+
 export default {
+  components: {
+    activitygraph: ActivityGraph,
+    assignbutton: AssignBtn,
+  },
   props: {
+    activityRange: {
+      type: Number,
+      required: true,
+    },
+    providers: {
+      type: Array,
+      required: true,
+    },
     signature: {
       type: Object,
       required: true,

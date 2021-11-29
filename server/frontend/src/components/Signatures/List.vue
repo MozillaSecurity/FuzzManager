@@ -1,8 +1,6 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading">
-      <i class="glyphicon glyphicon-tag"></i> Signatures
-    </div>
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signatures</div>
     <div class="panel-body">
       <div>
         <div class="btn-group" role="group">
@@ -80,7 +78,7 @@
           <a
             v-on:click="prevPage"
             v-show="currentPage > 1"
-            class="glyphicon glyphicon-chevron-left"
+            class="bi bi-caret-left-fill"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
@@ -91,98 +89,97 @@
             data-toggle="tooltip"
             data-placement="top"
             title=""
-            class="glyphicon glyphicon-chevron-right dimgray"
+            class="bi bi-caret-right-fill dimgray"
             data-original-title="Next"
           ></a>
         </span>
       </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-      <thead>
-        <tr>
-          <th
-            v-on:click.exact="sortBy('id')"
-            v-on:click.ctrl.exact="addSort('id')"
-            :class="{
-              active: sortKeys.includes('id') || sortKeys.includes('-id'),
-            }"
-            width="20px"
-          >
-            ID
-          </th>
-          <th
-            v-on:click.exact="sortBy('shortDescription')"
-            v-on:click.ctrl.exact="addSort('shortDescription')"
-            :class="{
-              active:
-                sortKeys.includes('shortDescription') ||
-                sortKeys.includes('-shortDescription'),
-            }"
-            width="150px"
-          >
-            Short Description
-          </th>
-          <th
-            v-on:click.exact="sortBy('size')"
-            v-on:click.ctrl.exact="addSort('size')"
-            :class="{
-              active: sortKeys.includes('size') || sortKeys.includes('-size'),
-            }"
-            width="20px"
-          >
-            Bucket Size
-          </th>
-          <th
-            v-on:click.exact="sortBy('quality')"
-            v-on:click.ctrl.exact="addSort('quality')"
-            :class="{
-              active:
-                sortKeys.includes('quality') || sortKeys.includes('-quality'),
-            }"
-            width="25px"
-          >
-            Best Test Quality
-          </th>
-          <th
-            v-on:click.exact="sortBy('bug__externalId')"
-            v-on:click.ctrl.exact="addSort('bug__externalId')"
-            :class="{
-              active:
-                sortKeys.includes('bug__externalId') ||
-                sortKeys.includes('-bug__externalId'),
-            }"
-            width="50px"
-          >
-            External Bug
-          </th>
-          <th
-            v-on:click.exact="sortBy('optimizedSignature')"
-            v-on:click.ctrl.exact="addSort('optimizedSignature')"
-            :class="{
-              active:
-                sortKeys.includes('optimizedSignature') ||
-                sortKeys.includes('-optimizedSignature'),
-            }"
-            width="30px"
-          >
-            Pending Optimization
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="loading">
-          <td colspan="6">
-            <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
-          </td>
-        </tr>
-        <Row
-          v-for="signature in signatures"
-          :key="signature.id"
-          :signature="signature"
-          v-else
-        />
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="table table-condensed table-hover table-bordered table-db">
+        <thead>
+          <tr>
+            <th
+              v-on:click.exact="sortBy('id')"
+              v-on:click.ctrl.exact="addSort('id')"
+              :class="{
+                active: sortKeys.includes('id') || sortKeys.includes('-id'),
+              }"
+            >
+              ID
+            </th>
+            <th
+              v-on:click.exact="sortBy('shortDescription')"
+              v-on:click.ctrl.exact="addSort('shortDescription')"
+              :class="{
+                active:
+                  sortKeys.includes('shortDescription') ||
+                  sortKeys.includes('-shortDescription'),
+              }"
+            >
+              Description
+            </th>
+            <th>Activity</th>
+            <th
+              v-on:click.exact="sortBy('size')"
+              v-on:click.ctrl.exact="addSort('size')"
+              :class="{
+                active: sortKeys.includes('size') || sortKeys.includes('-size'),
+              }"
+            >
+              Size
+            </th>
+            <th
+              v-on:click.exact="sortBy('quality')"
+              v-on:click.ctrl.exact="addSort('quality')"
+              :class="{
+                active:
+                  sortKeys.includes('quality') || sortKeys.includes('-quality'),
+              }"
+            >
+              Best Quality
+            </th>
+            <th
+              v-on:click.exact="sortBy('bug__externalId')"
+              v-on:click.ctrl.exact="addSort('bug__externalId')"
+              :class="{
+                active:
+                  sortKeys.includes('bug__externalId') ||
+                  sortKeys.includes('-bug__externalId'),
+              }"
+            >
+              External Bug
+            </th>
+            <th
+              v-on:click.exact="sortBy('optimizedSignature')"
+              v-on:click.ctrl.exact="addSort('optimizedSignature')"
+              :class="{
+                active:
+                  sortKeys.includes('optimizedSignature') ||
+                  sortKeys.includes('-optimizedSignature'),
+              }"
+            >
+              Pending Optimization
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="loading">
+            <td colspan="7">
+              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+            </td>
+          </tr>
+          <Row
+            v-for="signature in signatures"
+            :activity-range="activityRange"
+            :key="signature.id"
+            :providers="providers"
+            :signature="signature"
+            v-else
+          />
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -213,8 +210,16 @@ export default {
     HelpJSONQueryPopover,
   },
   props: {
+    activityRange: {
+      type: Number,
+      required: true,
+    },
     watchUrl: {
       type: String,
+      required: true,
+    },
+    providers: {
+      type: Array,
       required: true,
     },
   },
@@ -365,10 +370,6 @@ export default {
         this.loading = true;
         this.updateModifiedCache();
         this.signatures = null;
-        this.currentEntries = "?";
-        this.totalEntries = "?";
-        this.currentPage = 1;
-        this.totalPages = 1;
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());

@@ -65,6 +65,10 @@ export default {
       type: Object,
       required: true,
     },
+    template: {
+      type: Object,
+      required: true,
+    },
   },
   data: () => ({
     notAttachTest: false,
@@ -73,7 +77,9 @@ export default {
   }),
   async mounted() {
     this.notAttachTest = this.initialNotAttachTest;
-    this.filename = this.entry.testcase.split(/[\\/]/).pop();
+    this.filename = this.template
+      ? this.template.testcase_filename
+      : this.entry.testcase.split(/[\\/]/).pop();
     if (!this.entry.testcase_isbinary)
       this.content = await api.retrieveCrashTestCase(this.entry.id);
   },

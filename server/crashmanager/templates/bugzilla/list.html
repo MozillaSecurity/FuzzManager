@@ -2,24 +2,24 @@
 
 {% block body_content %}
 <div class="panel panel-default">
-    <div class="panel-heading"><i class="glyphicon glyphicon-list-alt"></i> Templates</div>
+    <div class="panel-heading"><i class="bi bi-card-list"></i> Templates</div>
     <div class="panel-body">
         <div>
             <a href="{% url 'crashmanager:templatecreatebug' %}" class="btn btn-primary">
-                <i class="glyphicon glyphicon-plus"></i> Add bug template
+                <i class="bi bi-plus"></i> Add bug template
             </a>
             <a href="{% url 'crashmanager:templatecreatecomment' %}" class="btn btn-primary">
-                <i class="glyphicon glyphicon-plus"></i> Add comment template
+                <i class="bi bi-plus"></i> Add comment template
             </a>
         </div>
         <div class="pagination">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <a title="Previous" href="?page={{ page_obj.previous_page_number }}" class="glyphicon glyphicon-chevron-left"></a>
+                    <a title="Previous" href="?page={{ page_obj.previous_page_number }}" class="bi bi-caret-left-fill"></a>
                 {% endif %}
                 <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
                 {% if page_obj.has_next %}
-                    <a title="Next" href="?page={{ page_obj.next_page_number }}" data-placement="top" class="glyphicon glyphicon-chevron-right"></a>
+                    <a title="Next" href="?page={{ page_obj.next_page_number }}" data-placement="top" class="bi bi-caret-right-fill"></a>
                 {% endif %}
             </span>
         </div>
@@ -39,9 +39,9 @@
                 <td>{{ template.name|default:'Ø' }}</td>
                 <td>{{ template.mode }}</td>
                 <td>
-                    <a title="Edit template" href="{% url 'crashmanager:templateedit' template.pk %}" class="btn btn-sm btn-success"><i class="glyphicon glyphicon-pencil"></i></a>
-                    <a title="Clone template" href="{% url 'crashmanager:templatedup' template.pk %}" class="btn btn-sm btn-primary"><i class="glyphicon glyphicon-duplicate"></i></a>
-                    <a title="Delete template" href="{% url 'crashmanager:templatedel' template.pk %}" class="btn btn-sm btn-danger"><i class="glyphicon glyphicon-trash"></i></a>
+                    <a title="Edit template" href="{% url 'crashmanager:templateedit' template.pk %}" class="btn btn-sm btn-success"><i class="bi bi-pencil-fill"></i></a>
+                    <a title="Clone template" href="{% url 'crashmanager:templatedup' template.pk %}" class="btn btn-sm btn-primary"><i class="bi bi-files"></i></a>
+                    <a title="Delete template" href="{% url 'crashmanager:templatedel' template.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash-fill"></i></a>
                 </td>
             </tr>
             {% empty %}

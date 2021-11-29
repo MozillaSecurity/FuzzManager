@@ -15,17 +15,20 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
-from abc import ABCMeta
+from abc import ABC
 import functools
+import logging
 import os
 import platform
 import time
 
 import requests
-import six
-
+import requests.exceptions
 
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
+
+
+LOG = logging.getLogger(__name__)
 
 
 def remote_checks(wrapped):
@@ -61,26 +64,31 @@ def requests_retry(wrapped):
         success = kwds.pop("expected")
         current_timeout = 2
         while True:
-            response = wrapped(*args, **kwds)
+            try:
+                response = wrapped(*args, **kwds)
+            except requests.exceptions.ConnectionError as exc:
+                if current_timeout <= 64:
+                    LOG.warning("in %s, %s, retrying...", wrapped.__name__, exc)
+                    time.sleep(current_timeout)
+                    current_timeout *= 2
+                    continue
+                raise
 
             if response.status_code != success:
                 # Allow for a total sleep time of up to 2 minutes if it's
                 # likely that the response codes indicate a temporary error
                 retry_codes = [500, 502, 503, 504]
                 if response.status_code in retry_codes and current_timeout <= 64:
+                    LOG.warning("in %s, server returned %s, retrying...", wrapped.__name__, response.status_code)
                     time.sleep(current_timeout)
                     current_timeout *= 2
                     continue
-
                 raise Reporter.serverError(response)
-            else:
-                return response
-        return wrapped(*args, **kwds)
+            return response
     return wrapper
 
 
-@six.add_metaclass(ABCMeta)
-class Reporter():
+class Reporter(ABC):
     def __init__(self, sigCacheDir=None, serverHost=None, serverPort=None,
                  serverProtocol=None, serverAuthToken=None,
                  clientId=None, tool=None):

@@ -1,7 +1,7 @@
 <template>
   <div class="panel panel-default">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-list-alt"></i> Create an external bug
+      <i class="bi bi-card-list"></i> Create an external bug
     </div>
     <div class="panel-body">
       <h3>Configuration</h3>
@@ -269,6 +269,30 @@
         </div>
         <div class="row">
           <div class="form-group col-md-6">
+            <label for="dependson">Depends On</label>
+            <input
+              id="id_dependson"
+              class="form-control"
+              maxlength="1023"
+              name="dependson"
+              type="text"
+              v-model="template.dependson"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="blocks">Blocks</label>
+            <input
+              id="id_blocks"
+              class="form-control"
+              maxlength="1023"
+              name="blocks"
+              type="text"
+              v-model="template.blocks"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6">
             <label for="attrs">Custom fields</label>
             <HelpPopover
               field="custom-fields"
@@ -378,6 +402,7 @@
           :initial-not-attach-test="notAttachTest"
           v-on:update-not-attach-test="notAttachTest = $event"
           :entry="entry"
+          :template="template"
           v-on:update-filename="entry.testcase = $event"
           v-on:update-content="testCaseContent = $event"
         />
@@ -748,6 +773,8 @@ export default {
         whiteboard: this.template.whiteboard,
         keywords: this.template.keywords,
         groups: groups.length ? groups : "",
+        blocks: this.template.blocks.split(","),
+        dependson: this.template.dependson.split(","),
         ...attrs,
       };
 

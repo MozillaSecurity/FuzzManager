@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
 from django.db.models import F, Q
-from django.db.models.aggregates import Count, Min, Max
+from django.db.models.aggregates import Count, Min
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
@@ -13,9 +13,7 @@ from django.views.generic import TemplateView
 from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from notifications.models import Notification
-import functools
 import json
-import operator
 import os
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
@@ -31,7 +29,7 @@ from wsgiref.util import FileWrapper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from .forms import BugzillaTemplateBugForm, BugzillaTemplateCommentForm, UserSettingsForm
-from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, \
+from .models import BugzillaTemplate, BugzillaTemplateMode, CrashEntry, Bucket, BucketHit, \
     BucketWatch, BugProvider, Bug, Tool, User
 from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
     BucketSerializer, BucketVueSerializer, CrashEntrySerializer, CrashEntryVueSerializer, \
@@ -39,6 +37,14 @@ from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
+
+
+class JSONDateEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat().replace("+00:00", "Z")
+        return super().default(obj)
 
 
 def check_authorized_for_crash_entry(request, entry):
@@ -60,7 +66,7 @@ def check_authorized_for_signature(request, signature):
 
         entries = CrashEntry.objects.filter(bucket=signature)
         entries = CrashEntry.deferRawFields(entries)
-        entries = entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        entries = entries.filter(tool__in=defaultToolsFilter)
         if not entries:
             raise PermissionDenied({"message": "You don't have permission to access this signature."})
 
@@ -81,7 +87,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return entries.filter(functools.reduce(operator.or_, [Q(("tool", x)) for x in defaultToolsFilter]))
+        return entries.filter(tool__in=defaultToolsFilter)
     elif user.restricted:
         return CrashEntry.objects.none()
 
@@ -116,6 +122,21 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, 
     return signatures
 
 
+def filter_bucket_hits_by_toolfilter(request, hits, restricted_only=False):
+    user = User.get_or_create_restricted(request.user)[0]
+
+    if restricted_only and not user.restricted:
+        return hits
+
+    defaultToolsFilter = user.defaultToolsFilter.all()
+    if defaultToolsFilter:
+        return hits.filter(tool__in=defaultToolsFilter)
+    elif user.restricted:
+        return BucketHit.objects.none()
+
+    return hits
+
+
 def renderError(request, err):
     return render(request, 'error.html', {'error_message': err})
 
@@ -144,7 +165,13 @@ def stats(request):
             obj.rph = freq
             frequentBuckets.append(obj)
 
-    return render(request, 'stats.html', {'total_reports_per_hour': len(entries), 'frequentBuckets': frequentBuckets})
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+
+    return render(request, 'stats.html', {
+        'total_reports_per_hour': len(entries),
+        'frequentBuckets': frequentBuckets,
+        'providers': json.dumps(providers),
+    })
 
 
 def settings(request):
@@ -231,7 +258,15 @@ def bucketWatchCrashes(request, sigid):
 
 
 def signatures(request):
-    return render(request, 'signatures/index.html')
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+    return render(
+        request,
+        'signatures/index.html',
+        {
+            'providers': json.dumps(providers),
+            'activity_range': getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14),
+        },
+    )
 
 
 def index(request):
@@ -251,7 +286,9 @@ def viewCrashEntry(request, crashid):
     if entry.testcase and not entry.testcase.isBinary:
         entry.testcase.loadTest()
 
-    return render(request, 'crashes/view.html', {'entry': entry})
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
+
+    return render(request, 'crashes/view.html', {'entry': entry, 'providers': json.dumps(providers)})
 
 
 def editCrashEntry(request, crashid):
@@ -389,31 +426,21 @@ def deleteSignature(request, sigid):
 
 
 def viewSignature(request, sigid):
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'),
-                                                      quality=Min('crashentry__testcase__quality'))
+    bucket = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid).data
+    if bucket['best_entry'] is not None:
+        best_entry_size = get_object_or_404(CrashEntry, pk=bucket['best_entry']).testcase.size
+    else:
+        best_entry_size = None
+    providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
-    if not bucket:
-        raise Http404
-
-    bucket = bucket[0]
-
-    check_authorized_for_signature(request, bucket)
-
-    entries = CrashEntry.objects.filter(bucket=sigid).filter(
-        testcase__quality=bucket.quality).order_by('testcase__size', '-id')
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
-    entries = entries.values_list('pk', flat=True)[:1]
-
-    bucket.bestEntry = None
-    if entries:
-        bucket.bestEntry = CrashEntry.objects.select_related('testcase').get(pk=entries[0])
-
-    latestCrash = CrashEntry.objects.aggregate(latest=Max('id'))['latest']
-
-    # standardize formatting of the signature
-    bucket.signature = json.dumps(json.loads(bucket.signature), indent=2, sort_keys=True)
-
-    return render(request, 'signatures/view.html', {'bucket': bucket, 'latestCrash': latestCrash})
+    return render(request, 'signatures/view.html', {
+        'activity_range': getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14),
+        'bucket': json.dumps(bucket, cls=JSONDateEncoder),
+        'bucket_id': bucket['id'],
+        'best_entry': bucket['best_entry'],
+        'best_entry_size': json.dumps(best_entry_size),
+        'providers': json.dumps(providers),
+    })
 
 
 def editSignature(request, sigid):
@@ -429,66 +456,6 @@ def editSignature(request, sigid):
         proposedSignature = bucket.getSignature().fit(entry.getCrashInfo())
 
     return render(request, 'signatures/edit.html', {'bucketId': bucket.pk, 'proposedSig': proposedSignature})
-
-
-def linkSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    check_authorized_for_signature(request, bucket)
-
-    providers = BugProvider.objects.all()
-
-    data = {'bucket': bucket, 'providers': providers}
-
-    if request.method == 'POST':
-        provider = get_object_or_404(BugProvider, pk=request.POST['provider'])
-        bugId = request.POST['bugId']
-        username = request.POST['username']
-        password = request.POST['password']
-
-        bug = Bug.objects.filter(externalId=bugId, externalType=provider)
-
-        if 'submit_save' in request.POST:
-            if not bug:
-                bug = Bug(externalId=bugId, externalType=provider)
-                bug.save()
-            else:
-                bug = bug[0]
-
-            bucket.bug = bug
-            bucket.save()
-            return redirect('crashmanager:sigview', sigid=bucket.pk)
-        else:
-            # This is a preview request
-            bugData = provider.getInstance().getBugData(bugId, username, password)
-
-            if bugData is None:
-                data['error_message'] = 'Bug not found in external database.'
-            else:
-                data['summary'] = bugData['summary']
-
-            data['provider'] = provider
-            data['bugId'] = bugId
-            data['username'] = username
-
-            return render(request, 'signatures/link.html', data)
-    elif request.method == 'GET':
-        return render(request, 'signatures/link.html', data)
-    else:
-        raise SuspiciousOperation
-
-
-def unlinkSignature(request, sigid):
-    bucket = get_object_or_404(Bucket, pk=sigid)
-    check_authorized_for_signature(request, bucket)
-
-    if request.method == 'POST':
-        bucket.bug = None
-        bucket.save(update_fields=['bug'])
-        return redirect('crashmanager:sigview', sigid=bucket.pk)
-    elif request.method == 'GET':
-        return render(request, 'signatures/unlink.html', {'bucket': bucket})
-    else:
-        raise SuspiciousOperation
 
 
 def trySignature(request, sigid, crashid):
@@ -858,8 +825,6 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
 class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
     def filter_queryset(self, request, queryset, view):
-        # we should use a subquery to get best_quality which would allow us to also get the corresponding crash
-        # Subquery was added in Django 1.11
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 
@@ -936,8 +901,8 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         return Response(CrashEntrySerializer(obj).data)
 
 
-class BucketViewSet(mixins.ListModelMixin,
-                    mixins.CreateModelMixin,
+class BucketViewSet(mixins.CreateModelMixin,
+                    mixins.ListModelMixin,
                     mixins.UpdateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
@@ -948,27 +913,87 @@ class BucketViewSet(mixins.ListModelMixin,
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
 
     def get_serializer(self, *args, **kwds):
-        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
-        if vue:
+        self.vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        if self.vue:
             return BucketVueSerializer(*args, **kwds)
         else:
             return super(BucketViewSet, self).get_serializer(*args, **kwds)
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        if self.vue and response.status_code == 200:
+            # no need to sanity check, this was already checked in ToolFilterSignaturesBackend filter
+            ignore_toolfilter = int(request.query_params.get('ignore_toolfilter', '0'))
+            hits = filter_bucket_hits_by_toolfilter(
+                request,
+                BucketHit.objects.all(),
+                restricted_only=bool(ignore_toolfilter),
+            ).filter(
+                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
+                bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
+            ).order_by("begin")
+
+            bucket_hits = {}
+            for bucket, begin, count in hits.values_list("bucket_id", "begin", "count"):
+                bucket_hits.setdefault(bucket, {})
+                bucket_hits[bucket].setdefault(begin, 0)
+                bucket_hits[bucket][begin] += count
+
+            for bucket in response.data["results"]:
+                bucket["crash_history"] = [
+                    {"begin": begin, "count": count}
+                    for begin, count in bucket_hits.get(bucket["id"], {}).items()
+                ]
+
+        return response
 
     def retrieve(self, request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]
         instance = self.get_object()
         ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
+
+        crashes_in_filter = filter_crash_entries_by_toolfilter(
+            request, instance.crashentry_set,
+            restricted_only=bool(ignore_toolfilter),
+        )
+        crashes_in_filter = CrashEntry.deferRawFields(crashes_in_filter)
+
         if not ignore_toolfilter and not user.restricted:
-            # if a normal user requested toolfilter, we ignored it...
+            # if a non-restricted user requested toolfilter, we ignored it...
+            # otherwise if the bucket had no crashes in toolfilter, it would 404
             # recalculate size and quality using toolfilter
             # even if the result is 0
-            defaultToolsFilter = user.defaultToolsFilter.all()
-            crashes_in_filter = instance.crashentry_set.filter(tool__in=defaultToolsFilter)
             agg = crashes_in_filter.aggregate(quality=Min("testcase__quality"), size=Count("id"))
             instance.size = agg["size"]
             instance.quality = agg["quality"]
+
+        if instance.quality is not None:
+            best_crash = crashes_in_filter.filter(testcase__quality=instance.quality).order_by(
+                "testcase__size", "-id"
+            ).first()
+            instance.best_entry = best_crash.id
+
+        if instance.size:
+            latest_crash = crashes_in_filter.order_by("id").last()
+            instance.latest_entry = latest_crash.id
+
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        response = Response(serializer.data)
+
+        if self.vue and response.status_code == 200:
+            hits = filter_bucket_hits_by_toolfilter(
+                request,
+                BucketHit.objects.all(),
+                restricted_only=bool(ignore_toolfilter),
+            ).filter(
+                begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
+                bucket_id=response.data["id"],
+            ).order_by("begin")
+
+            response.data["crash_history"] = list(hits.values("begin", "count"))
+
+        return response
 
     def __validate(self, request, bucket, submitSave, reassign):
         try:
@@ -978,6 +1003,15 @@ class BucketViewSet(mixins.ListModelMixin,
 
         # Only save if we hit "save" (not e.g. "preview")
         if submitSave:
+            if bucket.bug is not None:
+                bucket.bug.save()
+                # this is not a no-op!
+                # if the bug was just created by .save(),
+                # it must be re-assigned to the model
+                # ref: https://docs.djangoproject.com/en/3.1/topics/db/examples/many_to_one/
+                # "Note that you must save an object before it can be
+                #  assigned to a foreign key relationship."
+                bucket.bug = bucket.bug
             bucket.save()
 
         inList, outList = [], []
@@ -1009,31 +1043,41 @@ class BucketViewSet(mixins.ListModelMixin,
         if user.restricted:
             raise MethodNotAllowed(request.method)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
         check_authorized_for_signature(request, bucket)
 
-        # Either we are assigning an external bug to this bucket
-        if serializer.initial_data.get('bug') is not None:
-            extBug, _ = Bug.objects.get_or_create(
-                externalId=serializer.validated_data.get('bug')['externalId'],
-                defaults={
-                    "externalType": serializer.validated_data.get('bug_provider')
-                }
-            )
-            bucket.bug = extBug
-        # Or updating its values
-        else:
-            bucket.signature = serializer.validated_data.get('signature')
-            bucket.shortDescription = serializer.validated_data.get('shortDescription')
-            bucket.frequent = serializer.validated_data.get('frequent')
-            bucket.permanent = serializer.validated_data.get('permanent')
+        if 'bug' in serializer.validated_data:
+            if serializer.validated_data['bug'] is None:
+                bug = None
+            else:
+                bug = Bug.objects.filter(
+                    externalId=serializer.validated_data.get('bug')['externalId'],
+                    externalType=serializer.validated_data.get('bug_provider'),
+                )
+                if not bug.exists():
+                    bug = Bug(
+                        externalId=serializer.validated_data.get('bug')['externalId'],
+                        externalType=serializer.validated_data.get('bug_provider'),
+                    )
+                else:
+                    bug = bug.first()
+
+            bucket.bug = bug
+
+        if 'signature' in serializer.validated_data:
+            bucket.signature = serializer.validated_data['signature']
+        if 'shortDescription' in serializer.validated_data:
+            bucket.shortDescription = serializer.validated_data['shortDescription']
+        if 'frequent' in serializer.validated_data:
+            bucket.frequent = serializer.validated_data['frequent']
+        if 'permanent' in serializer.validated_data:
+            bucket.permanent = serializer.validated_data['permanent']
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
-        # TODO: FIXME: Update bug here as well
         data = self.__validate(request, bucket, save, reassign)
         return Response(
             status=status.HTTP_200_OK,
@@ -1053,13 +1097,19 @@ class BucketViewSet(mixins.ListModelMixin,
 
         save = request.query_params.get('save', 'true').lower() not in ('false', '0')
         reassign = request.query_params.get('reassign', 'true').lower() not in ('false', '0')
-        # TODO: FIXME: Update bug here as well
         data = self.__validate(request, bucket, save, reassign)
         response_status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
         return Response(
             status=response_status,
             data=data,
         )
+
+
+class BucketVueViewSet(BucketViewSet):
+    """API endpoint that allows viewing Buckets and always uses Vue serializer"""
+    def get_serializer(self, *args, **kwds):
+        self.vue = True
+        return BucketVueSerializer(*args, **kwds)
 
 
 class BugProviderViewSet(mixins.ListModelMixin,

@@ -12,7 +12,7 @@
               title="Refresh product list"
               v-on:click="refreshProducts"
             >
-              <i class="glyphicon glyphicon-refresh"></i>
+              <i class="bi bi-repeat"></i>
             </button>
           </span>
           <select

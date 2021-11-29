@@ -6,13 +6,13 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-	<div class="panel-heading"><i class="glyphicon glyphicon-tasks"></i> Coverage Collection Browser</div>
+	<div class="panel-heading"><i class="bi bi-clipboard-data"></i> Coverage Collection Browser</div>
     <div class="panel-body">
   		<div class="panel panel-default" style="float: left;">
-  		<div class="panel-heading"><i class="glyphicon glyphicon-book"></i> Patch Information</div>
+  		<div class="panel-heading"><i class="bi bi-file-code"></i> Patch Information</div>
       <div class="panel-body">
   			<div>
-  				<label>Repository:</label><input type="text" class="form-control glyphicon glyphicon-tasks" v-model="repository_search"
+  				<label>Repository:</label><input type="text" class="form-control bi bi-archive-fill" v-model="repository_search"
   					@focus="repository_suggestions_enabled = true" @blur="repository_suggestions_enabled = false"
             @keyup.enter="take_top_suggestion"/>
   				<div v-show="repository_suggestions_enabled">
@@ -24,7 +24,7 @@
   		</div>
 
   		<div class="panel panel-default" style="float: left;">
-  		<div class="panel-heading"><i class="glyphicon glyphicon-filter"></i> Target Collections</div>
+  		<div class="panel-heading"><i class="bi bi-funnel-fill"></i> Target Collections</div>
   		<div class="panel-body">
   			<div>
   				<span><b>!{ collections_count }!</b> collections selected for analysis.</span>
@@ -34,7 +34,7 @@
     	</div>
 
   		<div class="panel panel-default" style="float: right;">
-  		<div class="panel-heading"><i class="glyphicon glyphicon-flash"></i> Options</div>
+  		<div class="panel-heading"><i class="bi bi-lightning-charge-fill"></i> Options</div>
   		<div class="panel-body">
         <input type="checkbox" id="checkbox" v-model="prepatch">
         <label for="checkbox">Prepatch Analysis (Experimental)</label>
@@ -115,7 +115,7 @@ let covmanager = new Vue({
     if (ids != "") {
       self.collection_ids = ids.split(",")
     } else {
-      sweetAlert('Oops', "Patch analysis requires an ID list from search", 'error')
+      swal('Oops', "Patch analysis requires an ID list from search", 'error')
     }
   },
   watch: {
@@ -143,7 +143,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.repository_suggestions = json["results"]
 
@@ -177,7 +177,7 @@ let covmanager = new Vue({
         if (response.ok) {
           return response.json()
         }
-        sweetAlert('Oops', E_SERVER_ERROR, 'error')
+        swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.collections = json["results"]
         analysis_results = []
@@ -192,7 +192,7 @@ let covmanager = new Vue({
             if (response.ok) {
               return response.json()
             }
-            sweetAlert('Oops', E_SERVER_ERROR, 'error')
+            swal('Oops', E_SERVER_ERROR, 'error')
           }).then(json => {
             analysis_result = {
               collection: collection,

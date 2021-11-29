@@ -51,6 +51,10 @@ class BugzillaTemplateBugForm(ModelForm):
             Field('version', wrapper_class='col-md-6'),
             Field('target_milestone', wrapper_class='col-md-6'),
         ),
+        Row(
+            Field('blocks', wrapper_class='col-md-6'),
+            Field('dependson', wrapper_class='col-md-6'),
+        ),
         'attrs',
         'description',
         'security',
@@ -87,6 +91,8 @@ class BugzillaTemplateBugForm(ModelForm):
             'security',
             'security_group',
             'testcase_filename',
+            'blocks',
+            'dependson',
         ]
 
         labels = {
@@ -109,6 +115,8 @@ class BugzillaTemplateBugForm(ModelForm):
             'security': 'This is a security bug',
             'security_group': 'Security group',
             'testcase_filename': 'Filename that will be used for the testcase',
+            'blocks': 'Blocks',
+            'dependson': 'Depends On'
         }
 
         widgets = {}
@@ -125,6 +133,7 @@ class BugzillaTemplateCommentForm(ModelForm):
         HTML("""<div v-pre>"""),
         'name',
         'comment',
+        Row(Field('testcase_filename', wrapper_class='col-md-6')),
         Submit('submit', 'Save', css_class='btn btn-danger'),
         HTML("""<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">Cancel</a>"""),
         HTML("""</div>""")
@@ -132,14 +141,20 @@ class BugzillaTemplateCommentForm(ModelForm):
 
     class Meta:
         model = BugzillaTemplate
-        fields = ['name', 'comment']
+        fields = [
+            'name',
+            'comment',
+            'testcase_filename',
+        ]
         labels = {
             'name': 'Template name',
             'comment': 'Comment',
+            'testcase_filename': 'Filename that will be used for the testcase',
         }
         widgets = {
             'name': TextInput(),
-            'comment': Textarea(attrs={'rows': 6})
+            'comment': Textarea(attrs={'rows': 6}),
+            'testcase_filename': TextInput(),
         }
 
 

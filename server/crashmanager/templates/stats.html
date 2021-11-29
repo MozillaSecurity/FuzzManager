@@ -4,37 +4,39 @@
 
 {% block body_content %}
 <div class="panel panel-default">
-    <div class="panel-heading"><i class="glyphicon glyphicon-object-align-bottom"></i> Statistics</div>
+    <div class="panel-heading"><i class="bi bi-bar-chart-fill"></i> Statistics</div>
     <div class="panel-body">
         <div>
             Total reports in the last hour: {{ total_reports_per_hour }}
         </div>
     </div>
-    <table class="table table-condensed table-hover table-bordered table-db">
-        <thead>
-        <tr>
-            <th style="width: 25px;">Bucket</th>
-            <th style="width: 150px;">Short Description</th>
-            <th style="width: 25px;">Reports < 1h</th>
-            <th style="width: 50px;">External Bug</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for entry in frequentBuckets %}
-        <tr class="{% cycle 'odd' 'even' %}">
-            <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
-            <td>{{ entry.shortDescription|escape }}</td>
-            <td>{{ entry.rph }}</td>
-            <td>
-                {% if entry.bug %}
-                <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
-                {% else %}
-                <a title="Assign an external bug" href="{% url 'crashmanager:siglink' entry.pk %}">Assign</a>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-bordered table-db">
+            <thead>
+            <tr>
+                <th>Bucket</th>
+                <th>Short Description</th>
+                <th>Reports &lt; 1h</th>
+                <th>External Bug</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for entry in frequentBuckets %}
+            <tr class="{% cycle 'odd' 'even' %}">
+                <td><a href="{% url 'crashmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+                <td class="wrap-anywhere"><span class="two-line-limit">{{ entry.shortDescription|escape }}</span></td>
+                <td>{{ entry.rph }}</td>
+                <td>
+                    {% if entry.bug %}
+                    <a {% if entry.bug.closed %}class="fixedbug" {% endif %} href="{{ entry.bug.externalType.urlTemplate|varformat:entry.bug.externalId }}" target="_blank">{{ entry.bug.externalId }}</a>
+                    {% else %}
+                    <assignbutton :bucket="{{ entry.pk }}" :providers="{{ providers }}" />
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock body_content %}

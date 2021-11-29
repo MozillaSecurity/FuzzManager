@@ -9,8 +9,8 @@
             class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showQuery = !showQuery"
           >
-            <i class="glyphicon glyphicon-minus" v-if="showQuery"></i>
-            <i class="glyphicon glyphicon-plus" v-else></i>
+            <i class="bi bi-dash" v-if="showQuery"></i>
+            <i class="bi bi-plus" v-else></i>
           </button>
         </h4>
         <div class="pop-list mt-1" v-if="showQuery">
@@ -42,8 +42,8 @@
             class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showParams = !showParams"
           >
-            <i class="glyphicon glyphicon-minus" v-if="showParams"></i>
-            <i class="glyphicon glyphicon-plus" v-else></i>
+            <i class="bi bi-dash" v-if="showParams"></i>
+            <i class="bi bi-plus" v-else></i>
           </button>
         </h4>
         <div class="pop-list mt-1" v-if="showParams">
@@ -59,8 +59,8 @@
             class="btn btn-default btn-xs pull-right ml-8"
             v-on:click="showOps = !showOps"
           >
-            <i class="glyphicon glyphicon-minus" v-if="showOps"></i>
-            <i class="glyphicon glyphicon-plus" v-else></i>
+            <i class="bi bi-dash" v-if="showOps"></i>
+            <i class="bi bi-plus" v-else></i>
           </button>
         </h4>
         <div class="pop-list mt-1" v-if="showOps">
@@ -85,7 +85,7 @@
     </div>
     <!-- eslint-disable-next-line -->
     <span slot="reference">
-      <i class="glyphicon glyphicon-question-sign"></i>
+      <i class="bi bi-question-circle-fill"></i>
     </span>
   </Popper>
 </template>

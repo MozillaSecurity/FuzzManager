@@ -60,14 +60,32 @@ a.fixedbug:active {
 }
 
 /* database tables */
-
 .table-db {
-  table-layout: fixed;
-  word-wrap: break-word;
+  width: 100%;
 }
 
 .table-db th {
   background: #eee;
+}
+
+.wrap-none {
+  white-space: nowrap;
+}
+
+.wrap-normal {
+  white-space: normal;
+}
+
+.wrap-anywhere {
+  word-break: break-all;
+  white-space: normal;
+}
+
+.two-line-limit {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 /* sticky footer */

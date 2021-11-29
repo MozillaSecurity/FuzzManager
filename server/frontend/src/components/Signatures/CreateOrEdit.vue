@@ -1,7 +1,7 @@
 <template>
   <div class="panel panel-info">
     <div class="panel-heading">
-      <i class="glyphicon glyphicon-tag"></i>
+      <i class="bi bi-tag-fill"></i>
       {{ bucketId ? "Edit Signature" : "New Signature" }}
     </div>
     <div class="panel-body">

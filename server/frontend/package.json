@@ -12,10 +12,11 @@
     },
     "dependencies": {
         "axios": "^0.21.1",
+        "d3": "^4.13.0",
         "handlebars": "^4.7.7",
         "js-base64": "^3.6.1",
         "lodash": "^4.17.21",
-        "sweetalert": "^1.1.3",
+        "sweetalert": "^2.1.2",
         "vue": "^2.6.14",
         "vue-popperjs": "^2.3.0",
         "vue-router": "^3.5.1",
@@ -48,12 +49,12 @@
             "vue"
         ],
         "collectCoverageFrom": [
-             "**/*.{js,jsx}",
-             "**/*.vue",
-             "!**/tests/**",
-             "!**/coverage/**",
-             "!**/dist/**",
-             "!**/webpack.*.js"
+            "**/*.{js,jsx}",
+            "**/*.vue",
+            "!**/tests/**",
+            "!**/coverage/**",
+            "!**/dist/**",
+            "!**/webpack.*.js"
         ],
         "transformIgnorePatterns": [
             "/node_modules/(?!vue-spinner)"

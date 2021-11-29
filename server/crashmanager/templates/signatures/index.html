@@ -1,7 +1,9 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% load extratags %}
-
 {% block body_content %}
-<signatureslist watch-url="{% url 'crashmanager:sigwatch' %}"/>
+<signatureslist
+  :providers="{{ providers }}"
+  :activity-range="{{ activity_range }}"
+  watch-url="{% url 'crashmanager:sigwatch' %}"
+  />
 {% endblock body_content %}

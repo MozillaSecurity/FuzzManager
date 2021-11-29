@@ -28,8 +28,6 @@ pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=inv
 
 @pytest.mark.parametrize(("name", "kwargs"), [("crashmanager:signatures", {}),
                                               ("crashmanager:findsigs", {'crashid': 0}),
-                                              ("crashmanager:siglink", {'sigid': 0}),
-                                              ("crashmanager:sigunlink", {'sigid': 0}),
                                               ("crashmanager:sigopt", {'sigid': 0}),
                                               ("crashmanager:sigtry", {'sigid': 0, 'crashid': 0}),
                                               ("crashmanager:signew", {}),
@@ -78,24 +76,6 @@ def test_find_signature_simple_get(client, cm):  # pylint: disable=invalid-name
          'value': '//'}]}))
 
     response = client.get(reverse("crashmanager:findsigs", kwargs={"crashid": crash.pk}))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-
-
-def test_link_signature_simple_get(client, cm):  # pylint: disable=invalid-name
-    """No errors are thrown in template"""
-    client.login(username='test', password='test')
-    bucket = cm.create_bucket()
-    response = client.get(reverse("crashmanager:siglink", kwargs={"sigid": bucket.pk}))
-    LOG.debug(response)
-    assert response.status_code == requests.codes['ok']
-
-
-def test_unlink_signature_simple_get(client, cm):  # pylint: disable=invalid-name
-    """No errors are thrown in template"""
-    client.login(username='test', password='test')
-    bucket = cm.create_bucket()
-    response = client.get(reverse("crashmanager:sigunlink", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes['ok']
 

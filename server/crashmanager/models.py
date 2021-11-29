@@ -199,9 +199,17 @@ class Bucket(models.Model):
         if submitSave:
             while inList:
                 updList, inList = inList[:500], inList[500:]
+                for crash in CrashEntry.objects.filter(pk__in=updList).values("bucket_id", "created", "tool_id"):
+                    if crash["bucket_id"] != self.id:
+                        if crash["bucket_id"] is not None:
+                            BucketHit.decrement_count(crash["bucket_id"], crash["tool_id"], crash["created"])
+                        BucketHit.increment_count(self.id, crash["tool_id"], crash["created"])
                 CrashEntry.objects.filter(pk__in=updList).update(bucket=self)
             while outList:
                 updList, outList = outList[:500], outList[500:]
+                for crash in CrashEntry.objects.filter(pk__in=updList).values("bucket_id", "created", "tool_id"):
+                    if crash["bucket_id"] is not None:
+                        BucketHit.decrement_count(crash["bucket_id"], crash["tool_id"], crash["created"])
                 CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
 
         return inList, outList, inListCount, outListCount
@@ -287,6 +295,38 @@ class Bucket(models.Model):
         return (optimizedSignature, matchingEntries)
 
 
+def buckethit_default_range_begin():
+    return timezone.now().replace(microsecond=0, second=0, minute=0)
+
+
+class BucketHit(models.Model):
+    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
+    begin = models.DateTimeField(default=buckethit_default_range_begin)
+    count = models.IntegerField(default=0)
+
+    @classmethod
+    def decrement_count(cls, bucket_id, tool_id, begin):
+        begin = begin.replace(microsecond=0, second=0, minute=0)
+        counter = cls.objects.filter(
+            bucket_id=bucket_id,
+            begin=begin,
+            tool_id=tool_id,
+        ).first()
+        if counter is not None and counter.count > 0:
+            counter.count -= 1
+            counter.save()
+
+    @classmethod
+    def increment_count(cls, bucket_id, tool_id, begin):
+        begin = begin.replace(microsecond=0, second=0, minute=0)
+        counter, _ = cls.objects.get_or_create(
+            bucket_id=bucket_id, begin=begin, tool_id=tool_id
+        )
+        counter.count += 1
+        counter.save()
+
+
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
     tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
@@ -318,9 +358,14 @@ class CrashEntry(models.Model):
         # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
 
+        self._original_bucket = None
         super().__init__(*args, **kwargs)
 
-        self.__original_bucket = self.bucket_id
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._original_bucket = instance.bucket_id
+        return instance
 
     def save(self, *args, **kwargs):
         if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
@@ -367,17 +412,6 @@ class CrashEntry(models.Model):
 
         if len(self.shortSignature) > 255:
             self.shortSignature = self.shortSignature[0:255]
-
-        if self.bucket is not None and self.bucket_id != self.__original_bucket:
-            notify.send(
-                self.bucket,
-                recipient=self.bucket.watchers,
-                actor=self.bucket,
-                verb="bucket_hit",
-                target=self,
-                level="info",
-                description=f"The bucket {self.bucket_id} received a new crash entry {self.pk}"
-            )
 
         super().save(*args, **kwargs)
 
@@ -464,12 +498,14 @@ class CrashEntry(models.Model):
 
 
 # These post_delete handlers ensure that the corresponding testcase
-# is also deleted when the CrashEntry is gone. It also explicitely
+# is also deleted when the CrashEntry is gone. It also explicitly
 # deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=CrashEntry)
 def CrashEntry_delete(sender, instance, **kwargs):
     if instance.testcase:
         instance.testcase.delete(False)
+    if instance.bucket_id is not None:
+        BucketHit.decrement_count(instance.bucket_id, instance.tool_id, instance.created)
 
 
 @receiver(post_delete, sender=TestCase)
@@ -478,12 +514,31 @@ def TestCase_delete(sender, instance, **kwargs):
         instance.test.delete(False)
 
 
-# post_save handler for celery integration
-if getattr(settings, 'USE_CELERY', None):
-    @receiver(post_save, sender=CrashEntry)
-    def CrashEntry_save(sender, instance, **kwargs):
-        if kwargs.get('created', False) and not instance.triagedOnce:
+@receiver(post_save, sender=CrashEntry)
+def CrashEntry_save(sender, instance, created, **kwargs):
+    if getattr(settings, 'USE_CELERY', None):
+        if created and not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
+
+    if instance.bucket_id != instance._original_bucket:
+        if instance._original_bucket is not None:
+            # remove BucketHit for old bucket/tool
+            BucketHit.decrement_count(instance._original_bucket, instance.tool_id, instance.created)
+
+        if instance.bucket is not None:
+            # add BucketHit for new bucket
+            BucketHit.increment_count(instance.bucket_id, instance.tool_id, instance.created)
+
+        if instance.bucket is not None:
+            notify.send(
+                instance.bucket,
+                recipient=instance.bucket.watchers,
+                actor=instance.bucket,
+                verb="bucket_hit",
+                target=instance,
+                level="info",
+                description=f"The bucket {instance.bucket_id} received a new crash entry {instance.pk}"
+            )
 
 
 class BugzillaTemplateMode(Enum):
@@ -515,6 +570,8 @@ class BugzillaTemplate(models.Model):
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
     testcase_filename = models.TextField(blank=True)
+    blocks = models.TextField(blank=True)
+    dependson = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
