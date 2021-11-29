@@ -10,8 +10,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies: list[str] = []
 
     operations = [
         migrations.CreateModel(

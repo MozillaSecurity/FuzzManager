@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from argparse import ArgumentParser
 import os
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -10,12 +12,12 @@ from covmanager.models import Repository
 class Command(BaseCommand):
     help = 'Sets up a repository for CovManager'
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("name", help="repository identifier")
         parser.add_argument("provider", help="SourceCodeProvider subclass")
         parser.add_argument("location", help="path to the repository root")
 
-    def handle(self, name, provider, location, **opts):
+    def handle(self, name: str, provider: str, location: str, **opts: Any) -> None:
 
         if not name:
             raise CommandError("Error: invalid repository name")
@@ -30,7 +32,8 @@ class Command(BaseCommand):
         provider = {"git": "GITSourceCodeProvider",
                     "hg": "HGSourceCodeProvider"}.get(provider, provider)
         try:
-            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])
+            # Type information here may be confused by the need for Python 2 compatibility
+            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])  # type: ignore[list-item]
         except ImportError:
             raise CommandError("Error: '%s' is not a valid source code provider!" % provider)
 

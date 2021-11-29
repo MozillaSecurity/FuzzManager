@@ -75,7 +75,7 @@ def getInstructionPointer(registerMap: dict[str, int]) -> int:
     raise RuntimeError("Register map does not contain a usable instruction pointer!")
 
 
-def getRegisterValue(register: str, registerMap: dict[str, int]) -> int:
+def getRegisterValue(register: str, registerMap: dict[str, int]) -> int | None:
     '''
         Return the value of the specified register using the provided register map.
         This method also works for getting lower register parts out of higher ones.

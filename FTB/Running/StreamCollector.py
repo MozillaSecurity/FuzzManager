@@ -58,5 +58,5 @@ class StreamCollector(threading.Thread):
 
         self.fd.close()
 
-    def addResponsePrefix(self, prefix):
+    def addResponsePrefix(self, prefix: str) -> None:
         self.responsePrefixes.append(prefix)
