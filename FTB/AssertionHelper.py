@@ -28,17 +28,16 @@ RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
 RE_V8_END = re.compile(r"^")
 
 
-def getAssertion(output):
+def getAssertion(output: list[str]) -> list[str] | str | None:
     '''
     This helper method provides a way to extract and process the
     different types of assertions from a given buffer.
     The problem here is that pretty much every software has its
     own type of assertions with different output formats.
 
-    @type output: list
     @param output: List of strings to be searched
     '''
-    lastLine = None
+    lastLine: list[str] | str | None = None
     endRegex = None
 
     # Use this to ignore the ASan head line in case of an assertion
@@ -123,17 +122,16 @@ def getAssertion(output):
     return lastLine
 
 
-def getAuxiliaryAbortMessage(output):
+def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
     '''
     This helper method provides a way to extract and process additional
     abort messages or other useful messages produced by helper tools like
     sanitizers. These messages can be helpful in signatures if there is no
     abort message from the program itself.
 
-    @type output: list
     @param output: List of strings to be searched
     '''
-    lastLine = None
+    lastLine: list[str] | str | None = None
     needASanRW = False
     needTSanRW = False
 

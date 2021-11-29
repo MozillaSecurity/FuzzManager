@@ -22,6 +22,8 @@ import json
 import os
 import re
 import sys
+from typing import Mapping
+from typing_extensions import TypedDict
 
 import six
 
@@ -31,7 +33,7 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
-def uint32(val):
+def uint32(val: int) -> int:
     '''Force `val` into unsigned 32-bit range.
 
     Note that the input is returned as an int, therefore
@@ -51,7 +53,7 @@ def uint32(val):
     return val & 0xFFFFFFFF
 
 
-def int32(val):
+def int32(val: int) -> int:
     '''Force `val` into signed 32-bit range.
 
     Note that the input is returned as an int, therefore
@@ -74,7 +76,7 @@ def int32(val):
     return val
 
 
-def uint64(val):
+def uint64(val: int) -> int:
     '''Force `val` into unsigned 64-bit range.
 
     Note that the input is returned as an int, therefore
@@ -94,7 +96,7 @@ def uint64(val):
     return val & 0xFFFFFFFFFFFFFFFF
 
 
-def int64(val):
+def int64(val: int) -> int:
     '''Force `val` into signed 64-bit range.
 
     Note that the input is returned as an int, therefore
@@ -117,6 +119,16 @@ def int64(val):
     return val
 
 
+class CacheObject(TypedDict):
+    """CacheObject type specification."""
+
+    backtrace: list[str]
+    registers: dict[str, int]
+    crashAddress: int | None
+    crashInstruction: str | None
+    failureReason: str | None
+
+
 @six.add_metaclass(ABCMeta)
 class CrashInfo(object):
     '''
@@ -125,28 +137,28 @@ class CrashInfo(object):
     '''
     def __init__(self) -> None:
         # Store the raw data
-        self.rawStdout = []
-        self.rawStderr = []
-        self.rawCrashData = []
+        self.rawStdout: list[str] = []
+        self.rawStderr: list[str] = []
+        self.rawCrashData: list[str] = []
 
         # Store processed data
-        self.backtrace = []
-        self.registers = {}
-        self.crashAddress = None
-        self.crashInstruction = None
+        self.backtrace: list[str] = []
+        self.registers: dict[str, int] = {}
+        self.crashAddress: int | None = None
+        self.crashInstruction: str | None = None
 
         # Store configuration data (platform, product, os, etc.)
-        self.configuration = None
+        self.configuration: ProgramConfiguration | None = None
 
         # This is an optional testcase that is not stored with the crashInfo but
         # can be "attached" before matching signatures that might require the
         # testcase.
-        self.testcase = None
+        self.testcase: str | None = None
 
         # This can be used to record failures during signature creation
-        self.failureReason = None
+        self.failureReason: str | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         buf = []
         buf.append("Crash trace:")
         buf.append("")
@@ -168,48 +180,43 @@ class CrashInfo(object):
 
         return "\n".join(buf)
 
-    def toCacheObject(self):
+    def toCacheObject(self) -> CacheObject:
         '''
         Create a cache object for restoring the class instance later on without parsing
         the crash data again. This object includes all class fields except for the
         storage heavy raw objects like stdout, stderr and raw crashdata.
 
-        @rtype: dict
         @return: Dictionary containing expensive class fields
         '''
-        cacheObject = {}
-        cacheObject['backtrace'] = self.backtrace
-        cacheObject['registers'] = self.registers
-
-        if self.crashAddress is not None:
-            cacheObject['crashAddress'] = int(self.crashAddress)
-        else:
-            cacheObject['crashAddress'] = None
-
-        cacheObject['crashInstruction'] = self.crashInstruction
-        cacheObject['failureReason'] = self.failureReason
+        cacheObject: CacheObject = {
+            'backtrace': self.backtrace,
+            'registers': self.registers,
+            'crashAddress': self.crashAddress,
+            'crashInstruction': self.crashInstruction,
+            'failureReason': self.failureReason,
+        }
 
         return cacheObject
 
     @staticmethod
-    def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None, cacheObject=None):
+    def fromRawCrashData(
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            auxCrashData: list[str] | None = None,
+            cacheObject: CacheObject | None = None,
+        ) -> CrashInfo:
         '''
         Create appropriate CrashInfo instance from raw crash data
 
-        @type stdout: List of strings
         @param stdout: List of lines as they appeared on stdout
-        @type stderr: List of strings
         @param stderr: List of lines as they appeared on stderr
-        @type configuration: ProgramConfiguration
         @param configuration: Exact program configuration that is associated with the crash
-        @type auxCrashData: List of strings
         @param auxCrashData: Optional additional crash output (e.g. GDB). If not specified, stderr is used.
-        @type cacheObject: Dictionary
         @param cacheObject: The cache object that should be used to restore the class fields
                             instead of parsing the crash data. The appropriate object can be
                             created by calling the toCacheObject method.
 
-        @rtype: CrashInfo
         @return: Crash information object
         '''
 
@@ -281,7 +288,7 @@ class CrashInfo(object):
         if stderr is not None:
             lines.extend(stderr)
 
-        result = None
+        result: UBSanCrashInfo | ASanCrashInfo | LSanCrashInfo | TSanCrashInfo | AppleCrashInfo | CDBCrashInfo | GDBCrashInfo | RustCrashInfo | MinidumpCrashInfo | ValgrindCrashInfo | NoCrashInfo | None = None
         for line in lines:
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
@@ -336,9 +343,8 @@ class CrashInfo(object):
 
         return result
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
         # See if we have an abort message and if so, use that as short signature
@@ -522,15 +528,13 @@ class CrashInfo(object):
         return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
     @staticmethod
-    def sanitizeStackFrame(frame):
+    def sanitizeStackFrame(frame: str) -> str:
         '''
         This function removes function arguments and other non-generic parts
         of the function frame, returning a (hopefully) generic function name.
 
         @param frame: The stack frame to sanitize
-        @type forceCrashAddress: str
 
-        @rtype: str
         @return: Sanitized stack frame
         '''
 
@@ -566,7 +570,13 @@ class CrashInfo(object):
 
 
 class NoCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -585,7 +595,13 @@ class NoCrashInfo(CrashInfo):
 
 
 class ASanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -690,9 +706,8 @@ class ASanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
         # Always prefer using regular program aborts
@@ -756,7 +771,13 @@ class ASanCrashInfo(CrashInfo):
 
 
 class LSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -817,9 +838,8 @@ class LSanCrashInfo(CrashInfo):
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
         # Try to find the LSan message on stderr and use that as short signature
@@ -841,7 +861,13 @@ class LSanCrashInfo(CrashInfo):
 
 
 class UBSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -902,9 +928,8 @@ class UBSanCrashInfo(CrashInfo):
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
 
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         '''
-        @rtype: String
         @return: A string representing this crash (short signature)
         '''
         # Try to find the UBSan message on stderr and use that as short signature
@@ -926,7 +951,13 @@ class UBSanCrashInfo(CrashInfo):
 
 
 class GDBCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1069,16 +1100,16 @@ class GDBCrashInfo(CrashInfo):
                     self.crashAddress = uint64(self.crashAddress)
 
     @staticmethod
-    def calculateCrashAddress(crashInstruction, registerMap):
+    def calculateCrashAddress(
+            crashInstruction: str,
+            registerMap: Mapping[str, int],
+        ) -> int:
         '''
         Calculate the crash address given the crash instruction and register contents
 
-        @type crashInstruction: string
         @param crashInstruction: Crash instruction string as provided by GDB
-        @type registerMap: Map from string to int
         @param registerMap: Map of register names to values
 
-        @rtype: int
         @return The calculated crash address
 
         On error, a string containing the failure message is returned instead.
@@ -1345,7 +1376,10 @@ class GDBCrashInfo(CrashInfo):
         return failureReason
 
     @staticmethod
-    def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
+    def calculateComplexDerefOpAddress(
+            complexDerefOp: str,
+            registerMap: Mapping[str, int],
+        ):
 
         match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
         if match is not None:
@@ -1376,7 +1410,13 @@ class GDBCrashInfo(CrashInfo):
 
 
 class MinidumpCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1425,7 +1465,13 @@ class MinidumpCrashInfo(CrashInfo):
 
 
 class AppleCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1476,14 +1522,14 @@ class AppleCrashInfo(CrashInfo):
                     self.backtrace.append(stackEntry)
 
     @staticmethod
-    def removeFilename(stackEntry):
+    def removeFilename(stackEntry: str) -> str:
         match = re.match(r'(.*) \(\S+\)', stackEntry)
         if match:
             return match.group(1)
         return stackEntry
 
     @staticmethod
-    def removeOffset(stackEntry):
+    def removeOffset(stackEntry: str) -> str:
         match = re.match(r'(.*) \+ \d+', stackEntry)
         if match:
             return match.group(1)
@@ -1491,7 +1537,13 @@ class AppleCrashInfo(CrashInfo):
 
 
 class CDBCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1618,7 +1670,7 @@ class CDBCrashInfo(CrashInfo):
                 self.backtrace.append(stackEntry)
 
     @staticmethod
-    def removeFilenameAndOffset(stackEntry):
+    def removeFilenameAndOffset(stackEntry: str) -> str:
         # Extract only the function name
         if "0x" in stackEntry:
             result = stackEntry.split("!")[-1].split("+")[0].split("<")[0].split(" ")[-1]
@@ -1638,7 +1690,13 @@ class RustCrashInfo(CrashInfo):
     RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)"
                           r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
 
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1679,7 +1737,13 @@ class RustCrashInfo(CrashInfo):
 
 
 class TSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''
@@ -1830,7 +1894,13 @@ class ValgrindCrashInfo(CrashInfo):
         (Syscall\sparam.+)
         )""", re.VERBOSE)
 
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+            self,
+            stdout: list[str] | None,
+            stderr: list[str] | None,
+            configuration: ProgramConfiguration,
+            crashData: list[str] | None = None,
+        ):
         '''
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
         '''

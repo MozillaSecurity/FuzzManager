@@ -178,6 +178,7 @@ class SimplePersistentApplication(PersistentApplication):
             self.process.stdin.close()
 
     def _wait_child_stopped(self):
+        reveal_type(self.process.pid)
         monitor = WaitpidMonitor(self.process.pid, os.WUNTRACED)
         monitor.start()
         monitor.join(self.processingTimeout)

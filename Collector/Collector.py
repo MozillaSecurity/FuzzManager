@@ -36,7 +36,7 @@ from FTB.Signatures.CrashInfo import CrashInfo  # noqa
 from FTB.Signatures.CrashSignature import CrashSignature  # noqa
 from Reporter.Reporter import Reporter, signature_checks, remote_checks  # noqa
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
