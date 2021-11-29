@@ -43,14 +43,12 @@ def getRegisterPattern() -> str:
         ['|'.join(i) for i in validRegisters.values()]) + ")"
 
 
-def getStackPointer(registerMap):
+def getStackPointer(registerMap: dict[str, int]) -> int:
     '''
         Return the stack pointer value from the given register map
 
-        @type registerMap: map
         @param registerMap: Map of register names to value
 
-        @rtype: int
         @return: The value of the stack pointer
     '''
 
@@ -61,14 +59,12 @@ def getStackPointer(registerMap):
     raise RuntimeError("Register map does not contain a usable stack pointer!")
 
 
-def getInstructionPointer(registerMap):
+def getInstructionPointer(registerMap: dict[str, int]) -> int:
     '''
         Return the instruction pointer value from the given register map
 
-        @type registerMap: map
         @param registerMap: Map of register names to value
 
-        @rtype: int
         @return: The value of the instruction pointer
     '''
 
@@ -79,18 +75,15 @@ def getInstructionPointer(registerMap):
     raise RuntimeError("Register map does not contain a usable instruction pointer!")
 
 
-def getRegisterValue(register, registerMap):
+def getRegisterValue(register: str, registerMap: dict[str, int]) -> int:
     '''
         Return the value of the specified register using the provided register map.
         This method also works for getting lower register parts out of higher ones.
 
-        @type register: string
         @param register: The register to get the value for
 
-        @type registerMap: map
         @param registerMap: Map of register names to values
 
-        @rtype: int
         @return: The register value
     '''
 
@@ -150,14 +143,12 @@ def getRegisterValue(register, registerMap):
     return None
 
 
-def getBitWidth(registerMap):
+def getBitWidth(registerMap: dict[str, int]) -> int:
     '''
         Return the bit width (32 or 64 bit) given the registers
 
-        @type registerMap: map
         @param registerMap: Map of register names to value
 
-        @rtype: int
         @return: The bit width
     '''
     if "rax" in registerMap or "x0" in registerMap:
@@ -166,15 +157,13 @@ def getBitWidth(registerMap):
     return 32
 
 
-def isX86Compatible(registerMap):
+def isX86Compatible(registerMap: dict[str, int]) -> bool:
     '''
         Return true, if the the given registers are X86 compatible, such as x86 or x86-64.
         ARM, PPC and your PDP-15 will fail this check and we don't support it right now.
 
-        @type registerMap: map
         @param registerMap: Map of register names to value
 
-        @rtype: bool
         @return: True if the architecture is X86 compatible, False otherwise
     '''
     for register in x86OnlyRegisters:
@@ -183,14 +172,12 @@ def isX86Compatible(registerMap):
     return False
 
 
-def isARMCompatible(registerMap):
+def isARMCompatible(registerMap: dict[str, int]) -> bool:
     '''
         Return true, if the the given registers are either ARM or ARM64.
 
-        @type registerMap: map
         @param registerMap: Map of register names to value
 
-        @rtype: bool
         @return: True if the architecture is ARM/ARM64 compatible, False otherwise
     '''
     for register in armOnlyRegisters:

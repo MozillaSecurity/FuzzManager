@@ -22,7 +22,6 @@ import json
 import os
 import re
 import sys
-from typing import Mapping
 from typing_extensions import TypedDict
 
 import six
@@ -638,73 +637,74 @@ class ASanCrashInfo(CrashInfo):
 
         expectedIndex = 0
         reportFound = False
-        for traceLine in asanOutput:
-            if not reportFound or self.crashAddress is None:
-                match = re.search(asanCrashAddressPattern, traceLine)
-                if match is not None:
-                    reportFound = True
-                    try:
-                        self.crashAddress = int(match.group(1), 16)
-                    except TypeError:
-                        pass  # No crash address available
-
-                    # Crash Address and Registers are in the same line for ASan
-                    match = re.search(asanRegisterPattern, traceLine)
-                    # Collect register values if they are available in the ASan trace
+        if asanOutput is not None:
+            for traceLine in asanOutput:
+                if not reportFound or self.crashAddress is None:
+                    match = re.search(asanCrashAddressPattern, traceLine)
                     if match is not None:
-                        self.registers["pc"] = int(match.group(1), 16)
-                        self.registers[match.group(2)] = int(match.group(3), 16)
-                        self.registers[match.group(4)] = int(match.group(5), 16)
-                elif not reportFound:
-                    # Not in the ASan output yet.
-                    # Some lines in eg. debug+asan builds might error if we continue.
+                        reportFound = True
+                        try:
+                            self.crashAddress = int(match.group(1), 16)
+                        except TypeError:
+                            pass  # No crash address available
+
+                        # Crash Address and Registers are in the same line for ASan
+                        match = re.search(asanRegisterPattern, traceLine)
+                        # Collect register values if they are available in the ASan trace
+                        if match is not None:
+                            self.registers["pc"] = int(match.group(1), 16)
+                            self.registers[match.group(2)] = int(match.group(3), 16)
+                            self.registers[match.group(4)] = int(match.group(5), 16)
+                    elif not reportFound:
+                        # Not in the ASan output yet.
+                        # Some lines in eg. debug+asan builds might error if we continue.
+                        continue
+
+                parts = traceLine.strip().split()
+
+                # We only want stack frames
+                if not parts or not parts[0].startswith("#"):
                     continue
 
-            parts = traceLine.strip().split()
+                try:
+                    index = int(parts[0][1:])
+                except ValueError:
+                    continue
 
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
+                # We may see multiple traces in ASAN
+                if index == 0:
+                    expectedIndex = 0
 
-            try:
-                index = int(parts[0][1:])
-            except ValueError:
-                continue
+                if not expectedIndex == index:
+                    raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" %
+                                    (index, expectedIndex))
 
-            # We may see multiple traces in ASAN
-            if index == 0:
-                expectedIndex = 0
-
-            if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
-
-            component = None
-            # TSan doesn't include address, symbol will be immediately following the frame number
-            if len(parts) > 1 and not parts[1].startswith("0x"):
-                if parts[1] == "<null>":
-                    # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
-                    if "+" in parts[-1]:
-                        # Remove parentheses around component
-                        component = parts[-1][1:-1]
+                component = None
+                # TSan doesn't include address, symbol will be immediately following the frame number
+                if len(parts) > 1 and not parts[1].startswith("0x"):
+                    if parts[1] == "<null>":
+                        # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
+                        if "+" in parts[-1]:
+                            # Remove parentheses around component
+                            component = parts[-1][1:-1]
+                        else:
+                            component = "<missing>"
                     else:
+                        component = " ".join(parts[1:-2])
+                elif len(parts) > 2:
+                    if parts[2] == "in":
+                        component = " ".join(parts[3:-1])
+                    elif parts[2:] == ["(<unknown", "module>)"]:
                         component = "<missing>"
+                    else:
+                        # Remove parentheses around component
+                        component = parts[2][1:-1]
                 else:
-                    component = " ".join(parts[1:-2])
-            elif len(parts) > 2:
-                if parts[2] == "in":
-                    component = " ".join(parts[3:-1])
-                elif parts[2:] == ["(<unknown", "module>)"]:
+                    print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
                     component = "<missing>"
-                else:
-                    # Remove parentheses around component
-                    component = parts[2][1:-1]
-            else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
-                component = "<missing>"
 
-            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
-            expectedIndex += 1
+                self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+                expectedIndex += 1
 
     def createShortSignature(self) -> str:
         '''
@@ -800,37 +800,38 @@ class LSanCrashInfo(CrashInfo):
         lsanPatternSeen = False
 
         expectedIndex = 0
-        for traceLine in lsanOutput:
-            if not lsanErrorPattern:
-                if lsanErrorPattern in traceLine:
-                    lsanPatternSeen = True
-                continue
+        if lsanOutput is not None:
+            for traceLine in lsanOutput:
+                if not lsanErrorPattern:
+                    if lsanErrorPattern in traceLine:
+                        lsanPatternSeen = True
+                    continue
 
-            parts = traceLine.strip().split()
+                parts = traceLine.strip().split()
 
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
+                # We only want stack frames
+                if not parts or not parts[0].startswith("#"):
+                    continue
 
-            index = int(parts[0][1:])
+                index = int(parts[0][1:])
 
-            if expectedIndex != index:
-                raise RuntimeError("Fatal error parsing LSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                if expectedIndex != index:
+                    raise RuntimeError("Fatal error parsing LSan trace (Index mismatch, got index %s but expected %s)" %
+                                    (index, expectedIndex))
 
-            component = None
-            if len(parts) > 2:
-                if parts[2] == "in":
-                    component = " ".join(parts[3:-1])
+                component = None
+                if len(parts) > 2:
+                    if parts[2] == "in":
+                        component = " ".join(parts[3:-1])
+                    else:
+                        # Remove parentheses around component
+                        component = parts[2][1:-1]
                 else:
-                    # Remove parentheses around component
-                    component = parts[2][1:-1]
-            else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
-                component = "<missing>"
+                    print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                    component = "<missing>"
 
-            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
-            expectedIndex += 1
+                self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+                expectedIndex += 1
 
         if not self.backtrace and lsanPatternSeen:
             # We've seen the crash address but no frames, so this is likely
@@ -890,37 +891,38 @@ class UBSanCrashInfo(CrashInfo):
         ubsanPatternSeen = False
 
         expectedIndex = 0
-        for traceLine in ubsanOutput:
-            if not ubsanPatternSeen:
-                if re.search(ubsanErrorPattern, traceLine) is not None:
-                    ubsanPatternSeen = True
-                continue
+        if ubsanOutput is not None:
+            for traceLine in ubsanOutput:
+                if not ubsanPatternSeen:
+                    if re.search(ubsanErrorPattern, traceLine) is not None:
+                        ubsanPatternSeen = True
+                    continue
 
-            parts = traceLine.strip().split()
+                parts = traceLine.strip().split()
 
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
+                # We only want stack frames
+                if not parts or not parts[0].startswith("#"):
+                    continue
 
-            index = int(parts[0][1:])
+                index = int(parts[0][1:])
 
-            if expectedIndex != index:
-                raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                if expectedIndex != index:
+                    raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" %
+                                    (index, expectedIndex))
 
-            component = None
-            if len(parts) > 2:
-                if parts[2] == "in":
-                    component = " ".join(parts[3:-1])
+                component = None
+                if len(parts) > 2:
+                    if parts[2] == "in":
+                        component = " ".join(parts[3:-1])
+                    else:
+                        # Remove parentheses around component
+                        component = parts[2][1:-1]
                 else:
-                    # Remove parentheses around component
-                    component = parts[2][1:-1]
-            else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
-                component = "<missing>"
+                    print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                    component = "<missing>"
 
-            self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
-            expectedIndex += 1
+                self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
+                expectedIndex += 1
 
         if not self.backtrace and ubsanPatternSeen:
             # We've seen the crash address but no frames, so this is likely
@@ -1102,7 +1104,7 @@ class GDBCrashInfo(CrashInfo):
     @staticmethod
     def calculateCrashAddress(
             crashInstruction: str,
-            registerMap: Mapping[str, int],
+            registerMap: dict[str, int],
         ) -> int:
         '''
         Calculate the crash address given the crash instruction and register contents
@@ -1167,12 +1169,12 @@ class GDBCrashInfo(CrashInfo):
         #   e.g. shrb   -0x69(%rdx,%rbx,8)
 
         # When we fail, try storing a reason here
-        failureReason = "Unknown failure."
+        failureReason: str | None = "Unknown failure."
 
-        def isDerefOp(op):
+        def isDerefOp(op: str) -> bool:
             return "(" in op and ")" in op
 
-        def calculateDerefOpAddress(derefOp):
+        def calculateDerefOpAddress(derefOp: str) -> tuple[int | None, str | None]:
             match = re.match("\\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match is not None:
                 offset = 0
@@ -1314,13 +1316,13 @@ class GDBCrashInfo(CrashInfo):
             # Anything that is not explicitly handled now is considered unsupported
             failureReason = "Unsupported instruction in incomplete ARM/ARM64 support."
 
-            def getARMImmConst(val):
+            def getARMImmConst(val: str) -> int:
                 val = val.replace("#", "").strip()
                 if val.startswith("0x"):
                     return int(val, 16)
                 return int(val)
 
-            def calculateARMDerefOpAddress(derefOp):
+            def calculateARMDerefOpAddress(derefOp: str) -> tuple[int | None, str | None]:
                 derefOps = derefOp.split(",")
 
                 if len(derefOps) > 2:
@@ -1378,8 +1380,8 @@ class GDBCrashInfo(CrashInfo):
     @staticmethod
     def calculateComplexDerefOpAddress(
             complexDerefOp: str,
-            registerMap: Mapping[str, int],
-        ):
+            registerMap: dict[str, int],
+        ) -> tuple[int | None, str | None]:
 
         match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
         if match is not None:
@@ -1489,37 +1491,38 @@ class AppleCrashInfo(CrashInfo):
         self.configuration = configuration
 
         inCrashingThread = False
-        for line in crashData:
-            # Crash address
-            if line.startswith("Exception Codes:"):
-                # Example:
-                #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
-                #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
-                address = line.split(" ")[-1]
-                if address.startswith('0x'):
-                    self.crashAddress = int(address, 16)
+        if crashData is not None:
+            for line in crashData:
+                # Crash address
+                if line.startswith("Exception Codes:"):
+                    # Example:
+                    #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
+                    #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
+                    address = line.split(" ")[-1]
+                    if address.startswith('0x'):
+                        self.crashAddress = int(address, 16)
 
-            # Start of stack for crashing thread
-            if re.match(r'Thread \d+ Crashed:', line):
-                inCrashingThread = True
-                continue
+                # Start of stack for crashing thread
+                if re.match(r'Thread \d+ Crashed:', line):
+                    inCrashingThread = True
+                    continue
 
-            if line.strip() == "":
-                inCrashingThread = False
-                continue
+                if line.strip() == "":
+                    inCrashingThread = False
+                    continue
 
-            if inCrashingThread:
-                # Example:
-                # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)  # noqa
-                components = line.split(None, 3)
-                stackEntry = components[3]
-                if stackEntry.startswith('0'):
-                    self.backtrace.append("??")
-                else:
-                    stackEntry = AppleCrashInfo.removeFilename(stackEntry)
-                    stackEntry = AppleCrashInfo.removeOffset(stackEntry)
-                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
-                    self.backtrace.append(stackEntry)
+                if inCrashingThread:
+                    # Example:
+                    # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)  # noqa
+                    components = line.split(None, 3)
+                    stackEntry = components[3]
+                    if stackEntry.startswith('0'):
+                        self.backtrace.append("??")
+                    else:
+                        stackEntry = AppleCrashInfo.removeFilename(stackEntry)
+                        stackEntry = AppleCrashInfo.removeOffset(stackEntry)
+                        stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                        self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilename(stackEntry: str) -> str:
@@ -1569,105 +1572,106 @@ class CDBCrashInfo(CrashInfo):
         ecxrData = []
         cInstruction = ""
 
-        for line in crashData:
-            # Start of .ecxr data
-            if re.match(r'0:000> \.ecxr', line):
-                inEcxrData = True
-                continue
-
-            if inEcxrData:
-                # 32-bit example:
-                #     0:000> .ecxr
-                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
-                #     eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
-                #     cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
-                # 64-bit example:
-                #     0:000> .ecxr
-                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
-                #     rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
-                #     rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
-                #      r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
-                #     r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
-                #     r14=000000e87fbfd0e0 r15=0000000000000003
-                #     iopl=0         nv up ei pl nz na pe nc
-                #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
-                if line.startswith("cs="):
-                    inEcxrData = False
+        if crashData is not None:
+            for line in crashData:
+                # Start of .ecxr data
+                if re.match(r'0:000> \.ecxr', line):
+                    inEcxrData = True
                     continue
 
-                # Crash address
-                # Extract the eip/rip specifically for use later
-                if "eip=" in line:
-                    address = line.split("eip=")[1].split()[0]
-                    self.crashAddress = int(address, 16)
-                elif "rip=" in line:
-                    address = line.split("rip=")[1].split()[0]
-                    self.crashAddress = int(address, 16)
-
-                # First extract the line
-                # 32-bit example:
-                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
-                # 64-bit example:
-                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
-                matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
-                if matchLine is not None:
-                    ecxrData.extend(line.split())
-
-                # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own, then iterate
-                match = re.search(cdbRegisterPattern, line)
-                for instr in ecxrData:
-                    match = re.search(cdbRegisterPattern, instr)
-                    if match is not None:
-                        register = match.group(1)
-                        value = int(match.group(2), 16)
-                        self.registers[register] = value
-
-            # Crash instruction
-            # Start of crash instruction details
-            if line.startswith("FAULTING_IP"):
-                inCrashInstruction = True
-                continue
-
-            if inCrashInstruction and not cInstruction:
-                if "PROCESS_NAME" in line:
-                    inCrashInstruction = False
-                    continue
-
-                # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
-                lineWithoutBacktick = line.replace("`", "", 1)
-                if address and lineWithoutBacktick.startswith(address):
-                    # 32-bit examples:
-                    #     25d80b01 cc              int     3
-                    #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                if inEcxrData:
+                    # 32-bit example:
+                    #     0:000> .ecxr
+                    #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                    #     eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+                    #     cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
                     # 64-bit example:
-                    #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-                    cInstruction = line.split(None, 2)[-1]
-                    # There may be multiple spaces inside the faulting instruction
-                    cInstruction = " ".join(cInstruction.split())
-                    self.crashInstruction = cInstruction
+                    #     0:000> .ecxr
+                    #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                    #     rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
+                    #     rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
+                    #      r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
+                    #     r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
+                    #     r14=000000e87fbfd0e0 r15=0000000000000003
+                    #     iopl=0         nv up ei pl nz na pe nc
+                    #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
+                    if line.startswith("cs="):
+                        inEcxrData = False
+                        continue
 
-            # Start of stack for crashing thread
-            if line.startswith("STACK_TEXT:"):
-                inCrashingThread = True
-                continue
+                    # Crash address
+                    # Extract the eip/rip specifically for use later
+                    if "eip=" in line:
+                        address = line.split("eip=")[1].split()[0]
+                        self.crashAddress = int(address, 16)
+                    elif "rip=" in line:
+                        address = line.split("rip=")[1].split()[0]
+                        self.crashAddress = int(address, 16)
 
-            if inCrashingThread:
-                # 32-bit example:
-                #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9  # noqa
-                # 64-bit example:
-                #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13  # noqa
-                if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
-                        or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
-                    inCrashingThread = False
+                    # First extract the line
+                    # 32-bit example:
+                    #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                    # 64-bit example:
+                    #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                    matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
+                    if matchLine is not None:
+                        ecxrData.extend(line.split())
+
+                    # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own, then iterate
+                    match = re.search(cdbRegisterPattern, line)
+                    for instr in ecxrData:
+                        match = re.search(cdbRegisterPattern, instr)
+                        if match is not None:
+                            register = match.group(1)
+                            value = int(match.group(2), 16)
+                            self.registers[register] = value
+
+                # Crash instruction
+                # Start of crash instruction details
+                if line.startswith("FAULTING_IP"):
+                    inCrashInstruction = True
                     continue
 
-                # Ignore cdb error and empty lines
-                if "Following frames may be wrong." in line or line.strip() == '':
+                if inCrashInstruction and not cInstruction:
+                    if "PROCESS_NAME" in line:
+                        inCrashInstruction = False
+                        continue
+
+                    # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
+                    lineWithoutBacktick = line.replace("`", "", 1)
+                    if address and lineWithoutBacktick.startswith(address):
+                        # 32-bit examples:
+                        #     25d80b01 cc              int     3
+                        #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                        # 64-bit example:
+                        #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
+                        cInstruction = line.split(None, 2)[-1]
+                        # There may be multiple spaces inside the faulting instruction
+                        cInstruction = " ".join(cInstruction.split())
+                        self.crashInstruction = cInstruction
+
+                # Start of stack for crashing thread
+                if line.startswith("STACK_TEXT:"):
+                    inCrashingThread = True
                     continue
 
-                stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
-                stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
-                self.backtrace.append(stackEntry)
+                if inCrashingThread:
+                    # 32-bit example:
+                    #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9  # noqa
+                    # 64-bit example:
+                    #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13  # noqa
+                    if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
+                            or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
+                        inCrashingThread = False
+                        continue
+
+                    # Ignore cdb error and empty lines
+                    if "Following frames may be wrong." in line or line.strip() == '':
+                        continue
+
+                    stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
+                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                    self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry: str) -> str:
@@ -1720,20 +1724,21 @@ class RustCrashInfo(CrashInfo):
 
         inAssertion = False
         inBacktrace = False
-        for line in rustOutput:
-            # Start of stack
-            if not inAssertion:
-                if AssertionHelper.RE_RUST_ASSERT.match(line) is not None:
-                    inAssertion = True
-                continue
+        if rustOutput is not None:
+            for line in rustOutput:
+                # Start of stack
+                if not inAssertion:
+                    if AssertionHelper.RE_RUST_ASSERT.match(line) is not None:
+                        inAssertion = True
+                    continue
 
-            frame = self.RE_FRAME.match(line)
-            if frame is None and inBacktrace:
-                break
-            elif frame is not None:
-                inBacktrace = True
-                if frame.group("symbol"):
-                    self.backtrace.append(frame.group("symbol"))
+                frame = self.RE_FRAME.match(line)
+                if frame is None and inBacktrace:
+                    break
+                elif frame is not None:
+                    inBacktrace = True
+                    if frame.group("symbol"):
+                        self.backtrace.append(frame.group("symbol"))
 
 
 class TSanCrashInfo(CrashInfo):
@@ -1775,62 +1780,63 @@ class TSanCrashInfo(CrashInfo):
         isDataRace = False
         backtraces = []
         currentBacktrace = None
-        for traceLine in tsanOutput:
-            if not reportFound:
-                match = re.search(tsanWarningPattern, traceLine)
-                if match is not None:
-                    self.tsanWarnLine = traceLine.strip()
-                    reportFound = True
-                    isDataRace = "data race" in self.tsanWarnLine
-                continue
+        if tsanOutput is not None:
+            for traceLine in tsanOutput:
+                if not reportFound:
+                    match = re.search(tsanWarningPattern, traceLine)
+                    if match is not None:
+                        self.tsanWarnLine = traceLine.strip()
+                        reportFound = True
+                        isDataRace = "data race" in self.tsanWarnLine
+                    continue
 
-            if "[failed to restore the stack]" in traceLine:
-                # TSan failed to symbolize at least one stack
-                brokenStack = True
+                if "[failed to restore the stack]" in traceLine:
+                    # TSan failed to symbolize at least one stack
+                    brokenStack = True
 
-            parts = traceLine.strip().split()
+                parts = traceLine.strip().split()
 
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
+                # We only want stack frames
+                if not parts or not parts[0].startswith("#"):
+                    continue
 
-            try:
-                index = int(parts[0][1:])
-            except ValueError:
-                continue
+                try:
+                    index = int(parts[0][1:])
+                except ValueError:
+                    continue
 
-            # We may see multiple traces in TSAN
-            if index == 0:
-                if currentBacktrace is not None:
-                    backtraces.append(currentBacktrace)
-                currentBacktrace = []
-                expectedIndex = 0
+                # We may see multiple traces in TSAN
+                if index == 0:
+                    if currentBacktrace is not None:
+                        backtraces.append(currentBacktrace)
+                    currentBacktrace = []
+                    expectedIndex = 0
 
-            if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing TSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                if not expectedIndex == index:
+                    raise RuntimeError("Fatal error parsing TSan trace (Index mismatch, got index %s but expected %s)" %
+                                    (index, expectedIndex))
 
-            component = None
-            if len(parts) > 2:
-                # TSan has a different trace style than other sanitizers:
-                #   TSan uses:
-                #     #0 function name filename:line:col (bin+0xaddr)
-                #   ASan uses:
-                #     #0 0xaddr in function name filename:line
-                component = " ".join(parts[1:-2])
+                component = None
+                if len(parts) > 2:
+                    # TSan has a different trace style than other sanitizers:
+                    #   TSan uses:
+                    #     #0 function name filename:line:col (bin+0xaddr)
+                    #   ASan uses:
+                    #     #0 0xaddr in function name filename:line
+                    component = " ".join(parts[1:-2])
 
-                if component == "<null>" and len(parts) > 3:
-                    # TSan uses <null> <null> to indicate missing symbols, e.g.
-                    #   #1 <null> <null> (libXext.so.6+0xcc89)
-                    # Remove parentheses around component
-                    component = parts[3][1:-1]
-            else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
-                component = "<missing>"
+                    if component == "<null>" and len(parts) > 3:
+                        # TSan uses <null> <null> to indicate missing symbols, e.g.
+                        #   #1 <null> <null> (libXext.so.6+0xcc89)
+                        # Remove parentheses around component
+                        component = parts[3][1:-1]
+                else:
+                    print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                    component = "<missing>"
 
-            currentBacktrace.append(CrashInfo.sanitizeStackFrame(component))
+                currentBacktrace.append(CrashInfo.sanitizeStackFrame(component))
 
-            expectedIndex += 1
+                expectedIndex += 1
 
         if currentBacktrace is not None:
             backtraces.append(currentBacktrace)
@@ -1927,34 +1933,35 @@ class ValgrindCrashInfo(CrashInfo):
             """, re.VERBOSE)
 
         foundStart = False
-        for traceLine in vgdOutput:
-            if not traceLine.startswith("=="):
-                # skip unrelated noise
-                continue
-            elif not foundStart:
-                if re.match(self.MSG_REGEX, traceLine) is not None:
-                    # skip other lines that are not part of a recognized trace
-                    foundStart = True
-                # continue search for the beginning of the stack trace
-                continue
+        if vgdOutput is not None:
+            for traceLine in vgdOutput:
+                if not traceLine.startswith("=="):
+                    # skip unrelated noise
+                    continue
+                elif not foundStart:
+                    if re.match(self.MSG_REGEX, traceLine) is not None:
+                        # skip other lines that are not part of a recognized trace
+                        foundStart = True
+                    # continue search for the beginning of the stack trace
+                    continue
 
-            lineInfo = re.match(stackPattern, traceLine)
-            if lineInfo is not None:
-                lineFunc = lineInfo.group("func")
-                # if function name is not available use the file name instead
-                if lineFunc == "???":
-                    lineFunc = lineInfo.group("file")
-                self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
+                lineInfo = re.match(stackPattern, traceLine)
+                if lineInfo is not None:
+                    lineFunc = lineInfo.group("func")
+                    # if function name is not available use the file name instead
+                    if lineFunc == "???":
+                        lineFunc = lineInfo.group("file")
+                    self.backtrace.append(CrashInfo.sanitizeStackFrame(lineFunc))
 
-            elif self.backtrace:
-                # check if address info is available
-                addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
-                if addr:
-                    self.crashAddress = int(addr.group("addr"), 16)
-                # look for '==PID== \n' to indicate the end of a trace
-                if re.match(r"^==\d+==\s+$", traceLine) is not None:
-                    # done parsing
-                    break
+                elif self.backtrace:
+                    # check if address info is available
+                    addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
+                    if addr:
+                        self.crashAddress = int(addr.group("addr"), 16)
+                    # look for '==PID== \n' to indicate the end of a trace
+                    if re.match(r"^==\d+==\s+$", traceLine) is not None:
+                        # done parsing
+                        break
 
     def createShortSignature(self) -> str:
         '''
