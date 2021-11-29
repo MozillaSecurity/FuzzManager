@@ -22,6 +22,7 @@ import json
 import six
 
 from FTB.Signatures import JSONHelper
+from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.Matchers import StringMatch, NumberMatch
 
 
@@ -73,14 +74,12 @@ class Symptom(object):
             raise RuntimeError("Unknown symptom type: %s" % stype)
 
     @abstractmethod
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
         return
@@ -100,14 +99,12 @@ class OutputSymptom(Symptom):
             if self.src != "stderr" and self.src != "stdout" and self.src != "crashdata":
                 raise RuntimeError("Invalid source specified: %s" % self.src)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
         checkedOutput = []
@@ -146,14 +143,12 @@ class StackFrameSymptom(Symptom):
             # Default to 0
             self.frameNumber = NumberMatch(0)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
 
@@ -174,14 +169,12 @@ class StackSizeSymptom(Symptom):
         Symptom.__init__(self, obj)
         self.stackSize = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "size", True))
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
         return self.stackSize.matches(len(crashInfo.backtrace))
@@ -195,14 +188,12 @@ class CrashAddressSymptom(Symptom):
         Symptom.__init__(self, obj)
         self.address = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "address", True))
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
         # In case the crash address is not available,
@@ -224,14 +215,12 @@ class InstructionSymptom(Symptom):
         elif self.registerNames is None or len(self.registerNames) == 0:
             raise RuntimeError("Must provide at least instruction name or register names")
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
         if crashInfo.crashInstruction is None:
@@ -258,14 +247,12 @@ class TestcaseSymptom(Symptom):
         Symptom.__init__(self, obj)
         self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
 
@@ -295,20 +282,18 @@ class StackFramesSymptom(Symptom):
         for fn in rawFunctionNames:
             self.functionNames.append(StringMatch(fn))
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         '''
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
 
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         '''
 
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
-    def diff(self, crashInfo):
+    def diff(self, crashInfo: CrashInfo):
         if self.matches(crashInfo):
             return (0, None)
 
