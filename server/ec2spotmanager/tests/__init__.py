@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 from django.core.files.base import ContentFile
+from django.http.response import HttpResponse
 from django.test import SimpleTestCase as DjangoTestCase
 from django.utils import timezone
 from ec2spotmanager.models import Instance, InstancePool, PoolConfiguration, PoolStatusEntry
@@ -27,7 +28,7 @@ class UncatchableException(BaseException):
     pass
 
 
-def assert_contains(response, text):
+def assert_contains(response: HttpResponse, text: str) -> None:
     """Assert that the response was successful, and contains the given text.
     """
 

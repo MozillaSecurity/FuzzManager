@@ -12,10 +12,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from django.http.response import HttpResponse
 from django.test import SimpleTestCase as DjangoTestCase
 
 
-def assert_contains(response, text):
+def assert_contains(response: HttpResponse, text: str) -> None:
     """Assert that the response was successful, and contains the given text.
     """
 
@@ -27,7 +28,7 @@ def assert_contains(response, text):
     _().assertContains(response, text)
 
 
-def assert_not_contains(response, text):
+def assert_not_contains(response: HttpResponse, text: str) -> None:
     """Assert that the response was successful, and does not contain the given text.
     """
 
