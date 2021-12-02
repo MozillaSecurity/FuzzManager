@@ -12,7 +12,9 @@ from __future__ import annotations
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-from django.conf import global_settings  # noqa
+from typing import TypedDict
+from django.conf import global_settings
+from django.http.request import HttpRequest  # noqa
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -37,7 +39,7 @@ except IOError:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
 
 # Application definition
@@ -80,9 +82,15 @@ MIDDLEWARE = (
 )
 
 
+class ResolverContextProcessorObj(TypedDict):
+    app_name: str
+    namespace: str
+    url_name: str | None
+
+
 # We add a custom context processor to make our application name
 # and certain other variables available in all our templates
-def resolver_context_processor(request):
+def resolver_context_processor(request: HttpRequest) -> ResolverContextProcessorObj:
     return {
         'app_name': request.resolver_match.app_name,
         'namespace': request.resolver_match.namespace,

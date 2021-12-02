@@ -21,7 +21,8 @@ import ssl
 import traceback
 from abc import ABCMeta, abstractmethod
 from typing import Any
-# from typing import TypeVar
+from typing import Callable
+from typing import TypeVar
 
 import six
 
