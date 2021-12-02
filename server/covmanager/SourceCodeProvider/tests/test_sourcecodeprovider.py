@@ -16,6 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import pytest
 import shutil
 from covmanager.SourceCodeProvider.GITSourceCodeProvider import GITSourceCodeProvider
@@ -24,7 +25,7 @@ from covmanager.SourceCodeProvider.SourceCodeProvider import Utils
 
 
 @pytest.fixture
-def git_repo(tmp_path):
+def git_repo(tmp_path: Path):
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git"),
                     str(tmp_path / "test-git"))
     (tmp_path / "test-git" / "git").rename(tmp_path / "test-git" / ".git")
@@ -32,14 +33,14 @@ def git_repo(tmp_path):
 
 
 @pytest.fixture
-def hg_repo(tmp_path):
+def hg_repo(tmp_path: Path):
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg"),
                     str(tmp_path / "test-hg"))
     (tmp_path / "test-hg" / "hg").rename(tmp_path / "test-hg" / ".hg")
     yield str(tmp_path / "test-hg")
 
 
-def test_GITSourceCodeProvider(git_repo):
+def test_GITSourceCodeProvider(git_repo: str) -> None:
     provider = GITSourceCodeProvider(git_repo)
 
     tests = {
@@ -67,7 +68,7 @@ def test_GITSourceCodeProvider(git_repo):
     assert len(parents) == 0
 
 
-def test_HGSourceCodeProvider(hg_repo):
+def test_HGSourceCodeProvider(hg_repo: str) -> None:
     provider = HGSourceCodeProvider(hg_repo)
 
     tests = {

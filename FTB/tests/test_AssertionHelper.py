@@ -100,7 +100,7 @@ Hit MOZ_CRASH(Aborting on channel error.) at /builds/worker/workspace/build/src/
 """  # noqa
 
 
-def _check_regex_matches(error_lines, sanitized_message):
+def _check_regex_matches(error_lines: list[str] | str, sanitized_message: list[str] | str) -> None:
     if isinstance(sanitized_message, (six.text_type, bytes)):
         sanitized_message = [sanitized_message]
     else:

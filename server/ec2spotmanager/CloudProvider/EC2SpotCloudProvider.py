@@ -22,7 +22,7 @@ class EC2SpotCloudProvider(CloudProvider):
         self.cluster = None
         self.connected_region = None
 
-    def _connect(self, region):
+    def _connect(self, region: str) -> EC2Manager:
         if self.connected_region != region:
             self.cluster = EC2Manager(None)  # create a new Manager to invalidate cached image names, etc.
             self.cluster.connect(region=region, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -31,7 +31,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return self.cluster
 
     @wrap_provider_errors
-    def terminate_instances(self, instances_ids_by_region):
+    def terminate_instances(self, instances_ids_by_region) -> None:
         for region, instance_ids in instances_ids_by_region.items():
             cluster = self._connect(region)
             self.logger.info("Terminating %s instances in region %s", len(instance_ids), region)
@@ -50,7 +50,7 @@ class EC2SpotCloudProvider(CloudProvider):
             cluster.terminate(boto_instances)
 
     @wrap_provider_errors
-    def cancel_requests(self, requested_instances_by_region):
+    def cancel_requests(self, requested_instances_by_region) -> None:
         for region, instance_ids in requested_instances_by_region.items():
             cluster = self._connect(region)
             cluster.cancel_spot_requests(instance_ids)
@@ -194,7 +194,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return instance_states
 
     @wrap_provider_errors
-    def get_image(self, region, config):
+    def get_image(self, region: str, config) -> str:
         cluster = self._connect(region)
         ami = cluster.resolve_image_name(config.ec2_image_name)
         return ami

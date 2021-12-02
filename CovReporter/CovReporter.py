@@ -27,7 +27,7 @@ import sys
 from FTB import CoverageHelper
 from Reporter.Reporter import remote_checks, Reporter  # noqa
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = '2017-07-10'
 __updated__ = '2017-07-10'

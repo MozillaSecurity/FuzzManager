@@ -71,7 +71,7 @@ class LibFuzzerMonitor(threading.Thread):
         return self.testcase
 
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = '2016-07-28'
 __updated__ = '2016-07-28'

@@ -254,7 +254,7 @@ def _update_provider_status(provider, type_, message):
         logger.warning('Ignoring provider error: already exists.')
 
 
-def _update_pool_status(pool, type_, message):
+def _update_pool_status(pool, type_: str, message: str) -> None:
     from .models import PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 
     is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}

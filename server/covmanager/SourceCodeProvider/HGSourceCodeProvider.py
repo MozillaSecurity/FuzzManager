@@ -21,10 +21,10 @@ from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, Un
 
 
 class HGSourceCodeProvider(SourceCodeProvider):
-    def __init__(self, location):
+    def __init__(self, location: str):
         super(HGSourceCodeProvider, self).__init__(location)
 
-    def getSource(self, filename, revision):
+    def getSource(self, filename: str, revision: str) -> str:
         revision = revision.replace('+', '')
 
         # Avoid passing in absolute filenames to HG
@@ -41,7 +41,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
             # Otherwise assume the file doesn't exist
             raise UnknownFilenameException
 
-    def testRevision(self, revision):
+    def testRevision(self, revision: str) -> bool:
         revision = revision.replace('+', '')
 
         try:
@@ -54,7 +54,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
         # TODO: This will fail without remotes
         subprocess.check_call(["hg", "pull"], cwd=self.location)
 
-    def getParents(self, revision):
+    def getParents(self, revision: str) -> list[str]:
         revision = revision.replace('+', '')
 
         try:
@@ -63,18 +63,18 @@ class HGSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
-        output = output.splitlines()
+        output_str = output.splitlines()
 
         parents = []
 
-        for line in output:
+        for line in output_str:
             result = re.match(r'\d+:([0-9a-f]+)\s+', line)
             if result:
                 parents.append(result.group(1))
 
         return parents
 
-    def getUnifiedDiff(self, revision):
+    def getUnifiedDiff(self, revision: str) -> str:
         revision = revision.replace('+', '')
 
         try:
@@ -84,7 +84,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
 
         return output.decode('utf-8')
 
-    def checkRevisionsEquivalent(self, revisionA, revisionB):
+    def checkRevisionsEquivalent(self, revisionA: str, revisionB: str) -> bool:
         # Check if revisions are equal
         if revisionA == revisionB:
             return True

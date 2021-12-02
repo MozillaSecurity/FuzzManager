@@ -177,7 +177,7 @@ def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
     return lastLine
 
 
-def getSanitizedAssertionPattern(msgs: list[str] | str) -> list[str] | str:
+def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | str:
     '''
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.

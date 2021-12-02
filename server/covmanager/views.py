@@ -4,7 +4,10 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.db.models import Q
 from django.http import Http404
+from django.http.request import HttpRequest
 from django.http.response import HttpResponse
+from django.http.response import HttpResponsePermanentRedirect
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -24,40 +27,40 @@ from crashmanager.models import Tool
 from .SourceCodeProvider import SourceCodeProvider
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     return redirect('covmanager:%s' % getattr(settings, 'COV_DEFAULT_PAGE', "collections"))
 
 
-def reports(request):
+def reports(request: HttpRequest) -> HttpResponse:
     return render(request, 'collections/report.html', {})
 
 
-def repositories(request):
+def repositories(request: HttpRequest) -> HttpResponse:
     repositories = Repository.objects.all()
     return render(request, 'repositories/index.html', {'repositories': repositories})
 
 
-def reportconfigurations(request):
+def reportconfigurations(request: HttpRequest) -> HttpResponse:
     return render(request, 'reportconfigurations/index.html', {})
 
 
-def collections(request):
+def collections(request: HttpRequest) -> HttpResponse:
     return render(request, 'collections/index.html', {})
 
 
-def collections_browse(request, collectionid):
+def collections_browse(request: HttpRequest, collectionid: str) -> HttpResponse:
     return render(request, 'collections/browse.html', {'collectionid': collectionid})
 
 
-def collections_diff(request):
+def collections_diff(request: HttpRequest) -> HttpResponse:
     return render(request, 'collections/browse.html', {'diff_api': True})
 
 
-def collections_reportsummary(request, collectionid):
+def collections_reportsummary(request: HttpRequest, collectionid: str) -> HttpResponse:
     return render(request, 'reportconfigurations/summary.html', {'collectionid': collectionid})
 
 
-def collections_reportsummary_html_list(request, collectionid):
+def collections_reportsummary_html_list(request: HttpRequest, collectionid: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -138,7 +141,7 @@ def collections_reportsummary_html_list(request, collectionid):
     return render(request, 'reportconfigurations/summary_html_list.html', {'root': root})
 
 
-def collections_download(request, collectionid):
+def collections_download(request: HttpRequest, collectionid: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -154,7 +157,7 @@ def collections_download(request, collectionid):
     return response
 
 
-def collections_browse_api(request, collectionid, path):
+def collections_browse_api(request: HttpRequest, collectionid: str, path) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -185,7 +188,7 @@ def collections_browse_api(request, collectionid, path):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-def collections_diff_api(request, path):
+def collections_diff_api(request: HttpRequest, path) -> HttpResponse:
 
     collections = None
     coverages = []
@@ -294,11 +297,11 @@ def collections_diff_api(request, path):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-def collections_patch(request):
+def collections_patch(request: HttpRequest) -> HttpResponse:
     return render(request, 'collections/patch.html', {})
 
 
-def collections_patch_api(request, collectionid, patch_revision):
+def collections_patch_api(request: HttpRequest, collectionid: str, patch_revision) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -418,7 +421,7 @@ def collections_patch_api(request, collectionid, patch_revision):
     return HttpResponse(json.dumps(results), content_type='application/json')
 
 
-def collections_reportsummary_api(request, collectionid):
+def collections_reportsummary_api(request: HttpRequest, collectionid: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -456,7 +459,7 @@ def collections_reportsummary_api(request, collectionid):
     return HttpResponse(summary.cached_result, content_type='application/json')
 
 
-def repositories_search_api(request):
+def repositories_search_api(request: HttpRequest) -> HttpResponse:
     results = []
 
     if "name" in request.GET:
@@ -466,7 +469,7 @@ def repositories_search_api(request):
     return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
 
 
-def tools_search_api(request):
+def tools_search_api(request: HttpRequest) -> HttpResponse:
     results = []
 
     if "name" in request.GET:
@@ -477,7 +480,7 @@ def tools_search_api(request):
 
 
 @csrf_exempt
-def collections_aggregate_api(request):
+def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
     if request.method != 'POST':
         return HttpResponse(
             content=json.dumps({"error": "This API only supports POST."}),
@@ -586,7 +589,7 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with several collection-specific fields from the URL
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """
         Return a filtered queryset.
         """
@@ -646,7 +649,7 @@ class ReportFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """
         Return a filtered queryset.
         """
@@ -714,7 +717,7 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """
         Return a filtered queryset.
         """

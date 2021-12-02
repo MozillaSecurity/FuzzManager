@@ -22,9 +22,9 @@ import json
 import os
 import re
 import sys
-from typing_extensions import TypedDict
 
 import six
+from typing_extensions import TypedDict
 
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration

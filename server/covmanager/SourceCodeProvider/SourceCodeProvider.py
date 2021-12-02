@@ -17,6 +17,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 
 import six
+from typing_extensions import TypedDict
 
 
 class UnknownRevisionException(Exception):
@@ -32,38 +33,30 @@ class SourceCodeProvider():
     '''
     Abstract base class that defines what interfaces Source Code Providers must implement
     '''
-    def __init__(self, location):
+    def __init__(self, location: str):
         self.location = location
 
     @abstractmethod
-    def getSource(self, filename, revision):
+    def getSource(self, filename: str, revision: str) -> str:
         """
         Return the source code for the given filename on the given revision.
 
-        @ptype filename: string
         @param filename: The path to the requested file, relative to the
                          root of the repository.
-
-        @ptype revision: string
         @param revision: The revision to use when retrieving the source code.
-
-        @rtype string
         @return The requested source code as a single string.
         """
-        return
+        return ""
 
     @abstractmethod
-    def testRevision(self, revision):
+    def testRevision(self, revision: str) -> bool:
         """
         Check if the given revision exists in the resource associated with this provider.
 
-        @ptype revision: string
         @param revision: The revision to check for.
-
-        @rtype bool
         @return True, if the revision exists, False otherwise.
         """
-        return
+        return False
 
     @abstractmethod
     def update(self) -> None:
@@ -80,52 +73,48 @@ class SourceCodeProvider():
         return
 
     @abstractmethod
-    def getParents(self, revision):
+    def getParents(self, revision: str) -> list[str]:
         """
         Gets the parent revisions of the specified revision.
 
-        @ptype revision: string
         @param revision: The revision to get parents for.
-
-        @rtype list
         @return The list of parent revisions.
         """
-        return
+        return []
 
     @abstractmethod
-    def getUnifiedDiff(self, revision):
+    def getUnifiedDiff(self, revision: str) -> str:
         """
         Return a GIT-style unified diff for the given revision.
 
-        @ptype revision: string
         @param revision: The revision to get the diff for.
-
-        @rtype string
         @return The unified diff as a single string.
         """
-        return
+        return ""
 
     @abstractmethod
-    def checkRevisionsEquivalent(self, revisionA, revisionB):
+    def checkRevisionsEquivalent(self, revisionA: str, revisionB: str) -> bool:
         """
         Check if the given revisions are considered to be equivalent.
 
-        @ptype revisionA: string
         @param revisionA: The first revision to compare.
-
-        @ptype revisionB: string
         @param revisionB: The second revision to compare.
-
-        @rtype bool
         @return True, if the revisions are equivalent, False otherwise.
         """
-        return
+        return False
+
+
+class CObj(TypedDict):
+    """CObj type specification."""
+
+    filename: str | None
+    locations: list[int]
 
 
 class Utils():
 
     @staticmethod
-    def getDiffLocations(diff):
+    def getDiffLocations(diff: str) -> list[CObj]:
         """
         This method tries to return reasonable diff hunk locations for each
         changed file in the given unified diff, where the locations refer to the
@@ -144,28 +133,25 @@ class Utils():
         Note that the heuristics used here are far from perfect and are only
         meant to aid manual inspection.
 
-        @ptype diff: string
         @param diff: A GIT-style unified diff as a single string.
-
-        @rtype list
         @return A list containing one object per file changed. Each object in
                 the list has two attributes, "filename" and "locations", where
                 "locations" is the list of diff hunk locations for that
                 particular file.
         """
-        ret = []
-        diff = diff.splitlines()
+        ret: list[CObj] = []
+        diff_list = diff.splitlines()
 
-        while diff:
-            cobj = {"filename": None, "locations": []}
+        while diff_list:
+            cobj: CObj = {"filename": None, "locations": []}
 
             skipDiff = False
 
-            line = diff.pop(0)
+            line = diff_list.pop(0)
 
             if line.startswith("diff --git "):
-                (mm, mmLine) = diff.pop(0).split(" ", 2)
-                (pp, ppLine) = diff.pop(0).split(" ", 2)
+                (mm, mmLine) = diff_list.pop(0).split(" ", 2)
+                (pp, ppLine) = diff_list.pop(0).split(" ", 2)
 
                 if not mm == "---" or not pp == "+++":
                     raise RuntimeError("Malformed trace")
@@ -176,11 +162,11 @@ class Utils():
                 cobj["filename"] = mmLine[2:]
 
             skipHunk = False
-            lastHunkStart = None
-            hunkLineRemoveCount = None
+            lastHunkStart = 0
+            hunkLineRemoveCount = 0
 
-            while diff and not diff[0].startswith("diff --git "):
-                line = diff.pop(0)
+            while diff_list and not diff_list[0].startswith("diff --git "):
+                line = diff_list.pop(0)
 
                 if not skipDiff:
                     if line.startswith("@@ "):
