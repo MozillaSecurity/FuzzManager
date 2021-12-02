@@ -102,7 +102,7 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None)-> int:
     '''Command line options.'''
 
     # setup argparser

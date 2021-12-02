@@ -66,7 +66,7 @@ class TaskStatusReporter(Reporter):
         self.post(url, data, expected=requests.codes["ok"])
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None)-> int:
     '''Command line options.'''
 
     # setup argparser

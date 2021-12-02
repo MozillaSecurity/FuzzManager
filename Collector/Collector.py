@@ -334,7 +334,7 @@ class Collector(Reporter):
         return (testCaseData, isBinary)
 
 
-def main(args=None) -> int:
+def main(args: list[str] | None = None)-> int:
     '''Command line options.'''
 
     # setup argparser
