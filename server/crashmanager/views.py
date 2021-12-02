@@ -6,6 +6,7 @@ from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDe
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
 from django.http import Http404, HttpResponse
+from django.http.request import HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -73,7 +74,7 @@ def check_authorized_for_signature(request, signature):
     return
 
 
-def deny_restricted_users(request):
+def deny_restricted_users(request: HttpRequest) -> None:
     user = User.get_or_create_restricted(request.user)[0]
     if user.restricted:
         raise PermissionDenied({"message": "Restricted users cannot use this feature."})

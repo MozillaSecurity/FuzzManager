@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 import logging
 import re
+from typing import Any
+from typing import cast
 
 from django.conf import settings
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.models import User as DjangoUser, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
@@ -25,34 +29,34 @@ if getattr(settings, 'USE_CELERY', None):
 
 
 class Tool(models.Model):
-    name = models.CharField(max_length=63)
+    name = str(models.CharField(max_length=63))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 class Platform(models.Model):
-    name = models.CharField(max_length=63)
+    name = str(models.CharField(max_length=63))
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
+    name = str(models.CharField(max_length=63))
+    version = str(models.CharField(max_length=127, blank=True, null=True))
 
 
 class OS(models.Model):
-    name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
+    name = str(models.CharField(max_length=63))
+    version = str(models.CharField(max_length=127, blank=True, null=True))
 
 
 class TestCase(models.Model):
     test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)),
                             upload_to="tests")
-    size = models.IntegerField(default=0)
-    quality = models.IntegerField(default=0)
-    isBinary = models.BooleanField(default=False)
+    size = int(str(models.IntegerField(default=0)))
+    quality = int(str(models.IntegerField(default=0)))
+    isBinary = bool(models.BooleanField(default=False))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # This variable can hold the testcase data temporarily
         self.content = None
 
@@ -76,15 +80,15 @@ class TestCase(models.Model):
 
 
 class Client(models.Model):
-    name = models.CharField(max_length=255)
+    name = str(models.CharField(max_length=255))
 
 
 class BugProvider(models.Model):
-    classname = models.CharField(max_length=255, blank=False)
-    hostname = models.CharField(max_length=255, blank=False)
+    classname = str(models.CharField(max_length=255, blank=False))
+    hostname = str(models.CharField(max_length=255, blank=False))
 
     # This is used to annotate bugs with the URL linking to them
-    urlTemplate = models.CharField(max_length=1023, blank=False)
+    urlTemplate = str(models.CharField(max_length=1023, blank=False))
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
@@ -97,8 +101,8 @@ class BugProvider(models.Model):
 
 
 class Bug(models.Model):
-    externalId = models.CharField(max_length=255, blank=True)
-    externalType = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
+    externalId = str(models.CharField(max_length=255, blank=True))
+    externalType = cast(BugProvider, models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE))
     closed = models.DateTimeField(blank=True, null=True)
 
     @property
@@ -111,12 +115,12 @@ class Bug(models.Model):
 
 
 class Bucket(models.Model):
-    bug = models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE)
-    signature = models.TextField()
-    optimizedSignature = models.TextField(blank=True, null=True)
-    shortDescription = models.CharField(max_length=1023, blank=True)
-    frequent = models.BooleanField(blank=False, default=False)
-    permanent = models.BooleanField(blank=False, default=False)
+    bug = cast(Bug, models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    signature = str(models.TextField())
+    optimizedSignature = str(models.TextField(blank=True, null=True))
+    shortDescription = str(models.CharField(max_length=1023, blank=True))
+    frequent = bool(models.BooleanField(blank=False, default=False))
+    permanent = bool(models.BooleanField(blank=False, default=False))
 
     @property
     def watchers(self):
@@ -126,13 +130,13 @@ class Bucket(models.Model):
         ).values_list('user_id', flat=True)
         return DjangoUser.objects.filter(id__in=ids).distinct()
 
-    def getSignature(self):
+    def getSignature(self) -> CrashSignature:
         return CrashSignature(self.signature)
 
-    def getOptimizedSignature(self):
+    def getOptimizedSignature(self) -> CrashSignature:
         return CrashSignature(self.optimizedSignature)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # Sanitize signature line endings so we end up with the same hash
         # TODO: We might want to just parse the JSON here, and re-serialize
         # it to a canonical string representation.
@@ -300,10 +304,10 @@ def buckethit_default_range_begin():
 
 
 class BucketHit(models.Model):
-    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
-    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
+    bucket = cast(Bucket, models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE))
+    tool = cast(Tool, models.ForeignKey(Tool, on_delete=models.deletion.CASCADE))
     begin = models.DateTimeField(default=buckethit_default_range_begin)
-    count = models.IntegerField(default=0)
+    count = int(str(models.IntegerField(default=0)))
 
     @classmethod
     def decrement_count(cls, bucket_id, tool_id, begin):
@@ -329,24 +333,24 @@ class BucketHit(models.Model):
 
 class CrashEntry(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
-    platform = models.ForeignKey(Platform, on_delete=models.deletion.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.deletion.CASCADE)
-    os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
-    testcase = models.ForeignKey(TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE)
-    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    bucket = models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE)
-    rawStdout = models.TextField(blank=True)
-    rawStderr = models.TextField(blank=True)
-    rawCrashData = models.TextField(blank=True)
-    metadata = models.TextField(blank=True)
-    env = models.TextField(blank=True)
-    args = models.TextField(blank=True)
-    crashAddress = models.CharField(max_length=255, blank=True)
+    tool = cast(Tool, models.ForeignKey(Tool, on_delete=models.deletion.CASCADE))
+    platform = cast(Platform, models.ForeignKey(Platform, on_delete=models.deletion.CASCADE))
+    product = cast(Product, models.ForeignKey(Product, on_delete=models.deletion.CASCADE))
+    os = cast(OS, models.ForeignKey(OS, on_delete=models.deletion.CASCADE))
+    testcase = cast(TestCase, models.ForeignKey(TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
+    bucket = cast(Bucket, models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    rawStdout = str(models.TextField(blank=True))
+    rawStderr = str(models.TextField(blank=True))
+    rawCrashData = str(models.TextField(blank=True))
+    metadata = str(models.TextField(blank=True))
+    env = str(models.TextField(blank=True))
+    args = str(models.TextField(blank=True))
+    crashAddress = str(models.CharField(max_length=255, blank=True))
     crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
-    shortSignature = models.CharField(max_length=255, blank=True)
-    cachedCrashInfo = models.TextField(blank=True, null=True)
-    triagedOnce = models.BooleanField(blank=False, default=False)
+    shortSignature = str(models.CharField(max_length=255, blank=True))
+    cachedCrashInfo = str(models.TextField(blank=True, null=True))
+    triagedOnce = bool(models.BooleanField(blank=False, default=False))
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
@@ -427,7 +431,7 @@ class CrashEntry(models.Model):
             metadataDict = json.loads(self.metadata)
             self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
 
-    def getCrashInfo(self, attachTestcase=False, requiredOutputSources=("stdout", "stderr", "crashdata")):
+    def getCrashInfo(self, attachTestcase: bool = False, requiredOutputSources: tuple[str, str, str] = ("stdout", "stderr", "crashdata")) -> CrashInfo:
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
@@ -548,30 +552,30 @@ class BugzillaTemplateMode(Enum):
 
 class BugzillaTemplate(models.Model):
     mode = EnumField(BugzillaTemplateMode, max_length=30)
-    name = models.TextField()
-    product = models.TextField()
-    component = models.TextField()
-    summary = models.TextField(blank=True)
-    version = models.TextField()
-    description = models.TextField(blank=True)
-    whiteboard = models.TextField(blank=True)
-    keywords = models.TextField(blank=True)
-    op_sys = models.TextField(blank=True)
-    platform = models.TextField(blank=True)
-    priority = models.TextField(blank=True)
-    severity = models.TextField(blank=True)
-    alias = models.TextField(blank=True)
-    cc = models.TextField(blank=True)
-    assigned_to = models.TextField(blank=True)
-    qa_contact = models.TextField(blank=True)
-    target_milestone = models.TextField(blank=True)
-    attrs = models.TextField(blank=True)
-    security = models.BooleanField(blank=False, default=False)
-    security_group = models.TextField(blank=True)
-    comment = models.TextField(blank=True)
-    testcase_filename = models.TextField(blank=True)
-    blocks = models.TextField(blank=True)
-    dependson = models.TextField(blank=True)
+    name = str(models.TextField())
+    product = str(models.TextField())
+    component = str(models.TextField())
+    summary = str(models.TextField(blank=True))
+    version = str(models.TextField())
+    description = str(models.TextField(blank=True))
+    whiteboard = str(models.TextField(blank=True))
+    keywords = str(models.TextField(blank=True))
+    op_sys = str(models.TextField(blank=True))
+    platform = str(models.TextField(blank=True))
+    priority = str(models.TextField(blank=True))
+    severity = str(models.TextField(blank=True))
+    alias = str(models.TextField(blank=True))
+    cc = str(models.TextField(blank=True))
+    assigned_to = str(models.TextField(blank=True))
+    qa_contact = str(models.TextField(blank=True))
+    target_milestone = str(models.TextField(blank=True))
+    attrs = str(models.TextField(blank=True))
+    security = bool(models.BooleanField(blank=False, default=False))
+    security_group = str(models.TextField(blank=True))
+    comment = str(models.TextField(blank=True))
+    testcase_filename = str(models.TextField(blank=True))
+    blocks = str(models.TextField(blank=True))
+    dependson = str(models.TextField(blank=True))
 
     def __str__(self):
         return self.name
@@ -589,18 +593,18 @@ class User(models.Model):
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
-    defaultTemplateId = models.IntegerField(default=0)
-    defaultProviderId = models.IntegerField(default=1)
+    defaultTemplateId = int(str(models.IntegerField(default=0)))
+    defaultProviderId = int(str(models.IntegerField(default=1)))
     defaultToolsFilter = models.ManyToManyField(Tool)
-    restricted = models.BooleanField(blank=False, default=False)
+    restricted = bool(models.BooleanField(blank=False, default=False))
     bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
 
     # Notifications
-    inaccessible_bug = models.BooleanField(blank=False, default=False)
-    bucket_hit = models.BooleanField(blank=False, default=False)
+    inaccessible_bug = bool(models.BooleanField(blank=False, default=False))
+    bucket_hit = bool(models.BooleanField(blank=False, default=False))
 
     @staticmethod
-    def get_or_create_restricted(request_user):
+    def get_or_create_restricted(request_user: AbstractBaseUser | AnonymousUser) -> tuple[DjangoUser, bool]:
         (user, created) = User.objects.get_or_create(user=request_user)
         if created and getattr(settings, 'USERS_RESTRICTED_BY_DEFAULT', False):
             user.restricted = True
@@ -623,9 +627,9 @@ def add_default_perms(sender, instance, created, **kwargs):
 
 
 class BucketWatch(models.Model):
-    user = models.ForeignKey(User, on_delete=models.deletion.CASCADE)
-    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
+    user = cast(User, models.ForeignKey(User, on_delete=models.deletion.CASCADE))
+    bucket = cast(Bucket, models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE))
     # This is the primary key of last crash marked viewed by the user
     # Store as an integer to prevent problems if the particular crash
     # is deleted later. We only care about its place in the ordering.
-    lastCrash = models.IntegerField(default=0)
+    lastCrash = int(str(models.IntegerField(default=0)))

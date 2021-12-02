@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+from typing import cast
+
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
@@ -33,33 +35,33 @@ class OverwritingStorage(FileSystemStorage):
 
 class PoolConfiguration(models.Model):
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.deletion.CASCADE)
-    name = models.CharField(max_length=255, blank=False)
-    size = models.IntegerField(default=1, blank=True, null=True)
-    cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
+    name = str(models.CharField(max_length=255, blank=False))
+    size = int(str(models.IntegerField(default=1, blank=True, null=True)))
+    cycle_interval = int(str(models.IntegerField(default=86400, blank=True, null=True)))
     max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
-    instance_tags = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
-    ec2_instance_types = models.TextField(blank=True, null=True)
-    ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
+    instance_tags = str(models.CharField(max_length=1023, blank=True, null=True))
+    ec2_key_name = str(models.CharField(max_length=255, blank=True, null=True))
+    ec2_security_groups = str(models.CharField(max_length=255, blank=True, null=True))
+    ec2_instance_types = str(models.TextField(blank=True, null=True))
+    ec2_image_name = str(models.CharField(max_length=255, blank=True, null=True))
     ec2_userdata_file = \
         models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
                          upload_to=get_storage_path, blank=True, null=True)
-    ec2_userdata_macros = models.TextField(blank=True, null=True)
-    ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_raw_config = models.TextField(blank=True, null=True)
-    gce_machine_types = models.TextField(blank=True, null=True)
-    gce_image_name = models.CharField(max_length=255, blank=True, null=True)
-    gce_container_name = models.CharField(max_length=512, blank=True, null=True)
-    gce_docker_privileged = models.BooleanField(default=False)
-    gce_disk_size = models.IntegerField(blank=True, null=True)
-    gce_cmd = models.TextField(blank=True, null=True)
-    gce_args = models.TextField(blank=True, null=True)
-    gce_env = models.TextField(blank=True, null=True)
+    ec2_userdata_macros = str(models.TextField(blank=True, null=True))
+    ec2_allowed_regions = str(models.CharField(max_length=1023, blank=True, null=True))
+    ec2_raw_config = str(models.TextField(blank=True, null=True))
+    gce_machine_types = str(models.TextField(blank=True, null=True))
+    gce_image_name = str(models.CharField(max_length=255, blank=True, null=True))
+    gce_container_name = str(models.CharField(max_length=512, blank=True, null=True))
+    gce_docker_privileged = bool(models.BooleanField(default=False))
+    gce_disk_size = int(str(models.IntegerField(blank=True, null=True)))
+    gce_cmd = str(models.TextField(blank=True, null=True))
+    gce_args = str(models.TextField(blank=True, null=True))
+    gce_env = str(models.TextField(blank=True, null=True))
     # this is a special case that allows copying ec2_userdata_macros into gce_env during flatten()
     # we typically use userdata_macros to be the env vars provided to the userdata script
-    gce_env_include_macros = models.BooleanField(default=False)
-    gce_raw_config = models.TextField(blank=True, null=True)
+    gce_env_include_macros = bool(models.BooleanField(default=False))
+    gce_raw_config = str(models.TextField(blank=True, null=True))
 
     def __init__(self, *args, **kwargs):
         # These variables can hold temporarily deserialized data
@@ -337,56 +339,56 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
 
 
 class InstancePool(models.Model):
-    config = models.ForeignKey(PoolConfiguration, on_delete=models.deletion.CASCADE)
-    isEnabled = models.BooleanField(default=False)
+    config = cast(PoolConfiguration, models.ForeignKey(PoolConfiguration, on_delete=models.deletion.CASCADE))
+    isEnabled = bool(models.BooleanField(default=False))
     last_cycled = models.DateTimeField(blank=True, null=True)
 
 
 class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    pool = models.ForeignKey(InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE)
-    hostname = models.CharField(max_length=255, blank=True, null=True)
-    status_code = models.IntegerField()
-    status_data = models.TextField(blank=True, null=True)
-    instance_id = models.CharField(max_length=255, blank=True, null=True)
-    region = models.CharField(max_length=255)
-    zone = models.CharField(max_length=255)
-    size = models.IntegerField(default=1)
-    provider = models.CharField(max_length=255)
+    pool = cast(InstancePool, models.ForeignKey(InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    hostname = str(models.CharField(max_length=255, blank=True, null=True))
+    status_code = int(str(models.IntegerField()))
+    status_data = str(models.TextField(blank=True, null=True))
+    instance_id = str(models.CharField(max_length=255, blank=True, null=True))
+    region = str(models.CharField(max_length=255))
+    zone = str(models.CharField(max_length=255))
+    size = int(str(models.IntegerField(default=1)))
+    provider = str(models.CharField(max_length=255))
 
 
 class InstanceStatusEntry(models.Model):
-    instance = models.ForeignKey(Instance, on_delete=models.deletion.CASCADE)
+    instance = cast(Instance, models.ForeignKey(Instance, on_delete=models.deletion.CASCADE))
     created = models.DateTimeField(default=timezone.now)
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class PoolStatusEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    pool = cast(InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE))
     created = models.DateTimeField(default=timezone.now)
-    type = models.IntegerField()
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    type = int(str(models.IntegerField()))
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class ProviderStatusEntry(models.Model):
-    provider = models.CharField(max_length=255)
+    provider = str(models.CharField(max_length=255))
     created = models.DateTimeField(default=timezone.now)
-    type = models.IntegerField()
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    type = int(str(models.IntegerField()))
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class PoolUptimeDetailedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    pool = cast(InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE))
     created = models.DateTimeField(default=timezone.now)
-    target = models.IntegerField()
-    actual = models.IntegerField()
+    target = int(str(models.IntegerField()))
+    actual = int(str(models.IntegerField()))
 
 
 class PoolUptimeAccumulatedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    pool = cast(InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE))
     created = models.DateTimeField(default=timezone.now)
-    accumulated_count = models.IntegerField(default=0)
+    accumulated_count = int(str(models.IntegerField(default=0)))
     uptime_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)

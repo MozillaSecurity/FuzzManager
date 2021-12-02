@@ -468,6 +468,9 @@ def test_SignatureCreateTest() -> None:
     crashSig1 = crashInfo.createCrashSignature(forceCrashAddress=True, maxFrames=4, minimumSupportedVersion=10)
     crashSig2 = crashInfo.createCrashSignature(forceCrashAddress=False, maxFrames=3, minimumSupportedVersion=10)
     crashSig3 = crashInfo.createCrashSignature(forceCrashInstruction=True, maxFrames=2, minimumSupportedVersion=10)
+    assert isinstance(crashSig1, CrashSignature)
+    assert isinstance(crashSig2, CrashSignature)
+    assert isinstance(crashSig3, CrashSignature)
 
     # Check that all generated signatures match their originating crashInfo
     assert crashSig1.matches(crashInfo)
@@ -573,6 +576,7 @@ def test_SignatureStackFramesWildcardTailTest() -> None:
     crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTrace2.splitlines())
 
     testSig = crashInfo.createCrashSignature()
+    assert isinstance(testSig, CrashSignature)
 
     # Ensure that the last frame with a symbol is at the right place and there is nothing else,
     # espcially no wildcard, following afterwards.
@@ -602,6 +606,8 @@ def test_SignatureStackFramesAuxMessagesTest() -> None:
 
     crashSignaturePos = crashInfoPos.createCrashSignature()
     crashSignatureNeg = crashInfoNeg.createCrashSignature()
+    assert isinstance(crashSignaturePos, CrashSignature)
+    assert isinstance(crashSignatureNeg, CrashSignature)
 
     # Check that the first crash signature has ASan symptoms but
     # the second does not because it has a program abort message
@@ -622,6 +628,7 @@ def test_SignatureStackFramesNegativeSizeParamTest() -> None:
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testTraceNegativeSizeParam.splitlines())
 
     testSig = crashInfoPos.createCrashSignature()
+    assert isinstance(testSig, CrashSignature)
 
     assert "/ERROR: AddressSanitizer" in str(testSig)
     assert "negative-size-param" in str(testSig)
@@ -633,6 +640,7 @@ def test_SignatureAsanStackOverflowTest() -> None:
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanStackOverflow.splitlines())
 
     testSig = crashInfoPos.createCrashSignature()
+    assert isinstance(testSig, CrashSignature)
 
     # Check matches appropriately
     assert testSig.matches(crashInfoPos)
@@ -643,6 +651,7 @@ def test_SignatureAsanAccessViolationTest() -> None:
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanAccessViolation.splitlines())
 
     testSig = crashInfoPos.createCrashSignature()
+    assert isinstance(testSig, CrashSignature)
 
     assert "/ERROR: AddressSanitizer" not in str(testSig)
     assert "access-violation" not in str(testSig)
@@ -664,6 +673,7 @@ def test_SignatureAsanFailedAllocTest() -> None:
     crashInfoPos = CrashInfo.fromRawCrashData([], [], config, auxCrashData=testAsanFailedAlloc.splitlines())
 
     testSig = crashInfoPos.createCrashSignature()
+    assert isinstance(testSig, CrashSignature)
     assert "/AddressSanitizer failed to allocate" in str(testSig)
     assert testSig.matches(crashInfoPos)
     assert isinstance(testSig.symptoms[1], StackFramesSymptom)
@@ -674,6 +684,7 @@ def test_SignatureGenerationTSanLeakTest() -> None:
     with open(os.path.join(CWD, 'resources', 'tsan-simple-leak-report.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
     testSignature = crashInfo.createCrashSignature()
+    assert isinstance(testSignature, CrashSignature)
 
     assert testSignature.matches(crashInfo)
 
@@ -691,6 +702,7 @@ def test_SignatureGenerationTSanRaceTest() -> None:
     with open(os.path.join(CWD, 'resources', 'tsan-simple-race-report.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
     testSignature = crashInfo.createCrashSignature()
+    assert isinstance(testSignature, CrashSignature)
 
     print(testSignature)
 
@@ -722,6 +734,7 @@ def test_SignatureGenerationTSanRaceTestComplex1() -> None:
     with open(os.path.join(CWD, 'resources', 'tsan-report2.txt'), 'r') as f:
         crashInfo = CrashInfo.fromRawCrashData([], [], config, auxCrashData=f.read().splitlines())
     testSignature = crashInfo.createCrashSignature()
+    assert isinstance(testSignature, CrashSignature)
 
     print(testSignature)
 
@@ -759,6 +772,7 @@ def test_SignatureGenerationTSanRaceTestAtomic() -> None:
                "ThreadSanitizer: data race [@ pthread_mutex_destroy] vs. [@ pthread_mutex_unlock]")
 
         testSignature = crashInfo.createCrashSignature()
+        assert isinstance(testSignature, CrashSignature)
 
         assert testSignature.matches(crashInfo)
 
@@ -809,6 +823,7 @@ def test_SignatureMatchAssertionSlashes() -> None:
 
     # test that signature generated from linux assertion matches both
     linux_sig = fs_linux.createCrashSignature()
+    assert isinstance(linux_sig, CrashSignature)
     assert linux_sig.matches(fs_linux)
     assert not linux_sig.matches(bs_linux)  # this is invalid and should not match
     assert linux_sig.matches(fs_windows)
@@ -816,6 +831,7 @@ def test_SignatureMatchAssertionSlashes() -> None:
 
     # test that signature generated from windows assertion matches both
     windows_sig = bs_windows.createCrashSignature()
+    assert isinstance(windows_sig, CrashSignature)
     assert windows_sig.matches(fs_linux)
     assert not windows_sig.matches(bs_linux)  # this is invalid and should not match
     assert windows_sig.matches(fs_windows)

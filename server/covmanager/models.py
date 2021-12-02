@@ -9,6 +9,7 @@ from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import codecs
 import json
+from typing import cast
 
 from crashmanager.models import Client, Tool
 from FTB import CoverageHelper
@@ -18,9 +19,9 @@ if getattr(settings, 'USE_CELERY', None):
 
 
 class Repository(models.Model):
-    classname = models.CharField(max_length=255, blank=False)
-    name = models.CharField(max_length=255, blank=False)
-    location = models.CharField(max_length=1023, blank=False)
+    classname = str(models.CharField(max_length=255, blank=False))
+    name = str(models.CharField(max_length=255, blank=False))
+    location = str(models.CharField(max_length=1023, blank=False))
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
@@ -33,18 +34,18 @@ class CollectionFile(models.Model):
     file = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'COV_STORAGE', None)),
                             max_length=255,
                             upload_to="coverage")
-    format = models.IntegerField(default=0)
+    format = int(str(models.IntegerField(default=0)))
 
 
 class Collection(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    description = models.CharField(max_length=1023, blank=True)
-    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
-    revision = models.CharField(max_length=255, blank=False)
-    branch = models.CharField(max_length=255, blank=True)
+    description = str(models.CharField(max_length=1023, blank=True))
+    repository = cast(Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE))
+    revision = str(models.CharField(max_length=255, blank=False))
+    branch = str(models.CharField(max_length=255, blank=True))
     tools = models.ManyToManyField(Tool)
-    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    coverage = models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
+    coverage = cast(CollectionFile, models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE))
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
@@ -191,10 +192,10 @@ if getattr(settings, 'USE_CELERY', None):
 
 
 class ReportConfiguration(models.Model):
-    description = models.CharField(max_length=1023, blank=True)
-    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
-    directives = models.TextField()
-    public = models.BooleanField(blank=False, default=False)
+    description = str(models.CharField(max_length=1023, blank=True))
+    repository = cast(Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE))
+    directives = str(models.TextField())
+    public = bool(models.BooleanField(blank=False, default=False))
     logical_parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.deletion.CASCADE)
 
     def apply(self, collection):
@@ -204,7 +205,7 @@ class ReportConfiguration(models.Model):
 
 class ReportSummary(models.Model):
     collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
-    cached_result = models.TextField(null=True, blank=True)
+    cached_result = str(models.TextField(null=True, blank=True))
 
 
 class Report(models.Model):
@@ -214,8 +215,8 @@ class Report(models.Model):
     # creation dates. This date will be used as a reference time frame to
     # determine week, month, quarter, etc. for displaying purposes.
     data_created = models.DateTimeField(default=timezone.now)
-    public = models.BooleanField(blank=False, default=False)
+    public = bool(models.BooleanField(blank=False, default=False))
     coverage = models.ForeignKey(Collection, blank=False, null=False, on_delete=models.deletion.CASCADE)
 
-    is_monthly = models.BooleanField(blank=False, default=False)
-    is_quarterly = models.BooleanField(blank=False, default=False)
+    is_monthly = bool(models.BooleanField(blank=False, default=False))
+    is_quarterly = bool(models.BooleanField(blank=False, default=False))
