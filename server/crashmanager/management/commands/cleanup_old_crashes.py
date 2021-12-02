@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
@@ -15,7 +16,7 @@ class Command(BaseCommand):
     help = "Cleanup old crash entries."
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
 
         cleanup_crashes_after_days = getattr(settings, 'CLEANUP_CRASHES_AFTER_DAYS', 14)
         cleanup_fixed_buckets_after_days = getattr(settings, 'CLEANUP_FIXED_BUCKETS_AFTER_DAYS', 3)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django.core.management import BaseCommand, call_command
 
 from crashmanager.management.common import mgmt_lock_required
@@ -11,7 +13,7 @@ class Command(BaseCommand):
             "into the existing buckets.")
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         entries = CrashEntry.objects.filter(triagedOnce=False, bucket=None)
 
         for entry in entries:

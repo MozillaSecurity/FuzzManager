@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from argparse import ArgumentParser
 from collections import OrderedDict
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand
@@ -21,7 +23,7 @@ TRIAGE_CACHE = OrderedDict()
 class Command(BaseCommand):
     help = ("Triage a crash entry into an existing bucket.")
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "id",
             type=int,
@@ -29,7 +31,7 @@ class Command(BaseCommand):
         )
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         entry = CrashEntry.objects.get(pk=options["id"])
         crashInfo = entry.getCrashInfo(attachTestcase=True)
 

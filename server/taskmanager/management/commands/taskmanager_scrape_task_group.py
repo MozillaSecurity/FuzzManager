@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from argparse import ArgumentParser
 import functools
 from logging import getLogger
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand  # noqa
@@ -43,7 +45,7 @@ def paginated(func, result_key):
 class Command(BaseCommand):
     help = "Scrape a task group and add created tasks to taskmanager"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "task_group",
             help="Taskcluster task group to add tasks for",
@@ -55,7 +57,7 @@ class Command(BaseCommand):
             "(ie. include task with taskId == taskGroupId)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         queue_svc = taskcluster.Queue({"rootUrl": settings.TC_ROOT_URL})
         task_group_id = options["task_group"]
 
@@ -72,7 +74,7 @@ class Command(BaseCommand):
                     task["status"]["taskId"],
                     task["status"]["workerType"],
                 )
-                return
+                return None
 
             for run in task["status"]["runs"]:
                 _, created = Task.objects.update_or_create(

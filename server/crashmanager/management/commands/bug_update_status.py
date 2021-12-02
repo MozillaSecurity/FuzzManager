@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand, CommandError
@@ -14,7 +16,7 @@ class Command(BaseCommand):
     help = "Check the status of all bugs we have"
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         if args:
             raise CommandError("Command doesn't accept any arguments")
 

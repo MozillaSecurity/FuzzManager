@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from argparse import ArgumentParser
+from typing import Any
+
 from django.core.management import BaseCommand
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
@@ -11,7 +14,7 @@ class Command(BaseCommand):
     help = "Adds permissions to the specified user."
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         user = User.objects.get(username=options['user'])
 
         for perm in options['permission']:
@@ -25,7 +28,7 @@ class Command(BaseCommand):
 
         print('done')
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument('user')
         parser.add_argument('permission', nargs='+', choices=[
             'crashmanager.models.User:view_covmanager',

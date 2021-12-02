@@ -5,14 +5,20 @@ from django.conf import settings
 from fasteners import InterProcessLock
 import os
 import sys
+from types import TracebackType
+from typing import Any
+from typing import Callable
+from typing import Literal
+from typing import Type
+from typing import TypeVar
 
 LOCK_PATH = os.path.realpath(os.path.join(settings.BASE_DIR, 'mgmt'))
-
+RetType = TypeVar("RetType")
 
 class ManagementLock(object):
 
     def __init__(self) -> None:
-        self.lock = None
+        self.lock: InterProcessLock = None
 
     def acquire(self) -> None:
         self.lock = InterProcessLock(LOCK_PATH)
@@ -34,21 +40,26 @@ class ManagementLock(object):
         if self.lock is not None:
             self.lock.release()
 
-    def __enter__(self):
+    def __enter__(self) -> ManagementLock:
         self.acquire()
         return self
 
-    def __exit__(self, _exc_type, _exc_val, _exc_tb):
+    def __exit__(
+            self,
+            _exc_type: Type[BaseException] | None,
+            _exc_val: BaseException | None,
+            _exc_tb: TracebackType | None,
+        ) -> Literal[False]:
         self.release()
         return False
 
 
-def mgmt_lock_required(method):
+def mgmt_lock_required(method: Callable[..., RetType]) -> Callable[..., RetType]:
     """
     Decorator to use on management methods that shouldn't run in parallel
     """
     @functools.wraps(method)
-    def decorator(*args, **options):
+    def decorator(*args: Any, **options: Any) -> RetType:
         with ManagementLock():
             return method(*args, **options)
     return decorator

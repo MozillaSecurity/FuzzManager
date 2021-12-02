@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand
@@ -17,7 +18,7 @@ class Command(BaseCommand):
         parser.add_argument("filename", help="output filename to write signatures zip to")
 
     @mgmt_lock_required
-    def handle(self, filename, **options):
+    def handle(self, filename: str, **options: Any) -> None:
 
         with ZipFile(filename, 'w') as zipFile:
             for bucket in Bucket.objects.annotate(size=Count('crashentry'),

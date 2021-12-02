@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django.core.mail import send_mail
 from django.core.management import BaseCommand
 from django.template.loader import render_to_string
@@ -13,7 +15,7 @@ class Command(BaseCommand):
     help = "Send notifications by email."
 
     @mgmt_lock_required
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         # Select all notifications that haven't been sent by email for now
         notifications = Notification.objects.filter(emailed=False)
         for notification in notifications:

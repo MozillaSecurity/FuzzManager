@@ -31,7 +31,7 @@ LOG = logging.getLogger('fm.ec2spotmanager.tests.tasks')
 pytestmark = pytest.mark.usefixtures('ec2spotmanager_test', 'raise_on_status')  # pylint: disable=invalid-name
 
 
-@pytest.mark.usefixtures('mock_provider')
+@pytest.mark.usefixtures('mock_provider')  # type: ignore[misc]
 def test_nothing_to_do() -> None:
     """nothing is done if no pools are enabled"""
 

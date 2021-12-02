@@ -20,6 +20,8 @@ import socket
 import ssl
 import traceback
 from abc import ABCMeta, abstractmethod
+from typing import Any
+# from typing import TypeVar
 
 import six
 
@@ -29,6 +31,7 @@ INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.items())
 
 # List of currently supported providers. This and what is returned by get_name() must match
 PROVIDERS = ['EC2Spot', 'GCE']
+RetType = TypeVar("RetType")
 
 
 class CloudProviderError(Exception):
@@ -49,9 +52,9 @@ class CloudProviderInstanceCountError(CloudProviderError):
     TYPE = 'max-spot-instance-count-exceeded'
 
 
-def wrap_provider_errors(wrapped):
+def wrap_provider_errors(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
     @functools.wraps(wrapped)
-    def wrapper(*args, **kwds):
+    def wrapper(*args: Any, **kwds: Any) -> RetType:
         try:
             return wrapped(*args, **kwds)
         except (ssl.SSLError, socket.error) as exc:

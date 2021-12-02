@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from argparse import ArgumentParser
 from logging import getLogger
+from typing import Any
 
 from django.core.management import BaseCommand  # noqa
 
@@ -15,7 +17,7 @@ LOG = getLogger("taskmanager.management.commands.change_poolid")
 class Command(BaseCommand):
     help = "Change a Taskmanager pool ID"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "old",
             type=int,
@@ -27,7 +29,7 @@ class Command(BaseCommand):
             help="Original pool ID",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         old = options["old"]
         new = options["new"]
 
