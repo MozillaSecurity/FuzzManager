@@ -13,6 +13,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Any
+from typing import cast
+
 import pytest
 from django.core.management import call_command, CommandError
 from django.utils import timezone
@@ -22,14 +25,14 @@ from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
-def _crashentry_create(**kwds):
+def _crashentry_create(**kwds: Any) -> CrashEntry:
     defaults = {"client": Client.objects.create(),
                 "os": OS.objects.create(),
                 "platform": Platform.objects.create(),
                 "product": Product.objects.create(),
                 "tool": Tool.objects.create()}
     defaults.update(kwds)
-    return CrashEntry.objects.create(**defaults)
+    return cast(CrashEntry, CrashEntry.objects.create(**defaults))
 
 
 def test_args() -> None:
@@ -44,7 +47,7 @@ def test_bug_cleanup() -> None:
     assert Bug.objects.count() == 0
 
 
-def test_closed_bugs(settings):
+def test_closed_bugs(settings) -> None:
     """all buckets that have been closed for x days"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 4
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 2
@@ -62,7 +65,7 @@ def test_closed_bugs(settings):
     assert set(CrashEntry.objects.values_list('pk', flat=True)) == {o.pk for o in crashes[:-1]}
 
 
-def test_empty_bucket(settings):
+def test_empty_bucket(settings) -> None:
     """all buckets that are empty"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 4
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 2
@@ -77,7 +80,7 @@ def test_empty_bucket(settings):
     assert Bug.objects.count() == 1
 
 
-def test_old_crashes(settings):
+def test_old_crashes(settings) -> None:
     """all entries that are older than x days and not in any bucket or bucket has no bug associated with it"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 3
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 1

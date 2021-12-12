@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import functools
 import sys
+from typing import cast
+
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
 import pytest
@@ -28,8 +30,8 @@ except ImportError:
     from mock import Mock
 
 
-def _create_user(username, email="test@mozilla.com", password="test", has_permission=True):
-    user = User.objects.create_user(username, email, password)
+def _create_user(username: str, email: str = "test@mozilla.com", password: str = "test", has_permission: bool = True) -> User:
+    user = cast(User, User.objects.create_user(username, email, password))
     user.user_permissions.clear()
     if has_permission:
         content_type = ContentType.objects.get_for_model(cmUser)
@@ -41,7 +43,7 @@ def _create_user(username, email="test@mozilla.com", password="test", has_permis
 
 
 @pytest.fixture
-def ec2spotmanager_test(db):  # pylint: disable=invalid-name,unused-argument
+def ec2spotmanager_test(db) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all ec2spotmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")
@@ -77,9 +79,9 @@ def mock_provider(mocker):
 
 
 @pytest.fixture
-def raise_on_status(mocker):
+def raise_on_status(mocker) -> None:
 
-    def _mock_pool_status(_pool, type_, message):
+    def _mock_pool_status(_pool, type_: str, message: str) -> None:
         if sys.exc_info() != (None, None, None):
             raise  # pylint: disable=misplaced-bare-raise
         raise UncatchableException("%s: %s" % (type_, message))
