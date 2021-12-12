@@ -45,11 +45,10 @@ class EC2Reporter(Reporter):
         super(EC2Reporter, self).__init__(*args, **kwargs)
 
     @remote_checks
-    def report(self, text):
+    def report(self, text: str) -> None:
         '''
         Send textual report to server, overwriting any existing reports.
 
-        @type text: string
         @param text: Report text to send
         '''
         url = "%s://%s:%s/ec2spotmanager/rest/report/" % (self.serverProtocol, self.serverHost, self.serverPort)
@@ -63,11 +62,10 @@ class EC2Reporter(Reporter):
         self.post(url, data)
 
     @remote_checks
-    def cycle(self, poolid):
+    def cycle(self, poolid: int) -> None:
         '''
         Cycle the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to cycle
         '''
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (self.serverProtocol, self.serverHost, self.serverPort,
@@ -76,11 +74,10 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
-    def disable(self, poolid):
+    def disable(self, poolid: int) -> None:
         '''
         Disable the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to disable
         '''
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (self.serverProtocol, self.serverHost,
@@ -89,11 +86,10 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
-    def enable(self, poolid):
+    def enable(self, poolid: int) -> None:
         '''
         Enable the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to enable
         '''
         url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (self.serverProtocol, self.serverHost,
@@ -102,7 +98,7 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
 
-def main(argv: list[str] | None = None)-> int:
+def main(argv: list[str] | None = None) -> int:
     '''Command line options.'''
 
     # setup argparser

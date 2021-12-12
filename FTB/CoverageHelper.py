@@ -303,7 +303,7 @@ def apply_include_exclude_directives(node, directives):
     __apply_include_exclude_directives(node, directives_new)
 
 
-def get_flattened_names(node, prefix=""):
+def get_flattened_names(node, prefix: str = ""):
     """
     Returns a list of flattened paths (files and directories) of the given node.
 
@@ -314,7 +314,6 @@ def get_flattened_names(node, prefix=""):
     @type node: dict
 
     @param prefix: An optional prefix to prepend to each name
-    @type prefix: str
 
     @return The list of all paths occurring in the given node.
     @rtype: list(str)

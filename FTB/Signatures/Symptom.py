@@ -41,14 +41,13 @@ class Symptom(object):
         return self.jsonsrc
 
     @staticmethod
-    def fromJSONObject(obj):
+    def fromJSONObject(obj) -> Symptom:
         '''
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
         @type obj: map
         @param obj: Object as decoded from JSON
 
-        @rtype: Symptom
         @return: Symptom subclass instance matching the given object
         '''
         if "type" not in obj:

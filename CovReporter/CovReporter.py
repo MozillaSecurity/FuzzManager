@@ -256,7 +256,7 @@ class CovReporter(Reporter):
         return (ret, version, stats)
 
 
-def main(argv: list[str] | None = None)-> int:
+def main(argv: list[str] | None = None) -> int:
     '''Command line options.'''
 
     # setup argparser

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import TypedDict
+from typing import cast
+
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.db.models import Q
@@ -61,7 +65,7 @@ def collections_reportsummary(request: HttpRequest, collectionid: str) -> HttpRe
 
 
 def collections_reportsummary_html_list(request: HttpRequest, collectionid: str) -> HttpResponse:
-    collection = get_object_or_404(Collection, pk=collectionid)
+    collection: Collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
@@ -113,7 +117,7 @@ def collections_reportsummary_html_list(request: HttpRequest, collectionid: str)
 
         root["diffid"] = diff_collection.pk
 
-        def annotate_delta(a, b):
+        def annotate_delta(a, b) -> None:
             delta = round(a["coveragePercent"] - b["coveragePercent"], 2)
 
             if delta >= 1.0:
@@ -122,7 +126,7 @@ def collections_reportsummary_html_list(request: HttpRequest, collectionid: str)
                 a["coveragePercentDelta"] = "%s %%" % delta
 
             if "children" not in a or "children" not in b:
-                return
+                return None
 
             # Map children to their ids so we can iterate them side-by-side
             a_child_dict = {c["id"]: c for c in a["children"]}
@@ -188,16 +192,23 @@ def collections_browse_api(request: HttpRequest, collectionid: str, path) -> Htt
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-def collections_diff_api(request: HttpRequest, path) -> HttpResponse:
+class CTooltipDataType(TypedDict):
+    """ctooltipdata type specification."""
+    id: int
+    label: str
+    created: datetime
 
-    collections = None
+
+def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
+
+    collections: list[Collection]
     coverages = []
 
     if "ids" in request.GET:
         ids = request.GET["ids"].split(",")
-        collections = Collection.objects.filter(pk__in=ids)
+        collections = cast(list[Collection], Collection.objects.filter(pk__in=ids))
 
-    if len(collections) < 2:
+    if collections and len(collections) < 2:
         raise Http404("Need at least two collections")
 
     report_configuration = None
@@ -213,7 +224,7 @@ def collections_diff_api(request: HttpRequest, path) -> HttpResponse:
     # else:
     #    raise Http404("NYI")
 
-    tooltipdata = []
+    tooltipdata: list[CTooltipDataType] = []
 
     for collection in collections:
         if not collection.coverage:
@@ -242,7 +253,7 @@ def collections_diff_api(request: HttpRequest, path) -> HttpResponse:
 
         coverages.append(coverage)
 
-        ctooltipdata = {}
+        ctooltipdata: CTooltipDataType = {}
         for k in coverage:
             if k != "children":
                 ctooltipdata[k] = coverage[k]

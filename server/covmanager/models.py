@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
 from django.core.files.storage import FileSystemStorage
@@ -38,12 +40,12 @@ class CollectionFile(models.Model):
 
 
 class Collection(models.Model):
-    created = models.DateTimeField(default=timezone.now)
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
     description = str(models.CharField(max_length=1023, blank=True))
     repository = cast(Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE))
     revision = str(models.CharField(max_length=255, blank=False))
     branch = str(models.CharField(max_length=255, blank=True))
-    tools = models.ManyToManyField(Tool)
+    tools = cast(Tool, models.ManyToManyField(Tool))
     client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
     coverage = cast(CollectionFile, models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE))
 
@@ -73,14 +75,13 @@ class Collection(models.Model):
         self.content = json.load(codecs.getreader('utf-8')(self.coverage.file))
         self.coverage.file.close()
 
-    def annotateSource(self, path, coverage):
+    def annotateSource(self, path: str, coverage) -> None:
         """
         Annotate the source code to the given (leaf) coverage object by querying
         the SourceCodeProvider registered for the repository associated with this
         collection. The resulting source code is added to a "source" property in
         the object.
 
-        @type path: string
         @param path: The path to the source code that this coverage belongs to.
 
         @type coverage: dict
@@ -91,12 +92,11 @@ class Collection(models.Model):
         provider = self.repository.getInstance()
         coverage["source"] = provider.getSource(path, self.revision)
 
-    def subset(self, path, report_configuration=None):
+    def subset(self, path: str, report_configuration=None):
         """
         Calculate a subset of the coverage stored in this collection
         based on the given path.
 
-        @type path: string
         @param path: The path to reduce to. It is expected to use forward
                      slashes. The path is interpreted as relative to the root
                      of the collection.
@@ -204,7 +204,7 @@ class ReportConfiguration(models.Model):
 
 
 class ReportSummary(models.Model):
-    collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
+    collection = cast(Collection, models.OneToOneField(Collection, on_delete=models.deletion.CASCADE))
     cached_result = str(models.TextField(null=True, blank=True))
 
 
@@ -214,9 +214,9 @@ class Report(models.Model):
     # because aggregated collections can be created later, losing the original
     # creation dates. This date will be used as a reference time frame to
     # determine week, month, quarter, etc. for displaying purposes.
-    data_created = models.DateTimeField(default=timezone.now)
+    data_created = cast(datetime, models.DateTimeField(default=timezone.now))
     public = bool(models.BooleanField(blank=False, default=False))
-    coverage = models.ForeignKey(Collection, blank=False, null=False, on_delete=models.deletion.CASCADE)
+    coverage = cast(Collection, models.ForeignKey(Collection, blank=False, null=False, on_delete=models.deletion.CASCADE))
 
     is_monthly = bool(models.BooleanField(blank=False, default=False))
     is_quarterly = bool(models.BooleanField(blank=False, default=False))

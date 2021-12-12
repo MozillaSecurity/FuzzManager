@@ -77,7 +77,7 @@ __date__ = '2016-07-28'
 __updated__ = '2016-07-28'
 
 
-def main(argv: list[str] | None = None)-> int:
+def main(argv: list[str] | None = None) -> int:
     '''Command line options.'''
 
     program_name = os.path.basename(sys.argv[0])

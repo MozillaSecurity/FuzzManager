@@ -33,15 +33,10 @@ import time
 
 
 class S3Manager():
-    def __init__(self, bucket_name, project_name, build_project_name=None, zip_name="build.zip"):
+    def __init__(self, bucket_name: str, project_name: str, build_project_name: str | None = None, zip_name: str = "build.zip"):
         '''
-        @type bucket_name: String
         @param bucket_name: Name of the S3 bucket to use
-
-        @type project_name: String
         @param project_name: Name of the project folder inside the S3 bucket
-
-        @type cmdline_file: String
         @param cmdline_file: Path to the cmdline file to upload.
         '''
         self.bucket_name = bucket_name
@@ -67,19 +62,14 @@ class S3Manager():
         self.uploaded_files = set()
         self.downloaded_files = set()
 
-    def upload_libfuzzer_queue_dir(self, base_dir, corpus_dir, original_corpus):
+    def upload_libfuzzer_queue_dir(self, base_dir: str, corpus_dir: str, original_corpus: list[str]) -> None:
         '''
         Synchronize the corpus directory of the specified libFuzzer corpus directory
         to the specified S3 bucket. This method only uploads files that don't
         exist yet on the receiving side and excludes all files in the original corpus.
 
-        @type base_dir: String
         @param base_dir: libFuzzer base directory
-
-        @type corpus_dir: String
         @param corpus_dir: libFuzzer corpus directory
-
-        @type original_corpus: Set
         @param original_corpus: Set of original corpus files to exclude from synchronization
         '''
         upload_files = [x for x in os.listdir(corpus_dir) if x not in original_corpus and x not in self.uploaded_files]
@@ -91,11 +81,10 @@ class S3Manager():
 
         return self.__upload_queue_files(corpus_dir, upload_files, base_dir, cmdline_file)
 
-    def download_libfuzzer_queues(self, corpus_dir):
+    def download_libfuzzer_queues(self, corpus_dir: str) -> None:
         '''
         Synchronize files from open libFuzzer queues directly back into the local corpus directory.
 
-        @type corpus_dir: String
         @param corpus_dir: libFuzzer corpus directory
         '''
         remote_keys = list(self.bucket.list(self.remote_path_queues))
@@ -132,16 +121,13 @@ class S3Manager():
 
             self.downloaded_files.add(basename)
 
-    def upload_afl_queue_dir(self, base_dir, new_cov_only=True):
+    def upload_afl_queue_dir(self, base_dir: str, new_cov_only: bool = True) -> None:
         '''
         Synchronize the queue directory of the specified AFL base directory
         to the specified S3 bucket. This method only uploads files that don't
         exist yet on the receiving side.
 
-        @type base_dir: String
         @param base_dir: AFL base directory
-
-        @type new_cov_only: Boolean
         @param new_cov_only: Only upload files that have new coverage
         '''
         queue_dir = os.path.join(base_dir, "queue")
@@ -167,7 +153,7 @@ class S3Manager():
         cmdline_file = os.path.join(base_dir, "cmdline")
         return self.__upload_queue_files(queue_dir, queue_files, base_dir, cmdline_file)
 
-    def download_queue_dirs(self, work_dir):
+    def download_queue_dirs(self, work_dir: str) -> None:
         '''
         Downloads all queue files into the queues sub directory of the specified
         local work directory. The files are renamed to match their SHA1 hashes
@@ -175,7 +161,6 @@ class S3Manager():
 
         This method marks all remote queues that have been downloaded as closed.
 
-        @type work_dir: String
         @param work_dir: Local work directory
         '''
         download_dir = os.path.join(work_dir, "queues")
@@ -256,17 +241,16 @@ class S3Manager():
 
         self.bucket.delete_keys(remote_keys_for_deletion, quiet=True)
 
-    def get_queue_status(self):
+    def get_queue_status(self) -> dict[str, int]:
         '''
         Return status data for all queues in the specified S3 bucket/project
 
-        @rtype: dict
         @return: Dictionary containing queue size per queue
         '''
         remote_keys = list(self.bucket.list(self.remote_path_queues))
         remote_queues_closed_names = [x.name.rsplit("/", 1)[0] for x in remote_keys if x.name.endswith("/closed")]
 
-        status_data = {}
+        status_data: dict[str, int] = {}
 
         for remote_key in remote_keys:
             # Ignore any folders
@@ -288,22 +272,15 @@ class S3Manager():
 
         return status_data
 
-    def get_corpus_status(self):
+    def get_corpus_status(self) -> dict[str, int]:
         '''
         Return status data for the corpus of the specified S3 bucket/project
 
-        @type bucket_name: String
-        @param bucket_name: Name of the S3 bucket to use
-
-        @type project_name: String
-        @param project_name: Name of the project folder inside the S3 bucket
-
-        @rtype: dict
         @return: Dictionary containing corpus size per date modified
         '''
         remote_keys = list(self.bucket.list(self.remote_path_corpus))
 
-        status_data = {}
+        status_data: dict[str, int] = {}
 
         for remote_key in remote_keys:
             # Ignore any folders
@@ -320,19 +297,12 @@ class S3Manager():
 
         return status_data
 
-    def download_build(self, build_dir):
+    def download_build(self, build_dir: str) -> None:
         '''
         Downloads build.zip from the specified S3 bucket and unpacks it
         into the specified build directory.
 
-        @type base_dir: String
         @param base_dir: Build directory
-
-        @type bucket_name: String
-        @param bucket_name: Name of the S3 bucket to use
-
-        @type project_name: String
-        @param project_name: Name of the project folder inside the S3 bucket
         '''
         # Clear any previous builds
         if os.path.exists(build_dir):
@@ -348,33 +318,29 @@ class S3Manager():
 
         subprocess.check_call(["unzip", zip_dest, "-d", build_dir])
 
-    def upload_build(self, build_file):
+    def upload_build(self, build_file: str) -> None:
         '''
         Upload the given build zip file to the specified S3 bucket/project
         directory.
 
-        @type build_file: String
         @param build_file: (ZIP) file containing the build that should be uploaded
         '''
 
         if not os.path.exists(build_file) or not os.path.isfile(build_file):
             print("Error: Build must be a (zip) file.", file=sys.stderr)
-            return
+            return None
 
         remote_key = Key(self.bucket)
         remote_key.name = self.remote_path_build
         print("Uploading file %s -> %s" % (build_file, remote_key.name))
         remote_key.set_contents_from_filename(build_file)
 
-    def download_corpus(self, corpus_dir, random_subset_size=None):
+    def download_corpus(self, corpus_dir: str, random_subset_size: int | None = None) -> None:
         '''
         Downloads the test corpus from the specified S3 bucket and project
         into the specified directory, without overwriting any files.
 
-        @type corpus_dir: String
         @param corpus_dir: Directory where to store test corpus files
-
-        @type random_subset_size: int
         @param random_subset_size: If specified, only download a random subset of
                                    the corpus, with the specified size.
         '''
@@ -414,15 +380,12 @@ class S3Manager():
             if not os.path.exists(dest_file):
                 remote_key.get_contents_to_filename(dest_file)
 
-    def upload_corpus(self, corpus_dir, corpus_delete=False):
+    def upload_corpus(self, corpus_dir: str, corpus_delete: bool = False) -> None:
         '''
         Synchronize the specified test corpus directory to the specified S3 bucket.
         This method only uploads files that don't exist yet on the receiving side.
 
-        @type corpus_dir: String
         @param corpus_dir: Directory where the test corpus files are stored
-
-        @type corpus_delete: bool
         @param corpus_delete: Delete all remote files that don't exist on our side
         '''
         test_files = [file for file in os.listdir(corpus_dir) if os.path.isfile(os.path.join(corpus_dir, file))]
@@ -467,20 +430,15 @@ class S3Manager():
         if corpus_delete:
             self.bucket.delete_keys(delete_list, quiet=True)
 
-    def __get_machine_id(self, base_dir, refresh=False):
+    def __get_machine_id(self, base_dir: str, refresh: bool = False) -> str:
         '''
         Get (and if necessary generate) the machine id which is based on
         the current timestamp and the hostname of the machine. The
         generated ID is cached inside the base directory, so all
         future calls to this method return the same ID.
 
-        @type base_dir: String
         @param base_dir: Base directory
-
-        @type refresh: bool
         @param refresh: Force generating a new machine ID
-
-        @rtype: String
         @return: The generated/cached machine ID
         '''
         id_file = os.path.join(base_dir, "s3_id")
@@ -500,7 +458,7 @@ class S3Manager():
             with open(id_file, 'r') as id_fd:
                 return id_fd.read()
 
-    def __upload_queue_files(self, queue_basedir, queue_files, base_dir, cmdline_file):
+    def __upload_queue_files(self, queue_basedir: str, queue_files: list[str], base_dir: str, cmdline_file: str) -> None:
         machine_id = self.__get_machine_id(base_dir)
         remote_path = "%s%s/" % (self.remote_path_queues, machine_id)
         remote_files = [key.name.replace(remote_path, "", 1) for key in list(self.bucket.list(remote_path))]

@@ -665,7 +665,7 @@ def apply_transform(script_path, testcase_path):
     return archive_path
 
 
-def main(argv: list[str] | None = None)-> int:
+def main(argv: list[str] | None = None) -> int:
     '''Command line options.'''
 
     program_name = os.path.basename(sys.argv[0])

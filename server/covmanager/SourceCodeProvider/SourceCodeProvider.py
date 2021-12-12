@@ -109,6 +109,8 @@ class CObj(TypedDict):
 
     filename: str | None
     locations: list[int]
+    missed: list[int]
+    not_coverable: list[int]
 
 
 class Utils():

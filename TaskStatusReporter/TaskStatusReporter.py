@@ -45,11 +45,10 @@ class TaskStatusReporter(Reporter):
         super(TaskStatusReporter, self).__init__(*args, **kwargs)
 
     @remote_checks
-    def report(self, text):
+    def report(self, text: str) -> None:
         '''
         Send textual report to server, overwriting any existing reports.
 
-        @type text: string
         @param text: Report text to send
         '''
         url = "%s://%s:%s/taskmanager/rest/tasks/update_status/" % (
@@ -66,7 +65,7 @@ class TaskStatusReporter(Reporter):
         self.post(url, data, expected=requests.codes["ok"])
 
 
-def main(argv: list[str] | None = None)-> int:
+def main(argv: list[str] | None = None) -> int:
     '''Command line options.'''
 
     # setup argparser
