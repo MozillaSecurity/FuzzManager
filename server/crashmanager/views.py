@@ -7,6 +7,8 @@ from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
 from django.http import Http404, HttpResponse
 from django.http.request import HttpRequest
+from django.http.response import HttpResponsePermanentRedirect
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -24,6 +26,7 @@ from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import six
+from typing import cast
 
 from wsgiref.util import FileWrapper
 
@@ -48,18 +51,18 @@ class JSONDateEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-def check_authorized_for_crash_entry(request, entry):
-    user = User.get_or_create_restricted(request.user)[0]
+def check_authorized_for_crash_entry(request: HttpRequest, entry: CrashEntry) -> None:
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
     if user.restricted:
         defaultToolsFilter = user.defaultToolsFilter.all()
         if not defaultToolsFilter or entry.tool not in defaultToolsFilter:
             raise PermissionDenied({"message": "You don't have permission to access this crash entry."})
 
-    return
+    return None
 
 
-def check_authorized_for_signature(request, signature):
-    user = User.get_or_create_restricted(request.user)[0]
+def check_authorized_for_signature(request: HttpRequest, signature: Bucket) -> None:
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
     if user.restricted:
         defaultToolsFilter = user.defaultToolsFilter.all()
         if not defaultToolsFilter:
@@ -71,17 +74,17 @@ def check_authorized_for_signature(request, signature):
         if not entries:
             raise PermissionDenied({"message": "You don't have permission to access this signature."})
 
-    return
+    return None
 
 
 def deny_restricted_users(request: HttpRequest) -> None:
-    user = User.get_or_create_restricted(request.user)[0]
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
     if user.restricted:
         raise PermissionDenied({"message": "Restricted users cannot use this feature."})
 
 
-def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
-    user = User.get_or_create_restricted(request.user)[0]
+def filter_crash_entries_by_toolfilter(request: HttpRequest, entries, restricted_only=False):
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
         return entries
@@ -95,8 +98,8 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
     return entries
 
 
-def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, legacy_filters=True):
-    user = User.get_or_create_restricted(request.user)[0]
+def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted_only=False, legacy_filters=True):
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
         return signatures
@@ -123,8 +126,8 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, 
     return signatures
 
 
-def filter_bucket_hits_by_toolfilter(request, hits, restricted_only=False):
-    user = User.get_or_create_restricted(request.user)[0]
+def filter_bucket_hits_by_toolfilter(request: HttpRequest, hits, restricted_only=False):
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
         return hits
@@ -138,11 +141,11 @@ def filter_bucket_hits_by_toolfilter(request, hits, restricted_only=False):
     return hits
 
 
-def renderError(request, err):
+def renderError(request: HttpRequest, err: str) -> HttpResponse:
     return render(request, 'error.html', {'error_message': err})
 
 
-def stats(request):
+def stats(request: HttpRequest) -> HttpResponse:
     lastHourDelta = timezone.now() - timedelta(hours=1)
     print(lastHourDelta)
     entries = CrashEntry.objects.filter(created__gt=lastHourDelta).select_related('bucket')
@@ -175,18 +178,18 @@ def stats(request):
     })
 
 
-def settings(request):
+def settings(request: HttpRequest) -> HttpResponse:
     return render(request, 'settings.html')
 
 
-def watchedSignatures(request):
+def watchedSignatures(request: HttpRequest) -> HttpResponse:
     # for this user, list watches
     # buckets   sig       new crashes   remove
     # ========================================
     # 1         crash       10          tr
     # 2         assert      0           tr
     # 3         blah        0           tr
-    user = User.get_or_create_restricted(request.user)[0]
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     filters = {
         'user': user,
@@ -221,8 +224,8 @@ def watchedSignatures(request):
     return render(request, 'signatures/watch.html', {'siglist': buckets})
 
 
-def deleteBucketWatch(request, sigid):
-    user = User.get_or_create_restricted(request.user)[0]
+def deleteBucketWatch(request: HttpRequest, sigid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if request.method == 'POST':
         entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
@@ -235,9 +238,9 @@ def deleteBucketWatch(request, sigid):
         raise SuspiciousOperation()
 
 
-def newBucketWatch(request):
+def newBucketWatch(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     if request.method == 'POST':
-        user = User.get_or_create_restricted(request.user)[0]
+        user = cast(User, User.get_or_create_restricted(request.user)[0])
         bucket = get_object_or_404(Bucket, pk=int(request.POST['bucket']))
         for watch in BucketWatch.objects.filter(user=user, bucket=bucket):
             watch.lastCrash = int(request.POST['crash'])
@@ -251,14 +254,14 @@ def newBucketWatch(request):
     raise SuspiciousOperation()
 
 
-def bucketWatchCrashes(request, sigid):
-    user = User.get_or_create_restricted(request.user)[0]
+def bucketWatchCrashes(request: HttpRequest, sigid: int) -> HttpResponse:
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
     bucket = get_object_or_404(Bucket, pk=sigid)
     watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
     return render(request, 'crashes/index.html', {'restricted': user.restricted, 'watchId': watch.id})
 
 
-def signatures(request):
+def signatures(request: HttpRequest) -> HttpResponse:
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
     return render(
         request,
@@ -270,16 +273,16 @@ def signatures(request):
     )
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     return redirect('crashmanager:crashes')
 
 
-def crashes(request):
-    user = User.get_or_create_restricted(request.user)[0]
+def crashes(request: HttpRequest) -> HttpResponse:
+    user = cast(User, User.get_or_create_restricted(request.user)[0])
     return render(request, 'crashes/index.html', {'restricted': user.restricted})
 
 
-def viewCrashEntry(request, crashid):
+def viewCrashEntry(request: HttpRequest, crashid: int) -> HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
     entry.deserializeFields()
@@ -292,7 +295,7 @@ def viewCrashEntry(request, crashid):
     return render(request, 'crashes/view.html', {'entry': entry, 'providers': json.dumps(providers)})
 
 
-def editCrashEntry(request, crashid):
+def editCrashEntry(request: HttpRequest, crashid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
     entry.deserializeFields()
@@ -330,7 +333,7 @@ def editCrashEntry(request, crashid):
         return render(request, 'crashes/edit.html', {'entry': entry})
 
 
-def deleteCrashEntry(request, crashid):
+def deleteCrashEntry(request: HttpRequest, crashid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
@@ -343,7 +346,7 @@ def deleteCrashEntry(request, crashid):
         raise SuspiciousOperation
 
 
-def newSignature(request):
+def newSignature(request: HttpRequest) -> HttpResponse:
     if request.method != 'GET':
         raise SuspiciousOperation
 
@@ -404,7 +407,7 @@ def newSignature(request):
     return render(request, 'signatures/edit.html', data)
 
 
-def deleteSignature(request, sigid):
+def deleteSignature(request: HttpRequest, sigid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'))
     if not bucket:
         raise Http404
@@ -426,7 +429,7 @@ def deleteSignature(request, sigid):
         raise SuspiciousOperation
 
 
-def viewSignature(request, sigid):
+def viewSignature(request: HttpRequest, sigid: int) -> HttpResponse:
     bucket = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid).data
     if bucket['best_entry'] is not None:
         best_entry_size = get_object_or_404(CrashEntry, pk=bucket['best_entry']).testcase.size
@@ -444,7 +447,7 @@ def viewSignature(request, sigid):
     })
 
 
-def editSignature(request, sigid):
+def editSignature(request: HttpRequest, sigid: int) -> HttpResponse:
     if request.method != 'GET' or sigid is None:
         raise SuspiciousOperation
 
@@ -459,7 +462,7 @@ def editSignature(request, sigid):
     return render(request, 'signatures/edit.html', {'bucketId': bucket.pk, 'proposedSig': proposedSignature})
 
 
-def trySignature(request, sigid, crashid):
+def trySignature(request: HttpRequest, sigid: int, crashid: int) -> HttpResponse:
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
 
@@ -475,7 +478,7 @@ def trySignature(request, sigid, crashid):
     return render(request, 'signatures/try.html', {'bucket': bucket, 'entry': entry, 'diff': diff})
 
 
-def optimizeSignature(request, sigid):
+def optimizeSignature(request: HttpRequest, sigid: int) -> HttpResponse:
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
 
@@ -492,7 +495,7 @@ def optimizeSignature(request, sigid):
                                                         'diff': diff, 'matchingEntries': matchingEntries})
 
 
-def optimizeSignaturePrecomputed(request, sigid):
+def optimizeSignaturePrecomputed(request: HttpRequest, sigid: int) -> HttpResponse:
     bucket = get_object_or_404(Bucket, pk=sigid)
     check_authorized_for_signature(request, bucket)
 
@@ -524,7 +527,7 @@ def optimizeSignaturePrecomputed(request, sigid):
                                                         'diff': diff, 'matchingEntries': matchingEntries})
 
 
-def findSignatures(request, crashid):
+def findSignatures(request: HttpRequest, crashid: int) -> HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
@@ -618,7 +621,7 @@ def findSignatures(request, crashid):
         return render(request, 'signatures/find.html', {'buckets': similarBuckets, 'crashentry': entry})
 
 
-def createExternalBug(request, crashid):
+def createExternalBug(request: HttpRequest, crashid: int):
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
@@ -630,7 +633,7 @@ def createExternalBug(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            user = User.get_or_create_restricted(request.user)[0]
+            user = cast(User, User.get_or_create_restricted(request.user)[0])
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         template = provider.getInstance().getTemplateForUser(request, entry)
@@ -645,7 +648,7 @@ def createExternalBug(request, crashid):
         raise SuspiciousOperation
 
 
-def createExternalBugComment(request, crashid):
+def createExternalBugComment(request: HttpRequest, crashid: int) -> HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
@@ -653,7 +656,7 @@ def createExternalBugComment(request, crashid):
         if 'provider' in request.GET:
             provider = get_object_or_404(BugProvider, pk=request.GET['provider'])
         else:
-            user = User.get_or_create_restricted(request.user)[0]
+            user = cast(User, User.get_or_create_restricted(request.user)[0])
             provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
 
         template = provider.getInstance().getTemplateForUser(request, entry)
@@ -668,12 +671,12 @@ def createExternalBugComment(request, crashid):
         raise SuspiciousOperation
 
 
-def viewBugProviders(request):
+def viewBugProviders(request: HttpRequest) -> HttpResponse:
     providers = BugProvider.objects.annotate(size=Count('bug'))
     return render(request, 'providers/index.html', {'providers': providers})
 
 
-def deleteBugProvider(request, providerId):
+def deleteBugProvider(request: HttpRequest, providerId: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     deny_restricted_users(request)
 
     provider = get_object_or_404(BugProvider, pk=providerId)
@@ -693,7 +696,7 @@ def deleteBugProvider(request, providerId):
         raise SuspiciousOperation
 
 
-def viewBugProvider(request, providerId):
+def viewBugProvider(request: HttpRequest, providerId: int) -> HttpResponse:
     provider = BugProvider.objects.filter(pk=providerId).annotate(size=Count('bug'))
 
     if not provider:
@@ -704,7 +707,7 @@ def viewBugProvider(request, providerId):
     return render(request, 'providers/view.html', {'provider': provider})
 
 
-def editBugProvider(request, providerId):
+def editBugProvider(request: HttpRequest, providerId: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     deny_restricted_users(request)
 
     provider = get_object_or_404(BugProvider, pk=providerId)
@@ -726,7 +729,7 @@ def editBugProvider(request, providerId):
         raise SuspiciousOperation
 
 
-def createBugProvider(request):
+def createBugProvider(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     deny_restricted_users(request)
 
     if request.method == 'POST':
@@ -746,7 +749,7 @@ def createBugProvider(request):
         raise SuspiciousOperation
 
 
-def duplicateBugzillaTemplate(request, templateId):
+def duplicateBugzillaTemplate(request: HttpRequest, templateId: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     clone = get_object_or_404(BugzillaTemplate, pk=templateId)
     clone.pk = None  # to autogen a new pk on save()
     clone.name = "Clone of " + clone.name
@@ -872,7 +875,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
 
     def partial_update(self, request, pk=None):
         """Update individual crash fields."""
-        user = User.get_or_create_restricted(request.user)[0]
+        user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
             raise MethodNotAllowed(request.method)
 
@@ -950,7 +953,7 @@ class BucketViewSet(mixins.CreateModelMixin,
         return response
 
     def retrieve(self, request, *args, **kwargs):
-        user = User.get_or_create_restricted(request.user)[0]
+        user = cast(User, User.get_or_create_restricted(request.user)[0])
         instance = self.get_object()
         ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
 
@@ -1040,7 +1043,7 @@ class BucketViewSet(mixins.CreateModelMixin,
         raise MethodNotAllowed(request.method)
 
     def partial_update(self, request, *args, **kwargs):
-        user = User.get_or_create_restricted(request.user)[0]
+        user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
             raise MethodNotAllowed(request.method)
 
