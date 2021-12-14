@@ -24,7 +24,7 @@ from covmanager.SourceCodeProvider.HGSourceCodeProvider import HGSourceCodeProvi
 from covmanager.SourceCodeProvider.SourceCodeProvider import Utils
 
 
-@pytest.fixture()  # type: ignore[misc]
+@pytest.fixture()
 def git_repo(tmp_path: Path):
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git"),
                     str(tmp_path / "test-git"))
@@ -32,7 +32,7 @@ def git_repo(tmp_path: Path):
     yield str(tmp_path / "test-git")
 
 
-@pytest.fixture()  # type: ignore[misc]
+@pytest.fixture()
 def hg_repo(tmp_path: Path):
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg"),
                     str(tmp_path / "test-hg"))
@@ -96,7 +96,7 @@ def test_HGSourceCodeProvider(hg_repo: str) -> None:
     assert len(parents) == 0
 
 
-@pytest.mark.skipif(not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"), reason="not decoder")  # type: ignore[misc]
+@pytest.mark.skipif(not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"), reason="not decoder")
 def test_HGDiff() -> None:
     provider = HGSourceCodeProvider("/home/decoder/Mozilla/repos/mozilla-central-fm")
     diff = provider.getUnifiedDiff("4f8e0cb21016")
