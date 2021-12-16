@@ -5,18 +5,31 @@ from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Model
 from django.db.models import Q
+from django.db.models.query import QuerySet
+from django.http.request import HttpRequest
+from django.http.response import HttpResponse
+from django.http.response import HttpResponsePermanentRedirect
+from django.http.response import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import resolve, reverse
+from django.views import View
 import collections
 import functools
 import json
 from rest_framework import filters
 import six
+from typing import TypeVar
+from typing import cast
 
 from crashmanager.models import User
+from server.covmanager.models import Collection
+
+MT = TypeVar("MT", bound=Model)
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     user = User.get_or_create_restricted(request.user)[0]
     # return crashmanager, covmanager, or ec2spotmanager, as allowed, in that order.
     # if no permission to view any apps, then use crashmanager and let that fail
@@ -28,7 +41,7 @@ def index(request):
     return redirect('crashmanager:index')
 
 
-def login(request):
+def login(request: HttpRequest):
     if settings.USE_OIDC:
         auth_view = resolve(reverse('oidc_authentication_init')).func
         return auth_view(request)
@@ -45,11 +58,11 @@ def deny_restricted_users(wrapped):
     return decorator
 
 
-def renderError(request, err):
+def renderError(request: HttpRequest, err: str) -> HttpResponse:
     return render(request, 'error.html', {'error_message': err})  # noqa
 
 
-def paginate_requested_list(request, entries):
+def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> QuerySet[Model]:
     """
     This method generically paginates a given QuerySet and returns a list
     suitable for passing to a template. The set is paginated by request
@@ -111,7 +124,7 @@ def json_to_query(json_str):
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 
-    def get_query_obj(obj, key=None):
+    def get_query_obj(obj: six.text_type | list[str] | int | dict[str, str] | None, key: str | None = None) -> Q:
 
         if obj is None or isinstance(obj, (six.text_type, list, int)):
             kwargs = {key: obj}
@@ -152,7 +165,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset: QuerySet[MT], view: View) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -170,7 +183,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query using simple "contains" searches
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset: QuerySet[MT], view: View) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -181,7 +194,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         querystr = request.query_params.get('squery', None)
         if querystr is not None:
             queryobj = None
-            for field in queryset[0].simple_query_fields:
+            for field in cast(Collection, queryset[0]).simple_query_fields:
                 kwargs = {"%s__contains" % field: querystr}
                 if queryobj is None:
                     queryobj = Q(**kwargs)

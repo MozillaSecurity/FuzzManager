@@ -13,12 +13,14 @@ from django.contrib.auth.models import User as DjangoUser, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.db.models.query import QuerySet
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from enumfields import Enum, EnumField
 from notifications.signals import notify
 import six
+from typing import TypeVar
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
@@ -26,6 +28,8 @@ from FTB.Signatures.CrashSignature import CrashSignature
 
 if getattr(settings, 'USE_CELERY', None):
     from .tasks import triage_new_crash
+
+MT = TypeVar("MT", bound=models.Model)
 
 
 class Tool(models.Model):
@@ -489,7 +493,10 @@ class CrashEntry(models.Model):
         return self.save()
 
     @staticmethod
-    def deferRawFields(queryset, requiredOutputSources=()):
+    def deferRawFields(
+            queryset: QuerySet[MT],
+            requiredOutputSources: tuple[str, str, str] = ("", "", ""),
+        ) -> QuerySet[MT]:
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.
         if "stdout" not in requiredOutputSources:

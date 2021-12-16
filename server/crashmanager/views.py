@@ -1286,7 +1286,7 @@ class BugzillaTemplateListView(ListView[BugzillaTemplate]):
     paginate_by = 100
 
 
-class BugzillaTemplateDeleteView(DeleteView[BugzillaTemplate]):
+class BugzillaTemplateDeleteView(DeleteView):
     model = BugzillaTemplate
     template_name = 'bugzilla/delete.html'
     success_url = reverse_lazy('crashmanager:templates')

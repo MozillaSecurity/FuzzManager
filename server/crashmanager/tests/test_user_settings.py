@@ -23,7 +23,7 @@ LOG = logging.getLogger("fm.crashmanager.tests.usersettings")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
-def test_user_settings_no_login(client):
+def test_user_settings_no_login(client) -> None:
     """Request without login hits the login redirect"""
     path = reverse("crashmanager:usersettings")
     resp = client.get(path)
@@ -31,7 +31,7 @@ def test_user_settings_no_login(client):
     assert resp.url == '/login/?next=' + path
 
 
-def test_user_settings_simple_get(client):
+def test_user_settings_simple_get(client) -> None:
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     path = reverse("crashmanager:usersettings")
@@ -41,7 +41,7 @@ def test_user_settings_simple_get(client):
     assert response.context['user'] == User.objects.get(user__username='test').user
 
 
-def test_user_settings_edit(client, cm):
+def test_user_settings_edit(client, cm) -> None:
     """No errors are thrown in template"""
     tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
     providers = [
