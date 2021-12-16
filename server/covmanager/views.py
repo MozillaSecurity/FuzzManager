@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TypedDict
 from typing import cast
 
 from django.conf import settings
@@ -19,6 +18,7 @@ import os
 from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
+from typing_extensions import TypedDict
 from wsgiref.util import FileWrapper
 
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend

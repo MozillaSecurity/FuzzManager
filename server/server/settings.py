@@ -12,9 +12,9 @@ from __future__ import annotations
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-from typing import TypedDict
 from django.conf import global_settings
 from django.http.request import HttpRequest  # noqa
+from typing_extensions import TypedDict
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))

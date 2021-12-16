@@ -8,9 +8,9 @@ import sys
 from types import TracebackType
 from typing import Any
 from typing import Callable
-from typing import Literal
 from typing import Type
 from typing import TypeVar
+from typing_extensions import Literal
 
 LOCK_PATH = os.path.realpath(os.path.join(settings.BASE_DIR, 'mgmt'))
 RetType = TypeVar("RetType")
