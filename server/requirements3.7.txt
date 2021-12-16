@@ -18,6 +18,7 @@ django-enumfields==2.1.1
 django-notifications-hq==1.6.0
 django-stubs>=1.9.0
 djangorestframework>=3.9.4
+djangorestframework-stubs>=1.4.0
 fasteners>=0.14.1,<0.15
 flake8>=3.7.9,<3.8
 idna>=2.6,<2.8
