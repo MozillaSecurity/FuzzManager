@@ -16,14 +16,11 @@ from datetime import datetime
 import json
 import logging
 import os.path
+from unittest.mock import Mock, patch
+
 import pytest
 import requests
 from crashmanager.models import CrashEntry, TestCase as cmTestCase
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
 
 
 # What should be allowed:

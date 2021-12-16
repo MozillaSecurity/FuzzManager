@@ -14,16 +14,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+from unittest.mock import call
+
 import pytest
 from ec2spotmanager.cron import check_instance_pools
 from ec2spotmanager.tasks import terminate_instances
 from ec2spotmanager.CloudProvider.CloudProvider import INSTANCE_STATE
 from . import create_config, create_instance, create_pool
-
-try:
-    from unittest.mock import call
-except ImportError:
-    from mock import call
 
 LOG = logging.getLogger('fm.ec2spotmanager.tests.task_graph')
 pytestmark = pytest.mark.usefixtures('ec2spotmanager_test', 'mock_provider')  # pylint: disable=invalid-name

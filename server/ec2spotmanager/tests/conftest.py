@@ -16,6 +16,7 @@ from __future__ import annotations
 import functools
 import sys
 from typing import cast
+from unittest.mock import Mock
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
@@ -23,11 +24,6 @@ import pytest
 from crashmanager.models import User as cmUser
 from ec2spotmanager.CloudProvider.CloudProvider import CloudProvider
 from . import UncatchableException
-
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
 
 
 def _create_user(username: str, email: str = "test@mozilla.com", password: str = "test", has_permission: bool = True) -> User:

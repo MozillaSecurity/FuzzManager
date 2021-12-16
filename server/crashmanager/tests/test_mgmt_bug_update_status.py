@@ -13,6 +13,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import json
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.core.management import call_command, CommandError
 from notifications.models import Notification
@@ -20,10 +22,6 @@ import pytest
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, \
     Product, Tool, User as cmUser
 
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")

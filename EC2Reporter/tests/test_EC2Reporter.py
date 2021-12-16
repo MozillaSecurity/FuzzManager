@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from unittest.mock import Mock, patch
+
 import pytest
 from django.utils import timezone
 from six.moves.urllib.parse import urlsplit
@@ -7,11 +9,6 @@ from six.moves.urllib.parse import urlsplit
 from EC2Reporter.EC2Reporter import EC2Reporter, main
 from ec2spotmanager.models import Instance, InstancePool
 from ec2spotmanager.tests import create_config, create_instance, create_pool
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
 
 
 pytestmark = pytest.mark.django_db(transaction=True)

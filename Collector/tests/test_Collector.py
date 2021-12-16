@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+from unittest.mock import Mock, patch
 import zipfile
 
 import pytest
@@ -28,11 +29,6 @@ from Collector.Collector import Collector, main
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.ProgramConfiguration import ProgramConfiguration
 from crashmanager.models import CrashEntry
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
 
 
 asanTraceCrash = '''ASAN:SIGSEGV

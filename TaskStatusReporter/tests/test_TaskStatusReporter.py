@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import pytest
+from unittest.mock import Mock, patch
+
 from six.moves.urllib.parse import urlsplit
 
 from TaskStatusReporter.TaskStatusReporter import TaskStatusReporter, main
 from taskmanager.models import Task
 from taskmanager.tests import create_pool, create_task
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
 
 
 pytestmark = pytest.mark.django_db(transaction=True)
