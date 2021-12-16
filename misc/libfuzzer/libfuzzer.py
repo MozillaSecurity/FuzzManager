@@ -24,6 +24,8 @@ import os
 import subprocess
 import sys
 import threading
+from typing import IO
+from typing import cast
 
 from Collector.Collector import Collector  # noqa
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
@@ -31,15 +33,15 @@ from FTB.Signatures.CrashInfo import CrashInfo  # noqa
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, fd):
+    def __init__(self, fd: IO[str]):
         assert callable(fd.readline)
 
         threading.Thread.__init__(self)
 
         self.fd = fd
-        self.trace = []
+        self.trace: list[str] = []
         self.inTrace = False
-        self.testcase = None
+        self.testcase: str | None = None
 
     def run(self) -> None:
         while True:
@@ -64,10 +66,10 @@ class LibFuzzerMonitor(threading.Thread):
 
         self.fd.close()
 
-    def getASanTrace(self):
+    def getASanTrace(self) -> list[str]:
         return self.trace
 
-    def getTestcase(self):
+    def getTestcase(self) -> str | None:
         return self.testcase
 
 
@@ -77,7 +79,7 @@ __date__ = '2016-07-28'
 __updated__ = '2016-07-28'
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int | None:
     '''Command line options.'''
 
     program_name = os.path.basename(sys.argv[0])
@@ -201,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
             universal_newlines=True
         )
 
-        monitor = LibFuzzerMonitor(process.stderr)
+        monitor = LibFuzzerMonitor(cast(IO[str], process.stderr))
         monitor.start()
         monitor.join()
 
@@ -230,6 +232,8 @@ def main(argv: list[str] | None = None) -> int:
         if signature_repeat_count >= 10:
             print("Too many crashes with the same signature, exiting...", file=sys.stderr)
             break
+
+    return None
 
 
 if __name__ == "__main__":
