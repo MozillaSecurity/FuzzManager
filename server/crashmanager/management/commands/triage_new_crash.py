@@ -3,6 +3,7 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from collections import OrderedDict
 from typing import Any
+from typing import OrderedDict
 
 from django.conf import settings
 from django.core.management import BaseCommand
@@ -17,7 +18,7 @@ from crashmanager.models import CrashEntry, Bucket
 # although this cache looks pointless within this command,
 # the command is called in a loop from triage_new_crashes.py
 # and may be called multiple times in one process by celery
-TRIAGE_CACHE = OrderedDict()
+TRIAGE_CACHE: OrderedDict[str, list[int]] = OrderedDict()
 
 
 class Command(BaseCommand):
