@@ -14,7 +14,7 @@ class InvalidArgumentException(APIException):
     status_code = 400
 
 
-class CollectionSerializer(serializers.ModelSerializer):
+class CollectionSerializer(serializers.ModelSerializer[Collection]):
     # We need to redefine several fields explicitly because we flatten our
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
@@ -91,14 +91,14 @@ class CollectionSerializer(serializers.ModelSerializer):
         return super(CollectionSerializer, self).create(attrs)
 
 
-class RepositorySerializer(serializers.ModelSerializer):
+class RepositorySerializer(serializers.ModelSerializer[Repository]):
     class Meta:
         model = Repository
         fields = ('name',)
         read_only_fields = ('name',)
 
 
-class ReportConfigurationSerializer(serializers.ModelSerializer):
+class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfiguration]):
     repository = serializers.CharField(source='repository.name', max_length=255)
 
     class Meta:
@@ -154,7 +154,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
         return super(ReportConfigurationSerializer, self).create(attrs)
 
 
-class ReportSerializer(serializers.ModelSerializer):
+class ReportSerializer(serializers.ModelSerializer[Report]):
     class Meta:
         model = Report
         fields = (

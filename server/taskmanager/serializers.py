@@ -18,7 +18,7 @@ from .models import Pool, Task
 RUN_RATIO_THRESHOLD = 0.03
 
 
-class PoolSerializer(serializers.ModelSerializer):
+class PoolSerializer(serializers.ModelSerializer[Pool]):
     class Meta:
         model = Pool
         fields = "__all__"
@@ -93,7 +93,7 @@ class PoolVueSerializer(PoolSerializer):
         return reverse('taskmanager:pool-view-ui', kwargs={'pk': pool.id})
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskSerializer(serializers.ModelSerializer[Task]):
     status_data = serializers.CharField(trim_whitespace=False)
 
     class Meta:

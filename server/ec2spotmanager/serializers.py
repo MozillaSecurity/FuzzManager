@@ -4,10 +4,10 @@ import itertools
 from django.http.response import Http404  # noqa
 from rest_framework import serializers
 
-from ec2spotmanager.models import Instance
+from ec2spotmanager.models import Instance, PoolConfiguration
 
 
-class PoolConfigurationSerializer(serializers.BaseSerializer):
+class PoolConfigurationSerializer(serializers.BaseSerializer[PoolConfiguration]):
     id = serializers.IntegerField(read_only=True)
     parent = serializers.IntegerField(min_value=0, allow_null=True)
     name = serializers.CharField(max_length=255)
@@ -77,7 +77,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer):
         return result
 
 
-class MachineStatusSerializer(serializers.ModelSerializer):
+class MachineStatusSerializer(serializers.ModelSerializer[Instance]):
     status_data = serializers.CharField(max_length=4095)
 
     class Meta:

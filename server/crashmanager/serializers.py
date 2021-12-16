@@ -20,7 +20,7 @@ class InvalidArgumentException(APIException):
     status_code = 400
 
 
-class CrashEntrySerializer(serializers.ModelSerializer):
+class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
     # We need to redefine several fields explicitly because we flatten our
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
@@ -126,7 +126,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             raise
 
 
-class BucketSerializer(serializers.ModelSerializer):
+class BucketSerializer(serializers.ModelSerializer[Bucket]):
     signature = serializers.CharField(style={'base_template': 'textarea.html'}, required=False)
     bug = serializers.CharField(source='bug.externalId', default=None, allow_null=True)
     # write_only here means don't try to read it automatically in super().to_representation()
@@ -248,13 +248,13 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
         return reverse('crashmanager:findsigs', kwargs={'crashid': entry.id})
 
 
-class BugProviderSerializer(serializers.ModelSerializer):
+class BugProviderSerializer(serializers.ModelSerializer[BugProvider]):
     class Meta:
         model = BugProvider
         fields = ('id', 'classname', 'hostname', 'urlTemplate',)
 
 
-class BugzillaTemplateSerializer(serializers.ModelSerializer):
+class BugzillaTemplateSerializer(serializers.ModelSerializer[BugzillaTemplate]):
     mode = serializers.SerializerMethodField()
 
     class Meta:
@@ -270,7 +270,7 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
         return obj.mode.value
 
 
-class NotificationSerializer(serializers.ModelSerializer):
+class NotificationSerializer(serializers.ModelSerializer[Notification]):
     actor_url = serializers.SerializerMethodField()
     target_url = serializers.SerializerMethodField()
     external_bug_url = serializers.SerializerMethodField()

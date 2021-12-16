@@ -1280,20 +1280,20 @@ class SignaturesDownloadView(AbstractDownloadView):
         return self.response(file_path, filename)
 
 
-class BugzillaTemplateListView(ListView):
+class BugzillaTemplateListView(ListView[BugzillaTemplate]):
     model = BugzillaTemplate
     template_name = 'bugzilla/list.html'
     paginate_by = 100
 
 
-class BugzillaTemplateDeleteView(DeleteView):
+class BugzillaTemplateDeleteView(DeleteView[BugzillaTemplate]):
     model = BugzillaTemplate
     template_name = 'bugzilla/delete.html'
     success_url = reverse_lazy('crashmanager:templates')
     pk_url_kwarg = 'templateId'
 
 
-class BugzillaTemplateEditView(UpdateView):
+class BugzillaTemplateEditView(UpdateView[BugzillaTemplate]):
     model = BugzillaTemplate
     template_name = 'bugzilla/create_edit.html'
     success_url = reverse_lazy('crashmanager:templates')
@@ -1311,7 +1311,7 @@ class BugzillaTemplateEditView(UpdateView):
             return BugzillaTemplateCommentForm
 
 
-class BugzillaTemplateBugCreateView(CreateView):
+class BugzillaTemplateBugCreateView(CreateView[BugzillaTemplate]):
     model = BugzillaTemplate
     template_name = 'bugzilla/create_edit.html'
     form_class = BugzillaTemplateBugForm
@@ -1327,7 +1327,7 @@ class BugzillaTemplateBugCreateView(CreateView):
         return super(BugzillaTemplateBugCreateView, self).form_valid(form)
 
 
-class BugzillaTemplateCommentCreateView(CreateView):
+class BugzillaTemplateCommentCreateView(CreateView[BugzillaTemplate]):
     model = BugzillaTemplate
     template_name = 'bugzilla/create_edit.html'
     form_class = BugzillaTemplateCommentForm
@@ -1343,7 +1343,7 @@ class BugzillaTemplateCommentCreateView(CreateView):
         return super(BugzillaTemplateCommentCreateView, self).form_valid(form)
 
 
-class UserSettingsEditView(UpdateView):
+class UserSettingsEditView(UpdateView[User]):
     model = User
     template_name = 'usersettings.html'
     form_class = UserSettingsForm

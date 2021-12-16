@@ -14,7 +14,7 @@ class Row(Div):
     css_class = 'row'
 
 
-class BugzillaTemplateBugForm(ModelForm):
+class BugzillaTemplateBugForm(ModelForm[BugzillaTemplate]):
     helper = FormHelper()
     helper.layout = Layout(
         HTML("""<div v-pre>"""),
@@ -127,7 +127,7 @@ class BugzillaTemplateBugForm(ModelForm):
         widgets['attrs'] = Textarea(attrs={'rows': 2})
 
 
-class BugzillaTemplateCommentForm(ModelForm):
+class BugzillaTemplateCommentForm(ModelForm[BugzillaTemplate]):
     helper = FormHelper()
     helper.layout = Layout(
         HTML("""<div v-pre>"""),
@@ -158,7 +158,7 @@ class BugzillaTemplateCommentForm(ModelForm):
         }
 
 
-class UserSettingsForm(ModelForm):
+class UserSettingsForm(ModelForm[User]):
     helper = FormHelper()
     helper.layout = Layout(
         'defaultToolsFilter',
