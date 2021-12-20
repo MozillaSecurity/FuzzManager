@@ -1,6 +1,8 @@
 name: mypytmp
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
