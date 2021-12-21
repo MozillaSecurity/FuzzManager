@@ -55,4 +55,4 @@ jobs:
 
     - name: Run mypy
       run: |
-        py Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py
+        mypy Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py
