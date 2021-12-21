@@ -48,6 +48,7 @@ requests>=2.20.1,<3
 six>=1.12.0
 # fuzzing-decision is only needed for the taskmanager module (requires python 3)
 #git+https://github.com/MozillaSecurity/orion#egg=fuzzing-decision&subdirectory=services/fuzzing-decision
+taskcluster>=44.2.2,<44.3
 types-boto==0.1.4
 types-mock==0.1.5
 types-PyYAML==5.4.6
