@@ -2,7 +2,7 @@ name: mypytmp
 
 on:
   push:
-    branches: [ master, basic-mypy-infrastructure ]
+    branches: [ basic-mypy-infrastructure ]
   pull_request:
     branches: [ master ]
 
