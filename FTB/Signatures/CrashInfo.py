@@ -152,7 +152,7 @@ class CrashInfo(object):
         # This is an optional testcase that is not stored with the crashInfo but
         # can be "attached" before matching signatures that might require the
         # testcase.
-        self.testcase: str | None = None
+        self.testcase: bytes | str | None = None
 
         # This can be used to record failures during signature creation
         self.failureReason: str | None = None
@@ -199,10 +199,10 @@ class CrashInfo(object):
 
     @staticmethod
     def fromRawCrashData(
-            stdout: list[str] | None,
-            stderr: list[str] | None,
+            stdout: list[str] | str | None,
+            stderr: list[str] | str | None,
             configuration: ProgramConfiguration,
-            auxCrashData: list[str] | None = None,
+            auxCrashData: list[str] | str | None = None,
             cacheObject: CacheObject | None = None,
         ) -> CrashInfo:
         '''

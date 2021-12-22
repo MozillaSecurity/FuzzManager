@@ -21,13 +21,13 @@ from __future__ import annotations
 
 import argparse
 import base64
+from collections.abc import Iterator
 import hashlib
 import json
 import os
 import shutil
 import sys
 from tempfile import mkstemp
-from typing import Generator
 from zipfile import ZipFile
 
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
@@ -50,6 +50,9 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
+        assert isinstance(self.serverHost, str)
+        assert isinstance(self.serverPort, int)
+        assert isinstance(self.serverProtocol, str)
         url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (self.serverProtocol, self.serverHost,
                                                                      self.serverPort)
 
@@ -70,6 +73,7 @@ class Collector(Reporter):
         and invalidating old ones. (This is a non-standard use case;
         you probably want to use refresh() instead.)
         '''
+        assert isinstance(self.sigCacheDir, str)
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
                 raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
@@ -84,21 +88,21 @@ class Collector(Reporter):
             zipFile.extractall(self.sigCacheDir)
 
     @remote_checks
-    def submit(self, crashInfo, testCase=None, testCaseQuality=0, testCaseSize=None, metaData=None):
+    def submit(
+            self,
+            crashInfo: CrashInfo,
+            testCase: str | None = None,
+            testCaseQuality: int = 0,
+            testCaseSize: int | None = None,
+            metaData=None,
+        ):
         '''
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
-        @type testCase: string
         @param testCase: A file containing a testcase for reproduction
-
-        @type testCaseQuality: int
         @param testCaseQuality: A value indicating the quality of the test (less is better)
-
-        @type testCaseSize: int or None
         @param testCaseSize: The size of the testcase to report. If None, use the file size.
 
         @type metaData: map
@@ -106,6 +110,9 @@ class Collector(Reporter):
                          will be stored on the server in JSON format. This metadata is combined
                          with possible metadata stored in the L{ProgramConfiguration} inside crashInfo.
         '''
+        assert isinstance(self.serverHost, str)
+        assert isinstance(self.serverPort, int)
+        assert isinstance(self.serverProtocol, str)
         url = "%s://%s:%d/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # Serialize our crash information, testcase and metadata into a dictionary to POST
@@ -130,6 +137,7 @@ class Collector(Reporter):
             data["testcase_size"] = testCaseSize
             data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
+        assert isinstance(crashInfo.configuration, ProgramConfiguration)
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
         data["os"] = crashInfo.configuration.os
@@ -137,6 +145,8 @@ class Collector(Reporter):
         if crashInfo.configuration.version:
             data["product_version"] = crashInfo.configuration.version
 
+        assert isinstance(self.clientId, str)
+        assert isinstance(self.tool, str)
         data["client"] = self.clientId
         data["tool"] = self.tool
 
@@ -160,18 +170,17 @@ class Collector(Reporter):
         return self.post(url, data).json()
 
     @signature_checks
-    def search(self, crashInfo):
+    def search(self, crashInfo: CrashInfo):
         '''
         Searches within the local signature cache directory for a signature matching the
         given crash.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
 
         @rtype: tuple
         @return: Tuple containing filename of the signature and metadata matching, or None if no match.
         '''
-
+        assert isinstance(self.sigCacheDir, str)
         cachedSigFiles = os.listdir(self.sigCacheDir)
 
         for sigFile in cachedSigFiles:
@@ -202,11 +211,9 @@ class Collector(Reporter):
         on the same local cache directory.
 
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
         @param forceCrashAddress: Force including the crash address into the signature
         @param forceCrashInstruction: Force including the crash instruction into the signature (GDB only)
         @param numFrames: How many frames to include in the signature
-
         @return: File containing crash signature in JSON format
         '''
 
@@ -219,16 +226,16 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, crashId: int) -> tuple[str, dict[str, str]] | None:
         '''
         Download the testcase for the specified crashId.
 
-        @type crashId: int
         @param crashId: ID of the requested crash entry on the server side
-
-        @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''
+        assert isinstance(self.serverHost, str)
+        assert isinstance(self.serverPort, int)
+        assert isinstance(self.serverProtocol, str)
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                             crashId)
 
@@ -255,14 +262,17 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId: int) -> Generator[str]:
+    def download_all(self, bucketId: int) -> Iterator[str]:
         '''
         Download all testcases for the specified bucketId.
 
         @param bucketId: ID of the requested bucket on the server side
         @return: generator of filenames where tests were stored.
         '''
-        params = {
+        assert isinstance(self.serverHost, str)
+        assert isinstance(self.serverPort, int)
+        assert isinstance(self.serverProtocol, str)
+        params: dict[str, str] | None = {
             "query": json.dumps({
                 "op": "OR",
                 "bucket": bucketId
@@ -305,6 +315,7 @@ class Collector(Reporter):
         @param signature: CrashSignature to store
         @return: Name of the file that the signature was written to
         '''
+        assert isinstance(self.sigCacheDir, str)
         h = hashlib.new('sha1')
         if str is bytes:
             h.update(str(signature))
@@ -317,7 +328,7 @@ class Collector(Reporter):
         return sigfile
 
     @staticmethod
-    def read_testcase(testCase: str) -> tuple[str, bool]:
+    def read_testcase(testCase: str) -> tuple[bytes, bool]:
         '''
         Read a testcase file, return the content and indicate if it is binary or not.
 
@@ -556,11 +567,13 @@ def main(args: list[str] | None = None) -> int:
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
+            assert isinstance(args, list)
             print("Command line arguments: %s" % " ".join(args))
             print("")
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
+            assert isinstance(env, dict)
             print("Environment variables: %s", " ".join("%s = %s" % (k, v) for (k, v) in env.items()))
             print("")
 
@@ -590,6 +603,8 @@ def main(args: list[str] | None = None) -> int:
     if opts.get_clientid:
         print(collector.clientId)
         return 0
+
+    return 0
 
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ RetType = TypeVar("RetType")
 def remote_checks(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
     '''Decorator to perform error checks before using remote features'''
     @functools.wraps(wrapped)
-    def decorator(self: Reporter, *args: Any, **kwargs: Any) -> RetType:
+    def decorator(self: Reporter, *args: str, **kwargs: str) -> RetType:
         if not self.serverHost:
             raise RuntimeError("Must specify serverHost (configuration property: serverhost) to use remote features.")
         if not self.serverAuthToken:
@@ -53,7 +53,7 @@ def remote_checks(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
 def signature_checks(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
     '''Decorator to perform error checks before using signature features'''
     @functools.wraps(wrapped)
-    def decorator(self: Reporter, *args: Any, **kwargs: Any) -> RetType:
+    def decorator(self: Reporter, *args: str, **kwargs: str) -> RetType:
         if not self.sigCacheDir:
             raise RuntimeError("Must specify sigCacheDir (configuration property: sigdir) to use signatures.")
         return wrapped(self, *args, **kwargs)
@@ -64,7 +64,7 @@ def requests_retry(wrapped: Callable[..., Any]) -> Callable[..., Any]:
     '''Wrapper around requests methods that retries up to 2 minutes if it's likely that the response codes indicate a
     temporary error'''
     @functools.wraps(wrapped)
-    def wrapper(*args: Any, **kwds: Any) -> Any:
+    def wrapper(*args: str, **kwds: Any) -> Any:
         success = kwds.pop("expected")
         current_timeout = 2
         while True:
@@ -205,6 +205,6 @@ class Reporter(ABC):
         return requests_retry(self._session.patch)(*args, **kwds)
 
     @staticmethod
-    def serverError(response) -> RuntimeError:
+    def serverError(response: requests.Response) -> RuntimeError:
         return RuntimeError("Server unexpectedly responded with status code %s: %s" %
                             (response.status_code, response.text))
