@@ -12,7 +12,6 @@ module = [
     "enumfields",  # Package: django-enumfields
     "enumfields.fields",  # Package: django-enumfields
     "fasteners",  # Package: fasteners
-    "ffpuppet",  # Package: ffpuppet
     "fuzzing_decision.common.pool",  # Package: orion (Mozilla, needs FuzzManager types)
     "laniakea.core.providers.ec2",  # Package: laniakea (Mozilla, currently archived)
     "laniakea.core.providers.gce",  # Package: laniakea (Mozilla, currently archived)
