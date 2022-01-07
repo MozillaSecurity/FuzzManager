@@ -50,9 +50,9 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         '''
-        assert isinstance(self.serverHost, str)
-        assert isinstance(self.serverPort, int)
-        assert isinstance(self.serverProtocol, str)
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (self.serverProtocol, self.serverHost,
                                                                      self.serverPort)
 
@@ -73,7 +73,7 @@ class Collector(Reporter):
         and invalidating old ones. (This is a non-standard use case;
         you probably want to use refresh() instead.)
         '''
-        assert isinstance(self.sigCacheDir, str)
+        assert self.sigCacheDir is not None
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
                 raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
@@ -110,9 +110,9 @@ class Collector(Reporter):
                          will be stored on the server in JSON format. This metadata is combined
                          with possible metadata stored in the L{ProgramConfiguration} inside crashInfo.
         '''
-        assert isinstance(self.serverHost, str)
-        assert isinstance(self.serverPort, int)
-        assert isinstance(self.serverProtocol, str)
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # Serialize our crash information, testcase and metadata into a dictionary to POST
@@ -137,7 +137,7 @@ class Collector(Reporter):
             data["testcase_size"] = testCaseSize
             data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
-        assert isinstance(crashInfo.configuration, ProgramConfiguration)
+        assert crashInfo.configuration is not None
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
         data["os"] = crashInfo.configuration.os
@@ -145,8 +145,8 @@ class Collector(Reporter):
         if crashInfo.configuration.version:
             data["product_version"] = crashInfo.configuration.version
 
-        assert isinstance(self.clientId, str)
-        assert isinstance(self.tool, str)
+        assert self.clientId is not None
+        assert self.tool is not None
         data["client"] = self.clientId
         data["tool"] = self.tool
 
@@ -180,7 +180,7 @@ class Collector(Reporter):
         @rtype: tuple
         @return: Tuple containing filename of the signature and metadata matching, or None if no match.
         '''
-        assert isinstance(self.sigCacheDir, str)
+        assert self.sigCacheDir is not None
         cachedSigFiles = os.listdir(self.sigCacheDir)
 
         for sigFile in cachedSigFiles:
@@ -233,9 +233,9 @@ class Collector(Reporter):
         @param crashId: ID of the requested crash entry on the server side
         @return: Tuple containing name of the file where the test was stored and the raw JSON response
         '''
-        assert isinstance(self.serverHost, str)
-        assert isinstance(self.serverPort, int)
-        assert isinstance(self.serverProtocol, str)
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (self.serverProtocol, self.serverHost, self.serverPort,
                                                             crashId)
 
@@ -269,9 +269,9 @@ class Collector(Reporter):
         @param bucketId: ID of the requested bucket on the server side
         @return: generator of filenames where tests were stored.
         '''
-        assert isinstance(self.serverHost, str)
-        assert isinstance(self.serverPort, int)
-        assert isinstance(self.serverProtocol, str)
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         params: dict[str, str] | None = {
             "query": json.dumps({
                 "op": "OR",
@@ -315,7 +315,7 @@ class Collector(Reporter):
         @param signature: CrashSignature to store
         @return: Name of the file that the signature was written to
         '''
-        assert isinstance(self.sigCacheDir, str)
+        assert self.sigCacheDir is not None
         h = hashlib.new('sha1')
         if str is bytes:
             h.update(str(signature))
@@ -567,13 +567,13 @@ def main(args: list[str] | None = None) -> int:
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
-            assert isinstance(args, list)
+            assert args is not None
             print("Command line arguments: %s" % " ".join(args))
             print("")
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
-            assert isinstance(env, dict)
+            assert env is not None
             print("Environment variables: %s", " ".join("%s = %s" % (k, v) for (k, v) in env.items()))
             print("")
 
