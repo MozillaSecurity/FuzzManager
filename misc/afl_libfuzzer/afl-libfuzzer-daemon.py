@@ -30,6 +30,8 @@ import time
 import traceback
 import zipfile
 from pathlib import Path
+from typing import IO
+from typing import Type
 
 from fasteners import InterProcessLock
 from six.moves import queue
@@ -56,20 +58,20 @@ NO_CORPUS_MSG = "INFO: A corpus is not provided, starting from an empty corpus"
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, process, killOnOOM=True, mid=None, mqueue=None):
+    def __init__(self, process: subprocess.Popen[str], killOnOOM: bool = True, mid: int | None = None, mqueue = None) -> None:
         threading.Thread.__init__(self)
 
         self.process = process
         self.fd = process.stderr
-        self.trace = []
+        self.trace: list[str] = []
         self.stderr = collections.deque([], 128)
-        self.inTrace = False
-        self.testcase = None
+        self.inTrace: bool = False
+        self.testcase: str | None = None
         self.killOnOOM = killOnOOM
         self.hadOOM = False
         self.hitThreadLimit = False
         self.inited = False
-        self.mid = mid
+        self.mid: int | None = mid
         self.mqueue = mqueue
 
         # Keep some statistics
@@ -80,7 +82,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.last_new_pc = 0
 
         # Store potential exceptions
-        self.exc = None
+        self.exc: Exception | None = None
 
     def run(self) -> None:
         assert(not self.hitThreadLimit)
@@ -157,13 +159,13 @@ class LibFuzzerMonitor(threading.Thread):
             if self.mqueue is not None:
                 self.mqueue.put(self.mid)
 
-    def getASanTrace(self):
+    def getASanTrace(self) -> list[str]:
         return self.trace
 
-    def getTestcase(self):
+    def getTestcase(self) -> str | None:
         return self.testcase
 
-    def getStderr(self):
+    def getStderr(self) -> list[collections.deque[int]]:
         return list(self.stderr)
 
     def terminate(self) -> None:
@@ -174,6 +176,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.process.terminate()
 
         # Emulate a wait() with timeout through poll and sleep
+        maxSleepTime: int | float
         (maxSleepTime, pollInterval) = (10, 0.2)
         while self.process.poll() is None and maxSleepTime > 0:
             maxSleepTime -= pollInterval
@@ -185,14 +188,11 @@ class LibFuzzerMonitor(threading.Thread):
             self.process.wait()
 
 
-def command_file_to_list(cmd_file):
+def command_file_to_list(cmd_file: str) -> tuple[int, list[str]]:
     '''
     Open and parse custom command line file
 
-    @type cmd_file: String
     @param cmd_file: Command line file containing list of commands
-
-    @rtype: Tuple
     @return: Test index in list and the command as a list of strings
     '''
     cmdline = list()
@@ -208,20 +208,13 @@ def command_file_to_list(cmd_file):
     return test_idx, cmdline
 
 
-def write_stats_file(outfile, fields, stats, warnings):
+def write_stats_file(outfile: str, fields: list[str], stats, warnings: list[str]) -> None:
     '''
     Write the given stats data to the specified file
 
-    @type outfile: str
     @param outfile: Output file for statistics
-
-    @type fields: list
     @param fields: The list of fields to write out (defines the order as well)
-
-    @type stats: dict
     @param stats: The dictionary containing the actual data
-
-    @type warnings: list
     @param warnings: Any textual warnings to write in addition to stats
     '''
 
@@ -245,18 +238,13 @@ def write_stats_file(outfile, fields, stats, warnings):
     return
 
 
-def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
+def write_aggregated_stats_afl(base_dirs: list[str], outfile: str, cmdline_path: str | None = None) -> None:
     '''
     Generate aggregated statistics from the given base directories
     and write them to the specified output file.
 
-    @type base_dirs: list
     @param base_dirs: List of AFL base directories
-
-    @type outfile: str
     @param outfile: Output file for aggregated statistics
-
-    @type cmdline_path: String
     @param cmdline_path: Optional command line file to use instead of the
                          one found inside the base directory.
     '''
@@ -288,7 +276,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     fields.extend(wanted_fields_max)
 
     # Warnings to include
-    warnings = list()
+    warnings: list[str] = list()
 
     aggregated_stats = {}
 
@@ -301,7 +289,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     for field in wanted_fields_all:
         aggregated_stats[field] = []
 
-    def convert_num(num):
+    def convert_num(num: str) -> float | int:
         if '.' in num:
             return float(num)
         return int(num)
@@ -346,6 +334,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
             aggregated_stats[field_name] = val
 
     # Verify fuzzmanagerconf exists and can be parsed
+    assert cmdline_path is not None
     _, cmdline = command_file_to_list(cmdline_path)
     target_binary = cmdline[0] if cmdline else None
 
@@ -371,21 +360,14 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
 
 
-def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
+def write_aggregated_stats_libfuzzer(outfile: str, stats, monitors: list[LibFuzzerMonitor], warnings: list[str]) -> None:
     '''
     Generate aggregated statistics for the given overall libfuzzer stats and the individual monitors.
     Results are written to the specified output file.
 
-    @type outfile: str
     @param outfile: Output file for aggregated statistics
-
-    @type stats: dict
     @param stats: Dictionary containing overall stats
-
-    @type monitors: list
     @param monitors: A list of LibFuzzerMonitor instances
-
-    @type warnings: list
     @param warnings: Any textual warnings to write in addition to stats
     '''
 
@@ -475,30 +457,19 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
 
 
-def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_path=None, firefox=None,
-                 firefox_prefs=None, firefox_extensions=None, firefox_testpath=None, transform=None):
+def scan_crashes(base_dir: str, collector: Collector, cmdline_path: str | None = None, env_path: str | None = None, test_path: str | None = None, firefox: str | None = None,
+                 firefox_prefs: str | None = None, firefox_extensions: str | None = None, firefox_testpath: str | None = None, transform: str | None = None):
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
 
-    @type base_dir: String
     @param base_dir: AFL base directory
-
-    @type cmdline_path: String
     @param cmdline_path: Optional command line file to use instead of the
                          one found inside the base directory.
-
-    @type env_path: String
     @param env_path: Optional file containing environment variables.
-
-    @type test_path: String
     @param test_path: Optional filename where to copy the test before
                       attempting to reproduce a crash.
-
-    @type transform: String
     @param transform: Optional path to script for applying post-crash
                       transformations.
-
-    @rtype: int
     @return: Non-zero return code on failure
     '''
     crash_dir = os.path.join(base_dir, "crashes")
@@ -593,7 +564,7 @@ def scan_crashes(base_dir, collector, cmdline_path=None, env_path=None, test_pat
             ffpInst.clean_up()
 
 
-def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
+def setup_firefox(bin_path: str, prefs_path: str | None, ext_paths: str | None, test_path: str):
     ffp = FFPuppet(use_xvfb=True)
 
     # For now we support only one extension, but FFPuppet will handle
@@ -618,7 +589,7 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     return (ffp, cmd, env)
 
 
-def test_binary_asan(bin_path):
+def test_binary_asan(bin_path: str) -> bool:
     process = subprocess.Popen(
         ["nm", "-g", bin_path],
         stdin=subprocess.PIPE,
@@ -633,17 +604,12 @@ def test_binary_asan(bin_path):
     return False
 
 
-def apply_transform(script_path, testcase_path):
+def apply_transform(script_path: str, testcase_path: str) -> str:
     """
     Apply a post-crash transformation to the testcase
 
-    @type script_path: String
     @param script_path: Path to the transformation script
-
-    @type testcase_path: String
     @param testcase_path: Path to the testcase
-
-    @rtype: String
     @return: Path to the archive containing the original and transformed testcase
     """
 
@@ -852,6 +818,7 @@ def main(argv: list[str] | None = None) -> int:
         s3m = S3Manager(opts.s3_bucket, opts.project, opts.build_project, opts.build_zip_name)
 
     if opts.s3_queue_status:
+        assert s3m is not None
         status_data = s3m.get_queue_status()
         total_queue_files = 0
 
@@ -863,6 +830,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if opts.s3_corpus_status:
+        assert s3m is not None
         status_data = s3m.get_corpus_status()
         total_corpus_files = 0
 
@@ -874,18 +842,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if opts.s3_queue_cleanup:
+        assert s3m is not None
         s3m.clean_queue_dirs()
         return 0
 
     if opts.s3_build_download:
+        assert s3m is not None
         s3m.download_build(opts.s3_build_download)
         return 0
 
     if opts.s3_build_upload:
+        assert s3m is not None
         s3m.upload_build(opts.s3_build_upload)
         return 0
 
     if opts.s3_corpus_download:
+        assert s3m is not None
         if opts.s3_corpus_download_size is not None:
             opts.s3_corpus_download_size = int(opts.s3_corpus_download_size)
 
@@ -893,10 +865,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if opts.s3_corpus_upload:
+        assert s3m is not None
         s3m.upload_corpus(opts.s3_corpus_upload, opts.s3_corpus_replace)
         return 0
 
     if opts.s3_corpus_refresh:
+        assert s3m is not None
         if opts.aflfuzz and not opts.aflbindir:
             print("Error: Must specify --afl-binary-dir for refreshing the test corpus", file=sys.stderr)
             return 2
@@ -1045,6 +1019,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     if opts.libfuzzer:
+        assert s3m is not None
         if not opts.rargs:
             print("Error: No arguments specified", file=sys.stderr)
             return 2
@@ -1286,6 +1261,7 @@ def main(argv: list[str] | None = None) -> int:
                     corpus_size = len(os.listdir(corpus_dir))
 
                     # Update our auto-reduction target
+                    assert corpus_auto_reduce_ratio is not None
                     if corpus_size >= opts.libfuzzer_auto_reduce_min:
                         corpus_auto_reduce_threshold = int(corpus_size * (1 + corpus_auto_reduce_ratio))
                     else:
@@ -1447,6 +1423,7 @@ def main(argv: list[str] | None = None) -> int:
                 for i in range(len(monitors)):
                     if monitors[i] is not None:
                         monitor = monitors[i]
+                        assert monitor is not None
                         monitor.terminate()
                         monitor.join(10)
             finally:
@@ -1532,6 +1509,7 @@ def main(argv: list[str] | None = None) -> int:
 
                 # Only upload queue files every 20 minutes
                 if opts.s3_queue_upload and last_queue_upload < int(time.time()) - 1200:
+                    assert s3m is not None
                     for afl_out_dir in afl_out_dirs:
                         s3m.upload_afl_queue_dir(afl_out_dir, new_cov_only=True)
                     last_queue_upload = int(time.time())
