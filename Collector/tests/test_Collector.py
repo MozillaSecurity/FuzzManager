@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import platform
 from unittest.mock import Mock, patch
 import zipfile
@@ -55,7 +56,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = ('server.tests',)
 
 
-def test_collector_help(capsys):
+def test_collector_help(capsys: pytest.LogCaptureFixture) -> None:
     '''Test that help prints without throwing'''
     with pytest.raises(SystemExit):
         main()
@@ -65,7 +66,7 @@ def test_collector_help(capsys):
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
+def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user) -> None:
     '''Test crash submission'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -175,7 +176,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
         collector.submit(crashInfo, str(testcase_path))
 
 
-def test_collector_refresh(capsys, tmp_path):
+def test_collector_refresh(capsys: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     '''Test signature downloads'''
     # create a test signature zip
     test2_path = tmp_path / 'test2.signature'
@@ -259,7 +260,7 @@ def test_collector_refresh(capsys, tmp_path):
             collector.refresh()
 
 
-def test_collector_generate_search(tmp_path):
+def test_collector_generate_search(tmp_path: Path) -> None:
     '''Test sigcache generation and search'''
     # create a cache dir
     cache_dir = tmp_path / 'sigcache'
@@ -298,7 +299,7 @@ def test_collector_generate_search(tmp_path):
     assert result is None
 
 
-def test_collector_download(tmp_path, monkeypatch):
+def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     '''Test testcase downloads'''
     # create Collector
     collector = Collector(serverHost='aol.com',
