@@ -100,7 +100,7 @@ class BugProvider(models.Model):
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.hostname
 
 
@@ -222,7 +222,7 @@ class Bucket(models.Model):
 
         return inList, outList, inListCount, outListCount
 
-    def optimizeSignature(self, unbucketed_entries):
+    def optimizeSignature(self, unbucketed_entries) -> tuple[CrashSignature | None, list[CrashEntry]]:
         buckets = Bucket.objects.all()
 
         signature = self.getSignature()
@@ -367,6 +367,9 @@ class CrashEntry(models.Model):
         # deserializeFields method if you need this data.
 
         self._original_bucket = None
+
+        self.crashinfo: CrashInfo
+
         super().__init__(*args, **kwargs)
 
     @classmethod
@@ -375,13 +378,13 @@ class CrashEntry(models.Model):
         instance._original_bucket = instance.bucket_id
         return instance
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
             utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
 
-            def sanitize_utf8(s):
+            def sanitize_utf8(s: str) -> str:
                 if not isinstance(s, six.text_type):
                     s = six.text_type(s, 'utf-8')
 
@@ -464,7 +467,7 @@ class CrashEntry(models.Model):
 
         return crashInfo
 
-    def reparseCrashInfo(self):
+    def reparseCrashInfo(self) -> None:
         # Purges cached crash information and then forces a reparsing
         # of the raw crash information. Based on the new crash information,
         # the depending fields are also repopulated.
@@ -495,7 +498,7 @@ class CrashEntry(models.Model):
     @staticmethod
     def deferRawFields(
             queryset: QuerySet[MT],
-            requiredOutputSources: tuple[str, str, str] = ("", "", ""),
+            requiredOutputSources: tuple[str, str, str] | list[str] = ("", "", ""),
         ) -> QuerySet[MT]:
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.

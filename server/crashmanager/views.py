@@ -26,6 +26,7 @@ from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import six
+from typing import Type
 from typing import cast
 
 from wsgiref.util import FileWrapper
@@ -98,7 +99,7 @@ def filter_crash_entries_by_toolfilter(request: HttpRequest, entries, restricted
     return entries
 
 
-def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted_only=False, legacy_filters=True):
+def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted_only: bool = False, legacy_filters: bool = True):
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
@@ -126,7 +127,7 @@ def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted
     return signatures
 
 
-def filter_bucket_hits_by_toolfilter(request: HttpRequest, hits, restricted_only=False):
+def filter_bucket_hits_by_toolfilter(request: HttpRequest, hits, restricted_only: bool = False):
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
@@ -319,12 +320,14 @@ def editCrashEntry(request: HttpRequest, crashid: int) -> HttpResponseRedirect |
         if entry.testcase:
             if entry.testcase.isBinary:
                 if request.POST['testcase'] != "(binary)":
+                    assert entry.testcase.content is not None
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.isBinary = False
                     # TODO: The file extension stored on the server remains and is likely to be wrong
                     entry.testcase.storeTestAndSave()
             else:
                 if request.POST['testcase'] != entry.testcase.content:
+                    assert entry.testcase.content is not None
                     entry.testcase.content = request.POST['testcase']
                     entry.testcase.storeTestAndSave()
 
@@ -395,11 +398,11 @@ def newSignature(request: HttpRequest) -> HttpResponse:
             errorMsg = crashInfo.failureReason
             proposedSignature = crashInfo.createCrashSignature(maxFrames=maxStackFrames)
 
-        proposedSignature = str(proposedSignature)
+        proposedSignature_str = str(proposedSignature)
         proposedShortDesc = crashInfo.createShortSignature()
 
         data = {
-            'proposedSig': json.loads(proposedSignature),
+            'proposedSig': json.loads(proposedSignature_str),
             'proposedDesc': proposedShortDesc,
             'warningMessage': errorMsg
         }
@@ -408,10 +411,10 @@ def newSignature(request: HttpRequest) -> HttpResponse:
 
 
 def deleteSignature(request: HttpRequest, sigid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'))
-    if not bucket:
+    buckets = Bucket.objects.filter(pk=sigid).annotate(size=Count('crashentry'))
+    if not buckets:
         raise Http404
-    bucket = bucket[0]
+    bucket = buckets[0]
 
     check_authorized_for_signature(request, bucket)
 
@@ -621,7 +624,7 @@ def findSignatures(request: HttpRequest, crashid: int) -> HttpResponse:
         return render(request, 'signatures/find.html', {'buckets': similarBuckets, 'crashentry': entry})
 
 
-def createExternalBug(request: HttpRequest, crashid: int):
+def createExternalBug(request: HttpRequest, crashid: int) -> HttpResponse:
     entry = get_object_or_404(CrashEntry, pk=crashid)
     check_authorized_for_crash_entry(request, entry)
 
@@ -761,7 +764,7 @@ class JsonQueryFilterBackend(BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """
         Return a filtered queryset.
         """
@@ -783,7 +786,7 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
     Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
     Only unrestricted users can use ignore_toolfilter.
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """Return a filtered queryset"""
         ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
         try:
@@ -799,7 +802,7 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
 
 class WatchFilterCrashesBackend(BaseFilterBackend):
     """Filters the queryset to retrieve watched entries if '?watch=<int>'"""
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         watch_id = request.query_params.get('watch', 'false').lower()
         if watch_id == 'false':
             return queryset
@@ -812,7 +815,7 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
     Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
     Only unrestricted users can use ignore_toolfilter.
     """
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         """Return a filtered queryset"""
         ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
         try:
@@ -828,13 +831,13 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
 
 class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 
 class DeferRawFilterBackend(BaseFilterBackend):
     """Optionally defer raw fields"""
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(self, request: HttpRequest, queryset, view):
         include_raw = request.query_params.get('include_raw', '1')
         try:
             include_raw = int(include_raw)
@@ -873,10 +876,11 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         else:
             return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
 
-    def partial_update(self, request, pk=None):
+    def partial_update(self, request: HttpRequest, pk: int | None = None) -> Response:
         """Update individual crash fields."""
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
+            assert request.method is not None
             raise MethodNotAllowed(request.method)
 
         allowed_fields = {"testcase_quality"}
@@ -923,7 +927,7 @@ class BucketViewSet(mixins.CreateModelMixin,
         else:
             return super(BucketViewSet, self).get_serializer(*args, **kwds)
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs) -> Response:
         response = super().list(request, *args, **kwargs)
 
         if self.vue and response.status_code == 200:
@@ -952,7 +956,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
         return response
 
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         instance = self.get_object()
         ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
@@ -999,7 +1003,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
         return response
 
-    def __validate(self, request, bucket, submitSave, reassign):
+    def __validate(self, request: HttpRequest, bucket: Bucket, submitSave: bool, reassign: bool):
         try:
             bucket.getSignature()
         except RuntimeError as e:
@@ -1039,10 +1043,10 @@ class BucketViewSet(mixins.CreateModelMixin,
             'outListCount': outListCount,
         }
 
-    def update(self, request, *args, **kwargs):
+    def update(self, request: HttpRequest, *args: str, **kwargs: str) -> None:
         raise MethodNotAllowed(request.method)
 
-    def partial_update(self, request, *args, **kwargs):
+    def partial_update(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
             raise MethodNotAllowed(request.method)
@@ -1088,7 +1092,7 @@ class BucketViewSet(mixins.CreateModelMixin,
             data=data,
         )
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -1111,7 +1115,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
 class BucketVueViewSet(BucketViewSet):
     """API endpoint that allows viewing Buckets and always uses Vue serializer"""
-    def get_serializer(self, *args, **kwds):
+    def get_serializer(self, *args, **kwds) -> BucketVueSerializer:
         self.vue = True
         return BucketVueSerializer(*args, **kwds)
 
@@ -1166,7 +1170,7 @@ class NotificationViewSet(mixins.ListModelMixin,
         return Response(status=status.HTTP_200_OK)
 
 
-def json_to_query(json_str):
+def json_to_query(json_str: str):
     """
     This method converts JSON objects into trees of Django Q objects.
     It can be used to provide the user the ability to perform complex
@@ -1195,7 +1199,7 @@ def json_to_query(json_str):
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 
-    def get_query_obj(obj, key=None):
+    def get_query_obj(obj, key=None) -> Q:
 
         if obj is None or isinstance(obj, (six.text_type, list, int)):
             kwargs = {key: obj}
@@ -1235,7 +1239,7 @@ class AbstractDownloadView(APIView):
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (CheckAppPermission,)
 
-    def response(self, file_path, filename, content_type='application/octet-stream'):
+    def response(self, file_path: str, filename: str, content_type: str = 'application/octet-stream') -> HttpResponse:
         if not os.path.exists(file_path):
             return HttpResponse(status=404)
 
@@ -1244,12 +1248,12 @@ class AbstractDownloadView(APIView):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
         return response
 
-    def get(self):
+    def get(self, _request: HttpRequest, _crashid: int) -> HttpResponse:
         return HttpResponse(status=500)
 
 
 class TestDownloadView(AbstractDownloadView):
-    def get(self, request, crashid):
+    def get(self, request: HttpRequest, crashid: int) -> HttpResponse:
         storage_base = getattr(django_settings, 'TEST_STORAGE', None)
         if not storage_base:
             # This is a misconfiguration
@@ -1266,7 +1270,7 @@ class TestDownloadView(AbstractDownloadView):
 
 
 class SignaturesDownloadView(AbstractDownloadView):
-    def get(self, request, format=None):
+    def get(self, request: HttpRequest, format=None) -> HttpResponse:
         deny_restricted_users(request)
 
         storage_base = getattr(django_settings, 'SIGNATURE_STORAGE', None)
@@ -1304,7 +1308,7 @@ class BugzillaTemplateEditView(UpdateView[BugzillaTemplate]):
         context['title'] = 'Edit template'
         return context
 
-    def get_form_class(self):
+    def get_form_class(self) -> Type[BugzillaTemplateBugForm] | Type[BugzillaTemplateCommentForm]:
         if self.object.mode == BugzillaTemplateMode.Bug:
             return BugzillaTemplateBugForm
         else:
