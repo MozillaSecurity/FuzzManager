@@ -36,21 +36,21 @@ RetType = TypeVar("RetType")
 
 
 class CloudProviderError(Exception):
-    TYPE = 'unclassified'
+    TYPE: str = 'unclassified'
 
-    def __init__(self, message):
+    def __init__(self, message) -> None:
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '%s: %s (%s)' % (type(self).__name__, self.message, self.TYPE)
 
 
 class CloudProviderTemporaryFailure(CloudProviderError):
-    TYPE = 'temporary-failure'
+    TYPE: str = 'temporary-failure'
 
 
 class CloudProviderInstanceCountError(CloudProviderError):
-    TYPE = 'max-spot-instance-count-exceeded'
+    TYPE: str = 'max-spot-instance-count-exceeded'
 
 
 def wrap_provider_errors(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
@@ -198,11 +198,10 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_cores_per_instance() -> None:
+    def get_cores_per_instance() -> dict[str, int]:
         '''
         returns dictionary of instance types and their number of cores
 
-        @rtype: dictionary
         @return: instance types and how many cores per instance type
         '''
         return
@@ -279,11 +278,10 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_name() -> None:
+    def get_name() -> str:
         '''
         used to return name of cloud provider
 
-        @rtype: string
         @return: string representation of the cloud provider
         '''
         return

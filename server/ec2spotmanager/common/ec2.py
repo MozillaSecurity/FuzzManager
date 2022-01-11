@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-import collections
+from typing import NamedTuple
 
 
-InstanceType = collections.namedtuple("InstanceType", ("api_name", "vCPUs"))
+class InstanceType(NamedTuple):
+    """InstanceType NamedTuple type information."""
+
+    api_name: str
+    vCPUs: int
 
 
 INSTANCE_TYPES = (
