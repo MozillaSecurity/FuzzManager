@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import re
 
+from server.covmanager.models import Collection
 
-def merge_coverage_data(r, s):
+
+def merge_coverage_data(r: Collection, s) -> dict[str, int]:
     # These variables are mainly for debugging purposes. We count the number
     # of warnings we encounter during merging, which are mostly due to
     # bugs in GCOV. These statistics can be included in the report description
@@ -29,7 +31,7 @@ def merge_coverage_data(r, s):
         'coverable_mismatch_count': 0
     }
 
-    def merge_recursive(r, s):
+    def merge_recursive(r: Collection, s):
         assert(r['name'] == s['name'])
 
         if "children" in s:
@@ -107,7 +109,7 @@ def merge_coverage_data(r, s):
     return stats
 
 
-def calculate_summary_fields(node, name=None):
+def calculate_summary_fields(node: Collection, name: str | None = None) -> None:
     node["name"] = name
     node["linesTotal"] = 0
     node["linesCovered"] = 0
@@ -140,7 +142,7 @@ def calculate_summary_fields(node, name=None):
         node["coveragePercent"] = 0.0
 
 
-def apply_include_exclude_directives(node, directives):
+def apply_include_exclude_directives(node: Collection, directives: list[str]) -> None:
     """
     Applies the given include and exclude directives to the given nodeself.
     Directives either start with a + or a - for include or exclude, followed
@@ -149,9 +151,7 @@ def apply_include_exclude_directives(node, directives):
     are forward slashes, must not have a trailing slash and glob characters
     are not allowed. ** is additionally supported for recursive directory matching.
     @param node: The coverage node to modify, in server-side recursive format
-    @type node: dict
     @param directives: The directives to apply
-    @type directives: list(str)
     This method modifies the node in-place, nothing is returned.
     IMPORTANT: This method does *not* recalculate any total/summary fields.
                You *must* call L{calculate_summary_fields} after applying
@@ -196,13 +196,13 @@ def apply_include_exclude_directives(node, directives):
                 # convert glob pattern to regex
                 part = part.replace("\\*", ".*").replace("\\?", ".")
                 # compile the resulting regex
-                parts.append(re.compile(part))
+                parts.append(str(re.compile(part)))
         directives_new.append((what, parts))
 
-    def _is_dir(node):
+    def _is_dir(node: Collection) -> bool:
         return "children" in node
 
-    def __apply_include_exclude_directives(node, directives):
+    def __apply_include_exclude_directives(node: Collection, directives) -> None:
         if not _is_dir(node):
             return
 
@@ -303,7 +303,7 @@ def apply_include_exclude_directives(node, directives):
     __apply_include_exclude_directives(node, directives_new)
 
 
-def get_flattened_names(node, prefix: str = ""):
+def get_flattened_names(node: Collection, prefix: str = "") -> set[str | None]:
     """
     Returns a list of flattened paths (files and directories) of the given node.
 
@@ -311,14 +311,10 @@ def get_flattened_names(node, prefix: str = ""):
     All slashes in paths will be forward slashes and not use any trailing slashes.
 
     @param node: The coverage node to process, in server-side recursive format
-    @type node: dict
-
     @param prefix: An optional prefix to prepend to each name
-
     @return The list of all paths occurring in the given node.
-    @rtype: list(str)
     """
-    def __get_flattened_names(node, prefix, result):
+    def __get_flattened_names(node: Collection, prefix: str, result: set[str | None]) -> set[str | None]:
         current_name = node["name"]
         if current_name is None:
             new_prefix = ""
