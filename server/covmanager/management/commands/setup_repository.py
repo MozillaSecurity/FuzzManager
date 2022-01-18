@@ -17,7 +17,7 @@ class Command(BaseCommand):
         parser.add_argument("provider", help="SourceCodeProvider subclass")
         parser.add_argument("location", help="path to the repository root")
 
-    def handle(self, name: str, provider: str, location: str, **opts: Any) -> None:
+    def handle(self, name, provider, location, **opts: Any) -> None:
 
         if not name:
             raise CommandError("Error: invalid repository name")
@@ -32,8 +32,7 @@ class Command(BaseCommand):
         provider = {"git": "GITSourceCodeProvider",
                     "hg": "HGSourceCodeProvider"}.get(provider, provider)
         try:
-            # Type information here may be confused by the need for Python 2 compatibility
-            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])  # type: ignore[list-item]
+            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])
         except ImportError:
             raise CommandError("Error: '%s' is not a valid source code provider!" % provider)
 
