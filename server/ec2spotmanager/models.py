@@ -63,7 +63,7 @@ class PoolConfiguration(models.Model):
     gce_env_include_macros = bool(models.BooleanField(default=False))
     gce_raw_config = str(models.TextField(blank=True, null=True))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # These variables can hold temporarily deserialized data
         self.instance_tags_dict = None
         self.instance_tags_override = None

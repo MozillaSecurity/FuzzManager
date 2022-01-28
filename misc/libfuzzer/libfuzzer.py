@@ -33,7 +33,7 @@ from FTB.Signatures.CrashInfo import CrashInfo  # noqa
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, fd: IO[str]):
+    def __init__(self, fd: IO[str]) -> None:
         assert callable(fd.readline)
 
         threading.Thread.__init__(self)

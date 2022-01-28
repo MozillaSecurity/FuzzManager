@@ -108,7 +108,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfigurat
         )
         read_only_fields = ('id', 'created')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(ReportConfigurationSerializer, self).__init__(*args, **kwargs)
 
         request = self.context.get("request")
@@ -162,7 +162,7 @@ class ReportSerializer(serializers.ModelSerializer[Report]):
         )
         read_only_fields = ('id', 'data_created', 'coverage')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
         request = self.context.get("request")

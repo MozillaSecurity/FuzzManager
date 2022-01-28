@@ -196,7 +196,7 @@ class UserSettingsForm(ModelForm[User]):
             'bucket_hit'
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 

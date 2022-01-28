@@ -44,7 +44,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer[PoolConfiguration])
     gce_raw_config = serializers.DictField(child=serializers.CharField(), allow_null=True)
     gce_raw_config_override = serializers.BooleanField(default=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self._flatten = kwargs.pop('flatten', False)
         super(PoolConfigurationSerializer, self).__init__(*args, **kwargs)
 

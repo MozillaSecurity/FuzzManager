@@ -33,7 +33,7 @@ class SourceCodeProvider():
     '''
     Abstract base class that defines what interfaces Source Code Providers must implement
     '''
-    def __init__(self, location: str):
+    def __init__(self, location: str) -> None:
         self.location = location
 
     @abstractmethod

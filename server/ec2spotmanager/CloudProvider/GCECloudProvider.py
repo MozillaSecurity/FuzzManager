@@ -36,7 +36,7 @@ from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
 
 class _LowercaseDict(dict):
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, *args, **kwds) -> None:
         super(_LowercaseDict, self).__init__()
         if len(args) > 1:
             raise TypeError("dict expected at most 1 arguments, got %d" % (len(args),))

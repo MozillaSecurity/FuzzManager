@@ -7,7 +7,7 @@ register = template.Library()
 
 
 class RecurseReportSummaryTree(template.Node):
-    def __init__(self, template_nodes, config_var):
+    def __init__(self, template_nodes, config_var) -> None:
         self.template_nodes = template_nodes
         self.config_var = config_var
 

@@ -21,7 +21,7 @@ from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, Un
 
 
 class HGSourceCodeProvider(SourceCodeProvider):
-    def __init__(self, location: str):
+    def __init__(self, location: str) -> None:
         super(HGSourceCodeProvider, self).__init__(location)
 
     def getSource(self, filename: str, revision: str) -> str:

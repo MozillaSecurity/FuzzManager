@@ -24,7 +24,7 @@ from ..models import BugzillaTemplate, User
 
 
 class BugzillaProvider(Provider):
-    def __init__(self, pk, hostname):
+    def __init__(self, pk, hostname) -> None:
         super(BugzillaProvider, self).__init__(pk, hostname)
 
     def getTemplateForUser(self, request, crashEntry):

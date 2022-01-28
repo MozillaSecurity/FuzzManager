@@ -21,7 +21,7 @@ import threading
 
 
 class WaitpidMonitor(threading.Thread):
-    def __init__(self, pid: int, options: int):
+    def __init__(self, pid: int, options: int) -> None:
         threading.Thread.__init__(self)
 
         self.pid: int = pid

@@ -49,7 +49,7 @@ class Collection(models.Model):
     client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
     coverage = cast(CollectionFile, models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # This variable can hold the deserialized contents of the coverage blob
         self.content = None
 

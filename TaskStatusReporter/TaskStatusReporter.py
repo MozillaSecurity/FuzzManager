@@ -40,7 +40,7 @@ __updated__ = '2014-10-01'
 
 class TaskStatusReporter(Reporter):
     @functools.wraps(Reporter.__init__)
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         kwargs.setdefault('tool', 'N/A')  # tool is required by remote_checks, but unused by TaskStatusReporter
         super(TaskStatusReporter, self).__init__(*args, **kwargs)
 

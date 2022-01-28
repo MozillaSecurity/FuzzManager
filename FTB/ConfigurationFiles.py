@@ -21,7 +21,7 @@ from six.moves import configparser
 
 
 class ConfigurationFiles():
-    def __init__(self, configFiles: list[str]):
+    def __init__(self, configFiles: list[str]) -> None:
         self.mainConfig: dict[str, str] = {}
         self.metadataConfig: dict[str, str] = {}
 

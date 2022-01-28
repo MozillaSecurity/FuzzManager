@@ -20,7 +20,7 @@ from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, Un
 
 
 class GITSourceCodeProvider(SourceCodeProvider):
-    def __init__(self, location: str):
+    def __init__(self, location: str) -> None:
         super(GITSourceCodeProvider, self).__init__(location)
 
     def getSource(self, filename: str, revision: str) -> str:

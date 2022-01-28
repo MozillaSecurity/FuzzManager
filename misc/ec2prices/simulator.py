@@ -111,7 +111,7 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
 
 
 class ConfigurationFile():
-    def __init__(self, configFile):
+    def __init__(self, configFile) -> None:
         self.simulations = OrderedDict()
         self.main = {}
         if configFile:

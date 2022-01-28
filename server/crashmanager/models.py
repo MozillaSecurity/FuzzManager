@@ -356,7 +356,7 @@ class CrashEntry(models.Model):
     cachedCrashInfo = str(models.TextField(blank=True, null=True))
     triagedOnce = bool(models.BooleanField(blank=False, default=False))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         # These variables can hold temporarily deserialized data
         self.argsList = None
         self.envList = None

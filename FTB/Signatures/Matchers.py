@@ -35,7 +35,7 @@ class Match(object):
 
 class StringMatch(Match):
 
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         self.isPCRE = False
         self.compiledValue = None
         self.patternContainsSlash = False
@@ -104,7 +104,7 @@ class NumberMatchType(object):
 
 class NumberMatch(Match):
 
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         self.matchType = None
 
         if isinstance(obj, bytes):

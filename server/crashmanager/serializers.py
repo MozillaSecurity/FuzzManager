@@ -37,7 +37,7 @@ class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
     testcase_quality = serializers.IntegerField(source='testcase.quality', required=False, default=0)
     testcase_isbinary = serializers.BooleanField(source='testcase.isBinary', required=False, default=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
 
         include_raw = kwargs.pop('include_raw', True)
 

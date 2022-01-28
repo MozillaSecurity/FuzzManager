@@ -108,7 +108,7 @@ def test_fulfilled_spot_instance(mocker):
     """spot instance requests are turned into instances when fulfilled"""
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
-        def __init__(self, *args, **kwds):
+        def __init__(self, *args, **kwds) -> None:
             super(_MockInstance, self).__init__(*args, **kwds)
             self._test_tags = {}
 
@@ -309,7 +309,7 @@ def test_spot_instance_blacklist(mocker):
         code = 'instance-terminated-by-service'
 
     class _MockReq(boto.ec2.spotinstancerequest.SpotInstanceRequest):
-        def __init__(self, *args, **kwds):
+        def __init__(self, *args, **kwds) -> None:
             super(_MockReq, self).__init__(*args, **kwds)
             self.state = 'cancelled'
             self.status = _status_code

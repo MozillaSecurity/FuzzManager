@@ -32,7 +32,7 @@ class Symptom(object):
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
     '''
-    def __init__(self, jsonObj):
+    def __init__(self, jsonObj) -> None:
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)
         self.jsonobj = jsonObj
@@ -85,7 +85,7 @@ class Symptom(object):
 
 
 class OutputSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -128,7 +128,7 @@ class OutputSymptom(Symptom):
 
 
 class StackFrameSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -161,7 +161,7 @@ class StackFrameSymptom(Symptom):
 
 
 class StackSizeSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -180,7 +180,7 @@ class StackSizeSymptom(Symptom):
 
 
 class CrashAddressSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -201,7 +201,7 @@ class CrashAddressSymptom(Symptom):
 
 
 class InstructionSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -239,7 +239,7 @@ class InstructionSymptom(Symptom):
 
 
 class TestcaseSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -269,7 +269,7 @@ class TestcaseSymptom(Symptom):
 
 
 class StackFramesSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''

@@ -25,7 +25,7 @@ class Provider():
     Abstract base
     class that defines what interfaces Bug Providers must implement
     '''
-    def __init__(self, pk, hostname):
+    def __init__(self, pk, hostname) -> None:
         self.pk = pk
         self.hostname = hostname
 

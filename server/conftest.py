@@ -70,7 +70,7 @@ def migration_hook(request):
 
     class migration_hook_result(object):
 
-        def __init__(self, _from, _to):
+        def __init__(self, _from, _to) -> None:
             self._to = _to
             executor = MigrationExecutor(connection)
             self.apps = executor.loader.project_state(_from).apps
