@@ -37,7 +37,7 @@ now = datetime.datetime.now()
 
 # This function must be defined at the module level so it can be pickled
 # by the multiprocessing module when calling this asynchronously.
-def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws_secret_key, instance_type):
+def get_spot_price_per_region(region_name: str, start_time: datetime.datetime, end_time: datetime.datetime, aws_key_id: str, aws_secret_key: str, instance_type: str):
     '''Gets spot prices of the specified region and instance type'''
 
     print("Region %s Instance Type %s Start %s End %s" % (region_name, instance_type, start_time.isoformat(),
@@ -67,8 +67,8 @@ def get_spot_price_per_region(region_name, start_time, end_time, aws_key_id, aws
     return r
 
 
-def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, instance_types, prices,
-                    use_multiprocess=False):
+def get_spot_prices(regions: dict[str, str], start_time: datetime.datetime, end_time: datetime.datetime, aws_key_id: str, aws_secret_key: str, instance_types: list[str], prices: list[str],
+                    use_multiprocess: bool = False) -> None:
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
         pool = Pool(cpu_count())
@@ -111,9 +111,9 @@ def get_spot_prices(regions, start_time, end_time, aws_key_id, aws_secret_key, i
 
 
 class ConfigurationFile():
-    def __init__(self, configFile) -> None:
-        self.simulations = OrderedDict()
-        self.main = {}
+    def __init__(self, configFile: str) -> None:
+        self.simulations: OrderedDict[str, str] = OrderedDict()
+        self.main: dict[str, str] = {}
         if configFile:
             self.parser = configparser.ConfigParser()
 
@@ -146,7 +146,7 @@ class ConfigurationFile():
 
                     self.simulations[section] = sectionMap
 
-    def getSectionMap(self, section):
+    def getSectionMap(self, section: str) -> dict[str, str]:
         ret = OrderedDict()
         try:
             options = self.parser.options(section)
@@ -157,7 +157,7 @@ class ConfigurationFile():
         return ret
 
 
-def main() -> None:
+def main() -> int:
     '''Command line options.'''
 
     # setup argparser
@@ -176,7 +176,7 @@ def main() -> None:
         print("Error: No simulations configured, exiting...")
         sys.exit(1)
 
-    results = OrderedDict()
+    results: OrderedDict[str, int] = OrderedDict()
 
     cacheFile = configFile.main["cache_file"]
     regions = configFile.main["regions"].split(",")
@@ -186,6 +186,7 @@ def main() -> None:
     aws_secret_key = configFile.main["aws_secret_key"]
 
     for (simulation_name, simulation) in configFile.simulations.items():
+        assert isinstance(simulation, dict)
         sim_module = importlib.import_module("simulations.%s" % simulation["handler"])
 
         print("Performing simulation '%s' ..." % simulation_name)
@@ -220,6 +221,7 @@ def main() -> None:
         if col_len is None or col_len < len(simulation):
             col_len = len(simulation)
 
+    assert isinstance(col_len, int)
     col_len += 1
 
     print("")
@@ -243,6 +245,8 @@ def main() -> None:
             sys.stdout.write(p)
             sys.stdout.write(" " * (len(simulation_b) - len(p) + 2))
         sys.stdout.write("\n")
+
+    return 0
 
 
 if __name__ == "__main__":

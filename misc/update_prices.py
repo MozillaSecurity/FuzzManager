@@ -55,7 +55,7 @@ FIELDS_BLACKLIST = {
 }
 
 
-def get_instance_types(regions=True, index_json=None):
+def get_instance_types(regions: bool = True, index_json: dict[str, object] | None = None) -> dict[str, object]:
     """Fetch instance type data from EC2 pricing API.
 
     regions: if True, this will add a "regions" field to each instance type, stating which regions support it.
@@ -89,8 +89,9 @@ def get_instance_types(regions=True, index_json=None):
             requests.get("https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json").json()
 
     data = index_json['products']
+    assert isinstance(data, dict)
 
-    instance_types = {}
+    instance_types: dict[str, object] = {}
 
     for product in data.values():
         if product["productFamily"] not in {"Compute Instance", "Compute Instance (bare metal)"} or \
@@ -100,6 +101,7 @@ def get_instance_types(regions=True, index_json=None):
                 product["attributes"]["location"] not in REGION_NAMES:
             continue
         instance_data = instance_types.setdefault(product["attributes"]["instanceType"], {})
+        assert isinstance(instance_data, dict)
         if instance_data:
             # assert that all fields are the same!
             new_data = {key: value for key, value in product["attributes"].items() if key not in FIELDS_BLACKLIST}
@@ -122,6 +124,7 @@ def get_instance_types(regions=True, index_json=None):
 
     # normalize units
     for instance_data in instance_types.values():
+        assert isinstance(instance_data, dict)
         if regions:
             instance_data["regions"] = list(instance_data["regions"])
         instance_data["vcpu"] = int(instance_data["vcpu"])
