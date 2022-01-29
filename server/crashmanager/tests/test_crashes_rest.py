@@ -56,14 +56,14 @@ LOG = logging.getLogger("fm.crashmanager.tests.crashes.rest")
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/crashes/", "/crashmanager/rest/crashes/1/"])
-def test_rest_crashes_no_auth(db, api_client, method, url):
+def test_rest_crashes_no_auth(db: str, api_client, method: str, url: str) -> None:
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['unauthorized']
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/crashes/", "/crashmanager/rest/crashes/1/"])
-def test_rest_crashes_no_perm(user_noperm, api_client, method, url):
+def test_rest_crashes_no_perm(user_noperm: str, api_client, method: str, url: str) -> None:
     """must yield forbidden without permission"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['forbidden']
 
@@ -83,12 +83,12 @@ def test_rest_crashes_no_perm(user_noperm, api_client, method, url):
     ("put", "/crashmanager/rest/crashes/1/", "normal"),
     ("put", "/crashmanager/rest/crashes/1/", "restricted"),
 ], indirect=["user"])
-def test_rest_crashes_methods(api_client, user, method, url):
+def test_rest_crashes_methods(api_client, user: str, method: str, url: str) -> None:
     """must yield method-not-allowed for unsupported methods"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['method_not_allowed']
 
 
-def _compare_rest_result_to_crash(result, crash, raw=True):
+def _compare_rest_result_to_crash(result, crash, raw: bool = True) -> None:
     expected_fields = {
         'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
         'product', 'product_version',
@@ -117,7 +117,7 @@ def _compare_rest_result_to_crash(result, crash, raw=True):
         assert value == obj
 
 
-def _compare_created_data_to_crash(data, crash, crash_address=None, short_signature=None):
+def _compare_created_data_to_crash(data, crash, crash_address: str | None = None, short_signature: str | None = None) -> None:
     for field in ('rawStdout', 'rawStderr', 'rawCrashData'):
         assert getattr(crash, field) == data[field].strip()
     if 'testcase' in data:
@@ -140,7 +140,7 @@ def _compare_created_data_to_crash(data, crash, crash_address=None, short_signat
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 @pytest.mark.parametrize("include_raw", [True, False])
-def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw):
+def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter: bool, include_raw: bool) -> None:
     """test that list returns the right crashes"""
     # if restricted or normal, must only list crashes in toolfilter
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None]
@@ -182,7 +182,7 @@ def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw)
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 @pytest.mark.parametrize("include_raw", [True, False])
-def test_rest_crashes_retrieve(api_client, user, cm, ignore_toolfilter, include_raw):
+def test_rest_crashes_retrieve(api_client, user, cm, ignore_toolfilter: bool, include_raw: bool) -> None:
     """test that retrieve returns the right crash"""
     # if restricted or normal, must only list crashes in toolfilter
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None]
@@ -224,7 +224,7 @@ def test_rest_crashes_retrieve(api_client, user, cm, ignore_toolfilter, include_
     ("restricted", None, None),
     ("restricted", 3, "tool1"),
 ], indirect=["user"])
-def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
+def test_rest_crashes_list_query(api_client, cm, user, expected: int | None, toolfilter: str | None) -> None:
     """test that crashes can be queried"""
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None, None, None]
     testcases = [cm.create_testcase("test1.txt", quality=5),
@@ -308,7 +308,7 @@ def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
         'tool': 'x',
     },
 ])
-def test_rest_crashes_report_crash(api_client, user, data):
+def test_rest_crashes_report_crash(api_client, user, data) -> None:
     """test that crash reporting works"""
     resp = api_client.post('/crashmanager/rest/crashes/', data=data)
     LOG.debug(resp)
@@ -317,7 +317,7 @@ def test_rest_crashes_report_crash(api_client, user, data):
     _compare_created_data_to_crash(data, crash)
 
 
-def test_rest_crashes_report_crash_long(api_client, user_normal):
+def test_rest_crashes_report_crash_long(api_client, user_normal) -> None:
     """test that crash reporting works with fields interpreted as `long` in python 2"""
     data = {
         'rawStdout': '',
@@ -380,7 +380,7 @@ $1 = {si_signo = 11, si_errno = 0, si_code = 2, _sigfault = {si_addr = 0xf705700
 
 
 @patch('crashmanager.models.CrashEntry.save', new=Mock(side_effect=RuntimeError("crashentry failing intentionally")))
-def test_rest_crashes_report_bad_crash_removes_testcase(api_client, user_normal):
+def test_rest_crashes_report_bad_crash_removes_testcase(api_client, user_normal) -> None:
     """test that reporting a bad crash doesn't leave an orphaned testcase"""
     data = {
         'rawStdout': 'data on\nstdout',
@@ -402,7 +402,7 @@ def test_rest_crashes_report_bad_crash_removes_testcase(api_client, user_normal)
     assert not cmTestCase.objects.exists()
 
 
-def test_rest_crashes_report_crash_long_sig(api_client, user_normal):
+def test_rest_crashes_report_crash_long_sig(api_client, user_normal) -> None:
     """test that crash reporting works with an assertion message too long for shortSignature"""
     data = {
         'rawStdout': 'data on\nstdout',
@@ -422,7 +422,7 @@ def test_rest_crashes_report_crash_long_sig(api_client, user_normal):
     _compare_created_data_to_crash(data, crash, short_signature=expected)
 
 
-def test_rest_crash_update(api_client, cm, user_normal):
+def test_rest_crash_update(api_client, cm, user_normal) -> None:
     """test that only allowed fields of CrashEntry can be updated"""
     test = cm.create_testcase("test.txt", quality=0)
     bucket = cm.create_bucket(shortDescription="bucket #1")
@@ -449,7 +449,7 @@ def test_rest_crash_update(api_client, cm, user_normal):
     assert test.quality == 5
 
 
-def test_rest_crash_update_restricted(api_client, cm, user_restricted):
+def test_rest_crash_update_restricted(api_client, cm, user_restricted) -> None:
     """test that restricted users cannot perform updates on CrashEntry"""
     test = cm.create_testcase("test.txt", quality=0)
     bucket = cm.create_bucket(shortDescription="bucket #1")
