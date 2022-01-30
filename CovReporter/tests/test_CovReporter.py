@@ -68,6 +68,7 @@ def test_CovReporterPreprocessData() -> None:
     coveragePercent = "coveragePercent"
 
     # Check that we have all the topdirs
+    assert isinstance(result, dict)
     assert "topdir1" in result[children], "topdir1 missing in result"
     assert "topdir2" in result[children], "topdir2 missing in result"
 
@@ -133,6 +134,7 @@ def test_CovReporterMergeData() -> None:
         os.remove(cov_file1)
         os.remove(cov_file2)
 
+    assert isinstance(version, dict)
     assert version['revision'] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
     assert version['branch'] == "master"
 
@@ -145,6 +147,7 @@ def test_CovReporterMergeData() -> None:
     coveragePercent = "coveragePercent"
 
     # Check that we have all the topdirs
+    assert isinstance(result, dict)
     assert "topdir1" in result[children], "topdir1 missing in result"
     assert "topdir2" in result[children], "topdir2 missing in result"
     assert "topdir3" in result[children], "topdir2 missing in result"

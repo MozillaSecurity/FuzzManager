@@ -23,6 +23,8 @@ import argparse
 import json
 import os
 import sys
+from typing import Iterable
+from typing import Mapping
 
 from FTB import CoverageHelper
 from Reporter.Reporter import remote_checks, Reporter  # noqa
@@ -34,25 +36,19 @@ __updated__ = '2017-07-10'
 
 
 class CovReporter(Reporter):
-    def __init__(self, serverHost=None, serverPort=None,
-                 serverProtocol=None, serverAuthToken=None,
-                 clientId=None, tool=None, repository=None):
+    def __init__(self, serverHost: str | None = None, serverPort: int | None = None,
+                 serverProtocol: str | None = None, serverAuthToken: str | None = None,
+                 clientId: str | None = None, tool: str | None = None, repository: str | None = None) -> None:
         '''
         Initialize the Reporter. This constructor will also attempt to read
         a configuration file to populate any missing properties that have not
         been passed to this constructor.
 
-        @type serverHost: string
         @param serverHost: Server host to contact for refreshing signatures
-        @type serverPort: int
         @param serverPort: Server port to use when contacting server
-        @type serverAuthToken: string
         @param serverAuthToken: Token for server authentication
-        @type clientId: string
         @param clientId: Client ID stored in the server when submitting
-        @type tool: string
         @param tool: Name of the tool that created this coverage
-        @type repository: string
         @param repository: Name of the repository that this coverage was measured on
         '''
 
@@ -69,26 +65,16 @@ class CovReporter(Reporter):
         self.repository = repository
 
     @remote_checks
-    def submit(self, coverage, preprocessed=False, version=None, description="", stats=None):
+    def submit(self, coverage: Mapping[str, object], preprocessed: bool = False, version: dict[str, str] | None = None, description: str = "", stats: dict[str, str] | None = None) -> None:
         '''
         Send coverage data to server.
 
-        @type coverage: dict
         @param coverage: Coverage Data
-
-        @type covformat: int
-        @param covformat: Format of the coverage data (COVERALLS or COVMAN).
-
-        @type version: dict
         @param version: A dictionary containing keys 'revision' and 'branch', just
                         as returned by version_info_from_coverage_data. If left
                         empty, the implementation will attempt to extract the
                         information from the coverage data itself.
-
-        @type description: string
         @param description: Optional description for this coverage data
-
-        @type stats: dict
         @param stats: An optional stats object as returned by create_combined_coverage
         '''
         url = "%s://%s:%s/covmanager/rest/collections/" % (self.serverProtocol, self.serverHost, self.serverPort)
@@ -128,17 +114,14 @@ class CovReporter(Reporter):
         self.post(url, data)
 
     @staticmethod
-    def preprocess_coverage_data(coverage):
+    def preprocess_coverage_data(coverage: Mapping[str, object]) -> Mapping[str, object]:
         '''
         Preprocess the given coverage data.
 
         Preprocessing includes structuring the coverage data by directory
         for better performance as well as computing coverage summaries per directory.
 
-        @type coverage: dict
         @param coverage: Coverage Data
-
-        @rtype dict
         @return Preprocessed Coverage Data
         '''
 
@@ -148,6 +131,7 @@ class CovReporter(Reporter):
             # Coveralls format
             source_files = coverage["source_files"]
 
+            assert isinstance(source_files, Iterable)
             # Process every source file and store the coverage data in our tree structure
             for source_file in source_files:
 
@@ -183,7 +167,7 @@ class CovReporter(Reporter):
         return ret
 
     @staticmethod
-    def version_info_from_coverage_data(coverage):
+    def version_info_from_coverage_data(coverage) -> dict[str, str]:
         '''
         Extract various version fields from the given coverage data.
 
@@ -196,11 +180,8 @@ class CovReporter(Reporter):
         revision
         branch
 
-        @type coverage: string
         @param coverage: Coverage Data
-
         @return Dictionary with version data
-        @rtype dict
         '''
 
         ret = {}
@@ -213,18 +194,14 @@ class CovReporter(Reporter):
             raise RuntimeError("Unknown coverage format")
 
     @staticmethod
-    def create_combined_coverage(coverage_files, version=None):
+    def create_combined_coverage(coverage_files: list[int | str], version: dict[str, str] | None = None) -> tuple[Mapping[str, object] | None, Mapping[str, object] | None, Mapping[str, object] | None]:
         '''
         Read coverage data from multiple files and return a single dictionary
         containing the merged data (already preprocessed).
 
-        @type coverage_files: list
         @param coverage_files: List of filenames containing coverage data
-        @type version: dict
         @param version: Dictionary containing branch and revision
-
         @return Dictionary with combined coverage data, version information and debug statistics
-        @rtype tuple(dict,dict,dict)
         '''
         ret = None
         stats = None
