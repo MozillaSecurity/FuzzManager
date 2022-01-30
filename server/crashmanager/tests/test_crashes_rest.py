@@ -16,6 +16,7 @@ from datetime import datetime
 import json
 import logging
 import os.path
+from typing_extensions import NotRequired
 from typing_extensions import TypedDict
 from unittest.mock import Mock, patch
 
@@ -91,7 +92,7 @@ def test_rest_crashes_methods(api_client: APIClient, user: User, method: str, ur
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['method_not_allowed']
 
 
-def _compare_rest_result_to_crash(result, crash, raw: bool = True) -> None:
+def _compare_rest_result_to_crash(result: dict[str, str], crash, raw: bool = True) -> None:
     expected_fields = {
         'args', 'bucket', 'client', 'env', 'id', 'metadata', 'os', 'platform',
         'product', 'product_version',
@@ -126,10 +127,10 @@ class DataType(TypedDict):
     rawStdout: str
     rawStderr: str
     rawCrashData: str
-    testcase: str
-    testcase_isbinary: bool
-    testcase_quality: int
-    testcase_ext: str
+    testcase: NotRequired[str]
+    testcase_isbinary: NotRequired[bool]
+    testcase_quality: NotRequired[int]
+    testcase_ext: NotRequired[str]
     platform: str
     product: str
     product_version: str
