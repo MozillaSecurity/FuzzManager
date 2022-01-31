@@ -194,11 +194,11 @@ def test_collector_refresh(capsys: pytest.CaptureFixture[str], tmp_path: Path) -
     (sigs_path / 'other.txt').touch()
     assert {f.name for f in sigs_path.iterdir()} == {'test1.signature', 'other.txt'}
 
-    with outzip_path.open('rb') as fp:
+    with outzip_path.open('rb') as fp2:
         class response_t(object):
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp2
 
         # this asserts the expected arguments and returns the open handle to out.zip as 'raw' which is read by refresh()
         def myget(url: str, stream: bool | None = None, headers: dict[str, str] | None = None) -> response_t:
