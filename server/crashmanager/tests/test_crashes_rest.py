@@ -16,14 +16,14 @@ from datetime import datetime
 import json
 import logging
 import os.path
-from typing_extensions import NotRequired
-from typing_extensions import TypedDict
 from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import User
 import pytest
 import requests
 from rest_framework.test import APIClient
+
+from Collector.Collector import DataType
 from crashmanager.models import CrashEntry, TestCase as cmTestCase
 
 
@@ -119,24 +119,6 @@ def _compare_rest_result_to_crash(result: dict[str, str], crash, raw: bool = Tru
         if isinstance(obj, datetime):
             obj = obj.isoformat().replace("+00:00", "Z")
         assert value == obj
-
-
-class DataType(TypedDict):
-    """Type information for the data dictionary."""
-
-    rawStdout: str
-    rawStderr: str
-    rawCrashData: str
-    testcase: NotRequired[str]
-    testcase_isbinary: NotRequired[bool]
-    testcase_quality: NotRequired[int]
-    testcase_ext: NotRequired[str]
-    platform: str
-    product: str
-    product_version: str
-    os: str
-    client: str
-    tool: str
 
 
 def _compare_created_data_to_crash(data: DataType, crash: CrashEntry, crash_address: str | None = None, short_signature: str | None = None) -> None:

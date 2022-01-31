@@ -32,7 +32,7 @@ class ProgramConfiguration():
             version: str | None = None,
             env: dict[str, str] | None = None,
             args: list[str] | None = None,
-            metadata: dict[str, str] | None = None,
+            metadata: dict[str, object] | None = None,
         ):
         '''
         @param product: The name of the product/program/branch tested
@@ -102,7 +102,7 @@ class ProgramConfiguration():
         assert isinstance(args, list)
         self.args.extend(args)
 
-    def addMetadata(self, metadata: dict[str, str]) -> None:
+    def addMetadata(self, metadata: dict[str, object]) -> None:
         '''
         Add (additional) metadata definitions. Existing definitions
         will be overwritten if they are redefined in the given metadata.

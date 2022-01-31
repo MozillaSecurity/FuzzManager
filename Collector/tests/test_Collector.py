@@ -22,6 +22,7 @@ import platform
 from unittest.mock import Mock, patch
 import zipfile
 
+from django.contrib.auth.models import User
 import pytest
 import requests
 from six.moves.urllib.parse import urlsplit
@@ -66,7 +67,7 @@ def test_collector_help(capsys: pytest.LogCaptureFixture) -> None:
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user) -> None:
+def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
     '''Test crash submission'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -200,7 +201,7 @@ def test_collector_refresh(capsys: pytest.LogCaptureFixture, tmp_path: Path) -> 
             raw = fp
 
         # this asserts the expected arguments and returns the open handle to out.zip as 'raw' which is read by refresh()
-        def myget(url, stream=None, headers=None):
+        def myget(url: str, stream: bool | None = None, headers: dict[str, str] | None = None) -> response_t:
             assert url == 'gopher://aol.com:70/crashmanager/rest/signatures/download/'
             assert stream is True
             assert headers == {'Authorization': 'Token token'}
@@ -245,15 +246,15 @@ def test_collector_refresh(capsys: pytest.LogCaptureFixture, tmp_path: Path) -> 
         with pytest.raises(zipfile.BadZipfile, match='not a zip file'):
             collector.refresh()
 
-    with outzip_path.open('r+b') as fp:
+    with outzip_path.open('r+b') as fp_2:
         # corrupt the CRC field for the signature file in the zip
-        fp.seek(0x42)
-        fp.write(b'\xFF')
-    with outzip_path.open('rb') as fp:
+        fp_2.seek(0x42)
+        fp_2.write(b'\xFF')
+    with outzip_path.open('rb') as fp_3:
         class response_t(object):  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp_3
         collector._session.get = lambda *_, **__: response_t()
 
         with pytest.raises(RuntimeError, match='Bad CRC'):
@@ -281,6 +282,7 @@ def test_collector_generate_search(tmp_path: Path) -> None:
     assert meta is None
 
     # write metadata and make sure that's returned if it exists
+    assert sig is not None
     sigBase, _ = os.path.splitext(sig)
     with open(sigBase + '.metadata', 'w') as f:
         f.write('{}')
@@ -312,7 +314,7 @@ def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         status_code = requests.codes["ok"]
         text = 'OK'
 
-        def json(self):
+        def json(self) -> dict[str, object]:
             return {'id': 123, 'testcase': 'path/to/testcase.txt'}
 
     class response2_t(object):
@@ -322,7 +324,7 @@ def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         content = b'testcase\xFF'
 
     # myget1 mocks requests.get to return the rest response to the crashentry get
-    def myget1(url, headers=None):
+    def myget1(url: str, headers: dict[str, str] | None = None) -> response1_t:
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/'
         assert headers == {'Authorization': 'Token token'}
 
@@ -331,7 +333,7 @@ def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         return response1_t()
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
-    def myget2(url, headers=None):
+    def myget2(url: str, headers: dict[str, str] | None = None) -> response2_t:
         assert url == 'gopher://aol.com:70/crashmanager/rest/crashes/123/download/'
         assert headers == {'Authorization': 'Token token'}
         return response2_t()
@@ -358,7 +360,7 @@ def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         status_code = requests.codes["ok"]
         text = 'OK'
 
-        def json(self):
+        def json(self) -> dict[str, str]:
             return {'testcase': ''}
     collector._session.get = myget1
     result = collector.download(123)
@@ -369,7 +371,7 @@ def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
         status_code = requests.codes["ok"]
         text = 'OK'
 
-        def json(self):
+        def json(self) -> list[str]:
             return []
     collector._session.get = myget1
     with pytest.raises(RuntimeError, match='malformed JSON'):

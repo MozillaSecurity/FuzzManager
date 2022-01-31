@@ -30,6 +30,9 @@ import sys
 from tempfile import mkstemp
 from zipfile import ZipFile
 
+from typing_extensions import NotRequired
+from typing_extensions import TypedDict
+
 from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
 from FTB.Running.AutoRunner import AutoRunner  # noqa
 from FTB.Signatures.CrashInfo import CrashInfo  # noqa
@@ -40,6 +43,28 @@ __all__: list[str] = []
 __version__ = 0.1
 __date__ = '2014-10-01'
 __updated__ = '2014-10-01'
+
+
+class DataType(TypedDict):
+    """Type information for the data dictionary."""
+
+    rawStdout: NotRequired[str]
+    rawStderr: NotRequired[str]
+    rawCrashData: NotRequired[str]
+    testcase: NotRequired[bytes | str]
+    testcase_isbinary: NotRequired[bool]
+    testcase_quality: NotRequired[int]
+    testcase_ext: NotRequired[str]
+    testcase_size: NotRequired[int]
+    platform: NotRequired[str]
+    product: NotRequired[str]
+    product_version: NotRequired[str]
+    os: NotRequired[str]
+    client: NotRequired[str]
+    tool: NotRequired[str]
+    metadata: NotRequired[str]
+    env: NotRequired[str]
+    args: NotRequired[str]
 
 
 class Collector(Reporter):
@@ -94,7 +119,7 @@ class Collector(Reporter):
             testCase: str | None = None,
             testCaseQuality: int = 0,
             testCaseSize: int | None = None,
-            metaData=None,
+            metaData: dict[str, object] | None = None,
         ):
         '''
         Submit the given crash information and an optional testcase/metadata
@@ -104,8 +129,6 @@ class Collector(Reporter):
         @param testCase: A file containing a testcase for reproduction
         @param testCaseQuality: A value indicating the quality of the test (less is better)
         @param testCaseSize: The size of the testcase to report. If None, use the file size.
-
-        @type metaData: map
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format. This metadata is combined
                          with possible metadata stored in the L{ProgramConfiguration} inside crashInfo.
@@ -116,7 +139,7 @@ class Collector(Reporter):
         url = "%s://%s:%d/crashmanager/rest/crashes/" % (self.serverProtocol, self.serverHost, self.serverPort)
 
         # Serialize our crash information, testcase and metadata into a dictionary to POST
-        data = {}
+        data: DataType = {}
 
         data["rawStdout"] = os.linesep.join(crashInfo.rawStdout)
         data["rawStderr"] = os.linesep.join(crashInfo.rawStderr)
@@ -151,7 +174,7 @@ class Collector(Reporter):
         data["tool"] = self.tool
 
         if crashInfo.configuration.metadata or metaData:
-            aggrMetaData = {}
+            aggrMetaData: dict[str, object] = {}
 
             if crashInfo.configuration.metadata:
                 aggrMetaData.update(crashInfo.configuration.metadata)
@@ -170,14 +193,12 @@ class Collector(Reporter):
         return self.post(url, data).json()
 
     @signature_checks
-    def search(self, crashInfo: CrashInfo):
+    def search(self, crashInfo: CrashInfo) -> tuple[str | None, dict[str, object] | None]:
         '''
         Searches within the local signature cache directory for a signature matching the
         given crash.
 
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
-        @rtype: tuple
         @return: Tuple containing filename of the signature and metadata matching, or None if no match.
         '''
         assert self.sigCacheDir is not None
@@ -448,10 +469,11 @@ def main(args: list[str] | None = None) -> int:
     crashInfo = None
     args = None
     env = None
-    metadata = {}
+    metadata: dict[str, object] | None = {}
 
     if opts.search or opts.generate or opts.submit or opts.autosubmit:
         if opts.metadata:
+            assert metadata is not None
             metadata.update(dict(kv.split('=', 1) for kv in opts.metadata))
 
         if opts.autosubmit:
@@ -560,7 +582,11 @@ def main(args: list[str] | None = None) -> int:
             return 1
 
     if opts.download:
-        (retFile, retJSON) = collector.download(opts.download)
+        collector_download_ret_val = collector.download(opts.download)
+        if collector_download_ret_val:
+            (retFile, retJSON) = collector_download_ret_val
+        else:
+            raise AssertionError("collector.download function returned a None")
         if not retFile:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
             return 1
@@ -579,6 +605,7 @@ def main(args: list[str] | None = None) -> int:
 
         if "metadata" in retJSON and retJSON["metadata"]:
             metadata = json.loads(retJSON["metadata"])
+            assert metadata is not None
             print("== Metadata ==")
             for k, v in metadata.items():
                 print("%s = %s" % (k, v))
