@@ -32,7 +32,7 @@ def test_no_such_user() -> None:
         call_command("get_auth_token", "user")
 
 
-def test_one_user(capsys):
+def test_one_user(capsys: pytest.CaptureFixture[str]) -> None:
     user = User.objects.create_user("test", "test@example.com", "test")
     call_command("get_auth_token", "test")
     out, _ = capsys.readouterr()
@@ -43,7 +43,7 @@ def test_one_user(capsys):
     assert len(key) > 32  # just check that it's reasonably long
 
 
-def test_two_users(capsys):
+def test_two_users(capsys: pytest.CaptureFixture[str]) -> None:
     users = (User.objects.create_user("test", "test@example.com", "test"),
              User.objects.create_user("test2", "test2@example.com", "test2"))
     call_command("get_auth_token", "test", "test2")

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
+from django.contrib.auth.models import User
 from django.utils import timezone
+import pytest
 from six.moves.urllib.parse import urlsplit
 
 from EC2Reporter.EC2Reporter import EC2Reporter, main
@@ -15,7 +17,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = 'server.tests'
 
 
-def test_ec2reporter_help(capsys):
+def test_ec2reporter_help(capsys: pytest.CaptureFixture[str]) -> None:
     '''Test that help prints without throwing'''
     with pytest.raises(SystemExit):
         main()
@@ -25,7 +27,7 @@ def test_ec2reporter_help(capsys):
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_report(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
     '''Test report submission'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -58,13 +60,13 @@ def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
                            serverAuthToken=fm_user.token,
                            clientId='host2')
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 404: Not found"):
+    with pytest.raises(RuntimeError, match="Server unexpectedly responded with status code 404: Not found"):
         reporter.report('data')
 
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
     '''Test EC2Reporter enable/disable'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -86,7 +88,7 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert pool.isEnabled
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError, match="Server unexpectedly responded with status code 405: Not acceptable"):
         reporter.enable(pool.pk)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert pool.isEnabled
@@ -95,7 +97,7 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert not pool.isEnabled
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError, match="Server unexpectedly responded with status code 405: Not acceptable"):
         reporter.disable(pool.pk)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert not pool.isEnabled
@@ -103,7 +105,7 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
     """Test EC2Reporter cycle"""
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -121,7 +123,7 @@ def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
                            serverAuthToken=fm_user.token,
                            clientId='host1')
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError, match="Server unexpectedly responded with status code 405: Not acceptable"):
         reporter.cycle(pool.pk)
 
     pool.isEnabled = True

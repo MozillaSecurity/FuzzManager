@@ -57,7 +57,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = ('server.tests',)
 
 
-def test_collector_help(capsys: pytest.LogCaptureFixture) -> None:
+def test_collector_help(capsys: pytest.CaptureFixture[str]) -> None:
     '''Test that help prints without throwing'''
     with pytest.raises(SystemExit):
         main()
@@ -177,7 +177,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user:
         collector.submit(crashInfo, str(testcase_path))
 
 
-def test_collector_refresh(capsys: pytest.LogCaptureFixture, tmp_path: Path) -> None:
+def test_collector_refresh(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     '''Test signature downloads'''
     # create a test signature zip
     test2_path = tmp_path / 'test2.signature'
