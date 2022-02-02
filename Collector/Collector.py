@@ -28,6 +28,8 @@ import os
 import shutil
 import sys
 from tempfile import mkstemp
+from typing import Dict
+from typing import cast
 from zipfile import ZipFile
 
 from typing_extensions import NotRequired
@@ -120,7 +122,7 @@ class Collector(Reporter):
             testCaseQuality: int = 0,
             testCaseSize: int | None = None,
             metaData: dict[str, object] | None = None,
-        ):
+        ) -> dict[str, object]:
         '''
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
@@ -190,7 +192,7 @@ class Collector(Reporter):
         if crashInfo.configuration.args:
             data["args"] = json.dumps(crashInfo.configuration.args)
 
-        return self.post(url, data).json()
+        return cast(Dict[str, object], self.post(url, data).json())
 
     @signature_checks
     def search(self, crashInfo: CrashInfo) -> tuple[str | None, dict[str, object] | None]:

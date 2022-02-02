@@ -132,7 +132,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user:
     crashdata_path = tmp_path / 'crashdata.txt'
     with crashdata_path.open('w') as fp:
         fp.write(asanTraceCrash)
-    result = main([
+    result_return_code = main([
         '--submit',
         '--tool', 'tool2',
         '--product', 'mozilla-inbound',
@@ -148,7 +148,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user:
         '--stderr', str(stderr_path),
         '--crashdata', str(crashdata_path),
     ])
-    assert result == 0
+    assert result_return_code == 0
     entry = CrashEntry.objects.get(pk__gt=entry.id)  # newer than the last result, will fail if the test db is active
     assert entry.rawStdout == 'stdout data'
     assert entry.rawStderr == 'stderr data'
