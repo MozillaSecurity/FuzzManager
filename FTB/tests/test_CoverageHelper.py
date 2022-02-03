@@ -242,6 +242,6 @@ def test_CoverageHelperApplyDirectivesMakeEmpty() -> None:
 
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
-    expected_names = []
+    expected_names: list[str] = []
 
     assert result == set(expected_names)

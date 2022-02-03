@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from platform import libc_ver
 from unittest.mock import Mock, patch
 
 from django.contrib.auth.models import User
 import pytest
+from pytest_django.live_server_helper import LiveServer
 from six.moves.urllib.parse import urlsplit
 
 from TaskStatusReporter.TaskStatusReporter import TaskStatusReporter, main
@@ -27,7 +29,7 @@ def test_taskstatusreporter_help(capsys: pytest.CaptureFixture[str]) -> None:
 #@pytest.mark.skipif(str is bytes, reason="TaskManager requires python3")
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_taskstatusreporter_report(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
+def test_taskstatusreporter_report(mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User) -> None:
     '''Test report submission'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 

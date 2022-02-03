@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 import json
+from typing import Sequence
 
 import six
 
@@ -32,16 +33,16 @@ class Symptom(object):
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
     '''
-    def __init__(self, jsonObj) -> None:
+    def __init__(self, jsonObj: dict[str, object]) -> None:
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)
         self.jsonobj = jsonObj
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.jsonsrc
 
     @staticmethod
-    def fromJSONObject(obj) -> Symptom:
+    def fromJSONObject(obj: dict[str, object]) -> Symptom:
         '''
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
@@ -85,7 +86,7 @@ class Symptom(object):
 
 
 class OutputSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -119,6 +120,7 @@ class OutputSymptom(Symptom):
         else:
             checkedOutput = crashInfo.rawCrashData
 
+        assert crashInfo.configuration is not None
         windowsSlashWorkaround = crashInfo.configuration.os == "windows"
         for line in reversed(checkedOutput):
             if self.output.matches(line, windowsSlashWorkaround=windowsSlashWorkaround):
@@ -128,7 +130,7 @@ class OutputSymptom(Symptom):
 
 
 class StackFrameSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -161,7 +163,7 @@ class StackFrameSymptom(Symptom):
 
 
 class StackSizeSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -180,7 +182,7 @@ class StackSizeSymptom(Symptom):
 
 
 class CrashAddressSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -201,7 +203,7 @@ class CrashAddressSymptom(Symptom):
 
 
 class InstructionSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -239,7 +241,7 @@ class InstructionSymptom(Symptom):
 
 
 class TestcaseSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -269,7 +271,7 @@ class TestcaseSymptom(Symptom):
 
 
 class StackFramesSymptom(Symptom):
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: dict[str, object]) -> None:
         '''
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         '''
@@ -292,13 +294,14 @@ class StackFramesSymptom(Symptom):
 
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
-    def diff(self, crashInfo: CrashInfo):
+    def diff(self, crashInfo: CrashInfo) -> tuple[int | None, StackFramesSymptom | None]:
         if self.matches(crashInfo):
             return (0, None)
 
         for depth in range(1, 4):
             (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
             if bestDepth is not None:
+                assert bestGuess is not None
                 guessedFunctionNames = [repr(x) for x in bestGuess]
 
                 # Remove trailing wildcards as they are of no use
@@ -314,7 +317,7 @@ class StackFramesSymptom(Symptom):
         return (None, None)
 
     @staticmethod
-    def _diff(stack, signatureGuess, startIdx, depth, maxDepth):
+    def _diff(stack: list[str], signatureGuess: list[StringMatch], startIdx: int, depth: int, maxDepth: int) -> tuple[int | None, list[StringMatch] | None]:
         singleWildcardMatch = StringMatch("?")
 
         newSignatureGuess = []
@@ -394,12 +397,13 @@ class StackFramesSymptom(Symptom):
         return (bestDepth, bestGuess)
 
     @staticmethod
-    def _match(partialStack, partialFunctionNames):
+    def _match(partialStack: Sequence[StringMatch | str], partialFunctionNames: Sequence[StringMatch | str]) -> bool:
 
         while True:
 
             # Process as many non-wildcard chars as we can find iteratively for performance reasons
             while partialFunctionNames and partialStack and str(partialFunctionNames[0]) not in {'?', '???'}:
+                assert isinstance(partialFunctionNames[0], StringMatch)
                 if not partialFunctionNames[0].matches(partialStack[0]):
                     return False
 

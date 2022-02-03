@@ -24,6 +24,7 @@ import zipfile
 
 from django.contrib.auth.models import User
 import pytest
+from pytest_django.live_server_helper import LiveServer
 import requests
 from six.moves.urllib.parse import urlsplit
 
@@ -67,7 +68,7 @@ def test_collector_help(capsys: pytest.CaptureFixture[str]) -> None:
 
 @patch('os.path.expanduser')
 @patch('time.sleep', new=Mock())
-def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user: User) -> None:
+def test_collector_submit(mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User) -> None:
     '''Test crash submission'''
     mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
 
@@ -112,6 +113,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path: Path, fm_user:
     assert entry.args == ''
 
     # create a test config
+    assert url.port is not None
     with (tmp_path / ".fuzzmanagerconf").open("w") as fp:
         fp.write('[Main]\n')
         fp.write('serverhost = %s\n' % url.hostname)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
@@ -23,4 +25,4 @@ def fm_user() -> User:
         token.save()
 
     user.token = token.key
-    return user
+    return cast(User, user)

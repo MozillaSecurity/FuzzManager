@@ -15,7 +15,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from django.contrib.auth.models import User
 import pytest
+from pytest_django.live_server_helper import LiveServer
 import requests
 from six.moves.urllib.parse import urlsplit
 
@@ -25,9 +27,9 @@ pytest_plugins = 'server.tests'  # pylint: disable=invalid-name
 
 
 @pytest.mark.skip
-def test_RESTCrashEntryInterface(live_server, fm_user):
-    url = urlsplit(live_server.url)
-    url = "%s://%s:%s/crashmanager/rest/crashes/" % (url.scheme, url.hostname, url.port)
+def test_RESTCrashEntryInterface(live_server: LiveServer, fm_user: User) -> None:
+    url_split = urlsplit(live_server.url)
+    url = "%s://%s:%s/crashmanager/rest/crashes/" % (url_split.scheme, url_split.hostname, url_split.port)
 
     # Must yield forbidden without authentication
     assert requests.get(url).status_code == requests.codes["unauthorized"]
@@ -67,9 +69,9 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
     assert json[lengthBeforePost]["product_version"] == "ba0bc4f26681"
 
 
-def test_RESTSignatureInterface(live_server):
-    url = urlsplit(live_server.url)
-    url = "%s://%s:%s/crashmanager/rest/signatures/" % (url.scheme, url.hostname, url.port)
+def test_RESTSignatureInterface(live_server: LiveServer) -> None:
+    url_split = urlsplit(live_server.url)
+    url = "%s://%s:%s/crashmanager/rest/signatures/" % (url_split.scheme, url_split.hostname, url_split.port)
 
     # Must yield forbidden without authentication
     assert requests.get(url).status_code == requests.codes["not_found"]

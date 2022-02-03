@@ -19,11 +19,21 @@ from __future__ import annotations
 import difflib
 import json
 from pathlib import Path
+from typing import Sequence
+from typing_extensions import NotRequired
+from typing_extensions import TypedDict
 
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.Symptom import Symptom, TestcaseSymptom, StackFramesSymptom, \
     OutputSymptom
+
+
+class SymptomsDiffType(TypedDict):
+    """Type information for SymptomsDiff"""
+    offending: bool
+    proposed: NotRequired[Symptom]
+    symptom: Symptom
 
 
 class CrashSignature(object):
@@ -79,6 +89,7 @@ class CrashSignature(object):
 
         @return: True if the signature matches, False otherwise
         '''
+        assert crashInfo.configuration is not None
         if self.platforms is not None and crashInfo.configuration.platform not in self.platforms:
             return False
 
@@ -143,7 +154,7 @@ class CrashSignature(object):
 
         return ret
 
-    def getDistance(self, crashInfo):
+    def getDistance(self, crashInfo: CrashInfo) -> int:
         distance = 0
 
         for symptom in self.symptoms:
@@ -158,6 +169,7 @@ class CrashSignature(object):
                 if not symptom.matches(crashInfo):
                     distance += 1
 
+        assert crashInfo.configuration is not None
         if self.platforms is not None and crashInfo.configuration.platform not in self.platforms:
             distance += 1
 
@@ -171,7 +183,7 @@ class CrashSignature(object):
 
     def fit(self, crashInfo: CrashInfo) -> CrashSignature | None:
         sigObj = {}
-        sigSymptoms = []
+        sigSymptoms: list[dict[str, object]] = []
 
         sigObj['symptoms'] = sigSymptoms
 
@@ -198,8 +210,9 @@ class CrashSignature(object):
 
         return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
-    def getSymptomsDiff(self, crashInfo: CrashInfo):
-        symptomsDiff = []
+
+    def getSymptomsDiff(self, crashInfo: CrashInfo) -> list[SymptomsDiffType]:
+        symptomsDiff: list[SymptomsDiffType] = []
         for symptom in self.symptoms:
             if symptom.matches(crashInfo):
                 symptomsDiff.append({'offending': False, 'symptom': symptom})
@@ -216,7 +229,7 @@ class CrashSignature(object):
                 symptomsDiff.append({'offending': True, 'symptom': symptom})
         return symptomsDiff
 
-    def getSignatureUnifiedDiffTuples(self, crashInfo: CrashInfo):
+    def getSignatureUnifiedDiffTuples(self, crashInfo: CrashInfo) -> Sequence[tuple[str, list[str] | str]]:
         diffTuples = []
 
         # go through dumps(loads()) to standardize the format.
