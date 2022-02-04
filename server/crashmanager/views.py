@@ -914,6 +914,7 @@ class BucketViewSet(mixins.CreateModelMixin,
     serializer_class = BucketSerializer
     filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
+    pagination_class = None
 
     def get_serializer(self, *args, **kwds):
         self.vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
@@ -934,7 +935,7 @@ class BucketViewSet(mixins.CreateModelMixin,
                 restricted_only=bool(ignore_toolfilter),
             ).filter(
                 begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
-                bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
+                bucket_id__in=[bucket["id"] for bucket in response.data],
             ).order_by("begin")
 
             bucket_hits = {}
@@ -943,7 +944,7 @@ class BucketViewSet(mixins.CreateModelMixin,
                 bucket_hits[bucket].setdefault(begin, 0)
                 bucket_hits[bucket][begin] += count
 
-            for bucket in response.data["results"]:
+            for bucket in response.data:
                 bucket["crash_history"] = [
                     {"begin": begin, "count": count}
                     for begin, count in bucket_hits.get(bucket["id"], {}).items()
