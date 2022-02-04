@@ -3,14 +3,12 @@ from django.core.management import BaseCommand
 from django.template.loader import render_to_string
 from notifications.models import Notification
 
-from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import User
 
 
 class Command(BaseCommand):
     help = "Send notifications by email."
 
-    @mgmt_lock_required
     def handle(self, *args, **options):
         # Select all notifications that haven't been sent by email for now
         notifications = Notification.objects.filter(emailed=False)

@@ -5,14 +5,12 @@ from django.core.management import BaseCommand, CommandError  # noqa
 from django.db.models.aggregates import Count
 from django.utils import timezone
 
-from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket, Bug
 
 
 class Command(BaseCommand):
     help = "Cleanup old crash entries."
 
-    @mgmt_lock_required
     def handle(self, *args, **options):
 
         cleanup_crashes_after_days = getattr(settings, 'CLEANUP_CRASHES_AFTER_DAYS', 14)
