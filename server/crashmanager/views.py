@@ -109,11 +109,11 @@ def filter_signatures_by_toolfilter(request, signatures, restricted_only=False, 
         if "tool" in request.GET:
             tool_name = request.GET["tool"]
             tool = get_object_or_404(Tool, name=tool_name)
-            return signatures.filter(crashentry__tool=tool).distinct()
+            return signatures.filter(crashentry__tool=tool)
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return signatures.filter(crashentry__tool__in=defaultToolsFilter).distinct()
+        return signatures.filter(crashentry__tool__in=set(defaultToolsFilter))
     elif user.restricted:
         return Bucket.objects.none()
 
