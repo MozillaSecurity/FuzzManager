@@ -4,14 +4,12 @@ from django.core.management import BaseCommand, CommandError
 from notifications.models import Notification
 from notifications.signals import notify
 
-from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import Bug, BugProvider
 
 
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
 
-    @mgmt_lock_required
     def handle(self, *args, **options):
         if args:
             raise CommandError("Command doesn't accept any arguments")
