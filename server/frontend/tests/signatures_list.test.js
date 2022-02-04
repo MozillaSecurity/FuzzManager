@@ -39,8 +39,6 @@ test("signature list has no buckets", async () => {
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
-    limit: 100,
-    offset: "0",
     ordering: "-id",
     ignore_toolfilter: "0",
     query: defaultQueryStr,
@@ -67,8 +65,6 @@ test("signature list has two buckets", async () => {
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
-    limit: 100,
-    offset: "0",
     ordering: "-id",
     ignore_toolfilter: "0",
     query: defaultQueryStr,
@@ -79,7 +75,7 @@ test("signature list has two buckets", async () => {
   expect(document.querySelectorAll("tbody tr").length).toBe(2);
   getByText("A short description for bucket 1");
   const buttonLink = getByText("1630739");
-  expect(buttonLink).toHaveProperty("href", buckets.results[0].bug_urltemplate);
+  expect(buttonLink).toHaveProperty("href", buckets[0].bug_urltemplate);
   expect(buttonLink).toHaveProperty("target", "_blank");
   getByText("A short description for bucket 2");
   getByText("Assign an existing bug");
