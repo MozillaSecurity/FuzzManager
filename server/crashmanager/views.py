@@ -424,7 +424,12 @@ def deleteSignature(request, sigid):
 
 
 def viewSignature(request, sigid):
-    bucket = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid).data
+    response = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid)
+    if response.status_code == 404:
+        raise Http404
+    elif response.status_code != 200:
+        return response
+    bucket = response.data
     if bucket['best_entry'] is not None:
         best_entry_size = get_object_or_404(CrashEntry, pk=bucket['best_entry']).testcase.size
     else:
