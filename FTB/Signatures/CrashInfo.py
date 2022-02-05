@@ -17,6 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from abc import ABCMeta
 import json
 import os
@@ -382,7 +383,7 @@ class CrashInfo(object):
         else:
             numFrames = len(self.backtrace)
 
-        symptomArr = []
+        symptomArr: list[Mapping[str, object]] = []
 
         # Memorize where we find our abort messages
         abortMsgInCrashdata = False
@@ -414,8 +415,8 @@ class CrashInfo(object):
             if not isinstance(abortMsgs, list):
                 abortMsgs = [abortMsgs]
 
-            for abortMsg in abortMsgs:
-                abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+            for msg in abortMsgs:
+                abortMsg = AssertionHelper.getSanitizedAssertionPattern(msg)
                 abortMsgSrc = "stderr"
                 if abortMsgInCrashdata:
                     abortMsgSrc = "crashdata"
@@ -424,6 +425,7 @@ class CrashInfo(object):
                 # Versions below 1.2 only support the full object PCRE style,
                 # for anything newer, use the short form with forward slashes
                 # to increase the readability of the signatures.
+                symptomObj: dict[str, object]
                 if minimumSupportedVersion < 12:
                     stringObj = {"value": abortMsg, "matchType": "pcre"}
                     symptomObj = {"type": "output", "src": abortMsgSrc, "value": stringObj}
@@ -980,6 +982,7 @@ class GDBCrashInfo(CrashInfo):
         if crashData:
             gdbOutput = crashData
         else:
+            assert stderr is not None
             gdbOutput = stderr
 
         gdbFramePatterns = [
@@ -1070,6 +1073,7 @@ class GDBCrashInfo(CrashInfo):
                 # This is a workaround for GDB throwing an error while resolving function arguments
                 # in the trace and aborting. We try to remove the error message to at least recover
                 # the function name properly.
+                assert functionName is not None
                 gdbErrorIdx = functionName.find(" (/build/buildd/gdb")
                 if gdbErrorIdx > 0:
                     functionName = functionName[:gdbErrorIdx]
@@ -1105,7 +1109,7 @@ class GDBCrashInfo(CrashInfo):
     def calculateCrashAddress(
             crashInstruction: str,
             registerMap: dict[str, int],
-        ) -> int:
+        ) -> str | int | None:
         '''
         Calculate the crash address given the crash instruction and register contents
 
@@ -1288,12 +1292,12 @@ class GDBCrashInfo(CrashInfo):
                 if "(" in parts[0] and ")" in parts[2]:
                     complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
 
-                    (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                    (result_parts_3, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
 
-                    if result is None:
+                    if result_parts_3 is None:
                         failureReason = reason
                     else:
-                        return result
+                        return result_parts_3
                 else:
                     raise RuntimeError("Unexpected instruction pattern: %s" % crashInstruction)
             elif len(parts) == 4:
@@ -1302,12 +1306,12 @@ class GDBCrashInfo(CrashInfo):
                 elif "(" not in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[1] + "," + parts[2] + "," + parts[3]
 
-                (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                (result_parts_4, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
 
-                if result is None:
+                if result_parts_4 is None:
                     failureReason = reason
                 else:
-                    return result
+                    return result_parts_4
             else:
                 raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" %
                                    crashInstruction)
@@ -1365,11 +1369,11 @@ class GDBCrashInfo(CrashInfo):
                     # Load/Store instruction
                     match = re.match("^\\s*\\[(.*)\\]$", parts[1])
                     if match is not None:
-                        (result, reason) = calculateARMDerefOpAddress(match.group(1))
-                        if result is None:
+                        (result_parts_2, reason) = calculateARMDerefOpAddress(match.group(1))
+                        if result_parts_2 is None:
                             failureReason += " (%s)" % reason
                         else:
-                            return result
+                            return result_parts_2
         else:
             failureReason = "Architecture is not supported."
 
@@ -1439,6 +1443,7 @@ class MinidumpCrashInfo(CrashInfo):
         if crashData:
             minidumpOuput = crashData
         else:
+            assert stderr is not None
             minidumpOuput = stderr
 
         crashThread = None

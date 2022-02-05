@@ -1017,7 +1017,7 @@ def test_ASanParserTestDebugAssertion() -> None:
     ("", tsanTraceCrash),
     ("", ubsanTraceGenericCrash),
 ])
-def test_ASanDetectionTest(stderr, crashdata):
+def test_ASanDetectionTest(stderr: str, crashdata: str) -> None:
     config = ProgramConfiguration("test", "x86", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -1070,6 +1070,7 @@ def test_ASanParserTestTruncatedTrace() -> None:
     # Confirm that generating a crash signature will fail
     crashSig = crashInfo.createCrashSignature()
     assert crashSig is None
+    assert crashInfo.failureReason is not None
     assert "Insufficient data" in crashInfo.failureReason
 
 
@@ -1268,7 +1269,7 @@ def test_CrashSignatureOutputTest() -> None:
     outputSignature1Neg = CrashSignature(crashSignature1Neg)
     outputSignature2 = CrashSignature(crashSignature2)
 
-    gdbOutput = []
+    gdbOutput: list[str] = []
     stdout = []
     stderr = []
 
