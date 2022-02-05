@@ -16,6 +16,7 @@ import json
 import logging
 import pytest
 import requests
+from rest_framework.test import APIClient
 from django.contrib.auth.models import User
 
 
@@ -23,7 +24,7 @@ LOG = logging.getLogger("fm.covmanager.tests.repos.rest")  # pylint: disable=inv
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
 
 
-def test_rest_repositories_no_auth(api_client):
+def test_rest_repositories_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = '/covmanager/rest/repositories/'
     assert api_client.get(url).status_code == requests.codes['unauthorized']
@@ -33,7 +34,7 @@ def test_rest_repositories_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes['unauthorized']
 
 
-def test_rest_repositories_no_perm(api_client):
+def test_rest_repositories_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username='test-noperm')
     api_client.force_authenticate(user=user)
@@ -45,7 +46,7 @@ def test_rest_repositories_no_perm(api_client):
     assert api_client.delete(url).status_code == requests.codes['forbidden']
 
 
-def test_rest_repositories_patch(api_client):
+def test_rest_repositories_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -53,7 +54,7 @@ def test_rest_repositories_patch(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repositories_post(api_client):
+def test_rest_repositories_post(api_client: APIClient) -> None:
     """post should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -61,7 +62,7 @@ def test_rest_repositories_post(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repositories_put(api_client):
+def test_rest_repositories_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -69,7 +70,7 @@ def test_rest_repositories_put(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repositories_delete(api_client):
+def test_rest_repositories_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -77,7 +78,7 @@ def test_rest_repositories_delete(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repositories_get(api_client, cm):
+def test_rest_repositories_get(api_client: APIClient, cm) -> None:
     """get should be allowed"""
     cm.create_repository("git", name='testrepo')
     user = User.objects.get(username='test')
@@ -95,7 +96,7 @@ def test_rest_repositories_get(api_client, cm):
     assert resp['name'] == 'testrepo'
 
 
-def test_rest_repository_no_auth(api_client):
+def test_rest_repository_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = '/covmanager/rest/repositories/1/'
     assert api_client.get(url).status_code == requests.codes['unauthorized']
@@ -105,7 +106,7 @@ def test_rest_repository_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes['unauthorized']
 
 
-def test_rest_repository_no_perm(api_client):
+def test_rest_repository_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username='test-noperm')
     api_client.force_authenticate(user=user)
@@ -117,7 +118,7 @@ def test_rest_repository_no_perm(api_client):
     assert api_client.delete(url).status_code == requests.codes['forbidden']
 
 
-def test_rest_repository_patch(api_client):
+def test_rest_repository_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -125,7 +126,7 @@ def test_rest_repository_patch(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repository_post(api_client):
+def test_rest_repository_post(api_client: APIClient) -> None:
     """post should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -133,7 +134,7 @@ def test_rest_repository_post(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repository_put(api_client):
+def test_rest_repository_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -141,7 +142,7 @@ def test_rest_repository_put(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repository_delete(api_client):
+def test_rest_repository_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
@@ -149,7 +150,7 @@ def test_rest_repository_delete(api_client):
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repository_get(api_client, cm):
+def test_rest_repository_get(api_client: APIClient, cm) -> None:
     """get should be allowed"""
     repo = cm.create_repository("git", name='testrepo')
     user = User.objects.get(username='test')
