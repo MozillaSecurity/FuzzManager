@@ -19,6 +19,8 @@ import requests
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
 
+from .conftest import _result
+
 
 LOG = logging.getLogger("fm.covmanager.tests.repos.rest")  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
@@ -78,7 +80,7 @@ def test_rest_repositories_delete(api_client: APIClient) -> None:
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repositories_get(api_client: APIClient, cm) -> None:
+def test_rest_repositories_get(api_client: APIClient, cm: _result) -> None:
     """get should be allowed"""
     cm.create_repository("git", name='testrepo')
     user = User.objects.get(username='test')
@@ -150,7 +152,7 @@ def test_rest_repository_delete(api_client: APIClient) -> None:
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_repository_get(api_client: APIClient, cm) -> None:
+def test_rest_repository_get(api_client: APIClient, cm: _result) -> None:
     """get should be allowed"""
     repo = cm.create_repository("git", name='testrepo')
     user = User.objects.get(username='test')

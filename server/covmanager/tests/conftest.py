@@ -82,6 +82,9 @@ class covType(TypedDict):
 
 
 class _result(object):  # pylint: disable=invalid-name
+    have_git: bool
+    have_hg: bool
+
     @classmethod
     def create_repository(cls, repotype: str, name: str = "testrepo") -> Repository:
         ...
@@ -96,13 +99,13 @@ class _result(object):  # pylint: disable=invalid-name
                           revision: str = "",
                           branch: str = "",
                           tools: tuple[str]=("testtool",),
-                          client_str: str = "testclient",
-                          coverage_str: str = '{"linesTotal":0,'
-                                              '"name":null,'
-                                              '"coveragePercent":0.0,'
-                                              '"children":{},'
-                                              '"linesMissed":0,'
-                                              '"linesCovered":0}') -> Collection:
+                          client: str = "testclient",
+                          coverage: str = '{"linesTotal":0,'
+                                          '"name":null,'
+                                          '"coveragePercent":0.0,'
+                                          '"children":{},'
+                                          '"linesMissed":0,'
+                                          '"linesCovered":0}') -> Collection:
             ...
     @staticmethod
     def git(repo: Repository, *args: str) -> str:
@@ -166,19 +169,19 @@ def cm(request: pytest.FixtureRequest, settings: Iterator[SettingsWrapper], tmpd
                               revision: str = "",
                               branch: str = "",
                               tools: tuple[str]=("testtool",),
-                              client_str: str = "testclient",
-                              coverage_str: str = '{"linesTotal":0,'
-                                       '"name":null,'
-                                       '"coveragePercent":0.0,'
-                                       '"children":{},'
-                                       '"linesMissed":0,'
-                                       '"linesCovered":0}') -> Collection:
+                              client: str = "testclient",
+                              coverage: str = '{"linesTotal":0,'
+                                              '"name":null,'
+                                              '"coveragePercent":0.0,'
+                                              '"children":{},'
+                                              '"linesMissed":0,'
+                                              '"linesCovered":0}') -> Collection:
             # create collectionfile
-            coverage = cls.create_collection_file(coverage_str)
+            coverage_ = cls.create_collection_file(coverage)
             # create client
-            client, created = Client.objects.get_or_create(name=client_str)
+            client_, created = Client.objects.get_or_create(name=client)
             if created:
-                LOG.debug("Created Client pk=%d", client.pk)
+                LOG.debug("Created Client pk=%d", client_.pk)
             # create repository
             if repository is None:
                 repository = cls.create_repository("git")
@@ -186,8 +189,8 @@ def cm(request: pytest.FixtureRequest, settings: Iterator[SettingsWrapper], tmpd
                                                                 repository=repository,
                                                                 revision=revision,
                                                                 branch=branch,
-                                                                client=client,
-                                                                coverage=coverage))
+                                                                client=client_,
+                                                                coverage=coverage_))
             LOG.debug("Created Collection pk=%d", result.pk)
             # create tools
             for single_tool in tools:

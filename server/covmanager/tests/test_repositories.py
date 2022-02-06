@@ -19,6 +19,8 @@ import requests
 from django.test.client import Client
 from django.urls import reverse
 
+from .conftest import _result
+
 
 LOG = logging.getLogger("fm.covmanager.tests.repos")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
@@ -42,7 +44,7 @@ def test_repositories_view_simpleget(client: Client) -> None:
     assert response.status_code == requests.codes['ok']
 
 
-def test_repositories_view_list(client: Client, cm) -> None:
+def test_repositories_view_list(client: Client, cm: _result) -> None:
     """Repositories are listed"""
     client.login(username='test', password='test')
     repos = []
@@ -68,7 +70,7 @@ def test_repositories_search_view_simpleget(client: Client) -> None:
     assert response.status_code == requests.codes['ok']
 
 
-def test_repositories_search_view_search_git(client: Client, cm) -> None:
+def test_repositories_search_view_search_git(client: Client, cm: _result) -> None:
     cm.create_repository("git", name="gittest1")
     cm.create_repository("git", name="gittest2")
     client.login(username='test', password='test')
@@ -86,7 +88,7 @@ def test_repositories_search_view_search_git(client: Client, cm) -> None:
     assert set(response_test_json["results"]) == {"gittest1", "gittest2"}
 
 
-def test_repositories_search_view_search_hg(client: Client, cm) -> None:
+def test_repositories_search_view_search_hg(client: Client, cm: _result) -> None:
     cm.create_repository("hg", name="hgtest1")
     cm.create_repository("hg", name="hgtest2")
     client.login(username='test', password='test')
