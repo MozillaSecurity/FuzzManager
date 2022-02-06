@@ -18,8 +18,13 @@ import shutil
 import subprocess
 import tempfile
 import pytest
+from typing import Iterator, cast
+from typing_extensions import TypedDict
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.storage import Storage
+import py as py_package
+from pytest_django.fixtures import SettingsWrapper
 from covmanager.models import Collection, CollectionFile, Repository
 from crashmanager.models import Client, Tool, User as cmUser
 
@@ -54,7 +59,7 @@ HAVE_HG = _check_hg()
 
 
 @pytest.fixture
-def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
+def covmanager_test(db: None) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common setup/teardown tasks for all server unittests"""
     user = User.objects.create_user('test', 'test@mozilla.com', 'test')
     user.user_permissions.clear()
@@ -65,15 +70,57 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     user_np.user_permissions.clear()
 
 
+class covType(TypedDict):
+    """Type information for cov"""
+
+    children: dict[str, str]
+    coveragePercent: float
+    linesCovered: int
+    linesMissed: int
+    linesTotal: int
+    name: str | None
+
+
+class _result(object):  # pylint: disable=invalid-name
+    @classmethod
+    def create_repository(cls, repotype: str, name: str = "testrepo") -> Repository:
+        ...
+    @staticmethod
+    def create_collection_file(data: str) -> CollectionFile:
+        ...
+    @classmethod
+    def create_collection(cls,
+                          created: bool | None = None,
+                          description: str = "",
+                          repository: Repository | None = None,
+                          revision: str = "",
+                          branch: str = "",
+                          tools: tuple[str]=("testtool",),
+                          client_str: str = "testclient",
+                          coverage_str: str = '{"linesTotal":0,'
+                                              '"name":null,'
+                                              '"coveragePercent":0.0,'
+                                              '"children":{},'
+                                              '"linesMissed":0,'
+                                              '"linesCovered":0}') -> Collection:
+            ...
+    @staticmethod
+    def git(repo: Repository, *args: str) -> str:
+        ...
+    @staticmethod
+    def hg(repo: Repository, *args: str) -> str:
+        ...
+
+
 @pytest.fixture
-def cm(request, settings, tmpdir):
+def cm(request: pytest.FixtureRequest, settings: Iterator[SettingsWrapper], tmpdir: py_package.path.local):
 
     class _result(object):
         have_git = HAVE_GIT
         have_hg = HAVE_HG
 
         @classmethod
-        def create_repository(cls, repotype, name="testrepo"):
+        def create_repository(cls, repotype: str, name: str = "testrepo") -> Repository:
             location = tempfile.mkdtemp(prefix='testrepo', dir=os.path.dirname(__file__))
             request.addfinalizer(lambda: shutil.rmtree(location))
             if repotype == "git":
@@ -86,7 +133,7 @@ def cm(request, settings, tmpdir):
                 classname = "HGSourceCodeProvider"
             else:
                 raise Exception("unknown repository type: %s (expecting git or hg)" % repotype)
-            result = Repository.objects.create(classname=classname, name=name, location=location)
+            result = cast(Repository, Repository.objects.create(classname=classname, name=name, location=location))
             LOG.debug("Created Repository pk=%d", result.pk)
             if repotype == "git":
                 cls.git(result, "init")
@@ -95,62 +142,63 @@ def cm(request, settings, tmpdir):
             return result
 
         @staticmethod
-        def create_collection_file(data):
+        def create_collection_file(data: str) -> CollectionFile:
 
             # Use a specific temporary directory to upload covmanager files
             # This is required as Django now needs a path relative to that folder in FileField
             location = str(tmpdir)
+            assert isinstance(CollectionFile.file.field.storage, Storage)
             CollectionFile.file.field.storage.location = location
 
             tmp_fd, path = tempfile.mkstemp(suffix=".data", dir=location)
             os.close(tmp_fd)
             with open(path, "w") as fp:
                 fp.write(data)
-            result = CollectionFile.objects.create(file=os.path.basename(path))
+            result = cast(CollectionFile, CollectionFile.objects.create(file=os.path.basename(path)))
             LOG.debug("Created CollectionFile pk=%d", result.pk)
             return result
 
         @classmethod
         def create_collection(cls,
-                              created=None,
-                              description="",
-                              repository=None,
-                              revision="",
-                              branch="",
-                              tools=("testtool",),
-                              client="testclient",
-                              coverage='{"linesTotal":0,'
+                              created: bool | None = None,
+                              description: str = "",
+                              repository: Repository | None = None,
+                              revision: str = "",
+                              branch: str = "",
+                              tools: tuple[str]=("testtool",),
+                              client_str: str = "testclient",
+                              coverage_str: str = '{"linesTotal":0,'
                                        '"name":null,'
                                        '"coveragePercent":0.0,'
                                        '"children":{},'
                                        '"linesMissed":0,'
-                                       '"linesCovered":0}'):
+                                       '"linesCovered":0}') -> Collection:
             # create collectionfile
-            coverage = cls.create_collection_file(coverage)
+            coverage = cls.create_collection_file(coverage_str)
             # create client
-            client, created = Client.objects.get_or_create(name=client)
+            client, created = Client.objects.get_or_create(name=client_str)
             if created:
                 LOG.debug("Created Client pk=%d", client.pk)
             # create repository
             if repository is None:
                 repository = cls.create_repository("git")
-            result = Collection.objects.create(description=description,
-                                               repository=repository,
-                                               revision=revision,
-                                               branch=branch,
-                                               client=client,
-                                               coverage=coverage)
+            result = cast(Collection, Collection.objects.create(description=description,
+                                                                repository=repository,
+                                                                revision=revision,
+                                                                branch=branch,
+                                                                client=client,
+                                                                coverage=coverage))
             LOG.debug("Created Collection pk=%d", result.pk)
             # create tools
-            for tool in tools:
-                tool, created = Tool.objects.get_or_create(name=tool)
+            for single_tool in tools:
+                tool, created = Tool.objects.get_or_create(name=single_tool)
                 if created:
                     LOG.debug("Created Tool pk=%d", tool.pk)
                 result.tools.add(tool)
             return result
 
         @staticmethod
-        def git(repo, *args):
+        def git(repo: Repository, *args: str) -> str:
             path = os.getcwd()
             try:
                 os.chdir(repo.location)
@@ -159,7 +207,7 @@ def cm(request, settings, tmpdir):
                 os.chdir(path)
 
         @staticmethod
-        def hg(repo, *args):
+        def hg(repo: Repository, *args: str) -> str:
             path = os.getcwd()
             try:
                 os.chdir(repo.location)

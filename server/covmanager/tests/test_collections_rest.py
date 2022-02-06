@@ -17,11 +17,13 @@ import json
 import logging
 import pytest
 import requests
-from typing_extensions import TypedDict
 from django.contrib.auth.models import User
 from django.utils import dateparse, timezone
 from rest_framework.test import APIClient
 from covmanager.models import Collection
+
+from .conftest import _result
+from .conftest import covType
 
 
 LOG = logging.getLogger("fm.covmanager.tests.collections.rest")
@@ -59,21 +61,11 @@ def test_rest_collections_patch(api_client: APIClient) -> None:
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_collections_post(api_client: APIClient, cm) -> None:
+def test_rest_collections_post(api_client: APIClient, cm: _result) -> None:
     """post should be allowed"""
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
     repo = cm.create_repository("git", name="testrepo")
-
-    class covType(TypedDict):
-        """Type information for cov"""
-
-        children: dict[str, str]
-        coveragePercent: float
-        linesCovered: int
-        linesMissed: int
-        linesTotal: int
-        name: str | None
 
     cov: covType = {"linesTotal": 0,
            "name": None,
@@ -121,7 +113,7 @@ def test_rest_collections_delete(api_client: APIClient) -> None:
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_collections_get(api_client: APIClient, cm) -> None:
+def test_rest_collections_get(api_client: APIClient, cm: _result) -> None:
     """get should be allowed"""
     repo = cm.create_repository('git', name='testrepo')
     coll = cm.create_collection(repo, branch='master', description='testdesc', revision='abc')
@@ -211,7 +203,7 @@ def test_rest_collection_delete(api_client: APIClient) -> None:
     assert resp.status_code == requests.codes['method_not_allowed']
 
 
-def test_rest_collection_get(api_client: APIClient, cm) -> None:
+def test_rest_collection_get(api_client: APIClient, cm: _result) -> None:
     """get should not be allowed"""
     repo = cm.create_repository('git', name='testrepo')
     coll = cm.create_collection(repo, branch='master', description='testdesc', revision='abc')

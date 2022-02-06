@@ -60,7 +60,7 @@ LOG = logging.getLogger("fm.crashmanager.tests.crashes.rest")
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/crashes/", "/crashmanager/rest/crashes/1/"])
-def test_rest_crashes_no_auth(db: str, api_client: APIClient, method: str, url: str) -> None:
+def test_rest_crashes_no_auth(db: None, api_client: APIClient, method: str, url: str) -> None:
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['unauthorized']
 

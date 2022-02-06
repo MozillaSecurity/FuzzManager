@@ -41,7 +41,7 @@ def _create_user(username: str, email: str = "test@mozilla.com", password: str =
 
 
 @pytest.fixture
-def crashmanager_test(db: str) -> None:  # pylint: disable=invalid-name,unused-argument
+def crashmanager_test(db: None) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all crashmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")
@@ -50,7 +50,7 @@ def crashmanager_test(db: str) -> None:  # pylint: disable=invalid-name,unused-a
 
 
 @pytest.fixture
-def user_normal(db: str, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
+def user_normal(db: None, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
     """Create a normal, authenticated user"""
     user = _create_user("test")
     api_client.force_authenticate(user=user)
@@ -58,7 +58,7 @@ def user_normal(db: str, api_client: APIClient) -> User:  # pylint: disable=inva
 
 
 @pytest.fixture
-def user_restricted(db: str, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
+def user_restricted(db: None, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
     """Create a restricted, authenticated user"""
     user = _create_user("test-restricted", restricted=True)
     api_client.force_authenticate(user=user)
@@ -66,7 +66,7 @@ def user_restricted(db: str, api_client: APIClient) -> User:  # pylint: disable=
 
 
 @pytest.fixture
-def user_noperm(db: str, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
+def user_noperm(db: None, api_client: APIClient) -> User:  # pylint: disable=invalid-name,unused-argument
     """Create an authenticated user with no crashmanager ACL"""
     user = _create_user("test-noperm", has_permission=False)
     api_client.force_authenticate(user=user)
@@ -77,6 +77,82 @@ def user_noperm(db: str, api_client: APIClient) -> User:  # pylint: disable=inva
 def user(request):
     assert request.param in {"normal", "restricted", "noperm"}
     return request.getfixturevalue("user_" + request.param)
+
+
+class _cm_result(object):  # pylint: disable=invalid-name
+    @staticmethod
+    def create_crash(tool: str = "testtool",
+                     platform: str = "testplatform",
+                     product: str = "testproduct",
+                     product_version: Product | None = None,
+                     os: str = "testos",
+                     testcase: cmTestCase | None = None,
+                     client: str = "testclient",
+                     bucket: Bucket | None = None,
+                     stdout: str = "",
+                     stderr: str = "",
+                     crashdata: str = "",
+                     metadata: str = "",
+                     env: str = "",
+                     args: str = "",
+                     crashAddress: str = "",
+                     crashAddressNumeric: int | None = None,
+                     shortSignature: str = "",
+                     cachedCrashInfo: str = "",
+                     triagedOnce: bool = False) -> CrashEntry:
+        ...
+    @staticmethod
+    def create_bugprovider(classname: str = "BugzillaProvider", hostname: str = "", urlTemplate: str = "%s") -> BugProvider:
+        ...
+    @classmethod
+    def create_bug(cls, externalId: str, externalType: BugProvider | None = None, closed: bool | None = None) -> Bug:
+        ...
+    @staticmethod
+    def create_testcase(filename: str,
+                        testdata: str = "",
+                        quality: int = 0,
+                        isBinary: bool = False) -> cmTestCase:
+        ...
+    @staticmethod
+    def create_template(mode: str = BugzillaTemplateMode.Bug,
+                        name: str = "",
+                        product: str = "",
+                        component: str = "",
+                        summary: str = "",
+                        version: str = "",
+                        description: str = "",
+                        whiteboard: str = "",
+                        keywords: str = "",
+                        op_sys: str = "",
+                        platform: str = "",
+                        priority: str = "",
+                        severity: str = "",
+                        alias: str = "",
+                        cc: str = "",
+                        assigned_to: str = "",
+                        qa_contact: str = "",
+                        target_milestone: str = "",
+                        attrs: str = "",
+                        security: bool = False,
+                        security_group: str = "",
+                        comment: str = "",
+                        testcase_filename: str = "",
+                        blocks: str = "",
+                        dependson: str = "") -> BugzillaTemplate:
+        ...
+    @staticmethod
+    def create_bucket(bug: Bug | None = None,
+                        signature: str = "",
+                        shortDescription: str = "",
+                        frequent: bool = False,
+                        permanent: bool = False) -> Bucket:
+        ...
+    @staticmethod
+    def create_toolfilter(tool: str, user: str = 'test') -> None:
+        ...
+    @staticmethod
+    def create_bucketwatch(bucket: Bucket, crash: CrashEntry | int = 0) -> BucketWatch:
+        ...
 
 
 @pytest.fixture
@@ -252,10 +328,11 @@ def cm():
             cmuser.defaultToolsFilter.add(Tool.objects.get(name=tool))
 
         @staticmethod
-        def create_bucketwatch(bucket: Bucket, crash=0) -> BucketWatch:
+        def create_bucketwatch(bucket: Bucket, crash: CrashEntry | int = 0) -> BucketWatch:
             user = User.objects.get(username='test')
             cmuser, _ = cmUser.objects.get_or_create(user=user)
             if crash:
+                assert isinstance(crash, CrashEntry)
                 crash = crash.pk
             result = cast(BucketWatch, BucketWatch.objects.create(bucket=bucket, user=cmuser, lastCrash=crash))
             LOG.debug("Created BucketWatch pk=%d", result.pk)
