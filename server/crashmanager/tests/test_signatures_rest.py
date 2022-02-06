@@ -16,10 +16,12 @@ import json
 import logging
 import pytest
 import requests
+from django.contrib.auth.models import User as DjangoUser
 from django.urls import reverse
+from rest_framework.test import APIClient
 from rest_framework import status
-from crashmanager.models import Bucket, Bug, CrashEntry
-from .conftest import _create_user
+from crashmanager.models import Bucket, Bug, CrashEntry, User
+from crashmanager.tests.conftest import _cm_result, _create_user
 
 # What should be allowed:
 #
@@ -52,7 +54,7 @@ from .conftest import _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=None, latest=None, hist=[], vue=False):
+def _compare_rest_result_to_bucket(result: dict[str, object], bucket: Bucket, size: int, quality: int, best_entry: int | None = None, latest: int | None = None, hist: list[dict[str, object]] = [], vue: bool = False) -> None:
     attributes = {
         'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
         'has_optimization', 'latest_entry',
@@ -87,14 +89,14 @@ def _compare_rest_result_to_bucket(result, bucket, size, quality, best_entry=Non
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"])
-def test_rest_signatures_no_auth(db, api_client, method, url):
+def test_rest_signatures_no_auth(db: None, api_client: APIClient, method: str, url: str) -> None:
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['unauthorized']
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"])
-def test_rest_signatures_no_perm(user_noperm, api_client, method, url):
+def test_rest_signatures_no_perm(user_noperm: User, api_client: APIClient, method: str, url: str) -> None:
     """must yield forbidden without permission"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['forbidden']
 
@@ -114,7 +116,7 @@ def test_rest_signatures_no_perm(user_noperm, api_client, method, url):
     ("put", "/crashmanager/rest/buckets/1/", "normal"),
     ("put", "/crashmanager/rest/buckets/1/", "restricted"),
 ], indirect=["user"])
-def test_rest_signatures_methods(api_client, user, method, url):
+def test_rest_signatures_methods(api_client: APIClient, user: User, method: str, url: str) -> None:
     """must yield method-not-allowed for unsupported methods"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['method_not_allowed']
 
@@ -122,7 +124,7 @@ def test_rest_signatures_methods(api_client, user, method, url):
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 @pytest.mark.parametrize("vue", [True, False])
-def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
+def test_rest_signatures_list(api_client: APIClient, cm: _cm_result, user: DjangoUser, ignore_toolfilter: bool, vue: bool) -> None:
     """test that buckets can be listed"""
     bucket1 = cm.create_bucket(shortDescription="bucket #1")
     bucket2 = cm.create_bucket(shortDescription="bucket #2")
@@ -179,7 +181,7 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
-def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
+def test_rest_signatures_retrieve(api_client: APIClient, cm: _cm_result, user: DjangoUser, ignore_toolfilter: bool) -> None:
     """test that individual Signature can be fetched"""
     bucket1 = cm.create_bucket(shortDescription="bucket #1")
     bucket2 = cm.create_bucket(shortDescription="bucket #2")
@@ -230,7 +232,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("from_crash", [False, True])
-def test_new_signature_create(api_client, cm, user, from_crash):  # pylint: disable=invalid-name
+def test_new_signature_create(api_client: APIClient, cm: _cm_result, user: DjangoUser, from_crash: bool) -> None:  # pylint: disable=invalid-name
     if from_crash:
         if user.username == 'test-restricted':
             _create_user('test')
@@ -279,7 +281,7 @@ def test_new_signature_create(api_client, cm, user, from_crash):  # pylint: disa
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("many", [False, True])
-def test_new_signature_create_w_reassign(api_client, cm, user, many):  # pylint: disable=invalid-name
+def test_new_signature_create_w_reassign(api_client: APIClient, cm: _cm_result, user: User, many: bool) -> None:  # pylint: disable=invalid-name
     if many:
         crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
     else:
@@ -320,7 +322,7 @@ def test_new_signature_create_w_reassign(api_client, cm, user, many):  # pylint:
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("many", [False, True])
-def test_new_signature_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
+def test_new_signature_preview(api_client: APIClient, cm: _cm_result, user: User, many: bool) -> None:  # pylint: disable=invalid-name
     if many:
         crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
     else:
@@ -367,7 +369,7 @@ def test_new_signature_preview(api_client, cm, user, many):  # pylint: disable=i
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
-def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-name
+def test_edit_signature_edit(api_client: APIClient, cm: _cm_result, user: User) -> None:  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     crash = cm.create_crash(shortSignature='crash #1', stderr="blah")
     sig = json.dumps({
@@ -401,7 +403,7 @@ def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-n
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
 @pytest.mark.parametrize("many", [False, True])
-def test_edit_signature_edit_w_reassign(api_client, cm, user, many):  # pylint: disable=invalid-name
+def test_edit_signature_edit_w_reassign(api_client: APIClient, cm: _cm_result, user: User, many: bool) -> None:  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     if many:
         crashes = [cm.create_crash(shortSignature='crash #1', stderr="blah") for _ in range(201)]
@@ -443,7 +445,7 @@ def test_edit_signature_edit_w_reassign(api_client, cm, user, many):  # pylint: 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
 @pytest.mark.parametrize("many", [False, True])
-def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
+def test_edit_signature_edit_preview(api_client: APIClient, cm: _cm_result, user: User, many: bool) -> None:  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     if many:
         crashes1 = [cm.create_crash(shortSignature='crash #1', stderr="foo", bucket=bucket) for _ in range(201)]
@@ -501,7 +503,7 @@ def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: dis
         assert in_list[0]['id'] == crash2.pk
 
 
-def test_edit_signature_set_frequent(api_client, cm, user_normal):
+def test_edit_signature_set_frequent(api_client: APIClient, cm: _cm_result, user_normal: User) -> None:
     """test that partial_update action marks a signature frequent without touching anything else"""
     bug = cm.create_bug('123')
     sig = json.dumps({
@@ -524,7 +526,7 @@ def test_edit_signature_set_frequent(api_client, cm, user_normal):
     assert bucket.bug == bug
 
 
-def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
+def test_edit_signature_unassign_external_bug(api_client: APIClient, cm: _cm_result, user_normal: User) -> None:
     """test that partial_update action marks a signature frequent without touching anything else"""
     bug = cm.create_bug('123')
     sig = json.dumps({
@@ -545,7 +547,7 @@ def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
     assert bucket.bug is None
 
 
-def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
+def test_edit_signature_assign_external_bug(api_client: APIClient, cm: _cm_result, user_normal: User) -> None:
     """test that partial_update action create a new Bug and assign it to this Bucket"""
     provider = cm.create_bugprovider(hostname='test-provider.com', urlTemplate='test-provider.com/template')
     sig = json.dumps({

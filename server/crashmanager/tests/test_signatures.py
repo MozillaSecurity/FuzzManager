@@ -17,8 +17,10 @@ import json
 import logging
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 from crashmanager.models import Bucket, BucketWatch, CrashEntry
+from crashmanager.tests.conftest import _cm_result
 from . import assert_contains
 
 
@@ -32,7 +34,7 @@ pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=inv
                                               ("crashmanager:sigtry", {'sigid': 0, 'crashid': 0}),
                                               ("crashmanager:signew", {}),
                                               ("crashmanager:sigedit", {'sigid': 1})])
-def test_signatures_no_login(client, name, kwargs):
+def test_signatures_no_login(client: Client, name: str, kwargs: dict[str, int]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
@@ -40,7 +42,7 @@ def test_signatures_no_login(client, name, kwargs):
     assert resp.url == '/login/?next=' + path
 
 
-def test_signatures_view(client):  # pylint: disable=invalid-name
+def test_signatures_view(client: Client) -> None:  # pylint: disable=invalid-name
     """Check that the Vue component is called"""
     client.login(username='test', password='test')
     response = client.get(reverse("crashmanager:signatures"))
@@ -49,7 +51,7 @@ def test_signatures_view(client):  # pylint: disable=invalid-name
     assert_contains(response, 'signatureslist')
 
 
-def test_del_signature_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_del_signature_simple_get(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -66,7 +68,7 @@ def test_del_signature_simple_get(client, cm):  # pylint: disable=invalid-name
     assert_contains(response, "Also delete all %d entries with this bucket" % 1)
 
 
-def test_find_signature_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_find_signature_simple_get(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     crash = cm.create_crash()
@@ -80,7 +82,7 @@ def test_find_signature_simple_get(client, cm):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes['ok']
 
 
-def test_opt_signature_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_opt_signature_simple_get(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(signature=json.dumps({"symptoms": [
@@ -92,7 +94,7 @@ def test_opt_signature_simple_get(client, cm):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes['ok']
 
 
-def test_try_signature_simple_get(client, cm):  # pylint: disable=invalid-name
+def test_try_signature_simple_get(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(signature=json.dumps({"symptoms": [
@@ -105,7 +107,7 @@ def test_try_signature_simple_get(client, cm):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes['ok']
 
 
-def test_new_signature_view(client):
+def test_new_signature_view(client: Client) -> None:
     """Check that the Vue component is called"""
     client.login(username='test', password='test')
     response = client.get(reverse("crashmanager:signew"))
@@ -114,7 +116,7 @@ def test_new_signature_view(client):
     assert_contains(response, 'createoredit')
 
 
-def test_edit_signature_view(client, cm):  # pylint: disable=invalid-name
+def test_edit_signature_view(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Check that the Vue component is called"""
     client.login(username='test', password='test')
     sig = json.dumps({
@@ -132,7 +134,7 @@ def test_edit_signature_view(client, cm):  # pylint: disable=invalid-name
     assert response.context['bucketId'] == bucket.pk
 
 
-def test_del_signature_empty(client, cm):  # pylint: disable=invalid-name
+def test_del_signature_empty(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Test deleting a signature with no crashes"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -143,7 +145,7 @@ def test_del_signature_empty(client, cm):  # pylint: disable=invalid-name
     assert not Bucket.objects.count()
 
 
-def test_del_signature_leave_entries(client, cm):  # pylint: disable=invalid-name
+def test_del_signature_leave_entries(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Test deleting a signature with crashes and leave entries"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -157,7 +159,7 @@ def test_del_signature_leave_entries(client, cm):  # pylint: disable=invalid-nam
     assert crash.bucket is None
 
 
-def test_del_signature_del_entries(client, cm):  # pylint: disable=invalid-name
+def test_del_signature_del_entries(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Test deleting a signature with crashes and removing entries"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -170,7 +172,7 @@ def test_del_signature_del_entries(client, cm):  # pylint: disable=invalid-name
     assert not CrashEntry.objects.count()
 
 
-def test_watch_signature_empty(client):
+def test_watch_signature_empty(client: Client) -> None:
     """If no watched signatures, that should be shown"""
     client.login(username='test', password='test')
     response = client.get(reverse('crashmanager:sigwatch'))
@@ -178,7 +180,7 @@ def test_watch_signature_empty(client):
     assert_contains(response, "Displaying 0 watched signature entries from the database.")
 
 
-def test_watch_signature_buckets(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_buckets(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Watched signatures should be listed"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -191,7 +193,7 @@ def test_watch_signature_buckets(client, cm):  # pylint: disable=invalid-name
     assert siglist[0] == bucket
 
 
-def test_watch_signature_buckets_new_crashes(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_buckets_new_crashes(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Watched signatures should show new crashes"""
     client.login(username='test', password='test')
     buckets = (cm.create_bucket(shortDescription='bucket #1'),
@@ -212,7 +214,7 @@ def test_watch_signature_buckets_new_crashes(client, cm):  # pylint: disable=inv
     assert not siglist[1].newCrashes
 
 
-def test_watch_signature_del(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_del(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Deleting a signature watch"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -229,7 +231,7 @@ def test_watch_signature_del(client, cm):  # pylint: disable=invalid-name
     assert response.url == reverse('crashmanager:sigwatch')
 
 
-def test_watch_signature_delsig(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_delsig(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Deleting a watched signature"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')
@@ -238,7 +240,7 @@ def test_watch_signature_delsig(client, cm):  # pylint: disable=invalid-name
     assert not BucketWatch.objects.count()
 
 
-def test_watch_signature_update(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_update(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Updating a signature watch"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription="bucket #1")
@@ -255,7 +257,7 @@ def test_watch_signature_update(client, cm):  # pylint: disable=invalid-name
     assert watch.lastCrash == crash2.pk
 
 
-def test_watch_signature_new(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_new(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Creating a signature watch"""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription="bucket #1")
@@ -270,7 +272,7 @@ def test_watch_signature_new(client, cm):  # pylint: disable=invalid-name
     assert watch.lastCrash == crash.pk
 
 
-def test_watch_signature_crashes(client, cm):  # pylint: disable=invalid-name
+def test_watch_signature_crashes(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Crashes in a signature watch should be shown correctly."""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription='bucket #1')

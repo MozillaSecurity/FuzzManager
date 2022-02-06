@@ -19,6 +19,11 @@ import requests
 from django.urls import reverse
 from . import assert_contains
 
+from django.contrib.auth.models import User
+from django.test.client import Client
+
+from crashmanager.tests.conftest import _cm_result
+
 
 LOG = logging.getLogger("fm.crashmanager.tests.stats")
 VIEW_NAME = "crashmanager:stats"
@@ -26,7 +31,7 @@ VIEW_ENTRIES_FMT = "Total reports in the last hour: %d"
 pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
-def test_stats_view_no_login(client):
+def test_stats_view_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse(VIEW_NAME)
     resp = client.get(path)
@@ -34,7 +39,7 @@ def test_stats_view_no_login(client):
     assert resp.url == '/login/?next=' + path
 
 
-def test_stats_view_no_crashes(client):
+def test_stats_view_no_crashes(client: Client) -> None:
     """If no crashes in db, an appropriate message is shown."""
     client.login(username='test', password='test')
     response = client.get(reverse(VIEW_NAME))
@@ -44,7 +49,7 @@ def test_stats_view_no_crashes(client):
     assert not response.context['frequentBuckets']
 
 
-def test_stats_view_with_crash(client, cm):  # pylint: disable=invalid-name
+def test_stats_view_with_crash(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Insert one crash and check that it is shown ok."""
     client.login(username='test', password='test')
     cm.create_crash(shortSignature="crash #1")
@@ -55,7 +60,7 @@ def test_stats_view_with_crash(client, cm):  # pylint: disable=invalid-name
     assert not response.context['frequentBuckets']
 
 
-def test_stats_view_with_crashes(client, cm):  # pylint: disable=invalid-name
+def test_stats_view_with_crashes(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Insert crashes and check that they are shown ok."""
     client.login(username='test', password='test')
     bucket = cm.create_bucket(shortDescription="bucket #1")
@@ -74,7 +79,7 @@ def test_stats_view_with_crashes(client, cm):  # pylint: disable=invalid-name
     assert response_buckets[0].rph == 2
 
 
-def test_stats_view_old(client, cm):  # pylint: disable=invalid-name
+def test_stats_view_old(client: Client, cm: _cm_result) -> None:  # pylint: disable=invalid-name
     """Insert one crash in the past and check that it is not shown."""
     client.login(username='test', password='test')
     crash = cm.create_crash(shortSignature="crash #1")

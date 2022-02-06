@@ -19,7 +19,7 @@ import requests
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
 
-from .conftest import _result
+from covmanager.tests.conftest import _result
 
 
 LOG = logging.getLogger("fm.covmanager.tests.repos.rest")  # pylint: disable=invalid-name

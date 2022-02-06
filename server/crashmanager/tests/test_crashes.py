@@ -15,7 +15,9 @@ from __future__ import annotations
 import logging
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
+from crashmanager.tests.conftest import _cm_result
 from . import assert_contains
 
 
@@ -23,7 +25,7 @@ LOG = logging.getLogger("fm.crashmanager.tests.crashes")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
-def test_crashes_view(client):  # pylint: disable=invalid-name
+def test_crashes_view(client: Client) -> None:  # pylint: disable=invalid-name
     """Check that the Vue component is called"""
     client.login(username='test', password='test')
     response = client.get(reverse("crashmanager:crashes"))
@@ -38,7 +40,7 @@ def test_crashes_view(client):  # pylint: disable=invalid-name
                           ("crashmanager:crashdel", {'crashid': 0}),
                           ("crashmanager:crashedit", {'crashid': 0}),
                           ("crashmanager:crashview", {'crashid': 0})])
-def test_crashes_no_login(client, name, kwargs):
+def test_crashes_no_login(client: Client, name: str, kwargs: dict[str, int]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
@@ -50,7 +52,7 @@ def test_crashes_no_login(client, name, kwargs):
                          ["crashmanager:crashdel",
                           "crashmanager:crashedit",
                           "crashmanager:crashview"])
-def test_crash_simple_get(client, cm, name):  # pylint: disable=invalid-name
+def test_crash_simple_get(client: Client, cm: _cm_result, name: str) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username='test', password='test')
     crash = cm.create_crash()
@@ -59,7 +61,7 @@ def test_crash_simple_get(client, cm, name):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes['ok']
 
 
-def test_delete_testcase(cm):
+def test_delete_testcase(cm: _cm_result) -> None:
     """Testcases should be delete when TestCase object is removed"""
     testcase = cm.create_testcase("test.txt", "hello world")
     test_file = testcase.test.name
@@ -71,7 +73,7 @@ def test_delete_testcase(cm):
         raise AssertionError("file should have been deleted with TestCase: %r" % (test_file,))
 
 
-def test_delete_testcase_crash(cm):
+def test_delete_testcase_crash(cm: _cm_result) -> None:
     """Testcases should be delete when CrashInfo object is removed"""
     testcase = cm.create_testcase("test.txt", "hello world")
     test_file = testcase.test.name

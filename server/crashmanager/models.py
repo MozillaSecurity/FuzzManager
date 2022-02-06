@@ -600,14 +600,14 @@ class User(models.Model):
             ("view_taskmanager", "Can see TaskManager app"),
         )
 
-    user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
+    user = cast(DjangoUser, models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE))
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
     defaultTemplateId = int(str(models.IntegerField(default=0)))
     defaultProviderId = int(str(models.IntegerField(default=1)))
-    defaultToolsFilter = models.ManyToManyField(Tool)
+    defaultToolsFilter = cast(Tool, models.ManyToManyField(Tool))
     restricted = bool(models.BooleanField(blank=False, default=False))
-    bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
+    bucketsWatching = cast(Bucket, models.ManyToManyField(Bucket, through='BucketWatch'))
 
     # Notifications
     inaccessible_bug = bool(models.BooleanField(blank=False, default=False))

@@ -74,7 +74,7 @@ def user_noperm(db: None, api_client: APIClient) -> User:  # pylint: disable=inv
 
 
 @pytest.fixture
-def user(request):
+def user(request) -> User:
     assert request.param in {"normal", "restricted", "noperm"}
     return request.getfixturevalue("user_" + request.param)
 
@@ -84,7 +84,7 @@ class _cm_result(object):  # pylint: disable=invalid-name
     def create_crash(tool: str = "testtool",
                      platform: str = "testplatform",
                      product: str = "testproduct",
-                     product_version: Product | None = None,
+                     product_version: Product | str | None = None,
                      os: str = "testos",
                      testcase: cmTestCase | None = None,
                      client: str = "testclient",
@@ -164,7 +164,7 @@ def cm():
         def create_crash(tool: str = "testtool",
                          platform: str = "testplatform",
                          product: str = "testproduct",
-                         product_version: Product | None = None,
+                         product_version: Product | str | None = None,
                          os: str = "testos",
                          testcase: cmTestCase | None = None,
                          client: str = "testclient",

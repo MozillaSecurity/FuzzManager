@@ -21,7 +21,7 @@ import requests
 from django.test.client import Client
 from django.urls import reverse
 
-from .conftest import _result
+from covmanager.tests.conftest import _result
 
 
 LOG = logging.getLogger("fm.covmanager.tests.collections")

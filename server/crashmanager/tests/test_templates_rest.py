@@ -5,6 +5,11 @@ from __future__ import annotations
 import logging
 import pytest
 import requests
+from rest_framework.test import APIClient
+
+from django.contrib.auth.models import User
+from crashmanager.models import BugzillaTemplate
+from crashmanager.tests.conftest import _cm_result
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.templates.rest")
@@ -12,14 +17,14 @@ LOG = logging.getLogger("fm.crashmanager.tests.templates.rest")
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/bugzilla/templates/", "/crashmanager/rest/bugzilla/templates/1/"])
-def test_rest_templates_no_auth(db, api_client, method, url):
+def test_rest_templates_no_auth(db: None, api_client: APIClient, method: str, url: str) -> None:
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['unauthorized']
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize("url", ["/crashmanager/rest/bugzilla/templates/", "/crashmanager/rest/bugzilla/templates/1/"])
-def test_rest_templates_no_perm(user_noperm, api_client, method, url):
+def test_rest_templates_no_perm(user_noperm: User, api_client: APIClient, method: str, url: str) -> None:
     """must yield forbidden without permission"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['forbidden']
 
@@ -42,12 +47,12 @@ def test_rest_templates_no_perm(user_noperm, api_client, method, url):
     ("put", "/crashmanager/rest/bugzilla/templates/1/", "normal"),
     ("put", "/crashmanager/rest/bugzilla/templates/1/", "restricted"),
 ], indirect=["user"])
-def test_rest_templates_methods(api_client, user, method, url):
+def test_rest_templates_methods(api_client: APIClient, user: str, method: str, url: str) -> None:
     """must yield method-not-allowed for unsupported methods"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes['method_not_allowed']
 
 
-def _compare_rest_result_to_template(result, template):
+def _compare_rest_result_to_template(result: dict[str, str], template: BugzillaTemplate) -> None:
     expected_fields = {
         "id", "mode", "name", "comment", "product", "component", "summary", "version",
         "description", "op_sys", "platform", "priority", "severity", "alias", "cc",
@@ -63,7 +68,7 @@ def _compare_rest_result_to_template(result, template):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_templates_list(api_client, user, cm):
+def test_rest_templates_list(api_client: APIClient, user: str, cm: _cm_result) -> None:
     """test that list returns the right templates"""
     expected = 4
     templates = [cm.create_template(name="template #%d" % (i + 1),
@@ -86,7 +91,7 @@ def test_rest_templates_list(api_client, user, cm):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_templates_retrieve(api_client, user, cm):
+def test_rest_templates_retrieve(api_client: APIClient, user: str, cm: _cm_result) -> None:
     """test that retrieve returns the right template"""
     expected = 4
     templates = [cm.create_template(name="template #%d" % (i + 1),

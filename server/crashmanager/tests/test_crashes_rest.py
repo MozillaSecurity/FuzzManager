@@ -25,6 +25,7 @@ from rest_framework.test import APIClient
 
 from Collector.Collector import DataType
 from crashmanager.models import CrashEntry, TestCase as cmTestCase
+from crashmanager.tests.conftest import _cm_result
 
 
 # What should be allowed:
@@ -144,7 +145,7 @@ def _compare_created_data_to_crash(data: DataType, crash: CrashEntry, crash_addr
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 @pytest.mark.parametrize("include_raw", [True, False])
-def test_rest_crashes_list(api_client: APIClient, user: User, cm, ignore_toolfilter: bool, include_raw: bool) -> None:
+def test_rest_crashes_list(api_client: APIClient, user: User, cm: _cm_result, ignore_toolfilter: bool, include_raw: bool) -> None:
     """test that list returns the right crashes"""
     # if restricted or normal, must only list crashes in toolfilter
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None]
@@ -186,7 +187,7 @@ def test_rest_crashes_list(api_client: APIClient, user: User, cm, ignore_toolfil
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 @pytest.mark.parametrize("include_raw", [True, False])
-def test_rest_crashes_retrieve(api_client: APIClient, user: User, cm, ignore_toolfilter: bool, include_raw: bool) -> None:
+def test_rest_crashes_retrieve(api_client: APIClient, user: User, cm: _cm_result, ignore_toolfilter: bool, include_raw: bool) -> None:
     """test that retrieve returns the right crash"""
     # if restricted or normal, must only list crashes in toolfilter
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None]
@@ -228,7 +229,7 @@ def test_rest_crashes_retrieve(api_client: APIClient, user: User, cm, ignore_too
     ("restricted", None, None),
     ("restricted", 3, "tool1"),
 ], indirect=["user"])
-def test_rest_crashes_list_query(api_client: APIClient, cm, user: User, expected: int | None, toolfilter: str | None) -> None:
+def test_rest_crashes_list_query(api_client: APIClient, cm: _cm_result, user: User, expected: int | None, toolfilter: str | None) -> None:
     """test that crashes can be queried"""
     buckets = [cm.create_bucket(shortDescription="bucket #1"), None, None, None]
     testcases = [cm.create_testcase("test1.txt", quality=5),
@@ -426,7 +427,7 @@ def test_rest_crashes_report_crash_long_sig(api_client: APIClient, user_normal: 
     _compare_created_data_to_crash(data, crash, short_signature=expected)
 
 
-def test_rest_crash_update(api_client: APIClient, cm, user_normal: User) -> None:
+def test_rest_crash_update(api_client: APIClient, cm: _cm_result, user_normal: User) -> None:
     """test that only allowed fields of CrashEntry can be updated"""
     test = cm.create_testcase("test.txt", quality=0)
     bucket = cm.create_bucket(shortDescription="bucket #1")
@@ -453,7 +454,7 @@ def test_rest_crash_update(api_client: APIClient, cm, user_normal: User) -> None
     assert test.quality == 5
 
 
-def test_rest_crash_update_restricted(api_client: APIClient, cm, user_restricted: User) -> None:
+def test_rest_crash_update_restricted(api_client: APIClient, cm: _cm_result, user_restricted: User) -> None:
     """test that restricted users cannot perform updates on CrashEntry"""
     test = cm.create_testcase("test.txt", quality=0)
     bucket = cm.create_bucket(shortDescription="bucket #1")

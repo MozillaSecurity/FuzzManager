@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from django.contrib.auth.models import User
 from django.urls import reverse
 from notifications.models import Notification
 from notifications.signals import notify
@@ -19,15 +20,17 @@ import json
 import logging
 import pytest
 import requests
+from rest_framework.test import APIClient
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, \
     Product, Tool
+from crashmanager.tests.conftest import _cm_result
 
 
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
-def test_rest_notifications_no_auth(db, api_client, method):
+def test_rest_notifications_no_auth(db: None, api_client: APIClient, method: str) -> None:
     """must yield unauthorized without authentication"""
     assert getattr(api_client, method)(
         "/crashmanager/rest/inbox/", {}
@@ -35,7 +38,7 @@ def test_rest_notifications_no_auth(db, api_client, method):
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
-def test_rest_notifications_no_perm(user_noperm, api_client, method):
+def test_rest_notifications_no_perm(user_noperm: User, api_client: APIClient, method: str) -> None:
     """must yield forbidden without permission"""
     assert getattr(api_client, method)(
         "/crashmanager/rest/inbox/", {}
@@ -52,7 +55,7 @@ def test_rest_notifications_no_perm(user_noperm, api_client, method):
     ("put", "/crashmanager/rest/inbox/", "normal"),
     ("put", "/crashmanager/rest/inbox/", "restricted"),
 ], indirect=["user"])
-def test_rest_notifications_methods(api_client, user, method, url):
+def test_rest_notifications_methods(api_client: APIClient, user: User, method: str, url: str) -> None:
     """must yield method-not-allowed for unsupported methods"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes["method_not_allowed"]
 
@@ -69,13 +72,13 @@ def test_rest_notifications_methods(api_client, user, method, url):
     ("put", "/crashmanager/rest/inbox/1/", "normal"),
     ("put", "/crashmanager/rest/inbox/1/", "restricted"),
 ], indirect=["user"])
-def test_rest_notifications_methods_not_found(api_client, user, method, url):
+def test_rest_notifications_methods_not_found(api_client: APIClient, user: User, method: str, url: str) -> None:
     """must yield not-found for undeclared methods"""
     assert getattr(api_client, method)(url, {}).status_code == requests.codes["not_found"]
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_list_unread(api_client, user, cm):
+def test_rest_notifications_list_unread(api_client: APIClient, user: User, cm: _cm_result) -> None:
     """test that list returns the right notifications"""
     provider = BugProvider.objects.create(classname="BugzillaProvider",
                                           hostname="provider.com",
@@ -131,7 +134,7 @@ def test_rest_notifications_list_unread(api_client, user, cm):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_mark_as_read(api_client, user, cm):
+def test_rest_notifications_mark_as_read(api_client: APIClient, user: User, cm: _cm_result) -> None:
     """test that mark_as_read only marks the targetted notification as read"""
     bucket = Bucket.objects.create(signature=json.dumps(
         {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
@@ -161,7 +164,7 @@ def test_rest_notifications_mark_as_read(api_client, user, cm):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_mark_all_as_read(api_client, user, cm):
+def test_rest_notifications_mark_all_as_read(api_client: APIClient, user: User, cm: _cm_result) -> None:
     """test that mark_all_as_read marks all user notifications as read"""
     bucket = Bucket.objects.create(signature=json.dumps(
         {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}

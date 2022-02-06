@@ -22,8 +22,8 @@ from django.utils import dateparse, timezone
 from rest_framework.test import APIClient
 from covmanager.models import Collection
 
-from .conftest import _result
-from .conftest import covType
+from covmanager.tests.conftest import _result
+from covmanager.tests.conftest import covType
 
 
 LOG = logging.getLogger("fm.covmanager.tests.collections.rest")
