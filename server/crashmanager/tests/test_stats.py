@@ -19,7 +19,6 @@ import requests
 from django.urls import reverse
 from . import assert_contains
 
-from django.contrib.auth.models import User
 from django.test.client import Client
 
 from crashmanager.tests.conftest import _cm_result
