@@ -63,7 +63,7 @@ def update_stats() -> None:
         # Now check if we need to aggregate some of the detail entries we have
         entries = PoolUptimeDetailedEntry.objects.filter(pool=pool).order_by('created')
 
-        n = entries.count() - (STATS_TOTAL_DETAILED * 60 * 60) / STATS_DELTA_SECS
+        n = int(entries.count() - (STATS_TOTAL_DETAILED * 60 * 60) / STATS_DELTA_SECS)
         if n > 0:
             # We need to aggregate some entries
             entriesAggr = entries[:n]
@@ -109,7 +109,7 @@ def update_stats() -> None:
 
 
 @app.task
-def _release_lock(lock_key):
+def _release_lock(lock_key: str) -> None:
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
     lock = RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
     if not lock.release():
@@ -265,7 +265,7 @@ def update_prices() -> None:
         if not regions:
             continue
 
-        prices = {}
+        prices: dict[str, dict[str, str]] = {}
         for region in regions:
             for instance_type, price_data in cloud_provider.get_prices_per_region(region).items():
                 prices.setdefault(instance_type, {})

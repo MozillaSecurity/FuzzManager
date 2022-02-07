@@ -17,6 +17,7 @@ import decimal
 import json
 import logging
 import requests
+from django.test.client import Client
 from django.urls import reverse
 import pytest
 from ec2spotmanager.models import PoolConfiguration
@@ -33,7 +34,7 @@ pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")  # pylint: disable=i
                           ("ec2spotmanager:configview", {'configid': 0}),
                           ("ec2spotmanager:configedit", {'configid': 0}),
                           ("ec2spotmanager:configdel", {'configid': 0})])
-def test_configs_no_login(client, name, kwargs):
+def test_configs_no_login(client: Client, name: str, kwargs: dict[str, object]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     response = client.get(path)
@@ -42,7 +43,7 @@ def test_configs_no_login(client, name, kwargs):
     assert response.url == '/login/?next=' + path
 
 
-def test_configs_view_no_configs(client):
+def test_configs_view_no_configs(client: Client) -> None:
     """If no configs in db, an appropriate message is shown."""
     client.login(username='test', password='test')
     response = client.get(reverse("ec2spotmanager:configs"))
@@ -52,7 +53,7 @@ def test_configs_view_no_configs(client):
     assert len(configtree) == 0  # 0 configs
 
 
-def test_configs_view_config(client):
+def test_configs_view_config(client: Client) -> None:
     """Create config and see that it is shown."""
     client.login(username='test', password='test')
     config = create_config("config #1")
@@ -66,7 +67,7 @@ def test_configs_view_config(client):
     assert_contains(response, "config #1")
 
 
-def test_configs_view_configs(client):
+def test_configs_view_configs(client: Client) -> None:
     """Create configs and see that they are shown."""
     client.login(username='test', password='test')
     configs = (create_config("config #1"),
@@ -83,7 +84,7 @@ def test_configs_view_configs(client):
     assert_contains(response, "config #2")
 
 
-def test_configs_view_config_tree(client):
+def test_configs_view_config_tree(client: Client) -> None:
     """Create nested configs and see that they are shown."""
     client.login(username='test', password='test')
     config1 = create_config("config #1")
@@ -115,7 +116,7 @@ def test_configs_view_config_tree(client):
     assert_contains(response, "config #3")
 
 
-def test_create_config_view_create_form(client):
+def test_create_config_view_create_form(client: Client) -> None:
     """Config creation form should be shown"""
     client.login(username='test', password='test')
     response = client.get(reverse("ec2spotmanager:configcreate"))
@@ -127,7 +128,7 @@ def test_create_config_view_create_form(client):
     assert_contains(response, 'name="cycle_interval"')
 
 
-def test_create_config_view_create(client):
+def test_create_config_view_create(client: Client) -> None:
     """Config created via form should be added to db"""
     client.login(username='test', password='test')
     response = client.post(reverse("ec2spotmanager:configcreate"),
@@ -181,7 +182,7 @@ def test_create_config_view_create(client):
     assert json.loads(cfg.gce_raw_config) == {'tag3': 'value3', 'tag4': 'value4'}
 
 
-def test_create_config_view_clone(client):
+def test_create_config_view_clone(client: Client) -> None:
     """Creation form should contain source data"""
     client.login(username='test', password='test')
     cfg = create_config(name='config #1',
@@ -216,7 +217,7 @@ def test_create_config_view_clone(client):
     assert_contains(response, 'hello=world')
 
 
-def test_view_config_view(client):
+def test_view_config_view(client: Client) -> None:
     """Create a config and view it"""
     cfg = create_config(name='config #1',
                         size=1234567,
@@ -250,7 +251,7 @@ def test_view_config_view(client):
     assert_contains(response, 'hello=world')
 
 
-def test_edit_config_view(client):
+def test_edit_config_view(client: Client) -> None:
     """Edit an existing config"""
     cfg = create_config(name='config #1',
                         size=1234567,
@@ -285,7 +286,7 @@ def test_edit_config_view(client):
     assert_contains(response, 'hello=world')
 
 
-def test_del_config_view_delete(client):
+def test_del_config_view_delete(client: Client) -> None:
     """Delete an existing config"""
     cfg = create_config(name='config #1')
     client.login(username='test', password='test')
@@ -296,7 +297,7 @@ def test_del_config_view_delete(client):
     assert PoolConfiguration.objects.count() == 0
 
 
-def test_del_config_view_simple_get(client):
+def test_del_config_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name='config #1')
     client.login(username='test', password='test')

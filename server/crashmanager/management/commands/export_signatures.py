@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from typing import Any
 from zipfile import ZipFile
@@ -14,7 +15,7 @@ from crashmanager.models import CrashEntry, Bucket
 class Command(BaseCommand):
     help = "Export signatures and their metadata."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("filename", help="output filename to write signatures zip to")
 
     @mgmt_lock_required

@@ -19,6 +19,7 @@ from django.contrib.auth.models import User
 from django.core.management import call_command, CommandError
 from notifications.models import Notification
 import pytest
+from pytest_mock import MockerFixture
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, \
     Product, Tool, User as cmUser
 
@@ -37,7 +38,7 @@ def test_none() -> None:
 
 
 @patch('crashmanager.Bugtracker.BugzillaProvider.BugzillaProvider.getBugStatus', return_value={"0": None})
-def test_fake_with_notification(mock_get_bug_status):
+def test_fake_with_notification(mock_get_bug_status: MockerFixture) -> None:
     provider = BugProvider.objects.create(classname="BugzillaProvider",
                                           hostname="provider.com",
                                           urlTemplate="%s")

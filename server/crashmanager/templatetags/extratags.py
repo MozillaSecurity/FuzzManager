@@ -8,12 +8,12 @@ register = template.Library()
 
 
 @register.filter
-def basename(value):
+def basename(value: str) -> str:
     return os.path.basename(value)
 
 
 @register.filter
-def linejoin(value):
+def linejoin(value: list[str]) -> str:
     if value:
         return "\n".join(value)
     else:
@@ -21,12 +21,12 @@ def linejoin(value):
 
 
 @register.filter
-def varformat(arg, val):
+def varformat(arg: int, val: int) -> int:
     return arg % val
 
 
 @register.filter
-def listcsv(value):
+def listcsv(value: list[str]) -> str:
     if value:
         return ", ".join(value)
     else:
@@ -34,7 +34,7 @@ def listcsv(value):
 
 
 @register.filter
-def dictcsv(value):
+def dictcsv(value: dict[str, object]) -> str:
     if value:
         return ", ".join("%s=%s" % x for x in value.items())
     else:
@@ -42,7 +42,7 @@ def dictcsv(value):
 
 
 @register.filter
-def jsonparse(value):
+def jsonparse(value: str):
     if value:
         return json.loads(value)
     else:
