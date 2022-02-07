@@ -27,7 +27,7 @@ POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_
 
 
 class OverwritingStorage(FileSystemStorage):
-    def get_available_name(self, name, max_length=None):
+    def get_available_name(self, name: str, max_length: int | None = None) -> str:
         if self.exists(name):
             os.remove(os.path.join(getattr(settings, 'USERDATA_STORAGE', None), name))
         return name
@@ -66,7 +66,7 @@ class PoolConfiguration(models.Model):
     def __init__(self, *args, **kwargs) -> None:
         # These variables can hold temporarily deserialized data
         self.instance_tags_dict = None
-        self.instance_tags_override = None
+        self.instance_tags_override: bool | None = None
         self.ec2_raw_config_dict = None
         self.ec2_raw_config_override = None
         self.ec2_userdata_macros_dict = None
@@ -140,7 +140,7 @@ class PoolConfiguration(models.Model):
 
         super(PoolConfiguration, self).__init__(*args, **kwargs)
 
-    def flatten(self, cache=None):
+    def flatten(self, cache=None) -> FlatObject:
         # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
         if self.isCyclic(cache):
             raise RuntimeError("Attempted to flatten a cyclic configuration")
@@ -212,7 +212,7 @@ class PoolConfiguration(models.Model):
 
         return flat_parent_config
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         # Reserialize data, then call regular save method
         for field in self.dict_config_fields:
             obj = getattr(self, field + "_dict")

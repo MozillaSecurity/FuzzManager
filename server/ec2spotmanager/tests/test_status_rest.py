@@ -64,9 +64,9 @@ def test_rest_status_report(api_client: APIClient) -> None:
     user = User.objects.get(username='test')
     api_client.force_authenticate(user=user)
     host = create_instance('host1')
-    resp = api_client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
-    assert resp.status_code == requests.codes['created']
-    resp = json.loads(resp.content.decode('utf-8'))
+    resp_response = api_client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
+    assert resp_response.status_code == requests.codes['created']
+    resp = json.loads(resp_response.content.decode('utf-8'))
     assert resp == {'status_data': 'data'}
     host = Instance.objects.get(pk=host.pk)  # re-read
     assert host.status_data == 'data'
@@ -86,9 +86,9 @@ def test_rest_status_report2(api_client: APIClient) -> None:
     api_client.force_authenticate(user=user)
     host1 = create_instance('host1')
     host2 = create_instance('host2')
-    resp = api_client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
-    assert resp.status_code == requests.codes['created']
-    resp = json.loads(resp.content.decode('utf-8'))
+    resp_response = api_client.post('/ec2spotmanager/rest/report/', {'client': 'host1', 'status_data': 'data'})
+    assert resp_response.status_code == requests.codes['created']
+    resp = json.loads(resp_response.content.decode('utf-8'))
     assert resp == {'status_data': 'data'}
     host1 = Instance.objects.get(pk=host1.pk)  # re-read
     assert host1.status_data == 'data'

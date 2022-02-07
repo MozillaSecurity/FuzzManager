@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+from typing import cast
 from django.core.files.base import ContentFile
 from django.http.response import HttpResponse
 from django.test import SimpleTestCase as DjangoTestCase
@@ -43,14 +44,14 @@ def assert_contains(response: HttpResponse, text: str) -> None:
 def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_name=None, ec2_security_groups=None,
                   ec2_instance_types=None, ec2_image_name=None, ec2_userdata_macros=None, ec2_allowed_regions=None,
                   max_price=None, instance_tags=None, ec2_raw_config=None, ec2_userdata=None, gce_image_name=None,
-                  gce_container_name=None, gce_disk_size=None):
-    result = PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
-                                              ec2_key_name=ec2_key_name,
-                                              ec2_image_name=ec2_image_name,
-                                              max_price=max_price,
-                                              gce_image_name=gce_image_name,
-                                              gce_disk_size=gce_disk_size,
-                                              gce_container_name=gce_container_name)
+                  gce_container_name=None, gce_disk_size=None) -> PoolConfiguration:
+    result = cast(PoolConfiguration, PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
+                                                                      ec2_key_name=ec2_key_name,
+                                                                      ec2_image_name=ec2_image_name,
+                                                                      max_price=max_price,
+                                                                      gce_image_name=gce_image_name,
+                                                                      gce_disk_size=gce_disk_size,
+                                                                      gce_container_name=gce_container_name))
     if ec2_security_groups is not None:
         result.ec2_security_groups_list = ec2_security_groups
     if ec2_instance_types is not None:
@@ -72,14 +73,14 @@ def create_config(name, parent=None, size=None, cycle_interval=None, ec2_key_nam
     return result
 
 
-def create_pool(config, enabled=False, last_cycled=None):
-    result = InstancePool.objects.create(config=config, isEnabled=enabled, last_cycled=last_cycled)
+def create_pool(config, enabled=False, last_cycled=None) -> InstancePool:
+    result = cast(InstancePool, InstancePool.objects.create(config=config, isEnabled=enabled, last_cycled=last_cycled))
     LOG.debug("Created InstancePool pk=%d", result.pk)
     return result
 
 
-def create_poolmsg(pool):
-    result = PoolStatusEntry.objects.create(pool=pool, type=0)
+def create_poolmsg(pool) -> PoolStatusEntry:
+    result = cast(PoolStatusEntry, PoolStatusEntry.objects.create(pool=pool, type=0))
     LOG.debug("Created PoolStatusEntry pk=%d", result.pk)
     return result
 
@@ -93,11 +94,11 @@ def create_instance(hostname,
                     ec2_zone="",
                     size=1,
                     created=None,
-                    provider='EC2Spot'):
+                    provider='EC2Spot') -> Instance:
     if created is None:
         created = timezone.now()
-    result = Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
-                                     instance_id=ec2_instance_id, region=ec2_region, zone=ec2_zone, size=size,
-                                     created=created, provider=provider)
+    result = cast(Instance, Instance.objects.create(pool=pool, hostname=hostname, status_code=status_code, status_data=status_data,
+                                                    instance_id=ec2_instance_id, region=ec2_region, zone=ec2_zone, size=size,
+                                                    created=created, provider=provider))
     LOG.debug("Created Instance pk=%d", result.pk)
     return result
