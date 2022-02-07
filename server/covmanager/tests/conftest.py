@@ -18,7 +18,8 @@ import shutil
 import subprocess
 import tempfile
 import pytest
-from typing import Iterator, cast
+from typing import Iterator
+from typing import cast
 from typing_extensions import TypedDict
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType

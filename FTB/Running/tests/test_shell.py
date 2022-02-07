@@ -18,6 +18,7 @@ import os
 import signal
 import sys
 import time
+from typing import TextIO
 
 
 def crash() -> None:
@@ -36,7 +37,7 @@ def stop() -> None:
     os.kill(os.getpid(), signal.SIGSTOP)
 
 
-def processInput(mode, inputFd):
+def processInput(mode: str, inputFd: TextIO) -> None:
     received_aa = False
 
     if mode == "none":

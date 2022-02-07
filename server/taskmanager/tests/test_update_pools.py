@@ -18,6 +18,7 @@ import os.path
 import pytest
 import sys
 from dateutil.parser import isoparse
+from pytest_mock import MockerFixture
 # from taskmanager.cron import delete_expired
 from taskmanager.tasks import update_task, update_pool_defns
 from taskmanager.models import Pool, Task
@@ -244,7 +245,7 @@ TASK_EVENT_DATA = {
 
 
 @pytest.mark.parametrize("pulse_data, expected", TASK_EVENT_DATA.values())
-def test_update_task_0(mocker, settings, pulse_data, expected):
+def test_update_task_0(mocker: MockerFixture, settings, pulse_data: str, expected: dict[str, dict[str, object]]) -> None:
     """test that Task events update the DB"""
     settings.TC_EXTRA_POOLS = ["extra"]
     settings.TC_ROOT_URL = "https://allizom.org/tc"
@@ -268,7 +269,7 @@ def test_update_task_0(mocker, settings, pulse_data, expected):
         assert getattr(task_obj, field) == value
 
 
-def test_update_pool_defns_0(mocker, settings):
+def test_update_pool_defns_0(mocker: MockerFixture, settings) -> None:
     """test that Pool definition is read from GH"""
     settings.TC_FUZZING_CFG_STORAGE = os.path.join(os.path.dirname(__file__), "fixtures", "pool1")
     settings.TC_FUZZING_CFG_REPO = "git@allizom.org:allizom/fuzzing-config.git"

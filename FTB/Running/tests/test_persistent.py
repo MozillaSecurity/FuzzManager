@@ -16,6 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import sys
 import time
 import pytest
@@ -25,13 +26,14 @@ from FTB.Running.PersistentApplication import SimplePersistentApplication, Persi
 TEST_PATH = os.path.dirname(__file__)
 
 
-def test_PersistentApplicationTestModeNone(tmp_path):
-    def _check(spa):
+def test_PersistentApplicationTestModeNone(tmp_path: Path) -> None:
+    def _check(spa: SimplePersistentApplication) -> None:
         try:
             ret = spa.start("aa")
 
             assert ret == ApplicationStatus.OK
 
+            assert spa.stdout is not None
             assert spa.stdout[0] == "Stdout test1"
             assert spa.stdout[1] == "Stdout test2"
 
@@ -65,8 +67,8 @@ def test_PersistentApplicationTestModeNone(tmp_path):
 
 
 @pytest.mark.xfail
-def test_PersistentApplicationTestOtherModes(tmp_path):
-    def _check(spa):
+def test_PersistentApplicationTestOtherModes(tmp_path: Path) -> None:
+    def _check(spa: SimplePersistentApplication) -> None:
         try:
             ret = spa.start()
 
@@ -121,11 +123,12 @@ def test_PersistentApplicationTestOtherModes(tmp_path):
 
 
 @pytest.mark.xfail
-def test_PersistentApplicationTestPerf(tmp_path):
-    def _check(spa):
+def test_PersistentApplicationTestPerf(tmp_path: Path) -> None:
+    def _check(spa: SimplePersistentApplication) -> None:
         try:
             spa.start()
 
+            assert spa.process is not None
             oldPid = spa.process.pid
             startTime = time.time()
 
@@ -154,7 +157,7 @@ def test_PersistentApplicationTestPerf(tmp_path):
                                        inputFile=str(inputFile)))
 
 
-def test_PersistentApplicationTestFaultySigstop(tmp_path):
+def test_PersistentApplicationTestFaultySigstop(tmp_path: Path) -> None:
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
     spa = SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
@@ -165,7 +168,7 @@ def test_PersistentApplicationTestFaultySigstop(tmp_path):
         spa.start()
 
 
-def test_PersistentApplicationTestStopWithoutStart(tmp_path):
+def test_PersistentApplicationTestStopWithoutStart(tmp_path: Path) -> None:
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
     spa = SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
