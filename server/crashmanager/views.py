@@ -910,7 +910,7 @@ class BucketViewSet(mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    queryset = Bucket.objects.all().select_related('bug')
+    queryset = Bucket.objects.all().select_related('bug', 'bug__externalType')
     serializer_class = BucketSerializer
     filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
