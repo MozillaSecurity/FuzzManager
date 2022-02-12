@@ -9,34 +9,40 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
+from django.http import HttpResponse
+from django.http.request import HttpRequest
 from django.http.response import Http404  # noqa
+from django.http.response import HttpResponsePermanentRedirect
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.timezone import now, timedelta
 import fasteners
 import redis
 from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from server.auth import CheckAppPermission
 from server.views import deny_restricted_users
+from typing import Any, Sequence
 from .models import InstancePool, PoolConfiguration, Instance, PoolStatusEntry, ProviderStatusEntry
 from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
 from .serializers import MachineStatusSerializer, PoolConfigurationSerializer
 from .CloudProvider.CloudProvider import INSTANCE_STATE, INSTANCE_STATE_CODE, PROVIDERS, CloudProvider
 
 
-def renderError(request, err):
+def renderError(request: HttpRequest, err: str) -> HttpResponse:
     return render(request, 'error.html', {'error_message': err})
 
 
 @deny_restricted_users
-def index(request):
+def index(request: HttpRequest) -> HttpResponsePermanentRedirect | HttpResponseRedirect:
     return redirect('ec2spotmanager:pools')
 
 
 @deny_restricted_users
-def pools(request):
+def pools(request: HttpRequest) -> HttpResponse:
     filters = {}
     isSearch = True
 
@@ -88,11 +94,11 @@ def pools(request):
                 entry.msgs.append(status_entry)
                 break
 
-    provider_msgs = {}
+    provider_msgs: dict[str, list[ProviderStatusEntry]] = {}
     for msg in ProviderStatusEntry.objects.all().order_by('-created'):
         provider_msgs.setdefault(msg.provider, []).append(msg)
 
-    provider_pools = {}
+    provider_pools: dict[str, set[int]] = {}
     for pool in entries:
         flattened_config = pool.config.flatten(configs)
         for provider in provider_msgs:
@@ -127,7 +133,7 @@ def pools(request):
 
 
 @deny_restricted_users
-def viewPool(request, poolid):
+def viewPool(request: HttpRequest, poolid: int) -> HttpResponse:
     pool = get_object_or_404(InstancePool, pk=poolid)
     instances = Instance.objects.filter(pool=poolid)
 
@@ -150,7 +156,7 @@ def viewPool(request, poolid):
 
     pool.msgs = PoolStatusEntry.objects.filter(pool=pool).order_by('-created')
 
-    provider_msgs = {}
+    provider_msgs: dict[str, list[str]] = {}
     relevant_providers = {}
     for msg in ProviderStatusEntry.objects.all().order_by('-created'):
         # a status provider is relevant to this pool if it is supported by the config,
@@ -178,7 +184,7 @@ def viewPool(request, poolid):
 
 
 @deny_restricted_users
-def viewPoolPrices(request, poolid):
+def viewPoolPrices(request: HttpRequest, poolid: int) -> HttpResponse:
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
     pool = get_object_or_404(InstancePool, pk=poolid)
@@ -192,13 +198,13 @@ def viewPoolPrices(request, poolid):
         cores_per_instance = cloud_provider.get_cores_per_instance()
         allowed_regions = set(cloud_provider.get_allowed_regions(config))
         zones = set()
-        latest_price_by_zone = {}
+        latest_price_by_zone: dict[str, int] = {}
 
         for instance_type in cloud_provider.get_instance_types(config):
-            prices = cache.get('%s:price:%s' % (cloud_provider.get_name(), instance_type))
-            if prices is None:
+            prices_ = cache.get('%s:price:%s' % (cloud_provider.get_name(), instance_type))
+            if prices_ is None:
                 continue
-            prices = json.loads(prices)
+            prices = json.loads(prices_)
             for region in prices:
                 if region not in allowed_regions:
                     continue
@@ -214,7 +220,7 @@ def viewPoolPrices(request, poolid):
 
 
 @deny_restricted_users
-def disablePool(request, poolid):
+def disablePool(request: HttpRequest, poolid: int) -> HttpResponse:
     pool = get_object_or_404(InstancePool, pk=poolid)
 
     if not pool.isEnabled:
@@ -232,7 +238,7 @@ def disablePool(request, poolid):
 
 
 @deny_restricted_users
-def enablePool(request, poolid):
+def enablePool(request: HttpRequest, poolid: int) -> HttpResponse:
     pool = get_object_or_404(InstancePool, pk=poolid)
 
     # Safety check: Figure out if any parameters are missing
@@ -262,7 +268,7 @@ def enablePool(request, poolid):
 
 
 @deny_restricted_users
-def forceCyclePool(request, poolid):
+def forceCyclePool(request: HttpRequest, poolid: int) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     pool = get_object_or_404(InstancePool, pk=poolid)
 
     if not pool.isEnabled:
@@ -280,10 +286,10 @@ def forceCyclePool(request, poolid):
 
 
 @deny_restricted_users
-def forceCyclePoolsByConfig(request, configid):
+def forceCyclePoolsByConfig(request: HttpRequest, configid: int) -> list[PoolConfiguration] | HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
-    def recurse_get_dependent_configurations(config):
+    def recurse_get_dependent_configurations(config: PoolConfiguration) -> list[int]:
         config_pks = [config.pk]
         configs = PoolConfiguration.objects.filter(parent=config)
 
@@ -313,7 +319,7 @@ def forceCyclePoolsByConfig(request, configid):
 
 
 @deny_restricted_users
-def createPool(request):
+def createPool(request: HttpRequest) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     if request.method == 'POST':
         pool = InstancePool()
         config = get_object_or_404(PoolConfiguration, pk=int(request.POST['config']))
@@ -328,11 +334,11 @@ def createPool(request):
 
 
 @deny_restricted_users
-def viewConfigs(request):
+def viewConfigs(request: HttpRequest) -> HttpResponse:
     configs = PoolConfiguration.objects.all()
     roots = configs.filter(parent=None)
 
-    def add_children(node):
+    def add_children(node: PoolConfiguration) -> None:
         node.children = []
         children = configs.filter(parent=node)
         for child in children:
@@ -348,7 +354,7 @@ def viewConfigs(request):
 
 
 @deny_restricted_users
-def viewConfig(request, configid):
+def viewConfig(request: HttpRequest, configid: int) -> HttpResponse:
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
     config.deserializeFields()
@@ -356,7 +362,7 @@ def viewConfig(request, configid):
     return render(request, 'config/view.html', {'config': config})
 
 
-def __handleConfigPOST(request, config):
+def __handleConfigPOST(request: HttpRequest, config: PoolConfiguration) -> HttpResponsePermanentRedirect | HttpResponseRedirect:
     if int(request.POST['parent']) < 0:
         config.parent = None
     else:
@@ -488,6 +494,7 @@ def __handleConfigPOST(request, config):
             config.ec2_userdata_file.save("default.sh", ContentFile(""))
         config.ec2_userdata = request.POST['ec2_userdata']
         if request.POST.get('ec2_userdata_ff', 'unix') == 'unix':
+            assert config.ec2_userdata is not None
             config.ec2_userdata = config.ec2_userdata.replace('\r\n', '\n')
         config.storeTestAndSave()
     else:
@@ -500,7 +507,7 @@ def __handleConfigPOST(request, config):
 
 
 @deny_restricted_users
-def createConfig(request):
+def createConfig(request: HttpRequest) -> HttpResponse:
     if request.method == 'POST':
         config = PoolConfiguration()
         return __handleConfigPOST(request, config)
@@ -529,7 +536,7 @@ def createConfig(request):
 
 
 @deny_restricted_users
-def editConfig(request, configid):
+def editConfig(request: HttpRequest, configid: int) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     config = get_object_or_404(PoolConfiguration, pk=configid)
     config.deserializeFields()
 
@@ -547,7 +554,7 @@ def editConfig(request, configid):
 
 
 @deny_restricted_users
-def deletePool(request, poolid):
+def deletePool(request: HttpRequest, poolid: int) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     pool = get_object_or_404(InstancePool, pk=poolid)
 
     if pool.isEnabled:
@@ -581,7 +588,7 @@ def deletePool(request, poolid):
 
 
 @deny_restricted_users
-def deletePoolMsg(request, msgid, from_pool='0'):
+def deletePoolMsg(request: HttpRequest, msgid: int, from_pool: str = '0') -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     entry = get_object_or_404(PoolStatusEntry, pk=msgid)
     if request.method == 'POST':
         from_pool = int(request.POST['from_pool'])
@@ -599,7 +606,7 @@ def deletePoolMsg(request, msgid, from_pool='0'):
 
 
 @deny_restricted_users
-def deleteProviderMsg(request, msgid):
+def deleteProviderMsg(request: HttpRequest, msgid: int) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     entry = get_object_or_404(ProviderStatusEntry, pk=msgid)
     if request.method == 'POST':
         entry.delete()
@@ -611,7 +618,7 @@ def deleteProviderMsg(request, msgid):
 
 
 @deny_restricted_users
-def deleteConfig(request, configid):
+def deleteConfig(request: HttpRequest, configid: int) -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
     pools = InstancePool.objects.filter(config=config)
@@ -643,7 +650,7 @@ def deleteConfig(request, configid):
 class UptimeChartViewDetailed(JSONView):
     authentication_classes = (SessionAuthentication,)  # noqa
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, object]:
         context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
         pool.flat_config = pool.config.flatten()
@@ -661,7 +668,7 @@ class UptimeChartViewDetailed(JSONView):
     def get_colors(self):
         return next_color()
 
-    def get_data_colors(self, entries):
+    def get_data_colors(self, entries) -> list[str]:
         colors = []
         red = (204, 0, 0)
         yellow = (255, 204, 0)
@@ -677,7 +684,7 @@ class UptimeChartViewDetailed(JSONView):
 
         return colors
 
-    def get_options(self, pool, entries):
+    def get_options(self, pool, entries) -> dict[str, object]:
         if entries:
             scaleSteps = max(entries, key=attrgetter('target')).target + 1
         else:
@@ -710,14 +717,14 @@ class UptimeChartViewDetailed(JSONView):
         datasets.append(dataset)
         return datasets
 
-    def get_labels(self, pool, entries):
+    def get_labels(self, pool, entries) -> list[str]:
         return [x.created.strftime("%H:%M") for x in entries]
 
 
 class UptimeChartViewAccumulated(JSONView):
     authentication_classes = (SessionAuthentication,)  # noqa
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any):
         context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
         pool.flat_config = pool.config.flatten()
@@ -735,7 +742,7 @@ class UptimeChartViewAccumulated(JSONView):
     def get_colors(self):
         return next_color()
 
-    def get_data_colors(self, entries):
+    def get_data_colors(self, entries) -> list[str]:
         colors = []
         red = (204, 0, 0)
         orange = (255, 128, 0)
@@ -754,7 +761,7 @@ class UptimeChartViewAccumulated(JSONView):
 
         return colors
 
-    def get_options(self, pool, entries):
+    def get_options(self, pool, entries) -> dict[str, object]:
         # Scale to 100% but use 110 so the red bar is actually visible
         scaleSteps = 11
         return {
@@ -786,19 +793,19 @@ class UptimeChartViewAccumulated(JSONView):
         datasets.append(dataset)
         return datasets
 
-    def get_labels(self, pool, entries):
+    def get_labels(self, pool, entries) -> list[str]:
         return [x.created.strftime("%b %d") for x in entries]
 
 
 class MachineStatusViewSet(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
 
-    def get(self, request, *args, **kwargs):
-        result = {}
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        result: dict[str, object] = {}
         response = Response(result, status=status.HTTP_200_OK)
         return response
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         if 'client' not in request.data:
             return Response({"error": '"client" is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -821,7 +828,7 @@ class PoolConfigurationViewSet(mixins.RetrieveModelMixin,
     queryset = PoolConfiguration.objects.all()  # noqa
     serializer_class = PoolConfigurationSerializer
 
-    def retrieve(self, request, *args, **kwds):
+    def retrieve(self, request: Request, *args: Any, **kwds: Any) -> Response:
         flatten = request.query_params.get('flatten', '0')
         try:
             flatten = int(flatten)
@@ -836,7 +843,7 @@ class PoolCycleView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (CheckAppPermission,)
 
-    def post(self, request, poolid, format=None):
+    def post(self, request: Request, poolid: int, format: str | None = None) -> Response:
         pool = get_object_or_404(InstancePool, pk=poolid)
 
         if not pool.isEnabled:
@@ -852,7 +859,7 @@ class PoolEnableView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (CheckAppPermission,)
 
-    def post(self, request, poolid, format=None):
+    def post(self, request: Request, poolid: int, format: str | None = None) -> Response:
         pool = get_object_or_404(InstancePool, pk=poolid)
 
         if pool.isEnabled:
@@ -869,7 +876,7 @@ class PoolDisableView(APIView):
     authentication_classes = (TokenAuthentication,)  # noqa
     permission_classes = (CheckAppPermission,)
 
-    def post(self, request, poolid, format=None):
+    def post(self, request: Request, poolid: int, format: str | None = None) -> Response:
         pool = get_object_or_404(InstancePool, pk=poolid)
 
         if not pool.isEnabled:

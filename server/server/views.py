@@ -20,6 +20,7 @@ import functools
 import json
 from rest_framework import filters
 import six
+from typing import Any
 from typing import TypeVar
 from typing import cast
 
@@ -48,7 +49,7 @@ def login(request: HttpRequest):
     return LoginView.as_view()(request)
 
 
-def deny_restricted_users(wrapped):
+def deny_restricted_users(wrapped: collections.abc.Callable[..., Any]) -> collections.abc.Callable[..., Any]:
     @functools.wraps(wrapped)
     def decorator(request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]

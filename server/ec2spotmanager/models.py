@@ -36,14 +36,14 @@ class OverwritingStorage(FileSystemStorage):
 class PoolConfiguration(models.Model):
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.deletion.CASCADE)
     name = str(models.CharField(max_length=255, blank=False))
-    size = int(str(models.IntegerField(default=1, blank=True, null=True)))
-    cycle_interval = int(str(models.IntegerField(default=86400, blank=True, null=True)))
+    size: int | None = int(str(models.IntegerField(default=1, blank=True, null=True)))
+    cycle_interval: int | None = int(str(models.IntegerField(default=86400, blank=True, null=True)))
     max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
     instance_tags = str(models.CharField(max_length=1023, blank=True, null=True))
-    ec2_key_name = str(models.CharField(max_length=255, blank=True, null=True))
+    ec2_key_name: str | None = str(models.CharField(max_length=255, blank=True, null=True))
     ec2_security_groups = str(models.CharField(max_length=255, blank=True, null=True))
     ec2_instance_types = str(models.TextField(blank=True, null=True))
-    ec2_image_name = str(models.CharField(max_length=255, blank=True, null=True))
+    ec2_image_name: str | None = str(models.CharField(max_length=255, blank=True, null=True))
     ec2_userdata_file = \
         models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
                          upload_to=get_storage_path, blank=True, null=True)
@@ -51,10 +51,10 @@ class PoolConfiguration(models.Model):
     ec2_allowed_regions = str(models.CharField(max_length=1023, blank=True, null=True))
     ec2_raw_config = str(models.TextField(blank=True, null=True))
     gce_machine_types = str(models.TextField(blank=True, null=True))
-    gce_image_name = str(models.CharField(max_length=255, blank=True, null=True))
-    gce_container_name = str(models.CharField(max_length=512, blank=True, null=True))
+    gce_image_name: str | None = str(models.CharField(max_length=255, blank=True, null=True))
+    gce_container_name: str | None = str(models.CharField(max_length=512, blank=True, null=True))
     gce_docker_privileged = bool(models.BooleanField(default=False))
-    gce_disk_size = int(str(models.IntegerField(blank=True, null=True)))
+    gce_disk_size: int | None = int(str(models.IntegerField(blank=True, null=True)))
     gce_cmd = str(models.TextField(blank=True, null=True))
     gce_args = str(models.TextField(blank=True, null=True))
     gce_env = str(models.TextField(blank=True, null=True))
@@ -65,29 +65,29 @@ class PoolConfiguration(models.Model):
 
     def __init__(self, *args, **kwargs) -> None:
         # These variables can hold temporarily deserialized data
-        self.instance_tags_dict = None
+        self.instance_tags_dict: dict[str, str] | None = None
         self.instance_tags_override: bool | None = None
-        self.ec2_raw_config_dict = None
-        self.ec2_raw_config_override = None
-        self.ec2_userdata_macros_dict = None
-        self.ec2_userdata_macros_override = None
+        self.ec2_raw_config_dict: dict[str, str] | None = None
+        self.ec2_raw_config_override: bool | None = None
+        self.ec2_userdata_macros_dict: dict[str, str] | None = None
+        self.ec2_userdata_macros_override: bool | None = None
         self.ec2_userdata = None
-        self.ec2_security_groups_list = None
-        self.ec2_security_groups_override = None
-        self.ec2_allowed_regions_list = None
-        self.ec2_allowed_regions_override = None
-        self.ec2_instance_types_list = None
-        self.ec2_instance_types_override = None
-        self.gce_machine_types_list = None
-        self.gce_machine_types_override = None
-        self.gce_cmd_list = None
-        self.gce_cmd_override = None
-        self.gce_args_list = None
-        self.gce_args_override = None
-        self.gce_env_dict = None
-        self.gce_env_override = None
-        self.gce_raw_config_dict = None
-        self.gce_raw_config_override = None
+        self.ec2_security_groups_list: list[str] | None = None
+        self.ec2_security_groups_override: bool | None = None
+        self.ec2_allowed_regions_list: list[str] | None = None
+        self.ec2_allowed_regions_override: bool | None = None
+        self.ec2_instance_types_list: list[str] | None = None
+        self.ec2_instance_types_override: bool | None = None
+        self.gce_machine_types_list: list[str] | None = None
+        self.gce_machine_types_override: bool | None = None
+        self.gce_cmd_list: list[str] | None = None
+        self.gce_cmd_override: bool | None = None
+        self.gce_args_list: list[str] | None = None
+        self.gce_args_override: bool | None = None
+        self.gce_env_dict: dict[str, str] | None = None
+        self.gce_env_override: bool | None = None
+        self.gce_raw_config_dict: dict[str, str] | None = None
+        self.gce_raw_config_override: bool | None = None
 
         # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
@@ -278,7 +278,7 @@ class PoolConfiguration(models.Model):
             return self.parent
         return cache.get(self.parent_id)
 
-    def isCyclic(self, cache=None):
+    def isCyclic(self, cache=None) -> bool:
         # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
         if self._cache_parent(cache) is None:
             return False
@@ -291,7 +291,7 @@ class PoolConfiguration(models.Model):
             hare = hare._cache_parent(cache)._cache_parent(cache)
         return tortoise == hare
 
-    def getMissingParameters(self):
+    def getMissingParameters(self) -> list[str]:
         flat_config = self.flatten()
         ec2_missing_fields = []
         gce_missing_fields = []
