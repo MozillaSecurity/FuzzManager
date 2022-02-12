@@ -147,7 +147,7 @@
             </td>
           </tr>
           <Row
-            v-for="signature in signatures"
+            v-for="signature in orderedSignatures"
             :activity-range="activityRange"
             :key="signature.id"
             :providers="providers"
@@ -163,6 +163,7 @@
 <script>
 import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
+import _orderBy from "lodash/orderBy";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
@@ -254,6 +255,16 @@ export default {
       })();
       return !_isEqual(queryStr, this.modifiedCache.queryStr);
     },
+    orderedSignatures() {
+      const realKeys = [];
+      const orders = [];
+
+      this.sortKeys.forEach((key) => {
+        realKeys.push(key.startsWith("-") ? key.substring(1) : key);
+        orders.push(key.startsWith("-") ? "desc" : "asc");
+      });
+      return _orderBy(this.signatures, realKeys, orders);
+    },
     queryButtonTitle() {
       if (this.loading) return "Query in progress";
       if (!this.modified) return "Results match current query";
@@ -297,7 +308,6 @@ export default {
           this.sortKeys.unshift(`-${sortKey}`);
         }
       }
-      this.fetch();
     },
     sortBy(sortKey) {
       /*
@@ -312,12 +322,10 @@ export default {
       } else {
         this.sortKeys = [`-${sortKey}`];
       }
-      this.fetch();
     },
     buildParams() {
       return {
         vue: "1",
-        ordering: this.sortKeys.join(),
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.queryStr,
       };
@@ -379,6 +387,11 @@ export default {
         if (this.$route.hash !== "")
           this.$router.push({ path: this.$route.path, hash: "" });
       }
+    },
+  },
+  watch: {
+    sortKeys() {
+      this.updateHash();
     },
   },
 };
