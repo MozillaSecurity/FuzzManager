@@ -59,5 +59,5 @@ def test_taskstatusreporter_report(mock_expanduser: Mock, live_server: LiveServe
                                   serverAuthToken=fm_user.token,
                                   clientId='host2')
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 404: Not found"):
+    with pytest.raises(RuntimeError, match="Server unexpectedly responded with status code 404: Not found"):
         reporter.report('data')

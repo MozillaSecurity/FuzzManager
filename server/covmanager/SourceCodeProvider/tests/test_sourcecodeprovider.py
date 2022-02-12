@@ -19,13 +19,14 @@ import os
 from pathlib import Path
 import pytest
 import shutil
+from typing import Iterator
 from covmanager.SourceCodeProvider.GITSourceCodeProvider import GITSourceCodeProvider
 from covmanager.SourceCodeProvider.HGSourceCodeProvider import HGSourceCodeProvider
 from covmanager.SourceCodeProvider.SourceCodeProvider import Utils
 
 
 @pytest.fixture()
-def git_repo(tmp_path: Path):
+def git_repo(tmp_path: Path) -> Iterator[str]:
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git"),
                     str(tmp_path / "test-git"))
     (tmp_path / "test-git" / "git").rename(tmp_path / "test-git" / ".git")
@@ -33,7 +34,7 @@ def git_repo(tmp_path: Path):
 
 
 @pytest.fixture()
-def hg_repo(tmp_path: Path):
+def hg_repo(tmp_path: Path) -> Iterator[str]:
     shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg"),
                     str(tmp_path / "test-hg"))
     (tmp_path / "test-hg" / "hg").rename(tmp_path / "test-hg" / ".hg")

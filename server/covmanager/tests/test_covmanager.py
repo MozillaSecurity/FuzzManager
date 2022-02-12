@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 
 
@@ -22,7 +23,7 @@ LOG = logging.getLogger("fm.covmanager.tests.covmanager")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
 
 
-def test_covmanager_index(client):
+def test_covmanager_index(client: Client) -> None:
     """Request of root url redirects to pools view"""
     client.login(username='test', password='test')
     resp = client.get(reverse('covmanager:index'))
@@ -30,7 +31,7 @@ def test_covmanager_index(client):
     assert resp.url == reverse('covmanager:collections')
 
 
-def test_covmanager_noperm(client):
+def test_covmanager_noperm(client: Client) -> None:
     """Request without permission results in 403"""
     client.login(username='test-noperm', password='test')
     resp = client.get(reverse('covmanager:index'))

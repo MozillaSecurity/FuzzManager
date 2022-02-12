@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import requests
+from django.test.client import Client
 from django.urls import reverse
 import pytest
 
@@ -23,7 +24,7 @@ LOG = logging.getLogger("fm.ec2spotmanager.tests.ec2spotmanager")  # pylint: dis
 pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")  # pylint: disable=invalid-name
 
 
-def test_ec2spotmanager_index(client):
+def test_ec2spotmanager_index(client: Client) -> None:
     """Request of root url redirects to pools view"""
     client.login(username='test', password='test')
     response = client.get(reverse('ec2spotmanager:index'))
@@ -32,7 +33,7 @@ def test_ec2spotmanager_index(client):
     assert response.url == reverse('ec2spotmanager:pools')
 
 
-def test_ec2spotmanager_logout(client):
+def test_ec2spotmanager_logout(client: Client) -> None:
     """Logout url actually logs us out"""
     client.login(username='test', password='test')
     index = reverse('ec2spotmanager:pools')
@@ -44,7 +45,7 @@ def test_ec2spotmanager_logout(client):
     assert response.url == '/login/?next=' + index
 
 
-def test_ec2spotmanager_noperm(client):
+def test_ec2spotmanager_noperm(client: Client) -> None:
     """Request without permission results in 403"""
     client.login(username='test-noperm', password='test')
     resp = client.get(reverse('ec2spotmanager:index'))

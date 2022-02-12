@@ -18,7 +18,6 @@ import shutil
 import subprocess
 import tempfile
 import pytest
-from typing import Iterator
 from typing import cast
 from typing_extensions import TypedDict
 from django.contrib.auth.models import User, Permission
@@ -117,7 +116,7 @@ class _result(object):  # pylint: disable=invalid-name
 
 
 @pytest.fixture
-def cm(request: pytest.FixtureRequest, settings: Iterator[SettingsWrapper], tmpdir: py_package.path.local):
+def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_package.path.local):
 
     class _result(object):
         have_git = HAVE_GIT

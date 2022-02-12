@@ -17,6 +17,7 @@ from typing import Any
 from typing import cast
 
 import pytest
+from pytest_django.fixtures import SettingsWrapper
 from django.core.management import call_command, CommandError
 from django.utils import timezone
 from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, Product, Tool
@@ -47,7 +48,7 @@ def test_bug_cleanup() -> None:
     assert Bug.objects.count() == 0
 
 
-def test_closed_bugs(settings) -> None:
+def test_closed_bugs(settings: SettingsWrapper) -> None:
     """all buckets that have been closed for x days"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 4
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 2
@@ -65,7 +66,7 @@ def test_closed_bugs(settings) -> None:
     assert set(CrashEntry.objects.values_list('pk', flat=True)) == {o.pk for o in crashes[:-1]}
 
 
-def test_empty_bucket(settings) -> None:
+def test_empty_bucket(settings: SettingsWrapper) -> None:
     """all buckets that are empty"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 4
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 2
@@ -80,7 +81,7 @@ def test_empty_bucket(settings) -> None:
     assert Bug.objects.count() == 1
 
 
-def test_old_crashes(settings) -> None:
+def test_old_crashes(settings: SettingsWrapper) -> None:
     """all entries that are older than x days and not in any bucket or bucket has no bug associated with it"""
     settings.CLEANUP_CRASHES_AFTER_DAYS = 3
     settings.CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 1
