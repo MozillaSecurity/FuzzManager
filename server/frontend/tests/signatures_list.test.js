@@ -39,7 +39,6 @@ test("signature list has no buckets", async () => {
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
-    ordering: "-id",
     ignore_toolfilter: "0",
     query: defaultQueryStr,
   });
@@ -65,7 +64,6 @@ test("signature list has two buckets", async () => {
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
-    ordering: "-id",
     ignore_toolfilter: "0",
     query: defaultQueryStr,
   });
