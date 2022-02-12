@@ -17,6 +17,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 
 import six
+from typing_extensions import NotRequired
 from typing_extensions import TypedDict
 
 
@@ -109,8 +110,8 @@ class CObj(TypedDict):
 
     filename: str | None
     locations: list[int]
-    missed: list[int]
-    not_coverable: list[int]
+    missed: NotRequired[list[int]]
+    not_coverable: NotRequired[list[int]]
 
 
 class Utils():
