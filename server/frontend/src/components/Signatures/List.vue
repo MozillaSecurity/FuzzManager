@@ -107,11 +107,12 @@
               Size
             </th>
             <th
-              v-on:click.exact="sortBy('quality')"
-              v-on:click.ctrl.exact="addSort('quality')"
+              v-on:click.exact="sortBy('best_quality')"
+              v-on:click.ctrl.exact="addSort('best_quality')"
               :class="{
                 active:
-                  sortKeys.includes('quality') || sortKeys.includes('-quality'),
+                  sortKeys.includes('best_quality') ||
+                  sortKeys.includes('-best_quality'),
               }"
             >
               Best Quality
@@ -128,12 +129,12 @@
               External Bug
             </th>
             <th
-              v-on:click.exact="sortBy('optimizedSignature')"
-              v-on:click.ctrl.exact="addSort('optimizedSignature')"
+              v-on:click.exact="sortBy('has_optimization')"
+              v-on:click.ctrl.exact="addSort('has_optimization')"
               :class="{
                 active:
-                  sortKeys.includes('optimizedSignature') ||
-                  sortKeys.includes('-optimizedSignature'),
+                  sortKeys.includes('has_optimization') ||
+                  sortKeys.includes('-has_optimization'),
               }"
             >
               Pending Optimization
@@ -174,8 +175,8 @@ const validSortKeys = [
   "id",
   "shortDescription",
   "size",
-  "quality",
-  "optimizedSignature",
+  "best_quality",
+  "has_optimization",
   "bug__externalId",
 ];
 const defaultSortKey = "-id";
