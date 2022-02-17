@@ -42,9 +42,10 @@ tasks:
     then:
       $flatten:
         - $map:
-          - {image: ci-py-36, toxenv: 'py36', name: 'tests python 3.6 django 2.x'}
           - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
           - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
+          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 2.x'}
+          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 2.x'}
           each(build):
             taskId: {$eval: as_slugid(build.toxenv)}
             provisionerId: proj-fuzzing
@@ -55,7 +56,10 @@ tasks:
               - secrets:get:project/fuzzing/codecov-fuzzmanager
             payload:
               maxRunTime: 3600
-              image: mozillasecurity/${build.image}:latest
+              image:
+                namespace: project.fuzzing.orion.${build.image}.master
+                path: public/${build.image}.tar.zst
+                type: indexed-image
               features:
                 taskclusterProxy: true
               command:
@@ -64,7 +68,7 @@ tasks:
                 - '-x'
                 - '-c'
                 - >-
-                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
+                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; } &&
                   git init repo &&
                   cd repo &&
                   git remote add origin ${http_repo} &&
@@ -92,7 +96,10 @@ tasks:
               - secrets:get:project/fuzzing/codecov-fuzzmanager
             payload:
               maxRunTime: 3600
-              image: mozillasecurity/${build.image}:latest
+              image:
+                namespace: project.fuzzing.orion.${build.image}.master
+                path: public/${build.image}.tar.zst
+                type: indexed-image
               features:
                 taskclusterProxy: true
               command:
@@ -160,13 +167,17 @@ tasks:
           dependencies:
             - {$eval: as_slugid("linting")}
             - {$eval: as_slugid("node14")}
-            - {$eval: as_slugid("py36")}
             - {$eval: as_slugid("py37")}
             - {$eval: as_slugid("py38")}
+            - {$eval: as_slugid("py39")}
+            - {$eval: as_slugid("py310")}
           created: {$fromNow: ''}
           deadline: {$fromNow: '1 hour'}
           payload:
-            image: "mozillasecurity/orion-builder:latest"
+            image:
+              namespace: project.fuzzing.orion.orion-builder.master
+              path: public/orion-builder.tar.zst
+              type: indexed-image
             maxRunTime: 3600
             capabilities:
               privileged: true
@@ -201,16 +212,20 @@ tasks:
               dependencies:
                 - {$eval: as_slugid("linting")}
                 - {$eval: as_slugid("node14")}
-                - {$eval: as_slugid("py36")}
                 - {$eval: as_slugid("py37")}
                 - {$eval: as_slugid("py38")}
+                - {$eval: as_slugid("py39")}
+                - {$eval: as_slugid("py310")}
               created: {$fromNow: ''}
               deadline: {$fromNow: '1 hour'}
               scopes:
                 - secrets:get:project/fuzzing/pypi-fuzzmanager
               payload:
                 maxRunTime: 3600
-                image: mozillasecurity/ci-py-38:latest
+                image:
+                  namespace: project.fuzzing.orion.ci-py-38.master
+                  path: public/ci-py-38.tar.zst
+                  type: indexed-image
                 features:
                   taskclusterProxy: true
                 command:
