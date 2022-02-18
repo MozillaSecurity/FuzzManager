@@ -61,8 +61,9 @@ def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
                            serverAuthToken=fm_user.token,
                            clientId='host2')
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 404: Not found"):
+    with pytest.raises(RuntimeError) as exc:
         reporter.report('data')
+    assert "Server unexpectedly responded with status code 404:" in str(exc.value)
 
 
 @patch('os.path.expanduser')
@@ -89,8 +90,9 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert pool.isEnabled
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError) as exc:
         reporter.enable(pool.pk)
+    assert "Server unexpectedly responded with status code 406:" in str(exc.value)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert pool.isEnabled
 
@@ -98,8 +100,9 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert not pool.isEnabled
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError) as exc:
         reporter.disable(pool.pk)
+    assert "Server unexpectedly responded with status code 406:" in str(exc.value)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert not pool.isEnabled
 
@@ -124,8 +127,9 @@ def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
                            serverAuthToken=fm_user.token,
                            clientId='host1')
 
-    with pytest.raises(RuntimeError, message="Server unexpectedly responded with status code 405: Not acceptable"):
+    with pytest.raises(RuntimeError) as exc:
         reporter.cycle(pool.pk)
+    assert "Server unexpectedly responded with status code 406:" in str(exc.value)
 
     pool.isEnabled = True
     pool.save()
