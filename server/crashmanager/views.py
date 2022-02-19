@@ -116,11 +116,11 @@ def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted
         if "tool" in request.GET:
             tool_name = request.GET["tool"]
             tool = get_object_or_404(Tool, name=tool_name)
-            return signatures.filter(crashentry__tool=tool).distinct()
+            return signatures.filter(crashentry__tool=tool)
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return signatures.filter(crashentry__tool__in=defaultToolsFilter).distinct()
+        return signatures.filter(crashentry__tool__in=set(defaultToolsFilter))
     elif user.restricted:
         return Bucket.objects.none()
 
@@ -433,7 +433,12 @@ def deleteSignature(request: HttpRequest, sigid: int) -> HttpResponseRedirect | 
 
 
 def viewSignature(request: HttpRequest, sigid: int) -> HttpResponse:
-    bucket = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid).data
+    response = BucketVueViewSet.as_view({'get': 'retrieve'})(request, pk=sigid)
+    if response.status_code == 404:
+        raise Http404
+    elif response.status_code != 200:
+        return response
+    bucket = response.data
     if bucket['best_entry'] is not None:
         best_entry_size = get_object_or_404(CrashEntry, pk=bucket['best_entry']).testcase.size
     else:
@@ -915,10 +920,11 @@ class BucketViewSet(mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     """API endpoint that allows viewing Buckets"""
     authentication_classes = (TokenAuthentication, SessionAuthentication)
-    queryset = Bucket.objects.all().select_related('bug')
+    queryset = Bucket.objects.all().select_related('bug', 'bug__externalType')
     serializer_class = BucketSerializer
     filter_backends = [ToolFilterSignaturesBackend, JsonQueryFilterBackend, BucketAnnotateFilterBackend, OrderingFilter]
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
+    pagination_class = None
 
     def get_serializer(self, *args, **kwds):
         self.vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
@@ -939,7 +945,7 @@ class BucketViewSet(mixins.CreateModelMixin,
                 restricted_only=bool(ignore_toolfilter),
             ).filter(
                 begin__gte=timezone.now() - timedelta(days=getattr(django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)),
-                bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
+                bucket_id__in=[bucket["id"] for bucket in response.data],
             ).order_by("begin")
 
             bucket_hits = {}
@@ -948,7 +954,7 @@ class BucketViewSet(mixins.CreateModelMixin,
                 bucket_hits[bucket].setdefault(begin, 0)
                 bucket_hits[bucket][begin] += count
 
-            for bucket in response.data["results"]:
+            for bucket in response.data:
                 bucket["crash_history"] = [
                     {"begin": begin, "count": count}
                     for begin, count in bucket_hits.get(bucket["id"], {}).items()

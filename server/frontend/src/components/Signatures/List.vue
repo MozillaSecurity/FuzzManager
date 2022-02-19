@@ -65,35 +65,12 @@
       </div>
       <br />
       <p v-if="showAll">
-        Displaying {{ currentEntries }}/{{ totalEntries }} of all signature
-        entries in the database.
+        Displaying {{ totalEntries }} of all signature entries in the database.
       </p>
       <p v-else>
-        Displaying {{ currentEntries }}/{{ totalEntries }} unreported signature
-        entries from the database.
+        Displaying {{ totalEntries }} unreported signature entries from the
+        database.
       </p>
-
-      <div class="pagination">
-        <span class="step-links">
-          <a
-            v-on:click="prevPage"
-            v-show="currentPage > 1"
-            class="bi bi-caret-left-fill"
-          ></a>
-          <span class="current">
-            Page {{ currentPage }} of {{ totalPages }}.
-          </span>
-          <a
-            v-on:click="nextPage"
-            v-show="currentPage < totalPages"
-            data-toggle="tooltip"
-            data-placement="top"
-            title=""
-            class="bi bi-caret-right-fill dimgray"
-            data-original-title="Next"
-          ></a>
-        </span>
-      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-condensed table-hover table-bordered table-db">
@@ -130,11 +107,12 @@
               Size
             </th>
             <th
-              v-on:click.exact="sortBy('quality')"
-              v-on:click.ctrl.exact="addSort('quality')"
+              v-on:click.exact="sortBy('best_quality')"
+              v-on:click.ctrl.exact="addSort('best_quality')"
               :class="{
                 active:
-                  sortKeys.includes('quality') || sortKeys.includes('-quality'),
+                  sortKeys.includes('best_quality') ||
+                  sortKeys.includes('-best_quality'),
               }"
             >
               Best Quality
@@ -151,12 +129,12 @@
               External Bug
             </th>
             <th
-              v-on:click.exact="sortBy('optimizedSignature')"
-              v-on:click.ctrl.exact="addSort('optimizedSignature')"
+              v-on:click.exact="sortBy('has_optimization')"
+              v-on:click.ctrl.exact="addSort('has_optimization')"
               :class="{
                 active:
-                  sortKeys.includes('optimizedSignature') ||
-                  sortKeys.includes('-optimizedSignature'),
+                  sortKeys.includes('has_optimization') ||
+                  sortKeys.includes('-has_optimization'),
               }"
             >
               Pending Optimization
@@ -170,7 +148,7 @@
             </td>
           </tr>
           <Row
-            v-for="signature in signatures"
+            v-for="signature in orderedSignatures"
             :activity-range="activityRange"
             :key="signature.id"
             :providers="providers"
@@ -186,6 +164,7 @@
 <script>
 import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
+import _orderBy from "lodash/orderBy";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import { errorParser, parseHash } from "../../helpers";
 import * as api from "../../api";
@@ -196,12 +175,11 @@ const validSortKeys = [
   "id",
   "shortDescription",
   "size",
-  "quality",
-  "optimizedSignature",
+  "best_quality",
+  "has_optimization",
   "bug__externalId",
 ];
 const defaultSortKey = "-id";
-const pageSize = 100;
 
 export default {
   components: {
@@ -231,10 +209,7 @@ export default {
     queryError: "",
     ignoreToolFilter: false,
     searchStr: "",
-    currentPage: 1,
-    currentEntries: "?",
     totalEntries: "?",
-    totalPages: 1,
     loading: false,
   }),
   created() {
@@ -248,14 +223,6 @@ export default {
       );
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
-      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
-        try {
-          this.currentPage = Number.parseInt(hash.page, 10);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#page=\\d+': ${e}`);
-        }
-      }
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
         const sortKeys = hash.sort.split(",").filter((key) => {
           const realKey = key.startsWith("-") ? key.substring(1) : key;
@@ -275,6 +242,7 @@ export default {
         this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
       }
     }
+    this.updateHash();
     this.fetch();
   },
   computed: {
@@ -287,6 +255,16 @@ export default {
         } catch (e) {} // eslint-disable-line no-empty
       })();
       return !_isEqual(queryStr, this.modifiedCache.queryStr);
+    },
+    orderedSignatures() {
+      const realKeys = [];
+      const orders = [];
+
+      this.sortKeys.forEach((key) => {
+        realKeys.push(key.startsWith("-") ? key.substring(1) : key);
+        orders.push(key.startsWith("-") ? "desc" : "asc");
+      });
+      return _orderBy(this.signatures, realKeys, orders);
     },
     queryButtonTitle() {
       if (this.loading) return "Query in progress";
@@ -331,7 +309,6 @@ export default {
           this.sortKeys.unshift(`-${sortKey}`);
         }
       }
-      this.fetch();
     },
     sortBy(sortKey) {
       /*
@@ -346,14 +323,10 @@ export default {
       } else {
         this.sortKeys = [`-${sortKey}`];
       }
-      this.fetch();
     },
     buildParams() {
       return {
         vue: "1",
-        limit: pageSize,
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: this.sortKeys.join(),
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.queryStr,
       };
@@ -373,19 +346,8 @@ export default {
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());
-          this.signatures = data.results;
-          this.currentEntries = this.signatures.length;
-          this.totalEntries = data.count;
-          this.totalPages = Math.max(
-            Math.ceil(this.totalEntries / pageSize),
-            1
-          );
-          if (this.currentPage > this.totalPages) {
-            this.currentPage = this.totalPages;
-            this.fetch();
-            return;
-          }
-          this.updateHash();
+          this.signatures = data;
+          this.totalEntries = this.signatures.length;
         } catch (err) {
           if (
             err.response &&
@@ -407,23 +369,8 @@ export default {
       500,
       { trailing: true }
     ),
-    nextPage: function () {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        this.fetch();
-      }
-    },
-    prevPage: function () {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.fetch();
-      }
-    },
     updateHash() {
       let hash = {};
-      if (this.currentPage !== 1) {
-        hash.page = this.currentPage;
-      }
       if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
         hash.sort = this.sortKeys.join();
       }
@@ -441,6 +388,11 @@ export default {
         if (this.$route.hash !== "")
           this.$router.push({ path: this.$route.path, hash: "" });
       }
+    },
+  },
+  watch: {
+    sortKeys() {
+      this.updateHash();
     },
   },
 };

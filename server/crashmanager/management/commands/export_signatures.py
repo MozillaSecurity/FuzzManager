@@ -8,7 +8,6 @@ from zipfile import ZipFile
 from django.core.management.base import BaseCommand
 from django.db.models.aggregates import Count, Min
 
-from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket
 
 
@@ -18,7 +17,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("filename", help="output filename to write signatures zip to")
 
-    @mgmt_lock_required
     def handle(self, filename: str, **options: Any) -> None:
 
         with ZipFile(filename, 'w') as zipFile:

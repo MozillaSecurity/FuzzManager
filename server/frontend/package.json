@@ -11,7 +11,7 @@
         "production": "webpack --config webpack.prod.js"
     },
     "dependencies": {
-        "axios": "^0.21.1",
+        "axios": "^0.21.2",
         "d3": "^4.13.0",
         "handlebars": "^4.7.7",
         "js-base64": "^3.6.1",

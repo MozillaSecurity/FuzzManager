@@ -116,6 +116,7 @@ class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
             attrs['testcase'] = dbobj
         else:
             attrs['testcase'] = None
+            attrs.pop('testcase_ext', None)
 
         try:
             # Create our CrashEntry instance

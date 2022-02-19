@@ -295,6 +295,7 @@ def test_rest_crashes_list_query(api_client: APIClient, cm: _cm_result, user: Us
         'os': 'linux',
         'client': 'client1',
         'tool': 'tool1',
+        'testcase_ext': 'js',
     },
     # crash reporting works with empty fields where allowed
     {

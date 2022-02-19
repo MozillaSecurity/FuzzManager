@@ -19,7 +19,12 @@ def get_or_create_pool(worker_type):
 
     params = {}
     if worker_type in settings.TC_EXTRA_POOLS:
-        platform = "linux"  # default .. change manually if wrong
+        if "windows" in worker_type:
+            platform = "windows"
+        elif "macos" in worker_type:
+            platform = "macos"
+        else:
+            platform = "linux"  # default .. change manually if wrong
         pool_id = worker_type
     else:
         if "-pool" not in worker_type:

@@ -8,7 +8,6 @@ from typing import OrderedDict
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from crashmanager.management.common import mgmt_lock_required
 from crashmanager.models import CrashEntry, Bucket
 
 
@@ -31,17 +30,16 @@ class Command(BaseCommand):
             help="Crash ID",
         )
 
-    @mgmt_lock_required
     def handle(self, *args: Any, **options: Any) -> None:
         entry = CrashEntry.objects.get(pk=options["id"])
         crashInfo = entry.getCrashInfo(attachTestcase=True)
 
         cacheHit = False
 
-        triage_cache_hint = TRIAGE_CACHE.get(entry.shortSignature)
+        triage_cache_hint = TRIAGE_CACHE.get(entry.shortSignature, [])
 
         if triage_cache_hint:
-            buckets = Bucket.objects.filter(pk__in=triage_cache_hint)
+            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by('-id')
             for bucket in buckets:
                 signature = bucket.getSignature()
                 if signature.matches(crashInfo):
@@ -51,7 +49,7 @@ class Command(BaseCommand):
                     break
 
         if not cacheHit:
-            buckets = Bucket.objects.all()
+            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by('-id')
 
             for bucket in buckets:
                 signature = bucket.getSignature()

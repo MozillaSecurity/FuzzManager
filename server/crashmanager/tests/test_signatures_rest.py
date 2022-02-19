@@ -155,12 +155,8 @@ def test_rest_signatures_list(api_client: APIClient, cm: _cm_result, user: Djang
     LOG.debug(resp)
     assert resp.status_code == requests.codes['ok']
     resp = json.loads(resp.content.decode('utf-8'))
-    assert set(resp.keys()) == {'count', 'next', 'previous', 'results'}
+    assert isinstance(resp, list)
     expected_buckets = 2 if ignore_toolfilter and user.username == "test" else 1
-    assert resp['count'] == expected_buckets
-    assert resp['next'] is None
-    assert resp['previous'] is None
-    resp = resp['results']
     assert len(resp) == expected_buckets
     resp = sorted(resp, key=lambda x: x["id"])
     if ignore_toolfilter and user.username == "test":

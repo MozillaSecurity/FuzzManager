@@ -120,6 +120,9 @@ class Collection(models.Model):
             # Querying an empty path means requesting the whole collection
             return self.content
 
+        if names[0] == "<unmatched-prefix>":
+            names[0] = ""
+
         try:
             ret = self.content["children"]
             for name in names[:-1]:

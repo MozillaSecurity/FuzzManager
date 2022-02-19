@@ -7,13 +7,10 @@ from django.core.management import BaseCommand
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
 
-from crashmanager.management.common import mgmt_lock_required
-
 
 class Command(BaseCommand):
     help = "Adds permissions to the specified user."
 
-    @mgmt_lock_required
     def handle(self, *args: Any, **options: Any) -> None:
         user = User.objects.get(username=options['user'])
 
