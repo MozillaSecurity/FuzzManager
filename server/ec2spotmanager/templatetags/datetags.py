@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from django import template
 from django.utils import timezone
 
@@ -7,7 +9,7 @@ register = template.Library()
 
 
 @register.filter
-def date_ago(d):
+def date_ago(d: datetime) -> str:
     delta = timezone.now() - d
 
     days = delta.days

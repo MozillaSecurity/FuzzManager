@@ -9,7 +9,7 @@ class Command(LabelCommand):
 
     help = "Provides the REST interface authentication token for the specified user(s)."
 
-    def handle_label(self, label, **options):
+    def handle_label(self, label: str, **options: str) -> None:
         user = User.objects.get(username=label)
 
         (token, created) = Token.objects.get_or_create(user=user)

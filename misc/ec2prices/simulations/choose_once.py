@@ -21,7 +21,7 @@ from __future__ import annotations
 from .common import select_better
 
 
-def run(data, sim_config, main_config):
+def run(data, sim_config: dict[str, str], main_config: dict[str, str]) -> int:
     fixed_region = None
     fixed_instance_type = None
 
