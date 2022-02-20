@@ -59,8 +59,8 @@ class S3Manager():
 
         # Memorize which files we have uploaded/downloaded before, so we never attempt to
         # re-upload them to a different queue or re-download them after a local merge.
-        self.uploaded_files = set()
-        self.downloaded_files = set()
+        self.uploaded_files: set[str] = set()
+        self.downloaded_files: set[str] = set()
 
     def upload_libfuzzer_queue_dir(self, base_dir: str, corpus_dir: str, original_corpus: list[str]) -> None:
         '''

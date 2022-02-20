@@ -14,6 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from decimal import Decimal
 import functools
 import logging
 import socket
@@ -26,7 +27,7 @@ from typing import TypeVar
 
 import six
 
-from ec2spotmanager.models import FlatObject
+from ec2spotmanager.models import PoolConfiguration
 
 INSTANCE_STATE_CODE = {-1: "requested", 0: "pending", 16: "running", 32: "shutting-down",
                        48: "terminated", 64: "stopping", 80: "stopped"}
@@ -97,7 +98,7 @@ class CloudProvider():
         return
 
     @abstractmethod
-    def start_instances(self, config: FlatObject, region: str, zone: str, userdata, image: str, instance_type: str, count: int, tags: dict[str, str]) -> None:
+    def start_instances(self, config: PoolConfiguration, region: str, zone: str, userdata, image: str, instance_type: str, count: int, tags: dict[str, str]) -> None:
         '''
         Start instances using specified configuration.
 
@@ -117,7 +118,7 @@ class CloudProvider():
         return
 
     @abstractmethod
-    def check_instances_requests(self, region: str, instances: list[str], tags: dict[str, str]) -> None:
+    def check_instances_requests(self, region: str, instances: list[str], tags: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
         '''
         Take a list of requested instances and determines the state of each instance.
         Since this is the first point we see an actual running instance
@@ -151,7 +152,7 @@ class CloudProvider():
         return
 
     @abstractmethod
-    def get_image(self, region: str, config: FlatObject) -> None:
+    def get_image(self, region: str, config: PoolConfiguration) -> str | None:
         '''
         Takes a configuration and returns a provider specific image name.
 
@@ -163,7 +164,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_cores_per_instance() -> None:
+    def get_cores_per_instance() -> dict[str, float]:
         '''
         returns dictionary of instance types and their number of cores
 
@@ -173,7 +174,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_allowed_regions(config: FlatObject) -> None:
+    def get_allowed_regions(config: PoolConfiguration) -> list[str]:
         '''
         Takes a configuration and returns cloud provider specific regions.
 
@@ -184,7 +185,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_image_name(config: FlatObject) -> None:
+    def get_image_name(config: PoolConfiguration) -> str | None:
         '''
         Takes a configuration and returns cloud provider specific image name.
 
@@ -195,7 +196,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_instance_types(config: FlatObject) -> None:
+    def get_instance_types(config: PoolConfiguration) -> str:
         '''
         Takes a configuration and returns a list of cloud provider specific instance_types.
 
@@ -206,7 +207,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_max_price(config: FlatObject) -> None:
+    def get_max_price(config: PoolConfiguration) -> Decimal:
         '''
         Takes a configuration and returns the cloud provider specific max_price.
 
@@ -217,7 +218,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_tags(config: FlatObject) -> None:
+    def get_tags(config: PoolConfiguration) -> str:
         '''
         Takes a configuration and returns a dictionary of cloud provider specific tags.
 
@@ -228,7 +229,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def get_name() -> None:
+    def get_name() -> str:
         '''
         used to return name of cloud provider
 
@@ -238,7 +239,7 @@ class CloudProvider():
 
     @staticmethod
     @abstractmethod
-    def config_supported(config: FlatObject) -> None:
+    def config_supported(config: PoolConfiguration) -> bool:
         '''Compares the fields provided in the config with those required by the cloud
         provider. If any field is missing, return False.
 
@@ -248,7 +249,7 @@ class CloudProvider():
         return
 
     @abstractmethod
-    def get_prices_per_region(self, region_name: str, instance_types: list[str]) -> None:
+    def get_prices_per_region(self, region_name: str, instance_types: list[str] | None) -> dict[str, dict[str, dict[str, float]]]:
         '''
         takes region and instance_types and returns a dictionary of prices
         prices are stored with keys like 'provider:price:{instance-type}'

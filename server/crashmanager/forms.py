@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Div, Field, Submit
 from django.conf import settings
@@ -196,7 +198,7 @@ class UserSettingsForm(ModelForm[User]):
             'bucket_hit'
         ]
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
@@ -224,7 +226,7 @@ class UserSettingsForm(ModelForm[User]):
         data = self.cleaned_data['defaultProviderId'].id
         return data
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> User:
         self.instance.user.email = self.cleaned_data['email']
         self.instance.user.save()
         return super().save(*args, **kwargs)

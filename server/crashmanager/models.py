@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 import json
 import logging
 import re
@@ -76,6 +77,7 @@ class TestCase(models.Model):
         self.test.close()
 
     def storeTestAndSave(self) -> None:
+        assert self.content is not None
         self.size = len(self.content)
         self.test.open(mode='w')
         self.test.write(self.content)
@@ -107,10 +109,10 @@ class BugProvider(models.Model):
 class Bug(models.Model):
     externalId = str(models.CharField(max_length=255, blank=True))
     externalType = cast(BugProvider, models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE))
-    closed = models.DateTimeField(blank=True, null=True)
+    closed = cast(datetime, models.DateTimeField(blank=True, null=True))
 
     @property
-    def tools_filter_users(self):
+    def tools_filter_users(self) -> QuerySet[DjangoUser]:
         ids = User.objects.filter(
             defaultToolsFilter__crashentry__bucket__in=self.bucket_set.all(),
             inaccessible_bug=True,
@@ -127,7 +129,7 @@ class Bucket(models.Model):
     permanent = bool(models.BooleanField(blank=False, default=False))
 
     @property
-    def watchers(self):
+    def watchers(self) -> QuerySet[DjangoUser]:
         ids = User.objects.filter(
             bucketwatch__bucket=self,
             bucket_hit=True
@@ -154,7 +156,7 @@ class Bucket(models.Model):
 
         super(Bucket, self).save(*args, **kwargs)
 
-    def reassign(self, submitSave):
+    def reassign(self, submitSave: bool):
         """
         Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
@@ -222,7 +224,7 @@ class Bucket(models.Model):
 
         return inList, outList, inListCount, outListCount
 
-    def optimizeSignature(self, unbucketed_entries) -> tuple[CrashSignature | None, list[CrashEntry]]:
+    def optimizeSignature(self, unbucketed_entries: QuerySet[CrashEntry]) -> tuple[CrashSignature | None, list[CrashEntry]]:
         buckets = Bucket.objects.all()
 
         signature = self.getSignature()
@@ -241,7 +243,7 @@ class Bucket(models.Model):
 
         for entry in entries:
             entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(),
-                                                 requiredOutputSources=requiredOutputs)
+                                                 requiredOutputSources=tuple(requiredOutputs))
 
             # For optimization, disregard any issues that directly match since those could be
             # incoming new issues and we don't want these to block the optimization.
@@ -255,7 +257,7 @@ class Bucket(models.Model):
                 # broad and we should not consider it (or later rate it worse than others).
                 matchesInOtherBuckets = False
                 nonMatchesInOtherBuckets = 0  # noqa
-                otherMatchingBucketIds = []  # noqa
+                otherMatchingBucketIds: list[int] = []  # noqa
                 for otherBucket in buckets:
                     if otherBucket.pk == self.pk:
                         continue
@@ -267,11 +269,13 @@ class Bucket(models.Model):
                     if otherBucket.pk not in firstEntryPerBucketCache:
                         c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
                         c = CrashEntry.deferRawFields(c, requiredOutputs)
-                        c = c.first()
-                        firstEntryPerBucketCache[otherBucket.pk] = c
-                        if c:
+                        c_first = c.first()
+                        assert c_first is not None
+                        c_ = c_first
+                        firstEntryPerBucketCache[otherBucket.pk] = c_
+                        if c_:
                             # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(
+                            firstEntryPerBucketCache[otherBucket.pk] = c_.getCrashInfo(
                                 attachTestcase=False,
                                 requiredOutputSources=requiredOutputs
                             )
@@ -290,7 +294,7 @@ class Bucket(models.Model):
                 else:
                     for otherEntry in entries:
                         otherEntry.crashinfo = otherEntry.getCrashInfo(attachTestcase=False,
-                                                                       requiredOutputSources=requiredOutputs)
+                                                                       requiredOutputSources=tuple(requiredOutputs))
                         if optimizedSignature.matches(otherEntry.crashinfo):
                             matchingEntries.append(otherEntry)
 
@@ -303,18 +307,18 @@ class Bucket(models.Model):
         return (optimizedSignature, matchingEntries)
 
 
-def buckethit_default_range_begin():
+def buckethit_default_range_begin() -> datetime:
     return timezone.now().replace(microsecond=0, second=0, minute=0)
 
 
 class BucketHit(models.Model):
     bucket = cast(Bucket, models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE))
     tool = cast(Tool, models.ForeignKey(Tool, on_delete=models.deletion.CASCADE))
-    begin = models.DateTimeField(default=buckethit_default_range_begin)
+    begin = cast(datetime, models.DateTimeField(default=buckethit_default_range_begin))
     count = int(str(models.IntegerField(default=0)))
 
     @classmethod
-    def decrement_count(cls, bucket_id, tool_id, begin):
+    def decrement_count(cls, bucket_id: int, tool_id: int, begin: datetime) -> None:
         begin = begin.replace(microsecond=0, second=0, minute=0)
         counter = cls.objects.filter(
             bucket_id=bucket_id,
@@ -326,7 +330,7 @@ class BucketHit(models.Model):
             counter.save()
 
     @classmethod
-    def increment_count(cls, bucket_id, tool_id, begin):
+    def increment_count(cls, bucket_id: int, tool_id: int, begin: datetime) -> None:
         begin = begin.replace(microsecond=0, second=0, minute=0)
         counter, _ = cls.objects.get_or_create(
             bucket_id=bucket_id, begin=begin, tool_id=tool_id
@@ -336,7 +340,7 @@ class BucketHit(models.Model):
 
 
 class CrashEntry(models.Model):
-    created = models.DateTimeField(default=timezone.now)
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
     tool = cast(Tool, models.ForeignKey(Tool, on_delete=models.deletion.CASCADE))
     platform = cast(Platform, models.ForeignKey(Platform, on_delete=models.deletion.CASCADE))
     product = cast(Product, models.ForeignKey(Product, on_delete=models.deletion.CASCADE))
@@ -351,12 +355,12 @@ class CrashEntry(models.Model):
     env = str(models.TextField(blank=True))
     args = str(models.TextField(blank=True))
     crashAddress = str(models.CharField(max_length=255, blank=True))
-    crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
+    crashAddressNumeric = int(str(models.BigIntegerField(blank=True, null=True)))
     shortSignature = str(models.CharField(max_length=255, blank=True))
     cachedCrashInfo = str(models.TextField(blank=True, null=True))
     triagedOnce = bool(models.BooleanField(blank=False, default=False))
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # These variables can hold temporarily deserialized data
         self.argsList = None
         self.envList = None
@@ -378,7 +382,7 @@ class CrashEntry(models.Model):
         instance._original_bucket = instance.bucket_id
         return instance
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
@@ -438,7 +442,7 @@ class CrashEntry(models.Model):
             metadataDict = json.loads(self.metadata)
             self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
 
-    def getCrashInfo(self, attachTestcase: bool = False, requiredOutputSources: tuple[str, str, str] = ("stdout", "stderr", "crashdata")) -> CrashInfo:
+    def getCrashInfo(self, attachTestcase: bool = False, requiredOutputSources: tuple[str, ...] = ("stdout", "stderr", "crashdata")) -> CrashInfo:
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
         configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
@@ -515,7 +519,7 @@ class CrashEntry(models.Model):
 # is also deleted when the CrashEntry is gone. It also explicitly
 # deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=CrashEntry)
-def CrashEntry_delete(sender, instance, **kwargs):
+def CrashEntry_delete(sender, instance, **kwargs) -> None:
     if instance.testcase:
         instance.testcase.delete(False)
     if instance.bucket_id is not None:
@@ -523,13 +527,13 @@ def CrashEntry_delete(sender, instance, **kwargs):
 
 
 @receiver(post_delete, sender=TestCase)
-def TestCase_delete(sender, instance, **kwargs):
+def TestCase_delete(sender, instance, **kwargs) -> None:
     if instance.test:
         instance.test.delete(False)
 
 
 @receiver(post_save, sender=CrashEntry)
-def CrashEntry_save(sender, instance, created, **kwargs):
+def CrashEntry_save(sender, instance, created, **kwargs) -> None:
     if getattr(settings, 'USE_CELERY', None):
         if created and not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
@@ -587,7 +591,7 @@ class BugzillaTemplate(models.Model):
     blocks = str(models.TextField(blank=True))
     dependson = str(models.TextField(blank=True))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -623,7 +627,7 @@ class User(models.Model):
 
 
 @receiver(post_save, sender=DjangoUser)
-def add_default_perms(sender, instance, created, **kwargs):
+def add_default_perms(sender, instance, created, **kwargs) -> None:
     if created:
         log = logging.getLogger('crashmanager')
         for perm in getattr(settings, 'DEFAULT_PERMISSIONS', []):

@@ -25,6 +25,7 @@ import os
 import random
 import sys
 import time
+from typing import Any
 
 from fasteners import InterProcessLock
 import requests
@@ -40,7 +41,7 @@ __updated__ = '2014-10-01'
 
 class EC2Reporter(Reporter):
     @functools.wraps(Reporter.__init__)
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault('tool', 'N/A')  # tool is required by remote_checks, but unused by EC2Reporter
         super(EC2Reporter, self).__init__(*args, **kwargs)
 

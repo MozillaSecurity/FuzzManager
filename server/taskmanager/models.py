@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from datetime import timedelta
 from typing import cast
 
 from django.db import models
@@ -13,8 +15,8 @@ class Pool(models.Model):
     platform = str(models.CharField(max_length=15))
     size = int(str(models.PositiveIntegerField(null=True)))
     cpu = str(models.CharField(max_length=15, null=True))
-    cycle_time = models.DurationField(null=True)
-    max_run_time = models.DurationField(null=True)
+    cycle_time = cast(timedelta, models.DurationField(null=True))
+    max_run_time = cast(timedelta, models.DurationField(null=True))
 
 
 class Task(models.Model):
@@ -23,11 +25,11 @@ class Task(models.Model):
     decision_id = str(models.CharField(max_length=64, null=True))
     run_id = int(str(models.PositiveIntegerField()))
     state = str(models.CharField(max_length=15))
-    created = models.DateTimeField(null=True)
+    created = cast(datetime, models.DateTimeField(null=True))
     status_data = str(models.CharField(max_length=4095, blank=True))
-    started = models.DateTimeField(null=True)
-    resolved = models.DateTimeField(null=True)
-    expires = models.DateTimeField()
+    started = cast(datetime, models.DateTimeField(null=True))
+    resolved = cast(datetime, models.DateTimeField(null=True))
+    expires = cast(datetime, models.DateTimeField())
 
     class Meta:
         unique_together = (("task_id", "run_id"),)

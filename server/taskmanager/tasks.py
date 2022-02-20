@@ -6,6 +6,7 @@ from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
 from subprocess import check_output
+
 from django.conf import settings
 from celeryconf import app  # noqa
 from . import cron  # noqa ensure cron tasks get registered
@@ -14,7 +15,7 @@ from . import cron  # noqa ensure cron tasks get registered
 LOG = getLogger("taskmanager.tasks")
 
 
-def get_or_create_pool(worker_type):
+def get_or_create_pool(worker_type: str):
     from .models import Pool
 
     params = {}
@@ -100,7 +101,7 @@ def update_pool_defns() -> None:
 
 
 @app.task(ignore_result=True)
-def update_task(pulse_data):
+def update_task(pulse_data) -> None:
     import taskcluster
     from .models import Task
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 import json
 import os
 from typing import cast
@@ -38,7 +39,7 @@ class PoolConfiguration(models.Model):
     name = str(models.CharField(max_length=255, blank=False))
     size: int | None = int(str(models.IntegerField(default=1, blank=True, null=True)))
     cycle_interval: int | None = int(str(models.IntegerField(default=86400, blank=True, null=True)))
-    max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
+    max_price = cast(Decimal, models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True))
     instance_tags = str(models.CharField(max_length=1023, blank=True, null=True))
     ec2_key_name: str | None = str(models.CharField(max_length=255, blank=True, null=True))
     ec2_security_groups = str(models.CharField(max_length=255, blank=True, null=True))
@@ -391,4 +392,4 @@ class PoolUptimeAccumulatedEntry(models.Model):
     pool = cast(InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE))
     created = models.DateTimeField(default=timezone.now)
     accumulated_count = int(str(models.IntegerField(default=0)))
-    uptime_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    uptime_percentage = cast(Decimal, models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True))

@@ -13,14 +13,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from typing import cast
+
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
 import pytest
 from crashmanager.models import User as cmUser
 
 
-def _create_user(username, email="test@mozilla.com", password="test", has_permission=True):
-    user = User.objects.create_user(username, email, password)
+def _create_user(username: str, email: str = "test@mozilla.com", password: str = "test", has_permission: bool = True) -> User:
+    user = cast(User, User.objects.create_user(username, email, password))
     user.user_permissions.clear()
     if has_permission:
         content_type = ContentType.objects.get_for_model(cmUser)
@@ -32,7 +34,7 @@ def _create_user(username, email="test@mozilla.com", password="test", has_permis
 
 
 @pytest.fixture
-def taskmanager_test(db):  # pylint: disable=invalid-name,unused-argument
+def taskmanager_test(db: None) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all taskmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")

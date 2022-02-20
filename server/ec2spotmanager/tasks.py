@@ -12,7 +12,6 @@ from laniakea.core.userdata import UserData
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_price_median
-from .models import Pool
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider, CloudProviderError
 
 
@@ -44,19 +43,19 @@ def _terminate_instance_request_ids(provider: str, region: str, request_ids: str
         _update_provider_status(provider, 'unclassified', str(msg))
 
 
-def _determine_best_location(config, count, cache=None):
+def _determine_best_location(config, count: int, cache=None) -> tuple[str | None, str | None, str | None, str | None, dict[str, int]]:
     from .models import Instance, ProviderStatusEntry
 
     if cache is None:
         cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
-    best_provider = None
-    best_zone = None
-    best_region = None
-    best_type = None
-    best_median = None
-    best_instances = None
-    rejected_prices = {}
+    best_provider: str | None = None
+    best_zone: str | None = None
+    best_region: str | None = None
+    best_type: str | None = None
+    best_median: int | None = None
+    best_instances: int | None = None
+    rejected_prices: dict[str, int] = {}
 
     for provider in PROVIDERS:
         cloud_provider = CloudProvider.get_instance(provider)
@@ -70,7 +69,7 @@ def _determine_best_location(config, count, cache=None):
         cores_per_instance = cloud_provider.get_cores_per_instance()
 
         # Filter machine sizes that would put us over the number of cores required. If all do, then choose the smallest.
-        smallest = []
+        smallest: list[str] = []
         smallest_size = None
         acceptable_types = []
         for instance_type in cloud_provider.get_instance_types(config):
@@ -120,6 +119,7 @@ def _determine_best_location(config, count, cache=None):
                     if best_median is None or median <= best_median:
                         # don't care about excluding stopped/stopping, as we just want to know how "busy" the zone is
                         instances = int(Instance.objects.filter(provider=provider, region=region, zone=zone).count())
+                        assert best_instances is not None
                         if median == best_median and instances >= best_instances:
                             continue
                         best_provider = provider
@@ -134,7 +134,7 @@ def _determine_best_location(config, count, cache=None):
     return (best_provider, best_region, best_zone, best_type, rejected_prices)
 
 
-def _start_pool_instances(pool: Pool, config, count: int = 1) -> None:
+def _start_pool_instances(pool, config, count: int = 1) -> None:
     """ Start an instance with the given configuration """
     from .models import Instance, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 
@@ -159,6 +159,7 @@ def _start_pool_instances(pool: Pool, config, count: int = 1) -> None:
         elif priceLowEntries:
             priceLowEntries.delete()
 
+        assert provider is not None
         cloud_provider = CloudProvider.get_instance(provider)
         image_name = cloud_provider.get_image_name(config)
         cores_per_instance = cloud_provider.get_cores_per_instance()
@@ -220,6 +221,7 @@ def _start_pool_instances(pool: Pool, config, count: int = 1) -> None:
             instance.instance_id = instance_name
             instance.hostname = requested_instance['hostname']
             instance.region = region
+            assert zone is not None
             instance.zone = zone
             instance.status_code = requested_instance['status_code']
             instance.pool = pool
@@ -489,7 +491,7 @@ def cycle_and_terminate_disabled(provider: str, region: str) -> None:
         # check if the pool has any instances to be terminated
         requests_to_terminate = []
         instances_to_terminate = []
-        instances_by_pool = {}
+        instances_by_pool: dict[str, int] = {}
         pool_disable = {}  # pool_id -> reason (or blank for enabled)
         for instance in Instance.objects.filter(provider=provider, region=region):
             if instance.pool_id not in pool_disable:
@@ -571,7 +573,7 @@ def check_and_resize_pool(pool_id: int) -> list[int]:
         instance_cores_missing = config.size
         running_instances = []
 
-        instances = Instance.objects.filter(pool=pool)
+        instances = list(Instance.objects.filter(pool=pool))
 
         for instance in instances:
             if instance.status_code in [INSTANCE_STATE['running'], INSTANCE_STATE['pending'],

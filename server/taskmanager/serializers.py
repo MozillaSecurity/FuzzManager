@@ -82,14 +82,14 @@ class PoolVueSerializer(PoolSerializer):
             'view_url',
         )
 
-    def get_hook_url(self, pool):
+    def get_hook_url(self, pool: Pool) -> str:
         if pool.pool_id in settings.TC_EXTRA_POOLS:
             hook = pool.pool_id
         else:
             hook = f"{pool.platform}-{pool.pool_id}"
         return f"{settings.TC_ROOT_URL}hooks/project-{settings.TC_PROJECT}/{hook}"
 
-    def get_view_url(self, pool):
+    def get_view_url(self, pool: Pool) -> str:
         return reverse('taskmanager:pool-view-ui', kwargs={'pk': pool.id})
 
 
@@ -114,5 +114,5 @@ class TaskVueSerializer(TaskSerializer):
             'task_url',
         )
 
-    def get_task_url(self, task):
+    def get_task_url(self, task: Task) -> str:
         return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"
