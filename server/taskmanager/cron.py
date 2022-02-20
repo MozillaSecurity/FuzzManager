@@ -28,9 +28,9 @@ def update_tasks() -> None:
     # normal, try to update the task directly from taskcluster
 
     task_status = {}
-    done = set()
+    done: set[tuple[int, int]] = set()
 
-    def _update_task_run(task_id, run_id):
+    def _update_task_run(task_id: int, run_id: int) -> None:
         if (task_id, run_id) in done:
             return
 
