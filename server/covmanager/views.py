@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Any
 from typing import cast
 
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.http import Http404
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
@@ -18,7 +19,9 @@ import os
 from rest_framework import mixins, viewsets, filters
 from rest_framework.authentication import TokenAuthentication, \
     SessionAuthentication
-from typing_extensions import TypedDict
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from wsgiref.util import FileWrapper
 
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
@@ -161,7 +164,7 @@ def collections_download(request: HttpRequest, collectionid: str) -> HttpRespons
     return response
 
 
-def collections_browse_api(request: HttpRequest, collectionid: str, path) -> HttpResponse:
+def collections_browse_api(request: HttpRequest, collectionid: str, path: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -192,13 +195,6 @@ def collections_browse_api(request: HttpRequest, collectionid: str, path) -> Htt
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-class CTooltipDataType(TypedDict):
-    """ctooltipdata type specification."""
-    id: int
-    label: str
-    created: datetime
-
-
 def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
 
     collections: list[Collection]
@@ -224,7 +220,7 @@ def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
     # else:
     #    raise Http404("NYI")
 
-    tooltipdata: list[CTooltipDataType] = []
+    tooltipdata = []
 
     for collection in collections:
         if not collection.coverage:
@@ -253,7 +249,7 @@ def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
 
         coverages.append(coverage)
 
-        ctooltipdata: CTooltipDataType = {}
+        ctooltipdata = {}
         for k in coverage:
             if k != "children":
                 ctooltipdata[k] = coverage[k]
@@ -312,7 +308,7 @@ def collections_patch(request: HttpRequest) -> HttpResponse:
     return render(request, 'collections/patch.html', {})
 
 
-def collections_patch_api(request: HttpRequest, collectionid: str, patch_revision) -> HttpResponse:
+def collections_patch_api(request: HttpRequest, collectionid: str, patch_revision: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -347,6 +343,7 @@ def collections_patch_api(request: HttpRequest, collectionid: str, patch_revisio
         prepatch_source = provider.getSource(filename, diff_revision)
         coll_source = provider.getSource(filename, collection.revision)
 
+        assert filename is not None
         if prepatch_source != coll_source:
             response = {"error": "Source code mismatch."}
             response["filename"] = filename
@@ -471,21 +468,21 @@ def collections_reportsummary_api(request: HttpRequest, collectionid: str) -> Ht
 
 
 def repositories_search_api(request: HttpRequest) -> HttpResponse:
-    results = []
+    results: list[Repository] = []
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = Repository.objects.filter(name__contains=name).values_list('name', flat=True)
+        results = list(Repository.objects.filter(name__contains=name).values_list('name', flat=True))
 
     return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
 
 
 def tools_search_api(request: HttpRequest) -> HttpResponse:
-    results = []
+    results: list[Tool] = []
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = Tool.objects.filter(name__contains=name).values_list('name', flat=True)
+        results = list(Tool.objects.filter(name__contains=name).values_list('name', flat=True))
 
     return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
 
@@ -600,7 +597,7 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with several collection-specific fields from the URL
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset, view: APIView):
         """
         Return a filtered queryset.
         """
@@ -660,7 +657,7 @@ class ReportFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset, view: APIView):
         """
         Return a filtered queryset.
         """
@@ -704,7 +701,7 @@ class ReportViewSet(mixins.UpdateModelMixin,
     paginate_by_param = 'limit'
     filter_backends = [ReportFilterBackend]
 
-    def partial_update(self, request, *args, **kwargs):
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         if (not request.user or not request.user.is_authenticated or
                 not request.user.has_perm('crashmanager.view_crashmanager')):
             raise PermissionDenied()
@@ -728,7 +725,7 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset, view: APIView):
         """
         Return a filtered queryset.
         """
