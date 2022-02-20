@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 
+from django.db.models.query import QuerySet
 import six
+
+from ..models import BugzillaTemplate
 
 
 @six.add_metaclass(ABCMeta)
@@ -25,18 +28,18 @@ class Provider():
     Abstract base
     class that defines what interfaces Bug Providers must implement
     '''
-    def __init__(self, pk, hostname) -> None:
+    def __init__(self, pk: int, hostname: str) -> None:
         self.pk = pk
         self.hostname = hostname
 
     @abstractmethod
-    def getTemplateList(self) -> None:
+    def getTemplateList(self) -> QuerySet[BugzillaTemplate]:
         return
 
     @abstractmethod
-    def getBugData(self, bugId, username=None, password=None):
+    def getBugData(self, bugId: str, username: str | None = None, password: str | None = None) -> str | None:
         return
 
     @abstractmethod
-    def getBugStatus(self, bugIds, username=None, password=None):
+    def getBugStatus(self, bugIds: list[str], username: str | None = None, password: str | None = None):
         return
