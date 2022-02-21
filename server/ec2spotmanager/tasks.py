@@ -12,6 +12,7 @@ from laniakea.core.userdata import UserData
 from celeryconf import app
 from . import cron  # noqa ensure cron tasks get registered
 from .common.prices import get_price_median
+from .models import InstancePool
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider, CloudProviderError
 
 
@@ -53,7 +54,7 @@ def _determine_best_location(config, count: int, cache=None) -> tuple[str | None
     best_zone: str | None = None
     best_region: str | None = None
     best_type: str | None = None
-    best_median: int | None = None
+    best_median: float | None = None
     best_instances: int | None = None
     rejected_prices: dict[str, int] = {}
 
@@ -257,7 +258,7 @@ def _update_provider_status(provider: str, type_: str, message: str) -> None:
         logger.warning('Ignoring provider error: already exists.')
 
 
-def _update_pool_status(pool, type_: str, message: str) -> None:
+def _update_pool_status(pool: InstancePool, type_: str, message: str) -> None:
     from .models import PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
 
     is_critical = type_ not in {'max-spot-instance-count-exceeded', 'price-too-low', 'temporary-failure'}

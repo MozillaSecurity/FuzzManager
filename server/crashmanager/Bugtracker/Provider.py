@@ -41,5 +41,5 @@ class Provider():
         return
 
     @abstractmethod
-    def getBugStatus(self, bugIds: list[str], username: str | None = None, password: str | None = None):
+    def getBugStatus(self, bugIds: list[str], username: str | None = None, password: str | None = None) -> None:
         return

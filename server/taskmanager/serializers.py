@@ -23,7 +23,7 @@ class PoolSerializer(serializers.ModelSerializer[Pool]):
         model = Pool
         fields = "__all__"
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Pool):
         """Add dynamic fields"""
         ret = super(PoolSerializer, self).to_representation(instance)
         ret["cycle_time"] = None

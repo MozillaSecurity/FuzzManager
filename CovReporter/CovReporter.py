@@ -194,7 +194,7 @@ class CovReporter(Reporter):
             raise RuntimeError("Unknown coverage format")
 
     @staticmethod
-    def create_combined_coverage(coverage_files: list[int | str], version: dict[str, str] | None = None) -> tuple[Mapping[str, object] | None, Mapping[str, object] | None, Mapping[str, object] | None]:
+    def create_combined_coverage(coverage_files: list[int | str], version: dict[str, str] | None = None):
         '''
         Read coverage data from multiple files and return a single dictionary
         containing the merged data (already preprocessed).

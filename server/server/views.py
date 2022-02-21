@@ -4,7 +4,7 @@ from django.shortcuts import redirect
 from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage, Page
 from django.db.models import Model
 from django.db.models import Q
 from django.db.models.query import QuerySet
@@ -14,11 +14,12 @@ from django.http.response import HttpResponsePermanentRedirect
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import resolve, reverse
-from django.views import View
 import collections
 import functools
 import json
 from rest_framework import filters
+from rest_framework.request import Request
+from rest_framework.views import APIView
 import six
 from typing import Any
 from typing import TypeVar
@@ -51,7 +52,7 @@ def login(request: HttpRequest):
 
 def deny_restricted_users(wrapped: collections.abc.Callable[..., Any]) -> collections.abc.Callable[..., Any]:
     @functools.wraps(wrapped)
-    def decorator(request, *args, **kwargs):
+    def decorator(request: HttpRequest, *args: Any, **kwargs: Any) -> Any:
         user = User.get_or_create_restricted(request.user)[0]
         if user.restricted:
             raise PermissionDenied({"message": "You don't have permission to access this view."})
@@ -63,7 +64,7 @@ def renderError(request: HttpRequest, err: str) -> HttpResponse:
     return render(request, 'error.html', {'error_message': err})  # noqa
 
 
-def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> QuerySet[Model]:
+def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> Page:
     """
     This method generically paginates a given QuerySet and returns a list
     suitable for passing to a template. The set is paginated by request
@@ -71,11 +72,14 @@ def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> Q
     """
     page_size = request.GET.get('page_size')
     if not page_size:
-        page_size = 100
-    paginator = Paginator(entries, page_size)
+        assert page_size is not None
+        page_size_int = int(page_size)
+        page_size_int = 100
+    paginator = Paginator(entries, page_size_int)
     page = request.GET.get('page')
 
     try:
+        assert page is not None
         page_entries = paginator.page(page)
     except PageNotAnInteger:
         # If page is not an integer, deliver first page.
@@ -96,7 +100,7 @@ def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> Q
     return page_entries
 
 
-def json_to_query(json_str):
+def json_to_query(json_str: str):
     """
     This method converts JSON objects into trees of Django Q objects.
     It can be used to provide the user the ability to perform complex
@@ -166,7 +170,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
     """
-    def filter_queryset(self, request: HttpRequest, queryset: QuerySet[MT], view: View) -> QuerySet[MT]:
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -184,7 +188,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query using simple "contains" searches
     """
-    def filter_queryset(self, request: HttpRequest, queryset: QuerySet[MT], view: View) -> QuerySet[MT]:
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """

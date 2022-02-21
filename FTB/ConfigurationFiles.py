@@ -45,7 +45,7 @@ class ConfigurationFiles():
             if sections:
                 print("Warning: Ignoring the following config file sections: %s" % " ".join(sections), file=sys.stderr)
 
-    def getSectionMap(self, section: str) -> str:
+    def getSectionMap(self, section: str) -> dict[str, str]:
         ret = {}
         try:
             options = self.parser.options(section)

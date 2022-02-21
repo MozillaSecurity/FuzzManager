@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 import hashlib
@@ -46,7 +48,7 @@ class CollectionSerializer(serializers.ModelSerializer[Collection]):
 
         return serialized
 
-    def create(self, attrs):
+    def create(self, attrs) -> Collection:
         '''
         Create a Collection instance based on the given dictionary of values
         received. We need to unflatten foreign relationships like repository,
@@ -108,7 +110,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfigurat
         )
         read_only_fields = ('id', 'created')
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(ReportConfigurationSerializer, self).__init__(*args, **kwargs)
 
         request = self.context.get("request")
@@ -121,7 +123,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfigurat
             for field in exclude_fields:
                 self.fields.pop(field)
 
-    def handle_repository(self, attrs):
+    def handle_repository(self, attrs) -> None:
         '''
         When creating or updating a ReportConfiguration instance, we need to unflatten
         the foreign relationship to the repository and validate that it exists.
@@ -141,13 +143,13 @@ class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfigurat
 
         attrs['repository'] = repository[0]
 
-    def update(self, instance, attrs):
+    def update(self, instance, attrs) -> ReportConfiguration:
         self.handle_repository(attrs)
 
         # Update our ReportConfiguration instance
         return super(ReportConfigurationSerializer, self).update(instance, attrs)
 
-    def create(self, attrs):
+    def create(self, attrs) -> ReportConfiguration:
         self.handle_repository(attrs)
 
         # Create our ReportConfiguration instance
@@ -162,7 +164,7 @@ class ReportSerializer(serializers.ModelSerializer[Report]):
         )
         read_only_fields = ('id', 'data_created', 'coverage')
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
         request = self.context.get("request")

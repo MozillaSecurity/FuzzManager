@@ -22,7 +22,7 @@ logger = logging.getLogger("covmanager")
 # a summarized report for your testing efforts.
 
 
-def create_weekly_report_mc(revision):
+def create_weekly_report_mc(revision: str) -> None:
     from crashmanager.models import Client
     from .models import Collection, Repository, Report
     from .tasks import aggregate_coverage_data
@@ -38,7 +38,9 @@ def create_weekly_report_mc(revision):
         Q(revision=revision) | Q(revision=short_revision)).filter(
             repository=repository, coverage__isnull=False)
 
-    last_monday = collections.first().created + relativedelta(weekday=MO(-1))
+    collections_first = collections.first()
+    assert collections_first is not None
+    last_monday = collections_first.created + relativedelta(weekday=MO(-1))
 
     mergedCollection = Collection()
     mergedCollection.description = "Weekly Report (Week of %s, %s reports)" % (

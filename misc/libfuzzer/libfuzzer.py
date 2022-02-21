@@ -214,7 +214,7 @@ def main(argv: list[str] | None = None) -> int | None:
 
         crashInfo = CrashInfo.fromRawCrashData([], [], configuration, auxCrashData=trace)
 
-        (sigfile, metadata) = collector.search(crashInfo)
+        (sigfile, _metadata) = collector.search(crashInfo)
 
         if sigfile is not None:
             if last_signature == sigfile:

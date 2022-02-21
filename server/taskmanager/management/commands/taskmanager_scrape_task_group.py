@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
+from collections.abc import Callable
 import functools
 from logging import getLogger
 from typing import Any
+from typing import Generator
 
 from django.conf import settings
 from django.core.management import BaseCommand  # noqa
@@ -18,7 +20,7 @@ from ...models import Task
 LOG = getLogger("taskmanager.management.commands.scrape_group")
 
 
-def paginated(func, result_key):
+def paginated(func: Callable[..., Any], result_key: str) -> Callable[..., Any]:
     """Wraps a Taskcluster API that returns a result like:
     {
        continuationToken: "",
@@ -28,7 +30,7 @@ def paginated(func, result_key):
     and yields the contents of `result_key`
     """
     @functools.wraps(func)
-    def _wrapped(*args, **kwds):
+    def _wrapped(*args: Any, **kwds: Any) -> Generator[Any, Any, Any]:
         kwds = kwds.copy()
         result = func(*args, **kwds)
         while result.get("continuationToken"):

@@ -121,9 +121,9 @@ class Bug(models.Model):
 
 
 class Bucket(models.Model):
-    bug = cast(Bug, models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    bug: Bug | None = cast(Bug, models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE))
     signature = str(models.TextField())
-    optimizedSignature = str(models.TextField(blank=True, null=True))
+    optimizedSignature: str | None = str(models.TextField(blank=True, null=True))
     shortDescription = str(models.CharField(max_length=1023, blank=True))
     frequent = bool(models.BooleanField(blank=False, default=False))
     permanent = bool(models.BooleanField(blank=False, default=False))
@@ -140,6 +140,7 @@ class Bucket(models.Model):
         return CrashSignature(self.signature)
 
     def getOptimizedSignature(self) -> CrashSignature:
+        assert self.optimizedSignature is not None
         return CrashSignature(self.optimizedSignature)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -156,7 +157,7 @@ class Bucket(models.Model):
 
         super(Bucket, self).save(*args, **kwargs)
 
-    def reassign(self, submitSave: bool):
+    def reassign(self, submitSave: bool) -> tuple[list[str], list[str], int, int]:
         """
         Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
@@ -347,7 +348,7 @@ class CrashEntry(models.Model):
     os = cast(OS, models.ForeignKey(OS, on_delete=models.deletion.CASCADE))
     testcase = cast(TestCase, models.ForeignKey(TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE))
     client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
-    bucket = cast(Bucket, models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    bucket: Bucket | None = cast(Bucket, models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE))
     rawStdout = str(models.TextField(blank=True))
     rawStderr = str(models.TextField(blank=True))
     rawCrashData = str(models.TextField(blank=True))
@@ -357,14 +358,14 @@ class CrashEntry(models.Model):
     crashAddress = str(models.CharField(max_length=255, blank=True))
     crashAddressNumeric = int(str(models.BigIntegerField(blank=True, null=True)))
     shortSignature = str(models.CharField(max_length=255, blank=True))
-    cachedCrashInfo = str(models.TextField(blank=True, null=True))
+    cachedCrashInfo: str | None = str(models.TextField(blank=True, null=True))
     triagedOnce = bool(models.BooleanField(blank=False, default=False))
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # These variables can hold temporarily deserialized data
-        self.argsList = None
-        self.envList = None
-        self.metadataList = None
+        self.argsList: list[str] | None = None
+        self.envList: list[str] | None = None
+        self.metadataList: list[str] | None = None
 
         # For performance reasons we do not deserialize these fields
         # automatically here. You need to explicitly call the
@@ -519,7 +520,7 @@ class CrashEntry(models.Model):
 # is also deleted when the CrashEntry is gone. It also explicitly
 # deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=CrashEntry)
-def CrashEntry_delete(sender, instance, **kwargs) -> None:
+def CrashEntry_delete(sender: CrashEntry, instance: CrashEntry, **kwargs: Any) -> None:
     if instance.testcase:
         instance.testcase.delete(False)
     if instance.bucket_id is not None:
@@ -527,13 +528,13 @@ def CrashEntry_delete(sender, instance, **kwargs) -> None:
 
 
 @receiver(post_delete, sender=TestCase)
-def TestCase_delete(sender, instance, **kwargs) -> None:
+def TestCase_delete(sender: TestCase, instance: TestCase, **kwargs: Any) -> None:
     if instance.test:
         instance.test.delete(False)
 
 
 @receiver(post_save, sender=CrashEntry)
-def CrashEntry_save(sender, instance, created, **kwargs) -> None:
+def CrashEntry_save(sender: CrashEntry, instance: CrashEntry, created: bool, **kwargs: Any) -> None:
     if getattr(settings, 'USE_CELERY', None):
         if created and not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
@@ -609,9 +610,9 @@ class User(models.Model):
     # because the bug provider has to decide how to interpret this ID.
     defaultTemplateId = int(str(models.IntegerField(default=0)))
     defaultProviderId = int(str(models.IntegerField(default=1)))
-    defaultToolsFilter = cast(Tool, models.ManyToManyField(Tool))
+    defaultToolsFilter = cast(QuerySet[Tool], models.ManyToManyField(Tool))
     restricted = bool(models.BooleanField(blank=False, default=False))
-    bucketsWatching = cast(Bucket, models.ManyToManyField(Bucket, through='BucketWatch'))
+    bucketsWatching = cast(QuerySet[Bucket], models.ManyToManyField(Bucket, through='BucketWatch'))
 
     # Notifications
     inaccessible_bug = bool(models.BooleanField(blank=False, default=False))
@@ -627,7 +628,7 @@ class User(models.Model):
 
 
 @receiver(post_save, sender=DjangoUser)
-def add_default_perms(sender, instance, created, **kwargs) -> None:
+def add_default_perms(sender: DjangoUser, instance: DjangoUser, created: bool, **kwargs: Any) -> None:
     if created:
         log = logging.getLogger('crashmanager')
         for perm in getattr(settings, 'DEFAULT_PERMISSIONS', []):

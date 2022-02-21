@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import TypeVar
 from typing import cast
 
 from django.conf import settings
 from django.core.exceptions import SuspiciousOperation, PermissionDenied
+from django.db.models import Model
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http import Http404
@@ -32,6 +34,8 @@ from .tasks import aggregate_coverage_data, calculate_report_summary
 from crashmanager.models import Tool
 
 from .SourceCodeProvider import SourceCodeProvider
+
+MT = TypeVar("MT", bound=Model)
 
 
 def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
@@ -597,7 +601,7 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with several collection-specific fields from the URL
     """
-    def filter_queryset(self, request: Request, queryset, view: APIView):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -657,7 +661,7 @@ class ReportFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: Request, queryset, view: APIView):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -725,7 +729,7 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: Request, queryset, view: APIView):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """

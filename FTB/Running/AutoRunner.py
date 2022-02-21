@@ -36,7 +36,7 @@ class AutoRunner():
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.
     """
-    def __init__(self, binary: str, args: list[str] | None = None, env=None, cwd=None, stdin=None) -> None:
+    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> None:
         self.binary = binary
         self.cwd = cwd
         self.stdin = stdin
@@ -63,7 +63,7 @@ class AutoRunner():
         assert isinstance(self.args, list)
 
         # The command that we will run for obtaining crash information
-        self.cmdArgs: list[str] = []
+        self.cmdArgs: list[str | bytes] = []
 
         # These will hold our results from running
         self.stdout: str | None = None
@@ -74,7 +74,7 @@ class AutoRunner():
         return CrashInfo.fromRawCrashData(self.stdout, self.stderr, configuration, self.auxCrashData)
 
     @staticmethod
-    def fromBinaryArgs(binary: str, args: list[str] | None = None, env=None, cwd=None, stdin=None) -> ASanRunner | GDBRunner:
+    def fromBinaryArgs(binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> ASanRunner | GDBRunner:
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
@@ -96,7 +96,7 @@ class AutoRunner():
 
 
 class GDBRunner(AutoRunner):
-    def __init__(self, binary: str, args: list[str] | None = None, env=None, cwd=None, core=None, stdin=None) -> None:
+    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, core: bytes | None = None, stdin: bytes | None = None) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         # This can be used to force GDBRunner to first generate a core and then
@@ -207,7 +207,7 @@ class GDBRunner(AutoRunner):
 
 
 class ASanRunner(AutoRunner):
-    def __init__(self, binary: str, args: list[str] | None = None, env=None, cwd=None, stdin=None) -> None:
+    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         self.cmdArgs.append(self.binary)

@@ -280,7 +280,7 @@ class GCECloudProvider(CloudProvider):
         # apply it to the whole zone to be conservative.
         assert region_name == "global"
 
-        def get_price(sku):
+        def get_price(sku) -> tuple[float, str]:
             assert len(sku["pricingInfo"]) == 1
             expr = sku["pricingInfo"][0]["pricingExpression"]
             assert len(expr["tieredRates"]) == 1, expr["tieredRates"]

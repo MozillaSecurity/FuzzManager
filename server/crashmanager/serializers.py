@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime
+from typing import Any
+
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
@@ -37,7 +40,7 @@ class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
     testcase_quality = serializers.IntegerField(source='testcase.quality', required=False, default=0)
     testcase_isbinary = serializers.BooleanField(source='testcase.isBinary', required=False, default=False)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
 
         include_raw = kwargs.pop('include_raw', True)
 
@@ -58,7 +61,7 @@ class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
         ordering = ['-id']
         read_only_fields = ('bucket', 'id', 'shortSignature', 'crashAddress')
 
-    def create(self, attrs):
+    def create(self, attrs) -> CrashEntry:
         '''
         Create a CrashEntry instance based on the given dictionary of values
         received. We need to unflatten foreign relationships like product,
@@ -189,28 +192,28 @@ class BucketVueSerializer(BucketSerializer):
             'view_url',
         )
 
-    def get_bug_closed(self, sig):
+    def get_bug_closed(self, sig: Bucket) -> datetime | None:
         if sig.bug:
             return sig.bug.closed
         return None
 
-    def get_bug_hostname(self, sig):
+    def get_bug_hostname(self, sig: Bucket) -> str | None:
         if sig.bug and sig.bug.externalType:
-            return sig.bug.externalType.hostname
+            return str(sig.bug.externalType.hostname)
         return None
 
-    def get_bug_urltemplate(self, sig):
+    def get_bug_urltemplate(self, sig: Bucket) -> str | None:
         if sig.bug and sig.bug.externalType:
             try:
-                return sig.bug.externalType.urlTemplate % sig.bug.externalId
+                return str(sig.bug.externalType.urlTemplate % sig.bug.externalId)
             except Exception:
                 return None
         return None
 
-    def get_opt_pre_url(self, sig):
+    def get_opt_pre_url(self, sig: Bucket) -> str:
         return reverse('crashmanager:sigoptpre', kwargs={'sigid': sig.id})
 
-    def get_view_url(self, sig):
+    def get_view_url(self, sig: Bucket) -> str:
         return reverse('crashmanager:sigview', kwargs={'sigid': sig.id})
 
 
@@ -234,18 +237,18 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
             'find_sigs_url',
         )
 
-    def get_view_url(self, entry):
+    def get_view_url(self, entry: CrashEntry) -> str:
         return reverse('crashmanager:crashview', kwargs={'crashid': entry.id})
 
-    def get_sig_view_url(self, entry):
+    def get_sig_view_url(self, entry: CrashEntry) -> str | None:
         if entry.bucket:
             return reverse('crashmanager:sigview', kwargs={'sigid': entry.bucket.id})
         return None
 
-    def get_sig_new_url(self, entry):
+    def get_sig_new_url(self, entry: CrashEntry) -> str:
         return "{}?crashid={}".format(reverse('crashmanager:signew'), entry.id)
 
-    def get_find_sigs_url(self, entry):
+    def get_find_sigs_url(self, entry: CrashEntry) -> str:
         return reverse('crashmanager:findsigs', kwargs={'crashid': entry.id})
 
 
@@ -280,17 +283,17 @@ class NotificationSerializer(serializers.ModelSerializer[Notification]):
         model = Notification
         fields = ('id', 'timestamp', 'description', 'verb', 'actor_url', 'target_url', 'external_bug_url',)
 
-    def get_actor_url(self, notification):
+    def get_actor_url(self, notification: Notification) -> str | None:
         if isinstance(notification.actor, Bucket):
             return reverse('crashmanager:sigview', kwargs={'sigid': notification.actor.id})
         return None
 
-    def get_target_url(self, notification):
+    def get_target_url(self, notification: Notification) -> str | None:
         if isinstance(notification.target, CrashEntry):
             return reverse('crashmanager:crashview', kwargs={'crashid': notification.target.id})
         return None
 
-    def get_external_bug_url(self, notification):
+    def get_external_bug_url(self, notification: Notification) -> str | None:
         if isinstance(notification.target, Bug):
             return f"https://{notification.target.externalType.hostname}/{notification.target.externalId}"
         return None

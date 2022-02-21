@@ -58,13 +58,13 @@ NO_CORPUS_MSG = "INFO: A corpus is not provided, starting from an empty corpus"
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, process: subprocess.Popen[str], killOnOOM: bool = True, mid: int | None = None, mqueue = None) -> None:
+    def __init__(self, process: subprocess.Popen[str], killOnOOM: bool = True, mid: int | None = None, mqueue: queue.Queue[int] | None = None) -> None:
         threading.Thread.__init__(self)
 
         self.process = process
         self.fd = process.stderr
         self.trace: list[str] = []
-        self.stderr = collections.deque([], 128)
+        self.stderr: collections.deque[str] = collections.deque([], 128)
         self.inTrace: bool = False
         self.testcase: str | None = None
         self.killOnOOM = killOnOOM
@@ -90,6 +90,7 @@ class LibFuzzerMonitor(threading.Thread):
 
         try:
             while True:
+                assert self.fd is not None
                 line = self.fd.readline(4096)
 
                 if not line:
@@ -157,6 +158,7 @@ class LibFuzzerMonitor(threading.Thread):
             self.exc = e
         finally:
             if self.mqueue is not None:
+                assert self.mid is not None
                 self.mqueue.put(self.mid)
 
     def getASanTrace(self) -> list[str]:
@@ -165,7 +167,7 @@ class LibFuzzerMonitor(threading.Thread):
     def getTestcase(self) -> str | None:
         return self.testcase
 
-    def getStderr(self) -> list[collections.deque[int]]:
+    def getStderr(self) -> list[str]:
         return list(self.stderr)
 
     def terminate(self) -> None:
@@ -188,7 +190,7 @@ class LibFuzzerMonitor(threading.Thread):
             self.process.wait()
 
 
-def command_file_to_list(cmd_file: str) -> tuple[int, list[str]]:
+def command_file_to_list(cmd_file: str) -> tuple[int | None, list[str]]:
     '''
     Open and parse custom command line file
 
@@ -384,10 +386,10 @@ def write_aggregated_stats_libfuzzer(outfile: str, stats, monitors: list[LibFuzz
     ]
 
     # Which fields to aggregate by mean
-    wanted_fields_mean = []
+    wanted_fields_mean: list[str] = []
 
     # Which fields should be displayed per fuzzer instance
-    wanted_fields_all = []
+    wanted_fields_all: list[str] = []
 
     # Which fields should be aggregated by max
     wanted_fields_max = ['last_new', 'last_new_pc']
@@ -458,7 +460,7 @@ def write_aggregated_stats_libfuzzer(outfile: str, stats, monitors: list[LibFuzz
 
 
 def scan_crashes(base_dir: str, collector: Collector, cmdline_path: str | None = None, env_path: str | None = None, test_path: str | None = None, firefox: str | None = None,
-                 firefox_prefs: str | None = None, firefox_extensions: str | None = None, firefox_testpath: str | None = None, transform: str | None = None):
+                 firefox_prefs: str | None = None, firefox_extensions: str | None = None, firefox_testpath: str | None = None, transform: str | None = None) -> int:
     '''
     Scan the base directory for crash tests and submit them to FuzzManager.
 
@@ -520,6 +522,7 @@ def scan_crashes(base_dir: str, collector: Collector, cmdline_path: str | None =
             return 2
 
         if firefox:
+            assert firefox_testpath is not None
             (ffpInst, ffCmd, ffEnv) = setup_firefox(cmdline[0], firefox_prefs, firefox_extensions, firefox_testpath)
             cmdline = ffCmd
             base_env.update(ffEnv)
@@ -541,6 +544,7 @@ def scan_crashes(base_dir: str, collector: Collector, cmdline_path: str | None =
             if test_idx is not None:
                 cmdline[test_idx] = orig_test_arg.replace('@@', crash_file)
             elif test_in_env is not None:
+                assert env is not None
                 env[test_in_env] = env[test_in_env].replace('@@', crash_file)
             elif test_path is not None:
                 shutil.copy(crash_file, test_path)
@@ -1147,7 +1151,7 @@ def main(argv: list[str] | None = None) -> int:
                     print(rarg, file=fd)
 
         monitors = [None] * opts.libfuzzer_instances
-        monitor_queue = queue.Queue()
+        monitor_queue: queue.Queue[int] = queue.Queue()
 
         # Keep track how often we crash to abort in certain situations
         crashes_per_minute_interval = 0
@@ -1204,6 +1208,7 @@ def main(argv: list[str] | None = None) -> int:
                     # so we cache it here to avoid running listdir multiple times.
                     corpus_size = len(os.listdir(corpus_dir))
 
+                assert corpus_size is not None
                 if corpus_auto_reduce_threshold is not None and corpus_size >= corpus_auto_reduce_threshold:
                     print("Preparing automated merge...", file=sys.stderr)
 
@@ -1297,6 +1302,7 @@ def main(argv: list[str] | None = None) -> int:
                     continue
 
                 monitor = monitors[result]
+                assert monitor is not None
                 monitor.join(20)
                 if monitor.is_alive():
                     raise RuntimeError("Monitor %s still alive although it signaled termination." % result)

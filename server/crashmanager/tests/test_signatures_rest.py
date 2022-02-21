@@ -54,7 +54,7 @@ from crashmanager.tests.conftest import _cm_result, _create_user
 LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
-def _compare_rest_result_to_bucket(result: dict[str, object], bucket: Bucket, size: int, quality: int, best_entry: int | None = None, latest: int | None = None, hist: list[dict[str, object]] = [], vue: bool = False) -> None:
+def _compare_rest_result_to_bucket(result, bucket: Bucket, size: int, quality: int | None, best_entry: int | None = None, latest: int | None = None, hist: list[dict[str, object]] = [], vue: bool = False) -> None:
     attributes = {
         'best_entry', 'best_quality', 'bug', 'frequent', 'id', 'permanent', 'shortDescription', 'signature', 'size',
         'has_optimization', 'latest_entry',
@@ -213,6 +213,7 @@ def test_rest_signatures_retrieve(api_client: APIClient, cm: _cm_result, user: D
             status_code = resp.status_code
             resp = resp.json()
             assert status_code == requests.codes['ok'], resp['detail']
+            quality: int | None
             if user.username == "test":
                 if ignore_toolfilter:
                     size, quality, best, latest = [

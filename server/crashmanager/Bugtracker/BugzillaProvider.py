@@ -18,6 +18,7 @@ from django.db.models.query import QuerySet
 from django.forms.models import model_to_dict
 from django.shortcuts import get_object_or_404
 from django.utils import dateparse
+from rest_framework.request import Request
 
 from .BugzillaREST import BugzillaREST
 from .Provider import Provider
@@ -28,7 +29,7 @@ class BugzillaProvider(Provider):
     def __init__(self, pk: int, hostname: str) -> None:
         super(BugzillaProvider, self).__init__(pk, hostname)
 
-    def getTemplateForUser(self, request, crashEntry: CrashEntry):
+    def getTemplateForUser(self, request: Request, crashEntry: CrashEntry):
         if 'template' in request.GET:
             obj = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
             template = model_to_dict(obj)
@@ -36,15 +37,15 @@ class BugzillaProvider(Provider):
         else:
             user = User.get_or_create_restricted(request.user)[0]
 
-            obj = BugzillaTemplate.objects.filter(name__contains=crashEntry.tool.name)
-            if not obj:
+            obj_ = BugzillaTemplate.objects.filter(name__contains=crashEntry.tool.name)
+            if not obj_:
                 defaultTemplateId = user.defaultTemplateId
                 if not defaultTemplateId:
                     defaultTemplateId = 1
 
-                obj = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
+                obj_ = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
 
-            if not obj:
+            if not obj_:
                 template = {}
             else:
                 template = model_to_dict(obj[0])

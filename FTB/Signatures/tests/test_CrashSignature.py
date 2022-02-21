@@ -555,6 +555,7 @@ def test_SignatureStackFramesAlgorithmsTest() -> None:
             (actualDepth, actualSig) = StackFramesSymptom._diff(stack,
                                                                 [StringMatch(x) for x in rawSig], 0, 1, maxDepth)
             assert expectedDepth == actualDepth
+            assert actualSig is not None
             assert expectedSig == [str(x) for x in actualSig]
 
 

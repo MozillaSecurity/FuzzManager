@@ -6,11 +6,13 @@ from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.db.models.query import QuerySet
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 import codecs
 import json
+from typing import Any
 from typing import cast
 
 from crashmanager.models import Client, Tool
@@ -45,11 +47,11 @@ class Collection(models.Model):
     repository = cast(Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE))
     revision = str(models.CharField(max_length=255, blank=False))
     branch = str(models.CharField(max_length=255, blank=True))
-    tools = cast(Tool, models.ManyToManyField(Tool))
+    tools = cast(QuerySet[Tool], models.ManyToManyField(Tool))
     client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
-    coverage = cast(CollectionFile, models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE))
+    coverage: CollectionFile | None = cast(CollectionFile, models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE))
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # This variable can hold the deserialized contents of the coverage blob
         self.content = None
 
@@ -71,6 +73,7 @@ class Collection(models.Model):
         super(Collection, self).__init__(*args, **kwargs)
 
     def loadCoverage(self) -> None:
+        assert self.coverage is not None
         self.coverage.file.open(mode='rb')
         self.content = json.load(codecs.getreader('utf-8')(self.coverage.file))
         self.coverage.file.close()
@@ -124,6 +127,7 @@ class Collection(models.Model):
             names[0] = ""
 
         try:
+            assert self.content is not None
             ret = self.content["children"]
             for name in names[:-1]:
                 ret = ret[name]["children"]
@@ -156,7 +160,7 @@ class Collection(models.Model):
                     coverage["children"][child]["children"] = True
 
     @staticmethod
-    def strip(coverage):
+    def strip(coverage) -> None:
         """
         This method strips all detailed coverage information from the given
         coverage data. Only the summarized coverage fields are left intact.
@@ -181,7 +185,7 @@ class Collection(models.Model):
 # This post_delete handler ensures that the corresponding coverage
 # file is deleted when the Collection is gone.
 @receiver(post_delete, sender=Collection)
-def Collection_delete(sender, instance, **kwargs):
+def Collection_delete(sender: Collection, instance: Collection, **kwargs: Any) -> None:
     if instance.coverage:
         instance.coverage.file.delete(False)
         instance.coverage.delete(False)
@@ -190,7 +194,7 @@ def Collection_delete(sender, instance, **kwargs):
 # post_save handler for celery integration
 if getattr(settings, 'USE_CELERY', None):
     @receiver(post_save, sender=Collection)
-    def Collection_save(sender, instance, **kwargs):
+    def Collection_save(sender: Collection, instance: Collection, **kwargs: Any) -> None:
         check_revision_update.delay(instance.pk)
 
 
@@ -199,16 +203,16 @@ class ReportConfiguration(models.Model):
     repository = cast(Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE))
     directives = str(models.TextField())
     public = bool(models.BooleanField(blank=False, default=False))
-    logical_parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.deletion.CASCADE)
+    logical_parent = cast("ReportConfiguration", models.ForeignKey("self", blank=True, null=True, on_delete=models.deletion.CASCADE))
 
-    def apply(self, collection):
+    def apply(self, collection: Collection) -> None:
         CoverageHelper.apply_include_exclude_directives(collection, self.directives.splitlines())
         CoverageHelper.calculate_summary_fields(collection)
 
 
 class ReportSummary(models.Model):
     collection = cast(Collection, models.OneToOneField(Collection, on_delete=models.deletion.CASCADE))
-    cached_result = str(models.TextField(null=True, blank=True))
+    cached_result: str | None = str(models.TextField(null=True, blank=True))
 
 
 class Report(models.Model):

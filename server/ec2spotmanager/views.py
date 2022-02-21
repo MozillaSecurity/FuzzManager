@@ -490,6 +490,7 @@ def __handleConfigPOST(request: HttpRequest, config: PoolConfiguration) -> HttpR
     config.save()
 
     if request.POST['ec2_userdata']:
+        assert config.ec2_userdata_file is not None
         if not config.ec2_userdata_file.name:
             config.ec2_userdata_file.save("default.sh", ContentFile(""))
         config.ec2_userdata = request.POST['ec2_userdata']
@@ -588,7 +589,7 @@ def deletePool(request: HttpRequest, poolid: int) -> HttpResponse | HttpResponse
 
 
 @deny_restricted_users
-def deletePoolMsg(request: HttpRequest, msgid: int, from_pool: str = '0') -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
+def deletePoolMsg(request: HttpRequest, msgid: int, from_pool: str | int = '0') -> HttpResponse | HttpResponsePermanentRedirect | HttpResponseRedirect:
     entry = get_object_or_404(PoolStatusEntry, pk=msgid)
     if request.method == 'POST':
         from_pool = int(request.POST['from_pool'])
@@ -650,7 +651,7 @@ def deleteConfig(request: HttpRequest, configid: int) -> HttpResponse | HttpResp
 class UptimeChartViewDetailed(JSONView):
     authentication_classes = (SessionAuthentication,)  # noqa
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, object]:
+    def get_context_data(self, **kwargs: Any):
         context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs['poolid']))
         pool.flat_config = pool.config.flatten()
@@ -699,7 +700,7 @@ class UptimeChartViewDetailed(JSONView):
             'barShowStroke': False,
         }
 
-    def get_datasets(self, pool, entries):
+    def get_datasets(self, pool: InstancePool, entries):
         datasets = []
         color_generator = self.get_colors()
         color = tuple(next(color_generator))
@@ -717,7 +718,7 @@ class UptimeChartViewDetailed(JSONView):
         datasets.append(dataset)
         return datasets
 
-    def get_labels(self, pool, entries) -> list[str]:
+    def get_labels(self, pool: InstancePool, entries) -> list[str]:
         return [x.created.strftime("%H:%M") for x in entries]
 
 
@@ -761,7 +762,7 @@ class UptimeChartViewAccumulated(JSONView):
 
         return colors
 
-    def get_options(self, pool, entries) -> dict[str, object]:
+    def get_options(self, pool: InstancePool, entries) -> dict[str, object]:
         # Scale to 100% but use 110 so the red bar is actually visible
         scaleSteps = 11
         return {
@@ -775,7 +776,7 @@ class UptimeChartViewAccumulated(JSONView):
             'barShowStroke': False,
         }
 
-    def get_datasets(self, pool, entries):
+    def get_datasets(self, pool: InstancePool, entries):
         datasets = []
         color_generator = self.get_colors()
         color = tuple(next(color_generator))
@@ -793,7 +794,7 @@ class UptimeChartViewAccumulated(JSONView):
         datasets.append(dataset)
         return datasets
 
-    def get_labels(self, pool, entries) -> list[str]:
+    def get_labels(self, pool: InstancePool, entries) -> list[str]:
         return [x.created.strftime("%b %d") for x in entries]
 
 
@@ -829,7 +830,7 @@ class PoolConfigurationViewSet(mixins.RetrieveModelMixin,
     serializer_class = PoolConfigurationSerializer
 
     def retrieve(self, request: Request, *args: Any, **kwds: Any) -> Response:
-        flatten = request.query_params.get('flatten', '0')
+        flatten: str | int = request.query_params.get('flatten', '0')
         try:
             flatten = int(flatten)
             assert flatten in {0, 1}

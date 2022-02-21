@@ -3,8 +3,9 @@ from __future__ import annotations
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
-from django.db.models import F, Q
+from django.db.models import F, Q, Model
 from django.db.models.aggregates import Count, Min
+from django.db.models.query import QuerySet
 from django.http import Http404, HttpResponse
 from django.http.request import HttpRequest
 from django.http.response import HttpResponsePermanentRedirect
@@ -23,10 +24,13 @@ from rest_framework.authentication import TokenAuthentication, SessionAuthentica
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import six
+from typing import Any
 from typing import Type
+from typing import TypeVar
 from typing import cast
 
 from wsgiref.util import FileWrapper
@@ -42,6 +46,8 @@ from .serializers import BugzillaTemplateSerializer, InvalidArgumentException, \
 from server.auth import CheckAppPermission
 
 from django.conf import settings as django_settings
+
+MT = TypeVar("MT", bound=Model)
 
 
 class JSONDateEncoder(json.JSONEncoder):
@@ -84,7 +90,7 @@ def deny_restricted_users(request: HttpRequest) -> None:
         raise PermissionDenied({"message": "Restricted users cannot use this feature."})
 
 
-def filter_crash_entries_by_toolfilter(request: HttpRequest, entries, restricted_only=False):
+def filter_crash_entries_by_toolfilter(request: HttpRequest, entries: QuerySet[MT], restricted_only: bool = False) -> QuerySet[MT]:
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
@@ -99,7 +105,7 @@ def filter_crash_entries_by_toolfilter(request: HttpRequest, entries, restricted
     return entries
 
 
-def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted_only: bool = False, legacy_filters: bool = True):
+def filter_signatures_by_toolfilter(request: HttpRequest, signatures: QuerySet[MT], restricted_only: bool = False, legacy_filters: bool = True) -> QuerySet[MT]:
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
@@ -127,7 +133,7 @@ def filter_signatures_by_toolfilter(request: HttpRequest, signatures, restricted
     return signatures
 
 
-def filter_bucket_hits_by_toolfilter(request: HttpRequest, hits, restricted_only: bool = False):
+def filter_bucket_hits_by_toolfilter(request: HttpRequest, hits: QuerySet[MT], restricted_only: bool = False) -> QuerySet[MT]:
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
     if restricted_only and not user.restricted:
@@ -164,8 +170,8 @@ def stats(request: HttpRequest) -> HttpResponse:
     frequentBuckets = []
 
     if bucketFrequencyMap:
-        bucketFrequencyMap = sorted(bucketFrequencyMap.items(), key=lambda t: t[1], reverse=True)[:10]
-        for pk, freq in bucketFrequencyMap:
+        bucketFrequencyMap_ = sorted(bucketFrequencyMap.items(), key=lambda t: t[1], reverse=True)[:10]
+        for pk, freq in bucketFrequencyMap_:
             obj = Bucket.objects.get(pk=pk)
             obj.rph = freq
             frequentBuckets.append(obj)
@@ -212,22 +218,23 @@ def watchedSignatures(request: HttpRequest) -> HttpResponse:
     # this is the result, but we will replace any buckets also found in newBuckets
     bucketsAll = Bucket.objects.filter(user=user).order_by('-id')
     bucketsAll = bucketsAll.extra(select={'lastCrash': 'crashmanager_bucketwatch.lastCrash'})
-    buckets = list(bucketsAll)
-    for idx, bucket in enumerate(buckets):
+    buckets_list = list(bucketsAll)
+    for idx, bucket in enumerate(buckets_list):
         for newIdx, newBucket in enumerate(newBuckets):
             if newBucket == bucket:
                 # replace with this one
-                buckets[idx] = newBucket
+                buckets_list[idx] = newBucket
                 newBuckets.pop(newIdx)
                 break
         else:
             bucket.newCrashes = 0
-    return render(request, 'signatures/watch.html', {'siglist': buckets})
+    return render(request, 'signatures/watch.html', {'siglist': buckets_list})
 
 
 def deleteBucketWatch(request: HttpRequest, sigid: int) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
     user = cast(User, User.get_or_create_restricted(request.user)[0])
 
+    entry: BucketWatch | Bucket
     if request.method == 'POST':
         entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
         entry.delete()
@@ -769,7 +776,7 @@ class JsonQueryFilterBackend(BaseFilterBackend):
     """
     Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -791,11 +798,11 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
     Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
     Only unrestricted users can use ignore_toolfilter.
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """Return a filtered queryset"""
-        ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
+        ignore_toolfilter_requested = request.query_params.get('ignore_toolfilter', '0')
         try:
-            ignore_toolfilter = int(ignore_toolfilter)
+            ignore_toolfilter = int(ignore_toolfilter_requested)
             assert ignore_toolfilter in {0, 1}
         except (AssertionError, ValueError):
             raise InvalidArgumentException({'ignore_toolfilter': ['Expecting 0 or 1.']})
@@ -807,7 +814,7 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
 
 class WatchFilterCrashesBackend(BaseFilterBackend):
     """Filters the queryset to retrieve watched entries if '?watch=<int>'"""
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         watch_id = request.query_params.get('watch', 'false').lower()
         if watch_id == 'false':
             return queryset
@@ -820,11 +827,11 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
     Filters the queryset by the user's toolfilter unless '?ignore_toolfilter=1' is given.
     Only unrestricted users can use ignore_toolfilter.
     """
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         """Return a filtered queryset"""
-        ignore_toolfilter = request.query_params.get('ignore_toolfilter', '0')
+        ignore_toolfilter_requested = request.query_params.get('ignore_toolfilter', '0')
         try:
-            ignore_toolfilter = int(ignore_toolfilter)
+            ignore_toolfilter = int(ignore_toolfilter_requested)
             assert ignore_toolfilter in {0, 1}
         except (AssertionError, ValueError):
             raise InvalidArgumentException({'ignore_toolfilter': ['Expecting 0 or 1.']})
@@ -836,16 +843,16 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
 
 class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
-    def filter_queryset(self, request: HttpRequest, queryset, view):
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
         return queryset.annotate(size=Count('crashentry'), quality=Min('crashentry__testcase__quality'))
 
 
 class DeferRawFilterBackend(BaseFilterBackend):
     """Optionally defer raw fields"""
-    def filter_queryset(self, request: HttpRequest, queryset, view):
-        include_raw = request.query_params.get('include_raw', '1')
+    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
+        include_raw_requested = request.query_params.get('include_raw', '1')
         try:
-            include_raw = int(include_raw)
+            include_raw = int(include_raw_requested)
             assert include_raw in {0, 1}
         except (AssertionError, ValueError):
             raise InvalidArgumentException({'include_raw': ['Expecting 0 or 1.']})
@@ -873,7 +880,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         DeferRawFilterBackend
     ]
 
-    def get_serializer(self, *args, **kwds):
+    def get_serializer(self, *args: Any, **kwds: Any):
         kwds["include_raw"] = getattr(self, "include_raw", True)
         vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
         if vue:
@@ -881,7 +888,7 @@ class CrashEntryViewSet(mixins.CreateModelMixin,
         else:
             return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
 
-    def partial_update(self, request: HttpRequest, pk: int | None = None) -> Response:
+    def partial_update(self, request: Request, pk: int | None = None) -> Response:
         """Update individual crash fields."""
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
@@ -926,14 +933,14 @@ class BucketViewSet(mixins.CreateModelMixin,
     ordering_fields = ['id', 'shortDescription', 'size', 'quality', 'optimizedSignature', 'bug__externalId']
     pagination_class = None
 
-    def get_serializer(self, *args, **kwds):
+    def get_serializer(self, *args: Any, **kwds: Any):
         self.vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
         if self.vue:
             return BucketVueSerializer(*args, **kwds)
         else:
             return super(BucketViewSet, self).get_serializer(*args, **kwds)
 
-    def list(self, request, *args, **kwargs) -> Response:
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         response = super().list(request, *args, **kwargs)
 
         if self.vue and response.status_code == 200:
@@ -962,7 +969,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
         return response
 
-    def retrieve(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
+    def retrieve(self, request: Request, *args: str, **kwargs: str) -> Response:
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         instance = self.get_object()
         ignore_toolfilter = getattr(self, "ignore_toolfilter", False)
@@ -986,10 +993,12 @@ class BucketViewSet(mixins.CreateModelMixin,
             best_crash = crashes_in_filter.filter(testcase__quality=instance.quality).order_by(
                 "testcase__size", "-id"
             ).first()
+            assert best_crash is not None
             instance.best_entry = best_crash.id
 
         if instance.size:
             latest_crash = crashes_in_filter.order_by("id").last()
+            assert latest_crash is not None
             instance.latest_entry = latest_crash.id
 
         serializer = self.get_serializer(instance)
@@ -1009,7 +1018,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
         return response
 
-    def __validate(self, request: HttpRequest, bucket: Bucket, submitSave: bool, reassign: bool):
+    def __validate(self, request: Request, bucket: Bucket, submitSave: bool, reassign: bool):
         try:
             bucket.getSignature()
         except RuntimeError as e:
@@ -1028,8 +1037,8 @@ class BucketViewSet(mixins.CreateModelMixin,
                 bucket.bug = bucket.bug
             bucket.save()
 
-        inList, outList = [], []
-        inListCount, outListCount = 0, 0
+        inList: list[str] = []
+        outList: list[str] = []
         # If the reassign checkbox is checked
         if reassign:
             inList, outList, inListCount, outListCount = bucket.reassign(submitSave)
@@ -1049,12 +1058,14 @@ class BucketViewSet(mixins.CreateModelMixin,
             'outListCount': outListCount,
         }
 
-    def update(self, request: HttpRequest, *args: str, **kwargs: str) -> None:
+    def update(self, request: Request, *args: str, **kwargs: str) -> Response:
+        assert request.method is not None
         raise MethodNotAllowed(request.method)
 
-    def partial_update(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
+    def partial_update(self, request: Request, *args: str, **kwargs: str) -> Response:
         user = cast(User, User.get_or_create_restricted(request.user)[0])
         if user.restricted:
+            assert request.method is not None
             raise MethodNotAllowed(request.method)
 
         serializer = self.get_serializer(data=request.data, partial=True)
@@ -1063,6 +1074,7 @@ class BucketViewSet(mixins.CreateModelMixin,
         bucket = get_object_or_404(Bucket, id=self.kwargs["pk"])
         check_authorized_for_signature(request, bucket)
 
+        bug: QuerySet[Bug] | Bug | None
         if 'bug' in serializer.validated_data:
             if serializer.validated_data['bug'] is None:
                 bug = None
@@ -1098,7 +1110,7 @@ class BucketViewSet(mixins.CreateModelMixin,
             data=data,
         )
 
-    def create(self, request: HttpRequest, *args: str, **kwargs: str) -> Response:
+    def create(self, request: Request, *args: str, **kwargs: str) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -1121,7 +1133,7 @@ class BucketViewSet(mixins.CreateModelMixin,
 
 class BucketVueViewSet(BucketViewSet):
     """API endpoint that allows viewing Buckets and always uses Vue serializer"""
-    def get_serializer(self, *args, **kwds) -> BucketVueSerializer:
+    def get_serializer(self, *args: Any, **kwds: Any) -> BucketVueSerializer:
         self.vue = True
         return BucketVueSerializer(*args, **kwds)
 
@@ -1156,11 +1168,11 @@ class NotificationViewSet(mixins.ListModelMixin,
     serializer_class = NotificationSerializer
     filter_backends = [JsonQueryFilterBackend, ]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Notification]:
         return Notification.objects.unread().filter(recipient=self.request.user)
 
     @action(detail=True, methods=['patch'])
-    def mark_as_read(self, request, pk=None):
+    def mark_as_read(self, request: Request, pk: int | None = None) -> Response:
         notification = self.get_object()
 
         if notification.recipient != request.user:
@@ -1170,7 +1182,7 @@ class NotificationViewSet(mixins.ListModelMixin,
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['patch'])
-    def mark_all_as_read(self, request):
+    def mark_all_as_read(self, request: Request) -> Response:
         notifications = self.get_queryset()
         notifications.mark_all_as_read()
         return Response(status=status.HTTP_200_OK)
@@ -1205,7 +1217,7 @@ def json_to_query(json_str: str):
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 
-    def get_query_obj(obj, key=None) -> Q:
+    def get_query_obj(obj, key: str | None = None) -> Q:
 
         if obj is None or isinstance(obj, (six.text_type, list, int)):
             kwargs = {key: obj}
@@ -1276,7 +1288,7 @@ class TestDownloadView(AbstractDownloadView):
 
 
 class SignaturesDownloadView(AbstractDownloadView):
-    def get(self, request: HttpRequest, format=None) -> HttpResponse:
+    def get(self, request: HttpRequest, format: int | None = None) -> HttpResponse:
         deny_restricted_users(request)
 
         storage_base = getattr(django_settings, 'SIGNATURE_STORAGE', None)
@@ -1303,13 +1315,13 @@ class BugzillaTemplateDeleteView(DeleteView):
     pk_url_kwarg = 'templateId'
 
 
-class BugzillaTemplateEditView(UpdateView[BugzillaTemplate]):
+class BugzillaTemplateEditView(UpdateView):
     model = BugzillaTemplate
     template_name = 'bugzilla/create_edit.html'
     success_url = reverse_lazy('crashmanager:templates')
     pk_url_kwarg = 'templateId'
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Edit template'
         return context
@@ -1321,18 +1333,18 @@ class BugzillaTemplateEditView(UpdateView[BugzillaTemplate]):
             return BugzillaTemplateCommentForm
 
 
-class BugzillaTemplateBugCreateView(CreateView[BugzillaTemplate]):
+class BugzillaTemplateBugCreateView(CreateView):
     model = BugzillaTemplate
     template_name = 'bugzilla/create_edit.html'
     form_class = BugzillaTemplateBugForm
     success_url = reverse_lazy('crashmanager:templates')
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create a bug template'
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form) -> HttpResponse:
         form.instance.mode = BugzillaTemplateMode.Bug
         return super(BugzillaTemplateBugCreateView, self).form_valid(form)
 
@@ -1343,7 +1355,7 @@ class BugzillaTemplateCommentCreateView(CreateView[BugzillaTemplate]):
     form_class = BugzillaTemplateCommentForm
     success_url = reverse_lazy('crashmanager:templates')
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create a comment template'
         return context
@@ -1359,7 +1371,7 @@ class UserSettingsEditView(UpdateView[User]):
     form_class = UserSettingsForm
     success_url = reverse_lazy('crashmanager:usersettings')
 
-    def get_form_kwargs(self, **kwargs):
+    def get_form_kwargs(self, **kwargs: Any):
         kwargs = super(UserSettingsEditView, self).get_form_kwargs(**kwargs)
         kwargs['user'] = self.get_queryset().get(user=self.request.user)
         return kwargs
@@ -1367,7 +1379,7 @@ class UserSettingsEditView(UpdateView[User]):
     def get_object(self):
         return self.get_queryset().get(user=self.request.user)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any):
         context = super().get_context_data(**kwargs)
         context['bugzilla_providers'] = BugProvider.objects.filter(classname="BugzillaProvider")
         context['user'] = self.request.user

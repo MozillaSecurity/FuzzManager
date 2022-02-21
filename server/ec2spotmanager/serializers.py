@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import itertools
+from typing import Any
+
 from django.http.response import Http404  # noqa
 from rest_framework import serializers
 
@@ -44,7 +46,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer[PoolConfiguration])
     gce_raw_config = serializers.DictField(child=serializers.CharField(), allow_null=True)
     gce_raw_config_override = serializers.BooleanField(default=False)
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._flatten = kwargs.pop('flatten', False)
         super(PoolConfigurationSerializer, self).__init__(*args, **kwargs)
 
@@ -84,7 +86,7 @@ class MachineStatusSerializer(serializers.ModelSerializer[Instance]):
         model = Instance
         fields = ['status_data']
 
-    def update(self, instance, attrs):
+    def update(self, instance: Instance, attrs: dict[str, str]) -> Instance:
         '''
         Update the status_data field of a given instance
         '''

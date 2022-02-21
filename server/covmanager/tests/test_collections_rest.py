@@ -142,6 +142,7 @@ def test_rest_collections_get(api_client: APIClient, cm: _result) -> None:
     assert resp['client'] == 'testclient'
     assert resp['tools'] == 'testtool'
     assert resp['revision'] == 'abc'
+    assert coll.coverage is not None
     assert resp['coverage'] == coll.coverage.file
 
 
@@ -226,4 +227,5 @@ def test_rest_collection_get(api_client: APIClient, cm: _result) -> None:
     assert resp['client'] == 'testclient'
     assert resp['tools'] == 'testtool'
     assert resp['revision'] == 'abc'
+    assert coll.coverage is not None
     assert resp['coverage'] == coll.coverage.file

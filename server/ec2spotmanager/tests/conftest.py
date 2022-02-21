@@ -21,8 +21,10 @@ from unittest.mock import Mock
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User, Permission
 import pytest
+from pytest_mock import MockerFixture
 from crashmanager.models import User as cmUser
 from ec2spotmanager.CloudProvider.CloudProvider import CloudProvider
+from ec2spotmanager.models import InstancePool, PoolConfiguration
 from . import UncatchableException
 
 
@@ -39,7 +41,7 @@ def _create_user(username: str, email: str = "test@mozilla.com", password: str =
 
 
 @pytest.fixture
-def ec2spotmanager_test(db) -> None:  # pylint: disable=invalid-name,unused-argument
+def ec2spotmanager_test(db: None) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all ec2spotmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")
@@ -47,11 +49,11 @@ def ec2spotmanager_test(db) -> None:  # pylint: disable=invalid-name,unused-argu
 
 
 @pytest.fixture
-def mock_provider(mocker):
+def mock_provider(mocker: MockerFixture) -> Mock:
     prv_t = Mock(spec=CloudProvider)
 
-    def allowed_regions(cls, cfg):
-        result = []
+    def allowed_regions(cls, cfg: PoolConfiguration) -> list[str]:
+        result: list[str] = []
         if cls.provider == 'prov1':
             result.extend(set(cfg.ec2_allowed_regions) & set("abcd"))
         if cls.provider == 'prov2':
@@ -59,7 +61,7 @@ def mock_provider(mocker):
         result.sort()
         return result
 
-    def get_instance(cls, provider):
+    def get_instance(cls, provider: str):
         cls.provider = provider
         return cls
     prv_t.check_instances_state.return_value = {}
@@ -75,9 +77,9 @@ def mock_provider(mocker):
 
 
 @pytest.fixture
-def raise_on_status(mocker) -> None:
+def raise_on_status(mocker: MockerFixture) -> None:
 
-    def _mock_pool_status(_pool, type_: str, message: str) -> None:
+    def _mock_pool_status(_pool: InstancePool, type_: str, message: str) -> None:
         if sys.exc_info() != (None, None, None):
             raise  # pylint: disable=misplaced-bare-raise
         raise UncatchableException("%s: %s" % (type_, message))
