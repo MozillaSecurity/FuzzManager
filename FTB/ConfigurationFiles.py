@@ -23,7 +23,7 @@ from six.moves import configparser
 class ConfigurationFiles():
     def __init__(self, configFiles: list[str]) -> None:
         self.mainConfig: dict[str, str] = {}
-        self.metadataConfig: dict[str, str] = {}
+        self.metadataConfig = {}
 
         if configFiles:
             self.parser = configparser.ConfigParser()
@@ -45,7 +45,7 @@ class ConfigurationFiles():
             if sections:
                 print("Warning: Ignoring the following config file sections: %s" % " ".join(sections), file=sys.stderr)
 
-    def getSectionMap(self, section: str) -> dict[str, str]:
+    def getSectionMap(self, section: str):
         ret = {}
         try:
             options = self.parser.options(section)

@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import datetime
 import logging
 from typing import Iterable
@@ -421,20 +422,20 @@ def test_pool_trim() -> None:
 
 @pytest.mark.parametrize("term_task,provider_func", [(_terminate_instance_ids, "terminate_instances"),
                                                      (_terminate_instance_request_ids, "cancel_requests")])
-def test_terminate(mocker: MockerFixture, term_task, provider_func) -> None:
+def test_terminate(mocker: MockerFixture, term_task: Callable[..., None], provider_func: str) -> None:
     """check that terminate instances task works properly"""
     fake_provider_cls = mocker.patch('ec2spotmanager.tasks.CloudProvider')
     fake_provider = fake_provider_cls.get_instance.return_value = mocker.Mock()
     term_task('provider', 'region', ['inst1', 'inst2'])
     fake_provider_cls.get_instance.assert_called_once_with('provider')
-    provider_func = getattr(fake_provider, provider_func)
-    provider_func.assert_called_once_with({'region': ['inst1', 'inst2']})
+    provider_func_ = getattr(fake_provider, provider_func)
+    provider_func_.assert_called_once_with({'region': ['inst1', 'inst2']})
 
-    provider_func.side_effect = CloudProviderTemporaryFailure('blah')
+    provider_func_.side_effect = CloudProviderTemporaryFailure('blah')
     with pytest.raises(CloudProviderTemporaryFailure,
                        match=r'CloudProviderTemporaryFailure: blah \(temporary-failure\)'):
         term_task('provider', 'region', [])
 
-    provider_func.side_effect = Exception('blah')
+    provider_func_.side_effect = Exception('blah')
     with pytest.raises(Exception, match=r'blah'):
         term_task('provider', 'region', [])

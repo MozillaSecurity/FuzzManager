@@ -75,7 +75,7 @@ class PoolConfiguration(models.Model):
         self.ec2_raw_config_override: bool | None = None
         self.ec2_userdata_macros_dict: dict[str, str] | str | None = None
         self.ec2_userdata_macros_override: bool | None = None
-        self.ec2_userdata: UploadedFile | bytes | str | None = None
+        self.ec2_userdata: bytes | str | None = None
         self.ec2_security_groups_list: list[str] | str | None = None
         self.ec2_security_groups_override: bool | None = None
         self.ec2_allowed_regions_list: list[str] | str | None = None

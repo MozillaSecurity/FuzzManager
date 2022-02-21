@@ -44,9 +44,9 @@ def assert_contains(response: HttpResponse, text: str) -> None:
     _().assertContains(response, text)
 
 
-def create_config(name: str, parent: PoolConfiguration | None = None, size: int | None = None, cycle_interval: int | None = None, ec2_key_name: str | None = None, ec2_security_groups: str | None = None,
-                  ec2_instance_types: str | None = None, ec2_image_name: str | None = None, ec2_userdata_macros: str | None = None, ec2_allowed_regions: str | None = None,
-                  max_price: Decimal | None = None, instance_tags: str | None = None, ec2_raw_config: str | None = None, ec2_userdata: UploadedFile | None = None, gce_image_name: str | None = None,
+def create_config(name: str, parent: PoolConfiguration | None = None, size: int | None = None, cycle_interval: int | None = None, ec2_key_name: str | None = None, ec2_security_groups: list[str] | str | None = None,
+                  ec2_instance_types: list[str] | None = None, ec2_image_name: str | None = None, ec2_userdata_macros: dict[str, str] | None = None, ec2_allowed_regions: list[str] | None = None,
+                  max_price: float | str | None = None, instance_tags: dict[str, str] | None = None, ec2_raw_config: dict[str, str] | None = None, ec2_userdata: UploadedFile | str | bytes | None = None, gce_image_name: str | None = None,
                   gce_container_name: str | None = None, gce_disk_size: int | None = None) -> PoolConfiguration:
     result = cast(PoolConfiguration, PoolConfiguration.objects.create(name=name, parent=parent, size=size, cycle_interval=cycle_interval,
                                                                       ec2_key_name=ec2_key_name,
@@ -89,11 +89,11 @@ def create_poolmsg(pool: InstancePool) -> PoolStatusEntry:
     return result
 
 
-def create_instance(hostname: str,
+def create_instance(hostname: str | None,
                     pool: InstancePool | None = None,
                     status_code: int = 0,
                     status_data: str | None = None,
-                    ec2_instance_id: int | None = None,
+                    ec2_instance_id: str | int | None = None,
                     ec2_region: str = "",
                     ec2_zone: str = "",
                     size: int = 1,

@@ -577,6 +577,7 @@ def main(args: list[str] | None = None) -> int:
     if opts.autosubmit:
         runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
         if runner.run():
+            assert configuration is not None
             crashInfo = runner.getCrashInfo(configuration)
             collector.submit(crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata)
         else:
