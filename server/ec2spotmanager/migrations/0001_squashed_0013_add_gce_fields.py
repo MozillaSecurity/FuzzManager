@@ -123,7 +123,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         storage=django.core.files.storage.FileSystemStorage(
-                            location=getattr(settings, 'USERDATA_STORAGE', None)
+                            location=getattr(settings, "USERDATA_STORAGE", None)
                         ),
                         upload_to=ec2spotmanager.models.get_storage_path,
                     ),
@@ -295,13 +295,17 @@ class Migration(migrations.Migration):
             new_name="ec2_instance_types",
         ),
         migrations.RemoveField(
-            model_name="poolconfiguration", name="aws_access_key_id",
+            model_name="poolconfiguration",
+            name="aws_access_key_id",
         ),
         migrations.RemoveField(
-            model_name="poolconfiguration", name="aws_secret_access_key",
+            model_name="poolconfiguration",
+            name="aws_secret_access_key",
         ),
         migrations.AddField(
-            model_name="instance", name="size", field=models.IntegerField(default=1),
+            model_name="instance",
+            name="size",
+            field=models.IntegerField(default=1),
         ),
         migrations.AlterField(
             model_name="poolconfiguration",
@@ -309,13 +313,19 @@ class Migration(migrations.Migration):
             field=models.TextField(blank=True, null=True),
         ),
         migrations.RenameField(
-            model_name="instance", old_name="ec2_instance_id", new_name="instance_id",
+            model_name="instance",
+            old_name="ec2_instance_id",
+            new_name="instance_id",
         ),
         migrations.RenameField(
-            model_name="instance", old_name="ec2_region", new_name="region",
+            model_name="instance",
+            old_name="ec2_region",
+            new_name="region",
         ),
         migrations.RenameField(
-            model_name="instance", old_name="ec2_zone", new_name="zone",
+            model_name="instance",
+            old_name="ec2_zone",
+            new_name="zone",
         ),
         migrations.RenameField(
             model_name="poolconfiguration",

@@ -10,10 +10,12 @@ LOG = logging.getLogger("fuzzmanager.utils")
 class RedisLock(object):
     """Simple Redis mutex lock.
 
-    based on: https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-components-in-redis \
-                                   /6-2-distributed-locking/6-2-3-building-a-lock-in-redis/
+    based on: https://redislabs.com/ebook/part-2-core-concepts \
+              /chapter-6-application-components-in-redis/6-2-distributed-locking \
+              /6-2-3-building-a-lock-in-redis/
 
-    Not using RedLock because it isn't passable as a celery argument, so we can't release the lock in an async chain.
+    Not using RedLock because it isn't passable as a celery argument, so we can't
+    release the lock in an async chain.
     """
 
     def __init__(self, conn, name, unique_id=None):
@@ -58,5 +60,7 @@ class RedisLock(object):
                 except redis.exceptions.WatchError:
                     pass
 
-        LOG.debug("Failed to release lock: %s(%s) != %s", self.name, self.unique_id, existing)
+        LOG.debug(
+            "Failed to release lock: %s(%s) != %s", self.name, self.unique_id, existing
+        )
         return False

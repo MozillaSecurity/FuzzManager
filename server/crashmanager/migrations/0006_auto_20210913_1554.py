@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crashmanager', '0005_user_notification_booleans'),
+        ("crashmanager", "0005_user_notification_booleans"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='bugzillatemplate',
-            name='blocks',
+            model_name="bugzillatemplate",
+            name="blocks",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='bugzillatemplate',
-            name='dependson',
+            model_name="bugzillatemplate",
+            name="dependson",
             field=models.TextField(blank=True),
         ),
     ]

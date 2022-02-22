@@ -1,0 +1,23 @@
+thread 'StyleThread#2' panicked at 'assertion failed: self.get_data().is_some()', /home/worker/workspace/build/src/servo/components/style/gecko/wrapper.rs:976
+stack backtrace:
+   0: std::sys::imp::backtrace::tracing::imp::unwind_backtrace
+   1: std::sys_common::backtrace::_print
+   2: std::panicking::default_hook::{{closure}}
+   3: std::panicking::default_hook
+   4: std::panicking::rust_panic_with_hook
+   5: std::panicking::begin_panic
+   6: <style::gecko::wrapper::GeckoElement<'le> as style::dom::TElement>::set_dirty_descendants
+   7: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_child
+   8: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_dom_descendants_of
+   9: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate_descendants
+  10: <style::invalidation::element::invalidator::TreeStyleInvalidator<'a, 'b, E>>::invalidate
+  11: style::data::ElementData::invalidate_style_if_needed
+  12: style::traversal::note_children
+  13: style::traversal::recalc_style_at
+  14: <style::gecko::traversal::RecalcStyleOnly<'recalc> as style::traversal::DomTraversal<style::gecko::wrapper::GeckoElement<'le>>>::process_preorder
+  15: style::parallel::traverse_nodes::{{closure}}
+  16: rayon_core::scope::Scope::execute_job_closure::{{closure}}
+  17: <std::panic::AssertUnwindSafe<F> as core::ops::FnOnce<()>>::call_once
+  18: std::panicking::try::do_call
+  19: <unknown>
+Redirecting call to abort() to mozalloc_abort

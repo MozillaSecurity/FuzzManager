@@ -16,7 +16,7 @@ TRIAGE_CACHE = OrderedDict()
 
 
 class Command(BaseCommand):
-    help = ("Triage a crash entry into an existing bucket.")
+    help = "Triage a crash entry into an existing bucket."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -34,7 +34,7 @@ class Command(BaseCommand):
         triage_cache_hint = TRIAGE_CACHE.get(entry.shortSignature, [])
 
         if triage_cache_hint:
-            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by('-id')
+            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by("-id")
             for bucket in buckets:
                 signature = bucket.getSignature()
                 if signature.matches(crashInfo):
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                     break
 
         if not cacheHit:
-            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by('-id')
+            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by("-id")
 
             for bucket in buckets:
                 signature = bucket.getSignature()
@@ -64,7 +64,9 @@ class Command(BaseCommand):
 
                     TRIAGE_CACHE[entry.shortSignature] = cacheList
 
-                    if len(TRIAGE_CACHE) > getattr(settings, 'CELERY_TRIAGE_MEMCACHE_ENTRIES', 100):
+                    if len(TRIAGE_CACHE) > getattr(
+                        settings, "CELERY_TRIAGE_MEMCACHE_ENTRIES", 100
+                    ):
                         TRIAGE_CACHE.popitem(last=False)
 
                     break

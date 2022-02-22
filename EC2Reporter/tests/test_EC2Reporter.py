@@ -15,76 +15,86 @@ except ImportError:
 
 
 pytestmark = pytest.mark.django_db(transaction=True)
-pytest_plugins = 'server.tests'
+pytest_plugins = "server.tests"
 
 
 def test_ec2reporter_help(capsys):
-    '''Test that help prints without throwing'''
+    """Test that help prints without throwing"""
     with pytest.raises(SystemExit):
         main()
     _, err = capsys.readouterr()
-    assert err.startswith('usage: ')
+    assert err.startswith("usage: ")
 
 
-@patch('os.path.expanduser')
-@patch('time.sleep', new=Mock())
+@patch("os.path.expanduser")
+@patch("time.sleep", new=Mock())
 def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
-    '''Test report submission'''
-    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
+    """Test report submission"""
+    mock_expanduser.side_effect = lambda path: str(
+        tmp_path
+    )  # ensure fuzzmanager config is not used
 
     # create an instance
-    host = create_instance('host1')
+    host = create_instance("host1")
 
     # create a reporter
     url = urlsplit(live_server.url)
-    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path = tmp_path / "sigcache"
     sigcache_path.mkdir()
-    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
-                           serverHost=url.hostname,
-                           serverPort=url.port,
-                           serverProtocol=url.scheme,
-                           serverAuthToken=fm_user.token,
-                           clientId='host1')
+    reporter = EC2Reporter(
+        sigCacheDir=str(sigcache_path),
+        serverHost=url.hostname,
+        serverPort=url.port,
+        serverProtocol=url.scheme,
+        serverAuthToken=fm_user.token,
+        clientId="host1",
+    )
 
-    reporter.report('data')
+    reporter.report("data")
     host = Instance.objects.get(pk=host.pk)  # re-read
-    assert host.status_data == 'data'
+    assert host.status_data == "data"
 
     reporter.report(None)
     host = Instance.objects.get(pk=host.pk)  # re-read
     assert host.status_data is None
 
-    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
-                           serverHost=url.hostname,
-                           serverPort=url.port,
-                           serverProtocol=url.scheme,
-                           serverAuthToken=fm_user.token,
-                           clientId='host2')
+    reporter = EC2Reporter(
+        sigCacheDir=str(sigcache_path),
+        serverHost=url.hostname,
+        serverPort=url.port,
+        serverProtocol=url.scheme,
+        serverAuthToken=fm_user.token,
+        clientId="host2",
+    )
 
     with pytest.raises(RuntimeError) as exc:
-        reporter.report('data')
+        reporter.report("data")
     assert "Server unexpectedly responded with status code 404:" in str(exc.value)
 
 
-@patch('os.path.expanduser')
-@patch('time.sleep', new=Mock())
+@patch("os.path.expanduser")
+@patch("time.sleep", new=Mock())
 def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
-    '''Test EC2Reporter enable/disable'''
-    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
+    """Test EC2Reporter enable/disable"""
+    mock_expanduser.side_effect = lambda path: str(
+        tmp_path
+    )  # ensure fuzzmanager config is not used
 
-    config = create_config('testconfig')
+    config = create_config("testconfig")
     pool = create_pool(config)
 
     # create a reporter
     url = urlsplit(live_server.url)
-    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path = tmp_path / "sigcache"
     sigcache_path.mkdir()
-    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
-                           serverHost=url.hostname,
-                           serverPort=url.port,
-                           serverProtocol=url.scheme,
-                           serverAuthToken=fm_user.token,
-                           clientId='host1')
+    reporter = EC2Reporter(
+        sigCacheDir=str(sigcache_path),
+        serverHost=url.hostname,
+        serverPort=url.port,
+        serverProtocol=url.scheme,
+        serverAuthToken=fm_user.token,
+        clientId="host1",
+    )
 
     reporter.enable(pool.pk)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
@@ -107,25 +117,29 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     assert not pool.isEnabled
 
 
-@patch('os.path.expanduser')
-@patch('time.sleep', new=Mock())
+@patch("os.path.expanduser")
+@patch("time.sleep", new=Mock())
 def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
     """Test EC2Reporter cycle"""
-    mock_expanduser.side_effect = lambda path: str(tmp_path)  # ensure fuzzmanager config is not used
+    mock_expanduser.side_effect = lambda path: str(
+        tmp_path
+    )  # ensure fuzzmanager config is not used
 
-    config = create_config('testconfig')
+    config = create_config("testconfig")
     pool = create_pool(config, last_cycled=timezone.now())
 
     # create a reporter
     url = urlsplit(live_server.url)
-    sigcache_path = tmp_path / 'sigcache'
+    sigcache_path = tmp_path / "sigcache"
     sigcache_path.mkdir()
-    reporter = EC2Reporter(sigCacheDir=str(sigcache_path),
-                           serverHost=url.hostname,
-                           serverPort=url.port,
-                           serverProtocol=url.scheme,
-                           serverAuthToken=fm_user.token,
-                           clientId='host1')
+    reporter = EC2Reporter(
+        sigCacheDir=str(sigcache_path),
+        serverHost=url.hostname,
+        serverPort=url.port,
+        serverProtocol=url.scheme,
+        serverAuthToken=fm_user.token,
+        clientId="host1",
+    )
 
     with pytest.raises(RuntimeError) as exc:
         reporter.cycle(pool.pk)

@@ -18,7 +18,7 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 
-if getattr(settings, 'USE_CELERY', None):
+if getattr(settings, "USE_CELERY", None):
     from .tasks import triage_new_crash
 
 
@@ -44,8 +44,10 @@ class OS(models.Model):
 
 
 class TestCase(models.Model):
-    test = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'TEST_STORAGE', None)),
-                            upload_to="tests")
+    test = models.FileField(
+        storage=FileSystemStorage(location=getattr(settings, "TEST_STORAGE", None)),
+        upload_to="tests",
+    )
     size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
@@ -61,13 +63,13 @@ class TestCase(models.Model):
         super(TestCase, self).__init__(*args, **kwargs)
 
     def loadTest(self):
-        self.test.open(mode='rb')
+        self.test.open(mode="rb")
         self.content = self.test.read()
         self.test.close()
 
     def storeTestAndSave(self):
         self.size = len(self.content)
-        self.test.open(mode='w')
+        self.test.open(mode="w")
         self.test.write(self.content)
         self.test.close()
         self.save()
@@ -86,7 +88,9 @@ class BugProvider(models.Model):
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
-        providerModule = __import__('crashmanager.Bugtracker.%s' % self.classname, fromlist=[self.classname])
+        providerModule = __import__(
+            "crashmanager.Bugtracker.%s" % self.classname, fromlist=[self.classname]
+        )
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
 
@@ -104,12 +108,14 @@ class Bug(models.Model):
         ids = User.objects.filter(
             defaultToolsFilter__crashentry__bucket__in=self.bucket_set.all(),
             inaccessible_bug=True,
-        ).values_list('user_id', flat=True)
+        ).values_list("user_id", flat=True)
         return DjangoUser.objects.filter(id__in=ids).distinct()
 
 
 class Bucket(models.Model):
-    bug = models.ForeignKey(Bug, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    bug = models.ForeignKey(
+        Bug, blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
     signature = models.TextField()
     optimizedSignature = models.TextField(blank=True, null=True)
     shortDescription = models.CharField(max_length=1023, blank=True)
@@ -119,9 +125,8 @@ class Bucket(models.Model):
     @property
     def watchers(self):
         ids = User.objects.filter(
-            bucketwatch__bucket=self,
-            bucket_hit=True
-        ).values_list('user_id', flat=True)
+            bucketwatch__bucket=self, bucket_hit=True
+        ).values_list("user_id", flat=True)
         return DjangoUser.objects.filter(id__in=ids).distinct()
 
     def getSignature(self):
@@ -138,7 +143,7 @@ class Bucket(models.Model):
 
         # TODO: We could reset this only when we actually modify the signature,
         # but this would require fetching the old signature from the database again.
-        keepOptimized = kwargs.pop('keepOptimized', False)
+        keepOptimized = kwargs.pop("keepOptimized", False)
         if not keepOptimized:
             self.optimizedSignature = None
 
@@ -159,28 +164,38 @@ class Bucket(models.Model):
 
         signature = self.getSignature()
         needTest = signature.matchRequiresTest()
-        entries = CrashEntry.objects.filter(models.Q(bucket=None) | models.Q(bucket=self))
-        entries = entries.select_related('product', 'platform', 'os')  # these are used by getCrashInfo
+        entries = CrashEntry.objects.filter(
+            models.Q(bucket=None) | models.Q(bucket=self)
+        )
+        entries = entries.select_related(
+            "product", "platform", "os"
+        )  # these are used by getCrashInfo
         if needTest:
-            entries = entries.select_related('testcase')
+            entries = entries.select_related("testcase")
 
         requiredOutputs = signature.getRequiredOutputSources()
         entries = CrashEntry.deferRawFields(entries, requiredOutputs)
 
         if not submitSave:
-            entries = entries.select_related('tool').order_by('-id')  # used by the preview list
+            entries = entries.select_related("tool").order_by(
+                "-id"
+            )  # used by the preview list
 
         # If we are saving, we only care about the id of each entry
-        # Otherwise, we save the entire object. Limit to the first 100 entries to avoid OOM.
+        # Otherwise, we save the entire object. Limit to the first 100 entries to avoid
+        # OOM.
         entriesOffset = 0
         while True:
-            entriesChunk = entries[entriesOffset:entriesOffset + 100]
+            entriesChunk = entries[entriesOffset : entriesOffset + 100]
             if not entriesChunk:
                 break
             entriesOffset += 100
             for entry in entriesChunk:
-                match = signature.matches(entry.getCrashInfo(attachTestcase=needTest,
-                                                             requiredOutputSources=requiredOutputs))
+                match = signature.matches(
+                    entry.getCrashInfo(
+                        attachTestcase=needTest, requiredOutputSources=requiredOutputs
+                    )
+                )
                 if match and entry.bucket_id is None:
                     if submitSave:
                         inList.append(entry.pk)
@@ -197,18 +212,30 @@ class Bucket(models.Model):
         if submitSave:
             while inList:
                 updList, inList = inList[:500], inList[500:]
-                for crash in CrashEntry.objects.filter(pk__in=updList).values("bucket_id", "created", "tool_id"):
+                for crash in CrashEntry.objects.filter(pk__in=updList).values(
+                    "bucket_id", "created", "tool_id"
+                ):
                     if crash["bucket_id"] != self.id:
                         if crash["bucket_id"] is not None:
-                            BucketHit.decrement_count(crash["bucket_id"], crash["tool_id"], crash["created"])
-                        BucketHit.increment_count(self.id, crash["tool_id"], crash["created"])
+                            BucketHit.decrement_count(
+                                crash["bucket_id"], crash["tool_id"], crash["created"]
+                            )
+                        BucketHit.increment_count(
+                            self.id, crash["tool_id"], crash["created"]
+                        )
                 CrashEntry.objects.filter(pk__in=updList).update(bucket=self)
             while outList:
                 updList, outList = outList[:500], outList[500:]
-                for crash in CrashEntry.objects.filter(pk__in=updList).values("bucket_id", "created", "tool_id"):
+                for crash in CrashEntry.objects.filter(pk__in=updList).values(
+                    "bucket_id", "created", "tool_id"
+                ):
                     if crash["bucket_id"] is not None:
-                        BucketHit.decrement_count(crash["bucket_id"], crash["tool_id"], crash["created"])
-                CrashEntry.objects.filter(pk__in=updList).update(bucket=None, triagedOnce=False)
+                        BucketHit.decrement_count(
+                            crash["bucket_id"], crash["tool_id"], crash["created"]
+                        )
+                CrashEntry.objects.filter(pk__in=updList).update(
+                    bucket=None, triagedOnce=False
+                )
 
         return inList, outList, inListCount, outListCount
 
@@ -230,19 +257,23 @@ class Bucket(models.Model):
         firstEntryPerBucketCache = {}
 
         for entry in entries:
-            entry.crashinfo = entry.getCrashInfo(attachTestcase=signature.matchRequiresTest(),
-                                                 requiredOutputSources=requiredOutputs)
+            entry.crashinfo = entry.getCrashInfo(
+                attachTestcase=signature.matchRequiresTest(),
+                requiredOutputSources=requiredOutputs,
+            )
 
-            # For optimization, disregard any issues that directly match since those could be
-            # incoming new issues and we don't want these to block the optimization.
+            # For optimization, disregard any issues that directly match since those
+            # could be incoming new issues and we don't want these to block the
+            # optimization.
             if signature.matches(entry.crashinfo):
                 continue
 
             optimizedSignature = signature.fit(entry.crashinfo)
             if optimizedSignature:
-                # We now try to determine how this signature will behave in other buckets
-                # If the signature matches lots of other buckets as well, it is likely too
-                # broad and we should not consider it (or later rate it worse than others).
+                # We now try to determine how this signature will behave in other
+                # buckets. If the signature matches lots of other buckets as well, it is
+                # likely too broad and we should not consider it (or later rate it worse
+                # than others).
                 matchesInOtherBuckets = False
                 nonMatchesInOtherBuckets = 0  # noqa
                 otherMatchingBucketIds = []  # noqa
@@ -250,12 +281,19 @@ class Bucket(models.Model):
                     if otherBucket.pk == self.pk:
                         continue
 
-                    if self.bug and otherBucket.bug and self.bug.pk == otherBucket.bug.pk:
-                        # Allow matches in other buckets if they are both linked to the same bug
+                    if (
+                        self.bug
+                        and otherBucket.bug
+                        and self.bug.pk == otherBucket.bug.pk
+                    ):
+                        # Allow matches in other buckets if they are both linked to the
+                        # same bug
                         continue
 
                     if otherBucket.pk not in firstEntryPerBucketCache:
-                        c = CrashEntry.objects.filter(bucket=otherBucket).select_related("product", "platform", "os")
+                        c = CrashEntry.objects.filter(
+                            bucket=otherBucket
+                        ).select_related("product", "platform", "os")
                         c = CrashEntry.deferRawFields(c, requiredOutputs)
                         c = c.first()
                         firstEntryPerBucketCache[otherBucket.pk] = c
@@ -263,7 +301,7 @@ class Bucket(models.Model):
                             # Omit testcase for performance reasons for now
                             firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(
                                 attachTestcase=False,
-                                requiredOutputSources=requiredOutputs
+                                requiredOutputSources=requiredOutputs,
                             )
 
                     firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
@@ -274,17 +312,19 @@ class Bucket(models.Model):
                             break
 
                 if matchesInOtherBuckets:
-                    # Reset, we don't actually have an optimized signature if it's matching
-                    # some other bucket as well.
+                    # Reset, we don't actually have an optimized signature if it's
+                    # matching some other bucket as well.
                     optimizedSignature = None
                 else:
                     for otherEntry in entries:
-                        otherEntry.crashinfo = otherEntry.getCrashInfo(attachTestcase=False,
-                                                                       requiredOutputSources=requiredOutputs)
+                        otherEntry.crashinfo = otherEntry.getCrashInfo(
+                            attachTestcase=False, requiredOutputSources=requiredOutputs
+                        )
                         if optimizedSignature.matches(otherEntry.crashinfo):
                             matchingEntries.append(otherEntry)
 
-                    # Fallback for when the optimization algorithm failed for some reason
+                    # Fallback for when the optimization algorithm failed for some
+                    # reason
                     if not matchingEntries:
                         optimizedSignature = None
 
@@ -331,9 +371,13 @@ class CrashEntry(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.deletion.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.deletion.CASCADE)
     os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
-    testcase = models.ForeignKey(TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    testcase = models.ForeignKey(
+        TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
     client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    bucket = models.ForeignKey(Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    bucket = models.ForeignKey(
+        Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
     rawStdout = models.TextField(blank=True)
     rawStderr = models.TextField(blank=True)
     rawCrashData = models.TextField(blank=True)
@@ -366,16 +410,16 @@ class CrashEntry(models.Model):
         return instance
 
     def save(self, *args, **kwargs):
-        if self.pk is None and not getattr(settings, 'DB_ISUTF8MB4', False):
+        if self.pk is None and not getattr(settings, "DB_ISUTF8MB4", False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
-            utf8_4byte_re = re.compile(u'[^\u0000-\uD7FF\uE000-\uFFFF]', re.UNICODE)
+            utf8_4byte_re = re.compile("[^\u0000-\uD7FF\uE000-\uFFFF]", re.UNICODE)
 
             def sanitize_utf8(s):
                 if not isinstance(s, six.text_type):
-                    s = six.text_type(s, 'utf-8')
+                    s = six.text_type(s, "utf-8")
 
-                return utf8_4byte_re.sub(u"\uFFFD", s)
+                return utf8_4byte_re.sub("\uFFFD", s)
 
             self.rawStdout = sanitize_utf8(self.rawStdout)
             self.rawStderr = sanitize_utf8(self.rawStderr)
@@ -405,8 +449,8 @@ class CrashEntry(models.Model):
 
             # We need to possibly convert the numeric crash address from unsigned
             # to signed in order to store it in the database.
-            if (self.crashAddressNumeric > (2 ** 63 - 1)):
-                self.crashAddressNumeric -= 2 ** 64
+            if self.crashAddressNumeric > (2**63 - 1):
+                self.crashAddressNumeric -= 2**64
 
         if len(self.shortSignature) > 255:
             self.shortSignature = self.shortSignature[0:255]
@@ -423,12 +467,20 @@ class CrashEntry(models.Model):
 
         if self.metadata:
             metadataDict = json.loads(self.metadata)
-            self.metadataList = ["%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()]
+            self.metadataList = [
+                "%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()
+            ]
 
-    def getCrashInfo(self, attachTestcase=False, requiredOutputSources=("stdout", "stderr", "crashdata")):
+    def getCrashInfo(
+        self,
+        attachTestcase=False,
+        requiredOutputSources=("stdout", "stderr", "crashdata"),
+    ):
         # TODO: This should be cached at some level
         # TODO: Need to include environment and program arguments here
-        configuration = ProgramConfiguration(self.product.name, self.platform.name, self.os.name, self.product.version)
+        configuration = ProgramConfiguration(
+            self.product.name, self.platform.name, self.os.name, self.product.version
+        )
 
         cachedCrashInfo = None
         if self.cachedCrashInfo:
@@ -445,8 +497,13 @@ class CrashEntry(models.Model):
         if cachedCrashInfo is None or "crashdata" in requiredOutputSources:
             rawCrashData = self.rawCrashData
 
-        crashInfo = CrashInfo.fromRawCrashData(rawStdout, rawStderr, configuration, rawCrashData,
-                                               cacheObject=cachedCrashInfo)
+        crashInfo = CrashInfo.fromRawCrashData(
+            rawStdout,
+            rawStderr,
+            configuration,
+            rawCrashData,
+            cacheObject=cachedCrashInfo,
+        )
 
         if attachTestcase and self.testcase is not None and not self.testcase.isBinary:
             self.testcase.loadTest()
@@ -464,7 +521,7 @@ class CrashEntry(models.Model):
         self.cachedCrashInfo = None
         crashInfo = self.getCrashInfo()
         if crashInfo.crashAddress is not None:
-            self.crashAddress = '0x%x' % crashInfo.crashAddress
+            self.crashAddress = "0x%x" % crashInfo.crashAddress
         self.shortSignature = crashInfo.createShortSignature()
 
         # If the entry has a bucket, check if it still fits into
@@ -487,11 +544,11 @@ class CrashEntry(models.Model):
         # This method calls defer() on the given query set for every raw field
         # that is not required as specified in requiredOutputSources.
         if "stdout" not in requiredOutputSources:
-            queryset = queryset.defer('rawStdout')
+            queryset = queryset.defer("rawStdout")
         if "stderr" not in requiredOutputSources:
-            queryset = queryset.defer('rawStderr')
+            queryset = queryset.defer("rawStderr")
         if "crashdata" not in requiredOutputSources:
-            queryset = queryset.defer('rawCrashData')
+            queryset = queryset.defer("rawCrashData")
         return queryset
 
 
@@ -503,7 +560,9 @@ def CrashEntry_delete(sender, instance, **kwargs):
     if instance.testcase:
         instance.testcase.delete(False)
     if instance.bucket_id is not None:
-        BucketHit.decrement_count(instance.bucket_id, instance.tool_id, instance.created)
+        BucketHit.decrement_count(
+            instance.bucket_id, instance.tool_id, instance.created
+        )
 
 
 @receiver(post_delete, sender=TestCase)
@@ -514,18 +573,22 @@ def TestCase_delete(sender, instance, **kwargs):
 
 @receiver(post_save, sender=CrashEntry)
 def CrashEntry_save(sender, instance, created, **kwargs):
-    if getattr(settings, 'USE_CELERY', None):
+    if getattr(settings, "USE_CELERY", None):
         if created and not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
         if instance._original_bucket is not None:
             # remove BucketHit for old bucket/tool
-            BucketHit.decrement_count(instance._original_bucket, instance.tool_id, instance.created)
+            BucketHit.decrement_count(
+                instance._original_bucket, instance.tool_id, instance.created
+            )
 
         if instance.bucket is not None:
             # add BucketHit for new bucket
-            BucketHit.increment_count(instance.bucket_id, instance.tool_id, instance.created)
+            BucketHit.increment_count(
+                instance.bucket_id, instance.tool_id, instance.created
+            )
 
         if instance.bucket is not None:
             notify.send(
@@ -535,13 +598,16 @@ def CrashEntry_save(sender, instance, created, **kwargs):
                 verb="bucket_hit",
                 target=instance,
                 level="info",
-                description=f"The bucket {instance.bucket_id} received a new crash entry {instance.pk}"
+                description=(
+                    f"The bucket {instance.bucket_id} received a new crash entry "
+                    f"{instance.pk}"
+                ),
             )
 
 
 class BugzillaTemplateMode(Enum):
-    Bug = 'bug'
-    Comment = 'comment'
+    Bug = "bug"
+    Comment = "comment"
 
 
 class BugzillaTemplate(models.Model):
@@ -591,7 +657,7 @@ class User(models.Model):
     defaultProviderId = models.IntegerField(default=1)
     defaultToolsFilter = models.ManyToManyField(Tool)
     restricted = models.BooleanField(blank=False, default=False)
-    bucketsWatching = models.ManyToManyField(Bucket, through='BucketWatch')
+    bucketsWatching = models.ManyToManyField(Bucket, through="BucketWatch")
 
     # Notifications
     inaccessible_bug = models.BooleanField(blank=False, default=False)
@@ -600,7 +666,7 @@ class User(models.Model):
     @staticmethod
     def get_or_create_restricted(request_user):
         (user, created) = User.objects.get_or_create(user=request_user)
-        if created and getattr(settings, 'USERS_RESTRICTED_BY_DEFAULT', False):
+        if created and getattr(settings, "USERS_RESTRICTED_BY_DEFAULT", False):
             user.restricted = True
             user.save()
         return (user, created)
@@ -609,15 +675,17 @@ class User(models.Model):
 @receiver(post_save, sender=DjangoUser)
 def add_default_perms(sender, instance, created, **kwargs):
     if created:
-        log = logging.getLogger('crashmanager')
-        for perm in getattr(settings, 'DEFAULT_PERMISSIONS', []):
-            model, perm = perm.split(':', 1)
-            module, model = model.rsplit('.', 1)
-            module = __import__(module, globals(), locals(), [model], 0)  # from module import model
+        log = logging.getLogger("crashmanager")
+        for perm in getattr(settings, "DEFAULT_PERMISSIONS", []):
+            model, perm = perm.split(":", 1)
+            module, model = model.rsplit(".", 1)
+            module = __import__(
+                module, globals(), locals(), [model], 0
+            )  # from module import model
             content_type = ContentType.objects.get_for_model(getattr(module, model))
             perm = Permission.objects.get(content_type=content_type, codename=perm)
             instance.user_permissions.add(perm)
-            log.info('user %s added permission %s:%s', instance.username, model, perm)
+            log.info("user %s added permission %s:%s", instance.username, model, perm)
 
 
 class BucketWatch(models.Model):

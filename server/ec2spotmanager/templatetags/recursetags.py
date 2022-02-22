@@ -11,10 +11,10 @@ class RecurseConfigTree(template.Node):
 
     def _render_node(self, context, node):
         context.push()
-        context['node'] = node
+        context["node"] = node
         children = [self._render_node(context, x) for x in node.children]
         if node.children:
-            context['children'] = mark_safe(''.join(children))
+            context["children"] = mark_safe("".join(children))
         rendered = self.template_nodes.render(context)
         context.pop()
         return rendered
@@ -27,11 +27,13 @@ class RecurseConfigTree(template.Node):
 def recurseconfig(parser, token):
     bits = token.contents.split()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError(_('%s tag requires a start configuration') % bits[0])  # noqa
+        raise template.TemplateSyntaxError(
+            "%s tag requires a start configuration" % bits[0]
+        )
 
     config_var = template.Variable(bits[1])
 
-    template_nodes = parser.parse(('endrecurseconfig',))
+    template_nodes = parser.parse(("endrecurseconfig",))
     parser.delete_first_token()
 
     return RecurseConfigTree(template_nodes, config_var)

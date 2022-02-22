@@ -1,0 +1,11 @@
+{"symptoms": [
+    {
+      "type": "stackFrames",
+      "functionNames": [
+        "js::UnwindIteratorForException",
+        "CloseLiveIterator",
+        "HandleExceptionIon",
+        "js::jit::HandleException"
+      ]
+    }
+]}

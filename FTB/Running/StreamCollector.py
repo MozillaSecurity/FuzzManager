@@ -1,5 +1,5 @@
 # encoding: utf-8
-'''
+"""
 StreamCollector -- Runs as a thread and reads a single output stream of a process.
 
 @author:     Christian Holler (:decoder)
@@ -11,7 +11,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -44,9 +44,9 @@ class StreamCollector(threading.Thread):
 
             isResponse = False
             for prefix in self.responsePrefixes:
-                line = line.rstrip('\n')
+                line = line.rstrip("\n")
                 if line.startswith(prefix):
-                    self.queue.put(line.replace(prefix, ''))
+                    self.queue.put(line.replace(prefix, ""))
                     isResponse = True
                     break
 

@@ -1,4 +1,4 @@
-'''
+"""
 Bugzilla REST Abstraction Layer
 
 @author:     Christian Holler (:decoder)
@@ -10,7 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -18,10 +18,10 @@ from __future__ import print_function
 import requests
 
 
-class BugzillaREST():
+class BugzillaREST:
     def __init__(self, hostname, username=None, password=None, api_key=None):
         self.hostname = hostname
-        self.baseUrl = 'https://%s/rest' % self.hostname
+        self.baseUrl = "https://%s/rest" % self.hostname
         self.username = username
         self.password = password
         self.api_key = api_key
@@ -37,7 +37,7 @@ class BugzillaREST():
         if self.api_key is not None:
             # Transmit the API key via request header instead of embedding
             # it in the URI for additional security.
-            self.request_headers['X-BUGZILLA-API-KEY'] = self.api_key
+            self.request_headers["X-BUGZILLA-API-KEY"] = self.api_key
 
     def login(self, loginRequired=True, forceLogin=False):
         if (self.username is None or self.password is None) and self.api_key is None:
@@ -57,12 +57,16 @@ class BugzillaREST():
         if self.authToken is not None:
             return True
 
-        loginUrl = "%s/login?login=%s&password=%s" % (self.baseUrl, self.username, self.password)
+        loginUrl = "%s/login?login=%s&password=%s" % (
+            self.baseUrl,
+            self.username,
+            self.password,
+        )
         response = requests.get(loginUrl)
         json = response.json()
 
-        if 'token' not in json:
-            raise RuntimeError('Login failed: %s', response.text)
+        if "token" not in json:
+            raise RuntimeError("Login failed: %s", response.text)
 
         self.authToken = json["token"]
         return True
@@ -76,7 +80,16 @@ class BugzillaREST():
         return bugs[int(bugId)]
 
     def getBugStatus(self, bugIds):
-        return self.getBugs(bugIds, include_fields=["id", "is_open", "resolution", "dupe_of", "cf_last_resolved"])
+        return self.getBugs(
+            bugIds,
+            include_fields=[
+                "id",
+                "is_open",
+                "resolution",
+                "dupe_of",
+                "cf_last_resolved",
+            ],
+        )
 
     def getBugs(self, bugIds, include_fields=None, exclude_fields=None):
         if not isinstance(bugIds, list):
@@ -97,7 +110,9 @@ class BugzillaREST():
         if exclude_fields:
             extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
 
-        response = requests.get(bugUrl + "".join(extraParams), headers=self.request_headers)
+        response = requests.get(
+            bugUrl + "".join(extraParams), headers=self.request_headers
+        )
         json = response.json()
 
         if "bugs" not in json:

@@ -1,0 +1,9 @@
+OS|Linux|0.0.0 Linux 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:52 UTC 2017 i686
+CPU|x86|GenuineIntel family 6 model 63 stepping 2|8
+GPU|||
+Crash|SIGSEGV|0x40|34
+34|0|||||0x9e50a2ee
+34|1|swrast_dri.so||||0x470ecc
+0|0|linux-gate.so||||0xc31
+0|1|libc-2.23.so||||0xf42b2
+0|2|libxul.so||||0x43ebda

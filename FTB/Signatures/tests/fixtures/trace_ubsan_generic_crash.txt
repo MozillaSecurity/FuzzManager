@@ -1,0 +1,8 @@
+==8555==ERROR: UndefinedBehaviorSanitizer: SEGV on unknown address 0x000000004141 (pc 0x7f070b805037 bp 0x7f06626006b0 sp 0x7f0662600680 T28456)
+==8555==The signal is caused by a READ memory access.
+==8555==Hint: address points to the zero page.
+    #0 0x7f070b805036 in mozilla::dom::ToJSValue(JSContext*, mozilla::dom::Promise&, JS::MutableHandle<JS::Value>) (/home/worker/builds/m-c-20200514094044-fuzzing-debug/libxul.so+0x4e3d036)
+    #1 0x7f070e4d7a9e in js::jit::DoCallFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICCall_Fallback*, unsigned int, JS::Value*, JS::MutableHandle<JS::Value>) (/home/worker/builds/m-c-20200514094044-fuzzing-debug/libxul.so+0x7b0fa9e)
+
+UndefinedBehaviorSanitizer can not provide additional info.
+==8555==ABORTING

@@ -11,10 +11,10 @@ class RecurseReportSummaryTree(template.Node):
 
     def _render_node(self, context, node):
         context.push()
-        context['node'] = node
+        context["node"] = node
         if "children" in node:
             children = [self._render_node(context, x) for x in node["children"]]
-            context['children'] = mark_safe(''.join(children))
+            context["children"] = mark_safe("".join(children))
         rendered = self.template_nodes.render(context)
         context.pop()
         return rendered
@@ -27,11 +27,11 @@ class RecurseReportSummaryTree(template.Node):
 def recurseroot(parser, token):
     bits = token.contents.split()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError(_('%s tag requires a root') % bits[0])  # noqa
+        raise template.TemplateSyntaxError(f"{bits[0]} tag requires a root")
 
     config_var = template.Variable(bits[1])
 
-    template_nodes = parser.parse(('endrecurseroot',))
+    template_nodes = parser.parse(("endrecurseroot",))
     parser.delete_first_token()
 
     return RecurseReportSummaryTree(template_nodes, config_var)

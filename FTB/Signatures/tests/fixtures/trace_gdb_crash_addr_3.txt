@@ -1,0 +1,9 @@
+(gdb) bt 16
+#0  js::types::TypeObject::addProperty (this=0xf7469400, cx=0x9366458, id=$jsid(0x0), pprop=0xf7469418) at /srv/repos/mozilla-central/js/src/jsinfer.cpp:3691
+(More stack frames follow...)
+(gdb) info reg
+rax            0x1      1
+rdx            0x1      1
+rbx            0x1      1
+(gdb) x /i $pc
+=> 0x812bf19 <js::types::TypeObject::addProperty(JSContext*, jsid, js::types::Property**)+121>: shrb   -0x69(%rdx,%rbx,8)

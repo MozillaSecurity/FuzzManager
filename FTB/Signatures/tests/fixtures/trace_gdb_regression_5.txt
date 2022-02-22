@@ -1,0 +1,13 @@
+Program received signal SIGSEGV, Segmentation fault.
+0xf7673132 in ?? ()
+#0  0xf7673132 in ?? ()
+eax            0xf6043040    -167497664
+ecx            0xf651f4b0    -162401104
+edx            0xf651f4d0    -162401072
+ebx            0xf651f4f0    -162401040
+esp            0xfffd573c    0xfffd573c
+ebp            0xfffd57e4    0xfffd57e4
+esi            0x0    0
+edi            0x934d3d0    154457040
+eip            0xf7673132    0xf7673132
+=> 0xf7673132:    ret

@@ -1,0 +1,14 @@
+ASAN:SIGSEGV
+=================================================================
+==7116==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000010 (pc 0x0000014662ba sp 0x7fffe804f180 bp 0x7fffe804f250 T0)
+    #0 0x14662b9 in JSObject::getClass() const /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:128
+    #1 0x14662b9 in bool JSObject::is<js::PropertyIteratorObject>() const /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:520
+    #2 0x14662b9 in js::CloseIterator(JSContext*, JS::Handle<JSObject*>) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsiter.cpp:1065
+    #3 0x14668e2 in js::UnwindIteratorForException(JSContext*, JS::Handle<JSObject*>) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsiter.cpp:1100
+    #4 0xe989c0 in js::jit::CloseLiveIterator(JSContext*, js::jit::InlineFrameIterator const&, unsigned int) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:388
+    #5 0xe989c0 in js::jit::HandleExceptionIon(JSContext*, js::jit::InlineFrameIterator const&, js::jit::ResumeFromException*, bool*) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:464
+    #6 0xe989c0 in js::jit::HandleException(js::jit::ResumeFromException*) /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jit/JitFrames.cpp:782
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/ownhero/homes/mozilla/repos/mozilla-central/js/src/jsobj.h:128 JSObject::getClass() const
+==7116==ABORTING

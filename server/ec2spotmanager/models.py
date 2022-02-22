@@ -17,32 +17,48 @@ class FlatObject(dict):
     __setattr__ = dict.__setitem__
 
 
-POOL_STATUS_ENTRY_TYPE_CODE = {0: "unclassified", 1: "price-too-low", 2: "config-error",
-                               3: "max-spot-instance-count-exceeded", 4: "temporary-failure"}
-POOL_STATUS_ENTRY_TYPE = dict((val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.items())
+POOL_STATUS_ENTRY_TYPE_CODE = {
+    0: "unclassified",
+    1: "price-too-low",
+    2: "config-error",
+    3: "max-spot-instance-count-exceeded",
+    4: "temporary-failure",
+}
+POOL_STATUS_ENTRY_TYPE = dict(
+    (val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.items()
+)
 
 
 class OverwritingStorage(FileSystemStorage):
     def get_available_name(self, name, max_length=None):
         if self.exists(name):
-            os.remove(os.path.join(getattr(settings, 'USERDATA_STORAGE', None), name))
+            os.remove(os.path.join(getattr(settings, "USERDATA_STORAGE", None), name))
         return name
 
 
 class PoolConfiguration(models.Model):
-    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.deletion.CASCADE)
+    parent = models.ForeignKey(
+        "self", blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
     name = models.CharField(max_length=255, blank=False)
     size = models.IntegerField(default=1, blank=True, null=True)
     cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
-    max_price = models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True)
+    max_price = models.DecimalField(
+        max_digits=12, decimal_places=6, blank=True, null=True
+    )
     instance_tags = models.CharField(max_length=1023, blank=True, null=True)
     ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
     ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
     ec2_instance_types = models.TextField(blank=True, null=True)
     ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_userdata_file = \
-        models.FileField(storage=OverwritingStorage(location=getattr(settings, 'USERDATA_STORAGE', None)),
-                         upload_to=get_storage_path, blank=True, null=True)
+    ec2_userdata_file = models.FileField(
+        storage=OverwritingStorage(
+            location=getattr(settings, "USERDATA_STORAGE", None)
+        ),
+        upload_to=get_storage_path,
+        blank=True,
+        null=True,
+    )
     ec2_userdata_macros = models.TextField(blank=True, null=True)
     ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
     ec2_raw_config = models.TextField(blank=True, null=True)
@@ -54,8 +70,9 @@ class PoolConfiguration(models.Model):
     gce_cmd = models.TextField(blank=True, null=True)
     gce_args = models.TextField(blank=True, null=True)
     gce_env = models.TextField(blank=True, null=True)
-    # this is a special case that allows copying ec2_userdata_macros into gce_env during flatten()
-    # we typically use userdata_macros to be the env vars provided to the userdata script
+    # this is a special case that allows copying ec2_userdata_macros into gce_env during
+    # flatten().  we typically use userdata_macros to be the env vars provided to the
+    # userdata script
     gce_env_include_macros = models.BooleanField(default=False)
     gce_raw_config = models.TextField(blank=True, null=True)
 
@@ -94,40 +111,41 @@ class PoolConfiguration(models.Model):
         # The fields which are dictionaries/lists get special treatment
         # because they should behave in an additive manner.
         self.config_fields = [
-            'size',
-            'cycle_interval',
-            'max_price',
-            'ec2_key_name',
-            'ec2_image_name',
-            'ec2_userdata',
-            'gce_image_name',
-            'gce_container_name',
-            'gce_disk_size',
-            'gce_env_include_macros',
-            'gce_docker_privileged',
+            "size",
+            "cycle_interval",
+            "max_price",
+            "ec2_key_name",
+            "ec2_image_name",
+            "ec2_userdata",
+            "gce_image_name",
+            "gce_container_name",
+            "gce_disk_size",
+            "gce_env_include_macros",
+            "gce_docker_privileged",
         ]
 
-        # Boolean fields are special in that they can be False and still be valid, though they are required.
+        # Boolean fields are special in that they can be False and still be valid,
+        # though they are required.
         self.boolean_fields = [
-            'gce_env_include_macros',
-            'gce_docker_privileged',
+            "gce_env_include_macros",
+            "gce_docker_privileged",
         ]
 
         self.list_config_fields = [
-            'ec2_security_groups',
-            'ec2_allowed_regions',
-            'ec2_instance_types',
-            'gce_machine_types',
-            'gce_cmd',
-            'gce_args',
+            "ec2_security_groups",
+            "ec2_allowed_regions",
+            "ec2_instance_types",
+            "gce_machine_types",
+            "gce_cmd",
+            "gce_args",
         ]
 
         self.dict_config_fields = [
-            'instance_tags',
-            'ec2_raw_config',
-            'ec2_userdata_macros',
-            'gce_env',
-            'gce_raw_config',
+            "instance_tags",
+            "ec2_raw_config",
+            "ec2_userdata_macros",
+            "gce_env",
+            "gce_raw_config",
         ]
 
         # For performance reasons we do not deserialize these fields
@@ -137,7 +155,8 @@ class PoolConfiguration(models.Model):
         super(PoolConfiguration, self).__init__(*args, **kwargs)
 
     def flatten(self, cache=None):
-        # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
+        # cache is optionally a prefetched {config_id: config} dictionary used for
+        # parent lookups
         if self.isCyclic(cache):
             raise RuntimeError("Attempted to flatten a cyclic configuration")
 
@@ -177,8 +196,8 @@ class PoolConfiguration(models.Model):
             elif override:
                 flat_parent_config[field] = {}
 
-        # special flag to include macros in GCE environment
-        # this is done after the loop to guarantee that userdata_macros have been flattened
+        # special flag to include macros in GCE environment.  this is done after the
+        # loop to guarantee that userdata_macros have been flattened
         if self.gce_env_include_macros:
             field = "gce_env"
             gce_env = getattr(self, field + "_dict")
@@ -214,43 +233,43 @@ class PoolConfiguration(models.Model):
             obj = getattr(self, field + "_dict")
             override = getattr(self, field + "_override")
             if obj:
-                value = json.dumps(obj, separators=(',', ':'))
+                value = json.dumps(obj, separators=(",", ":"))
             else:
-                value = ''
+                value = ""
             if override:
-                value = '!' + value
+                value = "!" + value
             setattr(self, field, value)
 
         for field in self.list_config_fields:
             obj = getattr(self, field + "_list")
             override = getattr(self, field + "_override")
             if obj:
-                value = json.dumps(obj, separators=(',', ':'))
+                value = json.dumps(obj, separators=(",", ":"))
             else:
-                value = ''
+                value = ""
             if override:
-                value = '!' + value
+                value = "!" + value
             setattr(self, field, value)
 
         super(PoolConfiguration, self).save(*args, **kwargs)
 
     def deserializeFields(self):
         for field in self.dict_config_fields:
-            sobj = getattr(self, field) or ''
-            setattr(self, field + '_override', sobj.startswith('!'))
-            sobj = sobj.lstrip('!')
+            sobj = getattr(self, field) or ""
+            setattr(self, field + "_override", sobj.startswith("!"))
+            sobj = sobj.lstrip("!")
             if sobj:
-                setattr(self, field + '_dict', json.loads(sobj))
+                setattr(self, field + "_dict", json.loads(sobj))
 
         for field in self.list_config_fields:
-            sobj = getattr(self, field) or ''
-            setattr(self, field + '_override', sobj.startswith('!'))
-            sobj = sobj.lstrip('!')
+            sobj = getattr(self, field) or ""
+            setattr(self, field + "_override", sobj.startswith("!"))
+            sobj = sobj.lstrip("!")
             if sobj:
-                setattr(self, field + '_list', json.loads(sobj))
+                setattr(self, field + "_list", json.loads(sobj))
 
         if self.ec2_userdata_file:
-            self.ec2_userdata_file.open(mode='rb')
+            self.ec2_userdata_file.open(mode="rb")
             self.ec2_userdata = self.ec2_userdata_file.read()
             self.ec2_userdata_file.close()
 
@@ -259,8 +278,11 @@ class PoolConfiguration(models.Model):
             # Save the file using save() to avoid problems when initially
             # creating the directory. We use os.path.split to keep the
             # original filename assigned when saving the file.
-            self.ec2_userdata_file.save(os.path.split(self.ec2_userdata_file.name)[-1],
-                                        ContentFile(self.ec2_userdata), save=False)
+            self.ec2_userdata_file.save(
+                os.path.split(self.ec2_userdata_file.name)[-1],
+                ContentFile(self.ec2_userdata),
+                save=False,
+            )
         elif self.ec2_userdata_file:
             self.ec2_userdata_file.delete()
             self.ec2_userdata_file = None
@@ -275,13 +297,17 @@ class PoolConfiguration(models.Model):
         return cache.get(self.parent_id)
 
     def isCyclic(self, cache=None):
-        # cache is optionally a prefetched {config_id: config} dictionary used for parent lookups
+        # cache is optionally a prefetched {config_id: config} dictionary used for
+        # parent lookups
         if self._cache_parent(cache) is None:
             return False
         tortoise = self
         hare = self._cache_parent(cache)
         while tortoise != hare:
-            if hare._cache_parent(cache) is None or hare._cache_parent(cache)._cache_parent(cache) is None:
+            if (
+                hare._cache_parent(cache) is None
+                or hare._cache_parent(cache)._cache_parent(cache) is None
+            ):
                 break
             tortoise = tortoise._cache_parent(cache)
             hare = hare._cache_parent(cache)._cache_parent(cache)
@@ -342,7 +368,9 @@ class InstancePool(models.Model):
 
 class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
-    pool = models.ForeignKey(InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    pool = models.ForeignKey(
+        InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
     hostname = models.CharField(max_length=255, blank=True, null=True)
     status_code = models.IntegerField()
     status_data = models.TextField(blank=True, null=True)
@@ -387,4 +415,6 @@ class PoolUptimeAccumulatedEntry(models.Model):
     pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     accumulated_count = models.IntegerField(default=0)
-    uptime_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    uptime_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True
+    )

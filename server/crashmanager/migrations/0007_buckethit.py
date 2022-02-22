@@ -6,8 +6,8 @@ import django.db.models.deletion
 
 
 def add_crash_bucket_hits(apps, schema_editor):
-    BucketHit = apps.get_model('crashmanager', 'BucketHit')
-    CrashEntry = apps.get_model('crashmanager', 'CrashEntry')
+    BucketHit = apps.get_model("crashmanager", "BucketHit")
+    CrashEntry = apps.get_model("crashmanager", "CrashEntry")
 
     bucket_hits = {}
     crashes = CrashEntry.objects.filter(bucket__isnull=False)
@@ -19,7 +19,9 @@ def add_crash_bucket_hits(apps, schema_editor):
 
     for (bucket, tool), hits in bucket_hits.items():
         for begin, count in hits.items():
-            obj, _ = BucketHit.objects.get_or_create(bucket_id=bucket, tool_id=tool, begin=begin)
+            obj, _ = BucketHit.objects.get_or_create(
+                bucket_id=bucket, tool_id=tool, begin=begin
+            )
             obj.count += count
             obj.save()
 
@@ -27,24 +29,47 @@ def add_crash_bucket_hits(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crashmanager', '0006_auto_20210913_1554'),
+        ("crashmanager", "0006_auto_20210913_1554"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BucketHit',
+            name="BucketHit",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('begin', models.DateTimeField(default=crashmanager.models.buckethit_default_range_begin)),
-                ('count', models.IntegerField(default=0)),
-                ('bucket', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='crashmanager.Bucket')),
-                ('tool', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='crashmanager.Tool')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "begin",
+                    models.DateTimeField(
+                        default=crashmanager.models.buckethit_default_range_begin
+                    ),
+                ),
+                ("count", models.IntegerField(default=0)),
+                (
+                    "bucket",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="crashmanager.Bucket",
+                    ),
+                ),
+                (
+                    "tool",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="crashmanager.Tool",
+                    ),
+                ),
             ],
         ),
-
         migrations.RunPython(
             add_crash_bucket_hits,
             reverse_code=migrations.RunPython.noop,
         ),
-
     ]

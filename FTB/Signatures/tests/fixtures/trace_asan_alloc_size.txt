@@ -1,0 +1,2 @@
+==11096==ERROR: AddressSanitizer: requested allocation size 0x7ff9cdc82cb0 (0x7ff9cdc83cb0 after adjustments for alignment, red zones etc.) exceeds maximum supported size of 0x10000000000 (thread T0)
+    #0 0x7ffa032145d0 in malloc Z:\compiler-rt\lib\asan\asan_malloc_win.cc:69

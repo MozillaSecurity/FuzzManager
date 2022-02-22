@@ -1,0 +1,7 @@
+==12549==ERROR: AddressSanitizer: negative-size-param: (size=-17179869184)
+    #0 0x4a4afb in __asan_memmove /src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:445:3
+    #1 0x7f7d02324aa2 in MoveOverlappingRegion src/obj-firefox/dist/include/nsTArray.h:621:5
+    #2 0x7f7d02324aa2 in ShiftData<nsTArrayInfallibleAllocator> /src/obj-firefox/dist/include/nsTArray-inl.h:272
+    #3 0x7f7d02324aa2 in RemoveElementsAt /src/obj-firefox/dist/include/nsTArray.h:2061
+    #4 0x7f7d02324aa2 in mozilla::a11y::HyperTextAccessible::InsertChildAt(unsigned int, mozilla::a11y::Accessible*) /src/accessible/generic/HyperTextAccessible.cpp:1914
+    #5 0x7f7d02312322 in mozilla::a11y::DocAccessible::DoARIAOwnsRelocation(mozilla::a11y::Accessible*) /src/accessible/generic/DocAccessible.cpp:2089:19

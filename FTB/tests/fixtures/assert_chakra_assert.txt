@@ -1,0 +1,2 @@
+ASSERTION 15887: (/srv/repos/ChakraCore/lib/Runtime/ByteCode/ByteCodeEmitter.cpp, line 4827) scope->HasInnerScopeIndex()
+ Failure: (scope->HasInnerScopeIndex())

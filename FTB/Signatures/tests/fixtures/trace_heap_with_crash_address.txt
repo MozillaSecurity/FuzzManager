@@ -1,0 +1,15 @@
+Program terminated with signal 11, Segmentation fault.
+#0  0xe1afa070 in ?? ()
+#0  0xe1afa070 in ?? ()
+#1  0x00000000 in ?? ()
+eax    0xfff869cc    -497204
+ebx    0x9469ff4    155623412
+ecx    0xe20f6cc0    -502305600
+edx    0xe1afa070    -508583824
+esi    0xfff86934    -497356
+edi    0xfff868cc    -497460
+ebp    0xe20f8790    3792668560
+esp    0xfff8682c    4294469676
+eip    0xe1afa070    3786383472
+=> 0xe1afa070:    push   %edi
+   0xe1afa071:    push   %esi

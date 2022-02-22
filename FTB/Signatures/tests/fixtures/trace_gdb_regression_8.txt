@@ -1,0 +1,7 @@
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x0814977d in js::Mutex::lock (this=0xf7123988) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/threading/posix/Mutex.cpp:65
+#1  0x0848d094 in js::LockGuard<js::Mutex>::LockGuard (aLock=..., this=<synthetic pointer>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/threading/LockGuard.h:25
+#2  js::jit::AutoLockSimulatorCache::AutoLockSimulatorCache (sim=0xf7123000, this=<synthetic pointer>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:369
+#3 <signal handler called>
+#4 0xf7442cfc in ?? () from /lib32/libc.so.6
+#5 0x08488e62 in js::jit::CheckICacheLocked (instr=0xf49d1648, i_cache=...) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/arm/Simulator-arm.cpp:1034

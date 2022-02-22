@@ -43,9 +43,9 @@ class PoolSerializer(serializers.ModelSerializer):
             # happen early, they will affect the ratio a lot, and if errors happen late,
             # fuzzing work probably happened and we should count it.
             query = (
-                Q(pool=instance) &
-                Q(started__isnull=False) &
-                (Q(resolved__isnull=True) | Q(resolved__gte=last_cycle_start))
+                Q(pool=instance)
+                & Q(started__isnull=False)
+                & (Q(resolved__isnull=True) | Q(resolved__gte=last_cycle_start))
             )
             for task in Task.objects.filter(query):
                 begin = max(task.started, last_cycle_start)
@@ -75,8 +75,8 @@ class PoolVueSerializer(PoolSerializer):
 
     class Meta(PoolSerializer.Meta):
         read_only_fields = (
-            'hook_url',
-            'view_url',
+            "hook_url",
+            "view_url",
         )
 
     def get_hook_url(self, pool):
@@ -87,7 +87,7 @@ class PoolVueSerializer(PoolSerializer):
         return f"{settings.TC_ROOT_URL}hooks/project-{settings.TC_PROJECT}/{hook}"
 
     def get_view_url(self, pool):
-        return reverse('taskmanager:pool-view-ui', kwargs={'pk': pool.id})
+        return reverse("taskmanager:pool-view-ui", kwargs={"pk": pool.id})
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -98,8 +98,15 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = "__all__"
         # all fields except "status_data"
         read_only_fields = (
-            "pool_id", "task_id", "decision_id", "run_id", "state", "created",
-            "started", "resolved", "expires",
+            "pool_id",
+            "task_id",
+            "decision_id",
+            "run_id",
+            "state",
+            "created",
+            "started",
+            "resolved",
+            "expires",
         )
 
 
@@ -107,9 +114,7 @@ class TaskVueSerializer(TaskSerializer):
     task_url = serializers.SerializerMethodField()
 
     class Meta(TaskSerializer.Meta):
-        read_only_fields = TaskSerializer.Meta.read_only_fields + (
-            'task_url',
-        )
+        read_only_fields = TaskSerializer.Meta.read_only_fields + ("task_url",)
 
     def get_task_url(self, task):
         return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"

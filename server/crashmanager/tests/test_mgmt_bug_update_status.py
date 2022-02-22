@@ -1,5 +1,5 @@
 # coding: utf-8
-'''Tests for CrashManager bug_update_status management command
+"""Tests for CrashManager bug_update_status management command
 
 @author:     Eva Bardou
 
@@ -8,14 +8,24 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 import json
 from django.contrib.auth.models import User
 from django.core.management import call_command, CommandError
 from notifications.models import Notification
 import pytest
-from crashmanager.models import Bucket, Bug, BugProvider, Client, CrashEntry, OS, Platform, \
-    Product, Tool, User as cmUser
+from crashmanager.models import (
+    Bucket,
+    Bug,
+    BugProvider,
+    Client,
+    CrashEntry,
+    OS,
+    Platform,
+    Product,
+    Tool,
+    User as cmUser,
+)
 
 try:
     from unittest.mock import patch
@@ -35,22 +45,30 @@ def test_none():
     call_command("bug_update_status")
 
 
-@patch('crashmanager.Bugtracker.BugzillaProvider.BugzillaProvider.getBugStatus', return_value={"0": None})
+@patch(
+    "crashmanager.Bugtracker.BugzillaProvider.BugzillaProvider.getBugStatus",
+    return_value={"0": None},
+)
 def test_fake_with_notification(mock_get_bug_status):
-    provider = BugProvider.objects.create(classname="BugzillaProvider",
-                                          hostname="provider.com",
-                                          urlTemplate="%s")
-    bug = Bug.objects.create(externalId='123456', externalType=provider)
-    bucket = Bucket.objects.create(bug=bug, signature=json.dumps(
-        {"symptoms": [{'src': 'stderr', 'type': 'output', 'value': '/match/'}]}
-    ))
-    defaults = {"client": Client.objects.create(),
-                "os": OS.objects.create(),
-                "platform": Platform.objects.create(),
-                "product": Product.objects.create(),
-                "tool": Tool.objects.create()}
+    provider = BugProvider.objects.create(
+        classname="BugzillaProvider", hostname="provider.com", urlTemplate="%s"
+    )
+    bug = Bug.objects.create(externalId="123456", externalType=provider)
+    bucket = Bucket.objects.create(
+        bug=bug,
+        signature=json.dumps(
+            {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+        ),
+    )
+    defaults = {
+        "client": Client.objects.create(),
+        "os": OS.objects.create(),
+        "platform": Platform.objects.create(),
+        "product": Product.objects.create(),
+        "tool": Tool.objects.create(),
+    }
     CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
-    user, _ = cmUser.objects.get_or_create(user=User.objects.get(username='test'))
+    user, _ = cmUser.objects.get_or_create(user=User.objects.get(username="test"))
     user.defaultToolsFilter.add(defaults["tool"])
     user.inaccessible_bug = True
     user.save()
@@ -64,8 +82,11 @@ def test_fake_with_notification(mock_get_bug_status):
     assert notification.unread
     assert notification.actor == bug
     assert notification.verb == "inaccessible_bug"
-    assert notification.description == f"The bucket {bucket.pk} assigned to the external bug {bug.externalId}" \
-                                       f" on {bug.externalType.hostname} has become inaccessible"
+    assert (
+        notification.description
+        == f"The bucket {bucket.pk} assigned to the external bug {bug.externalId}"
+        f" on {bug.externalType.hostname} has become inaccessible"
+    )
     assert notification.target == bug
 
     # Calling the command again should not generate a duplicate notification

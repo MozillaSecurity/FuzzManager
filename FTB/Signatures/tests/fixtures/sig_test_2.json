@@ -1,0 +1,17 @@
+{"symptoms": [
+    {
+    "functionName": "GetObjectAllocKindForCopy",
+    "frameNumber": 0,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "js::Nursery::moveToTenured",
+    "frameNumber": 1,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "MinorGCCallback",
+    "frameNumber": 2,
+    "type": "stackFrame"
+  }
+]}

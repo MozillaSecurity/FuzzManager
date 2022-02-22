@@ -60,7 +60,15 @@ def update_pool_defns():
         storage.mkdir(parents=True, exist_ok=True)
         check_output(["git", "init"], cwd=storage)
         check_output(
-            ["git", "remote", "add", "-t", "master", "origin", settings.TC_FUZZING_CFG_REPO],
+            [
+                "git",
+                "remote",
+                "add",
+                "-t",
+                "master",
+                "origin",
+                settings.TC_FUZZING_CFG_REPO,
+            ],
             cwd=storage,
         )
     check_output(
@@ -83,7 +91,13 @@ def update_pool_defns():
             defaults=defaults,
         )
         pools_seen.add(pool.id)
-        LOG.info("> pool[%d] %s-%s (%s)", pool.pk, pool.platform, pool.pool_id, pool.pool_name)
+        LOG.info(
+            "> pool[%d] %s-%s (%s)",
+            pool.pk,
+            pool.platform,
+            pool.pool_id,
+            pool.pool_name,
+        )
 
     # if a pool is in the DB but not in Github/TC, it should be deleted
     to_delete = []

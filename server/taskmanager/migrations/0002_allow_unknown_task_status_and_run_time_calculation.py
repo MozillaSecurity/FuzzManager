@@ -7,32 +7,36 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('taskmanager', '0001_initial'),
+        ("taskmanager", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='pool',
-            name='max_run_time',
+            model_name="pool",
+            name="max_run_time",
             field=models.DurationField(null=True),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='created',
+            model_name="task",
+            name="created",
             field=models.DateTimeField(null=True),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='decision_id',
+            model_name="task",
+            name="decision_id",
             field=models.CharField(max_length=64, null=True),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='pool',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='taskmanager.Pool'),
+            model_name="task",
+            name="pool",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="taskmanager.Pool",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='task',
-            unique_together={('task_id', 'run_id')},
+            name="task",
+            unique_together={("task_id", "run_id")},
         ),
     ]

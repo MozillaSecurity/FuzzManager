@@ -1,4 +1,4 @@
-'''
+"""
 Source Code Provider Interface
 
 @author:     Christian Holler (:decoder)
@@ -10,7 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -29,10 +29,12 @@ class UnknownFilenameException(Exception):
 
 
 @six.add_metaclass(ABCMeta)
-class SourceCodeProvider():
-    '''
-    Abstract base class that defines what interfaces Source Code Providers must implement
-    '''
+class SourceCodeProvider:
+    """
+    Abstract base class that defines what interfaces Source Code Providers must
+    implement
+    """
+
     def __init__(self, location):
         self.location = location
 
@@ -56,7 +58,7 @@ class SourceCodeProvider():
     @abstractmethod
     def testRevision(self, revision):
         """
-        Check if the given revision exists in the resource associated with this provider.
+        Check if the given revision exists in the resource associated with this provider
 
         @ptype revision: string
         @param revision: The revision to check for.
@@ -123,8 +125,7 @@ class SourceCodeProvider():
         return
 
 
-class Utils():
-
+class Utils:
     @staticmethod
     def getDiffLocations(diff):
         """

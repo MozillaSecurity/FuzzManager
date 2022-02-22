@@ -1,0 +1,1 @@
+Assertion failure: block->graph().osrBlock(), at c:/Users/fuzz1win/trees/mozilla-central/js/src/jit/Lowering.cpp:4691

@@ -1,0 +1,6 @@
+==5328==ERROR: AddressSanitizer: access-violation on unknown address 0x000000000050 (pc 0x7ffa9a30c9e7 bp 0x00f9915f0a20 sp 0x00f9915f0940 T0)
+==5328==The signal is caused by a READ memory access.
+==5328==Hint: address points to the zero page.
+    #0 0x7ffa9a30c9e6 in nsCSSFrameConstructor::WipeContainingBlock z:\build\build\src\layout\base\nsCSSFrameConstructor.cpp:12715
+    #1 0x7ffa9a3051d7 in nsCSSFrameConstructor::ContentAppended z:\build\build\src\layout\base\nsCSSFrameConstructor.cpp:7690
+    #2 0x7ffa9a1f0241 in mozilla::RestyleManager::ProcessRestyledFrames z:\build\build\src\layout\base\RestyleManager.cpp:1414

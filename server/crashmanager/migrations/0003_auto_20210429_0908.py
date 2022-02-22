@@ -8,18 +8,18 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crashmanager', '0002_add_taskmanager'),
+        ("crashmanager", "0002_add_taskmanager"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='testcase',
-            name='test',
+            model_name="testcase",
+            name="test",
             field=models.FileField(
                 storage=django.core.files.storage.FileSystemStorage(
-                    location=getattr(settings, 'TEST_STORAGE', None)
+                    location=getattr(settings, "TEST_STORAGE", None)
                 ),
-                upload_to='tests'
+                upload_to="tests",
             ),
         ),
     ]

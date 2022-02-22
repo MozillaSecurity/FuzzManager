@@ -45,7 +45,10 @@ def test_rest_pools_no_perm(api_client):
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
 
 
-@pytest.mark.parametrize(("method", "item"), itertools.product(["post", "patch", "put", "delete"], [True, False]))
+@pytest.mark.parametrize(
+    ("method", "item"),
+    itertools.product(["post", "patch", "put", "delete"], [True, False]),
+)
 def test_rest_pool_methods(api_client, method, item):
     """post/put/patch/delete should not be allowed"""
     user = User.objects.get(username="test")
@@ -84,7 +87,16 @@ def test_rest_pool_read(api_client, item):
         assert len(resp["results"]) == 1
         resp = resp["results"][0]
     assert set(resp.keys()) == {
-        "pool_id", "pool_name", "platform", "size", "cpu", "cycle_time", "id", "running", "status", "max_run_time",
+        "pool_id",
+        "pool_name",
+        "platform",
+        "size",
+        "cpu",
+        "cycle_time",
+        "id",
+        "running",
+        "status",
+        "max_run_time",
     }
     assert resp["id"] == pool.pk
     assert resp["pool_id"] == pool.pool_id

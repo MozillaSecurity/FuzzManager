@@ -18,17 +18,17 @@ def index(request):
     user = User.get_or_create_restricted(request.user)[0]
     # return crashmanager, covmanager, or ec2spotmanager, as allowed, in that order.
     # if no permission to view any apps, then use crashmanager and let that fail
-    if not user.user.has_perm('crashmanager.view_crashmanager'):
-        if user.user.has_perm('crashmanager.view_covmanager'):
-            return redirect('covmanager:index')
-        elif user.user.has_perm('crashmanager.view_ec2spotmanager'):
-            return redirect('ec2spotmanager:index')
-    return redirect('crashmanager:index')
+    if not user.user.has_perm("crashmanager.view_crashmanager"):
+        if user.user.has_perm("crashmanager.view_covmanager"):
+            return redirect("covmanager:index")
+        elif user.user.has_perm("crashmanager.view_ec2spotmanager"):
+            return redirect("ec2spotmanager:index")
+    return redirect("crashmanager:index")
 
 
 def login(request):
     if settings.USE_OIDC:
-        auth_view = resolve(reverse('oidc_authentication_init')).func
+        auth_view = resolve(reverse("oidc_authentication_init")).func
         return auth_view(request)
     return LoginView.as_view()(request)
 
@@ -38,13 +38,16 @@ def deny_restricted_users(wrapped):
     def decorator(request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]
         if user.restricted:
-            raise PermissionDenied({"message": "You don't have permission to access this view."})
+            raise PermissionDenied(
+                {"message": "You don't have permission to access this view."}
+            )
         return wrapped(request, *args, **kwargs)
+
     return decorator
 
 
 def renderError(request, err):
-    return render(request, 'error.html', {'error_message': err})  # noqa
+    return render(request, "error.html", {"error_message": err})  # noqa
 
 
 def paginate_requested_list(request, entries):
@@ -53,11 +56,11 @@ def paginate_requested_list(request, entries):
     suitable for passing to a template. The set is paginated by request
     parameters 'page' and 'page_size'.
     """
-    page_size = request.GET.get('page_size')
+    page_size = request.GET.get("page_size")
     if not page_size:
         page_size = 100
     paginator = Paginator(entries, page_size)
-    page = request.GET.get('page')
+    page = request.GET.get("page")
 
     try:
         page_entries = paginator.page(page)
@@ -71,8 +74,8 @@ def paginate_requested_list(request, entries):
     # We need to preserve the query parameters when adding the page to the
     # query URL, so we store the sanitized copy inside our entries object.
     paginator_query = request.GET.copy()
-    if 'page' in paginator_query:
-        del paginator_query['page']
+    if "page" in paginator_query:
+        del paginator_query["page"]
 
     page_entries.paginator_query = paginator_query
     page_entries.count = paginator.count
@@ -116,7 +119,9 @@ def json_to_query(json_str):
             qobj = Q(**kwargs)
             return qobj
         elif not isinstance(obj, dict):
-            raise RuntimeError("Invalid object type '%s' in query object" % type(obj).__name__)
+            raise RuntimeError(
+                "Invalid object type '%s' in query object" % type(obj).__name__
+            )
 
         qobj = Q()
 
@@ -127,19 +132,21 @@ def json_to_query(json_str):
         objkeys = list(obj)
         objkeys.remove("op")
 
-        if op == 'NOT' and len(objkeys) > 1:
+        if op == "NOT" and len(objkeys) > 1:
             raise RuntimeError("Attempted to negate multiple objects at once")
 
         for objkey in objkeys:
-            if op == 'AND':
+            if op == "AND":
                 qobj.add(get_query_obj(obj[objkey], objkey), Q.AND)
-            elif op == 'OR':
+            elif op == "OR":
                 qobj.add(get_query_obj(obj[objkey], objkey), Q.OR)
-            elif op == 'NOT':
+            elif op == "NOT":
                 qobj = get_query_obj(obj[objkey], objkey)
                 qobj.negate()
             else:
-                raise RuntimeError("Invalid operator '%s' specified in query object" % op)
+                raise RuntimeError(
+                    "Invalid operator '%s' specified in query object" % op
+                )
 
         return qobj
 
@@ -148,13 +155,15 @@ def json_to_query(json_str):
 
 class JsonQueryFilterBackend(filters.BaseFilterBackend):
     """
-    Accepts filtering with a query parameter which builds a Django query from JSON (see json_to_query)
+    Accepts filtering with a query parameter which builds a Django query from JSON
+    (see json_to_query)
     """
+
     def filter_queryset(self, request, queryset, view):
         """
         Return a filtered queryset.
         """
-        querystr = request.query_params.get('query', None)
+        querystr = request.query_params.get("query", None)
         if querystr is not None:
             try:
                 _, queryobj = json_to_query(querystr)
@@ -166,8 +175,10 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
 
 class SimpleQueryFilterBackend(filters.BaseFilterBackend):
     """
-    Accepts filtering with a query parameter which builds a Django query using simple "contains" searches
+    Accepts filtering with a query parameter which builds a Django query using simple
+    "contains" searches
     """
+
     def filter_queryset(self, request, queryset, view):
         """
         Return a filtered queryset.
@@ -176,7 +187,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         if not queryset:
             return queryset
 
-        querystr = request.query_params.get('squery', None)
+        querystr = request.query_params.get("squery", None)
         if querystr is not None:
             queryobj = None
             for field in queryset[0].simple_query_fields:

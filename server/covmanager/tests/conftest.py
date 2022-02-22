@@ -1,5 +1,5 @@
 # coding: utf-8
-'''Common test fixtures
+"""Common test fixtures
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,7 +8,7 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 import logging
 import os
 import shutil
@@ -26,7 +26,9 @@ LOG = logging.getLogger("fm.covmanager.tests")
 
 def _check_git():
     try:
-        proc = subprocess.Popen(["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(
+            ["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
         output = proc.communicate()
         if output and proc.wait() == 1:
             return True
@@ -37,7 +39,9 @@ def _check_git():
 
 def _check_hg():
     try:
-        proc = subprocess.Popen(["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(
+            ["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
         output = proc.communicate()
         if output and proc.wait() == 0:
             return True
@@ -53,25 +57,26 @@ HAVE_HG = _check_hg()
 @pytest.fixture
 def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     """Common setup/teardown tasks for all server unittests"""
-    user = User.objects.create_user('test', 'test@mozilla.com', 'test')
+    user = User.objects.create_user("test", "test@mozilla.com", "test")
     user.user_permissions.clear()
     content_type = ContentType.objects.get_for_model(cmUser)
-    perm = Permission.objects.get(content_type=content_type, codename='view_covmanager')
+    perm = Permission.objects.get(content_type=content_type, codename="view_covmanager")
     user.user_permissions.add(perm)
-    user_np = User.objects.create_user('test-noperm', 'test@mozilla.com', 'test')
+    user_np = User.objects.create_user("test-noperm", "test@mozilla.com", "test")
     user_np.user_permissions.clear()
 
 
 @pytest.fixture
 def cm(request, settings, tmpdir):
-
     class _result(object):
         have_git = HAVE_GIT
         have_hg = HAVE_HG
 
         @classmethod
         def create_repository(cls, repotype, name="testrepo"):
-            location = tempfile.mkdtemp(prefix='testrepo', dir=os.path.dirname(__file__))
+            location = tempfile.mkdtemp(
+                prefix="testrepo", dir=os.path.dirname(__file__)
+            )
             request.addfinalizer(lambda: shutil.rmtree(location))
             if repotype == "git":
                 if not HAVE_GIT:
@@ -82,8 +87,12 @@ def cm(request, settings, tmpdir):
                     pytest.skip("hg is not available")
                 classname = "HGSourceCodeProvider"
             else:
-                raise Exception("unknown repository type: %s (expecting git or hg)" % repotype)
-            result = Repository.objects.create(classname=classname, name=name, location=location)
+                raise Exception(
+                    "unknown repository type: %s (expecting git or hg)" % repotype
+                )
+            result = Repository.objects.create(
+                classname=classname, name=name, location=location
+            )
             LOG.debug("Created Repository pk=%d", result.pk)
             if repotype == "git":
                 cls.git(result, "init")
@@ -94,8 +103,8 @@ def cm(request, settings, tmpdir):
         @staticmethod
         def create_collection_file(data):
 
-            # Use a specific temporary directory to upload covmanager files
-            # This is required as Django now needs a path relative to that folder in FileField
+            # Use a specific temporary directory to upload covmanager files.  This is
+            # required as Django now needs a path relative to that folder in FileField
             location = str(tmpdir)
             CollectionFile.file.field.storage.location = location
 
@@ -108,20 +117,22 @@ def cm(request, settings, tmpdir):
             return result
 
         @classmethod
-        def create_collection(cls,
-                              created=None,
-                              description="",
-                              repository=None,
-                              revision="",
-                              branch="",
-                              tools=("testtool",),
-                              client="testclient",
-                              coverage='{"linesTotal":0,'
-                                       '"name":null,'
-                                       '"coveragePercent":0.0,'
-                                       '"children":{},'
-                                       '"linesMissed":0,'
-                                       '"linesCovered":0}'):
+        def create_collection(
+            cls,
+            created=None,
+            description="",
+            repository=None,
+            revision="",
+            branch="",
+            tools=("testtool",),
+            client="testclient",
+            coverage='{"linesTotal":0,'
+            '"name":null,'
+            '"coveragePercent":0.0,'
+            '"children":{},'
+            '"linesMissed":0,'
+            '"linesCovered":0}',
+        ):
             # create collectionfile
             coverage = cls.create_collection_file(coverage)
             # create client
@@ -131,12 +142,14 @@ def cm(request, settings, tmpdir):
             # create repository
             if repository is None:
                 repository = cls.create_repository("git")
-            result = Collection.objects.create(description=description,
-                                               repository=repository,
-                                               revision=revision,
-                                               branch=branch,
-                                               client=client,
-                                               coverage=coverage)
+            result = Collection.objects.create(
+                description=description,
+                repository=repository,
+                revision=revision,
+                branch=branch,
+                client=client,
+                coverage=coverage,
+            )
             LOG.debug("Created Collection pk=%d", result.pk)
             # create tools
             for tool in tools:

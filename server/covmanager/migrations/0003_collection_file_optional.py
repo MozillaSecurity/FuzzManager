@@ -9,14 +9,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('covmanager', '0002_increase_collection_filename_length'),
+        ("covmanager", "0002_increase_collection_filename_length"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collection',
-            name='coverage',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
-                                    to='covmanager.CollectionFile'),
+            model_name="collection",
+            name="coverage",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="covmanager.CollectionFile",
+            ),
         ),
     ]

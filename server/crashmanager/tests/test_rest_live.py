@@ -1,5 +1,5 @@
 # coding: utf-8
-'''
+"""
 Tests
 
 @author:     Christian Holler (:decoder)
@@ -11,14 +11,14 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 import pytest
 import requests
 from six.moves.urllib.parse import urlsplit
 
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
-pytest_plugins = 'server.tests'  # pylint: disable=invalid-name
+pytest_plugins = "server.tests"  # pylint: disable=invalid-name
 
 
 @pytest.mark.skip
@@ -37,7 +37,7 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
     # Must be empty now
     assert response.status_code == requests.codes["ok"]
     lengthBeforePost = len(response.json())
-    #self.assertEqual(response.json(), [])
+    # self.assertEqual(response.json(), [])
 
     data = {
         "rawStdout": "data on\nstdout",
@@ -55,8 +55,12 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
         "tool": "tool1",
     }
 
-    assert requests.post(url, data, headers=dict(Authorization="Token %s" % fm_user.token)).status_code \
+    assert (
+        requests.post(
+            url, data, headers=dict(Authorization="Token %s" % fm_user.token)
+        ).status_code
         == requests.codes["created"]
+    )
     response = requests.get(url, headers=dict(Authorization="Token %s" % fm_user.token))
 
     json = response.json()
@@ -66,7 +70,11 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
 
 def test_RESTSignatureInterface(live_server):
     url = urlsplit(live_server.url)
-    url = "%s://%s:%s/crashmanager/rest/signatures/" % (url.scheme, url.hostname, url.port)
+    url = "%s://%s:%s/crashmanager/rest/signatures/" % (
+        url.scheme,
+        url.hostname,
+        url.port,
+    )
 
     # Must yield forbidden without authentication
     assert requests.get(url).status_code == requests.codes["not_found"]

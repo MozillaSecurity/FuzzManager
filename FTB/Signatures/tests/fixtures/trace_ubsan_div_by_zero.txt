@@ -1,0 +1,4 @@
+src/opus_demo.c:870:40: runtime error: division by zero
+    #0 0x42a550 in main /home/user/code/opus/src/opus_demo.c:870:40
+    #1 0x7f751aef582f in __libc_start_main /build/glibc-bfm8X4/glibc-2.23/csu/../csu/libc-start.c:291
+    #2 0x402de8 in _start (/home/user/code/opus/opus_demo+0x402de8)

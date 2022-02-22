@@ -1,0 +1,26 @@
+Program received signal SIGTRAP, Trace/breakpoint trap.
+0x00007ffff5573368 in ?? ()
+#0  0x00007ffff5573368 in ?? ()
+#1  0x00007ffff558a9c9 in ?? ()
+#2  0x0000000000000183 in ?? ()
+#3  0x00007ffff5671ac0 in ?? ()
+#4  0x0000000000000000 in ?? ()
+rax    0x1ac4d40    28069184
+rbx    0x7ffff5658730    140737310459696
+rcx    0xfff9000000000000    -1970324836974592
+rdx    0xfffc7ffff5700060    -985162595696544
+rsi    0x7ffff55efa4d    140737310030413
+rdi    0x1acfa60    28113504
+rbp    0x7fffffffbf20    140737488338720
+rsp    0x7fffffffbf28    140737488338728
+r8    0x7ffff565b060    140737310470240
+r9    0x0    0
+r10    0x0    0
+r11    0x7ffff6c3fc90    140737333427344
+r12    0x0    0
+r13    0x7fffffffca00    140737488341504
+r14    0x183    387
+r15    0x7ffff558a970    140737309616496
+rip    0x7ffff5573368    140737309520744
+=> 0x7ffff5573368:    movabs $0x7fffffffffff,%rbx
+   0x7ffff5573372:    and    0xa08(%rax),%rbx

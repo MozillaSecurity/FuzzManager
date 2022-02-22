@@ -15,6 +15,7 @@ class ExceptionLoggingMiddleware(object):
     This tiny middleware module allows us to see exceptions on stderr
     when running a Django instance with runserver.py
     """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -40,11 +41,14 @@ class RequireLoginMiddleware(object):
     LOGIN_REQUIRED_URLS_EXCEPTIONS is, conversely, where you explicitly
     define any exceptions (like login and logout URLs).
     """
+
     # Based on snippet from https://stackoverflow.com/a/46976284
     # Docstring and original idea from https://stackoverflow.com/a/2164224
     def __init__(self, get_response):
         self.get_response = get_response
-        self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
+        self.exceptions = re.compile(
+            "(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")"
+        )
 
     def __call__(self, request):
         return self.get_response(request)
@@ -63,26 +67,29 @@ class RequireLoginMiddleware(object):
 
 
 class CheckAppPermissionsMiddleware(object):
-
     def __init__(self, get_response):
         self.get_response = get_response
-        self.exceptions = re.compile("(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")")
+        self.exceptions = re.compile(
+            "(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")"
+        )
 
     def __call__(self, request):
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         # Get the app name
-        app = view_func.__module__.split('.', 1)[0]
+        app = view_func.__module__.split(".", 1)[0]
 
-        if app in {'notifications', 'server'}:
+        if app in {"notifications", "server"}:
             return None
 
         # If no login is required for this path, we can't check permissions
         if self.exceptions.match(request.path):
             return None
 
-        User.get_or_create_restricted(request.user)  # create a CrashManager user if needed to apply defaults
+        User.get_or_create_restricted(
+            request.user
+        )  # create a CrashManager user if needed to apply defaults
 
         if not CheckAppPermission().has_permission(request, view_func):
             return HttpResponseForbidden()

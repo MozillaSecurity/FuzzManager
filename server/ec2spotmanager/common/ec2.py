@@ -1,4 +1,5 @@
-# data exported from: https://ec2instances.info/ at 2018-08-16 17:54:16 UTC .. see disclaimers
+# data exported from: https://ec2instances.info/ at 2018-08-16 17:54:16 UTC
+# .. see disclaimers
 
 import collections
 

@@ -1,0 +1,4 @@
+#
+# Fatal error in ../src/compiler.cc, line 219
+# Check failed: !feedback_vector_->metadata()->SpecDiffersFrom( literal()->feedback_vector_spec()).
+#

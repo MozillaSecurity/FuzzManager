@@ -1,0 +1,13 @@
+==7727==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000000 (pc 0x559ed71aa5e3 bp 0x000000000033 sp 0x7fe1a51bcf00 T7880)
+==7727==The signal is caused by a WRITE memory access.
+==7727==Hint: address points to the zero page.
+    #0 mozalloc_abort /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 (firefox+0xcb5e3)
+    #1 mozalloc_handle_oom(unsigned long) /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_oom.cpp:51:3 (firefox+0xcb6ac)
+    #2 GeckoHandleOOM /builds/worker/checkouts/gecko/toolkit/xre/nsAppRunner.cpp:5825:47 (libxul.so+0x679a4d5)
+    #3 gkrust_shared::oom_hook::hook::hdb794dafd9a70020 /builds/worker/checkouts/gecko/toolkit/library/rust/shared/lib.rs:133:13 (libxul.so+0x7c33ea6)
+    #4 <null> <null> (swrast_dri.so+0x75dc33)
+    #5 <null> <null> (0x7eff0a5dad88)
+
+ThreadSanitizer can not provide additional info.
+SUMMARY: ThreadSanitizer: SEGV /builds/worker/checkouts/gecko/memory/mozalloc/mozalloc_abort.cpp:33:3 in mozalloc_abort
+==7727==ABORTING

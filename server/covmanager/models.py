@@ -11,7 +11,7 @@ import json
 from crashmanager.models import Client, Tool
 from FTB import CoverageHelper
 
-if getattr(settings, 'USE_CELERY', None):
+if getattr(settings, "USE_CELERY", None):
     from .tasks import check_revision_update
 
 
@@ -22,15 +22,20 @@ class Repository(models.Model):
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
-        providerModule = __import__('covmanager.SourceCodeProvider.%s' % self.classname, fromlist=[self.classname])
+        providerModule = __import__(
+            "covmanager.SourceCodeProvider.%s" % self.classname,
+            fromlist=[self.classname],
+        )
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.location)
 
 
 class CollectionFile(models.Model):
-    file = models.FileField(storage=FileSystemStorage(location=getattr(settings, 'COV_STORAGE', None)),
-                            max_length=255,
-                            upload_to="coverage")
+    file = models.FileField(
+        storage=FileSystemStorage(location=getattr(settings, "COV_STORAGE", None)),
+        max_length=255,
+        upload_to="coverage",
+    )
     format = models.IntegerField(default=0)
 
 
@@ -42,7 +47,9 @@ class Collection(models.Model):
     branch = models.CharField(max_length=255, blank=True)
     tools = models.ManyToManyField(Tool)
     client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    coverage = models.ForeignKey(CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE)
+    coverage = models.ForeignKey(
+        CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
@@ -56,7 +63,7 @@ class Collection(models.Model):
             "revision",
             "branch",
             "client__name",
-            "tools__name"
+            "tools__name",
         ]
 
         # For performance reasons we do not deserialize this field
@@ -66,8 +73,8 @@ class Collection(models.Model):
         super(Collection, self).__init__(*args, **kwargs)
 
     def loadCoverage(self):
-        self.coverage.file.open(mode='rb')
-        self.content = json.load(codecs.getreader('utf-8')(self.coverage.file))
+        self.coverage.file.open(mode="rb")
+        self.content = json.load(codecs.getreader("utf-8")(self.coverage.file))
         self.coverage.file.close()
 
     def annotateSource(self, path, coverage):
@@ -185,7 +192,8 @@ def Collection_delete(sender, instance, **kwargs):
 
 
 # post_save handler for celery integration
-if getattr(settings, 'USE_CELERY', None):
+if getattr(settings, "USE_CELERY", None):
+
     @receiver(post_save, sender=Collection)
     def Collection_save(sender, instance, **kwargs):
         check_revision_update.delay(instance.pk)
@@ -196,10 +204,14 @@ class ReportConfiguration(models.Model):
     repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
     directives = models.TextField()
     public = models.BooleanField(blank=False, default=False)
-    logical_parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.deletion.CASCADE)
+    logical_parent = models.ForeignKey(
+        "self", blank=True, null=True, on_delete=models.deletion.CASCADE
+    )
 
     def apply(self, collection):
-        CoverageHelper.apply_include_exclude_directives(collection, self.directives.splitlines())
+        CoverageHelper.apply_include_exclude_directives(
+            collection, self.directives.splitlines()
+        )
         CoverageHelper.calculate_summary_fields(collection)
 
 
@@ -216,7 +228,9 @@ class Report(models.Model):
     # determine week, month, quarter, etc. for displaying purposes.
     data_created = models.DateTimeField(default=timezone.now)
     public = models.BooleanField(blank=False, default=False)
-    coverage = models.ForeignKey(Collection, blank=False, null=False, on_delete=models.deletion.CASCADE)
+    coverage = models.ForeignKey(
+        Collection, blank=False, null=False, on_delete=models.deletion.CASCADE
+    )
 
     is_monthly = models.BooleanField(blank=False, default=False)
     is_quarterly = models.BooleanField(blank=False, default=False)

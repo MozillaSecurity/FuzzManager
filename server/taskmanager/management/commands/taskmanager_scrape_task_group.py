@@ -22,6 +22,7 @@ def paginated(func, result_key):
     This hides the process of re-requesting with continuationToken,
     and yields the contents of `result_key`
     """
+
     @functools.wraps(func)
     def _wrapped(*args, **kwds):
         kwds = kwds.copy()
@@ -34,6 +35,7 @@ def paginated(func, result_key):
             result = func(*args, **kwds)
         for sub in result[result_key]:
             yield sub
+
     return _wrapped
 
 

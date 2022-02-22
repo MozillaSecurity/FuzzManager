@@ -1,5 +1,5 @@
 # coding: utf-8
-'''Tests for CrashManager get_auth_token management command
+"""Tests for CrashManager get_auth_token management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,7 +8,7 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 import re
 from django.contrib.auth.models import User
 from django.core.management import call_command, CommandError
@@ -41,8 +41,10 @@ def test_one_user(capsys):
 
 
 def test_two_users(capsys):
-    users = (User.objects.create_user("test", "test@example.com", "test"),
-             User.objects.create_user("test2", "test2@example.com", "test2"))
+    users = (
+        User.objects.create_user("test", "test@example.com", "test"),
+        User.objects.create_user("test2", "test2@example.com", "test2"),
+    )
     call_command("get_auth_token", "test", "test2")
     out, _ = capsys.readouterr()
     keys = set(out.strip().split())

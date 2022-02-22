@@ -1,0 +1,25 @@
+=================================================================
+==8746==ERROR: AddressSanitizer: SEGV on unknown address 0x7f637b59cffc (pc 0x7f63fd5c11af bp 0x7f63a0702090 sp 0x7f63a0701f40 T35)
+Done, waiting 10ms before calling close()
+    #0 0x7f63fd5c11ae in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool) /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35
+    #1 0x7f63fd5c07b0 in mozilla::ipc::IToplevelProtocol::ShmemCreated(IPC::Message const&) /home/worker/workspace/build/src/ipc/glue/ProtocolUtils.cpp:790:38
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /home/worker/workspace/build/src/ipc/glue/Shmem.cpp:454:35 in mozilla::ipc::Shmem::OpenExisting(mozilla::ipc::Shmem::IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead, IPC::Message const&, int*, bool)
+Thread T35 (Compositor) created by T0 here:
+    #0 0x4a8e16 in __interceptor_pthread_create /builds/slave/moz-toolchain/src/llvm/projects/compiler-rt/lib/asan/asan_interceptors.cc:245:3
+    #1 0x7f63fd4d9ad4 in CreateThread /home/worker/workspace/build/src/ipc/chromium/src/base/platform_thread_posix.cc:139:14
+
+==8746==ABORTING
+ASAN:DEADLYSIGNAL
+=================================================================
+ASAN:DEADLYSIGNAL
+=================================================================
+==8986==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7fcfcfaadeda bp 0x7fcfcb405340 sp 0x7fcfcb405320 T2)
+==8986==The signal is caused by a WRITE memory access.
+==8927==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x7f2fc08adeda bp 0x7f2fbc21c340 sp 0x7f2fbc21c320 T2)
+==8986==Hint: address points to the zero page.
+==8927==The signal is caused by a WRITE memory access.
+==8927==Hint: address points to the zero page.
+Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299)
+###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv

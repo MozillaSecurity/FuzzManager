@@ -8,18 +8,18 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crashmanager', '0001_squashed_0020_add_app_permissions'),
+        ("crashmanager", "0001_squashed_0020_add_app_permissions"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='user',
+            name="user",
             options={
-                'permissions': (
-                    ('view_crashmanager', 'Can see CrashManager app'),
-                    ('view_covmanager', 'Can see CovManager app'),
-                    ('view_ec2spotmanager', 'Can see EC2SpotManager app'),
-                    ('view_taskmanager', 'Can see TaskManager app'),
+                "permissions": (
+                    ("view_crashmanager", "Can see CrashManager app"),
+                    ("view_covmanager", "Can see CovManager app"),
+                    ("view_ec2spotmanager", "Can see EC2SpotManager app"),
+                    ("view_taskmanager", "Can see TaskManager app"),
                 )
             },
         ),

@@ -1,4 +1,4 @@
-'''
+"""
 Crash Information
 
 Represents information about a crash. Specific subclasses implement
@@ -13,7 +13,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -33,7 +33,7 @@ from FTB.Signatures.CrashSignature import CrashSignature
 
 
 def uint32(val):
-    '''Force `val` into unsigned 32-bit range.
+    """Force `val` into unsigned 32-bit range.
 
     Note that the input is returned as an int, therefore
     any math on the result may no longer be in uint32 range.
@@ -48,12 +48,12 @@ def uint32(val):
     2147483647
     >>> uint32(0x80000000)
     2147483648
-    '''
+    """
     return val & 0xFFFFFFFF
 
 
 def int32(val):
-    '''Force `val` into signed 32-bit range.
+    """Force `val` into signed 32-bit range.
 
     Note that the input is returned as an int, therefore
     any math on the result may no longer be in int32 range.
@@ -68,7 +68,7 @@ def int32(val):
     2147483647
     >>> int32(0x80000000)
     -2147483648
-    '''
+    """
     val = uint32(val)
     if val.bit_length() == 32:
         val = val - 0x100000000
@@ -76,7 +76,7 @@ def int32(val):
 
 
 def uint64(val):
-    '''Force `val` into unsigned 64-bit range.
+    """Force `val` into unsigned 64-bit range.
 
     Note that the input is returned as an int, therefore
     any math on the result may no longer be in uint64 range.
@@ -91,12 +91,12 @@ def uint64(val):
     9223372036854775807
     >>> uint64(0x8000000000000000)
     9223372036854775808
-    '''
+    """
     return val & 0xFFFFFFFFFFFFFFFF
 
 
 def int64(val):
-    '''Force `val` into signed 64-bit range.
+    """Force `val` into signed 64-bit range.
 
     Note that the input is returned as an int, therefore
     any math on the result may no longer be in int64 range.
@@ -111,7 +111,7 @@ def int64(val):
     9223372036854775807
     >>> int64(0x8000000000000000)
     -9223372036854775808
-    '''
+    """
     val = uint64(val)
     if val.bit_length() == 64:
         val = val - 0x10000000000000000
@@ -120,10 +120,11 @@ def int64(val):
 
 @six.add_metaclass(ABCMeta)
 class CrashInfo(object):
-    '''
+    """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
-    '''
+    """
+
     def __init__(self):
         # Store the raw data
         self.rawStdout = []
@@ -170,31 +171,33 @@ class CrashInfo(object):
         return "\n".join(buf)
 
     def toCacheObject(self):
-        '''
+        """
         Create a cache object for restoring the class instance later on without parsing
         the crash data again. This object includes all class fields except for the
         storage heavy raw objects like stdout, stderr and raw crashdata.
 
         @rtype: dict
         @return: Dictionary containing expensive class fields
-        '''
+        """
         cacheObject = {}
-        cacheObject['backtrace'] = self.backtrace
-        cacheObject['registers'] = self.registers
+        cacheObject["backtrace"] = self.backtrace
+        cacheObject["registers"] = self.registers
 
         if self.crashAddress is not None:
-            cacheObject['crashAddress'] = int(self.crashAddress)
+            cacheObject["crashAddress"] = int(self.crashAddress)
         else:
-            cacheObject['crashAddress'] = None
+            cacheObject["crashAddress"] = None
 
-        cacheObject['crashInstruction'] = self.crashInstruction
-        cacheObject['failureReason'] = self.failureReason
+        cacheObject["crashInstruction"] = self.crashInstruction
+        cacheObject["failureReason"] = self.failureReason
 
         return cacheObject
 
     @staticmethod
-    def fromRawCrashData(stdout, stderr, configuration, auxCrashData=None, cacheObject=None):
-        '''
+    def fromRawCrashData(
+        stdout, stderr, configuration, auxCrashData=None, cacheObject=None
+    ):
+        """
         Create appropriate CrashInfo instance from raw crash data
 
         @type stdout: List of strings
@@ -202,21 +205,25 @@ class CrashInfo(object):
         @type stderr: List of strings
         @param stderr: List of lines as they appeared on stderr
         @type configuration: ProgramConfiguration
-        @param configuration: Exact program configuration that is associated with the crash
+        @param configuration: Exact program configuration that is associated with the
+                              crash
         @type auxCrashData: List of strings
-        @param auxCrashData: Optional additional crash output (e.g. GDB). If not specified, stderr is used.
+        @param auxCrashData: Optional additional crash output (e.g. GDB). If not
+                             specified, stderr is used.
         @type cacheObject: Dictionary
-        @param cacheObject: The cache object that should be used to restore the class fields
-                            instead of parsing the crash data. The appropriate object can be
-                            created by calling the toCacheObject method.
+        @param cacheObject: The cache object that should be used to restore the class
+                            fields instead of parsing the crash data. The appropriate
+                            object can be created by calling the toCacheObject method.
 
         @rtype: CrashInfo
         @return: Crash information object
-        '''
+        """
 
         assert stdout is None or isinstance(stdout, (list, six.text_type, bytes))
         assert stderr is None or isinstance(stderr, (list, six.text_type, bytes))
-        assert auxCrashData is None or isinstance(auxCrashData, (list, six.text_type, bytes))
+        assert auxCrashData is None or isinstance(
+            auxCrashData, (list, six.text_type, bytes)
+        )
 
         assert isinstance(configuration, ProgramConfiguration)
 
@@ -242,15 +249,16 @@ class CrashInfo(object):
                 c.rawCrashData.extend(auxCrashData)
 
             c.configuration = configuration
-            c.backtrace = cacheObject['backtrace']
-            c.registers = cacheObject['registers']
-            c.crashAddress = cacheObject['crashAddress']
-            c.crashInstruction = cacheObject['crashInstruction']
-            c.failureReason = cacheObject['failureReason']
+            c.backtrace = cacheObject["backtrace"]
+            c.registers = cacheObject["registers"]
+            c.crashAddress = cacheObject["crashAddress"]
+            c.crashInstruction = cacheObject["crashInstruction"]
+            c.failureReason = cacheObject["failureReason"]
 
             return c
 
-        # some results are weak, meaning any other CrashInfo detected after it will take precedence
+        # some results are weak, meaning any other CrashInfo detected after it will take
+        # precedence
         weakResult = None
 
         asanString = "ERROR: AddressSanitizer"
@@ -329,19 +337,23 @@ class CrashInfo(object):
         # This is still useful in case there is no crash but we want to match
         # e.g. stdout/stderr output with signatures.
         if result is None:
-            result = weakResult or NoCrashInfo(stdout, stderr, configuration, auxCrashData)
+            result = weakResult or NoCrashInfo(
+                stdout, stderr, configuration, auxCrashData
+            )
 
-        # Rust symbols have a source hash appended to them. Strip this off regardless of the
-        # CrashInfo type
-        result.backtrace = [re.sub(r"::h[0-9a-f]{16}$", "", frame) for frame in result.backtrace]
+        # Rust symbols have a source hash appended to them. Strip this off regardless of
+        # the CrashInfo type
+        result.backtrace = [
+            re.sub(r"::h[0-9a-f]{16}$", "", frame) for frame in result.backtrace
+        ]
 
         return result
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
         # See if we have an abort message and if so, use that as short signature
         abortMsg = AssertionHelper.getAssertion(self.rawStderr)
 
@@ -360,23 +372,31 @@ class CrashInfo(object):
 
         return "[@ %s]" % self.backtrace[0]
 
-    def createCrashSignature(self, forceCrashAddress=False, forceCrashInstruction=False, maxFrames=8,
-                             minimumSupportedVersion=13):
-        '''
-        @param forceCrashAddress: If True, the crash address will be included in any case
+    def createCrashSignature(
+        self,
+        forceCrashAddress=False,
+        forceCrashInstruction=False,
+        maxFrames=8,
+        minimumSupportedVersion=13,
+    ):
+        """
+        @param forceCrashAddress: If True, the crash address will be included in any
+                                  case
         @type forceCrashAddress: bool
-        @param forceCrashInstruction: If True, the crash instruction will be included in any case
+        @param forceCrashInstruction: If True, the crash instruction will be included in
+                                      any case
         @type forceCrashInstruction: bool
         @param maxFrames: How many frames (at most) should be included in the signature
         @type maxFrames: int
 
-        @param minimumSupportedVersion: The minimum crash signature standard version that the
-                                        generated signature should be valid for (10 => 1.0, 13 => 1.3)
+        @param minimumSupportedVersion: The minimum crash signature standard version
+                                        that the generated signature should be valid for
+                                        (10 => 1.0, 13 => 1.3)
         @type minimumSupportedVersion: int
 
         @rtype: CrashSignature
         @return: A crash signature object
-        '''
+        """
         # Determine the actual number of frames based on how many we got
         if len(self.backtrace) > maxFrames:
             numFrames = maxFrames
@@ -427,19 +447,28 @@ class CrashInfo(object):
                 # to increase the readability of the signatures.
                 if minimumSupportedVersion < 12:
                     stringObj = {"value": abortMsg, "matchType": "pcre"}
-                    symptomObj = {"type": "output", "src": abortMsgSrc, "value": stringObj}
+                    symptomObj = {
+                        "type": "output",
+                        "src": abortMsgSrc,
+                        "value": stringObj,
+                    }
                 else:
-                    symptomObj = {"type": "output", "src": abortMsgSrc, "value": "/%s/" % abortMsg}
+                    symptomObj = {
+                        "type": "output",
+                        "src": abortMsgSrc,
+                        "value": "/%s/" % abortMsg,
+                    }
                 symptomArr.append(symptomObj)
 
         # Consider the first four frames as top stack
         topStackLimit = 4
 
-        # If we have less than topStackLimit frames available anyway, count the difference
-        # between topStackLimit and the available frames already as missing.
-        # E.g. if the trace has only three entries anyway, one will be considered missing
-        # right from the start. This should prevent that very short stack frames are used
-        # for signatures without additional crash information that narrows the signature.
+        # If we have less than topStackLimit frames available anyway, count the
+        # difference between topStackLimit and the available frames already as missing.
+        # E.g. if the trace has only three entries anyway, one will be considered
+        # missing right from the start. This should prevent that very short stack frames
+        # are used for signatures without additional crash information that narrows the
+        # signature.
 
         if numFrames >= topStackLimit:
             topStackMissCount = 0
@@ -452,7 +481,11 @@ class CrashInfo(object):
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
                 if not functionName == "??":
-                    symptomObj = {"type": "stackFrame", "frameNumber": idx, "functionName": functionName}
+                    symptomObj = {
+                        "type": "stackFrame",
+                        "frameNumber": idx,
+                        "functionName": functionName,
+                    }
                     symptomArr.append(symptomObj)
                 elif idx < 4:
                     # If we're in the top 4, we count this as a miss
@@ -472,12 +505,12 @@ class CrashInfo(object):
 
             lastSymbolizedFrame = None
             for frameIdx in range(0, len(framesArray)):
-                if str(framesArray[frameIdx]) != '?':
+                if str(framesArray[frameIdx]) != "?":
                     lastSymbolizedFrame = frameIdx
 
             if lastSymbolizedFrame is not None:
                 # Remove all elements behind the last symbolized frame
-                framesArray = framesArray[:lastSymbolizedFrame + 1]
+                framesArray = framesArray[: lastSymbolizedFrame + 1]
             else:
                 # We don't have a single symbolized frame, so it doesn't make sense
                 # to keep any wildcards in case we added some for unsymbolized frames.
@@ -490,7 +523,9 @@ class CrashInfo(object):
         stackIsInsufficient = topStackMissCount >= 2 and abortMsgs is None
 
         includeCrashAddress = stackIsInsufficient or forceCrashAddress
-        includeCrashInstruction = (stackIsInsufficient and self.crashInstruction is not None) or forceCrashInstruction
+        includeCrashInstruction = (
+            stackIsInsufficient and self.crashInstruction is not None
+        ) or forceCrashInstruction
 
         if not symptomArr and not includeCrashInstruction:
             # If at this point, we don't have any symptoms from either backtrace
@@ -517,10 +552,16 @@ class CrashInfo(object):
         if includeCrashInstruction:
             if self.crashInstruction is None:
                 failureReason = self.failureReason
-                self.failureReason = "No crash instruction available from crash data. Reason: %s" % failureReason
+                self.failureReason = (
+                    "No crash instruction available from crash data. Reason: %s"
+                    % failureReason
+                )
                 return None
 
-            crashInstructionSymptomObj = {"type": "instruction", "instructionName": self.crashInstruction}
+            crashInstructionSymptomObj = {
+                "type": "instruction",
+                "instructionName": self.crashInstruction,
+            }
             symptomArr.append(crashInstructionSymptomObj)
 
         sigObj = {"symptoms": symptomArr}
@@ -529,7 +570,7 @@ class CrashInfo(object):
 
     @staticmethod
     def sanitizeStackFrame(frame):
-        '''
+        """
         This function removes function arguments and other non-generic parts
         of the function frame, returning a (hopefully) generic function name.
 
@@ -538,17 +579,17 @@ class CrashInfo(object):
 
         @rtype: str
         @return: Sanitized stack frame
-        '''
+        """
 
         # Remove any trailing const declaration
         if frame.endswith(" const"):
-            frame = frame[0:-len(" const")]
+            frame = frame[0 : -len(" const")]
 
         # Strip the last ( ) segment, which might also contain more parentheses
         if frame.endswith(")"):
             idx = len(frame) - 2
             parlevel = 0
-            while(idx > 0):
+            while idx > 0:
                 if frame[idx] == "(":
                     if parlevel > 0:
                         parlevel -= 1
@@ -573,9 +614,10 @@ class CrashInfo(object):
 
 class NoCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -592,9 +634,10 @@ class NoCrashInfo(CrashInfo):
 
 class ASanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -612,19 +655,25 @@ class ASanCrashInfo(CrashInfo):
         asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
-                                   \s[A-Za-z]+Sanitizer.*\s
-                                     (?:on\saddress             # The most common format, used for all overflows
-                                       |on\sunknown\saddress    # Used in case of a SIGSEGV
-                                       |double-free\son         # Used in case of a double-free
-                                       |allocator\sis\sout\sof\smemory\strying\sto\sallocate\s0x[0-9a-f]+\sbytes
-                                       |failed\sto\sallocate\s0x[0-9a-f]+\s
-                                       |negative-size-param:\s*\(size=-\d+\)
-                                       |not\smalloc\(\)-ed:     # Used in case of a wild free (on unallocated memory)
-                                       |not\sowned:             # Used when calling __asan_get_allocated_size() on a pointer that isn't owned
-                                       |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
-                                       |requested\sallocation\ssize\s0x[0-9a-f]+\s)
-                                   (\s*0x([0-9a-f]+))?"""  # noqa
-        asanRegisterPattern = r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)"
+            \s[A-Za-z]+Sanitizer.*\s
+              (?:on\saddress             # Most common format, used for all overflows
+                |on\sunknown\saddress    # Used in case of a SIGSEGV
+                |double-free\son         # Used in case of a double-free
+                |allocator\sis\sout\sof\smemory\strying\sto\sallocate\s0x[0-9a-f]+\s
+                 bytes
+                |failed\sto\sallocate\s0x[0-9a-f]+\s
+                |negative-size-param:\s*\(size=-\d+\)
+                |not\smalloc\(\)-ed:     # Used in case of a wild free
+                                         #   (on unallocated memory)
+                |not\sowned:             # Used when calling __asan_get_allocated_size()
+                                         #   on a pointer that isn't owned
+                |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
+                |requested\sallocation\ssize\s0x[0-9a-f]+\s)
+            (\s*0x([0-9a-f]+))?"""
+        asanRegisterPattern = (
+            r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+"
+            r"0x([0-9a-f]+)"
+        )
 
         expectedIndex = 0
         reportFound = False
@@ -666,11 +715,14 @@ class ASanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing ASan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                raise RuntimeError(
+                    f"Fatal error parsing ASan trace (Index mismatch, got index {index}"
+                    f" but expected {expectedIndex})"
+                )
 
             component = None
-            # TSan doesn't include address, symbol will be immediately following the frame number
+            # TSan doesn't include address, symbol will be immediately following the
+            # frame number
             if len(parts) > 1 and not parts[1].startswith("0x"):
                 if parts[1] == "<null>":
                     # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
@@ -690,17 +742,20 @@ class ASanCrashInfo(CrashInfo):
                     # Remove parentheses around component
                     component = parts[2][1:-1]
             else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                print(
+                    "Warning: Missing component in this line: %s" % traceLine,
+                    file=sys.stderr,
+                )
                 component = "<missing>"
 
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
         # Always prefer using regular program aborts
         abortMsg = AssertionHelper.getAssertion(self.rawStderr)
 
@@ -737,9 +792,17 @@ class ASanCrashInfo(CrashInfo):
             # Strip various forms of special thread information and messages
             asanMsg = re.sub(" in thread T.+", "", asanMsg)
             asanMsg = re.sub(r" malloc\(\)\-ed: 0x[0-9a-f]+", r" malloc()-ed", asanMsg)
-            asanMsg = re.sub(r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) overlap$",
-                             "overlap", asanMsg)
-            asanMsg = re.sub(r"0x[0-9a-f]+\s\(0x[0-9a-f]+\safter\sadjustments.+?\)\s", "", asanMsg)
+            asanMsg = re.sub(
+                (
+                    r"\[0x[0-9a-f]+,0x[0-9a-f]+\) and \[0x[0-9a-f]+, 0x[0-9a-f]+\) "
+                    "overlap$"
+                ),
+                "overlap",
+                asanMsg,
+            )
+            asanMsg = re.sub(
+                r"0x[0-9a-f]+\s\(0x[0-9a-f]+\safter\sadjustments.+?\)\s", "", asanMsg
+            )
             asanMsg = re.sub(r"size\sof\s0x[0-9a-f]+$", "size", asanMsg)
 
             if self.backtrace:
@@ -753,7 +816,8 @@ class ASanCrashInfo(CrashInfo):
 
         if not self.backtrace:
             if self.crashAddress is not None:
-                # We seem to have a crash but no backtrace, so let it show up as a crash with no symbols
+                # We seem to have a crash but no backtrace, so let it show up as a crash
+                # with no symbols
                 return "[@ ??]"
 
             return "No crash detected"
@@ -763,9 +827,10 @@ class ASanCrashInfo(CrashInfo):
 
 class LSanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -800,8 +865,10 @@ class LSanCrashInfo(CrashInfo):
             index = int(parts[0][1:])
 
             if expectedIndex != index:
-                raise RuntimeError("Fatal error parsing LSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                raise RuntimeError(
+                    f"Fatal error parsing LSan trace (Index mismatch, got index {index}"
+                    f" but expected {expectedIndex})"
+                )
 
             component = None
             if len(parts) > 2:
@@ -811,7 +878,10 @@ class LSanCrashInfo(CrashInfo):
                     # Remove parentheses around component
                     component = parts[2][1:-1]
             else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                print(
+                    "Warning: Missing component in this line: %s" % traceLine,
+                    file=sys.stderr,
+                )
                 component = "<missing>"
 
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
@@ -824,10 +894,10 @@ class LSanCrashInfo(CrashInfo):
             self.backtrace.append("??")
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
         # Try to find the LSan message on stderr and use that as short signature
         abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
 
@@ -848,9 +918,10 @@ class LSanCrashInfo(CrashInfo):
 
 class UBSanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -885,8 +956,10 @@ class UBSanCrashInfo(CrashInfo):
             index = int(parts[0][1:])
 
             if expectedIndex != index:
-                raise RuntimeError("Fatal error parsing UBSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                raise RuntimeError(
+                    "Fatal error parsing UBSan trace (Index mismatch, got index "
+                    f"{index} but expected {expectedIndex})"
+                )
 
             component = None
             if len(parts) > 2:
@@ -896,7 +969,10 @@ class UBSanCrashInfo(CrashInfo):
                     # Remove parentheses around component
                     component = parts[2][1:-1]
             else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                print(
+                    "Warning: Missing component in this line: %s" % traceLine,
+                    file=sys.stderr,
+                )
                 component = "<missing>"
 
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
@@ -909,10 +985,10 @@ class UBSanCrashInfo(CrashInfo):
             self.backtrace.append("??")
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
         # Try to find the UBSan message on stderr and use that as short signature
         abortMsg = AssertionHelper.getAuxiliaryAbortMessage(self.rawStderr)
 
@@ -933,9 +1009,10 @@ class UBSanCrashInfo(CrashInfo):
 
 class GDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -958,7 +1035,7 @@ class GDBCrashInfo(CrashInfo):
         gdbFramePatterns = [
             "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
             "\\s*#(\\d+)\\s+()(.+?) \\(.*?\\)( at .+)?",
-            "\\s*#(\\d+)\\s+()(<signal handler called>)"
+            "\\s*#(\\d+)\\s+()(<signal handler called>)",
         ]
 
         gdbRegisterPattern = RegisterHelper.getRegisterPattern() + "\\s+0x([0-9a-f]+)"
@@ -974,8 +1051,11 @@ class GDBCrashInfo(CrashInfo):
             # buffer content. If we detect this constellation, then it's highly likely
             # that we have a valid trace line but no pattern that fits it. We need
             # to make sure that we report this.
-            if (not pastFrames and re.match("\\s*#\\d+.+", lastLineBuf) is not None and
-                    re.match("\\s*#\\d+.+", traceLine) is not None):
+            if (
+                not pastFrames
+                and re.match("\\s*#\\d+.+", lastLineBuf) is not None
+                and re.match("\\s*#\\d+.+", traceLine) is not None
+            ):
                 print("Fatal error parsing this GDB trace line:", file=sys.stderr)
                 print(lastLineBuf, file=sys.stderr)
                 raise RuntimeError("Fatal error parsing GDB trace")
@@ -1000,7 +1080,9 @@ class GDBCrashInfo(CrashInfo):
                             # trailing function information, strip it here.
                             match = re.search("(\\s+<.+>\\s*)$", self.crashInstruction)
                             if match is not None:
-                                self.crashInstruction = self.crashInstruction.replace(match.group(1), "")
+                                self.crashInstruction = self.crashInstruction.replace(
+                                    match.group(1), ""
+                                )
 
             if not pastFrames:
                 if not lastLineBuf and re.match("\\s*#\\d+.+", traceLine) is None:
@@ -1019,9 +1101,12 @@ class GDBCrashInfo(CrashInfo):
                         frameIndex = int(match.group(1))
                         functionName = match.group(3)
 
-                        # When GDB runs into unknown types in debug info (e.g. due to version mismatch),
-                        # then it emits an additional signature segment that we need to remove later.
-                        gdbDebugInfoMismatch = ("unknown type in" in lastLineBuf and "CU 0x" in lastLineBuf)
+                        # When GDB runs into unknown types in debug info (e.g. due to
+                        # version mismatch), then it emits an additional signature
+                        # segment that we need to remove later.
+                        gdbDebugInfoMismatch = (
+                            "unknown type in" in lastLineBuf and "CU 0x" in lastLineBuf
+                        )
                         break
 
                 if frameIndex is None:
@@ -1031,18 +1116,22 @@ class GDBCrashInfo(CrashInfo):
                     # Successfully parsed line, reset last line buffer
                     lastLineBuf = ""
 
-                # Allow #0 to appear twice in the beginning, GDB does this for core dumps ...
+                # Allow #0 to appear twice in the beginning, GDB does this for core
+                # dumps ...
                 if len(self.backtrace) != frameIndex and frameIndex == 0:
                     self.backtrace.pop(0)
                 elif len(self.backtrace) != frameIndex:
-                    print("Fatal error parsing this GDB trace (Index mismatch, wanted %s got %s ): " %
-                          (len(self.backtrace), frameIndex), file=sys.stderr)
+                    print(
+                        "Fatal error parsing this GDB trace (Index mismatch, wanted "
+                        f"{len(self.backtrace)} got {frameIndex}): ",
+                        file=sys.stderr,
+                    )
                     print(os.linesep.join(gdbOutput), file=sys.stderr)
                     raise RuntimeError("Fatal error parsing GDB trace")
 
-                # This is a workaround for GDB throwing an error while resolving function arguments
-                # in the trace and aborting. We try to remove the error message to at least recover
-                # the function name properly.
+                # This is a workaround for GDB throwing an error while resolving
+                # function arguments in the trace and aborting. We try to remove the
+                # error message to at least recover the function name properly.
                 gdbErrorIdx = functionName.find(" (/build/buildd/gdb")
                 if gdbErrorIdx > 0:
                     functionName = functionName[:gdbErrorIdx]
@@ -1057,9 +1146,12 @@ class GDBCrashInfo(CrashInfo):
             # Remove any leading/trailing whitespaces
             self.crashInstruction = self.crashInstruction.strip()
 
-        # If we have no crash address but the instruction, try to calculate the crash address
+        # If we have no crash address but the instruction, try to calculate the crash
+        # address
         if self.crashAddress is None and self.crashInstruction is not None:
-            crashAddress = GDBCrashInfo.calculateCrashAddress(self.crashInstruction, self.registers)
+            crashAddress = GDBCrashInfo.calculateCrashAddress(
+                self.crashInstruction, self.registers
+            )
 
             if isinstance(crashAddress, (six.text_type, bytes)):
                 self.failureReason = crashAddress
@@ -1076,7 +1168,7 @@ class GDBCrashInfo(CrashInfo):
 
     @staticmethod
     def calculateCrashAddress(crashInstruction, registerMap):
-        '''
+        """
         Calculate the crash address given the crash instruction and register contents
 
         @type crashInstruction: string
@@ -1088,7 +1180,7 @@ class GDBCrashInfo(CrashInfo):
         @return The calculated crash address
 
         On error, a string containing the failure message is returned instead.
-        '''
+        """
 
         if not crashInstruction:
             # GDB shows us no instruction, so the memory at the instruction
@@ -1117,10 +1209,14 @@ class GDBCrashInfo(CrashInfo):
                 # We also consider this an invalid instruction
                 return RegisterHelper.getInstructionPointer(registerMap)
             else:
-                raise RuntimeError("Unsupported non-operand instruction: %s" % instruction)
+                raise RuntimeError(
+                    "Unsupported non-operand instruction: %s" % instruction
+                )
 
         if len(parts) != 2:
-            raise RuntimeError("Failed to split instruction and operands apart: %s" % crashInstruction)
+            raise RuntimeError(
+                "Failed to split instruction and operands apart: %s" % crashInstruction
+            )
 
         instruction = parts[0]
         operands = parts[1]
@@ -1171,12 +1267,14 @@ class GDBCrashInfo(CrashInfo):
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
                 if re.match("(push|pop|call)(l|w|q)?$", instruction):
-                    # push/pop/call are quite special because they can perform an optional
-                    # memory dereference before touching the stack. We don't know for sure
-                    # which of the two operations fail if we detect a deref in the instruction,
-                    # but for now we assume that the deref fails and the stack pointer is ok.
+                    # push/pop/call are quite special because they can perform an
+                    # optional memory dereference before touching the stack. We don't
+                    # know for sure which of the two operations fail if we detect a
+                    # deref in the instruction, but for now we assume that the deref
+                    # fails and the stack pointer is ok.
                     #
-                    # TODO: Fix this properly by including readability information in GDB output
+                    # TODO: Fix this properly by including readability information in
+                    #       GDB output
                     if isDerefOp(parts[0]):
                         (val, failed) = calculateDerefOpAddress(parts[0])
                         if failed:
@@ -1213,25 +1311,28 @@ class GDBCrashInfo(CrashInfo):
                             #
                             #   movsq  %ds:(%rsi),%es:(%rdi)
                             #
-                            #  (gdb) p $_siginfo._sifields._sigfault.si_addr
-                            #    $1 = (void *) 0x7ff846e64d28
-                            #    (gdb) x /i $pc
-                            #    => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)  # noqa
-                            #    (gdb) info reg $ds
-                            #    ds             0x0      0
-                            #    (gdb) info reg $es
-                            #    es             0x0      0
-                            #    (gdb) info reg $rsi
-                            #    rsi            0x7ff846e64d28   140704318115112
-                            #    (gdb) info reg $rdi
-                            #    rdi            0x7fff27fac030   140733864132656
+                            #    (gdb) p $_siginfo._sifields._sigfault.si_addr
+                            #      $1 = (void *) 0x7ff846e64d28
+                            #      (gdb) x /i $pc
+                            # noqa => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)
+                            #      (gdb) info reg $ds
+                            #      ds             0x0      0
+                            #      (gdb) info reg $es
+                            #      es             0x0      0
+                            #      (gdb) info reg $rsi
+                            #      rsi            0x7ff846e64d28   140704318115112
+                            #      (gdb) info reg $rdi
+                            #      rdi            0x7fff27fac030   140733864132656
                             #
                             #
                             # We don't support this right now, so return None.
                             #
                             return None
 
-                        raise RuntimeError("Instruction operands have multiple loads? %s" % crashInstruction)
+                        raise RuntimeError(
+                            "Instruction operands have multiple loads? %s"
+                            % crashInstruction
+                        )
 
                     derefOp = parts[1]
 
@@ -1242,8 +1343,10 @@ class GDBCrashInfo(CrashInfo):
                     else:
                         return val
                 else:
-                    failureReason = ("Failed to decode two-operand instruction: No dereference operation or "
-                                     "hardcoded address detected.")
+                    failureReason = (
+                        "Failed to decode two-operand instruction: No dereference "
+                        "operation or hardcoded address detected."
+                    )
                     # We might still be reading from/writing to a hardcoded address.
                     # Note that it's not possible to have two hardcoded addresses
                     # in one instruction, one operand must be a register or immediate
@@ -1261,29 +1364,37 @@ class GDBCrashInfo(CrashInfo):
                 if "(" in parts[0] and ")" in parts[2]:
                     complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
 
-                    (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                    (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(
+                        complexDerefOp, registerMap
+                    )
 
                     if result is None:
                         failureReason = reason
                     else:
                         return result
                 else:
-                    raise RuntimeError("Unexpected instruction pattern: %s" % crashInstruction)
+                    raise RuntimeError(
+                        "Unexpected instruction pattern: %s" % crashInstruction
+                    )
             elif len(parts) == 4:
                 if "(" in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
                 elif "(" not in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[1] + "," + parts[2] + "," + parts[3]
 
-                (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(complexDerefOp, registerMap)
+                (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(
+                    complexDerefOp, registerMap
+                )
 
                 if result is None:
                     failureReason = reason
                 else:
                     return result
             else:
-                raise RuntimeError("Unexpected length after splitting operands of this instruction: %s" %
-                                   crashInstruction)
+                raise RuntimeError(
+                    "Unexpected length after splitting operands of this instruction: %s"
+                    % crashInstruction
+                )
 
         if RegisterHelper.isARMCompatible(registerMap):
             # Anything that is not explicitly handled now is considered unsupported
@@ -1331,7 +1442,8 @@ class GDBCrashInfo(CrashInfo):
 
             if len(parts) == 1:
                 if instruction == ".inst" and parts[0].endswith("; undefined"):
-                    # This is an instruction that the dissassembler can't read, so likely a SIGILL
+                    # This is an instruction that the dissassembler can't read, so
+                    # likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
             elif len(parts) == 2:
                 if instruction.startswith("ldr") or instruction.startswith("str"):
@@ -1346,14 +1458,21 @@ class GDBCrashInfo(CrashInfo):
         else:
             failureReason = "Architecture is not supported."
 
-        print("Unable to calculate crash address from instruction: >%s<" % crashInstruction, file=sys.stderr)
+        print(
+            "Unable to calculate crash address from instruction: >%s<"
+            % crashInstruction,
+            file=sys.stderr,
+        )
         print("Reason: %s" % failureReason, file=sys.stderr)
         return failureReason
 
     @staticmethod
     def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
 
-        match = re.match("((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)", complexDerefOp)
+        match = re.match(
+            "((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)",
+            complexDerefOp,
+        )
         if match is not None:
             offset = 0
             if match.group(1):
@@ -1383,9 +1502,10 @@ class GDBCrashInfo(CrashInfo):
 
 class MinidumpCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1399,7 +1519,8 @@ class MinidumpCrashInfo(CrashInfo):
 
         self.configuration = configuration
 
-        # If crashData is given, use that to find the Minidump trace, otherwise use stderr
+        # If crashData is given, use that to find the Minidump trace, otherwise use
+        # stderr
         if crashData:
             minidumpOuput = crashData
         else:
@@ -1412,9 +1533,9 @@ class MinidumpCrashInfo(CrashInfo):
                     components = traceLine.split("|")
 
                     if not components[3]:
-                        # If we have no symbols, but we have a library/component, using that allows
-                        # us to match on the libary name in the stack which is helpful for crashes
-                        # in low level libraries.
+                        # If we have no symbols, but we have a library/component, using
+                        # that allows us to match on the libary name in the stack which
+                        # is helpful for crashes in low level libraries.
                         if components[2]:
                             frame = components[2]
                             if len(components) >= 7 and components[6]:
@@ -1423,7 +1544,9 @@ class MinidumpCrashInfo(CrashInfo):
                         else:
                             self.backtrace.append("??")
                     else:
-                        self.backtrace.append(CrashInfo.sanitizeStackFrame(components[3]))
+                        self.backtrace.append(
+                            CrashInfo.sanitizeStackFrame(components[3])
+                        )
             elif traceLine.startswith("Crash|"):
                 components = traceLine.split("|")
                 crashThread = int(components[3])
@@ -1432,9 +1555,10 @@ class MinidumpCrashInfo(CrashInfo):
 
 class AppleCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1458,11 +1582,11 @@ class AppleCrashInfo(CrashInfo):
                 #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
                 #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
                 address = line.split(" ")[-1]
-                if address.startswith('0x'):
+                if address.startswith("0x"):
                     self.crashAddress = int(address, 16)
 
             # Start of stack for crashing thread
-            if re.match(r'Thread \d+ Crashed:', line):
+            if re.match(r"Thread \d+ Crashed:", line):
                 inCrashingThread = True
                 continue
 
@@ -1472,10 +1596,10 @@ class AppleCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # Example:
-                # 0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)  # noqa
+                # noqa "0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)"
                 components = line.split(None, 3)
                 stackEntry = components[3]
-                if stackEntry.startswith('0'):
+                if stackEntry.startswith("0"):
                     self.backtrace.append("??")
                 else:
                     stackEntry = AppleCrashInfo.removeFilename(stackEntry)
@@ -1485,14 +1609,14 @@ class AppleCrashInfo(CrashInfo):
 
     @staticmethod
     def removeFilename(stackEntry):
-        match = re.match(r'(.*) \(\S+\)', stackEntry)
+        match = re.match(r"(.*) \(\S+\)", stackEntry)
         if match:
             return match.group(1)
         return stackEntry
 
     @staticmethod
     def removeOffset(stackEntry):
-        match = re.match(r'(.*) \+ \d+', stackEntry)
+        match = re.match(r"(.*) \+ \d+", stackEntry)
         if match:
             return match.group(1)
         return stackEntry
@@ -1500,9 +1624,10 @@ class AppleCrashInfo(CrashInfo):
 
 class CDBCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1529,26 +1654,26 @@ class CDBCrashInfo(CrashInfo):
 
         for line in cdb_crash_data:
             # Start of .ecxr data
-            if re.match(r'0:000> \.ecxr', line):
+            if re.match(r"0:000> \.ecxr", line):
                 inEcxrData = True
                 continue
 
             if inEcxrData:
                 # 32-bit example:
-                #     0:000> .ecxr
-                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
-                #     eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
-                #     cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
+                #      0:000> .ecxr
+                # noqa eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                # noqa eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+                # noqa cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
                 # 64-bit example:
-                #     0:000> .ecxr
-                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
-                #     rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
-                #     rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
-                #      r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
-                #     r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
-                #     r14=000000e87fbfd0e0 r15=0000000000000003
-                #     iopl=0         nv up ei pl nz na pe nc
-                #     cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
+                #      0:000> .ecxr
+                #      rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                #      rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
+                #      rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
+                #       r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
+                #      r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
+                #      r14=000000e87fbfd0e0 r15=0000000000000003
+                #      iopl=0         nv up ei pl nz na pe nc
+                # noqa cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
                 if line.startswith("cs="):
                     inEcxrData = False
                     continue
@@ -1564,14 +1689,15 @@ class CDBCrashInfo(CrashInfo):
 
                 # First extract the line
                 # 32-bit example:
-                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b esi=02e00310 edi=02e00310
                 # 64-bit example:
                 #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
                 matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
                 if matchLine is not None:
                     ecxrData.extend(line.split())
 
-                # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own, then iterate
+                # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own,
+                # then iterate
                 match = re.search(cdbRegisterPattern, line)
                 for instr in ecxrData:
                     match = re.search(cdbRegisterPattern, instr)
@@ -1591,7 +1717,8 @@ class CDBCrashInfo(CrashInfo):
                     inCrashInstruction = False
                     continue
 
-                # 64-bit binaries have a backtick in their addresses, e.g. 00007ff7`1e424e62
+                # 64-bit binaries have a backtick in their addresses,
+                # e.g. 00007ff7`1e424e62
                 lineWithoutBacktick = line.replace("`", "", 1)
                 if address and lineWithoutBacktick.startswith(address):
                     # 32-bit examples:
@@ -1611,16 +1738,20 @@ class CDBCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # 32-bit example:
-                #     016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9  # noqa
+                # noqa  "016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9"
                 # 64-bit example:
-                #     000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13  # noqa
-                if "STACK_COMMAND" in line or "SYMBOL_NAME" in line \
-                        or "THREAD_SHA1_HASH_MOD_FUNC" in line or "FAULTING_SOURCE_CODE" in line:
+                # noqa  "000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13"
+                if (
+                    "STACK_COMMAND" in line
+                    or "SYMBOL_NAME" in line
+                    or "THREAD_SHA1_HASH_MOD_FUNC" in line
+                    or "FAULTING_SOURCE_CODE" in line
+                ):
                     inCrashingThread = False
                     continue
 
                 # Ignore cdb error and empty lines
-                if "Following frames may be wrong." in line or line.strip() == '':
+                if "Following frames may be wrong." in line or line.strip() == "":
                     continue
 
                 stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
@@ -1631,12 +1762,14 @@ class CDBCrashInfo(CrashInfo):
     def removeFilenameAndOffset(stackEntry):
         # Extract only the function name
         if "0x" in stackEntry:
-            result = stackEntry.split("!")[-1].split("+")[0].split("<")[0].split(" ")[-1]
+            result = (
+                stackEntry.split("!")[-1].split("+")[0].split("<")[0].split(" ")[-1]
+            )
             if "0x" in result:
                 result = "??"  # Sometimes there is only a memory address in the stack
             elif ".exe" in result:
                 # Sometimes the binary name is present:
-                #     e.g.: "00000000 00000000 unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe+0x0"
+                # eg. "00000000 00000000 unknown!js-dbg-32-windows-42c95d88aaaa.exe+0x0"
                 result = "??"
         else:
             result = "??"
@@ -1645,13 +1778,16 @@ class CDBCrashInfo(CrashInfo):
 
 class RustCrashInfo(CrashInfo):
 
-    RE_FRAME = re.compile(r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)"
-                          r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$")
+    RE_FRAME = re.compile(
+        r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)"
+        r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$"
+    )
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1665,10 +1801,13 @@ class RustCrashInfo(CrashInfo):
 
         self.configuration = configuration
 
-        # If crashData is given, use that to find the rust backtrace, otherwise use stderr
+        # If crashData is given, use that to find the rust backtrace, otherwise use
+        # stderr
         rustOutput = crashData or stderr
 
-        self.crashAddress = 0  # this is always an assertion, set to 0 to make matching more efficient
+        self.crashAddress = (
+            0  # this is always an assertion, set to 0 to make matching more efficient
+        )
 
         inAssertion = False
         inBacktrace = False
@@ -1690,9 +1829,10 @@ class RustCrashInfo(CrashInfo):
 
 class TSanCrashInfo(CrashInfo):
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1709,7 +1849,9 @@ class TSanCrashInfo(CrashInfo):
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         tsanOutput = crashData if crashData else stderr
 
-        tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""  # noqa
+        tsanWarningPattern = (
+            r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""  # noqa
+        )
 
         # Cache this for use by createShortSignature
         self.tsanWarnLine = None
@@ -1753,8 +1895,10 @@ class TSanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError("Fatal error parsing TSan trace (Index mismatch, got index %s but expected %s)" %
-                                   (index, expectedIndex))
+                raise RuntimeError(
+                    f"Fatal error parsing TSan trace (Index mismatch, got index {index}"
+                    f" but expected {expectedIndex})"
+                )
 
             component = None
             if len(parts) > 2:
@@ -1771,7 +1915,10 @@ class TSanCrashInfo(CrashInfo):
                     # Remove parentheses around component
                     component = parts[3][1:-1]
             else:
-                print("Warning: Missing component in this line: %s" % traceLine, file=sys.stderr)
+                print(
+                    "Warning: Missing component in this line: %s" % traceLine,
+                    file=sys.stderr,
+                )
                 component = "<missing>"
 
             currentBacktrace.append(CrashInfo.sanitizeStackFrame(component))
@@ -1794,10 +1941,10 @@ class TSanCrashInfo(CrashInfo):
             self.backtrace.extend(backtrace)
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
         if self.tsanWarnLine:
             msg = re.sub(r"\s*\(pid=\d+\)", "", self.tsanWarnLine)
             msg = msg.replace("WARNING: ", "")
@@ -1821,7 +1968,10 @@ class TSanCrashInfo(CrashInfo):
                 if self.backtrace:
                     msg += " [@ %s]" % self.backtrace[0]
             else:
-                raise RuntimeError("Fatal error: TSan trace warning line has unhandled message case: %s" % msg)
+                raise RuntimeError(
+                    "Fatal error: TSan trace warning line has unhandled message case: "
+                    "%s" % msg
+                )
 
             return msg
 
@@ -1829,7 +1979,8 @@ class TSanCrashInfo(CrashInfo):
 
 
 class ValgrindCrashInfo(CrashInfo):
-    MSG_REGEX = re.compile(r"""
+    MSG_REGEX = re.compile(
+        r"""
         ==\d+==\s+(?P<msg>
         (\d+(,\d+)*\sbytes\sin\s\d+(,\d+)*\sblocks\sare\s\w+\slost)|
         (Argument\s'\w+'\sof\sfunction\smalloc.+)|
@@ -1839,12 +1990,15 @@ class ValgrindCrashInfo(CrashInfo):
         (Process\sterminating\swith\sdefault\saction.+)|
         (Source\sand\sdestination\soverlap)|
         (Syscall\sparam.+)
-        )""", re.VERBOSE)
+        )""",
+        re.VERBOSE,
+    )
 
     def __init__(self, stdout, stderr, configuration, crashData=None):
-        '''
-        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use directly.
-        '''
+        """
+        Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
+        directly.
+        """
         CrashInfo.__init__(self)
 
         if stdout is not None:
@@ -1858,14 +2012,18 @@ class ValgrindCrashInfo(CrashInfo):
 
         self.configuration = configuration
 
-        # If crashData is given, use that to find the Valgrind trace, otherwise use stderr
+        # If crashData is given, use that to find the Valgrind trace, otherwise use
+        # stderr
         vgdOutput = crashData if crashData else stderr
-        stackPattern = re.compile(r"""
+        stackPattern = re.compile(
+            r"""
             ^==\d+==\s+(at|by)\s+            # beginning of entry
             0x[0-9A-Fa-f]+\:\s+              # address
             (?P<func>.+)\s+                  # function name
             \((in\s+)?(?P<file>.+?)(:.+?)?\) # file name
-            """, re.VERBOSE)
+            """,
+            re.VERBOSE,
+        )
 
         foundStart = False
         for traceLine in vgdOutput:
@@ -1889,7 +2047,9 @@ class ValgrindCrashInfo(CrashInfo):
 
             elif self.backtrace:
                 # check if address info is available
-                addr = re.match(r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine)
+                addr = re.match(
+                    r"^==\d+==\s+Address\s(?P<addr>0x[0-9A-Fa-f]+)\s", traceLine
+                )
                 if addr:
                     self.crashAddress = int(addr.group("addr"), 16)
                 # look for '==PID== \n' to indicate the end of a trace
@@ -1898,10 +2058,10 @@ class ValgrindCrashInfo(CrashInfo):
                     break
 
     def createShortSignature(self):
-        '''
+        """
         @rtype: String
         @return: A string representing this crash (short signature)
-        '''
+        """
 
         logData = self.rawCrashData if self.rawCrashData else self.rawStderr
         for line in logData:

@@ -8,7 +8,7 @@ from covmanager.models import Repository
 
 
 class Command(BaseCommand):
-    help = 'Sets up a repository for CovManager'
+    help = "Sets up a repository for CovManager"
 
     def add_arguments(self, parser):
         parser.add_argument("name", help="repository identifier")
@@ -21,18 +21,26 @@ class Command(BaseCommand):
             raise CommandError("Error: invalid repository name")
 
         if Repository.objects.filter(name=name):
-            raise CommandError("Error: repository with name '%s' already exists!" % name)
+            raise CommandError(
+                "Error: repository with name '%s' already exists!" % name
+            )
 
         if not provider:
             raise CommandError("Error: invalid provider class")
 
         # also accept friendly names
-        provider = {"git": "GITSourceCodeProvider",
-                    "hg": "HGSourceCodeProvider"}.get(provider, provider)
+        provider = {"git": "GITSourceCodeProvider", "hg": "HGSourceCodeProvider"}.get(
+            provider, provider
+        )
         try:
-            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])
+            __import__(
+                "covmanager.SourceCodeProvider.%s" % provider,
+                fromlist=[provider.encode("utf-8")],
+            )
         except ImportError:
-            raise CommandError("Error: '%s' is not a valid source code provider!" % provider)
+            raise CommandError(
+                "Error: '%s' is not a valid source code provider!" % provider
+            )
 
         if not location:
             raise CommandError("Error: invalid location")
@@ -47,4 +55,7 @@ class Command(BaseCommand):
 
         repository.save()
 
-        print("Successfully created repository '%s' with provider '%s' located at %s" % (name, provider, location))
+        print(
+            "Successfully created repository '%s' with provider '%s' located at %s"
+            % (name, provider, location)
+        )

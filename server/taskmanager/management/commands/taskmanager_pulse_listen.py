@@ -13,7 +13,6 @@ LOG = getLogger("taskmanager.management.commands.listen")
 
 
 class TaskClusterConsumer(GenericConsumer):
-
     def __init__(self, **kwargs):
         repo_slug = Path(settings.TC_FUZZING_CFG_REPO.split(":", 1)[1])
         org = repo_slug.parent
@@ -40,11 +39,15 @@ class TaskClusterConsumer(GenericConsumer):
 
 
 class Command(BaseCommand):
-    help = ("Listens for Mozilla Pulse messages relating to TaskManager tasks, "
-            "and schedule celery tasks to handle them")
+    help = (
+        "Listens for Mozilla Pulse messages relating to TaskManager tasks, "
+        "and schedule celery tasks to handle them"
+    )
 
     def callback(self, body, msg):
-        if msg.delivery_info["exchange"].startswith("exchange/taskcluster-queue/v1/task-"):
+        if msg.delivery_info["exchange"].startswith(
+            "exchange/taskcluster-queue/v1/task-"
+        ):
             LOG.info(
                 "%s on %s for %s",
                 msg.delivery_info["routing_key"],
@@ -66,7 +69,8 @@ class Command(BaseCommand):
             msg.ack()
             return
         raise RuntimeError(
-            "Unhandled message: %s on %s" % (
+            "Unhandled message: %s on %s"
+            % (
                 msg.delivery_info["routing_key"],
                 msg.delivery_info["exchange"],
             )

@@ -33,14 +33,16 @@ def create_weekly_report_mc(revision):
     client = Client.objects.get_or_create(name="Server")[0]
 
     collections = Collection.objects.filter(
-        Q(revision=revision) | Q(revision=short_revision)).filter(
-            repository=repository, coverage__isnull=False)
+        Q(revision=revision) | Q(revision=short_revision)
+    ).filter(repository=repository, coverage__isnull=False)
 
     last_monday = collections.first().created + relativedelta(weekday=MO(-1))
 
     mergedCollection = Collection()
     mergedCollection.description = "Weekly Report (Week of %s, %s reports)" % (
-        last_monday.strftime("%-m/%-d"), collections.count())
+        last_monday.strftime("%-m/%-d"),
+        collections.count(),
+    )
     mergedCollection.repository = repository
     mergedCollection.revision = revision
     mergedCollection.branch = "master"
@@ -59,14 +61,14 @@ def create_weekly_report_mc(revision):
         tools.extend(collection.tools.all())
     mergedCollection.tools.add(*tools)
 
-    ids = list(collections.values_list('id', flat=True))
+    ids = list(collections.values_list("id", flat=True))
 
     aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
 
 @app.task(ignore_result=True)
 def create_current_weekly_report_mc():
-    COVERAGE_REVISION_URL = getattr(settings, 'COVERAGE_REVISION_URL', None)
+    COVERAGE_REVISION_URL = getattr(settings, "COVERAGE_REVISION_URL", None)
 
     if not COVERAGE_REVISION_URL:
         logger.error("Missing configuration for COVERAGE_REVISION_URL.")
@@ -74,8 +76,11 @@ def create_current_weekly_report_mc():
 
     response = requests.get(COVERAGE_REVISION_URL)
     if not response.ok:
-        logger.error("Failed fetching coverage revision. Got status %s with response: %s",
-                     response.status_code, response.text)
+        logger.error(
+            "Failed fetching coverage revision. Got status %s with response: %s",
+            response.status_code,
+            response.text,
+        )
         return
 
     revision = response.text.rstrip()

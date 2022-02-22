@@ -9,30 +9,63 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('covmanager', '0003_collection_file_optional'),
+        ("covmanager", "0003_collection_file_optional"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ReportConfiguration',
+            name="ReportConfiguration",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('description', models.CharField(blank=True, max_length=1023)),
-                ('directives', models.TextField()),
-                ('public', models.BooleanField(default=False)),
-                ('logical_parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
-                                                     to='covmanager.ReportConfiguration')),
-                ('repository', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
-                                                 to='covmanager.Repository')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("description", models.CharField(blank=True, max_length=1023)),
+                ("directives", models.TextField()),
+                ("public", models.BooleanField(default=False)),
+                (
+                    "logical_parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="covmanager.ReportConfiguration",
+                    ),
+                ),
+                (
+                    "repository",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="covmanager.Repository",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ReportSummary',
+            name="ReportSummary",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cached_result', models.TextField(blank=True, null=True)),
-                ('collection', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
-                                                    to='covmanager.Collection')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("cached_result", models.TextField(blank=True, null=True)),
+                (
+                    "collection",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="covmanager.Collection",
+                    ),
+                ),
             ],
         ),
     ]

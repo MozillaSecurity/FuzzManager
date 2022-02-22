@@ -1,4 +1,4 @@
-'''
+"""
 Helper methods around registers
 
 @author:     Christian Holler (:decoder)
@@ -10,47 +10,95 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 x86Registers = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "eip"]
 
-x64Registers = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8",
-                "r9", "r10", "r11", "r12", "r13", "r14", "r15", "rip"]
+x64Registers = [
+    "rax",
+    "rbx",
+    "rcx",
+    "rdx",
+    "rsi",
+    "rdi",
+    "rbp",
+    "rsp",
+    "r8",
+    "r9",
+    "r10",
+    "r11",
+    "r12",
+    "r13",
+    "r14",
+    "r15",
+    "rip",
+]
 
-armRegisters = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
-                "r10", "r11", "r12", "sp", "lr", "pc", "cpsr"]
+armRegisters = [
+    "r0",
+    "r1",
+    "r2",
+    "r3",
+    "r4",
+    "r5",
+    "r6",
+    "r7",
+    "r8",
+    "r9",
+    "r10",
+    "r11",
+    "r12",
+    "sp",
+    "lr",
+    "pc",
+    "cpsr",
+]
 
-arm64Registers = ["x" + str(x) for x in range(0, 31)] + ["sp", "pc", "cpsr", "fpcsr", "fpcr"]
+arm64Registers = ["x" + str(x) for x in range(0, 31)] + [
+    "sp",
+    "pc",
+    "cpsr",
+    "fpcsr",
+    "fpcr",
+]
 
-x86OnlyRegisters = list(set(x86Registers + x64Registers) - set(armRegisters + arm64Registers))
-armOnlyRegisters = list(set(armRegisters + arm64Registers) - set(x86Registers + x64Registers))
+x86OnlyRegisters = list(
+    set(x86Registers + x64Registers) - set(armRegisters + arm64Registers)
+)
+armOnlyRegisters = list(
+    set(armRegisters + arm64Registers) - set(x86Registers + x64Registers)
+)
 
 validRegisters = {
     "X86": x86Registers,
     "X64": x64Registers,
     "ARM": armRegisters,
-    "ARM64": arm64Registers
+    "ARM64": arm64Registers,
 }
 
 
 def getRegisterPattern():
-    '''
-        Return a pattern including all register names that are considered valid
-    '''
-    return "(" + '|'.join(["%s"] * len(validRegisters)) % tuple(
-        ['|'.join(i) for i in validRegisters.values()]) + ")"
+    """
+    Return a pattern including all register names that are considered valid
+    """
+    return (
+        "("
+        + "|".join(["%s"] * len(validRegisters))
+        % tuple(["|".join(i) for i in validRegisters.values()])
+        + ")"
+    )
 
 
 def getStackPointer(registerMap):
-    '''
-        Return the stack pointer value from the given register map
+    """
+    Return the stack pointer value from the given register map
 
-        @type registerMap: map
-        @param registerMap: Map of register names to value
+    @type registerMap: map
+    @param registerMap: Map of register names to value
 
-        @rtype: int
-        @return: The value of the stack pointer
-    '''
+    @rtype: int
+    @return: The value of the stack pointer
+    """
 
     for reg in ["rsp", "esp", "sp"]:
         if reg in registerMap:
@@ -60,15 +108,15 @@ def getStackPointer(registerMap):
 
 
 def getInstructionPointer(registerMap):
-    '''
-        Return the instruction pointer value from the given register map
+    """
+    Return the instruction pointer value from the given register map
 
-        @type registerMap: map
-        @param registerMap: Map of register names to value
+    @type registerMap: map
+    @param registerMap: Map of register names to value
 
-        @rtype: int
-        @return: The value of the instruction pointer
-    '''
+    @rtype: int
+    @return: The value of the instruction pointer
+    """
 
     for reg in ["rip", "eip", "pc"]:
         if reg in registerMap:
@@ -78,19 +126,19 @@ def getInstructionPointer(registerMap):
 
 
 def getRegisterValue(register, registerMap):
-    '''
-        Return the value of the specified register using the provided register map.
-        This method also works for getting lower register parts out of higher ones.
+    """
+    Return the value of the specified register using the provided register map.
+    This method also works for getting lower register parts out of higher ones.
 
-        @type register: string
-        @param register: The register to get the value for
+    @type register: string
+    @param register: The register to get the value for
 
-        @type registerMap: map
-        @param registerMap: Map of register names to values
+    @type registerMap: map
+    @param registerMap: Map of register names to values
 
-        @rtype: int
-        @return: The register value
-    '''
+    @rtype: int
+    @return: The register value
+    """
 
     # If the register is requested as in the map, return it immediately
     if register in registerMap:
@@ -149,15 +197,15 @@ def getRegisterValue(register, registerMap):
 
 
 def getBitWidth(registerMap):
-    '''
-        Return the bit width (32 or 64 bit) given the registers
+    """
+    Return the bit width (32 or 64 bit) given the registers
 
-        @type registerMap: map
-        @param registerMap: Map of register names to value
+    @type registerMap: map
+    @param registerMap: Map of register names to value
 
-        @rtype: int
-        @return: The bit width
-    '''
+    @rtype: int
+    @return: The bit width
+    """
     if "rax" in registerMap or "x0" in registerMap:
         return 64
 
@@ -165,16 +213,16 @@ def getBitWidth(registerMap):
 
 
 def isX86Compatible(registerMap):
-    '''
-        Return true, if the the given registers are X86 compatible, such as x86 or x86-64.
-        ARM, PPC and your PDP-15 will fail this check and we don't support it right now.
+    """
+    Return true, if the the given registers are X86 compatible, such as x86 or x86-64.
+    ARM, PPC and your PDP-15 will fail this check and we don't support it right now.
 
-        @type registerMap: map
-        @param registerMap: Map of register names to value
+    @type registerMap: map
+    @param registerMap: Map of register names to value
 
-        @rtype: bool
-        @return: True if the architecture is X86 compatible, False otherwise
-    '''
+    @rtype: bool
+    @return: True if the architecture is X86 compatible, False otherwise
+    """
     for register in x86OnlyRegisters:
         if register in registerMap:
             return True
@@ -182,15 +230,15 @@ def isX86Compatible(registerMap):
 
 
 def isARMCompatible(registerMap):
-    '''
-        Return true, if the the given registers are either ARM or ARM64.
+    """
+    Return true, if the the given registers are either ARM or ARM64.
 
-        @type registerMap: map
-        @param registerMap: Map of register names to value
+    @type registerMap: map
+    @param registerMap: Map of register names to value
 
-        @rtype: bool
-        @return: True if the architecture is ARM/ARM64 compatible, False otherwise
-    '''
+    @rtype: bool
+    @return: True if the architecture is ARM/ARM64 compatible, False otherwise
+    """
     for register in armOnlyRegisters:
         if register in registerMap:
             return True

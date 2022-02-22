@@ -13,45 +13,60 @@ from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from server.auth import CheckAppPermission
-from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend, deny_restricted_users
+from server.views import (
+    JsonQueryFilterBackend,
+    SimpleQueryFilterBackend,
+    deny_restricted_users,
+)
 from .models import Pool, Task
-from .serializers import PoolSerializer, PoolVueSerializer, TaskSerializer, TaskVueSerializer
+from .serializers import (
+    PoolSerializer,
+    PoolVueSerializer,
+    TaskSerializer,
+    TaskVueSerializer,
+)
 
 LOG = logging.getLogger("fm.taskmanager.views")
 
-# If status is reported for an unknown task, we store it in the DB with the Pool key nulled.
-# We can't show this in taskmanager until we know what pool it belongs to. If for some reason
-# the task is never claimed by a pool, we set an expiry so it will be deleted.
+# If status is reported for an unknown task, we store it in the DB with the Pool key
+# nulled.  We can't show this in taskmanager until we know what pool it belongs to.
+# If for some reason the task is never claimed by a pool, we set an expiry so it will
+# be deleted.
 UNKNOWN_TASK_STATUS_EXPIRES = datetime.timedelta(hours=1)
 
 
 @deny_restricted_users
 def index(request):
-    return redirect('taskmanager:pool-list-ui')
+    return redirect("taskmanager:pool-list-ui")
 
 
 @deny_restricted_users
 def list_pools(request):
-    return render(request, 'pool/index.html', {})
+    return render(request, "pool/index.html", {})
 
 
 @deny_restricted_users
 def view_pool(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
-    return render(request, 'pool/view.html', {
-        "pool": PoolVueSerializer(pool).data,
-    })
+    return render(
+        request,
+        "pool/view.html",
+        {
+            "pool": PoolVueSerializer(pool).data,
+        },
+    )
 
 
 class PoolViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows viewing Pools
     """
+
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (CheckAppPermission,)
     queryset = Pool.objects.all()
     serializer_class = PoolSerializer
-    paginate_by_param = 'limit'
+    paginate_by_param = "limit"
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
@@ -59,23 +74,27 @@ class PoolViewSet(viewsets.ReadOnlyModelViewSet):
     ]
 
     def get_serializer(self, *args, **kwds):
-        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        vue = self.request.query_params.get("vue", "false").lower() not in (
+            "false",
+            "0",
+        )
         if vue:
             return PoolVueSerializer(*args, **kwds)
         return super().get_serializer(*args, **kwds)
 
 
-class TaskViewSet(mixins.ListModelMixin,
-                  mixins.RetrieveModelMixin,
-                  viewsets.GenericViewSet):
+class TaskViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     """
     API endpoint that allows viewing Tasks
     """
+
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     permission_classes = (CheckAppPermission,)
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    paginate_by_param = 'limit'
+    paginate_by_param = "limit"
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
@@ -83,12 +102,17 @@ class TaskViewSet(mixins.ListModelMixin,
     ]
 
     def get_serializer(self, *args, **kwds):
-        vue = self.request.query_params.get('vue', 'false').lower() not in ('false', '0')
+        vue = self.request.query_params.get("vue", "false").lower() not in (
+            "false",
+            "0",
+        )
         if vue:
             return TaskVueSerializer(*args, **kwds)
         return super().get_serializer(*args, **kwds)
 
-    @action(detail=False, methods=['post'], authentication_classes=(TokenAuthentication,))
+    @action(
+        detail=False, methods=["post"], authentication_classes=(TokenAuthentication,)
+    )
     def update_status(self, request):
         if set(request.data.keys()) != {"client", "status_data"}:
             LOG.debug("request.data.keys(): %s", request.data.keys())

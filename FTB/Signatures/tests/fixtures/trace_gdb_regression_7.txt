@@ -1,0 +1,36 @@
+Assertion failure: this->is<T>(), at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jsobj.h:554
+
+Thread 1 "js" received signal SIGSEGV, Segmentation fault.
+0x0000000000b7e884 in JSObject::as<js::ModuleEnvironmentObject> (this=<optimized out>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jsobj.h:554
+554     /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jsobj.h: No such file or directory.
+#0  0x0000000000b7e884 in JSObject::as<js::ModuleEnvironmentObject> (this=<optimized out>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jsobj.h:554
+#1  0x0000000000b4b041 in js::ScopeIter::settle (this=this@entry=0x7fffffffaea0) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/ScopeObject.cpp:1481
+#2  0x0000000000b4b653 in js::ScopeIter::ScopeIter(JSContext*, js::AbstractFramePtr, unsigned char*, mozilla::detail::GuardObjectNotifier&&) (this=0x7fffffffaea0, cx=0x7ffff691ac00, frame=..., pc=<optimized out>, _notifier=<unknown type in /home/decoder/LangFuzz/work/remote/builds/debug64/dist/bin/js, CU 0x400acc3, DIE 0x41cf0a6>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/vm/ScopeObject.cpp:1413
+#3  0x0000000000834eec in js::jit::DebugEpilogue (cx=cx@entry=0x7ffff691ac00, frame=frame@entry=0x7fffffffb668, pc=0x7ffff69f4e96 "0", ok=<optimized out>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/VMFunctions.cpp:707
+#4  0x000000000071a505 in js::jit::OnLeaveBaselineFrame (frameOk=<optimized out>, rfe=0x7fffffffb5d0, pc=<optimized out>, frame=..., cx=0x7ffff691ac00) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/JitFrames.cpp:463
+#5  js::jit::HandleExceptionBaseline (pc=0x7ffff69f4e96 "0", rfe=<optimized out>, frame=..., cx=0x7ffff691ac00) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/JitFrames.cpp:696
+#6  js::jit::HandleException (rfe=<optimized out>) at /srv/jenkins/jobs/mozilla-central-clone/workspace/js/src/jit/JitFrames.cpp:837
+#7  0x00007ffff7fe6608 in ?? ()
+#8  0x0000000000000000 in ?? ()
+rax     0x0     0
+rbx     0x7fffffffaea0  140737488334496
+rcx     0x7ffff6c28a2d  140737333332525
+rdx     0x0     0
+rsi     0x7ffff6ef7770  140737336276848
+rdi     0x7ffff6ef6540  140737336272192
+rbp     0x7fffffffadb0  140737488334256
+rsp     0x7fffffffadb0  140737488334256
+r8      0x7ffff6ef7770  140737336276848
+r9      0x7ffff7fdc740  140737353992000
+r10     0x0     0
+r11     0x0     0
+r12     0x7ffff7e7b100  140737352544512
+r13     0x7ffff7e7b100  140737352544512
+r14     0x7fffffffae00  140737488334336
+r15     0x7fffffffadf0  140737488334320
+rip     0xb7e884 <JSObject::as<js::ModuleEnvironmentObject>()+52>
+=> 0xb7e884 <JSObject::as<js::ModuleEnvironmentObject>()+52>:   movl   $0x0,0x0
+   0xb7e88f <JSObject::as<js::ModuleEnvironmentObject>()+63>:   ud2
+A debugging session is active.
+
+        Inferior 1 [process 24244] will be killed.

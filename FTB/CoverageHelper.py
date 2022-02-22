@@ -1,5 +1,5 @@
 # encoding: utf-8
-'''
+"""
 CoverageHelper -- Various methods around processing coverage data
 
 @author:     Christian Holler (:decoder)
@@ -11,7 +11,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
@@ -25,52 +25,55 @@ def merge_coverage_data(r, s):
     # bugs in GCOV. These statistics can be included in the report description
     # to track the status of these bugs.
     stats = {
-        'null_coverable_count': 0,
-        'length_mismatch_count': 0,
-        'coverable_mismatch_count': 0
+        "null_coverable_count": 0,
+        "length_mismatch_count": 0,
+        "coverable_mismatch_count": 0,
     }
 
     def merge_recursive(r, s):
-        assert(r['name'] == s['name'])
+        assert r["name"] == s["name"]
 
         if "children" in s:
-            for child in s['children']:
-                if child in r['children']:
+            for child in s["children"]:
+                if child in r["children"]:
                     # Slow path, child is in both data blobs,
                     # perform recursive merge.
-                    merge_recursive(r['children'][child], s['children'][child])
+                    merge_recursive(r["children"][child], s["children"][child])
                 else:
                     # Fast path, subtree only in merge source
-                    r['children'][child] = s['children'][child]
+                    r["children"][child] = s["children"][child]
         else:
-            rc = r['coverage']
-            sc = s['coverage']
+            rc = r["coverage"]
+            sc = s["coverage"]
 
             # GCOV bug, if the file has 0% coverage, then all of the file
             # is reported as not coverable. If s has that property, we simply
             # ignore it. If r has that property, we replace it by s.
             if sc.count(-1) == len(sc):
                 if rc.count(-1) != len(rc):
-                    #print("Warning: File %s reports no coverable lines" % r['name'])
-                    stats['null_coverable_count'] += 1
+                    # print("Warning: File %s reports no coverable lines" % r['name'])
+                    stats["null_coverable_count"] += 1
                 return
 
             if rc.count(-1) == len(rc):
                 if sc.count(-1) != len(sc):
-                    #print("Warning: File %s reports no coverable lines" % r['name'])
-                    stats['null_coverable_count'] += 1
+                    # print("Warning: File %s reports no coverable lines" % r['name'])
+                    stats["null_coverable_count"] += 1
 
-                r['coverage'] = sc
+                r["coverage"] = sc
                 return
 
-            # grcov does not always output the correct length for files when they end in non-coverable lines.
-            # We record this, then ignore the excess lines.
+            # grcov does not always output the correct length for files when they end in
+            # non-coverable lines.  We record this, then ignore the excess lines.
             if len(rc) != len(sc):
-                #print("Warning: Length mismatch for file %s (%s vs. %s)" % (r['name'], len(rc), len(sc)))
-                stats['length_mismatch_count'] += 1
+                # print(
+                #     "Warning: Length mismatch for file %s (%s vs. %s)"
+                #     % (r['name'], len(rc), len(sc))
+                # )
+                stats["length_mismatch_count"] += 1
 
             # Disable the assertion for now
-            #assert(len(r['coverage']) == len(s['coverage']))
+            # assert(len(r['coverage']) == len(s['coverage']))
 
             minlen = min(len(rc), len(sc))
 
@@ -78,17 +81,20 @@ def merge_coverage_data(r, s):
                 # There are multiple situations where coverage reports might disagree
                 # about which lines are coverable and which are not. Sometimes, GCOV
                 # reports this wrong in headers, but it can also happen when mixing
-                # Clang and GCOV reports. Clang seems to consider more lines as coverable
-                # than GCOV.
+                # Clang and GCOV reports. Clang seems to consider more lines as
+                # coverable than GCOV.
                 #
-                # As a short-term solution we will always treat a location as *not* coverable
-                # if any of the reports says it is not coverable. We will still record these
-                # mismatches so we can track them and confirm them going down once we fix the
-                # various root causes for this behavior.
+                # As a short-term solution we will always treat a location as *not*
+                # coverable if any of the reports says it is not coverable. We will
+                # still record these mismatches so we can track them and confirm them
+                # going down once we fix the various root causes for this behavior.
                 if (sc[idx] < 0 and rc[idx] >= 0) or (rc[idx] < 0 and sc[idx] >= 0):
-                    #print("Warning: Coverable/Non-Coverable mismatch for file %s (idx %s, %s vs. %s)" %
-                    #      (r['name'], idx, rc[idx], sc[idx]))
-                    stats['coverable_mismatch_count'] += 1
+                    # print(
+                    #     "Warning: Coverable/Non-Coverable mismatch for file %s (idx "
+                    #     "%s, %s vs. %s)" %
+                    #     (r['name'], idx, rc[idx], sc[idx])
+                    # )
+                    stats["coverable_mismatch_count"] += 1
 
                     # Explicitly mark as not coverable
                     rc[idx] = -1
@@ -136,7 +142,9 @@ def calculate_summary_fields(node, name=None):
     node["linesMissed"] = node["linesTotal"] - node["linesCovered"]
 
     if node["linesTotal"] > 0:
-        node["coveragePercent"] = round(((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2)
+        node["coveragePercent"] = round(
+            ((float(node["linesCovered"]) / node["linesTotal"]) * 100), 2
+        )
     else:
         node["coveragePercent"] = 0.0
 
@@ -170,7 +178,9 @@ def apply_include_exclude_directives(node, directives):
     #
     # ** are left as a string
     # patterns are converted to regex and compile
-    directives_new = [("+", ["**"])]  # start with an implicit +:** so we don't have to handle the empty case
+    directives_new = [
+        ("+", ["**"])
+    ]  # start with an implicit +:** so we don't have to handle the empty case
     for directive in directives:
         directive = directive.lstrip()
         if directive.startswith("#") or not len(directive):
@@ -187,9 +197,9 @@ def apply_include_exclude_directives(node, directives):
             if part == "**":
                 parts.append(part)
             elif "**" in part:
-                # although this is technically still a valid glob, raise an error since ** has special meaning
-                # and this probably indicates a misunderstanding of what it will do
-                # (functionally, ** == * if it was left in)
+                # although this is technically still a valid glob, raise an error since
+                # ** has special meaning and this probably indicates a misunderstanding
+                # of what it will do (functionally, ** == * if it was left in)
                 raise RuntimeError("** cannot be used in an expression")
             else:
                 # escape regex characters
@@ -207,9 +217,15 @@ def apply_include_exclude_directives(node, directives):
         if not _is_dir(node):
             return
 
-        #print("\tdirectives = [ " +
-        #      ", ".join(w + ":" + "/".join("**" if d == "**" else d.pattern for d in p) for (w, p) in directives) +
-        #      "]")
+        # print(
+        #     "\tdirectives = [ " +
+        #     ", ".join(
+        #         w + ":" + "/".join(
+        #             "**" if d == "**" else d.pattern for d in p
+        #         ) for (w, p) in directives
+        #     ) +
+        #     "]"
+        # )
 
         # separate out files from dirs
         original_files = []
@@ -225,7 +241,8 @@ def apply_include_exclude_directives(node, directives):
         for what, parts in directives:
             pattern, subtree_pattern = parts[0], parts[1:]
 
-            # there is still a "/" in the pattern, so it shouldn't be applied to files at this point
+            # there is still a "/" in the pattern, so it shouldn't be applied to files
+            # at this point
             if subtree_pattern:
                 continue
 
@@ -233,7 +250,11 @@ def apply_include_exclude_directives(node, directives):
                 if pattern == "**":
                     files = set(original_files)
                 else:
-                    files |= {child for child in original_files if pattern.match(child) is not None}
+                    files |= {
+                        child
+                        for child in original_files
+                        if pattern.match(child) is not None
+                    }
             else:  # what == "-"
                 if pattern == "**":
                     files = set()
@@ -241,14 +262,17 @@ def apply_include_exclude_directives(node, directives):
                     files = {child for child in files if pattern.match(child) is None}
 
         # run directives on dirs
-        universal_directives = []  # patterns beginning with **/ should always be applied recursively
+        universal_directives = (
+            []
+        )  # patterns beginning with **/ should always be applied recursively
         dirs = {}
         for what, parts in directives:
             pattern, subtree_pattern = parts[0], parts[1:]
 
             if pattern == "**":
-                # ** is unique in that it applies to both files and directories at every level
-                # it is also the only pattern that can remove a directory from recursion
+                # ** is unique in that it applies to both files and directories at every
+                # level.  it is also the only pattern that can remove a directory from
+                # recursion
                 if subtree_pattern:
                     universal_directives.append((what, parts))
                 else:
@@ -256,15 +280,17 @@ def apply_include_exclude_directives(node, directives):
                     #   so ignore the existing universal_directives
                     universal_directives = [(what, parts)]
 
-                    # this is a unique case, so handle it separately
-                    # it will either reset dirs to all directory children of the current node, or clear dirs
+                    # this is a unique case, so handle it separately.  it will either
+                    # reset dirs to all directory children of the current node, or
+                    # clear dirs
                     if what == "+":
                         dirs = {child: [(what, parts)] for child in original_dirs}
                     else:  # what == "-"
                         dirs = {}
                     continue
 
-            # ** is the only case we care about that is not a subtree pattern, and it was already handled above
+            # ** is the only case we care about that is not a subtree pattern, and it
+            # was already handled above
             if not subtree_pattern:
                 continue
 
@@ -287,11 +313,18 @@ def apply_include_exclude_directives(node, directives):
                 universal_directives.append((what, subtree_pattern))
 
         # filters are applied, now remove/recurse for each child
-        for child in list(node["children"]):  # make a copy since elements will be removed during iteration
+        for child in list(
+            node["children"]
+        ):  # make a copy since elements will be removed during iteration
             if _is_dir(node["children"][child]):
                 if child in dirs:
-                    #print("recursing to %s/%s" % (node["name"], node["children"][child]["name"]))
-                    __apply_include_exclude_directives(node["children"][child], dirs[child])
+                    # print(
+                    #     f"recursing to {node['name']}/"
+                    #     f"{node['children'][child]['name']}"
+                    # )
+                    __apply_include_exclude_directives(
+                        node["children"][child], dirs[child]
+                    )
                     # the child is now empty, so remove it too
                     if not node["children"][child]["children"]:
                         del node["children"][child]
@@ -320,6 +353,7 @@ def get_flattened_names(node, prefix=""):
     @return The list of all paths occurring in the given node.
     @rtype: list(str)
     """
+
     def __get_flattened_names(node, prefix, result):
         current_name = node["name"]
         if current_name is None:
