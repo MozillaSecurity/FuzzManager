@@ -3,10 +3,11 @@ from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
 from subprocess import check_output
-from django.conf import settings
-from celeryconf import app  # noqa
-from . import cron  # noqa ensure cron tasks get registered
 
+from celeryconf import app
+from django.conf import settings
+
+from . import cron  # noqa ensure cron tasks get registered
 
 LOG = getLogger("taskmanager.tasks")
 
@@ -49,6 +50,7 @@ def get_or_create_pool(worker_type):
 @app.task(ignore_result=True)
 def update_pool_defns():
     from fuzzing_decision.common.pool import PoolConfigLoader
+
     from .models import Pool, Task
 
     # don't remove pools while they have existing tasks
@@ -113,6 +115,7 @@ def update_pool_defns():
 @app.task(ignore_result=True)
 def update_task(pulse_data):
     import taskcluster
+
     from .models import Task
 
     status = pulse_data["status"]

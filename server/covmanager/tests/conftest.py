@@ -14,12 +14,14 @@ import os
 import shutil
 import subprocess
 import tempfile
-import pytest
-from django.contrib.auth.models import User, Permission
-from django.contrib.contenttypes.models import ContentType
-from covmanager.models import Collection, CollectionFile, Repository
-from crashmanager.models import Client, Tool, User as cmUser
 
+import pytest
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
+
+from covmanager.models import Collection, CollectionFile, Repository
+from crashmanager.models import Client, Tool
+from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.covmanager.tests")
 

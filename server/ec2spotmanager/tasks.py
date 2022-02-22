@@ -1,22 +1,23 @@
-import json
 import itertools
+import json
 import logging
 import sys
+
 import celery
 import redis
+from celeryconf import app
 from django.conf import settings
 from django.utils import timezone
 from laniakea.core.userdata import UserData
-from celeryconf import app
+
 from . import cron  # noqa ensure cron tasks get registered
-from .common.prices import get_price_median
 from .CloudProvider.CloudProvider import (
     INSTANCE_STATE,
     PROVIDERS,
     CloudProvider,
     CloudProviderError,
 )
-
+from .common.prices import get_price_median
 
 logger = logging.getLogger("ec2spotmanager")
 
@@ -170,7 +171,7 @@ def _determine_best_location(config, count, cache=None):
 
 def _start_pool_instances(pool, config, count=1):
     """Start an instance with the given configuration"""
-    from .models import Instance, PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+    from .models import POOL_STATUS_ENTRY_TYPE, Instance, PoolStatusEntry
 
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
@@ -286,7 +287,7 @@ def _start_pool_instances(pool, config, count=1):
 
 
 def _update_provider_status(provider, type_, message):
-    from .models import ProviderStatusEntry, POOL_STATUS_ENTRY_TYPE
+    from .models import POOL_STATUS_ENTRY_TYPE, ProviderStatusEntry
 
     is_critical = type_ not in {
         "max-spot-instance-count-exceeded",
@@ -319,7 +320,7 @@ def _update_provider_status(provider, type_, message):
 
 
 def _update_pool_status(pool, type_, message):
-    from .models import PoolStatusEntry, POOL_STATUS_ENTRY_TYPE
+    from .models import POOL_STATUS_ENTRY_TYPE, PoolStatusEntry
 
     is_critical = type_ not in {
         "max-spot-instance-count-exceeded",
@@ -365,11 +366,11 @@ def update_requests(provider, region, pool_id):
     @param pool_id: InstancePool pk
     """
     from .models import (
+        POOL_STATUS_ENTRY_TYPE,
         Instance,
         InstancePool,
         PoolStatusEntry,
         ProviderStatusEntry,
-        POOL_STATUS_ENTRY_TYPE,
     )
 
     logger.debug("-> update_requests(%r, %r, %r)", provider, region, pool_id)

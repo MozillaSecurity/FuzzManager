@@ -20,10 +20,10 @@ import json
 
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Symptom import (
+    OutputSymptom,
+    StackFramesSymptom,
     Symptom,
     TestcaseSymptom,
-    StackFramesSymptom,
-    OutputSymptom,
 )
 
 

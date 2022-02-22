@@ -1,23 +1,25 @@
 import datetime
 import logging
 import re
-import botocore
+
 import boto3
 import boto.ec2
 import boto.exception
-from django.utils import timezone
+import botocore
 from django.conf import settings
+from django.utils import timezone
 from laniakea.core.providers.ec2 import EC2Manager
+
+from ..common.ec2 import CORES_PER_INSTANCE
+from ..tasks import SPOTMGR_TAG
 from .CloudProvider import (
-    CloudProvider,
-    CloudProviderTemporaryFailure,
-    CloudProviderInstanceCountError,
     INSTANCE_STATE,
     INSTANCE_STATE_CODE,
+    CloudProvider,
+    CloudProviderInstanceCountError,
+    CloudProviderTemporaryFailure,
     wrap_provider_errors,
 )
-from ..tasks import SPOTMGR_TAG
-from ..common.ec2 import CORES_PER_INSTANCE
 
 
 class EC2SpotCloudProvider(CloudProvider):

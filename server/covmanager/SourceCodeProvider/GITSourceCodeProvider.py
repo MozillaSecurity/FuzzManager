@@ -19,8 +19,8 @@ import subprocess
 
 from .SourceCodeProvider import (
     SourceCodeProvider,
-    UnknownRevisionException,
     UnknownFilenameException,
+    UnknownRevisionException,
 )
 
 

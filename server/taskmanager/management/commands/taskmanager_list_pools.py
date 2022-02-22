@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.core.management import BaseCommand  # noqa
+from django.core.management import BaseCommand
 
 from ...models import Pool
 

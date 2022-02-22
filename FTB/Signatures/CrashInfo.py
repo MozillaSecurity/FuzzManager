@@ -18,11 +18,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from abc import ABCMeta
 import json
 import os
 import re
 import sys
+from abc import ABCMeta
 
 import six
 
@@ -1849,9 +1849,7 @@ class TSanCrashInfo(CrashInfo):
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         tsanOutput = crashData if crashData else stderr
 
-        tsanWarningPattern = (
-            r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""  # noqa
-        )
+        tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""
 
         # Cache this for use by createShortSignature
         self.tsanWarnLine = None

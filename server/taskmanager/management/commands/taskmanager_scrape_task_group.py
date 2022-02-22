@@ -2,13 +2,12 @@
 import functools
 from logging import getLogger
 
-from django.conf import settings
-from django.core.management import BaseCommand  # noqa
 import taskcluster
+from django.conf import settings
+from django.core.management import BaseCommand
 
-from ...tasks import get_or_create_pool
 from ...models import Task
-
+from ...tasks import get_or_create_pool
 
 LOG = getLogger("taskmanager.management.commands.scrape_group")
 

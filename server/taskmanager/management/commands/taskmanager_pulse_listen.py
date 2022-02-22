@@ -6,8 +6,7 @@ from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
 from mozillapulse.consumers import GenericConsumer, PulseConfiguration
 
-from ...tasks import update_task, update_pool_defns
-
+from ...tasks import update_pool_defns, update_task
 
 LOG = getLogger("taskmanager.management.commands.listen")
 

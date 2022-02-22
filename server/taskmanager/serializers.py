@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import datetime
+
 from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Pool, Task
 
+from .models import Pool, Task
 
 # For enabled pools, we calculate whether the run-time/cycle-time ratio
 # is expected (compared to max_run_time). The threshold allows the ratio

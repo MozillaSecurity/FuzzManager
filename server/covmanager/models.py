@@ -1,3 +1,6 @@
+import codecs
+import json
+
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
 from django.core.files.storage import FileSystemStorage
@@ -5,8 +8,6 @@ from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
-import codecs
-import json
 
 from crashmanager.models import Client, Tool
 from FTB import CoverageHelper

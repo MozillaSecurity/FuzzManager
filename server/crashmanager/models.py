@@ -2,8 +2,10 @@ import json
 import logging
 import re
 
+import six
 from django.conf import settings
-from django.contrib.auth.models import User as DjangoUser, Permission
+from django.contrib.auth.models import Permission
+from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
 from django.db import models
@@ -12,7 +14,6 @@ from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from enumfields import Enum, EnumField
 from notifications.signals import notify
-import six
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo

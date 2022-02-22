@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from logging import getLogger
 
-from django.core.management import BaseCommand  # noqa
+from django.core.management import BaseCommand
 
 from ...models import Pool, Task
-
 
 LOG = getLogger("taskmanager.management.commands.change_poolid")
 

@@ -1,5 +1,8 @@
 import json
 from operator import attrgetter
+
+import fasteners
+import redis
 from chartjs.colors import next_color
 from chartjs.views.base import JSONView
 from django.conf import settings
@@ -8,31 +11,32 @@ from django.core.files.base import ContentFile
 from django.db.models import Q
 from django.db.models.aggregates import Count, Sum
 from django.http.response import Http404  # noqa
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now, timedelta
-import fasteners
-import redis
 from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from server.auth import CheckAppPermission
 from server.views import deny_restricted_users
-from .models import (
-    InstancePool,
-    PoolConfiguration,
-    Instance,
-    PoolStatusEntry,
-    ProviderStatusEntry,
-)
-from .models import PoolUptimeDetailedEntry, PoolUptimeAccumulatedEntry
-from .serializers import MachineStatusSerializer, PoolConfigurationSerializer
+
 from .CloudProvider.CloudProvider import (
     INSTANCE_STATE,
     INSTANCE_STATE_CODE,
     PROVIDERS,
     CloudProvider,
 )
+from .models import (
+    Instance,
+    InstancePool,
+    PoolConfiguration,
+    PoolStatusEntry,
+    PoolUptimeAccumulatedEntry,
+    PoolUptimeDetailedEntry,
+    ProviderStatusEntry,
+)
+from .serializers import MachineStatusSerializer, PoolConfigurationSerializer
 
 
 def renderError(request, err):
@@ -776,7 +780,7 @@ def deleteConfig(request, configid):
 
 
 class UptimeChartViewDetailed(JSONView):
-    authentication_classes = (SessionAuthentication,)  # noqa
+    authentication_classes = (SessionAuthentication,)
 
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
@@ -854,7 +858,7 @@ class UptimeChartViewDetailed(JSONView):
 
 
 class UptimeChartViewAccumulated(JSONView):
-    authentication_classes = (SessionAuthentication,)  # noqa
+    authentication_classes = (SessionAuthentication,)
 
     def get_context_data(self, **kwargs):
         context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
@@ -934,7 +938,7 @@ class UptimeChartViewAccumulated(JSONView):
 
 
 class MachineStatusViewSet(APIView):
-    authentication_classes = (TokenAuthentication,)  # noqa
+    authentication_classes = (TokenAuthentication,)
 
     def get(self, request, *args, **kwargs):
         result = {}
@@ -966,7 +970,7 @@ class PoolConfigurationViewSet(
 
     authentication_classes = (TokenAuthentication,)
     permission_classes = (CheckAppPermission,)
-    queryset = PoolConfiguration.objects.all()  # noqa
+    queryset = PoolConfiguration.objects.all()
     serializer_class = PoolConfigurationSerializer
 
     def retrieve(self, request, *args, **kwds):
@@ -981,7 +985,7 @@ class PoolConfigurationViewSet(
 
 
 class PoolCycleView(APIView):
-    authentication_classes = (TokenAuthentication,)  # noqa
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
@@ -999,7 +1003,7 @@ class PoolCycleView(APIView):
 
 
 class PoolEnableView(APIView):
-    authentication_classes = (TokenAuthentication,)  # noqa
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
@@ -1019,7 +1023,7 @@ class PoolEnableView(APIView):
 
 
 class PoolDisableView(APIView):
-    authentication_classes = (TokenAuthentication,)  # noqa
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):

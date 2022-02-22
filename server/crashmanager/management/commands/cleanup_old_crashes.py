@@ -5,7 +5,7 @@ from django.core.management import BaseCommand, CommandError  # noqa
 from django.db.models.aggregates import Count
 from django.utils import timezone
 
-from crashmanager.models import CrashEntry, Bucket, Bug
+from crashmanager.models import Bucket, Bug, CrashEntry
 
 
 class Command(BaseCommand):

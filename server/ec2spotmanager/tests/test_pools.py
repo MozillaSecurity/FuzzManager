@@ -11,11 +11,12 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
+
+import pytest
 import requests
 from django.urls import reverse
-import pytest
-from . import assert_contains, create_config, create_pool, create_poolmsg
 
+from . import assert_contains, create_config, create_pool, create_poolmsg
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.pools")  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures(

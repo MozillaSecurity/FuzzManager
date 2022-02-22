@@ -10,25 +10,27 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 from __future__ import unicode_literals
+
+import json
+import logging
+
+import pytest
+import requests
 from django.urls import reverse
 from notifications.models import Notification
 from notifications.signals import notify
-import json
-import logging
-import pytest
-import requests
+
 from crashmanager.models import (
+    OS,
     Bucket,
     Bug,
     BugProvider,
     Client,
     CrashEntry,
-    OS,
     Platform,
     Product,
     Tool,
 )
-
 
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
 

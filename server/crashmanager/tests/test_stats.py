@@ -11,11 +11,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import datetime
 import logging
+
 import pytest
 import requests
 from django.urls import reverse
-from . import assert_contains
 
+from . import assert_contains
 
 LOG = logging.getLogger("fm.crashmanager.tests.stats")
 VIEW_NAME = "crashmanager:stats"

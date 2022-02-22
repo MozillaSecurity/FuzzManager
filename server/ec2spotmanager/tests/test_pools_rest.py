@@ -12,12 +12,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import json
 import logging
+
 import pytest
 import requests
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+
 from ec2spotmanager.models import InstancePool
+
 from . import create_config, create_pool
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.pools.rest")

@@ -10,21 +10,22 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 from datetime import timedelta
+
 import pytest
-from django.core.management import call_command, CommandError
+from django.core.management import CommandError, call_command
 from django.utils import timezone
+
 from crashmanager.models import (
+    OS,
     Bucket,
     Bug,
     BugProvider,
     Client,
     CrashEntry,
-    OS,
     Platform,
     Product,
     Tool,
 )
-
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 

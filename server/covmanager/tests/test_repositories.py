@@ -11,10 +11,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import json
 import logging
+
 import pytest
 import requests
 from django.urls import reverse
-
 
 LOG = logging.getLogger("fm.covmanager.tests.repos")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name

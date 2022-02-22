@@ -9,15 +9,16 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
-import itertools
 import datetime
+import itertools
 import json
 import logging
+
 import pytest
 import requests
 from django.contrib.auth.models import User
-from . import create_pool, create_task
 
+from . import create_pool, create_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.pools.rest")
 pytestmark = pytest.mark.usefixtures("taskmanager_test")  # pylint: disable=invalid-name

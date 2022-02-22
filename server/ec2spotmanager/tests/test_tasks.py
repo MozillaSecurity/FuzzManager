@@ -12,25 +12,27 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import datetime
 import logging
+
 import boto.ec2
 import pytest
 from django.utils import timezone
-from . import UncatchableException, create_config, create_instance, create_pool
-from ec2spotmanager.tasks import (
-    update_requests,
-    update_instances,
-    cycle_and_terminate_disabled,
-    check_and_resize_pool,
-    _terminate_instance_ids,
-    _terminate_instance_request_ids,
-    SPOTMGR_TAG,
-)
-from ec2spotmanager.models import Instance  # PoolStatusEntry
+
 from ec2spotmanager.CloudProvider.CloudProvider import (
     INSTANCE_STATE,
     CloudProviderTemporaryFailure,
 )
+from ec2spotmanager.models import Instance  # PoolStatusEntry
+from ec2spotmanager.tasks import (
+    SPOTMGR_TAG,
+    _terminate_instance_ids,
+    _terminate_instance_request_ids,
+    check_and_resize_pool,
+    cycle_and_terminate_disabled,
+    update_instances,
+    update_requests,
+)
 
+from . import UncatchableException, create_config, create_instance, create_pool
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.tasks")
 

@@ -12,10 +12,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import json
 import logging
-import requests
+
 import pytest
+import requests
 from django.contrib.auth.models import User
+
 from ec2spotmanager.models import Instance
+
 from . import create_instance
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.status.rest")

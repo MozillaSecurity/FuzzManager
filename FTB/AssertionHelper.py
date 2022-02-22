@@ -16,7 +16,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import re
 
-
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\([^\)]")
 RE_MOZ_CRASH_END = re.compile(r".*\) at .+?:\d+$")

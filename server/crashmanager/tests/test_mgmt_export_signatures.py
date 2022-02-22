@@ -10,15 +10,17 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 from __future__ import unicode_literals
+
 import json
 import os
 import re
 import tempfile
 import zipfile
-from django.core.management import call_command, CommandError
-import pytest
-from crashmanager.models import Bucket
 
+import pytest
+from django.core.management import CommandError, call_command
+
+from crashmanager.models import Bucket
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 

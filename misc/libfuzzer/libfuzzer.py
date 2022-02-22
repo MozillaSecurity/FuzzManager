@@ -26,9 +26,9 @@ import subprocess
 import sys
 import threading
 
-from Collector.Collector import Collector  # noqa
-from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
-from FTB.Signatures.CrashInfo import CrashInfo  # noqa
+from Collector.Collector import Collector
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
 
 
 class LibFuzzerMonitor(threading.Thread):

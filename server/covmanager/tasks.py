@@ -1,12 +1,12 @@
-from django.conf import settings  # noqa
-from django.core.files.base import ContentFile
-
-from celeryconf import app  # noqa
-from . import cron  # noqa ensure cron tasks get registered
-
 import copy
 import hashlib
 import json
+
+from celeryconf import app
+from django.conf import settings  # noqa
+from django.core.files.base import ContentFile
+
+from . import cron  # noqa ensure cron tasks get registered
 
 
 @app.task(ignore_result=True)
@@ -33,8 +33,8 @@ def check_revision_update(pk):
 
 @app.task(ignore_result=True)
 def aggregate_coverage_data(pk, pks):
-    from covmanager.models import Collection, CollectionFile  # noqa
-    from FTB import CoverageHelper  # noqa
+    from covmanager.models import Collection, CollectionFile
+    from FTB import CoverageHelper
 
     # Fetch our existing, but incomplete destination collection
     mergedCollection = Collection.objects.get(pk=pk)

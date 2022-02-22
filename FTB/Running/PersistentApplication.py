@@ -22,11 +22,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from abc import ABCMeta
 import os
 import signal
 import subprocess
 import time
+from abc import ABCMeta
 
 import six
 from six.moves import queue

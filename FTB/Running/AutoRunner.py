@@ -17,13 +17,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function, unicode_literals
 
-from abc import ABCMeta
-from distutils import spawn
 import os
 import re
 import signal
 import subprocess
 import sys
+from abc import ABCMeta
+from distutils import spawn
 
 import six
 

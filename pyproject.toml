@@ -14,6 +14,21 @@ omit = [
     "*/.eggs/*",
 ]
 
+[tool.isort]
+known_first_party = [
+    "Collector",
+    "CovReporter",
+    "EC2StatusReporter",
+    "FTB",
+    "Reporter",
+    "TaskStatusReporter",
+    "covmanager",
+    "crashmanager",
+    "ec2spotmanager",
+    "taskmanager",
+]
+profile = "black"
+
 [tool.pytest.ini_options]
 log_level = "DEBUG"
 DJANGO_SETTINGS_MODULE = "server.settings_test"

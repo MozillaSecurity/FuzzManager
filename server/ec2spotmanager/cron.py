@@ -1,15 +1,17 @@
 import datetime
 import json
 import logging
+
 import celery
 import redis
+from celeryconf import app
 from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
-from celeryconf import app
-from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
+
 from server.utils import RedisLock
 
+from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
 
 LOG = logging.getLogger("ec2spotmanager")
 
@@ -26,10 +28,10 @@ CHECK_POOL_LOCK_EXPIRY = 30 * 60
 @app.task(ignore_result=True)
 def update_stats():
     from .models import (
-        PoolUptimeDetailedEntry,
-        PoolUptimeAccumulatedEntry,
-        InstancePool,
         Instance,
+        InstancePool,
+        PoolUptimeAccumulatedEntry,
+        PoolUptimeDetailedEntry,
     )
 
     instance_pools = InstancePool.objects.all()
@@ -148,7 +150,7 @@ def check_instance_pools():
     - spawns and monitors spot requests asynchronously
     - cycles pools as required
     """
-    from .models import InstancePool, Instance
+    from .models import Instance, InstancePool
     from .tasks import (
         check_and_resize_pool,
         cycle_and_terminate_disabled,

@@ -11,10 +11,11 @@ p3.2xlarge,m4.2xlarge,f1.2xlarge,h1.2xlarge,x1e.2xlarge,m5d.2xlarge,t2.2xlarge
 """
 
 from __future__ import print_function
+
 import json
-import requests
 import sys
 
+import requests
 
 # for some reason, the pricing API uses friendly names for regions, not API names
 # this is a mapping from friendly name to API name

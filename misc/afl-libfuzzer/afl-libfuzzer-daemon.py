@@ -33,13 +33,13 @@ import zipfile
 from pathlib import Path
 
 from fasteners import InterProcessLock
+from S3Manager import S3Manager
 from six.moves import queue
 
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
 from FTB.Signatures.CrashInfo import CrashInfo
-from S3Manager import S3Manager
 
 haveFFPuppet = True
 try:

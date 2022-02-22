@@ -12,11 +12,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import itertools
 import json
 import logging
+
 import pytest
 import requests
 from django.contrib.auth.models import User
 from django.utils import dateparse
+
 from taskmanager.models import Task
+
 from . import create_pool, create_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.tasks.rest")

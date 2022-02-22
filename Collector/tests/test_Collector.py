@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 from __future__ import absolute_import, unicode_literals
+
 import json
 import os
 import platform
@@ -24,9 +25,9 @@ import requests
 from six.moves.urllib.parse import urlsplit
 
 from Collector.Collector import Collector, main
-from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.ProgramConfiguration import ProgramConfiguration
 from crashmanager.models import CrashEntry
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
 
 try:
     from unittest.mock import Mock, patch

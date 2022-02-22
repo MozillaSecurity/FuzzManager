@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import re
 import traceback
 
@@ -7,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 
 from crashmanager.models import User
+
 from .auth import CheckAppPermission
 
 

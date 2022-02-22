@@ -16,13 +16,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-from boto.utils import parse_ts as boto_parse_ts
-
-from tempfile import mkstemp
-from zipfile import ZipFile, ZIP_DEFLATED
-
 import hashlib
 import os
 import platform
@@ -31,6 +24,12 @@ import shutil
 import subprocess
 import sys
 import time
+from tempfile import mkstemp
+from zipfile import ZIP_DEFLATED, ZipFile
+
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
+from boto.utils import parse_ts as boto_parse_ts
 
 
 class S3Manager:

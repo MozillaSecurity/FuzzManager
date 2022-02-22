@@ -5,8 +5,8 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from notifications import views as notifications_views
-from .views import index, login
 
+from .views import index, login
 
 admin.autodiscover()
 

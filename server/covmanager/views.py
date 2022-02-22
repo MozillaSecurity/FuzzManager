@@ -1,29 +1,29 @@
+import json
+import os
+from wsgiref.util import FileWrapper
+
 from django.conf import settings
-from django.core.exceptions import SuspiciousOperation, PermissionDenied
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-import json
-import os
-from rest_framework import mixins, viewsets, filters
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from wsgiref.util import FileWrapper
+from rest_framework import filters, mixins, viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 
+from crashmanager.models import Tool
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
-from .models import Collection, Repository, ReportConfiguration, ReportSummary, Report
+from .models import Collection, Report, ReportConfiguration, ReportSummary, Repository
 from .serializers import (
     CollectionSerializer,
-    RepositorySerializer,
     ReportConfigurationSerializer,
     ReportSerializer,
+    RepositorySerializer,
 )
-from .tasks import aggregate_coverage_data, calculate_report_summary
-from crashmanager.models import Tool
-
 from .SourceCodeProvider import SourceCodeProvider
+from .tasks import aggregate_coverage_data, calculate_report_summary
 
 
 def index(request):

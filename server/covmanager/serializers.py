@@ -1,11 +1,13 @@
+import hashlib
+
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
-import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from crashmanager.models import Client, Tool
-from .models import Collection, CollectionFile, Repository, ReportConfiguration, Report
+
+from .models import Collection, CollectionFile, Report, ReportConfiguration, Repository
 
 
 class InvalidArgumentException(APIException):

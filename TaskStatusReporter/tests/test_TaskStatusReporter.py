@@ -3,9 +3,9 @@ from __future__ import absolute_import
 import pytest
 from six.moves.urllib.parse import urlsplit
 
-from TaskStatusReporter.TaskStatusReporter import TaskStatusReporter, main
 from taskmanager.models import Task
 from taskmanager.tests import create_pool, create_task
+from TaskStatusReporter.TaskStatusReporter import TaskStatusReporter, main
 
 try:
     from unittest.mock import Mock, patch

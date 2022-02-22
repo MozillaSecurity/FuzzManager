@@ -1,13 +1,13 @@
 from django.contrib import admin
 
-from crashmanager.models import (
-    CrashEntry,
+from crashmanager.models import (  # @UnresolvedImport
+    OS,
     Bucket,
     Bug,
+    CrashEntry,
     Platform,
     Product,
-    OS,
-)  # @UnresolvedImport
+)
 
 admin.site.register(CrashEntry)
 admin.site.register(Bucket)

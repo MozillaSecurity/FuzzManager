@@ -1,9 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
+
 import logging
+
 import pytest
 import requests
-
 
 LOG = logging.getLogger("fm.crashmanager.tests.templates.rest")
 

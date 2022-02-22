@@ -13,8 +13,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 import json
-from FTB import CoverageHelper
 
+from FTB import CoverageHelper
 
 covdata = r"""
 {
@@ -144,7 +144,7 @@ covdata = r"""
   "linesTotal": 25,
   "name": null
 }
-"""  # noqa
+"""
 
 
 def test_CoverageHelperFlattenNames():

@@ -22,16 +22,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
 
-import boto.ec2
-from collections import OrderedDict
 import datetime
 import importlib
 import json
 import os
 import sys
+from collections import OrderedDict
 
+import boto.ec2
 from six.moves import configparser
-
 
 now = datetime.datetime.now()
 

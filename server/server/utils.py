@@ -1,8 +1,8 @@
 import logging
 import time
 import uuid
-import redis
 
+import redis
 
 LOG = logging.getLogger("fuzzmanager.utils")
 

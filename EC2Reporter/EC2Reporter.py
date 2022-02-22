@@ -27,11 +27,11 @@ import random
 import sys
 import time
 
-from fasteners import InterProcessLock
 import requests
+from fasteners import InterProcessLock
 
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
-from Reporter.Reporter import Reporter, remote_checks  # noqa
+from Reporter.Reporter import Reporter, remote_checks
 
 __all__ = []
 __version__ = 0.1

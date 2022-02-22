@@ -10,11 +10,12 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
+
 import pytest
 import requests
 from django.urls import reverse
-from crashmanager.models import Tool, User
 
+from crashmanager.models import Tool, User
 
 LOG = logging.getLogger("fm.crashmanager.tests.usersettings")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")

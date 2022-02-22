@@ -1,28 +1,29 @@
 import base64
+import hashlib
+
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
 from django.urls import reverse
 from notifications.models import Notification
-import hashlib
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashInfo import CrashInfo
 from crashmanager.models import (
-    Bug,
-    CrashEntry,
+    OS,
     Bucket,
+    Bug,
     BugProvider,
     BugzillaTemplate,
+    Client,
+    CrashEntry,
     Platform,
     Product,
-    OS,
     TestCase,
-    Client,
     Tool,
 )
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
 
 
 class InvalidArgumentException(APIException):

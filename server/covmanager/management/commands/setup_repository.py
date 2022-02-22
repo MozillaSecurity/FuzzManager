@@ -1,5 +1,6 @@
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
+
 import os
 
 from django.core.management.base import BaseCommand, CommandError

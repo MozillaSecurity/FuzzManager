@@ -16,6 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    jschwartzentruber@mozilla.com
 """
 import sys
+
 from .TaskStatusReporter import main
 
 sys.exit(main())

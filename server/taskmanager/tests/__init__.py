@@ -1,8 +1,9 @@
 import datetime
 import logging
-from django.utils import timezone
-from taskmanager.models import Pool, Task
 
+from django.utils import timezone
+
+from taskmanager.models import Pool, Task
 
 LOG = logging.getLogger("fm.taskmanager.tests")
 

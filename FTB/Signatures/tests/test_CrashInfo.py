@@ -20,13 +20,13 @@ import pytest
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashInfo import (
-    ASanCrashInfo,
-    GDBCrashInfo,
-    CrashInfo,
-    NoCrashInfo,
-    MinidumpCrashInfo,
     AppleCrashInfo,
+    ASanCrashInfo,
     CDBCrashInfo,
+    CrashInfo,
+    GDBCrashInfo,
+    MinidumpCrashInfo,
+    NoCrashInfo,
     RustCrashInfo,
     int32,
 )

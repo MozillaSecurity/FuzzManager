@@ -10,10 +10,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
+
+import pytest
 from django.apps import apps
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-import pytest
 from rest_framework.test import APIClient
 
 logging.getLogger("django").setLevel(logging.WARNING)

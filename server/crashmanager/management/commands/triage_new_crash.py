@@ -3,8 +3,7 @@ from collections import OrderedDict
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from crashmanager.models import CrashEntry, Bucket
-
+from crashmanager.models import Bucket, CrashEntry
 
 # This is a per-worker global cache mapping short descriptions of
 # crashes to a list of bucket candidates to try first.

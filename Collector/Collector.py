@@ -30,11 +30,11 @@ import sys
 from tempfile import mkstemp
 from zipfile import ZipFile
 
-from FTB.ProgramConfiguration import ProgramConfiguration  # noqa
-from FTB.Running.AutoRunner import AutoRunner  # noqa
-from FTB.Signatures.CrashInfo import CrashInfo  # noqa
-from FTB.Signatures.CrashSignature import CrashSignature  # noqa
-from Reporter.Reporter import Reporter, signature_checks, remote_checks  # noqa
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Running.AutoRunner import AutoRunner
+from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.Signatures.CrashSignature import CrashSignature
+from Reporter.Reporter import Reporter, remote_checks, signature_checks
 
 __all__ = []
 __version__ = 0.1

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+
 from datetime import datetime
 from logging import getLogger
+
+from celeryconf import app
 from django.conf import settings
 from django.db.models import Max
 from django.utils import timezone
-from celeryconf import app
-
 
 LOG = getLogger("taskmanager.cron")
 
@@ -14,6 +15,7 @@ LOG = getLogger("taskmanager.cron")
 @app.task(ignore_result=True)
 def update_tasks():
     import taskcluster
+
     from .models import Task
     from .tasks import update_task
 

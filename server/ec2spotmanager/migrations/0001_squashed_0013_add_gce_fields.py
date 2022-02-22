@@ -3,11 +3,12 @@
 from __future__ import unicode_literals
 
 import django.core.files.storage
-from django.db import migrations, models
 import django.db.migrations.operations.special
 import django.db.models.deletion
-from django.conf import settings
 import django.utils.timezone
+from django.conf import settings
+from django.db import migrations, models
+
 import ec2spotmanager.models
 
 

@@ -1,8 +1,8 @@
 import logging
-import requests
 
+import requests
 from celeryconf import app
-from dateutil.relativedelta import relativedelta, MO
+from dateutil.relativedelta import MO, relativedelta
 from django.conf import settings
 from django.db.models import Q
 
@@ -22,7 +22,8 @@ logger = logging.getLogger("covmanager")
 
 def create_weekly_report_mc(revision):
     from crashmanager.models import Client
-    from .models import Collection, Repository, Report
+
+    from .models import Collection, Report, Repository
     from .tasks import aggregate_coverage_data
 
     # Some of our builds (e.g. JS shell) use the HG short revision format

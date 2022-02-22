@@ -3,7 +3,6 @@
 
 import collections
 
-
 InstanceType = collections.namedtuple("InstanceType", ("api_name", "vCPUs"))
 
 

@@ -4,7 +4,7 @@ from zipfile import ZipFile
 from django.core.management.base import BaseCommand
 from django.db.models.aggregates import Count, Min
 
-from crashmanager.models import CrashEntry, Bucket
+from crashmanager.models import Bucket, CrashEntry
 
 
 class Command(BaseCommand):

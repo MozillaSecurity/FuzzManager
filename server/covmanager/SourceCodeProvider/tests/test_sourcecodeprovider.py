@@ -13,8 +13,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 import os
-import pytest
 import shutil
+
+import pytest
+
 from covmanager.SourceCodeProvider.GITSourceCodeProvider import GITSourceCodeProvider
 from covmanager.SourceCodeProvider.HGSourceCodeProvider import HGSourceCodeProvider
 from covmanager.SourceCodeProvider.SourceCodeProvider import Utils

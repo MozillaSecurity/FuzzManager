@@ -10,11 +10,14 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Permission
-from django.core.files.base import ContentFile
+
 import pytest
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.base import ContentFile
+
 from crashmanager.models import (
+    OS,
     Bucket,
     BucketWatch,
     Bug,
@@ -23,14 +26,12 @@ from crashmanager.models import (
     BugzillaTemplateMode,
     Client,
     CrashEntry,
-    OS,
     Platform,
     Product,
-    TestCase as cmTestCase,
-    Tool,
-    User as cmUser,
 )
-
+from crashmanager.models import TestCase as cmTestCase
+from crashmanager.models import Tool
+from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.crashmanager.tests")
 

@@ -1,61 +1,61 @@
+import json
+import os
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from django.core.exceptions import FieldError, SuspiciousOperation, PermissionDenied
+from wsgiref.util import FileWrapper
+
+import six
+from django.conf import settings as django_settings
+from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
 from django.http import Http404, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import TemplateView
-from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django.views.generic.list import ListView
 from notifications.models import Notification
-import json
-import os
 from rest_framework import mixins, status, viewsets
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import six
-
-from wsgiref.util import FileWrapper
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
+from server.auth import CheckAppPermission
+
 from .forms import (
     BugzillaTemplateBugForm,
     BugzillaTemplateCommentForm,
     UserSettingsForm,
 )
 from .models import (
-    BugzillaTemplate,
-    BugzillaTemplateMode,
-    CrashEntry,
     Bucket,
     BucketHit,
     BucketWatch,
-    BugProvider,
     Bug,
+    BugProvider,
+    BugzillaTemplate,
+    BugzillaTemplateMode,
+    CrashEntry,
     Tool,
     User,
 )
 from .serializers import (
-    BugzillaTemplateSerializer,
-    InvalidArgumentException,
     BucketSerializer,
     BucketVueSerializer,
+    BugProviderSerializer,
+    BugzillaTemplateSerializer,
     CrashEntrySerializer,
     CrashEntryVueSerializer,
-    BugProviderSerializer,
+    InvalidArgumentException,
     NotificationSerializer,
 )
-from server.auth import CheckAppPermission
-
-from django.conf import settings as django_settings
 
 
 class JSONDateEncoder(json.JSONEncoder):

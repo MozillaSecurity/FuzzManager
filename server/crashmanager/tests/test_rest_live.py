@@ -16,7 +16,6 @@ import pytest
 import requests
 from six.moves.urllib.parse import urlsplit
 
-
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytest_plugins = "server.tests"  # pylint: disable=invalid-name
 

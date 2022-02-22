@@ -12,11 +12,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import functools
 import sys
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Permission
+
 import pytest
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
+
 from crashmanager.models import User as cmUser
 from ec2spotmanager.CloudProvider.CloudProvider import CloudProvider
+
 from . import UncatchableException
 
 try:

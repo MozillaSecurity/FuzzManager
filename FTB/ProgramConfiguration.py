@@ -18,8 +18,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Ensure print() compatibility with Python 3
 from __future__ import print_function
-import sys
+
 import os
+import sys
+
 from FTB.ConfigurationFiles import ConfigurationFiles
 
 

@@ -13,10 +13,10 @@ import json
 import logging
 import os
 import re
+
 import pytest
 import requests
 from django.urls import reverse
-
 
 LOG = logging.getLogger("fm.covmanager.tests.collections")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name

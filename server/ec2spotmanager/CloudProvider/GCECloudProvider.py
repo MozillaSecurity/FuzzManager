@@ -12,24 +12,25 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    truber@mozilla.com
 """
 import logging
-import requests
 import time
+
+import requests
 import yaml
 from django.conf import settings
 from laniakea.core.providers.gce import (
     ComputeEngineManager,
     ComputeEngineManagerException,
 )
+
+from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
+from ..tasks import SPOTMGR_TAG
 from .CloudProvider import (
-    CloudProvider,
-    CloudProviderTemporaryFailure,
     INSTANCE_STATE,
     INSTANCE_STATE_CODE,
+    CloudProvider,
+    CloudProviderTemporaryFailure,
     wrap_provider_errors,
 )
-from ..tasks import SPOTMGR_TAG
-from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
-
 
 #
 # Google Compute Platform provider for EC2SpotManager

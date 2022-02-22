@@ -1,15 +1,16 @@
-from django.shortcuts import redirect
-from django.contrib.auth.views import LoginView
-from django.conf import settings
-from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q
-from django.urls import resolve, reverse
 import collections
 import functools
 import json
-from rest_framework import filters
+
 import six
+from django.conf import settings
+from django.contrib.auth.views import LoginView
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Q
+from django.shortcuts import redirect
+from django.urls import resolve, reverse
+from rest_framework import filters
 
 from crashmanager.models import User
 
@@ -108,7 +109,7 @@ def json_to_query(json_str):
     then the operator has no effect.
     """
     try:
-        obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)  # noqa
+        obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)
     except ValueError as e:
         raise RuntimeError("Invalid JSON: %s" % e)
 

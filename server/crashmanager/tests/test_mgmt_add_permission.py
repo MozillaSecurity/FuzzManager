@@ -11,8 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import pytest
 from django.contrib.auth.models import User
-from django.core.management import call_command, CommandError
-
+from django.core.management import CommandError, call_command
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 

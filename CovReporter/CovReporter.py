@@ -26,7 +26,7 @@ import os
 import sys
 
 from FTB import CoverageHelper
-from Reporter.Reporter import remote_checks, Reporter  # noqa
+from Reporter.Reporter import Reporter, remote_checks
 
 __all__ = []
 __version__ = 0.1

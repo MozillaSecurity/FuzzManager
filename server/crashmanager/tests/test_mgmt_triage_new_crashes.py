@@ -10,22 +10,23 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import json
-from django.contrib.auth.models import User
-from django.core.management import call_command, CommandError
-from notifications.models import Notification
+
 import pytest
+from django.contrib.auth.models import User
+from django.core.management import CommandError, call_command
+from notifications.models import Notification
+
 from crashmanager.models import (
+    OS,
     Bucket,
     BucketWatch,
     Client,
     CrashEntry,
-    OS,
     Platform,
     Product,
     Tool,
-    User as cmUser,
 )
-
+from crashmanager.models import User as cmUser
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")

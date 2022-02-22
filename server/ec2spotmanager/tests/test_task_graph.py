@@ -11,10 +11,13 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
+
 import pytest
+
+from ec2spotmanager.CloudProvider.CloudProvider import INSTANCE_STATE
 from ec2spotmanager.cron import check_instance_pools
 from ec2spotmanager.tasks import terminate_instances
-from ec2spotmanager.CloudProvider.CloudProvider import INSTANCE_STATE
+
 from . import create_config, create_instance, create_pool
 
 try:

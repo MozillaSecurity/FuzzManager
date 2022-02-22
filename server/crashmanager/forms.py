@@ -1,5 +1,5 @@
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import HTML, Layout, Div, Field, Submit
+from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
 from django.forms import (
     CharField,
@@ -7,8 +7,8 @@ from django.forms import (
     ChoiceField,
     EmailField,
     ModelChoiceField,
-    ModelMultipleChoiceField,
     ModelForm,
+    ModelMultipleChoiceField,
     Textarea,
     TextInput,
 )

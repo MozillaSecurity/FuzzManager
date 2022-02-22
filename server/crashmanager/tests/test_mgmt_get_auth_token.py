@@ -10,11 +10,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import re
-from django.contrib.auth.models import User
-from django.core.management import call_command, CommandError
-from rest_framework.authtoken.models import Token
-import pytest
 
+import pytest
+from django.contrib.auth.models import User
+from django.core.management import CommandError, call_command
+from rest_framework.authtoken.models import Token
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 

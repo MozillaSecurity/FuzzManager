@@ -16,6 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 import sys
+
 from .EC2Reporter import main
 
 sys.exit(main())

@@ -1,7 +1,8 @@
 import pytest
+from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Permission
 from rest_framework.authtoken.models import Token
+
 from crashmanager.models import User as CMUser
 
 pytestmark = pytest.mark.django_db(transaction=True)

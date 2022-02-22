@@ -12,18 +12,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-from abc import ABC
 import functools
 import logging
 import os
 import platform
 import time
+from abc import ABC
 
 import requests
 import requests.exceptions
 
-from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
-
+from FTB.ConfigurationFiles import ConfigurationFiles
 
 LOG = logging.getLogger(__name__)
 

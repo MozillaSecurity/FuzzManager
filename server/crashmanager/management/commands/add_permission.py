@@ -1,8 +1,8 @@
 from __future__ import print_function
 
-from django.core.management import BaseCommand
+from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User, Permission
+from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):

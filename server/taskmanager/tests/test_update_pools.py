@@ -12,14 +12,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import datetime
 import logging
 import os.path
-import pytest
 import sys
+
+import pytest
 from dateutil.parser import isoparse
 
-# from taskmanager.cron import delete_expired
-from taskmanager.tasks import update_task, update_pool_defns
 from taskmanager.models import Pool, Task
 
+# from taskmanager.cron import delete_expired
+from taskmanager.tasks import update_pool_defns, update_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.tasks")
 pytestmark = [  # pylint: disable=invalid-name

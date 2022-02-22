@@ -13,10 +13,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import decimal
 import json
 import logging
+
+import pytest
 import requests
 from django.urls import reverse
-import pytest
+
 from ec2spotmanager.models import PoolConfiguration
+
 from . import assert_contains, create_config
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.configs")

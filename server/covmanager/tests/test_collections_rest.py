@@ -12,12 +12,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import codecs
 import json
 import logging
+
 import pytest
 import requests
 from django.contrib.auth.models import User
 from django.utils import dateparse, timezone
-from covmanager.models import Collection
 
+from covmanager.models import Collection
 
 LOG = logging.getLogger("fm.covmanager.tests.collections.rest")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name

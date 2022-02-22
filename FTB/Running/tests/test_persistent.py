@@ -13,15 +13,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 from __future__ import print_function
+
 import os
 import sys
 import time
+
 import pytest
 
 from FTB.Running.PersistentApplication import (
-    SimplePersistentApplication,
-    PersistentMode,
     ApplicationStatus,
+    PersistentMode,
+    SimplePersistentApplication,
 )
 
 TEST_PATH = os.path.dirname(__file__)
