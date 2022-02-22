@@ -11,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function, unicode_literals
-
 import subprocess
 
 from .SourceCodeProvider import (
@@ -26,12 +22,12 @@ from .SourceCodeProvider import (
 
 class GITSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location):
-        super(GITSourceCodeProvider, self).__init__(location)
+        super().__init__(location)
 
     def getSource(self, filename, revision):
         try:
             return subprocess.check_output(
-                ["git", "show", "%s:%s" % (revision, filename)], cwd=self.location
+                ["git", "show", f"{revision}:{filename}"], cwd=self.location
             ).decode("utf-8")
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise

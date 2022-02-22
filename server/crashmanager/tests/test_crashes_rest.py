@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Crashes rest api.
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -9,25 +8,19 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
-from __future__ import unicode_literals
 
 import json
 import logging
 import os.path
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 import requests
 
 from crashmanager.models import CrashEntry
 from crashmanager.models import TestCase as cmTestCase
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
-
 
 # What should be allowed:
 #

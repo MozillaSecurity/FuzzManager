@@ -59,7 +59,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         include_raw = kwargs.pop("include_raw", True)
 
-        super(CrashEntrySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if not include_raw:
             for field_name in ("rawCrashData", "rawStdout", "rawStderr"):
@@ -161,9 +161,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             dbobj = TestCase(
                 quality=testcase_quality, isBinary=testcase_isbinary, size=testcase_size
             )
-            dbobj.test.save(
-                "%s.%s" % (h.hexdigest(), testcase_ext), ContentFile(testcase)
-            )
+            dbobj.test.save(f"{h.hexdigest()}.{testcase_ext}", ContentFile(testcase))
             dbobj.save()
             attrs["testcase"] = dbobj
         else:
@@ -172,7 +170,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         try:
             # Create our CrashEntry instance
-            return super(CrashEntrySerializer, self).create(attrs)
+            return super().create(attrs)
         except:  # noqa
             if attrs["testcase"] is not None:
                 attrs["testcase"].delete()

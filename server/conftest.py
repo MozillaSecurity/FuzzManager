@@ -1,4 +1,3 @@
-# coding: utf-8
 """Common utilities for tests
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -73,7 +72,7 @@ def migration_hook(request):
     migrate_from = [(app, migrate_from_mark.args[0])]
     migrate_to = [(app, migrate_to_mark.args[0])]
 
-    class migration_hook_result(object):
+    class migration_hook_result:
         def __init__(self, _from, _to):
             self._to = _to
             executor = MigrationExecutor(connection)

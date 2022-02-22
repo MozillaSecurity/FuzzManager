@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CovManager setup_repository management command
 
 @author:     Jesse Schwartzentruber (:truber)

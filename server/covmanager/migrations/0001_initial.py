@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import django.core.files.storage
 import django.utils.timezone
 from django.db import migrations, models

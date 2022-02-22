@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 S3Manager -- Class to manage builds, corpus and queues for AFL and libFuzzer on AWS S3
 
@@ -12,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import hashlib
 import os
 import platform
@@ -60,9 +55,9 @@ class S3Manager:
         self.remote_path_corpus_bundle = "%s/corpus.zip" % self.project_name
 
         if self.build_project_name:
-            self.remote_path_build = "%s/%s" % (self.build_project_name, self.zip_name)
+            self.remote_path_build = f"{self.build_project_name}/{self.zip_name}"
         else:
-            self.remote_path_build = "%s/%s" % (self.project_name, self.zip_name)
+            self.remote_path_build = f"{self.project_name}/{self.zip_name}"
 
         # Memorize which files we have uploaded/downloaded before, so we never attempt
         # to re-upload them to a different queue or re-download them after a local
@@ -142,7 +137,7 @@ class S3Manager:
                 # If the file already exists locally, ignore it
                 continue
 
-            print("Syncing from queue %s: %s" % (queue_name, filename))
+            print(f"Syncing from queue {queue_name}: {filename}")
             remote_key.get_contents_to_filename(dest_file)
 
             self.downloaded_files.add(basename)
@@ -386,7 +381,7 @@ class S3Manager:
 
         remote_key = Key(self.bucket)
         remote_key.name = self.remote_path_build
-        print("Uploading file %s -> %s" % (build_file, remote_key.name))
+        print(f"Uploading file {build_file} -> {remote_key.name}")
         remote_key.set_contents_from_filename(build_file)
 
     def download_corpus(self, corpus_dir, random_subset_size=None):
@@ -470,7 +465,7 @@ class S3Manager:
         zip_file.close()
         remote_key = Key(self.bucket)
         remote_key.name = self.remote_path_corpus_bundle
-        print("Uploading file %s -> %s" % (zip_dest, remote_key.name))
+        print(f"Uploading file {zip_dest} -> {remote_key.name}")
         remote_key.set_contents_from_filename(zip_dest)
         os.remove(zip_dest)
 
@@ -495,7 +490,7 @@ class S3Manager:
         for upload_file in upload_list:
             remote_key = Key(self.bucket)
             remote_key.name = remote_path + os.path.basename(upload_file)
-            print("Uploading file %s -> %s" % (upload_file, remote_key.name))
+            print(f"Uploading file {upload_file} -> {remote_key.name}")
             remote_key.set_contents_from_filename(upload_file)
 
         if corpus_delete:
@@ -531,12 +526,12 @@ class S3Manager:
                 id_fd.write(id)
             return id
         else:
-            with open(id_file, "r") as id_fd:
+            with open(id_file) as id_fd:
                 return id_fd.read()
 
     def __upload_queue_files(self, queue_basedir, queue_files, base_dir, cmdline_file):
         machine_id = self.__get_machine_id(base_dir)
-        remote_path = "%s%s/" % (self.remote_path_queues, machine_id)
+        remote_path = f"{self.remote_path_queues}{machine_id}/"
         remote_files = [
             key.name.replace(remote_path, "", 1)
             for key in list(self.bucket.list(remote_path))
@@ -547,7 +542,7 @@ class S3Manager:
             # Switch to a new queue instead.
             print("Remote queue %s closed, switching to new queue..." % machine_id)
             machine_id = self.__get_machine_id(base_dir, refresh=True)
-            remote_path = "%s%s/" % (self.remote_path_queues, machine_id)
+            remote_path = f"{self.remote_path_queues}{machine_id}/"
             remote_files = [
                 key.name.replace(remote_path, "", 1)
                 for key in list(self.bucket.list(remote_path))
@@ -565,10 +560,10 @@ class S3Manager:
         for upload_file in upload_list:
             remote_key = Key(self.bucket)
             remote_key.name = remote_path + os.path.basename(upload_file)
-            print("Uploading file %s -> %s" % (upload_file, remote_key.name))
+            print(f"Uploading file {upload_file} -> {remote_key.name}")
             try:
                 remote_key.set_contents_from_filename(upload_file)
-            except IOError:
+            except OSError:
                 # Newer libFuzzer can delete files from the corpus if it finds a shorter
                 # version in the same run.
                 pass

@@ -1,17 +1,11 @@
-from __future__ import absolute_import
+from unittest.mock import Mock, patch
+from urllib.parse import urlsplit
 
 import pytest
-from six.moves.urllib.parse import urlsplit
 
 from taskmanager.models import Task
 from taskmanager.tests import create_pool, create_task
 from TaskStatusReporter.TaskStatusReporter import TaskStatusReporter, main
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
-
 
 pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = "server.tests"

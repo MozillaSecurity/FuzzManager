@@ -13,21 +13,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function, unicode_literals
-
 import numbers
 import re
 from abc import ABCMeta, abstractmethod
 
-import six
-
 from FTB.Signatures import JSONHelper
 
 
-@six.add_metaclass(ABCMeta)
-class Match(object):
+class Match(metaclass=ABCMeta):
     @abstractmethod
     def matches(self, value):
         pass
@@ -42,7 +35,7 @@ class StringMatch(Match):
         if isinstance(obj, bytes):
             obj = obj.decode("utf-8")
 
-        if isinstance(obj, six.text_type):
+        if isinstance(obj, str):
             self.value = obj
 
             # Support the short form using forward slashes to indicate a PCRE
@@ -100,7 +93,7 @@ class StringMatch(Match):
         return self.value
 
 
-class NumberMatchType(object):
+class NumberMatchType:
     GE, GT, LE, LT = range(4)
 
 
@@ -111,7 +104,7 @@ class NumberMatch(Match):
         if isinstance(obj, bytes):
             obj = obj.decode("utf-8")
 
-        if isinstance(obj, six.text_type):
+        if isinstance(obj, str):
             if len(obj) > 0:
                 numberMatchComponents = obj.split(None, 1)
                 numIdx = 0

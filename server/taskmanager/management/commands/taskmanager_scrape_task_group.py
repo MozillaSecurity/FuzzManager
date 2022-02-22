@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import functools
 from logging import getLogger
 
@@ -27,13 +26,11 @@ def paginated(func, result_key):
         kwds = kwds.copy()
         result = func(*args, **kwds)
         while result.get("continuationToken"):
-            for sub in result[result_key]:
-                yield sub
+            yield from result[result_key]
             kwds.setdefault("query", {})
             kwds["query"]["continuationToken"] = result["continuationToken"]
             result = func(*args, **kwds)
-        for sub in result[result_key]:
-            yield sub
+        yield from result[result_key]
 
     return _wrapped
 

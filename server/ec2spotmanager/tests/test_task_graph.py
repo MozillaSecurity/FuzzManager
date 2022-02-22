@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests for ec2spotmanager task graph.
 
@@ -11,6 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import logging
+from unittest.mock import call
 
 import pytest
 
@@ -19,11 +19,6 @@ from ec2spotmanager.cron import check_instance_pools
 from ec2spotmanager.tasks import terminate_instances
 
 from . import create_config, create_instance, create_pool
-
-try:
-    from unittest.mock import call
-except ImportError:
-    from mock import call
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.task_graph")
 pytestmark = pytest.mark.usefixtures(

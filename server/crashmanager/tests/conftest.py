@@ -1,4 +1,3 @@
-# coding: utf-8
 """Common utilities for tests
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -98,7 +97,7 @@ def user(request):
 
 @pytest.fixture
 def cm():
-    class _cm_result(object):  # pylint: disable=invalid-name
+    class _cm_result:  # pylint: disable=invalid-name
         @staticmethod
         def create_crash(
             tool="testtool",

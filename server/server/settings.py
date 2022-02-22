@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
     SECRET_KEY = open(SECRET_FILE).read().strip()
-except IOError:
+except OSError:
     try:
         with open(SECRET_FILE, "w") as f:
             import random
@@ -29,7 +29,7 @@ except IOError:
             chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
             SECRET_KEY = "".join([random.choice(chars) for i in range(64)])
             f.write(SECRET_KEY)
-    except IOError:
+    except OSError:
         raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!

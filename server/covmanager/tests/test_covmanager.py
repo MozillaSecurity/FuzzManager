@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CovManager
 
 @author:     Jesse Schwartzentruber (:truber)

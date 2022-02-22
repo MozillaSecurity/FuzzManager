@@ -14,17 +14,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import json
 import os
 import re
 import sys
 from abc import ABCMeta
-
-import six
 
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -118,8 +112,7 @@ def int64(val):
     return val
 
 
-@six.add_metaclass(ABCMeta)
-class CrashInfo(object):
+class CrashInfo(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
@@ -219,21 +212,19 @@ class CrashInfo(object):
         @return: Crash information object
         """
 
-        assert stdout is None or isinstance(stdout, (list, six.text_type, bytes))
-        assert stderr is None or isinstance(stderr, (list, six.text_type, bytes))
-        assert auxCrashData is None or isinstance(
-            auxCrashData, (list, six.text_type, bytes)
-        )
+        assert stdout is None or isinstance(stdout, (list, str, bytes))
+        assert stderr is None or isinstance(stderr, (list, str, bytes))
+        assert auxCrashData is None or isinstance(auxCrashData, (list, str, bytes))
 
         assert isinstance(configuration, ProgramConfiguration)
 
-        if isinstance(stdout, (six.text_type, bytes)):
+        if isinstance(stdout, (str, bytes)):
             stdout = stdout.splitlines()
 
-        if isinstance(stderr, (six.text_type, bytes)):
+        if isinstance(stderr, (str, bytes)):
             stderr = stderr.splitlines()
 
-        if isinstance(auxCrashData, (six.text_type, bytes)):
+        if isinstance(auxCrashData, (str, bytes)):
             auxCrashData = auxCrashData.splitlines()
 
         if cacheObject is not None:
@@ -1153,7 +1144,7 @@ class GDBCrashInfo(CrashInfo):
                 self.crashInstruction, self.registers
             )
 
-            if isinstance(crashAddress, (six.text_type, bytes)):
+            if isinstance(crashAddress, (str, bytes)):
                 self.failureReason = crashAddress
                 return
 
@@ -1539,7 +1530,7 @@ class MinidumpCrashInfo(CrashInfo):
                         if components[2]:
                             frame = components[2]
                             if len(components) >= 7 and components[6]:
-                                frame = "%s+%s" % (frame, components[6])
+                                frame = f"{frame}+{components[6]}"
                             self.backtrace.append(CrashInfo.sanitizeStackFrame(frame))
                         else:
                             self.backtrace.append("??")
@@ -2066,7 +2057,9 @@ class ValgrindCrashInfo(CrashInfo):
             m = re.match(ValgrindCrashInfo.MSG_REGEX, line)
             if m and m.group("msg"):
                 if self.backtrace:
-                    return "Valgrind: %s [@ %s]" % (m.group("msg"), self.backtrace[0])
+                    return "Valgrind: {} [@ {}]".format(
+                        m.group("msg"), self.backtrace[0]
+                    )
                 return "Valgrind: %s" % m.group("msg")
 
         if not self.backtrace:

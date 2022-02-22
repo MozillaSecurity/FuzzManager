@@ -48,7 +48,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         want the foreign relationships of our object to be flattened into our
         object by name.
         """
-        serialized = super(CollectionSerializer, self).to_representation(obj)
+        serialized = super().to_representation(obj)
         if obj is not None:
             serialized["tools"] = ",".join([x.name for x in obj.tools.all()])
 
@@ -101,7 +101,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         attrs["coverage"] = dbobj
 
         # Create our Collection instance
-        return super(CollectionSerializer, self).create(attrs)
+        return super().create(attrs)
 
 
 class RepositorySerializer(serializers.ModelSerializer):
@@ -127,7 +127,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created")
 
     def __init__(self, *args, **kwargs):
-        super(ReportConfigurationSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         request = self.context.get("request")
         if request and hasattr(request, "GET"):
@@ -163,13 +163,13 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
         self.handle_repository(attrs)
 
         # Update our ReportConfiguration instance
-        return super(ReportConfigurationSerializer, self).update(instance, attrs)
+        return super().update(instance, attrs)
 
     def create(self, attrs):
         self.handle_repository(attrs)
 
         # Create our ReportConfiguration instance
-        return super(ReportConfigurationSerializer, self).create(attrs)
+        return super().create(attrs)
 
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -186,7 +186,7 @@ class ReportSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "data_created", "coverage")
 
     def __init__(self, *args, **kwargs):
-        super(ReportSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         request = self.context.get("request")
         if request and hasattr(request, "GET"):

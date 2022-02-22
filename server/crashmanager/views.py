@@ -4,7 +4,6 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
 
-import six
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
@@ -1028,7 +1027,7 @@ class CrashEntryViewSet(
         if vue:
             return CrashEntryVueSerializer(*args, **kwds)
         else:
-            return super(CrashEntryViewSet, self).get_serializer(*args, **kwds)
+            return super().get_serializer(*args, **kwds)
 
     def partial_update(self, request, pk=None):
         """Update individual crash fields."""
@@ -1098,7 +1097,7 @@ class BucketViewSet(
         if self.vue:
             return BucketVueSerializer(*args, **kwds)
         else:
-            return super(BucketViewSet, self).get_serializer(*args, **kwds)
+            return super().get_serializer(*args, **kwds)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
@@ -1403,7 +1402,7 @@ def json_to_query(json_str):
 
     def get_query_obj(obj, key=None):
 
-        if obj is None or isinstance(obj, (six.text_type, list, int)):
+        if obj is None or isinstance(obj, (str, list, int)):
             kwargs = {key: obj}
             qobj = Q(**kwargs)
             return qobj
@@ -1536,7 +1535,7 @@ class BugzillaTemplateBugCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.mode = BugzillaTemplateMode.Bug
-        return super(BugzillaTemplateBugCreateView, self).form_valid(form)
+        return super().form_valid(form)
 
 
 class BugzillaTemplateCommentCreateView(CreateView):
@@ -1552,7 +1551,7 @@ class BugzillaTemplateCommentCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.mode = BugzillaTemplateMode.Comment
-        return super(BugzillaTemplateCommentCreateView, self).form_valid(form)
+        return super().form_valid(form)
 
 
 class UserSettingsEditView(UpdateView):
@@ -1562,7 +1561,7 @@ class UserSettingsEditView(UpdateView):
     success_url = reverse_lazy("crashmanager:usersettings")
 
     def get_form_kwargs(self, **kwargs):
-        kwargs = super(UserSettingsEditView, self).get_form_kwargs(**kwargs)
+        kwargs = super().get_form_kwargs(**kwargs)
         kwargs["user"] = self.get_queryset().get(user=self.request.user)
         return kwargs
 

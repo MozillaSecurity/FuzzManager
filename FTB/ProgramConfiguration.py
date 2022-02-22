@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 ProgramConfiguration -- Configuration of a target program
 
@@ -15,10 +14,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import os
 import sys
 
@@ -75,8 +70,7 @@ class ProgramConfiguration:
         for field in ["product", "platform", "os"]:
             if field not in mainConfig:
                 raise RuntimeError(
-                    'Missing "%s" in binary configuration file %s'
-                    % (field, binaryConfig)
+                    f'Missing "{field}" in binary configuration file {binaryConfig}'
                 )
 
         # Version field is optional

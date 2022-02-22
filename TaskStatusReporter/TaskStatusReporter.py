@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf-8
 """
 TaskStatusReporter -- Simple status reporting tool for TaskManager
 
@@ -16,10 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    jschwartzentruber@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import functools
 import os
@@ -45,7 +40,7 @@ class TaskStatusReporter(Reporter):
         kwargs.setdefault(
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by TaskStatusReporter
-        super(TaskStatusReporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @remote_checks
     def report(self, text):
@@ -55,7 +50,7 @@ class TaskStatusReporter(Reporter):
         @type text: string
         @param text: Report text to send
         """
-        url = "%s://%s:%s/taskmanager/rest/tasks/update_status/" % (
+        url = "{}://{}:{}/taskmanager/rest/tasks/update_status/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -78,7 +73,7 @@ def main(argv=None):
     parser.add_argument(
         "--version",
         action="version",
-        version="%s v%s (%s)" % (os.path.basename(__file__), __version__, __updated__),
+        version=f"{os.path.basename(__file__)} v{__version__} ({__updated__})",
     )
 
     # Actions

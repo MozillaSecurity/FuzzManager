@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests
 
@@ -12,7 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-from __future__ import print_function
 
 import os
 import sys

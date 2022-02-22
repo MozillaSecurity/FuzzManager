@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """
 Price Simulator -- Tool to simulate how scheduling behavior/price strategies
                    affect the overall cost of your EC2 instances. This tool is
@@ -18,10 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
+import configparser
 import datetime
 import importlib
 import json
@@ -30,7 +26,6 @@ import sys
 from collections import OrderedDict
 
 import boto.ec2
-from six.moves import configparser
 
 now = datetime.datetime.now()
 
@@ -251,7 +246,7 @@ def main():
         priceData = {}
 
         if os.path.isfile(cacheFile):
-            with open(cacheFile, mode="r") as cacheFd:
+            with open(cacheFile) as cacheFd:
                 priceData = json.load(cacheFd, object_pairs_hook=OrderedDict)
         else:
             for hour in range(interval - 1, -1, -1):
@@ -281,7 +276,7 @@ def main():
     col_len = None
 
     for simulation in results:
-        print("Simulation %s (total price): %s" % (simulation, results[simulation]))
+        print(f"Simulation {simulation} (total price): {results[simulation]}")
 
         if col_len is None or col_len < len(simulation):
             col_len = len(simulation)

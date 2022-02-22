@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests for ec2spotmanager tasks.
 
@@ -91,7 +90,7 @@ def test_create_instance(mocker):
             return '{"redmond": {"mshq": [0.005]}, "toronto": {"markham": [0.01]}}'
         if ":image:" in key:
             return "warp"
-        raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
+        raise UncatchableException(f"unhandle key in mock_get(): {key}")
 
     mock_redis = mocker.patch("redis.StrictRedis.from_url")
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
@@ -146,7 +145,7 @@ def test_fulfilled_spot_instance(mocker):
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         def __init__(self, *args, **kwds):
-            super(_MockInstance, self).__init__(*args, **kwds)
+            super().__init__(*args, **kwds)
             self._test_tags = {}
 
         @property
@@ -249,7 +248,7 @@ def test_instance_shutting_down(mocker):
             return '{"redmond": {"mshq": [0.005]}}'
         if ":image:" in key:
             return "warp"
-        raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
+        raise UncatchableException(f"unhandle key in mock_get(): {key}")
 
     mock_redis = mocker.patch("redis.StrictRedis.from_url")
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
@@ -388,7 +387,7 @@ def test_instance_price_high(mocker):
             return '{"redmond": {"mshq": [0.05]}}'
         if ":image:" in key:
             return "warp"
-        raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
+        raise UncatchableException(f"unhandle key in mock_get(): {key}")
 
     mock_redis = mocker.patch("redis.StrictRedis.from_url")
     mock_redis.return_value.get = mocker.Mock(side_effect=_mock_redis_get)
@@ -434,12 +433,12 @@ def test_instance_price_high(mocker):
 def test_spot_instance_blacklist(mocker):
     """check that spot requests being cancelled will result in temporary blacklisting"""
     # ensure EC2Manager returns a request ID
-    class _status_code(object):
+    class _status_code:
         code = "instance-terminated-by-service"
 
     class _MockReq(boto.ec2.spotinstancerequest.SpotInstanceRequest):
         def __init__(self, *args, **kwds):
-            super(_MockReq, self).__init__(*args, **kwds)
+            super().__init__(*args, **kwds)
             self.state = "cancelled"
             self.status = _status_code
 
@@ -463,7 +462,7 @@ def test_spot_instance_blacklist(mocker):
             return '{"redmond": {"mshq": [0.001]}}'
         if ":image:" in key:
             return "warp"
-        raise UncatchableException("unhandle key in mock_get(): %s" % (key,))
+        raise UncatchableException(f"unhandle key in mock_get(): {key}")
 
     def _mock_redis_set(key, value, ex=None):
         assert ":blacklist:redmond:mshq:" in key

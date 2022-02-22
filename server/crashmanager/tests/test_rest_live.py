@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests
 
@@ -12,9 +11,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+from urllib.parse import urlsplit
+
 import pytest
 import requests
-from six.moves.urllib.parse import urlsplit
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytest_plugins = "server.tests"  # pylint: disable=invalid-name
@@ -23,7 +23,7 @@ pytest_plugins = "server.tests"  # pylint: disable=invalid-name
 @pytest.mark.skip
 def test_RESTCrashEntryInterface(live_server, fm_user):
     url = urlsplit(live_server.url)
-    url = "%s://%s:%s/crashmanager/rest/crashes/" % (url.scheme, url.hostname, url.port)
+    url = f"{url.scheme}://{url.hostname}:{url.port}/crashmanager/rest/crashes/"
 
     # Must yield forbidden without authentication
     assert requests.get(url).status_code == requests.codes["unauthorized"]
@@ -69,11 +69,7 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
 
 def test_RESTSignatureInterface(live_server):
     url = urlsplit(live_server.url)
-    url = "%s://%s:%s/crashmanager/rest/signatures/" % (
-        url.scheme,
-        url.hostname,
-        url.port,
-    )
+    url = f"{url.scheme}://{url.hostname}:{url.port}/crashmanager/rest/signatures/"
 
     # Must yield forbidden without authentication
     assert requests.get(url).status_code == requests.codes["not_found"]

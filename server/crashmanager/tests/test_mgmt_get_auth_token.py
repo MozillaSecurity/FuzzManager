@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CrashManager get_auth_token management command
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -49,7 +48,7 @@ def test_two_users(capsys):
     out, _ = capsys.readouterr()
     keys = set(out.strip().split())
     assert len(keys) == len(users)
-    tkns = set(tkn.key for tkn in Token.objects.all())
+    tkns = {tkn.key for tkn in Token.objects.all()}
     assert tkns == keys
     for key in keys:
         assert re.match(r"^[A-Fa-f0-9]+$", key) is not None

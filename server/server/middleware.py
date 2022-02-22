@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import re
 import traceback
 
@@ -12,7 +10,7 @@ from crashmanager.models import User
 from .auth import CheckAppPermission
 
 
-class ExceptionLoggingMiddleware(object):
+class ExceptionLoggingMiddleware:
     """
     This tiny middleware module allows us to see exceptions on stderr
     when running a Django instance with runserver.py
@@ -29,7 +27,7 @@ class ExceptionLoggingMiddleware(object):
         return None
 
 
-class RequireLoginMiddleware(object):
+class RequireLoginMiddleware:
     """
     Middleware component that wraps the login_required decorator around
     matching URL patterns. To use, add the class to MIDDLEWARE_CLASSES and
@@ -68,7 +66,7 @@ class RequireLoginMiddleware(object):
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
 
-class CheckAppPermissionsMiddleware(object):
+class CheckAppPermissionsMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         self.exceptions = re.compile(

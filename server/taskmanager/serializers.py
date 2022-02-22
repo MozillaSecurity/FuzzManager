@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 
 from django.conf import settings
@@ -23,7 +22,7 @@ class PoolSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Add dynamic fields"""
-        ret = super(PoolSerializer, self).to_representation(instance)
+        ret = super().to_representation(instance)
         ret["cycle_time"] = None
         if instance.cycle_time is not None:
             ret["cycle_time"] = int(instance.cycle_time.total_seconds())

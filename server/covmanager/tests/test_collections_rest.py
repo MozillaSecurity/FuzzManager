@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Collections rest api.
 
 @author:     Jesse Schwartzentruber (:truber)

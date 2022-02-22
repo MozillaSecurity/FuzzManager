@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from logging import getLogger
 from pathlib import Path
 
@@ -25,7 +24,7 @@ class TaskClusterConsumer(GenericConsumer):
             "exchange/taskcluster-github/v1/push",
         ]
         topics = ["primary.#.proj-%s.#" % settings.TC_PROJECT] * 5 + [
-            "primary.%s.%s" % (org, repo),
+            f"primary.{org}.{repo}",
         ]
         super().__init__(
             PulseConfiguration(**kwargs),

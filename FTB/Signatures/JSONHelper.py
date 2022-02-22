@@ -13,10 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
 import numbers
-
-import six
 
 
 def getArrayChecked(obj, key, mandatory=False):
@@ -54,7 +51,7 @@ def getStringChecked(obj, key, mandatory=False):
     @rtype: string
     @return: String retrieved from object
     """
-    return __getTypeChecked(obj, key, [six.text_type, bytes], mandatory)
+    return __getTypeChecked(obj, key, [str, bytes], mandatory)
 
 
 def getNumberChecked(obj, key, mandatory=False):
@@ -92,7 +89,7 @@ def getObjectOrStringChecked(obj, key, mandatory=False):
     @rtype: string or dict
     @return: String/Object object retrieved from object
     """
-    return __getTypeChecked(obj, key, [six.text_type, bytes, dict], mandatory)
+    return __getTypeChecked(obj, key, [str, bytes, dict], mandatory)
 
 
 def getNumberOrStringChecked(obj, key, mandatory=False):
@@ -111,9 +108,7 @@ def getNumberOrStringChecked(obj, key, mandatory=False):
     @rtype: string or number
     @return: String/Number object retrieved from object
     """
-    return __getTypeChecked(
-        obj, key, [six.text_type, bytes, numbers.Integral], mandatory
-    )
+    return __getTypeChecked(obj, key, [str, bytes, numbers.Integral], mandatory)
 
 
 def __getTypeChecked(obj, key, valTypes, mandatory=False):

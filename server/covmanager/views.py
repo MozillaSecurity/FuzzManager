@@ -780,7 +780,7 @@ class ReportViewSet(
         ):
             raise PermissionDenied()
 
-        return super(ReportViewSet, self).partial_update(request, *args, **kwargs)
+        return super().partial_update(request, *args, **kwargs)
 
 
 class RepositoryViewSet(

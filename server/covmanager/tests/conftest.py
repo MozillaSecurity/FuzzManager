@@ -1,4 +1,3 @@
-# coding: utf-8
 """Common test fixtures
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -70,7 +69,7 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
 
 @pytest.fixture
 def cm(request, settings, tmpdir):
-    class _result(object):
+    class _result:
         have_git = HAVE_GIT
         have_hg = HAVE_HG
 

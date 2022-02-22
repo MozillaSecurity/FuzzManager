@@ -25,9 +25,7 @@ POOL_STATUS_ENTRY_TYPE_CODE = {
     3: "max-spot-instance-count-exceeded",
     4: "temporary-failure",
 }
-POOL_STATUS_ENTRY_TYPE = dict(
-    (val, key) for key, val in POOL_STATUS_ENTRY_TYPE_CODE.items()
-)
+POOL_STATUS_ENTRY_TYPE = {val: key for key, val in POOL_STATUS_ENTRY_TYPE_CODE.items()}
 
 
 class OverwritingStorage(FileSystemStorage):
@@ -153,7 +151,7 @@ class PoolConfiguration(models.Model):
         # automatically here. You need to explicitly call the
         # deserializeFields method if you need this data.
 
-        super(PoolConfiguration, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def flatten(self, cache=None):
         # cache is optionally a prefetched {config_id: config} dictionary used for
@@ -252,7 +250,7 @@ class PoolConfiguration(models.Model):
                 value = "!" + value
             setattr(self, field, value)
 
-        super(PoolConfiguration, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def deserializeFields(self):
         for field in self.dict_config_fields:

@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 PersistentApplication -- Defines an interface for running multiple tests in
 a single target application process (persistent testing). Also includes an
@@ -18,18 +17,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import os
+import queue
 import signal
 import subprocess
 import time
 from abc import ABCMeta
-
-import six
-from six.moves import queue
 
 from FTB.Running.StreamCollector import StreamCollector
 from FTB.Running.WaitpidMonitor import WaitpidMonitor
@@ -68,8 +61,7 @@ class PersistentMode:
     NONE, SPFP, SIGSTOP = range(1, 4)
 
 
-@six.add_metaclass(ABCMeta)
-class PersistentApplication:
+class PersistentApplication(metaclass=ABCMeta):
     """
     Abstract base class that defines the interface
     """
@@ -188,7 +180,7 @@ class SimplePersistentApplication(PersistentApplication):
             # that in general
             print(test, file=self.process.stdin)
             print(
-                "%sspfp-endofdata%s" % (self.spfpPrefix, self.spfpSuffix),
+                f"{self.spfpPrefix}spfp-endofdata{self.spfpSuffix}",
                 file=self.process.stdin,
             )
         elif self.persistentMode == PersistentMode.SIGSTOP:
@@ -266,10 +258,10 @@ class SimplePersistentApplication(PersistentApplication):
         if self.persistentMode == PersistentMode.SPFP:
             try:
                 print(
-                    "%sspfp-selftest%s" % (self.spfpPrefix, self.spfpSuffix),
+                    f"{self.spfpPrefix}spfp-selftest{self.spfpSuffix}",
                     file=self.process.stdin,
                 )
-            except IOError:
+            except OSError:
                 raise RuntimeError(
                     "SPFP Error: Selftest failed, application did not start properly."
                 )

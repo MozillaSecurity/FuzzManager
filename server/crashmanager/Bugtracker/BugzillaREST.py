@@ -11,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import requests
 
 
@@ -57,10 +53,8 @@ class BugzillaREST:
         if self.authToken is not None:
             return True
 
-        loginUrl = "%s/login?login=%s&password=%s" % (
-            self.baseUrl,
-            self.username,
-            self.password,
+        loginUrl = (
+            f"{self.baseUrl}/login?login={self.username}&password={self.password}"
         )
         response = requests.get(loginUrl)
         json = response.json()
@@ -95,7 +89,7 @@ class BugzillaREST:
         if not isinstance(bugIds, list):
             bugIds = [bugIds]
 
-        bugUrl = "%s/bug?id=%s" % (self.baseUrl, ",".join(bugIds))
+        bugUrl = "{}/bug?id={}".format(self.baseUrl, ",".join(bugIds))
 
         extraParams = []
 

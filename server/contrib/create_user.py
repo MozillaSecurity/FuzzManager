@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import os
 import random
@@ -45,7 +43,7 @@ def main():
         else:
             User.objects.create_user(username, email, password)
 
-    print("Password: {}".format(password))
+    print(f"Password: {password}")
 
 
 if __name__ == "__main__":

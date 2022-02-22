@@ -71,7 +71,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer):
 
     def __init__(self, *args, **kwargs):
         self._flatten = kwargs.pop("flatten", False)
-        super(PoolConfigurationSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_representation(self, obj):
         result = {

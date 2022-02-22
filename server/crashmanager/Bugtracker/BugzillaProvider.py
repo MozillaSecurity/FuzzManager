@@ -11,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 from django.forms.models import model_to_dict
 from django.shortcuts import get_object_or_404
 from django.utils import dateparse
@@ -26,7 +22,7 @@ from .Provider import Provider
 
 class BugzillaProvider(Provider):
     def __init__(self, pk, hostname):
-        super(BugzillaProvider, self).__init__(pk, hostname)
+        super().__init__(pk, hostname)
 
     def getTemplateForUser(self, request, crashEntry):
         if "template" in request.GET:

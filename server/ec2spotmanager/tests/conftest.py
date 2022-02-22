@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Common utilities for tests
 
@@ -12,6 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import functools
 import sys
+from unittest.mock import Mock
 
 import pytest
 from django.contrib.auth.models import Permission, User
@@ -21,11 +21,6 @@ from crashmanager.models import User as cmUser
 from ec2spotmanager.CloudProvider.CloudProvider import CloudProvider
 
 from . import UncatchableException
-
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
 
 
 def _create_user(
@@ -86,7 +81,7 @@ def raise_on_status(mocker):
     def _mock_pool_status(_pool, type_, message):
         if sys.exc_info() != (None, None, None):
             raise  # pylint: disable=misplaced-bare-raise
-        raise UncatchableException("%s: %s" % (type_, message))
+        raise UncatchableException(f"{type_}: {message}")
 
     mocker.patch(
         "ec2spotmanager.tasks._update_pool_status",

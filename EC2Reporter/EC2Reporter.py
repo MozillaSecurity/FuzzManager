@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf-8
 """
 EC2Reporter -- Simple EC2 status reporting tool for EC2SpotManager
 
@@ -16,10 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import functools
 import os
@@ -45,7 +40,7 @@ class EC2Reporter(Reporter):
         kwargs.setdefault(
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by EC2Reporter
-        super(EC2Reporter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @remote_checks
     def report(self, text):
@@ -55,7 +50,7 @@ class EC2Reporter(Reporter):
         @type text: string
         @param text: Report text to send
         """
-        url = "%s://%s:%s/ec2spotmanager/rest/report/" % (
+        url = "{}://{}:{}/ec2spotmanager/rest/report/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -77,7 +72,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to cycle
         """
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/cycle/" % (
+        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/cycle/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -94,7 +89,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to disable
         """
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/disable/" % (
+        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/disable/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -111,7 +106,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to enable
         """
-        url = "%s://%s:%s/ec2spotmanager/rest/pool/%s/enable/" % (
+        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/enable/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -130,7 +125,7 @@ def main(argv=None):
     parser.add_argument(
         "--version",
         action="version",
-        version="%s v%s (%s)" % (os.path.basename(__file__), __version__, __updated__),
+        version=f"{os.path.basename(__file__)} v{__version__} ({__updated__})",
     )
 
     # Actions

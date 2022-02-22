@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests
 
@@ -15,15 +14,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 from pathlib import Path
 
-import six
-
 from FTB import AssertionHelper
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
 def _check_regex_matches(error_lines, sanitized_message):
-    if isinstance(sanitized_message, (six.text_type, bytes)):
+    if isinstance(sanitized_message, (str, bytes)):
         sanitized_message = [sanitized_message]
     else:
         sanitized_message = list(sanitized_message)
@@ -37,7 +34,7 @@ def _check_regex_matches(error_lines, sanitized_message):
         if not sanitized_message:
             return
     raise AssertionError(
-        "sanitized message did not match input: %r" % (sanitized_message,)
+        f"sanitized message did not match input: {sanitized_message!r}"
     )
 
 

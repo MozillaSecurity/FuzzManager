@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 TaskStatusReporter -- Simple Task status reporting tool for TaskManager
 

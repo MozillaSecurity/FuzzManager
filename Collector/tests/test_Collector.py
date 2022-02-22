@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests
 
@@ -12,28 +11,21 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-from __future__ import absolute_import, unicode_literals
-
 import json
 import os
 import platform
 import zipfile
 from pathlib import Path
+from unittest.mock import Mock, patch
+from urllib.parse import urlsplit
 
 import pytest
 import requests
-from six.moves.urllib.parse import urlsplit
 
 from Collector.Collector import Collector, main
 from crashmanager.models import CrashEntry
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
-    from mock import Mock, patch
-
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
@@ -183,7 +175,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     assert json.loads(entry.env) == {"PATH": "/home/ken", "LD_PRELOAD": "hack.so"}
     assert json.loads(entry.args) == ["./myprog"]
 
-    class response_t(object):
+    class response_t:
         status_code = 500
         text = "Error"
 
@@ -212,7 +204,7 @@ def test_collector_refresh(capsys, tmp_path):
 
     with outzip_path.open("rb") as fp:
 
-        class response_t(object):
+        class response_t:
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -249,7 +241,7 @@ def test_collector_refresh(capsys, tmp_path):
 
     # check that 404 raises
 
-    class response_t(object):  # noqa
+    class response_t:  # noqa
         status_code = requests.codes["not found"]
         text = "Not found"
 
@@ -261,7 +253,7 @@ def test_collector_refresh(capsys, tmp_path):
     # check that bad zips raise errors
     with (sigs_path / "other.txt").open("rb") as fp:
 
-        class response_t(object):  # noqa
+        class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -277,7 +269,7 @@ def test_collector_refresh(capsys, tmp_path):
         fp.write(b"\xFF")
     with outzip_path.open("rb") as fp:
 
-        class response_t(object):  # noqa
+        class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -341,14 +333,14 @@ def test_collector_download(tmp_path, monkeypatch):
         tool="test-tool",
     )
 
-    class response1_t(object):
+    class response1_t:
         status_code = requests.codes["ok"]
         text = "OK"
 
         def json(self):
             return {"id": 123, "testcase": "path/to/testcase.txt"}
 
-    class response2_t(object):
+    class response2_t:
         status_code = requests.codes["ok"]
         headers = {"content-disposition": "foo"}
         text = "OK"
@@ -380,7 +372,7 @@ def test_collector_download(tmp_path, monkeypatch):
         assert fp.read() == response2_t.content
 
     # testcase GET returns http error
-    class response2_t(object):
+    class response2_t:
         status_code = 404
         text = "Not found"
 
@@ -389,7 +381,7 @@ def test_collector_download(tmp_path, monkeypatch):
         collector.download(123)
 
     # download with no testcase
-    class response1_t(object):  # noqa
+    class response1_t:  # noqa
         status_code = requests.codes["ok"]
         text = "OK"
 
@@ -401,7 +393,7 @@ def test_collector_download(tmp_path, monkeypatch):
     assert result is None
 
     # invalid REST response
-    class response1_t(object):  # noqa
+    class response1_t:  # noqa
         status_code = requests.codes["ok"]
         text = "OK"
 
@@ -413,7 +405,7 @@ def test_collector_download(tmp_path, monkeypatch):
         collector.download(123)
 
     # REST query returns http error
-    class response1_t(object):  # noqa
+    class response1_t:  # noqa
         status_code = 404
         text = "Not found"
 

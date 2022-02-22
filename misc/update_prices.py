@@ -10,7 +10,6 @@ i2.2xlarge,r3.2xlarge,m3.2xlarge,m5.2xlarge,m2.4xlarge,d2.2xlarge,i3.2xlarge,r4.
 p3.2xlarge,m4.2xlarge,f1.2xlarge,h1.2xlarge,x1e.2xlarge,m5d.2xlarge,t2.2xlarge
 """
 
-from __future__ import print_function
 
 import json
 import sys

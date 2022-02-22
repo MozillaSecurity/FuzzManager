@@ -13,21 +13,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import json
 from abc import ABCMeta, abstractmethod
-
-import six
 
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Matchers import NumberMatch, StringMatch
 
 
-@six.add_metaclass(ABCMeta)
-class Symptom(object):
+class Symptom(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.

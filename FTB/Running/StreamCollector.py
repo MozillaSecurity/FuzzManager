@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 StreamCollector -- Runs as a thread and reads a single output stream of a process.
 
@@ -12,13 +11,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
+import queue
 import threading
-
-from six.moves import queue
 
 
 class StreamCollector(threading.Thread):

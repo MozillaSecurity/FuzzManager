@@ -27,7 +27,7 @@ from FTB.Signatures.Symptom import (
 )
 
 
-class CrashSignature(object):
+class CrashSignature:
     def __init__(self, rawSignature):
         """
         Constructor
@@ -67,7 +67,7 @@ class CrashSignature(object):
 
     @staticmethod
     def fromFile(signatureFile):
-        with open(signatureFile, "r") as sigFd:
+        with open(signatureFile) as sigFd:
             return CrashSignature(sigFd.read())
 
     def __str__(self):

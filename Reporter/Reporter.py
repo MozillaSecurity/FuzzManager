@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 Reporter -- Abstract base class for all reporters that use FuzzManager's config file
 

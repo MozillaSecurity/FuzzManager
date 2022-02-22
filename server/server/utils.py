@@ -7,7 +7,7 @@ import redis
 LOG = logging.getLogger("fuzzmanager.utils")
 
 
-class RedisLock(object):
+class RedisLock:
     """Simple Redis mutex lock.
 
     based on: https://redislabs.com/ebook/part-2-core-concepts \

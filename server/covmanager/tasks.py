@@ -70,7 +70,7 @@ def aggregate_coverage_data(pk, pks):
     dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(newCoverage))
     dbobj.save()
 
-    mergedCollection.description += " (NC %s, LM %s, CM %s)" % (
+    mergedCollection.description += " (NC {}, LM {}, CM {})".format(
         stats["null_coverable_count"],
         stats["length_mismatch_count"],
         stats["coverable_mismatch_count"],

@@ -43,7 +43,7 @@ from .CloudProvider import (
 
 class _LowercaseDict(dict):
     def __init__(self, *args, **kwds):
-        super(_LowercaseDict, self).__init__()
+        super().__init__()
         if len(args) > 1:
             raise TypeError("dict expected at most 1 arguments, got %d" % (len(args),))
         if args:
@@ -58,16 +58,16 @@ class _LowercaseDict(dict):
                 self[k] = v
 
     def __getitem__(self, key):
-        return super(_LowercaseDict, self).__getitem__(key.lower())
+        return super().__getitem__(key.lower())
 
     def __setitem__(self, key, value):
-        return super(_LowercaseDict, self).__setitem__(key.lower(), value.lower())
+        return super().__setitem__(key.lower(), value.lower())
 
     def __delitem__(self, key):
-        return super(_LowercaseDict, self).__delitem__(key.lower())
+        return super().__delitem__(key.lower())
 
     def __contains__(self, item):
-        return super(_LowercaseDict, self).__contains__(item.lower())
+        return super().__contains__(item.lower())
 
 
 class GCECloudProvider(CloudProvider):
@@ -113,7 +113,7 @@ class GCECloudProvider(CloudProvider):
         for region, instance_ids in instances_ids_by_region.items():
             assert (
                 region == "global"
-            ), "Invalid region name for GCE: %s (only 'global' supported)" % (region,)
+            ), f"Invalid region name for GCE: {region} (only 'global' supported)"
             cluster = self._connect()
             self.logger.info("Terminating %s instances in GCE", len(instance_ids))
             nodes = cluster.filter().name(instance_ids).nodes
@@ -152,9 +152,8 @@ class GCECloudProvider(CloudProvider):
     ):
         assert (
             region == "global"
-        ), "Invalid region name for GCE: %s (only 'global' supported)" % (region,)
-        self.logger.info(
-            "Using machine type %s in GCE availability zone %s.", instance_type, zone
+        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
+            region,
         )
         cluster = self._connect()
         container_spec = {
@@ -222,7 +221,9 @@ class GCECloudProvider(CloudProvider):
         # this isn't a spot provider, and tags were already set at instance creation
         assert (
             region == "global"
-        ), "Invalid region name for GCE: %s (only 'global' supported)" % (region,)
+        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
+            region,
+        )
         cluster = self._connect()
 
         requests = {}
@@ -255,7 +256,9 @@ class GCECloudProvider(CloudProvider):
         # unnecessary for this provider
         assert (
             region == "global"
-        ), "Invalid region name for GCE: %s (only 'global' supported)" % (region,)
+        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
+            region,
+        )
 
         instance_states = {}
         cluster = self._connect()
@@ -291,7 +294,9 @@ class GCECloudProvider(CloudProvider):
     def get_image(self, region, config):
         assert (
             region == "global"
-        ), "Invalid region name for GCE: %s (only 'global' supported)" % (region,)
+        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
+            region,
+        )
         return config.gce_image_name
 
     @staticmethod
@@ -361,8 +366,7 @@ class GCECloudProvider(CloudProvider):
             params = {"key": settings.GCE_API_KEY}
             data = requests.get(compute_skus_url, params=params).json()
             while True:
-                for sku in data["skus"]:
-                    yield sku
+                yield from data["skus"]
                 if data["nextPageToken"]:
                     params["pageToken"] = data["nextPageToken"]
                     data = requests.get(compute_skus_url, params=params).json()
@@ -381,12 +385,8 @@ class GCECloudProvider(CloudProvider):
                 # I don't know what this is for, so make sure it's 0
                 if sku["description"].startswith("CPU Upgrade Premium"):
                     assert price == 0, (
-                        "CPU Upgrade Premium is not 0 in %r/%r, please update pricing "
-                        "function"
-                        % (
-                            sku["serviceRegions"],
-                            sku["category"],
-                        )
+                        f"CPU Upgrade Premium is not 0 in {sku['serviceRegions']!r}/"
+                        f"{sku['category']!r}, please update pricing function"
                     )
                     continue
 
@@ -461,9 +461,7 @@ class GCECloudProvider(CloudProvider):
             elif instance_type == "f1-micro":
                 keys["instance"] = "f1-inst"
             else:
-                assert instance_type == "g1-small", "instance type is %s" % (
-                    instance_type,
-                )
+                assert instance_type == "g1-small", f"instance type is {instance_type}"
                 keys["instance"] = "g1-inst"
 
             for zone, prices in zones.items():

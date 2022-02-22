@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 Prices -- Various methods for accessing price history on EC2
 

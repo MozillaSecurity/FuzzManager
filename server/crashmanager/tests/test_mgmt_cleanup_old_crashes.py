@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CrashManager cleanup_old_crashes management command
 
 @author:     Jesse Schwartzentruber (:truber)

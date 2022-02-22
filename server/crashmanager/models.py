@@ -2,7 +2,6 @@ import json
 import logging
 import re
 
-import six
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User as DjangoUser
@@ -61,7 +60,7 @@ class TestCase(models.Model):
         # automatically. You must call the loadTest method if you
         # want to access the test content
 
-        super(TestCase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def loadTest(self):
         self.test.open(mode="rb")
@@ -148,7 +147,7 @@ class Bucket(models.Model):
         if not keepOptimized:
             self.optimizedSignature = None
 
-        super(Bucket, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def reassign(self, submitSave):
         """
@@ -417,8 +416,8 @@ class CrashEntry(models.Model):
             utf8_4byte_re = re.compile("[^\u0000-\uD7FF\uE000-\uFFFF]", re.UNICODE)
 
             def sanitize_utf8(s):
-                if not isinstance(s, six.text_type):
-                    s = six.text_type(s, "utf-8")
+                if not isinstance(s, str):
+                    s = str(s, "utf-8")
 
                 return utf8_4byte_re.sub("\uFFFD", s)
 
@@ -464,13 +463,11 @@ class CrashEntry(models.Model):
 
         if self.env:
             envDict = json.loads(self.env)
-            self.envList = ["%s=%s" % (s, envDict[s]) for s in envDict.keys()]
+            self.envList = [f"{s}={envDict[s]}" for s in envDict.keys()]
 
         if self.metadata:
             metadataDict = json.loads(self.metadata)
-            self.metadataList = [
-                "%s=%s" % (s, metadataDict[s]) for s in metadataDict.keys()
-            ]
+            self.metadataList = [f"{s}={metadataDict[s]}" for s in metadataDict.keys()]
 
     def getCrashInfo(
         self,

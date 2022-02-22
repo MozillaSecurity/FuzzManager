@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Tasks rest api.
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -89,14 +88,14 @@ def test_rest_task_status_methods(api_client, method):
     [
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
             },
             requests.codes["bad_request"],
             "Status text",
         ),
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
                 "status_data": "Hello world",
                 "extra": "blah",
             },
@@ -125,7 +124,7 @@ def test_rest_task_status_methods(api_client, method):
         ),
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
                 "status_data": "Hello world",
             },
             requests.codes["ok"],

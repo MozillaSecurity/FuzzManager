@@ -2,7 +2,6 @@ import collections
 import functools
 import json
 
-import six
 from django.conf import settings
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
@@ -115,7 +114,7 @@ def json_to_query(json_str):
 
     def get_query_obj(obj, key=None):
 
-        if obj is None or isinstance(obj, (six.text_type, list, int)):
+        if obj is None or isinstance(obj, (str, list, int)):
             kwargs = {key: obj}
             qobj = Q(**kwargs)
             return qobj

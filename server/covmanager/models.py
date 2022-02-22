@@ -71,7 +71,7 @@ class Collection(models.Model):
         # automatically here. You need to explicitly call the
         # loadCoverage method if you need this data.
 
-        super(Collection, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def loadCoverage(self):
         self.coverage.file.open(mode="rb")

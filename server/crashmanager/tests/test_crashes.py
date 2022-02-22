@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Crashes view.
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -73,7 +72,7 @@ def test_delete_testcase(cm):
     if storage.exists(test_file):
         storage.delete(test_file)
         raise AssertionError(
-            "file should have been deleted with TestCase: %r" % (test_file,)
+            f"file should have been deleted with TestCase: {test_file!r}"
         )
 
 
@@ -88,5 +87,5 @@ def test_delete_testcase_crash(cm):
     if storage.exists(test_file):
         storage.delete(test_file)
         raise AssertionError(
-            "file should have been deleted with CrashInfo: %r" % (test_file,)
+            f"file should have been deleted with CrashInfo: {test_file!r}"
         )

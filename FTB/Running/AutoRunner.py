@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 AutoRunner -- Determine the correct runner class (GDB, ASan, etc) for
               the given program, instantiate and return it.
@@ -13,10 +12,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function, unicode_literals
-
 import os
 import re
 import signal
@@ -25,13 +20,10 @@ import sys
 from abc import ABCMeta
 from distutils import spawn
 
-import six
-
 from FTB.Signatures.CrashInfo import CrashInfo
 
 
-@six.add_metaclass(ABCMeta)
-class AutoRunner:
+class AutoRunner(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.

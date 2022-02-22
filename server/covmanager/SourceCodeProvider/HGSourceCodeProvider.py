@@ -11,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function, unicode_literals
-
 import re
 import subprocess
 
@@ -27,7 +23,7 @@ from .SourceCodeProvider import (
 
 class HGSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location):
-        super(HGSourceCodeProvider, self).__init__(location)
+        super().__init__(location)
 
     def getSource(self, filename, revision):
         revision = revision.replace("+", "")

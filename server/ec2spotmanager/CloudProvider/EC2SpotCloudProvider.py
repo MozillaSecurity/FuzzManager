@@ -147,11 +147,11 @@ class EC2SpotCloudProvider(CloudProvider):
                         region,
                     )
                     raise CloudProviderTemporaryFailure(
-                        "Request limit exceeded for region %s" % (region,)
+                        f"Request limit exceeded for region {region}"
                     )
                 if code in {"InternalError", "Unavailable"}:
                     raise CloudProviderTemporaryFailure(
-                        "start_instances in region %s: %s" % (region, msg)
+                        f"start_instances in region {region}: {msg}"
                     )
             raise
 
@@ -169,7 +169,7 @@ class EC2SpotCloudProvider(CloudProvider):
                     "Request limit exceeded for region %s, trying again later.", region
                 )
                 raise CloudProviderTemporaryFailure(
-                    "Request limit exceeded for region %s" % (region,)
+                    f"Request limit exceeded for region {region}"
                 )
             else:
                 raise
@@ -220,7 +220,7 @@ class EC2SpotCloudProvider(CloudProvider):
                     ] = result.launch_specification.instance_type
                     failed_requests[req_id][
                         "reason"
-                    ] = "Spot request %s in %s is %s and %s" % (
+                    ] = "Spot request {} in {} is {} and {}".format(
                         req_id,
                         region,
                         result.status.code,
@@ -237,8 +237,7 @@ class EC2SpotCloudProvider(CloudProvider):
                     )
                 else:  # state=failed
                     self.logger.error(
-                        "Request %s is %s and %s."
-                        % (req_id, result.status.code, result.state)
+                        f"Request {req_id} is {result.status.code} and {result.state}."
                     )
                     failed_requests[req_id] = {}
                     failed_requests[req_id]["action"] = "disable_pool"
@@ -273,7 +272,7 @@ class EC2SpotCloudProvider(CloudProvider):
                 code = code_match.group(1)
                 if code == "Unavailable":
                     raise CloudProviderTemporaryFailure(
-                        "getting instances in region %s: %s" % (region, msg)
+                        f"getting instances in region {region}: {msg}"
                     )
             raise
 
@@ -365,7 +364,7 @@ class EC2SpotCloudProvider(CloudProvider):
                         .append(float(price["SpotPrice"]))
                     )
         except botocore.exceptions.EndpointConnectionError as exc:
-            raise RuntimeError("Boto connection error: %s" % (exc,))
+            raise RuntimeError(f"Boto connection error: {exc}")
 
         return prices
 

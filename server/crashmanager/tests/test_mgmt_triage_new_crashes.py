@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CrashManager triage_new_crashes management command
 
 @author:     Jesse Schwartzentruber (:truber)

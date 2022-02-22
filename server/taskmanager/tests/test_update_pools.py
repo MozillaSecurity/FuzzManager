@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for TaskManager tasks
 
 @author:     Jesse Schwartzentruber (:truber)

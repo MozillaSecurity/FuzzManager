@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import random
 import string
@@ -7,7 +5,6 @@ import subprocess
 import sys
 
 import django
-from six.moves import input
 
 
 def create_fuzzmanager():
@@ -50,14 +47,14 @@ def create_fuzzmanager():
 
         with open(".fuzzmanagerconf", "w") as f:
             f.write("[Main]\n")
-            f.write("sigdir = {}\n".format(sigdir))
-            f.write("serverhost = {}\n".format(serverhost))
-            f.write("serverport = {}\n".format(serverport))
-            f.write("serverproto = {}\n".format(serverproto))
-            f.write("serverauthtoken = {}\n".format(auth_token))
+            f.write(f"sigdir = {sigdir}\n")
+            f.write(f"serverhost = {serverhost}\n")
+            f.write(f"serverport = {serverport}\n")
+            f.write(f"serverproto = {serverproto}\n")
+            f.write(f"serverauthtoken = {auth_token}\n")
             f.write("tool = jsfunfuzz\n")
 
-        with open(".fuzzmanagerconf", "r") as f:
+        with open(".fuzzmanagerconf") as f:
             print(f.read())
 
         user_obj = User.objects.get(username="fuzzmanager")
@@ -103,9 +100,9 @@ def main():
         username = input("Please enter a user account to create, or ENTER to quit\n")
         if not username:
             break
-        password = input("Please enter a password for {}\n".format(username))
-        email = input("Please enter an email address for {}\n".format(username))
-        su = input("Is {} a super user account? (y/n)".format(username))
+        password = input(f"Please enter a password for {username}\n")
+        email = input(f"Please enter an email address for {username}\n")
+        su = input(f"Is {username} a super user account? (y/n)")
 
         if su == "y":
             superuser = True

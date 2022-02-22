@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf-8
 """
 AFL Management Daemon -- Tool to manage AFL queue and results
 
@@ -13,13 +12,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import collections
 import os
+import queue
 import re
 import shutil
 import stat
@@ -34,7 +30,6 @@ from pathlib import Path
 
 from fasteners import InterProcessLock
 from S3Manager import S3Manager
-from six.moves import queue
 
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -141,7 +136,7 @@ class LibFuzzerMonitor(threading.Thread):
 
                 # Pass-through output
                 if self.mid is not None:
-                    sys.stderr.write("[Job %s] %s" % (self.mid, line))
+                    sys.stderr.write(f"[Job {self.mid}] {line}")
                 else:
                     sys.stderr.write(line)
 
@@ -202,7 +197,7 @@ def command_file_to_list(cmd_file):
     cmdline = list()
     idx = 0
     test_idx = None
-    with open(cmd_file, "r") as cmd_fp:
+    with open(cmd_file) as cmd_fp:
         for line in cmd_fp:
             if "@@" in line:
                 test_idx = idx
@@ -241,7 +236,9 @@ def write_stats_file(outfile, fields, stats, warnings):
             if isinstance(val, list):
                 val = " ".join(val)
 
-            f.write("%s%s: %s\n" % (field, " " * (max_keylen + 1 - len(field)), val))
+            f.write(
+                "{}{}: {}\n".format(field, " " * (max_keylen + 1 - len(field)), val)
+            )
 
         for warning in warnings:
             f.write(warning)
@@ -318,7 +315,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
             cmdline_path = os.path.join(base_dir, "cmdline")
 
         if os.path.exists(stats_path):
-            with open(stats_path, "r") as stats_file:
+            with open(stats_path) as stats_file:
                 stats = stats_file.read()
 
             for line in stats.splitlines():
@@ -551,7 +548,7 @@ def scan_crashes(
         base_env = {}
         test_in_env = None
         if env_path:
-            with open(env_path, "r") as env_file:
+            with open(env_path) as env_file:
                 for line in env_file:
                     (name, val) = line.rstrip("\n").split("=", 1)
                     base_env[name] = val
@@ -603,7 +600,7 @@ def scan_crashes(
             elif test_path is not None:
                 shutil.copy(crash_file, test_path)
             else:
-                with open(crash_file, "r") as crash_fd:
+                with open(crash_file) as crash_fd:
                     stdin = crash_fd.read()
 
             print("Processing crash file %s" % crash_file, file=sys.stderr)
@@ -1172,7 +1169,7 @@ def main(argv=None):
         total_queue_files = 0
 
         for queue_name in status_data:
-            print("Queue %s: %s" % (queue_name, status_data[queue_name]))
+            print(f"Queue {queue_name}: {status_data[queue_name]}")
             total_queue_files += status_data[queue_name]
         print("Total queue files: %s" % total_queue_files)
 
@@ -1183,7 +1180,7 @@ def main(argv=None):
         total_corpus_files = 0
 
         for (status_dt, status_cnt) in sorted(status_data.items()):
-            print("Added %s: %s" % (status_dt, status_cnt))
+            print(f"Added {status_dt}: {status_cnt}")
             total_corpus_files += status_cnt
         print("Total corpus files: %s" % total_corpus_files)
 
@@ -1225,10 +1222,7 @@ def main(argv=None):
 
         queues_dir = os.path.join(opts.s3_corpus_refresh, "queues")
 
-        print(
-            "Cleaning old queues from s3://%s/%s/queues/"
-            % (opts.s3_bucket, opts.project)
-        )
+        print(f"Cleaning old queues from s3://{opts.s3_bucket}/{opts.project}/queues/")
         s3m.clean_queue_dirs()
 
         print(
@@ -1258,7 +1252,7 @@ def main(argv=None):
             print("Downloading build")
             s3m.download_build(build_path)
 
-        with open(os.path.join(opts.s3_corpus_refresh, "cmdline"), "r") as cmdline_file:
+        with open(os.path.join(opts.s3_corpus_refresh, "cmdline")) as cmdline_file:
             cmdline = cmdline_file.read().splitlines()
 
         # Assume cmdline[0] is the name of the binary
@@ -1379,8 +1373,7 @@ def main(argv=None):
 
         # replace existing corpus with reduced corpus
         print(
-            "Uploading reduced corpus to s3://%s/%s/corpus/"
-            % (opts.s3_bucket, opts.project)
+            f"Uploading reduced corpus to s3://{opts.s3_bucket}/{opts.project}/corpus/"
         )
         s3m.upload_corpus(updated_tests_dir, corpus_delete=True)
 

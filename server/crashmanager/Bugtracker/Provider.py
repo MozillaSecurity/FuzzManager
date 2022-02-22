@@ -11,17 +11,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 from abc import ABCMeta, abstractmethod
 
-import six
 
-
-@six.add_metaclass(ABCMeta)
-class Provider:
+class Provider(metaclass=ABCMeta):
     """
     Abstract base
     class that defines what interfaces Bug Providers must implement

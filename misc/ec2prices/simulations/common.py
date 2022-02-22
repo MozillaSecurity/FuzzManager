@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """
 common -- Functions used by simulation handlers
 
@@ -13,7 +12,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-from __future__ import print_function
 
 
 def select_better(
@@ -33,7 +31,7 @@ def select_better(
 
     def print_indent(s):
         if verbose:
-            print("%s%s" % ("*" * indent, s))
+            print("{}{}".format("*" * indent, s))
 
     if region is None:
         for region_name in data:
@@ -54,7 +52,7 @@ def select_better(
                     ret["price"],
                 )
             else:
-                print_indent("Price rejected: %s > %s" % (ret["price"], best_price))
+                print_indent("Price rejected: {} > {}".format(ret["price"], best_price))
     else:
         if zone is None:
             for zone_name in data[region]:
@@ -75,7 +73,9 @@ def select_better(
                         ret["price"],
                     )
                 else:
-                    print_indent("Price rejected: %s > %s" % (ret["price"], best_price))
+                    print_indent(
+                        "Price rejected: {} > {}".format(ret["price"], best_price)
+                    )
         else:
             if instance_type is None:
                 for instance_type_name in data[region][zone]:
@@ -97,7 +97,7 @@ def select_better(
                         )
                     else:
                         print_indent(
-                            "Price rejected: %s > %s" % (ret["price"], best_price)
+                            "Price rejected: {} > {}".format(ret["price"], best_price)
                         )
             else:
                 if instance_time is None:

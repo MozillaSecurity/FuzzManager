@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests for Pools rest api.
 
@@ -257,7 +256,7 @@ def test_rest_pool_disable_get(api_client):
 
 
 @pytest.mark.xfail
-class TestRestPoolChartDetailed(object):
+class TestRestPoolChartDetailed:
     @staticmethod
     def test_rest_pool_chart_detailed_no_auth(api_client):
         """must yield forbidden without authentication"""
@@ -342,7 +341,7 @@ class TestRestPoolChartDetailed(object):
 
 
 @pytest.mark.xfail
-class TestRestPoolChartAccumulated(object):
+class TestRestPoolChartAccumulated:
     @staticmethod
     def test_rest_pool_chart_accumulated_no_auth(api_client):
         """must yield forbidden without authentication"""

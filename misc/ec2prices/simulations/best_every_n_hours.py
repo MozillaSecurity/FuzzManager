@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """
 best_every_n_hours -- Simulation handler that makes a new cheapest choice every
                       n hours. Region and instance type can be fixed with the
@@ -15,10 +14,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 from .common import select_better
 
 
@@ -68,7 +63,7 @@ def run(data, sim_config, main_config):
 
             total_price = total_price + price
             print(
-                "%s %s %s %s %s" % (region, zone, instance_type, instance_time, price),
+                f"{region} {zone} {instance_type} {instance_time} {price}",
                 file=logFileFd,
             )
             cnt += 1

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
@@ -20,7 +18,7 @@ class Command(BaseCommand):
             content_type = ContentType.objects.get_for_model(getattr(module, model))
             perm = Permission.objects.get(content_type=content_type, codename=perm)
             user.user_permissions.add(perm)
-            print("user %s added permission %s:%s" % (user.username, model, perm))
+            print(f"user {user.username} added permission {model}:{perm}")
 
         print("done")
 

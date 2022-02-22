@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Repositories rest api.
 
 @author:     Jesse Schwartzentruber (:truber)

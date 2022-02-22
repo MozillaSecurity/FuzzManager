@@ -40,7 +40,7 @@ def create_weekly_report_mc(revision):
     last_monday = collections.first().created + relativedelta(weekday=MO(-1))
 
     mergedCollection = Collection()
-    mergedCollection.description = "Weekly Report (Week of %s, %s reports)" % (
+    mergedCollection.description = "Weekly Report (Week of {}, {} reports)".format(
         last_monday.strftime("%-m/%-d"),
         collections.count(),
     )

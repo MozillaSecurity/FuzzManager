@@ -17,7 +17,7 @@ if getattr(settings, "USE_OIDC", False):
 
     class FMOIDCAB(OIDCAuthenticationBackend):
         def verify_claims(self, claims):
-            verified = super(FMOIDCAB, self).verify_claims(claims)
+            verified = super().verify_claims(claims)
 
             if not verified:
                 return False

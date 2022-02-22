@@ -211,9 +211,7 @@ def viewPoolPrices(request, poolid):
         latest_price_by_zone = {}
 
         for instance_type in cloud_provider.get_instance_types(config):
-            prices = cache.get(
-                "%s:price:%s" % (cloud_provider.get_name(), instance_type)
-            )
+            prices = cache.get(f"{cloud_provider.get_name()}:price:{instance_type}")
             if prices is None:
                 continue
             prices = json.loads(prices)
@@ -783,7 +781,7 @@ class UptimeChartViewDetailed(JSONView):
     authentication_classes = (SessionAuthentication,)
 
     def get_context_data(self, **kwargs):
-        context = super(UptimeChartViewDetailed, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs["poolid"]))
         pool.flat_config = pool.config.flatten()
 
@@ -861,7 +859,7 @@ class UptimeChartViewAccumulated(JSONView):
     authentication_classes = (SessionAuthentication,)
 
     def get_context_data(self, **kwargs):
-        context = super(UptimeChartViewAccumulated, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         pool = InstancePool.objects.get(pk=int(kwargs["poolid"]))
         pool.flat_config = pool.config.flatten()
 

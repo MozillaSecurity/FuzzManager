@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Buckets rest api.
 
 @author:     Jesse Schwartzentruber (:truber)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 """
 libfuzzer -- Simple script to manage libfuzzer processes
 
@@ -16,10 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import os
 import subprocess
@@ -85,7 +80,7 @@ def main(argv=None):
     program_version = "v%s" % __version__
     program_build_date = "%s" % __updated__
 
-    program_version_string = "%%prog %s (%s)" % (program_version, program_build_date)
+    program_version_string = f"%prog {program_version} ({program_build_date})"
 
     if argv is None:
         argv = sys.argv[1:]

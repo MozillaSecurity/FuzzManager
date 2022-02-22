@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 EC2Reporter -- Simple EC2 status reporting tool for EC2SpotManager
 

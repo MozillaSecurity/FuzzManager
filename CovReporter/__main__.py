@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 CovReporter -- Coverage reporting client for CoverageManager
 

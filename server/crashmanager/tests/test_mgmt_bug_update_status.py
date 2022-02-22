@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CrashManager bug_update_status management command
 
 @author:     Eva Bardou
@@ -10,6 +9,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import json
+from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import User
@@ -28,11 +28,6 @@ from crashmanager.models import (
     Tool,
 )
 from crashmanager.models import User as cmUser
-
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")

@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 ConfigurationFiles -- Generic class used in FuzzManager to read one or more
                       configuration files
@@ -13,13 +12,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
+import configparser
 import sys
-
-from six.moves import configparser
 
 
 class ConfigurationFiles:

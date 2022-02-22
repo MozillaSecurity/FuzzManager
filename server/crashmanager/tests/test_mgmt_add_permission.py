@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for CrashManager add_permission management command
 
 @author:     Jesse Schwartzentruber (:truber)

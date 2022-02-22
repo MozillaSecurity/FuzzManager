@@ -97,7 +97,7 @@ def _determine_best_location(config, count, cache=None):
         # Calculate median values for all availability zones and best zone/price
         allowed_regions = set(cloud_provider.get_allowed_regions(config))
         for instance_type in instance_types:
-            data = cache.get("%s:price:%s" % (cloud_provider.get_name(), instance_type))
+            data = cache.get(f"{cloud_provider.get_name()}:price:{instance_type}")
             if data is None:
                 logger.warning("No price data for %s?", instance_type)
                 continue
@@ -198,7 +198,7 @@ def _start_pool_instances(pool, config, count=1):
             if not priceLowEntries:
                 msg = "No allowed region was cheap enough to spawn instances."
                 for zone in rejected_prices:
-                    msg += "\n%s at %s" % (zone, rejected_prices[zone])
+                    msg += f"\n{zone} at {rejected_prices[zone]}"
                 _update_pool_status(pool, "price-too-low", msg)
             return
 
@@ -254,7 +254,7 @@ def _start_pool_instances(pool, config, count=1):
             config.gce_env["EC2SPOTMANAGER_PROVIDER"] = provider
             config.gce_env["EC2SPOTMANAGER_CYCLETIME"] = str(config.cycle_interval)
 
-        image_key = "%s:image:%s:%s" % (cloud_provider.get_name(), region, image_name)
+        image_key = f"{cloud_provider.get_name()}:image:{region}:{image_name}"
         image = cache.get(image_key)
 
         if image is None:
@@ -418,7 +418,7 @@ def update_requests(provider, region, pool_id):
                 if failed_requests[req_id]["action"] == "blacklist":
                     # request was not fulfilled for some reason.. blacklist this
                     # type/region/zone for a while
-                    key = "%s:blacklist:%s:%s:%s" % (
+                    key = "{}:blacklist:{}:{}:{}".format(
                         provider,
                         instance.region,
                         instance.zone,
@@ -729,7 +729,7 @@ def check_and_resize_pool(pool_id):
         missing = pool.config.getMissingParameters()
         if missing:
             _update_pool_status(
-                pool, "config-error", "Configuration error (missing: %r)." % (missing,)
+                pool, "config-error", f"Configuration error (missing: {missing!r})."
             )
             return []
 

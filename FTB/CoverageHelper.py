@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 CoverageHelper -- Various methods around processing coverage data
 
@@ -12,10 +11,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import re
 
 
@@ -360,7 +355,7 @@ def get_flattened_names(node, prefix=""):
             new_prefix = ""
         else:
             if prefix:
-                new_prefix = "%s/%s" % (prefix, current_name)
+                new_prefix = f"{prefix}/{current_name}"
             else:
                 new_prefix = current_name
             result.add(new_prefix)

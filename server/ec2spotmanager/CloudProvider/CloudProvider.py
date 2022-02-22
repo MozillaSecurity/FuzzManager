@@ -11,15 +11,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    truber@mozilla.com
 """
-
 import functools
 import logging
-import socket
 import ssl
 import traceback
 from abc import ABCMeta, abstractmethod
-
-import six
 
 INSTANCE_STATE_CODE = {
     -1: "requested",
@@ -30,7 +26,7 @@ INSTANCE_STATE_CODE = {
     64: "stopping",
     80: "stopped",
 }
-INSTANCE_STATE = dict((val, key) for key, val in INSTANCE_STATE_CODE.items())
+INSTANCE_STATE = {val: key for key, val in INSTANCE_STATE_CODE.items()}
 
 # List of currently supported providers. This and what is returned by get_name() must
 # match
@@ -44,7 +40,7 @@ class CloudProviderError(Exception):
         self.message = message
 
     def __str__(self):
-        return "%s: %s (%s)" % (type(self).__name__, self.message, self.TYPE)
+        return f"{type(self).__name__}: {self.message} ({self.TYPE})"
 
 
 class CloudProviderTemporaryFailure(CloudProviderError):
@@ -60,23 +56,22 @@ def wrap_provider_errors(wrapped):
     def wrapper(*args, **kwds):
         try:
             return wrapped(*args, **kwds)
-        except (ssl.SSLError, socket.error) as exc:
+        except (ssl.SSLError, OSError) as exc:
             logging.getLogger("ec2spotmanager").exception("")
-            raise CloudProviderTemporaryFailure("%s: %s" % (wrapped.__name__, exc))
+            raise CloudProviderTemporaryFailure(f"{wrapped.__name__}: {exc}")
         except CloudProviderError:
             logging.getLogger("ec2spotmanager").exception("")
             raise
         except Exception:
             logging.getLogger("ec2spotmanager").exception("")
             raise CloudProviderError(
-                "%s: unhandled error: %s" % (wrapped.__name__, traceback.format_exc())
+                f"{wrapped.__name__}: unhandled error: {traceback.format_exc()}"
             )
 
     return wrapper
 
 
-@six.add_metaclass(ABCMeta)
-class CloudProvider:
+class CloudProvider(metaclass=ABCMeta):
     """
     Abstract base class that defines what interfaces Cloud Providers must implement
     """

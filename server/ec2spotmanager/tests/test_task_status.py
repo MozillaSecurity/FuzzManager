@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Tests for ec2spotmanager task update_status utilities.
 

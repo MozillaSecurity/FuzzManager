@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf-8
 """
 Collector -- Crash processing client
 
@@ -16,10 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import base64
 import hashlib
@@ -283,7 +278,7 @@ class Collector(Reporter):
         resp_json = self.get(url).json()
 
         if not isinstance(resp_json, dict):
-            raise RuntimeError("Server sent malformed JSON response: %r" % (resp_json,))
+            raise RuntimeError(f"Server sent malformed JSON response: {resp_json!r}")
 
         if not resp_json["testcase"]:
             return None
@@ -291,9 +286,11 @@ class Collector(Reporter):
         response = self.get(dlurl)
 
         if "content-disposition" not in response.headers:
-            raise RuntimeError("Server sent malformed response: %r" % (response,))
+            raise RuntimeError(f"Server sent malformed response: {response!r}")
 
-        local_filename = "%s%s" % (crashId, os.path.splitext(resp_json["testcase"])[1])
+        local_filename = "{}{}".format(
+            crashId, os.path.splitext(resp_json["testcase"])[1]
+        )
         with open(local_filename, "wb") as output:
             output.write(response.content)
 
@@ -323,7 +320,7 @@ class Collector(Reporter):
 
             if not isinstance(resp_json, dict):
                 raise RuntimeError(
-                    "Server sent malformed JSON response: %r" % (resp_json,)
+                    f"Server sent malformed JSON response: {resp_json!r}"
                 )
 
             next_url = resp_json["next"]
@@ -343,9 +340,7 @@ class Collector(Reporter):
                 response = self.get(url)
 
                 if "content-disposition" not in response.headers:
-                    raise RuntimeError(
-                        "Server sent malformed response: %r" % (response,)
-                    )
+                    raise RuntimeError(f"Server sent malformed response: {response!r}")
 
                 local_filename = "%d%s" % (
                     crash["id"],
@@ -409,7 +404,7 @@ def main(args=None):
     parser.add_argument(
         "--version",
         action="version",
-        version="%s v%s (%s)" % (__file__, __version__, __updated__),
+        version=f"{__file__} v{__version__} ({__updated__})",
     )
 
     # Crash information
@@ -770,8 +765,8 @@ def main(args=None):
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
             print(
-                "Environment variables: %s",
-                " ".join("%s = %s" % (k, v) for (k, v) in env.items()),
+                "Environment variables:",
+                " ".join(f"{k} = {v}" for (k, v) in env.items()),
             )
             print("")
 
@@ -779,7 +774,7 @@ def main(args=None):
             metadata = json.loads(retJSON["metadata"])
             print("== Metadata ==")
             for k, v in metadata.items():
-                print("%s = %s" % (k, v))
+                print(f"{k} = {v}")
             print("")
 
         print(retFile)

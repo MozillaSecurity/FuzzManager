@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# encoding: utf-8
 """
 CovReporter -- Coverage reporting client for CoverageManager
 
@@ -16,10 +15,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 import argparse
 import json
 import os
@@ -103,7 +98,7 @@ class CovReporter(Reporter):
         @type stats: dict
         @param stats: An optional stats object as returned by create_combined_coverage
         """
-        url = "%s://%s:%s/covmanager/rest/collections/" % (
+        url = "{}://{}:{}/covmanager/rest/collections/".format(
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -125,7 +120,7 @@ class CovReporter(Reporter):
             # to track the status of these bugs.
             if len(description) > 0:
                 description += " "
-            description += "(dv1:%s,%s,%s)" % (
+            description += "(dv1:{},{},{})".format(
                 stats["null_coverable_count"],
                 stats["length_mismatch_count"],
                 stats["coverable_mismatch_count"],
@@ -285,7 +280,7 @@ def main(argv=None):
     parser.add_argument(
         "--version",
         action="version",
-        version="%s v%s (%s)" % (os.path.basename(__file__), __version__, __updated__),
+        version=f"{os.path.basename(__file__)} v{__version__} ({__updated__})",
     )
 
     # Actions

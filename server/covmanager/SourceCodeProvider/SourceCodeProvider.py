@@ -11,13 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
-
-# Ensure print() compatibility with Python 3
-from __future__ import print_function
-
 from abc import ABCMeta, abstractmethod
-
-import six
 
 
 class UnknownRevisionException(Exception):
@@ -28,8 +22,7 @@ class UnknownFilenameException(Exception):
     pass
 
 
-@six.add_metaclass(ABCMeta)
-class SourceCodeProvider:
+class SourceCodeProvider(metaclass=ABCMeta):
     """
     Abstract base class that defines what interfaces Source Code Providers must
     implement
