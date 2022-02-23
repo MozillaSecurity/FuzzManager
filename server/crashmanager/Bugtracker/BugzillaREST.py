@@ -17,7 +17,7 @@ import requests
 class BugzillaREST:
     def __init__(self, hostname, username=None, password=None, api_key=None):
         self.hostname = hostname
-        self.baseUrl = "https://%s/rest" % self.hostname
+        self.baseUrl = f"https://{self.hostname}/rest"
         self.username = username
         self.password = password
         self.api_key = api_key
@@ -89,20 +89,20 @@ class BugzillaREST:
         if not isinstance(bugIds, list):
             bugIds = [bugIds]
 
-        bugUrl = "{}/bug?id={}".format(self.baseUrl, ",".join(bugIds))
+        bugUrl = f"{self.baseUrl}/bug?id={','.join(bugIds)}"
 
         extraParams = []
 
         # Ensure we are logged in if we have any login data.
         # However, we might not need any credentials for reading bugs.
         if self.login(loginRequired=False):
-            extraParams.append("&token=%s" % self.authToken)
+            extraParams.append(f"&token={self.authToken}")
 
         if include_fields:
-            extraParams.append("&include_fields=%s" % ",".join(include_fields))
+            extraParams.append(f"&include_fields={','.join(include_fields)}")
 
         if exclude_fields:
-            extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
+            extraParams.append(f"&exclude_fields={','.join(exclude_fields)}")
 
         response = requests.get(
             bugUrl + "".join(extraParams), headers=self.request_headers

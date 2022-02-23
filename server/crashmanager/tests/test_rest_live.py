@@ -56,11 +56,11 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
 
     assert (
         requests.post(
-            url, data, headers=dict(Authorization="Token %s" % fm_user.token)
+            url, data, headers=dict(Authorization=f"Token {fm_user.token}")
         ).status_code
         == requests.codes["created"]
     )
-    response = requests.get(url, headers=dict(Authorization="Token %s" % fm_user.token))
+    response = requests.get(url, headers=dict(Authorization=f"Token {fm_user.token}"))
 
     json = response.json()
     assert len(json) == lengthBeforePost + 1

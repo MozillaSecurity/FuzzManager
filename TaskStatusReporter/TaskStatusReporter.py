@@ -188,7 +188,7 @@ def main(argv=None):
                             reporter.report(report)
                         except RuntimeError as e:
                             # Ignore errors if the server is temporarily unavailable
-                            print("Failed to contact server: %s" % e, file=sys.stderr)
+                            print(f"Failed to contact server: {e}", file=sys.stderr)
                     finally:
                         lock.release()
 

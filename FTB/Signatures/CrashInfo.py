@@ -150,10 +150,10 @@ class CrashInfo(metaclass=ABCMeta):
         buf.append("")
 
         if self.crashAddress:
-            buf.append("Crash address: 0x%x" % self.crashAddress)
+            buf.append(f"Crash address: 0x{self.crashAddress:x}")
 
         if self.crashInstruction:
-            buf.append("Crash instruction: %s" % self.crashInstruction)
+            buf.append(f"Crash instruction: {self.crashInstruction}")
 
         if self.crashAddress or self.crashInstruction:
             buf.append("")
@@ -361,7 +361,7 @@ class CrashInfo(metaclass=ABCMeta):
         if not self.backtrace:
             return "No crash detected"
 
-        return "[@ %s]" % self.backtrace[0]
+        return f"[@ {self.backtrace[0]}]"
 
     def createCrashSignature(
         self,
@@ -447,7 +447,7 @@ class CrashInfo(metaclass=ABCMeta):
                     symptomObj = {
                         "type": "output",
                         "src": abortMsgSrc,
-                        "value": "/%s/" % abortMsg,
+                        "value": f"/{abortMsg}/",
                     }
                 symptomArr.append(symptomObj)
 
@@ -544,8 +544,8 @@ class CrashInfo(metaclass=ABCMeta):
             if self.crashInstruction is None:
                 failureReason = self.failureReason
                 self.failureReason = (
-                    "No crash instruction available from crash data. Reason: %s"
-                    % failureReason
+                    "No crash instruction available from crash data. Reason: "
+                    f"{failureReason}"
                 )
                 return None
 
@@ -734,7 +734,7 @@ class ASanCrashInfo(CrashInfo):
                     component = parts[2][1:-1]
             else:
                 print(
-                    "Warning: Missing component in this line: %s" % traceLine,
+                    f"Warning: Missing component in this line: {traceLine}",
                     file=sys.stderr,
                 )
                 component = "<missing>"
@@ -797,11 +797,11 @@ class ASanCrashInfo(CrashInfo):
             asanMsg = re.sub(r"size\sof\s0x[0-9a-f]+$", "size", asanMsg)
 
             if self.backtrace:
-                asanMsg += " [@ %s]" % self.backtrace[0]
+                asanMsg += f" [@ {self.backtrace[0]}]"
             if rwMsg:
                 # Strip address and thread
                 rwMsg = re.sub(" at 0x[0-9a-f]+ thread .+", "", rwMsg)
-                asanMsg += " with %s" % rwMsg
+                asanMsg += f" with {rwMsg}"
 
             return asanMsg
 
@@ -813,7 +813,7 @@ class ASanCrashInfo(CrashInfo):
 
             return "No crash detected"
 
-        return "[@ %s]" % self.backtrace[0]
+        return f"[@ {self.backtrace[0]}]"
 
 
 class LSanCrashInfo(CrashInfo):
@@ -870,7 +870,7 @@ class LSanCrashInfo(CrashInfo):
                     component = parts[2][1:-1]
             else:
                 print(
-                    "Warning: Missing component in this line: %s" % traceLine,
+                    f"Warning: Missing component in this line: {traceLine}",
                     file=sys.stderr,
                 )
                 component = "<missing>"
@@ -898,13 +898,13 @@ class LSanCrashInfo(CrashInfo):
 
         if abortMsg is not None:
             if isinstance(abortMsg, list):
-                return "LeakSanitizer: %s" % " ".join(abortMsg)
-            return "LeakSanitizer: %s" % abortMsg
+                return f"LeakSanitizer: {' '.join(abortMsg)}"
+            return f"LeakSanitizer: {abortMsg}"
 
         if not self.backtrace:
             return "No crash detected"
 
-        return "LeakSanitizer: [@ %s]" % self.backtrace[0]
+        return f"LeakSanitizer: [@ {self.backtrace[0]}]"
 
 
 class UBSanCrashInfo(CrashInfo):
@@ -961,7 +961,7 @@ class UBSanCrashInfo(CrashInfo):
                     component = parts[2][1:-1]
             else:
                 print(
-                    "Warning: Missing component in this line: %s" % traceLine,
+                    f"Warning: Missing component in this line: {traceLine}",
                     file=sys.stderr,
                 )
                 component = "<missing>"
@@ -989,13 +989,13 @@ class UBSanCrashInfo(CrashInfo):
 
         if abortMsg is not None:
             if isinstance(abortMsg, list):
-                return "UndefinedBehaviorSanitizer: %s" % " ".join(abortMsg)
-            return "UndefinedBehaviorSanitizer: %s" % abortMsg
+                return f"UndefinedBehaviorSanitizer: {' '.join(abortMsg)}"
+            return f"UndefinedBehaviorSanitizer: {abortMsg}"
 
         if not self.backtrace:
             return "No crash detected"
 
-        return "UndefinedBehaviorSanitizer: [@ %s]" % self.backtrace[0]
+        return f"UndefinedBehaviorSanitizer: [@ {self.backtrace[0]}]"
 
 
 class GDBCrashInfo(CrashInfo):
@@ -1201,19 +1201,19 @@ class GDBCrashInfo(CrashInfo):
                 return RegisterHelper.getInstructionPointer(registerMap)
             else:
                 raise RuntimeError(
-                    "Unsupported non-operand instruction: %s" % instruction
+                    f"Unsupported non-operand instruction: {instruction}"
                 )
 
         if len(parts) != 2:
             raise RuntimeError(
-                "Failed to split instruction and operands apart: %s" % crashInstruction
+                f"Failed to split instruction and operands apart: {crashInstruction}"
             )
 
         instruction = parts[0]
         operands = parts[1]
 
         if not re.match("[a-z\\.]+", instruction):
-            raise RuntimeError("Invalid instruction: %s" % instruction)
+            raise RuntimeError(f"Invalid instruction: {instruction}")
 
         parts = operands.split(",")
 
@@ -1245,7 +1245,7 @@ class GDBCrashInfo(CrashInfo):
 
                 # If we don't have the value, return None
                 if val is None:
-                    return (None, "Missing value for register %s " % match.group(2))
+                    return (None, f"Missing value for register {match.group(2)} ")
                 else:
                     if RegisterHelper.getBitWidth(registerMap) == 32:
                         return (int32(uint32(offset) + uint32(val)), None)
@@ -1321,8 +1321,8 @@ class GDBCrashInfo(CrashInfo):
                             return None
 
                         raise RuntimeError(
-                            "Instruction operands have multiple loads? %s"
-                            % crashInstruction
+                            "Instruction operands have multiple loads? "
+                            f"{crashInstruction}"
                         )
 
                     derefOp = parts[1]
@@ -1365,7 +1365,7 @@ class GDBCrashInfo(CrashInfo):
                         return result
                 else:
                     raise RuntimeError(
-                        "Unexpected instruction pattern: %s" % crashInstruction
+                        f"Unexpected instruction pattern: {crashInstruction}"
                     )
             elif len(parts) == 4:
                 if "(" in parts[0] and ")" not in parts[0]:
@@ -1412,7 +1412,7 @@ class GDBCrashInfo(CrashInfo):
 
                 # If we don't have the value, return None
                 if val is None:
-                    return (None, "Missing value for register %s " % derefOps[0])
+                    return (None, f"Missing value for register {derefOps[0]} ")
                 else:
                     if RegisterHelper.getBitWidth(registerMap) == 32:
                         return (int32(uint32(offset) + uint32(val)), None)
@@ -1443,18 +1443,17 @@ class GDBCrashInfo(CrashInfo):
                     if match is not None:
                         (result, reason) = calculateARMDerefOpAddress(match.group(1))
                         if result is None:
-                            failureReason += " (%s)" % reason
+                            failureReason += f" ({reason})"
                         else:
                             return result
         else:
             failureReason = "Architecture is not supported."
 
         print(
-            "Unable to calculate crash address from instruction: >%s<"
-            % crashInstruction,
+            f"Unable to calculate crash address from instruction: >{crashInstruction}<",
             file=sys.stderr,
         )
-        print("Reason: %s" % failureReason, file=sys.stderr)
+        print(f"Reason: {failureReason}", file=sys.stderr)
         return failureReason
 
     @staticmethod
@@ -1477,9 +1476,9 @@ class GDBCrashInfo(CrashInfo):
             # If we're missing any of the two register values, return None
             if regA is None or regB is None:
                 if regA is None:
-                    return (None, "Missing value for register %s" % match.group(2))
+                    return (None, f"Missing value for register {match.group(2)}")
                 else:
-                    return (None, "Missing value for register %s" % match.group(3))
+                    return (None, f"Missing value for register {match.group(3)}")
 
             if RegisterHelper.getBitWidth(registerMap) == 32:
                 val = int32(uint32(regA) + uint32(offset) + uint32(regB) * uint32(mult))
@@ -1520,7 +1519,7 @@ class MinidumpCrashInfo(CrashInfo):
         crashThread = None
         for traceLine in minidumpOuput:
             if crashThread is not None:
-                if traceLine.startswith("%s|" % crashThread):
+                if traceLine.startswith(f"{crashThread}|"):
                     components = traceLine.split("|")
 
                     if not components[3]:
@@ -1905,7 +1904,7 @@ class TSanCrashInfo(CrashInfo):
                     component = parts[3][1:-1]
             else:
                 print(
-                    "Warning: Missing component in this line: %s" % traceLine,
+                    f"Warning: Missing component in this line: {traceLine}",
                     file=sys.stderr,
                 )
                 component = "<missing>"
@@ -1940,26 +1939,26 @@ class TSanCrashInfo(CrashInfo):
 
             if "data race" in msg or "race on external object" in msg:
                 if self.tsanIndexZero:
-                    msg += " [@ %s]" % self.tsanIndexZero[0]
+                    msg += f" [@ {self.tsanIndexZero[0]}]"
                     if len(self.tsanIndexZero) > 1:
-                        msg += " vs. [@ %s]" % self.tsanIndexZero[1]
+                        msg += f" vs. [@ {self.tsanIndexZero[1]}]"
             elif "thread leak" in msg:
                 if self.tsanIndexZero:
-                    msg += " [@ %s]" % self.tsanIndexZero[0]
+                    msg += f" [@ {self.tsanIndexZero[0]}]"
             elif "mutex" in msg or "deadlock" in msg:
                 for frame in self.backtrace:
                     # This is a heuristic for finding an interesting frame
                     # that does not refer to a mutex primitive.
                     if "mutex" not in frame:
-                        msg += " [@ %s]" % frame
+                        msg += f" [@ {frame}]"
                         break
             elif "signal" in msg or "use-after-free" in msg:
                 if self.backtrace:
-                    msg += " [@ %s]" % self.backtrace[0]
+                    msg += f" [@ {self.backtrace[0]}]"
             else:
                 raise RuntimeError(
                     "Fatal error: TSan trace warning line has unhandled message case: "
-                    "%s" % msg
+                    f"{msg}"
                 )
 
             return msg
@@ -2057,11 +2056,9 @@ class ValgrindCrashInfo(CrashInfo):
             m = re.match(ValgrindCrashInfo.MSG_REGEX, line)
             if m and m.group("msg"):
                 if self.backtrace:
-                    return "Valgrind: {} [@ {}]".format(
-                        m.group("msg"), self.backtrace[0]
-                    )
-                return "Valgrind: %s" % m.group("msg")
+                    return f"Valgrind: {m.group('msg')} [@ {self.backtrace[0]}]"
+                return f"Valgrind: {m.group('msg')}"
 
         if not self.backtrace:
             return "No crash detected"
-        return "Valgrind: [@ %s]" % self.backtrace[0]
+        return f"Valgrind: [@ {self.backtrace[0]}]"

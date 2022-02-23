@@ -333,7 +333,7 @@ class CloudProvider(metaclass=ABCMeta):
         """
         classname = provider + "CloudProvider"
         providerModule = __import__(
-            "ec2spotmanager.CloudProvider.%s" % classname, fromlist=[classname]
+            f"ec2spotmanager.CloudProvider.{classname}", fromlist=[classname]
         )
         providerClass = getattr(providerModule, classname)
         return providerClass()

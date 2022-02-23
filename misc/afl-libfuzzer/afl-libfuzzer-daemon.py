@@ -166,7 +166,7 @@ class LibFuzzerMonitor(threading.Thread):
         return list(self.stderr)
 
     def terminate(self):
-        print("[Job %s] Received terminate request..." % self.mid, file=sys.stderr)
+        print(f"[Job {self.mid}] Received terminate request...", file=sys.stderr)
 
         # Avoid sending anything through the queue when the run() loop exits
         self.mqueue = None
@@ -236,9 +236,7 @@ def write_stats_file(outfile, fields, stats, warnings):
             if isinstance(val, list):
                 val = " ".join(val)
 
-            f.write(
-                "{}{}: {}\n".format(field, " " * (max_keylen + 1 - len(field)), val)
-            )
+            f.write(f"{field}{' ' * (max_keylen + 1 - len(field))}: {val}\n")
 
         for warning in warnings:
             f.write(warning)
@@ -358,10 +356,10 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     target_binary = cmdline[0] if cmdline else None
 
     if target_binary is not None:
-        if not os.path.isfile("%s.fuzzmanagerconf" % target_binary):
-            warnings.append("WARNING: Missing %s.fuzzmanagerconf\n" % target_binary)
+        if not os.path.isfile(f"{target_binary}.fuzzmanagerconf"):
+            warnings.append(f"WARNING: Missing {target_binary}.fuzzmanagerconf\n")
         elif ProgramConfiguration.fromBinary(target_binary) is None:
-            warnings.append("WARNING: Invalid %s.fuzzmanagerconf\n" % target_binary)
+            warnings.append(f"WARNING: Invalid {target_binary}.fuzzmanagerconf\n")
 
     # Look for unreported crashes
     failed_reports = 0
@@ -448,7 +446,7 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
                 aggregated_stats[field] = stats[field]
 
         for field in wanted_fields_mean:
-            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            assert hasattr(monitors[0], field), f"Field {field} not in monitor"
             aggregated_stats[field] = 0
             for monitor in monitors:
                 aggregated_stats[field] += getattr(monitor, field)
@@ -457,13 +455,13 @@ def write_aggregated_stats_libfuzzer(outfile, stats, monitors, warnings):
             )
 
         for field in wanted_fields_all:
-            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            assert hasattr(monitors[0], field), f"Field {field} not in monitor"
             aggregated_stats[field] = []
             for monitor in monitors:
                 aggregated_stats[field].append(getattr(monitor, field))
 
         for field in wanted_fields_max:
-            assert hasattr(monitors[0], field), "Field %s not in monitor" % field
+            assert hasattr(monitors[0], field), f"Field {field} not in monitor"
             aggregated_stats[field] = 0
             for monitor in monitors:
                 val = getattr(monitor, field)
@@ -603,7 +601,7 @@ def scan_crashes(
                 with open(crash_file) as crash_fd:
                     stdin = crash_fd.read()
 
-            print("Processing crash file %s" % crash_file, file=sys.stderr)
+            print(f"Processing crash file {crash_file}", file=sys.stderr)
 
             runner = AutoRunner.fromBinaryArgs(
                 cmdline[0], cmdline[1:], env=env, stdin=stdin
@@ -712,8 +710,8 @@ def main(argv=None):
     # setup argparser
     parser = argparse.ArgumentParser(
         usage=(
-            "%s --libfuzzer or --aflfuzz [OPTIONS] --cmd <COMMAND AND ARGUMENTS>"
-            % program_name
+            f"{program_name} --libfuzzer or --aflfuzz [OPTIONS] "
+            "--cmd <COMMAND AND ARGUMENTS>"
         )
     )
 
@@ -1133,7 +1131,7 @@ def main(argv=None):
 
     if opts.transform and not os.path.isfile(opts.transform):
         print(
-            "Error: Failed to locate transformation script %s" % opts.transform,
+            f"Error: Failed to locate transformation script {opts.transform}",
             file=sys.stderr,
         )
         return 2
@@ -1171,7 +1169,7 @@ def main(argv=None):
         for queue_name in status_data:
             print(f"Queue {queue_name}: {status_data[queue_name]}")
             total_queue_files += status_data[queue_name]
-        print("Total queue files: %s" % total_queue_files)
+        print(f"Total queue files: {total_queue_files}")
 
         return 0
 
@@ -1182,7 +1180,7 @@ def main(argv=None):
         for (status_dt, status_cnt) in sorted(status_data.items()):
             print(f"Added {status_dt}: {status_cnt}")
             total_corpus_files += status_cnt
-        print("Total corpus files: %s" % total_corpus_files)
+        print(f"Total corpus files: {total_corpus_files}")
 
         return 0
 
@@ -1274,14 +1272,14 @@ def main(argv=None):
 
         if not binary_search_result:
             print(
-                "Error: Failed to locate binary %s in unpacked build." % binary_name,
+                f"Error: Failed to locate binary {binary_name} in unpacked build.",
                 file=sys.stderr,
             )
             return 2
 
         if len(binary_search_result) > 1:
             print(
-                "Error: Binary name %s is ambiguous in unpacked build." % binary_name,
+                f"Error: Binary name {binary_name} is ambiguous in unpacked build.",
                 file=sys.stderr,
             )
             return 2
@@ -1413,9 +1411,7 @@ def main(argv=None):
 
         binary = opts.rargs[0]
         if not os.path.exists(binary):
-            print(
-                "Error: Specified binary does not exist: %s" % binary, file=sys.stderr
-            )
+            print(f"Error: Specified binary does not exist: {binary}", file=sys.stderr)
             return 2
 
         configuration = ProgramConfiguration.fromBinary(binary)
@@ -1643,7 +1639,7 @@ def main(argv=None):
                         monitor = monitors[i]
                         if monitor is not None:
                             print(
-                                "Asking monitor %s to terminate..." % i, file=sys.stderr
+                                f"Asking monitor {i} to terminate...", file=sys.stderr
                             )
                             monitor.terminate()
                             monitor.join(30)
@@ -1748,8 +1744,8 @@ def main(argv=None):
                 monitor.join(20)
                 if monitor.is_alive():
                     raise RuntimeError(
-                        "Monitor %s still alive although it signaled termination."
-                        % result
+                        f"Monitor {result} still alive although it signaled "
+                        "termination."
                     )
 
                 # Monitor is dead, mark it for restarts
@@ -1764,7 +1760,7 @@ def main(argv=None):
                     stats["execs_done"] += monitor.execs_done
 
                 print(
-                    "Job %s terminated, processing results..." % result, file=sys.stderr
+                    f"Job {result} terminated, processing results...", file=sys.stderr
                 )
 
                 trace = monitor.getASanTrace()
@@ -1801,7 +1797,7 @@ def main(argv=None):
                             potential_corpus_file = os.path.join(corpus_dir, hashname)
                             if os.path.exists(potential_corpus_file):
                                 print(
-                                    "Removing problematic corpus file %s..." % hashname,
+                                    f"Removing problematic corpus file {hashname}...",
                                     file=sys.stderr,
                                 )
                                 os.remove(potential_corpus_file)
@@ -1889,7 +1885,7 @@ def main(argv=None):
                         signature_repeat_count = 0
 
                     print(
-                        "Crash matches signature %s, not submitting..." % sigfile,
+                        f"Crash matches signature {sigfile}, not submitting...",
                         file=sys.stderr,
                     )
                 else:

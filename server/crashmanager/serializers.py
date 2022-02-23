@@ -127,7 +127,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         # Populate certain fields here from the CrashInfo object we just got
         if crashInfo.crashAddress is not None:
-            attrs["crashAddress"] = "0x%x" % crashInfo.crashAddress
+            attrs["crashAddress"] = f"0x{crashInfo.crashAddress:x}"
         attrs["shortSignature"] = crashInfo.createShortSignature()
         attrs["shortSignature"] = attrs["shortSignature"][
             : CrashEntry._meta.get_field("shortSignature").max_length
@@ -309,7 +309,7 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
         return None
 
     def get_sig_new_url(self, entry):
-        return "{}?crashid={}".format(reverse("crashmanager:signew"), entry.id)
+        return f"{reverse('crashmanager:signew')}?crashid={entry.id}"
 
     def get_find_sigs_url(self, entry):
         return reverse("crashmanager:findsigs", kwargs={"crashid": entry.id})

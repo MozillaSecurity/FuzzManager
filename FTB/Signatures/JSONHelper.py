@@ -114,7 +114,7 @@ def getNumberOrStringChecked(obj, key, mandatory=False):
 def __getTypeChecked(obj, key, valTypes, mandatory=False):
     if key not in obj:
         if mandatory:
-            raise RuntimeError('Expected key "%s" in object' % key)
+            raise RuntimeError(f'Expected key "{key}" in object')
         return None
 
     val = obj[key]

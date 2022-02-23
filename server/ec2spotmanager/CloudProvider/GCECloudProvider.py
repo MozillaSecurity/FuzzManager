@@ -45,7 +45,7 @@ class _LowercaseDict(dict):
     def __init__(self, *args, **kwds):
         super().__init__()
         if len(args) > 1:
-            raise TypeError("dict expected at most 1 arguments, got %d" % (len(args),))
+            raise TypeError(f"dict expected at most 1 arguments, got {len(args)}")
         if args:
             if hasattr(args[0], "items"):
                 for (k, v) in args[0].items():
@@ -152,8 +152,9 @@ class GCECloudProvider(CloudProvider):
     ):
         assert (
             region == "global"
-        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
-            region,
+        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+        self.logger.info(
+            "Using machine type %s in GCE availability zone %s.", instance_type, zone
         )
         cluster = self._connect()
         container_spec = {
@@ -221,9 +222,7 @@ class GCECloudProvider(CloudProvider):
         # this isn't a spot provider, and tags were already set at instance creation
         assert (
             region == "global"
-        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
-            region,
-        )
+        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
         cluster = self._connect()
 
         requests = {}
@@ -256,9 +255,7 @@ class GCECloudProvider(CloudProvider):
         # unnecessary for this provider
         assert (
             region == "global"
-        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
-            region,
-        )
+        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
 
         instance_states = {}
         cluster = self._connect()
@@ -294,9 +291,7 @@ class GCECloudProvider(CloudProvider):
     def get_image(self, region, config):
         assert (
             region == "global"
-        ), "Invalid region name for GCE: {} (only 'global' supported)".format(
-            region,
-        )
+        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
         return config.gce_image_name
 
     @staticmethod

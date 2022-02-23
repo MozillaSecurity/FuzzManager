@@ -63,7 +63,7 @@ def test_GITSourceCodeProvider(git_repo):
 
     for filename in tests:
         for revision in tests[filename]:
-            assert provider.testRevision(revision), "Revision %s is unknown" % revision
+            assert provider.testRevision(revision), f"Revision {revision} is unknown"
             assert provider.getSource(filename, revision) == tests[filename][revision]
 
     parents = provider.getParents("deede1283a224184f6654027e23b654a018e81b0")
@@ -96,7 +96,7 @@ def test_HGSourceCodeProvider(hg_repo):
 
     for filename in tests:
         for revision in tests[filename]:
-            assert provider.testRevision(revision), "Revision %s is unknown" % revision
+            assert provider.testRevision(revision), f"Revision {revision} is unknown"
             assert provider.getSource(filename, revision) == tests[filename][revision]
 
     parents = provider.getParents("7a6e60cac455")

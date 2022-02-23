@@ -77,8 +77,8 @@ def main(argv=None):
     """Command line options."""
 
     program_name = os.path.basename(sys.argv[0])
-    program_version = "v%s" % __version__
-    program_build_date = "%s" % __updated__
+    program_version = f"v{__version__}"
+    program_build_date = f"{__updated__}"
 
     program_version_string = f"%prog {program_version} ({program_build_date})"
 
@@ -87,7 +87,7 @@ def main(argv=None):
 
     # setup argparser
     parser = argparse.ArgumentParser(
-        usage="%s [OPTIONS] --cmd <COMMAND AND ARGUMENTS>" % program_name
+        usage=f"{program_name} [OPTIONS] --cmd <COMMAND AND ARGUMENTS>"
     )
 
     mainGroup = parser.add_argument_group(title="Main arguments", description=None)
@@ -202,7 +202,7 @@ def main(argv=None):
 
     binary = opts.rargs[0]
     if not os.path.exists(binary):
-        print("Error: Specified binary does not exist: %s" % binary, file=sys.stderr)
+        print(f"Error: Specified binary does not exist: {binary}", file=sys.stderr)
         return 2
 
     configuration = ProgramConfiguration.fromBinary(binary)
@@ -304,8 +304,7 @@ def main(argv=None):
                 signature_repeat_count = 0
 
             print(
-                "Crash matches signature %s, not submitting..." % sigfile,
-                file=sys.stderr,
+                f"Crash matches signature {sigfile}, not submitting...", file=sys.stderr
             )
         else:
             collector.generate(

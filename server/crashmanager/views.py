@@ -906,11 +906,11 @@ class JsonQueryFilterBackend(BaseFilterBackend):
             try:
                 _, queryobj = json_to_query(querystr)
             except (RuntimeError, TypeError) as e:
-                raise InvalidArgumentException("error in query: %s" % e)
+                raise InvalidArgumentException(f"error in query: {e}")
             try:
                 queryset = queryset.filter(queryobj)
             except FieldError as exc:
-                raise InvalidArgumentException("error in query: %s" % exc)
+                raise InvalidArgumentException(f"error in query: {exc}")
         return queryset
 
 
@@ -1044,10 +1044,10 @@ class CrashEntryViewSet(
         disallowed_fields = given_fields - allowed_fields
         if disallowed_fields:
             if len(disallowed_fields) == 1:
-                error_str = "field %r" % disallowed_fields.pop()
+                error_str = f"field {disallowed_fields.pop()!r}"
             else:
-                error_str = "fields %r" % list(disallowed_fields)
-            raise InvalidArgumentException("%s cannot be updated" % error_str)
+                error_str = f"fields {list(disallowed_fields)!r}"
+            raise InvalidArgumentException(f"{error_str} cannot be updated")
         if "testcase_quality" in request.data:
             if obj.testcase is None:
                 raise InvalidArgumentException("crash has no testcase")
@@ -1199,7 +1199,7 @@ class BucketViewSet(
         try:
             bucket.getSignature()
         except RuntimeError as e:
-            raise ValidationError("Signature is not valid: %s" % e)
+            raise ValidationError(f"Signature is not valid: {e}")
 
         # Only save if we hit "save" (not e.g. "preview")
         if submitSave:
@@ -1398,7 +1398,7 @@ def json_to_query(json_str):
     try:
         obj = json.loads(json_str, object_pairs_hook=OrderedDict)
     except ValueError as e:
-        raise RuntimeError("Invalid JSON: %s" % e)
+        raise RuntimeError(f"Invalid JSON: {e}")
 
     def get_query_obj(obj, key=None):
 
@@ -1408,7 +1408,7 @@ def json_to_query(json_str):
             return qobj
         elif not isinstance(obj, dict):
             raise RuntimeError(
-                "Invalid object type '%s' in query object" % type(obj).__name__
+                f"Invalid object type '{type(obj).__name__}' in query object"
             )
 
         qobj = Q()
@@ -1431,9 +1431,7 @@ def json_to_query(json_str):
                 qobj = get_query_obj(obj[objkey], objkey)
                 qobj.negate()
             else:
-                raise RuntimeError(
-                    "Invalid operator '%s' specified in query object" % op
-                )
+                raise RuntimeError(f"Invalid operator '{op}' specified in query object")
 
         return qobj
 
@@ -1452,7 +1450,7 @@ class AbstractDownloadView(APIView):
         response = HttpResponse(
             FileWrapper(test_file), content_type="application/octet-stream"
         )
-        response["Content-Disposition"] = 'attachment; filename="%s"' % filename
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
     def get(self):

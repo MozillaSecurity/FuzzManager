@@ -110,7 +110,7 @@ def json_to_query(json_str):
     try:
         obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)
     except ValueError as e:
-        raise RuntimeError("Invalid JSON: %s" % e)
+        raise RuntimeError(f"Invalid JSON: {e}")
 
     def get_query_obj(obj, key=None):
 
@@ -120,7 +120,7 @@ def json_to_query(json_str):
             return qobj
         elif not isinstance(obj, dict):
             raise RuntimeError(
-                "Invalid object type '%s' in query object" % type(obj).__name__
+                f"Invalid object type '{type(obj).__name__}' in query object"
             )
 
         qobj = Q()
@@ -144,9 +144,7 @@ def json_to_query(json_str):
                 qobj = get_query_obj(obj[objkey], objkey)
                 qobj.negate()
             else:
-                raise RuntimeError(
-                    "Invalid operator '%s' specified in query object" % op
-                )
+                raise RuntimeError(f"Invalid operator '{op}' specified in query object")
 
         return qobj
 
@@ -168,7 +166,7 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
             try:
                 _, queryobj = json_to_query(querystr)
             except RuntimeError as e:
-                raise InvalidArgumentException("error in query: %s" % e)  # noqa
+                raise InvalidArgumentException(f"error in query: {e}")  # noqa
             queryset = queryset.filter(queryobj)
         return queryset
 
@@ -191,7 +189,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         if querystr is not None:
             queryobj = None
             for field in queryset[0].simple_query_fields:
-                kwargs = {"%s__contains" % field: querystr}
+                kwargs = {f"{field}__contains": querystr}
                 if queryobj is None:
                     queryobj = Q(**kwargs)
                 else:

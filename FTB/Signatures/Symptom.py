@@ -65,7 +65,7 @@ class Symptom(metaclass=ABCMeta):
         elif stype == "stackFrames":
             return StackFramesSymptom(obj)
         else:
-            raise RuntimeError("Unknown symptom type: %s" % stype)
+            raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
     def matches(self, crashInfo):
@@ -99,7 +99,7 @@ class OutputSymptom(Symptom):
                 and self.src != "stdout"
                 and self.src != "crashdata"
             ):
-                raise RuntimeError("Invalid source specified: %s" % self.src)
+                raise RuntimeError(f"Invalid source specified: {self.src}")
 
     def matches(self, crashInfo):
         """

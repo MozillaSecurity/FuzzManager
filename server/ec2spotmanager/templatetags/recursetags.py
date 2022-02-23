@@ -28,7 +28,7 @@ def recurseconfig(parser, token):
     bits = token.contents.split()
     if len(bits) != 2:
         raise template.TemplateSyntaxError(
-            "%s tag requires a start configuration" % bits[0]
+            f"{bits[0]} tag requires a start configuration"
         )
 
     config_var = template.Variable(bits[1])

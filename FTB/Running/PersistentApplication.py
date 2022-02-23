@@ -275,8 +275,8 @@ class SimplePersistentApplication(PersistentApplication):
 
             if response != "PASSED":
                 raise RuntimeError(
-                    "SPFP Error: Selftest failed, unsupported application response: %s"
-                    % response
+                    "SPFP Error: Selftest failed, unsupported application response: "
+                    f"{response}"
                 )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             if not self._wait_child_stopped():
@@ -383,7 +383,7 @@ class SimplePersistentApplication(PersistentApplication):
                 return ApplicationStatus.ERROR
 
             raise RuntimeError(
-                "SPFP Error: Unsupported application response: %s" % response
+                f"SPFP Error: Unsupported application response: {response}"
             )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             # Resume the process

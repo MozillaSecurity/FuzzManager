@@ -154,7 +154,7 @@ def test_PersistentApplicationTestPerf(tmp_path):
                 spa.runTest("aaa\naaaa")
 
             stopTime = time.time()
-            print("%s execs per second" % (float(10000) / float(stopTime - startTime)))
+            print(f"{float(10000) / float(stopTime - startTime)} execs per second")
             newPid = spa.process.pid
 
             # Make sure we are still in the same process

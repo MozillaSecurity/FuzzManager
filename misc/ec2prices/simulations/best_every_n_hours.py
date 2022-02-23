@@ -42,7 +42,7 @@ def run(data, sim_config, main_config):
 
     cnt = 0
 
-    with open("%s.log" % sim_config["name"], mode="w") as logFileFd:
+    with open(f"{sim_config['name']}.log", mode="w") as logFileFd:
         for instance_time in data[region][zone][instance_type]:
             if cnt % n:
                 (_, price, _) = data[region][zone][instance_type][instance_time]

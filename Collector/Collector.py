@@ -70,7 +70,7 @@ class Collector(Reporter):
         """
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
-                raise RuntimeError("Bad CRC for downloaded zipfile %s" % zipFileName)
+                raise RuntimeError(f"Bad CRC for downloaded zipfile {zipFileName}")
 
             # Now clean the signature directory, only deleting signatures and metadata
             for sigFile in os.listdir(self.sigCacheDir):
@@ -78,8 +78,8 @@ class Collector(Reporter):
                     os.remove(os.path.join(self.sigCacheDir, sigFile))
                 else:
                     print(
-                        "Warning: Skipping deletion of non-signature file: %s"
-                        % sigFile,
+                        "Warning: Skipping deletion of non-signature file:",
+                        sigFile,
                         file=sys.stderr,
                     )
 
@@ -288,9 +288,7 @@ class Collector(Reporter):
         if "content-disposition" not in response.headers:
             raise RuntimeError(f"Server sent malformed response: {response!r}")
 
-        local_filename = "{}{}".format(
-            crashId, os.path.splitext(resp_json["testcase"])[1]
-        )
+        local_filename = f"{crashId}{os.path.splitext(resp_json['testcase'])[1]}"
         with open(local_filename, "wb") as output:
             output.write(response.content)
 
@@ -599,7 +597,7 @@ def main(args=None):
     # Either --autosubmit was specified, or someone specified --binary manually
     # Check that the binary actually exists
     if opts.binary and not os.path.exists(opts.binary):
-        parser.error("Error: Specified binary does not exist: %s" % opts.binary)
+        parser.error(f"Error: Specified binary does not exist: {opts.binary}")
 
     stdout = None
     stderr = None
@@ -759,7 +757,10 @@ def main(args=None):
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
-            print("Command line arguments: %s" % " ".join(args))
+            print(
+                "Command line arguments:",
+                " ".join(args),
+            )
             print("")
 
         if "env" in retJSON and retJSON["env"]:

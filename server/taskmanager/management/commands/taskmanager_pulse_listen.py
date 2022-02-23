@@ -23,7 +23,7 @@ class TaskClusterConsumer(GenericConsumer):
             "exchange/taskcluster-queue/v1/task-exception",
             "exchange/taskcluster-github/v1/push",
         ]
-        topics = ["primary.#.proj-%s.#" % settings.TC_PROJECT] * 5 + [
+        topics = [f"primary.#.proj-{settings.TC_PROJECT}.#"] * 5 + [
             f"primary.{org}.{repo}",
         ]
         super().__init__(

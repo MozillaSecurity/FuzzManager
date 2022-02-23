@@ -96,7 +96,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         h.update(repr(coverage).encode("utf-8"))
 
         dbobj = CollectionFile()
-        dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(coverage))
+        dbobj.file.save(f"{h.hexdigest()}.coverage", ContentFile(coverage))
         dbobj.save()
         attrs["coverage"] = dbobj
 

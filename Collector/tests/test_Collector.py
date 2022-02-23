@@ -102,10 +102,10 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     # create a test config
     with (tmp_path / ".fuzzmanagerconf").open("w") as fp:
         fp.write("[Main]\n")
-        fp.write("serverhost = %s\n" % url.hostname)
-        fp.write("serverport = %d\n" % url.port)
-        fp.write("serverproto = %s\n" % url.scheme)
-        fp.write("serverauthtoken = %s\n" % fm_user.token)
+        fp.write(f"serverhost = {url.hostname}\n")
+        fp.write(f"serverport = {url.port:d}\n")
+        fp.write(f"serverproto = {url.scheme}\n")
+        fp.write(f"serverauthtoken = {fm_user.token}\n")
 
     # try a binary testcase via cmd line
     testcase_path = tmp_path / "testcase.bin"

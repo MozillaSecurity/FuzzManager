@@ -67,7 +67,7 @@ def aggregate_coverage_data(pk, pks):
     h = hashlib.new("sha1")
     h.update(newCoverage.encode("utf-8"))
     dbobj = CollectionFile()
-    dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(newCoverage))
+    dbobj.file.save(f"{h.hexdigest()}.coverage", ContentFile(newCoverage))
     dbobj.save()
 
     mergedCollection.description += " (NC {}, LM {}, CM {})".format(

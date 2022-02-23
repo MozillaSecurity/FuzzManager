@@ -202,7 +202,7 @@ class Reporter(ABC):
         """
         kwds.setdefault("expected", requests.codes["ok"])
         kwds.setdefault("headers", {}).update(
-            {"Authorization": "Token %s" % self.serverAuthToken}
+            {"Authorization": f"Token {self.serverAuthToken}"}
         )
         return requests_retry(self._session.get)(*args, **kwds)
 
@@ -216,7 +216,7 @@ class Reporter(ABC):
         """
         kwds.setdefault("expected", requests.codes["created"])
         kwds.setdefault("headers", {}).update(
-            {"Authorization": "Token %s" % self.serverAuthToken}
+            {"Authorization": f"Token {self.serverAuthToken}"}
         )
         return requests_retry(self._session.post)(*args, **kwds)
 
@@ -230,7 +230,7 @@ class Reporter(ABC):
         """
         kwds.setdefault("expected", requests.codes["ok"])
         kwds.setdefault("headers", {}).update(
-            {"Authorization": "Token %s" % self.serverAuthToken}
+            {"Authorization": f"Token {self.serverAuthToken}"}
         )
         return requests_retry(self._session.patch)(*args, **kwds)
 

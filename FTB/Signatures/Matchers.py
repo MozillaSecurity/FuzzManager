@@ -46,7 +46,7 @@ class StringMatch(Match):
                 try:
                     self.compiledValue = re.compile(self.value)
                 except re.error as e:
-                    raise RuntimeError("Error in regular expression: %s" % e)
+                    raise RuntimeError(f"Error in regular expression: {e}")
         else:
             self.value = JSONHelper.getStringChecked(obj, "value", True)
 
@@ -59,11 +59,9 @@ class StringMatch(Match):
                     try:
                         self.compiledValue = re.compile(self.value)
                     except re.error as e:
-                        raise RuntimeError("Error in regular expression: %s" % e)
+                        raise RuntimeError(f"Error in regular expression: {e}")
                 else:
-                    raise RuntimeError(
-                        "Unknown match operator specified: %s" % matchType
-                    )
+                    raise RuntimeError(f"Unknown match operator specified: {matchType}")
 
     def matches(self, value, windowsSlashWorkaround=False):
         if isinstance(value, bytes):
@@ -88,7 +86,7 @@ class StringMatch(Match):
 
     def __repr__(self):
         if self.isPCRE:
-            return "/%s/" % self.value
+            return f"/{self.value}/"
 
         return self.value
 
@@ -125,7 +123,7 @@ class NumberMatch(Match):
                         self.matchType = NumberMatchType.GE
                     else:
                         raise RuntimeError(
-                            "Unknown match operator specified: %s" % matchType
+                            f"Unknown match operator specified: {matchType}"
                         )
 
                 try:
@@ -134,7 +132,7 @@ class NumberMatch(Match):
                     self.value = int(numberMatchComponents[numIdx], base)
                 except ValueError:
                     raise RuntimeError(
-                        "Invalid number specified: %s" % numberMatchComponents[numIdx]
+                        f"Invalid number specified: {numberMatchComponents[numIdx]}"
                     )
             else:
                 # We're trying to match the fact that we cannot calculate a crash
@@ -144,7 +142,7 @@ class NumberMatch(Match):
         elif isinstance(obj, numbers.Integral):
             self.value = obj
         else:
-            raise RuntimeError("Invalid type %s in NumberMatch." % type(obj))
+            raise RuntimeError(f"Invalid type {type(obj)} in NumberMatch.")
 
     def matches(self, value):
         if value is None:

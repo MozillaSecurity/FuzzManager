@@ -10,7 +10,7 @@ from django.utils import timezone
 
 
 def get_storage_path(self, name):
-    return os.path.join("poolconfig-%s-files" % self.pk, name)
+    return os.path.join(f"poolconfig-{self.pk}-files", name)
 
 
 class FlatObject(dict):

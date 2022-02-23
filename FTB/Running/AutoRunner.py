@@ -107,7 +107,7 @@ class GDBRunner(AutoRunner):
         self.gdbArgs = [
             "--batch",
             "-ex",
-            "source %s" % classPath,
+            f"source {classPath}",
         ]
 
         if core is None and not self.force_core:
@@ -236,8 +236,8 @@ class ASanRunner(AutoRunner):
 
         if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
             raise RuntimeError(
-                "Misconfigured ASAN_SYMBOLIZER_PATH: %s"
-                % self.env["ASAN_SYMBOLIZER_PATH"]
+                "Misconfigured ASAN_SYMBOLIZER_PATH: "
+                f"{self.env['ASAN_SYMBOLIZER_PATH']}"
             )
 
         if "UBSAN_OPTIONS" not in self.env:

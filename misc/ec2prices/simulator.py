@@ -52,7 +52,7 @@ def get_spot_price_per_region(
             )
 
             if not region:
-                raise RuntimeError("Invalid region: %s" % region_name)
+                raise RuntimeError(f"Invalid region: {region_name}")
 
             r = region.get_spot_price_history(
                 start_time=start_time.isoformat(),
@@ -189,8 +189,8 @@ class ConfigurationFile:
                 else:
                     if "handler" not in sectionMap:
                         print(
-                            "Warning: Simulation '%s' has no handler set, ignoring..."
-                            % section
+                            f"Warning: Simulation '{section}' has no handler set, "
+                            "ignoring..."
                         )
                         continue
 
@@ -239,9 +239,9 @@ def main():
     aws_secret_key = configFile.main["aws_secret_key"]
 
     for (simulation_name, simulation) in configFile.simulations.items():
-        sim_module = importlib.import_module("simulations.%s" % simulation["handler"])
+        sim_module = importlib.import_module(f"simulations.{simulation['handler']}")
 
-        print("Performing simulation '%s' ..." % simulation_name)
+        print(f"Performing simulation '{simulation_name}' ...")
 
         priceData = {}
 
@@ -250,7 +250,7 @@ def main():
                 priceData = json.load(cacheFd, object_pairs_hook=OrderedDict)
         else:
             for hour in range(interval - 1, -1, -1):
-                print("Obtaining hour %s" % (hour + 1))
+                print(f"Obtaining hour {hour + 1}")
                 stop = now - datetime.timedelta(hours=hour)
                 start = now - datetime.timedelta(hours=hour + 1)
 
@@ -299,7 +299,7 @@ def main():
             price_a = results[simulation_a]
             price_b = results[simulation_b]
 
-            p = "%.2f %%" % (100 - (price_a / price_b) * 100)
+            p = f"{100 - price_a / price_b * 100:.2f} %"
 
             sys.stdout.write(p)
             sys.stdout.write(" " * (len(simulation_b) - len(p) + 2))

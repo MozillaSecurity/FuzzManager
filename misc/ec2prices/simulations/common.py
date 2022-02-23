@@ -31,7 +31,7 @@ def select_better(
 
     def print_indent(s):
         if verbose:
-            print("{}{}".format("*" * indent, s))
+            print(f"{'*' * indent}{s}")
 
     if region is None:
         for region_name in data:
@@ -52,7 +52,7 @@ def select_better(
                     ret["price"],
                 )
             else:
-                print_indent("Price rejected: {} > {}".format(ret["price"], best_price))
+                print_indent(f"Price rejected: {ret['price']} > {best_price}")
     else:
         if zone is None:
             for zone_name in data[region]:
@@ -73,9 +73,7 @@ def select_better(
                         ret["price"],
                     )
                 else:
-                    print_indent(
-                        "Price rejected: {} > {}".format(ret["price"], best_price)
-                    )
+                    print_indent(f"Price rejected: {ret['price']} > {best_price}")
         else:
             if instance_type is None:
                 for instance_type_name in data[region][zone]:
@@ -96,9 +94,7 @@ def select_better(
                             ret["price"],
                         )
                     else:
-                        print_indent(
-                            "Price rejected: {} > {}".format(ret["price"], best_price)
-                        )
+                        print_indent(f"Price rejected: {ret['price']} > {best_price}")
             else:
                 if instance_time is None:
                     (_, best_price, _) = list(

@@ -50,9 +50,9 @@ class S3Manager:
         self.bucket = self.connection.get_bucket(self.bucket_name)
 
         # Define some path constants that define the folder structure on S3
-        self.remote_path_queues = "%s/queues/" % self.project_name
-        self.remote_path_corpus = "%s/corpus/" % self.project_name
-        self.remote_path_corpus_bundle = "%s/corpus.zip" % self.project_name
+        self.remote_path_queues = f"{self.project_name}/queues/"
+        self.remote_path_corpus = f"{self.project_name}/corpus/"
+        self.remote_path_corpus_bundle = f"{self.project_name}/corpus.zip"
 
         if self.build_project_name:
             self.remote_path_build = f"{self.build_project_name}/{self.zip_name}"
@@ -266,7 +266,7 @@ class S3Manager:
                 remote_keys_for_deletion.append(remote_key.name)
 
         for remote_key_for_deletion in remote_keys_for_deletion:
-            print("Deleting old key %s" % remote_key_for_deletion)
+            print(f"Deleting old key {remote_key_for_deletion}")
 
         self.bucket.delete_keys(remote_keys_for_deletion, quiet=True)
 
@@ -416,7 +416,7 @@ class S3Manager:
                             # Warn, but don't throw, we can try to download the corpus
                             # directly
                             print(
-                                "Bad CRC for downloaded zipfile %s" % zip_dest,
+                                f"Bad CRC for downloaded zipfile {zip_dest}",
                                 file=sys.stderr,
                             )
                         else:
@@ -540,7 +540,7 @@ class S3Manager:
         if "closed" in remote_files:
             # The queue we are assigned has been closed remotely.
             # Switch to a new queue instead.
-            print("Remote queue %s closed, switching to new queue..." % machine_id)
+            print(f"Remote queue {machine_id} closed, switching to new queue...")
             machine_id = self.__get_machine_id(base_dir, refresh=True)
             remote_path = f"{self.remote_path_queues}{machine_id}/"
             remote_files = [

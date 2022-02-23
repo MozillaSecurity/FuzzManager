@@ -56,10 +56,10 @@ class ProgramConfiguration:
 
     @staticmethod
     def fromBinary(binaryPath):
-        binaryConfig = "%s.fuzzmanagerconf" % binaryPath
+        binaryConfig = f"{binaryPath}.fuzzmanagerconf"
         if not os.path.exists(binaryConfig):
             print(
-                "Warning: No binary configuration found at %s" % binaryConfig,
+                f"Warning: No binary configuration found at {binaryConfig}",
                 file=sys.stderr,
             )
             return None

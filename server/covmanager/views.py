@@ -28,7 +28,7 @@ from .tasks import aggregate_coverage_data, calculate_report_summary
 
 def index(request):
     return redirect(
-        "covmanager:%s" % getattr(settings, "COV_DEFAULT_PAGE", "collections")
+        f"covmanager:{getattr(settings, 'COV_DEFAULT_PAGE', 'collections')}"
     )
 
 
@@ -135,9 +135,9 @@ def collections_reportsummary_html_list(request, collectionid):
             delta = round(a["coveragePercent"] - b["coveragePercent"], 2)
 
             if delta >= 1.0:
-                a["coveragePercentDelta"] = "+%s %%" % delta
+                a["coveragePercentDelta"] = f"+{delta} %"
             elif delta <= -1.0:
-                a["coveragePercentDelta"] = "%s %%" % delta
+                a["coveragePercentDelta"] = f"{delta} %"
 
             if "children" not in a or "children" not in b:
                 return

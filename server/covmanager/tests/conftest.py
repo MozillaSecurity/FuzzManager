@@ -89,7 +89,7 @@ def cm(request, settings, tmpdir):
                 classname = "HGSourceCodeProvider"
             else:
                 raise Exception(
-                    "unknown repository type: %s (expecting git or hg)" % repotype
+                    f"unknown repository type: {repotype} (expecting git or hg)"
                 )
             result = Repository.objects.create(
                 classname=classname, name=name, location=location

@@ -19,9 +19,7 @@ class Command(BaseCommand):
             raise CommandError("Error: invalid repository name")
 
         if Repository.objects.filter(name=name):
-            raise CommandError(
-                "Error: repository with name '%s' already exists!" % name
-            )
+            raise CommandError(f"Error: repository with name '{name}' already exists!")
 
         if not provider:
             raise CommandError("Error: invalid provider class")
@@ -32,19 +30,19 @@ class Command(BaseCommand):
         )
         try:
             __import__(
-                "covmanager.SourceCodeProvider.%s" % provider,
+                f"covmanager.SourceCodeProvider.{provider}",
                 fromlist=[provider.encode("utf-8")],
             )
         except ImportError:
             raise CommandError(
-                "Error: '%s' is not a valid source code provider!" % provider
+                f"Error: '{provider}' is not a valid source code provider!"
             )
 
         if not location:
             raise CommandError("Error: invalid location")
 
         if not os.path.isdir(location):
-            raise CommandError("Error: location not found: %s" % location)
+            raise CommandError(f"Error: location not found: {location}")
 
         repository = Repository()
         repository.name = name

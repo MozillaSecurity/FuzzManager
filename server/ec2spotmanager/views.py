@@ -145,7 +145,7 @@ def viewPool(request, poolid):
         if instance.status_code in INSTANCE_STATE_CODE:
             instance.status_code_text = INSTANCE_STATE_CODE[instance.status_code]
         else:
-            instance.status_code_text = "Unknown (%s)" % instance.status_code
+            instance.status_code_text = f"Unknown ({instance.status_code})"
 
     cyclic = pool.config.isCyclic()
 
@@ -597,7 +597,7 @@ def createConfig(request):
 
         if "clone" in request.GET:
             config = get_object_or_404(PoolConfiguration, pk=int(request.GET["clone"]))
-            config.name = "%s (Cloned)" % config.name
+            config.name = f"{config.name} (Cloned)"
             config.pk = None
             clone = True
         else:
@@ -665,7 +665,7 @@ def deletePool(request, poolid):
         )
 
     if request.method == "POST":
-        lock = fasteners.InterProcessLock("/tmp/ec2spotmanager.pool%s.lck" % poolid)
+        lock = fasteners.InterProcessLock(f"/tmp/ec2spotmanager.pool{poolid}.lck")
 
         if not lock.acquire(blocking=False):
             return render(

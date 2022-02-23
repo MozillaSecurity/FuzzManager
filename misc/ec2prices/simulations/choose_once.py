@@ -34,7 +34,7 @@ def run(data, sim_config, main_config):
     instance_type = ret["instance_type"]
     total_price = 0
 
-    with open("%s.log" % sim_config["name"], mode="w") as logFileFd:
+    with open(f"{sim_config['name']}.log", mode="w") as logFileFd:
         for instance_time in data[region][zone][instance_type]:
             (_, price, _) = data[region][zone][instance_type][instance_time]
             total_price = total_price + price

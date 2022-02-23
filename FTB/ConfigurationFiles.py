@@ -40,8 +40,8 @@ class ConfigurationFiles:
                     sections.remove(section)
             if sections:
                 print(
-                    "Warning: Ignoring the following config file sections: %s"
-                    % " ".join(sections),
+                    "Warning: Ignoring the following config file sections:",
+                    " ".join(sections),
                     file=sys.stderr,
                 )
 

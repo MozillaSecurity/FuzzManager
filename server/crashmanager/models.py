@@ -89,7 +89,7 @@ class BugProvider(models.Model):
     def getInstance(self):
         # Dynamically instantiate the provider as requested
         providerModule = __import__(
-            "crashmanager.Bugtracker.%s" % self.classname, fromlist=[self.classname]
+            f"crashmanager.Bugtracker.{self.classname}", fromlist=[self.classname]
         )
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.pk, self.hostname)
@@ -519,7 +519,7 @@ class CrashEntry(models.Model):
         self.cachedCrashInfo = None
         crashInfo = self.getCrashInfo()
         if crashInfo.crashAddress is not None:
-            self.crashAddress = "0x%x" % crashInfo.crashAddress
+            self.crashAddress = f"0x{crashInfo.crashAddress:x}"
         self.shortSignature = crashInfo.createShortSignature()
 
         # If the entry has a bucket, check if it still fits into

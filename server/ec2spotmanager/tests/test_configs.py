@@ -108,7 +108,7 @@ def test_configs_view_config_tree(client):
             seen3 = True
             assert len(cfg.children) == 0
         else:
-            raise Exception("unexpected configuration: %s" % cfg.name)
+            raise Exception(f"unexpected configuration: {cfg.name}")
     assert seen1
     assert seen3
     assert_contains(response, "config #1")

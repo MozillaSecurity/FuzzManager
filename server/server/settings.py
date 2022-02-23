@@ -30,7 +30,7 @@ except OSError:
             SECRET_KEY = "".join([random.choice(chars) for i in range(64)])
             f.write(SECRET_KEY)
     except OSError:
-        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE)
+        raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

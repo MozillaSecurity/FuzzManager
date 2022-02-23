@@ -407,7 +407,7 @@ def test_SignatureGenerationTSanRaceTest():
         for symptom in outputSymptoms:
             if symptom.output.value == stringMatchVal:
                 found = True
-        assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
+        assert found, f"Couldn't find OutputSymptom with value '{stringMatchVal}'"
 
 
 def test_SignatureGenerationTSanRaceTestComplex1():
@@ -448,7 +448,7 @@ def test_SignatureGenerationTSanRaceTestComplex1():
         for symptom in outputSymptoms:
             if symptom.output.value == stringMatchVal:
                 found = True
-        assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
+        assert found, f"Couldn't find OutputSymptom with value '{stringMatchVal}'"
 
 
 def test_SignatureGenerationTSanRaceTestAtomic():
@@ -492,7 +492,7 @@ def test_SignatureGenerationTSanRaceTestAtomic():
             for symptom in outputSymptoms:
                 if symptom.output.value == stringMatchVal:
                     found = True
-            assert found, "Couldn't find OutputSymptom with value '%s'" % stringMatchVal
+            assert found, f"Couldn't find OutputSymptom with value '{stringMatchVal}'"
 
 
 def test_SignatureMatchWithUnicode():
