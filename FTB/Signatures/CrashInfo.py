@@ -1448,8 +1448,10 @@ class AppleCrashInfo(CrashInfo):
 
         self.configuration = configuration
 
+        apple_crash_data = crashData or stderr
+
         inCrashingThread = False
-        for line in crashData:
+        for line in apple_crash_data:
             # Crash address
             if line.startswith("Exception Codes:"):
                 # Example:
@@ -1523,7 +1525,9 @@ class CDBCrashInfo(CrashInfo):
         ecxrData = []
         cInstruction = ""
 
-        for line in crashData:
+        cdb_crash_data = crashData or stderr
+
+        for line in cdb_crash_data:
             # Start of .ecxr data
             if re.match(r'0:000> \.ecxr', line):
                 inEcxrData = True
