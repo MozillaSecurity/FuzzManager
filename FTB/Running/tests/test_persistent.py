@@ -1,5 +1,4 @@
-# coding: utf-8
-'''
+"""
 Tests
 
 @author:     Christian Holler (:decoder)
@@ -11,17 +10,22 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
+
 import pytest
 
-from FTB.Running.PersistentApplication import SimplePersistentApplication, PersistentMode, ApplicationStatus
+from FTB.Running.PersistentApplication import (
+    ApplicationStatus,
+    PersistentMode,
+    SimplePersistentApplication,
+)
 
 TEST_PATH = os.path.dirname(__file__)
 
@@ -56,14 +60,22 @@ def test_PersistentApplicationTestModeNone(tmp_path: Path) -> None:
             spa.stop()
 
     # Check with stdin as source
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "none"]))
+    _check(
+        SimplePersistentApplication(
+            sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "none"]
+        )
+    )
 
     # Now use a temporary file instead
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "none",
-                                                        str(inputFile)],
-                                       inputFile=str(inputFile)))
+    _check(
+        SimplePersistentApplication(
+            sys.executable,
+            [os.path.join(TEST_PATH, "test_shell.py"), "none", str(inputFile)],
+            inputFile=str(inputFile),
+        )
+    )
 
 
 @pytest.mark.xfail
@@ -110,16 +122,27 @@ def test_PersistentApplicationTestOtherModes(tmp_path: Path) -> None:
             spa.stop()
 
     # Check with spfp and stdin as source
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "spfp"],
-                                       persistentMode=PersistentMode.SPFP, processingTimeout=2))
+    _check(
+        SimplePersistentApplication(
+            sys.executable,
+            [os.path.join(TEST_PATH, "test_shell.py"), "spfp"],
+            persistentMode=PersistentMode.SPFP,
+            processingTimeout=2,
+        )
+    )
 
     # Check with sigstop and temporary file as source
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "sigstop",
-                                                        str(inputFile)],
-                                       persistentMode=PersistentMode.SIGSTOP, processingTimeout=2,
-                                       inputFile=str(inputFile)))
+    _check(
+        SimplePersistentApplication(
+            sys.executable,
+            [os.path.join(TEST_PATH, "test_shell.py"), "sigstop", str(inputFile)],
+            persistentMode=PersistentMode.SIGSTOP,
+            processingTimeout=2,
+            inputFile=str(inputFile),
+        )
+    )
 
 
 @pytest.mark.xfail
@@ -136,7 +159,7 @@ def test_PersistentApplicationTestPerf(tmp_path: Path) -> None:
                 spa.runTest("aaa\naaaa")
 
             stopTime = time.time()
-            print("%s execs per second" % (float(10000) / float(stopTime - startTime)))
+            print(f"{float(10000) / float(stopTime - startTime)} execs per second")
             newPid = spa.process.pid
 
             # Make sure we are still in the same process
@@ -144,25 +167,40 @@ def test_PersistentApplicationTestPerf(tmp_path: Path) -> None:
 
         finally:
             spa.stop()
+
     # Check with spfp and stdin as source
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "spfp"],
-                                       persistentMode=PersistentMode.SPFP, processingTimeout=3))
+    _check(
+        SimplePersistentApplication(
+            sys.executable,
+            [os.path.join(TEST_PATH, "test_shell.py"), "spfp"],
+            persistentMode=PersistentMode.SPFP,
+            processingTimeout=3,
+        )
+    )
 
     # Check with sigstop and temporary file as source
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
-    _check(SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "sigstop",
-                                                        str(inputFile)],
-                                       persistentMode=PersistentMode.SIGSTOP, processingTimeout=3,
-                                       inputFile=str(inputFile)))
+    _check(
+        SimplePersistentApplication(
+            sys.executable,
+            [os.path.join(TEST_PATH, "test_shell.py"), "sigstop", str(inputFile)],
+            persistentMode=PersistentMode.SIGSTOP,
+            processingTimeout=3,
+            inputFile=str(inputFile),
+        )
+    )
 
 
 def test_PersistentApplicationTestFaultySigstop(tmp_path: Path) -> None:
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
-    spa = SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
-                                                       str(inputFile)],
-                                      persistentMode=PersistentMode.SIGSTOP, inputFile=str(inputFile))
+    spa = SimplePersistentApplication(
+        sys.executable,
+        [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", str(inputFile)],
+        persistentMode=PersistentMode.SIGSTOP,
+        inputFile=str(inputFile),
+    )
 
     with pytest.raises(RuntimeError):
         spa.start()
@@ -171,9 +209,12 @@ def test_PersistentApplicationTestFaultySigstop(tmp_path: Path) -> None:
 def test_PersistentApplicationTestStopWithoutStart(tmp_path: Path) -> None:
     inputFile = tmp_path / "input.tmp"
     inputFile.touch()
-    spa = SimplePersistentApplication(sys.executable, [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop",
-                                                       str(inputFile)],
-                                      persistentMode=PersistentMode.SIGSTOP, inputFile=str(inputFile))
+    spa = SimplePersistentApplication(
+        sys.executable,
+        [os.path.join(TEST_PATH, "test_shell.py"), "faulty_sigstop", str(inputFile)],
+        persistentMode=PersistentMode.SIGSTOP,
+        inputFile=str(inputFile),
+    )
 
     # Should not throw, instead it should be a no-op
     spa.stop()

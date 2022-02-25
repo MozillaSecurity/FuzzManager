@@ -8,18 +8,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('crashmanager', '0004_bugzillatemplate_mode'),
+        ("crashmanager", "0004_bugzillatemplate_mode"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='bucket_hit',
+            model_name="user",
+            name="bucket_hit",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='user',
-            name='inaccessible_bug',
+            model_name="user",
+            name="inaccessible_bug",
             field=models.BooleanField(default=False),
         ),
     ]

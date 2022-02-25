@@ -9,8 +9,10 @@ RUN npm run production
 FROM python:3.8
 
 # Install dependencies before copying src, so pip is only run when needed
-COPY ./server/requirements3.0.txt ./server/requirements-docker.txt /tmp/
-RUN pip install -q -r /tmp/requirements3.0.txt -r /tmp/requirements-docker.txt
+COPY ./requirements.txt ./setup.cfg /src/
+RUN cd /src && \
+   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'], ex['taskmanager'])))" | xargs -0 pip install -q -c requirements.txt && \
+   rm -rf /src
 
 # Embed full source code
 COPY . /src/
@@ -19,7 +21,9 @@ COPY . /src/
 COPY --from=frontend /src/dist/ /src/server/frontend/dist/
 
 # Install FM
-RUN pip install -q /src
+# Note: the extras must be duplicated above in the Python
+#       script to pre-install dependencies.
+RUN pip install -q /src[docker,server,taskmanager]
 
 # Use a custom settings file that can be overwritten
 ENV DJANGO_SETTINGS_MODULE "server.settings_docker"

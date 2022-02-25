@@ -12,10 +12,9 @@ from __future__ import annotations
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-from django.conf import global_settings
-from django.http.request import HttpRequest  # noqa
-from typing_extensions import TypedDict
 
+from django.http.request import HttpRequest
+from typing_extensions import TypedDict
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -26,15 +25,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
     SECRET_KEY = open(SECRET_FILE).read().strip()
-except IOError:
+except OSError:
     try:
-        with open(SECRET_FILE, 'w') as f:
+        with open(SECRET_FILE, "w") as f:
             import random
-            chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
-            SECRET_KEY = ''.join([random.choice(chars) for i in range(64)])
+
+            chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
+            SECRET_KEY = "".join([random.choice(chars) for i in range(64)])
             f.write(SECRET_KEY)
-    except IOError:
-        raise Exception('Cannot open file "%s" for writing.' % SECRET_FILE)
+    except OSError:
+        raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,40 +45,40 @@ ALLOWED_HOSTS: list[str] = []
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    #'livesync',
-    'django.contrib.staticfiles',
-    'ec2spotmanager',
-    'crashmanager',
-    'taskmanager',
-    'covmanager',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'chartjs',
-    #'mozilla_django_oidc',
-    'crispy_forms',
-    'notifications',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    # 'livesync',
+    "django.contrib.staticfiles",
+    "ec2spotmanager",
+    "crashmanager",
+    "taskmanager",
+    "covmanager",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "chartjs",
+    # 'mozilla_django_oidc',
+    "crispy_forms",
+    "notifications",
 )
 
 
 MIDDLEWARE = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'django.contrib.auth.middleware.RemoteUserMiddleware',
-    #'mozilla_django_oidc.middleware.SessionRefresh',
-    'server.middleware.RequireLoginMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'server.middleware.ExceptionLoggingMiddleware',
-    'server.middleware.CheckAppPermissionsMiddleware',
-    #'livesync.core.middleware.DjangoLiveSyncMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # 'django.contrib.auth.middleware.RemoteUserMiddleware',
+    # 'mozilla_django_oidc.middleware.SessionRefresh',
+    "server.middleware.RequireLoginMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "server.middleware.ExceptionLoggingMiddleware",
+    "server.middleware.CheckAppPermissionsMiddleware",
+    # 'livesync.core.middleware.DjangoLiveSyncMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 )
 
 
@@ -92,36 +92,36 @@ class ResolverContextProcessorObj(TypedDict):
 # and certain other variables available in all our templates
 def resolver_context_processor(request: HttpRequest) -> ResolverContextProcessorObj:
     return {
-        'app_name': request.resolver_match.app_name,
-        'namespace': request.resolver_match.namespace,
-        'url_name': request.resolver_match.url_name
+        "app_name": request.resolver_match.app_name,
+        "namespace": request.resolver_match.namespace,
+        "url_name": request.resolver_match.url_name,
     }
 
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.template.context_processors.debug',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.debug",
                 # Required in views imported from django-notifications
-                'django.template.context_processors.request',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-                'django.contrib.messages.context_processors.messages',
-                'server.settings.resolver_context_processor',
+                "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                "django.template.context_processors.static",
+                "django.template.context_processors.tz",
+                "django.contrib.messages.context_processors.messages",
+                "server.settings.resolver_context_processor",
             ],
-            'debug': True,
+            "debug": True,
         },
     },
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = "bootstrap3"
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,
 # you can probably use similar code to get 2FA for your FuzzManager instance.
@@ -129,54 +129,51 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 USE_OIDC = False
 
 # Modify the way we generate our usernames, based on the email address
-#OIDC_USERNAME_ALGO = 'server.auth.generate_username'
+# OIDC_USERNAME_ALGO = 'server.auth.generate_username'
 #
 #
-#OID_ALLOWED_USERS = {
+# OID_ALLOWED_USERS = {
 #    "test@example.com",
-#}
+# }
 
 # For basic auth, uncomment the following lines and the line
 # in MIDDLEWARE_CLASSES containing RemoteUserMiddleware.
 # You still have to configure basic auth through your webserver.
 #
-#AUTHENTICATION_BACKENDS = (
+# AUTHENTICATION_BACKENDS = (
 #    'django.contrib.auth.backends.RemoteUserBackend',
 #    'server.settings.FMOIDCAB',
-#)
+# )
 
 
-ROOT_URLCONF = 'server.urls'
+ROOT_URLCONF = "server.urls"
 
-WSGI_APPLICATION = 'server.wsgi.application'
+WSGI_APPLICATION = "server.wsgi.application"
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "https://www.mozilla.org/"
 LOGIN_REQUIRED_URLS_EXCEPTIONS = (
-    r'/login/.*',
-    r'/logout/.*',
-    r'/oidc/.*',
-    r'/ec2spotmanager/rest/.*',
-    r'/covmanager/rest/.*',
-    r'/taskmanager/rest/.*',
-    r'/crashmanager/rest/.*',
+    r"/login/.*",
+    r"/logout/.*",
+    r"/oidc/.*",
+    r"/ec2spotmanager/rest/.*",
+    r"/covmanager/rest/.*",
+    r"/taskmanager/rest/.*",
+    r"/crashmanager/rest/.*",
 )
 
 # permissions given to new users by default
-DEFAULT_PERMISSIONS = [
-    'crashmanager.models.User:view_covmanager'
-]
+DEFAULT_PERMISSIONS = ["crashmanager.models.User:view_covmanager"]
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
-
     # For a production setup, we recommend to not use sqlite
     # but instead a real database like MySQL or Postgres.
     #    'default': {
@@ -190,9 +187,9 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -204,17 +201,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'frontend/dist')
-]
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "frontend/dist")]
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        'server.auth.CheckAppPermission',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
+    "DEFAULT_PERMISSION_CLASSES": ("server.auth.CheckAppPermission",),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
 # Logging
@@ -228,70 +221,71 @@ if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '[%(asctime)s] [%(levelname)s] [%(module)s] [%(process)d] ]%(thread)d]: %(message)s'
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": (
+                "[%(asctime)s] [%(levelname)s] [%(module)s] [%(process)d] [%(thread)d]:"
+                " %(message)s"
+            ),
         },
-        'simple': {
-            'format': '[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s'
+        "simple": {"format": "[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "ec2spotmanager_logfile": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "ec2spotmanager.log"),
+            "maxBytes": 16777216,
+            "formatter": "simple",
+        },
+        "taskmanager_logfile": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(LOG_DIR, "taskmanager.log"),
+            "maxBytes": 16777216,
+            "formatter": "simple",
+        },
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler",
+            "include_html": True,
         },
     },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+    "loggers": {
+        "flake8": {
+            "level": "WARNING",
         },
-        'ec2spotmanager_logfile': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'ec2spotmanager.log'),
-            'maxBytes': 16777216,
-            'formatter': 'simple'
+        "boto": {
+            "handlers": ["ec2spotmanager_logfile"],
+            "propagate": True,
+            "level": "WARNING",
         },
-        'taskmanager_logfile': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'taskmanager.log'),
-            'maxBytes': 16777216,
-            'formatter': 'simple'
+        "laniakea": {
+            "handlers": ["ec2spotmanager_logfile"],
+            "propagate": True,
+            "level": "INFO",
         },
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-            'include_html': True,
-        }
-    },
-    'loggers': {
-        'flake8': {
-            'level': 'WARNING',
+        "libcloud": {
+            "handlers": ["ec2spotmanager_logfile"],
+            "propagate": True,
+            "level": "INFO",
         },
-        'boto': {
-            'handlers': ['ec2spotmanager_logfile'],
-            'propagate': True,
-            'level': 'WARNING',
+        "ec2spotmanager": {
+            "handlers": ["ec2spotmanager_logfile"],
+            "propagate": True,
+            "level": "INFO",
         },
-        'laniakea': {
-            'handlers': ['ec2spotmanager_logfile'],
-            'propagate': True,
-            'level': 'INFO',
-        },
-        'libcloud': {
-            'handlers': ['ec2spotmanager_logfile'],
-            'propagate': True,
-            'level': 'INFO',
-        },
-        'ec2spotmanager': {
-            'handlers': ['ec2spotmanager_logfile'],
-            'propagate': True,
-            'level': 'INFO',
-        },
-        'taskmanager': {
-            'handlers': ['taskmanager_logfile'],
-            'propagate': True,
-            'level': 'INFO',
+        "taskmanager": {
+            "handlers": ["taskmanager_logfile"],
+            "propagate": True,
+            "level": "INFO",
         },
     },
 }
@@ -299,22 +293,26 @@ LOGGING = {
 # If you are running FuzzManager behind a TLS loadbalancer,
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # EC2Spotmanager configuration
-# If access keys are None, boto will look for global credentials (~/.aws/credentials or IAM role)
+# If access keys are None, boto will look for global credentials
+# (~/.aws/credentials or IAM role)
 #
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
 
 # Google Compute credentials
 # This is using service account credentials
-# TODO: It should also be possible to use "installed application" or GCE role to authenticate, see libcloud docs
+# TODO: It should also be possible to use "installed application" or GCE role to
+# authenticate, see libcloud docs
 #
 GCE_CLIENT_EMAIL = None  # these 3 fields are extracted from the JSON auth file
 GCE_PROJECT_ID = None
 GCE_PRIVATE_KEY = None  # PK as a string blob
-GCE_API_KEY = None  # this is a separate key created at "APIs & Services" / "Credentials"
+GCE_API_KEY = (
+    None  # this is a separate key created at "APIs & Services" / "Credentials"
+)
 GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
 # TaskManager configuration
@@ -322,26 +320,28 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 # TaskManager is used to allow tracking fuzzing tasks run in a Taskcluster instance.
 # Most people will find EC2 easier to use for small clusters.
 #
-#TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
-#TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
-#TC_ROOT_URL = ""  # root URL to the taskcluster instance
-#TC_PROJECT = ""  # taskcluster project for fuzzing resources
-#TC_EXTRA_POOLS = [] # extra pools to include in TaskManager that don't fit the "platform-pool[0-9]+" pattern
+# TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
+# TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
+# TC_ROOT_URL = ""  # root URL to the taskcluster instance
+# TC_PROJECT = ""  # taskcluster project for fuzzing resources
+# extra pools to include in TaskManager that don't fit the "platform-pool[0-9]+" pattern
+# TC_EXTRA_POOLS = []
 
-# Credentials for Mozilla Pulse instance used for by Taskcluster instance (for TaskManager)
-#TC_PULSE_VHOST = ""
-#TC_PULSE_USERNAME = ""
-#TC_PULSE_PASSWORD = ""
+# Credentials for Mozilla Pulse instance used for by Taskcluster instance
+# (for TaskManager)
+# TC_PULSE_VHOST = ""
+# TC_PULSE_USERNAME = ""
+# TC_PULSE_PASSWORD = ""
 
 # Crashmanager configuration
 #
 # FuzzManager supports username/password authentication as well as API keys
 # for authenticating to a Bugzilla instance. Omitting the username will cause
 # the password to be used as an API key instead.
-#BUGZILLA_USERNAME = "example@example.com"
-#BUGZILLA_PASSWORD = "secret"
-#CLEANUP_CRASHES_AFTER_DAYS = 14
-#CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
+# BUGZILLA_USERNAME = "example@example.com"
+# BUGZILLA_PASSWORD = "secret"
+# CLEANUP_CRASHES_AFTER_DAYS = 14
+# CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
 ALLOW_EMAIL_EDITION = True
 
 # This is the base directory where the tests/ subdirectory will
@@ -353,14 +353,15 @@ USERDATA_STORAGE = os.path.join(BASE_DIR)
 SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 
 # Redis configuration
-REDIS_URL = 'redis://localhost:6379?db=0'  # unix sockets, use unix:///path/to/sock?db=0
+REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
 
 # Celery configuration
 # USE_CELERY = True
 # CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
-# CELERY_BROKER_URL = 'redis://'  # unix sockets, use redis+socket:///path/to/socket?virtual_host=0
+# For CELERY_BROKER_URL unix sockets, use redis+socket:///path/to/socket?virtual_host=0
+# CELERY_BROKER_URL = 'redis://'
 # CELERY_RESULT_BACKEND = 'redis://'
 # CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 # CELERY_TASK_ROUTES = {
@@ -404,5 +405,5 @@ REDIS_URL = 'redis://localhost:6379?db=0'  # unix sockets, use unix:///path/to/s
 # }
 
 # Email
-EMAIL_SUBJECT_PREFIX = '[FuzzManager] '
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

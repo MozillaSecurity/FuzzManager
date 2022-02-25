@@ -1,4 +1,4 @@
-'''
+"""
 JSONHelper
 
 Various functions around JSON encoding/decoding
@@ -12,99 +12,97 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import numbers
 
-import six
-
 
 def getArrayChecked(obj, key: str, mandatory: bool = False):
-    '''
-        Retrieve a list from the given object using the given key
+    """
+    Retrieve a list from the given object using the given key
 
-        @type obj: map
-        @param obj: Source object
+    @type obj: map
+    @param obj: Source object
 
-        @param key: Key to retrieve from obj
-        @param mandatory: If True, throws an exception if the key is not found
+    @param key: Key to retrieve from obj
+    @param mandatory: If True, throws an exception if the key is not found
 
-        @rtype: list
-        @return: List retrieved from object
-    '''
+    @rtype: list
+    @return: List retrieved from object
+    """
     return __getTypeChecked(obj, key, [list], mandatory)
 
 
 def getStringChecked(obj, key: str, mandatory: bool = False):
-    '''
-        Retrieve a string from the given object using the given key
+    """
+    Retrieve a string from the given object using the given key
 
-        @type obj: map
-        @param obj: Source object
+    @type obj: map
+    @param obj: Source object
 
-        @param key: Key to retrieve from obj
-        @param mandatory: If True, throws an exception if the key is not found
+    @param key: Key to retrieve from obj
+    @param mandatory: If True, throws an exception if the key is not found
 
-        @rtype: string
-        @return: String retrieved from object
-    '''
-    return __getTypeChecked(obj, key, [six.text_type, bytes], mandatory)
+    @rtype: string
+    @return: String retrieved from object
+    """
+    return __getTypeChecked(obj, key, [str, bytes], mandatory)
 
 
 def getNumberChecked(obj, key: str, mandatory: bool = False):
-    '''
-        Retrieve an integer from the given object using the given key
+    """
+    Retrieve an integer from the given object using the given key
 
-        @type obj: map
-        @param obj: Source object
+    @type obj: map
+    @param obj: Source object
 
-        @param key: Key to retrieve from obj
-        @param mandatory: If True, throws an exception if the key is not found
+    @param key: Key to retrieve from obj
+    @param mandatory: If True, throws an exception if the key is not found
 
-        @rtype: int
-        @return: Number retrieved from object
-    '''
+    @rtype: int
+    @return: Number retrieved from object
+    """
     return __getTypeChecked(obj, key, [numbers.Integral], mandatory)
 
 
 def getObjectOrStringChecked(obj, key: str, mandatory: bool = False):
-    '''
-        Retrieve an object or string from the given object using the given key
+    """
+    Retrieve an object or string from the given object using the given key
 
-        @type obj: map
-        @param obj: Source object
+    @type obj: map
+    @param obj: Source object
 
-        @param key: Key to retrieve from obj
-        @param mandatory: If True, throws an exception if the key is not found
+    @param key: Key to retrieve from obj
+    @param mandatory: If True, throws an exception if the key is not found
 
-        @rtype: string or dict
-        @return: String/Object object retrieved from object
-    '''
-    return __getTypeChecked(obj, key, [six.text_type, bytes, dict], mandatory)
+    @rtype: string or dict
+    @return: String/Object object retrieved from object
+    """
+    return __getTypeChecked(obj, key, [str, bytes, dict], mandatory)
 
 
 def getNumberOrStringChecked(obj, key: str, mandatory: bool = False):
-    '''
-        Retrieve a number or string from the given object using the given key
+    """
+    Retrieve a number or string from the given object using the given key
 
-        @type obj: map
-        @param obj: Source object
+    @type obj: map
+    @param obj: Source object
 
-        @param key: Key to retrieve from obj
-        @param mandatory: If True, throws an exception if the key is not found
+    @param key: Key to retrieve from obj
+    @param mandatory: If True, throws an exception if the key is not found
 
-        @rtype: string or number
-        @return: String/Number object retrieved from object
-    '''
-    return __getTypeChecked(obj, key, [six.text_type, bytes, numbers.Integral], mandatory)
+    @rtype: string or number
+    @return: String/Number object retrieved from object
+    """
+    return __getTypeChecked(obj, key, [str, bytes, numbers.Integral], mandatory)
 
 
 def __getTypeChecked(obj, key: str, valTypes, mandatory: bool = False):
     if key not in obj:
         if mandatory:
-            raise RuntimeError('Expected key "%s" in object' % key)
+            raise RuntimeError(f'Expected key "{key}" in object')
         return None
 
     val = obj[key]
@@ -112,5 +110,7 @@ def __getTypeChecked(obj, key: str, valTypes, mandatory: bool = False):
     if isinstance(val, tuple(valTypes)):
         return val
 
-    raise RuntimeError('Expected any of types "%s" for key "%s" but got type %s' %
-                       (", ".join([str(i) for i in valTypes]), key, type(val)))
+    raise RuntimeError(
+        'Expected any of types "%s" for key "%s" but got type %s'
+        % (", ".join([str(i) for i in valTypes]), key, type(val))
+    )

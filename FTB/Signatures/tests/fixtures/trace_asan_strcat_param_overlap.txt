@@ -1,0 +1,2 @@
+==12266==ERROR: AddressSanitizer: strcat-param-overlap: memory ranges [0x6210001a0541,0x6210001a054f) and [0x6210001a054c, 0x6210001a0556) overlap
+    #0 0x7f5c2db40c40 in __interceptor_strcat /build/gcc/src/gcc/libsanitizer/asan/asan_interceptors.cc:349

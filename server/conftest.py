@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Common utilities for tests
+"""Common utilities for tests
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,17 +7,17 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
 
+import pytest
 from django.apps import apps
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-import pytest
 from pytest_django.fixtures import SettingsWrapper
 from rest_framework.request import Request
 from rest_framework.test import APIClient
@@ -44,38 +43,46 @@ def api_client() -> APIClient:
 
 @pytest.fixture
 def migration_hook(request: Request):
-    '''
-    Pause migration at the migration named in @pytest.mark.migrate_from('0001-initial-migration')
+    """
+    Pause migration at the migration named in
+        @pytest.mark.migrate_from('0001-initial-migration')
 
     The migration_hook param will be a callable to then trigger the migration named in:
         @pytest.mark.migrate_from('0002-migrate-things')
 
-    migration_hook also has an 'apps' attribute which is used to lookup models in the current migration state
+    migration_hook also has an 'apps' attribute which is used to lookup models in the
+    current migration state
 
     eg.
         MyModel = migration_hook.apps.get_model('myapp', 'MyModel')
 
-    based on: https://www.caktusgroup.com/blog/2016/02/02/writing-unit-tests-django-migrations/
-    '''
+    based on: https://www.caktusgroup.com/blog/2016/02/02
+              /writing-unit-tests-django-migrations/
+    """
 
-    migrate_from_mark = request.node.get_closest_marker('migrate_from')
-    assert migrate_from_mark, 'must mark the migration to stop at with @pytest.mark.migrate_from()'
-    assert len(migrate_from_mark.args) == 1, 'migrate_from mark expects 1 arg'
-    assert not migrate_from_mark.kwargs, 'migrate_from mark takes no keywords'
-    migrate_to_mark = request.node.get_closest_marker('migrate_to')
-    assert migrate_to_mark, 'must mark the migration to hook with @pytest.mark.migrate_to()'
-    assert len(migrate_to_mark.args) == 1, 'migrate_to mark expects 1 arg'
-    assert not migrate_to_mark.kwargs, 'migrate_to mark takes no keywords'
+    migrate_from_mark = request.node.get_closest_marker("migrate_from")
+    assert (
+        migrate_from_mark
+    ), "must mark the migration to stop at with @pytest.mark.migrate_from()"
+    assert len(migrate_from_mark.args) == 1, "migrate_from mark expects 1 arg"
+    assert not migrate_from_mark.kwargs, "migrate_from mark takes no keywords"
+    migrate_to_mark = request.node.get_closest_marker("migrate_to")
+    assert (
+        migrate_to_mark
+    ), "must mark the migration to hook with @pytest.mark.migrate_to()"
+    assert len(migrate_to_mark.args) == 1, "migrate_to mark expects 1 arg"
+    assert not migrate_to_mark.kwargs, "migrate_to mark takes no keywords"
 
-    apps_get_containing_app_config = apps.get_containing_app_config(request.module.__name__)
+    apps_get_containing_app_config = apps.get_containing_app_config(
+        request.module.__name__
+    )
     assert apps_get_containing_app_config is not None
     app = apps_get_containing_app_config.name
 
     migrate_from = [(app, migrate_from_mark.args[0])]
     migrate_to = [(app, migrate_to_mark.args[0])]
 
-    class migration_hook_result(object):
-
+    class migration_hook_result:
         def __init__(self, _from, _to) -> None:
             self._to = _to
             executor = MigrationExecutor(connection)

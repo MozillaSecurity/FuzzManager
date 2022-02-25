@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Tests for CrashManager add_permission management command
+"""Tests for CrashManager add_permission management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,14 +7,13 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
 import pytest
 from django.contrib.auth.models import User
-from django.core.management import call_command, CommandError
-
+from django.core.management import CommandError, call_command
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
@@ -27,7 +25,11 @@ def test_args() -> None:
 
 def test_no_such_user() -> None:
     with pytest.raises(User.DoesNotExist):
-        call_command("add_permission", "test@example.com", "crashmanager.models.User:view_crashmanager")
+        call_command(
+            "add_permission",
+            "test@example.com",
+            "crashmanager.models.User:view_crashmanager",
+        )
 
 
 def test_no_perms() -> None:
@@ -40,12 +42,19 @@ def test_one_perm() -> None:
     user = User.objects.create_user("test", "test@example.com", "test")
     user.user_permissions.clear()  # clear any default permissions
     call_command("add_permission", "test", "crashmanager.models.User:view_crashmanager")
-    assert set(user.get_all_permissions()) == {'crashmanager.view_crashmanager'}
+    assert set(user.get_all_permissions()) == {"crashmanager.view_crashmanager"}
 
 
 def test_two_perms() -> None:
     user = User.objects.create_user("test", "test@example.com", "test")
     user.user_permissions.clear()  # clear any default permissions
-    call_command("add_permission", "test", "crashmanager.models.User:view_crashmanager",
-                 "crashmanager.models.User:view_covmanager")
-    assert set(user.get_all_permissions()) == {'crashmanager.view_crashmanager', 'crashmanager.view_covmanager'}
+    call_command(
+        "add_permission",
+        "test",
+        "crashmanager.models.User:view_crashmanager",
+        "crashmanager.models.User:view_covmanager",
+    )
+    assert set(user.get_all_permissions()) == {
+        "crashmanager.view_crashmanager",
+        "crashmanager.view_covmanager",
+    }

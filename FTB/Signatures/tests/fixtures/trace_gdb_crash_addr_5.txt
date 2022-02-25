@@ -1,0 +1,11 @@
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x0000000000b49798 in js::gc::TenuredCell::arena (this=<optimized out>) at /home/ubuntu/mozilla-central/js/src/gc/Cell.h:333
+x0	0x9f3f1da0	281473353457056
+x1	0x1d9540	7696583333184
+x2	0x87afa000	281472958177280
+sp	0xa0065000	281473366511616
+pc	0xb49798 <IsAboutToBeFinalizedInternal<JSObject>(JSObject**)+56>
+cpsr	0x20000000	536870912
+fpcsr	void
+fpcr	0x0	0
+=> 0xb49798 <IsAboutToBeFinalizedInternal<JSObject>(JSObject**)+56>:	ldrb	w2, [x2,#20]

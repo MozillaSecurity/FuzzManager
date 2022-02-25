@@ -1,4 +1,3 @@
-# encoding: utf-8
 """
 AutoRunner -- Determine the correct runner class (GDB, ASan, etc) for
               the given program, instantiate and return it.
@@ -16,27 +15,32 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
-from abc import ABCMeta
-from distutils import spawn
 import os
 import re
 import signal
 import subprocess
 import sys
-
-import six
+from abc import ABCMeta
+from distutils import spawn
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 
 
-@six.add_metaclass(ABCMeta)
-class AutoRunner():
+class AutoRunner(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.
     """
-    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> None:
+
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
         self.stdin = stdin
@@ -52,8 +56,8 @@ class AutoRunner():
             for envkey in env:
                 self.env[envkey] = env[envkey]
 
-        if 'LD_LIBRARY_PATH' not in self.env:
-            self.env['LD_LIBRARY_PATH'] = os.path.dirname(binary)
+        if "LD_LIBRARY_PATH" not in self.env:
+            self.env["LD_LIBRARY_PATH"] = os.path.dirname(binary)
 
         self.args = args
         if self.args is None:
@@ -71,58 +75,85 @@ class AutoRunner():
         self.auxCrashData: list[str] | str | None = None
 
     def getCrashInfo(self, configuration: ProgramConfiguration) -> CrashInfo:
-        return CrashInfo.fromRawCrashData(self.stdout, self.stderr, configuration, self.auxCrashData)
+        return CrashInfo.fromRawCrashData(
+            self.stdout, self.stderr, configuration, self.auxCrashData
+        )
 
     @staticmethod
-    def fromBinaryArgs(binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> ASanRunner | GDBRunner:
+    def fromBinaryArgs(
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> ASanRunner | GDBRunner:
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=cwd,
-            env=env
+            env=env,
         )
 
         (stdout, _) = process.communicate()
         stdout_decoded = stdout.decode("utf-8", errors="ignore")
 
-        force_gdb = bool(os.environ.get('FTB_FORCE_GDB', False))
+        force_gdb = bool(os.environ.get("FTB_FORCE_GDB", False))
 
-        if not force_gdb and (stdout_decoded.find(" __asan_init") >= 0 or stdout_decoded.find("__ubsan_default_options") >= 0):
+        if not force_gdb and (
+            stdout_decoded.find(" __asan_init") >= 0
+            or stdout_decoded.find("__ubsan_default_options") >= 0
+        ):
             return ASanRunner(binary, args, env, cwd, stdin)
 
         return GDBRunner(binary, args, env, cwd, stdin)
 
 
 class GDBRunner(AutoRunner):
-    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, core: bytes | None = None, stdin: bytes | None = None) -> None:
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        core: bytes | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         # This can be used to force GDBRunner to first generate a core and then
         # also use it immediately for generating crash information. This is
         # required in the rare case that a crash doesn't reproduce then the
         # program runs directly under GDB.
-        self.force_core = bool(os.environ.get('FTB_FORCE_GDBCORE', False))
+        self.force_core = bool(os.environ.get("FTB_FORCE_GDBCORE", False))
 
         classPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GDB.py")
         self.gdbArgs = [
             "--batch",
             "-ex",
-            "source %s" % classPath,
+            f"source {classPath}",
         ]
 
         if core is None and not self.force_core:
             self.gdbArgs.extend(["-ex", "run"])
 
-        self.gdbArgs.extend([
-            "-ex", "set pagination 0",
-            "-ex", "set backtrace limit 128",
-            "-ex", "bt",
-            "-ex", "python printImportantRegisters()",
-            "-ex", "x/2i $pc",
-            "-ex", "quit",
-        ])
+        self.gdbArgs.extend(
+            [
+                "-ex",
+                "set pagination 0",
+                "-ex",
+                "set backtrace limit 128",
+                "-ex",
+                "bt",
+                "-ex",
+                "python printImportantRegisters()",
+                "-ex",
+                "x/2i $pc",
+                "-ex",
+                "quit",
+            ]
+        )
 
         if core is None and not self.force_core:
             self.gdbArgs.append("--args")
@@ -150,7 +181,7 @@ class GDBRunner(AutoRunner):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=self.cwd,
-                env=self.env
+                env=self.env,
             )
 
             core = "core.%s" % process.pid
@@ -163,7 +194,10 @@ class GDBRunner(AutoRunner):
                 # Fallback in case core_uses_pid is disabled
                 self.cmdArgs.append("core")
             else:
-                print("Unable to locate core dump, check system configuration", file=sys.stderr)
+                print(
+                    "Unable to locate core dump, check system configuration",
+                    file=sys.stderr,
+                )
                 return False
 
         process = subprocess.Popen(
@@ -172,7 +206,7 @@ class GDBRunner(AutoRunner):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self.cwd,
-            env=self.env
+            env=self.env,
         )
 
         (stdout, stderr) = process.communicate(input=self.stdin)
@@ -207,7 +241,14 @@ class GDBRunner(AutoRunner):
 
 
 class ASanRunner(AutoRunner):
-    def __init__(self, binary: str, args: list[str] | None = None, env: dict[str, str] | None = None, cwd: str | None = None, stdin: bytes | None = None) -> None:
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         self.cmdArgs.append(self.binary)
@@ -218,9 +259,13 @@ class ASanRunner(AutoRunner):
             if "ASAN_SYMBOLIZER_PATH" in os.environ:
                 self.env["ASAN_SYMBOLIZER_PATH"] = os.environ["ASAN_SYMBOLIZER_PATH"]
             else:
-                self.env["ASAN_SYMBOLIZER_PATH"] = os.path.join(os.path.dirname(binary), "llvm-symbolizer")
+                self.env["ASAN_SYMBOLIZER_PATH"] = os.path.join(
+                    os.path.dirname(binary), "llvm-symbolizer"
+                )
                 if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
-                    spawn_find_llvm_symbolizer = spawn.find_executable("llvm-symbolizer")
+                    spawn_find_llvm_symbolizer = spawn.find_executable(
+                        "llvm-symbolizer"
+                    )
                     assert spawn_find_llvm_symbolizer is not None
                     self.env["ASAN_SYMBOLIZER_PATH"] = spawn_find_llvm_symbolizer
                     if not self.env["ASAN_SYMBOLIZER_PATH"]:
@@ -228,27 +273,30 @@ class ASanRunner(AutoRunner):
 
         if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
             raise RuntimeError(
-                "Misconfigured ASAN_SYMBOLIZER_PATH: %s" % self.env["ASAN_SYMBOLIZER_PATH"]
+                "Misconfigured ASAN_SYMBOLIZER_PATH: "
+                f"{self.env['ASAN_SYMBOLIZER_PATH']}"
             )
 
         if "UBSAN_OPTIONS" not in self.env:
             if "UBSAN_OPTIONS" in os.environ:
                 self.env["UBSAN_OPTIONS"] = os.environ["UBSAN_OPTIONS"]
             else:
-                # Default to print stacktraces and summary if no other options are set. If the caller
-                # overrides these options, they need to set this themselves, otherwise this code won't
-                # be able to isolate a UBSan trace.
+                # Default to print stacktraces and summary if no other options are set.
+                # If the caller overrides these options, they need to set this
+                # themselves, otherwise this code won't be able to isolate a UBSan
+                # trace.
                 self.env["UBSAN_OPTIONS"] = "print_stacktrace=1:print_summary=1"
 
         if "ASAN_OPTIONS" not in self.env:
             if "ASAN_OPTIONS" in os.environ:
                 self.env["ASAN_OPTIONS"] = os.environ["ASAN_OPTIONS"]
             else:
-                # Default to allowing the allocator to return null to reproduce crashes mostly caused
-                # by OOM conditions rather than aborting with the ASan OOM failure. If ASAN_OPTIONS
-                # is already set, then the caller should ensure that this option is present.
-                # handle_abort is set to true to use the ASan to print the stack trace for bucketing.
-                # This is helpful when assertions are hit in debug builds.
+                # Default to allowing the allocator to return null to reproduce crashes
+                # mostly caused by OOM conditions rather than aborting with the ASan OOM
+                # failure. If ASAN_OPTIONS is already set, then the caller should ensure
+                # that this option is present.
+                # handle_abort is set to true to use the ASan to print the stack trace
+                # for bucketing. This is helpful when assertions are hit in debug builds
                 self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1:handle_abort=1"
 
     def run(self) -> bool:
@@ -258,7 +306,7 @@ class ASanRunner(AutoRunner):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self.cwd,
-            env=self.env
+            env=self.env,
         )
 
         (stdout, stderr) = process.communicate(input=self.stdin)
@@ -277,10 +325,17 @@ class ASanRunner(AutoRunner):
                 if (inASanTrace or inUBSanTrace) and line.find("==ABORTING") >= 0:
                     inASanTrace = False
                     inUBSanTrace = False
-                elif inUBSanTrace and "==SUMMARY: AddressSanitizer: undefined-behavior" in line:
+                elif (
+                    inUBSanTrace
+                    and "==SUMMARY: AddressSanitizer: undefined-behavior" in line
+                ):
                     # This format is used when combining ASan and UBSan.
                     inUBSanTrace = False
-                elif inUBSanTrace and "SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior" in line:
+                elif (
+                    inUBSanTrace
+                    and "SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior"
+                    in line
+                ):
                     # This is what UBSan emits on its own with `print_summary=1`.
                     inUBSanTrace = False
                 elif inTSanTrace and "SUMMARY: ThreadSanitizer: data race" in line:
@@ -293,7 +348,9 @@ class ASanRunner(AutoRunner):
                 # handle a regular crash/abort and emit a backtrace for it.
                 self.auxCrashData.append(line)
                 inUBSanTrace = True
-            elif "runtime error" in line and re.search(":\\d+:\\d+: runtime error: ", line):
+            elif "runtime error" in line and re.search(
+                ":\\d+:\\d+: runtime error: ", line
+            ):
                 self.auxCrashData.append(line)
                 inUBSanTrace = True
             elif line.startswith("WARNING: ThreadSanitizer: data race"):
@@ -305,9 +362,9 @@ class ASanRunner(AutoRunner):
         if not self.auxCrashData:
             processCrashed = False
 
-            # It can happen that we don't get an AddressSanitizer trace because ASan's signal
-            # handler did not catch the signal for some reason. This can happen easily with
-            # SIGILL but also for some programs with SIGSEGV.
+            # It can happen that we don't get an AddressSanitizer trace because ASan's
+            # signal handler did not catch the signal for some reason. This can happen
+            # easily with SIGILL but also for some programs with SIGSEGV.
             if process.returncode < 0:
                 crashSignals = [
                     # POSIX.1-1990 signals

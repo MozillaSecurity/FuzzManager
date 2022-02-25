@@ -1,0 +1,3 @@
+terminate called after throwing an instance of 'std::regex_error'
+  what():  regex_error
+TEST-INFO | Main app process: killed by SIGIOT

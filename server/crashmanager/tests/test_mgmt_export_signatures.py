@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Tests for CrashManager export_signatures management command
+"""Tests for CrashManager export_signatures management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,7 +7,7 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
@@ -17,10 +16,11 @@ import os
 import re
 import tempfile
 import zipfile
-from django.core.management import call_command, CommandError
-import pytest
-from crashmanager.models import Bucket
 
+import pytest
+from django.core.management import CommandError, call_command
+
+from crashmanager.models import Bucket
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
@@ -43,8 +43,8 @@ def test_none() -> None:
 
 
 def test_some() -> None:
-    sig1 = Bucket.objects.create(signature='sig1', frequent=True)
-    sig2 = Bucket.objects.create(signature='sig2', shortDescription="desc")
+    sig1 = Bucket.objects.create(signature="sig1", frequent=True)
+    sig2 = Bucket.objects.create(signature="sig2", shortDescription="desc")
     members = set()
     fd, tmpf = tempfile.mkstemp()
     os.close(fd)
@@ -55,26 +55,28 @@ def test_some() -> None:
                 assert member not in members
                 members.add(member)
             assert len(members) == 4
-            expected = {"%d.metadata" % sig1.pk,
-                        "%d.signature" % sig1.pk,
-                        "%d.metadata" % sig2.pk,
-                        "%d.signature" % sig2.pk}
+            expected = {
+                "%d.metadata" % sig1.pk,
+                "%d.signature" % sig1.pk,
+                "%d.metadata" % sig2.pk,
+                "%d.signature" % sig2.pk,
+            }
             assert {m.filename for m in members} == expected
             for member in members:
                 with zipf.open(member) as memberf:
-                    contents = memberf.read().decode('utf-8')
+                    contents = memberf.read().decode("utf-8")
                 m = re.match(r"^(\d+).(metadata|signature)$", member.filename)
                 assert m is not None
                 if m.group(2) == "metadata":
                     obj = json.loads(contents)
                     assert set(obj.keys()) == {"shortDescription", "frequent", "size"}
-                    assert obj['size'] == 0
+                    assert obj["size"] == 0
                     if int(m.group(1)) == sig1.pk:
-                        assert obj['frequent']
-                        assert obj['shortDescription'] == ''
+                        assert obj["frequent"]
+                        assert obj["shortDescription"] == ""
                     else:
-                        assert not obj['frequent']
-                        assert obj['shortDescription'] == 'desc'
+                        assert not obj["frequent"]
+                        assert obj["shortDescription"] == "desc"
                 else:
                     if int(m.group(1)) == sig1.pk:
                         assert contents == "sig1"

@@ -1,5 +1,4 @@
-# encoding: utf-8
-'''
+"""
 StreamCollector -- Runs as a thread and reads a single output stream of a process.
 
 @author:     Christian Holler (:decoder)
@@ -11,18 +10,23 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
+import queue
 import threading
 from typing import TextIO
 
-from six.moves import queue
-
 
 class StreamCollector(threading.Thread):
-    def __init__(self, fd: TextIO, responseQueue: queue.Queue, logResponses: bool = False, maxBacklog: int | None = None) -> None:
+    def __init__(
+        self,
+        fd: TextIO,
+        responseQueue: queue.Queue,
+        logResponses: bool = False,
+        maxBacklog: int | None = None,
+    ) -> None:
         assert callable(fd.readline)
         assert isinstance(responseQueue, queue.Queue)
 
@@ -44,9 +48,9 @@ class StreamCollector(threading.Thread):
 
             isResponse = False
             for prefix in self.responsePrefixes:
-                line = line.rstrip('\n')
+                line = line.rstrip("\n")
                 if line.startswith(prefix):
-                    self.queue.put(line.replace(prefix, ''))
+                    self.queue.put(line.replace(prefix, ""))
                     isResponse = True
                     break
 

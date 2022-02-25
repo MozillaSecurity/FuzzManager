@@ -1,4 +1,4 @@
-'''
+"""
 Example:
 >>> import update_prices, json
 >>> with open('index.json') as jsonf:
@@ -6,16 +6,16 @@ Example:
 ...
 >>> data = update_prices.get_instance_types(index_json=data)
 >>> ','.join(t for t,obj in data.items() if obj['vcpu'] == 8 and obj['memory'] >= 30)
-i2.2xlarge,r3.2xlarge,m3.2xlarge,m5.2xlarge,m2.4xlarge,d2.2xlarge,i3.2xlarge,r4.2xlarge,p3.2xlarge,m4.2xlarge,
-f1.2xlarge,h1.2xlarge,x1e.2xlarge,m5d.2xlarge,t2.2xlarge
-'''
+i2.2xlarge,r3.2xlarge,m3.2xlarge,m5.2xlarge,m2.4xlarge,d2.2xlarge,i3.2xlarge,r4.2xlarge,
+p3.2xlarge,m4.2xlarge,f1.2xlarge,h1.2xlarge,x1e.2xlarge,m5d.2xlarge,t2.2xlarge
+"""
 
 from __future__ import annotations
 
 import json
-import requests
 import sys
 
+import requests
 
 # for some reason, the pricing API uses friendly names for regions, not API names
 # this is a mapping from friendly name to API name
@@ -55,12 +55,15 @@ FIELDS_BLACKLIST = {
 }
 
 
-def get_instance_types(regions: bool = True, index_json: dict[str, object] | None = None) -> dict[str, object]:
+def get_instance_types(
+    regions: bool = True, index_json: dict[str, object] | None = None
+) -> dict[str, object]:
     """Fetch instance type data from EC2 pricing API.
 
-    regions: if True, this will add a "regions" field to each instance type, stating which regions support it.
-    index_json: the data blob is large. if it is cached locally for testing, you can pass in the JSON decoded
-                dictionary here.
+    regions: if True, this will add a "regions" field to each instance type, stating
+             which regions support it.
+    index_json: the data blob is large. if it is cached locally for testing, you can
+                pass in the JSON decoded dictionary here.
     returns:
     {
       "c5.xlarge": {
@@ -85,33 +88,48 @@ def get_instance_types(regions: bool = True, index_json: dict[str, object] | Non
     }
     """
     if index_json is None:
-        index_json = \
-            requests.get("https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/index.json").json()
+        index_json = requests.get(
+            "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current"
+            "/index.json"
+        ).json()
 
-    data = index_json['products']
+    data = index_json["products"]
     assert isinstance(data, dict)
 
     instance_types: dict[str, object] = {}
 
     for product in data.values():
-        if product["productFamily"] not in {"Compute Instance", "Compute Instance (bare metal)"} or \
-                product["attributes"]["operatingSystem"] != "Linux" or \
-                product["attributes"]["preInstalledSw"] != "NA" or \
-                product["attributes"]["capacitystatus"] == "None" or \
-                product["attributes"]["location"] not in REGION_NAMES:
+        if (
+            product["productFamily"]
+            not in {"Compute Instance", "Compute Instance (bare metal)"}
+            or product["attributes"]["operatingSystem"] != "Linux"
+            or product["attributes"]["preInstalledSw"] != "NA"
+            or product["attributes"]["capacitystatus"] == "None"
+            or product["attributes"]["location"] not in REGION_NAMES
+        ):
             continue
-        instance_data = instance_types.setdefault(product["attributes"]["instanceType"], {})
+        instance_data = instance_types.setdefault(
+            product["attributes"]["instanceType"], {}
+        )
         assert isinstance(instance_data, dict)
         if instance_data:
             # assert that all fields are the same!
-            new_data = {key: value for key, value in product["attributes"].items() if key not in FIELDS_BLACKLIST}
-            new_data["metal"] = product["productFamily"] == "Compute Instance (bare metal)"
+            new_data = {
+                key: value
+                for key, value in product["attributes"].items()
+                if key not in FIELDS_BLACKLIST
+            }
+            new_data["metal"] = (
+                product["productFamily"] == "Compute Instance (bare metal)"
+            )
             if regions:
                 old_data = instance_data.copy()
                 del old_data["regions"]
                 assert new_data == old_data
                 # add to region list
-                instance_data["regions"].add(REGION_NAMES[product["attributes"]["location"]])
+                instance_data["regions"].add(
+                    REGION_NAMES[product["attributes"]["location"]]
+                )
             else:
                 assert new_data == instance_data
         else:
@@ -119,8 +137,12 @@ def get_instance_types(regions: bool = True, index_json: dict[str, object] | Non
                 if field not in FIELDS_BLACKLIST:
                     instance_data[field] = value
             if regions:
-                instance_data["regions"] = {REGION_NAMES[product["attributes"]["location"]]}
-            instance_data["metal"] = product["productFamily"] == "Compute Instance (bare metal)"
+                instance_data["regions"] = {
+                    REGION_NAMES[product["attributes"]["location"]]
+                }
+            instance_data["metal"] = (
+                product["productFamily"] == "Compute Instance (bare metal)"
+            )
 
     # normalize units
     for instance_data in instance_types.values():
@@ -145,7 +167,9 @@ def main() -> None:
         with open(sys.argv[1]) as data_fp:
             index_json = json.load(data_fp)
 
-    print(json.dumps(get_instance_types(index_json=index_json), sort_keys=True, indent=2))
+    print(
+        json.dumps(get_instance_types(index_json=index_json), sort_keys=True, indent=2)
+    )
 
 
 if __name__ == "__main__":

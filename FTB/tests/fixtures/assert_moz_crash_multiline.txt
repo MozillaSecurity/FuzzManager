@@ -1,0 +1,2 @@
+Hit MOZ_CRASH(assertion failed: combined_local_clip_rect.size.width >= 0.0 &&
+    combined_local_clip_rect.size.height >= 0.0) at gfx/wr/webrender/src/prim_store/mod.rs:2198

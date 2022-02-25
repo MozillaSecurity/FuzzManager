@@ -3,13 +3,11 @@ from __future__ import annotations
 from argparse import ArgumentParser
 from collections import OrderedDict
 from typing import Any
-from typing import OrderedDict
 
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from crashmanager.models import CrashEntry, Bucket
-
+from crashmanager.models import Bucket, CrashEntry
 
 # This is a per-worker global cache mapping short descriptions of
 # crashes to a list of bucket candidates to try first.
@@ -21,7 +19,7 @@ TRIAGE_CACHE: OrderedDict[str, list[int]] = OrderedDict()
 
 
 class Command(BaseCommand):
-    help = ("Triage a crash entry into an existing bucket.")
+    help = "Triage a crash entry into an existing bucket."
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
@@ -39,7 +37,7 @@ class Command(BaseCommand):
         triage_cache_hint = TRIAGE_CACHE.get(entry.shortSignature, [])
 
         if triage_cache_hint:
-            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by('-id')
+            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by("-id")
             for bucket in buckets:
                 signature = bucket.getSignature()
                 if signature.matches(crashInfo):
@@ -49,7 +47,7 @@ class Command(BaseCommand):
                     break
 
         if not cacheHit:
-            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by('-id')
+            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by("-id")
 
             for bucket in buckets:
                 signature = bucket.getSignature()
@@ -69,7 +67,9 @@ class Command(BaseCommand):
 
                     TRIAGE_CACHE[entry.shortSignature] = cacheList
 
-                    if len(TRIAGE_CACHE) > getattr(settings, 'CELERY_TRIAGE_MEMCACHE_ENTRIES', 100):
+                    if len(TRIAGE_CACHE) > getattr(
+                        settings, "CELERY_TRIAGE_MEMCACHE_ENTRIES", 100
+                    ):
                         TRIAGE_CACHE.popitem(last=False)
 
                     break

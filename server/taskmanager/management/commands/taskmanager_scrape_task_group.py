@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
+import functools
 from argparse import ArgumentParser
 from collections.abc import Callable
-import functools
 from logging import getLogger
-from typing import Any
-from typing import Generator
+from typing import Any, Generator
 
-from django.conf import settings
-from django.core.management import BaseCommand  # noqa
 import taskcluster
+from django.conf import settings
+from django.core.management import BaseCommand
 
-from ...tasks import get_or_create_pool
 from ...models import Task
-
+from ...tasks import get_or_create_pool
 
 LOG = getLogger("taskmanager.management.commands.scrape_group")
 
@@ -29,18 +25,18 @@ def paginated(func: Callable[..., Any], result_key: str) -> Callable[..., Any]:
     This hides the process of re-requesting with continuationToken,
     and yields the contents of `result_key`
     """
+
     @functools.wraps(func)
     def _wrapped(*args: Any, **kwds: Any) -> Generator[Any, Any, Any]:
         kwds = kwds.copy()
         result = func(*args, **kwds)
         while result.get("continuationToken"):
-            for sub in result[result_key]:
-                yield sub
+            yield from result[result_key]
             kwds.setdefault("query", {})
             kwds["query"]["continuationToken"] = result["continuationToken"]
             result = func(*args, **kwds)
-        for sub in result[result_key]:
-            yield sub
+        yield from result[result_key]
+
     return _wrapped
 
 

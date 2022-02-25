@@ -19,13 +19,13 @@ def date_ago(d: datetime) -> str:
     ret = ""
 
     if days > 0:
-        ret += "%s %s " % (days, "days" if days > 1 else "day")
+        ret += f"{days} {'days' if days > 1 else 'day'} "
 
     if hours > 0:
-        ret += "%s %s " % (hours, "hours" if hours > 1 else "hour")
+        ret += f"{hours} {'hours' if hours > 1 else 'hour'} "
 
     if minutes > 0:
-        ret += "%s %s " % (minutes, "minutes" if minutes > 1 else "minute")
+        ret += f"{minutes} {'minutes' if minutes > 1 else 'minute'} "
 
     if not ret:
         ret = "less than a minute "

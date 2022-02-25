@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import logging
-import requests
 
+import requests
 from celeryconf import app
-from dateutil.relativedelta import relativedelta, MO
+from dateutil.relativedelta import MO, relativedelta
 from django.conf import settings
 from django.db.models import Q
 
@@ -24,7 +24,8 @@ logger = logging.getLogger("covmanager")
 
 def create_weekly_report_mc(revision: str) -> None:
     from crashmanager.models import Client
-    from .models import Collection, Repository, Report
+
+    from .models import Collection, Report, Repository
     from .tasks import aggregate_coverage_data
 
     # Some of our builds (e.g. JS shell) use the HG short revision format
@@ -35,16 +36,18 @@ def create_weekly_report_mc(revision: str) -> None:
     client = Client.objects.get_or_create(name="Server")[0]
 
     collections = Collection.objects.filter(
-        Q(revision=revision) | Q(revision=short_revision)).filter(
-            repository=repository, coverage__isnull=False)
+        Q(revision=revision) | Q(revision=short_revision)
+    ).filter(repository=repository, coverage__isnull=False)
 
     collections_first = collections.first()
     assert collections_first is not None
     last_monday = collections_first.created + relativedelta(weekday=MO(-1))
 
     mergedCollection = Collection()
-    mergedCollection.description = "Weekly Report (Week of %s, %s reports)" % (
-        last_monday.strftime("%-m/%-d"), collections.count())
+    mergedCollection.description = "Weekly Report (Week of {}, {} reports)".format(
+        last_monday.strftime("%-m/%-d"),
+        collections.count(),
+    )
     mergedCollection.repository = repository
     mergedCollection.revision = revision
     mergedCollection.branch = "master"
@@ -63,14 +66,14 @@ def create_weekly_report_mc(revision: str) -> None:
         tools.extend(collection.tools.all())
     mergedCollection.tools.add(*tools)
 
-    ids = list(collections.values_list('id', flat=True))
+    ids = list(collections.values_list("id", flat=True))
 
     aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
 
 @app.task(ignore_result=True)
 def create_current_weekly_report_mc() -> None:
-    COVERAGE_REVISION_URL = getattr(settings, 'COVERAGE_REVISION_URL', None)
+    COVERAGE_REVISION_URL = getattr(settings, "COVERAGE_REVISION_URL", None)
 
     if not COVERAGE_REVISION_URL:
         logger.error("Missing configuration for COVERAGE_REVISION_URL.")
@@ -78,8 +81,11 @@ def create_current_weekly_report_mc() -> None:
 
     response = requests.get(COVERAGE_REVISION_URL)
     if not response.ok:
-        logger.error("Failed fetching coverage revision. Got status %s with response: %s",
-                     response.status_code, response.text)
+        logger.error(
+            "Failed fetching coverage revision. Got status %s with response: %s",
+            response.status_code,
+            response.text,
+        )
         return
 
     revision = response.text.rstrip()

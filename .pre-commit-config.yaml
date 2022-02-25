@@ -1,4 +1,21 @@
 repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.3.0
+    hooks:
+      - id: yesqa
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.0
+    hooks:
+      - id: pyupgrade
+        args: ['--py37-plus']
+  - repo: https://github.com/ambv/black
+    rev: 22.1.0
+    hooks:
+      - id: black
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.2
     hooks:
@@ -6,7 +23,7 @@ repos:
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v7.25.0
     hooks:
-    -   id: eslint
+      - id: eslint
         language: node
         args: ['--fix', '--max-warnings', '0']
         files: ^server/frontend/.*\.(js|vue)$

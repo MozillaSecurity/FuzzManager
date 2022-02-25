@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Tasks rest api.
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -12,16 +11,19 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import itertools
 import json
 import logging
+from collections.abc import Callable
+
 import pytest
 import requests
 from django.contrib.auth.models import User
 from django.utils import dateparse
 from rest_framework.test import APIClient
+
 from taskmanager.models import Task
+
 from . import create_pool, create_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.tasks.rest")
@@ -50,7 +52,10 @@ def test_rest_tasks_no_perm(api_client: APIClient) -> None:
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
 
 
-@pytest.mark.parametrize(("method", "item"), itertools.product(["post", "put", "patch", "delete"], [True, False]))
+@pytest.mark.parametrize(
+    ("method", "item"),
+    itertools.product(["post", "put", "patch", "delete"], [True, False]),
+)
 def test_rest_task_methods(api_client: APIClient, method: str, item: bool) -> None:
     """post/put/patch/delete should not be allowed"""
     user = User.objects.get(username="test")
@@ -88,14 +93,14 @@ def test_rest_task_status_methods(api_client: APIClient, method: str) -> None:
     [
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
             },
             requests.codes["bad_request"],
             "Status text",
         ),
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
                 "status_data": "Hello world",
                 "extra": "blah",
             },
@@ -124,7 +129,7 @@ def test_rest_task_status_methods(api_client: APIClient, method: str) -> None:
         ),
         (
             lambda task: {
-                "client": "task-%s-run-%s" % (task.task_id, task.run_id),
+                "client": f"task-{task.task_id}-run-{task.run_id}",
                 "status_data": "Hello world",
             },
             requests.codes["ok"],
@@ -132,7 +137,12 @@ def test_rest_task_status_methods(api_client: APIClient, method: str) -> None:
         ),
     ],
 )
-def test_rest_task_status(api_client: APIClient, make_data: Callable[..., dict[str, str]], result: int, status_data: str) -> None:
+def test_rest_task_status(
+    api_client: APIClient,
+    make_data: Callable[..., dict[str, str]],
+    result: int,
+    status_data: str,
+) -> None:
     """post should require well-formed parameters"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -188,8 +198,17 @@ def test_rest_task_read(api_client: APIClient, item: bool) -> None:
         assert len(resp["results"]) == 1
         resp = resp["results"][0]
     assert set(resp.keys()) == {
-        "task_id", "decision_id", "run_id", "state", "created", "status_data",
-        "started", "id", "resolved", "expires", "pool",
+        "task_id",
+        "decision_id",
+        "run_id",
+        "state",
+        "created",
+        "status_data",
+        "started",
+        "id",
+        "resolved",
+        "expires",
+        "pool",
     }
     assert resp["id"] == task.pk
     assert resp["pool"] == pool.pk

@@ -4,29 +4,32 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.db import migrations, models
+
 import ec2spotmanager.models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ec2spotmanager', '0001_squashed_0013_add_gce_fields'),
+        ("ec2spotmanager", "0001_squashed_0013_add_gce_fields"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='poolconfiguration',
-            name='ec2_userdata_file',
+            model_name="poolconfiguration",
+            name="ec2_userdata_file",
             field=models.FileField(
                 blank=True,
                 null=True,
-                storage=ec2spotmanager.models.OverwritingStorage(location=settings.BASE_DIR),
-                upload_to=ec2spotmanager.models.get_storage_path
+                storage=ec2spotmanager.models.OverwritingStorage(
+                    location=settings.BASE_DIR
+                ),
+                upload_to=ec2spotmanager.models.get_storage_path,
             ),
         ),
         migrations.AlterField(
-            model_name='poolstatusentry',
-            name='type',
+            model_name="poolstatusentry",
+            name="type",
             field=models.IntegerField(),
         ),
     ]

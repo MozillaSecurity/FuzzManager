@@ -1,4 +1,4 @@
-'''
+"""
 Symptom
 
 Represents one symptom which may appear in a crash signature.
@@ -12,27 +12,25 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
 import json
+from abc import ABCMeta, abstractmethod
 from typing import Sequence
-
-import six
 
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.Signatures.Matchers import StringMatch, NumberMatch
+from FTB.Signatures.Matchers import NumberMatch, StringMatch
 
 
-@six.add_metaclass(ABCMeta)
-class Symptom(object):
-    '''
+class Symptom(metaclass=ABCMeta):
+    """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
-    '''
+    """
+
     def __init__(self, jsonObj: dict[str, object]) -> None:
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)
@@ -43,79 +41,85 @@ class Symptom(object):
 
     @staticmethod
     def fromJSONObject(obj: dict[str, object]) -> Symptom:
-        '''
+        """
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
         @type obj: map
         @param obj: Object as decoded from JSON
 
         @return: Symptom subclass instance matching the given object
-        '''
+        """
         if "type" not in obj:
             raise RuntimeError("Missing symptom type in object")
 
         stype = obj["type"]
 
-        if (stype == "output"):
+        if stype == "output":
             return OutputSymptom(obj)
-        elif (stype == "stackFrame"):
+        elif stype == "stackFrame":
             return StackFrameSymptom(obj)
-        elif (stype == "stackSize"):
+        elif stype == "stackSize":
             return StackSizeSymptom(obj)
-        elif (stype == "crashAddress"):
+        elif stype == "crashAddress":
             return CrashAddressSymptom(obj)
-        elif (stype == "instruction"):
+        elif stype == "instruction":
             return InstructionSymptom(obj)
-        elif (stype == "testcase"):
+        elif stype == "testcase":
             return TestcaseSymptom(obj)
-        elif (stype == "stackFrames"):
+        elif stype == "stackFrames":
             return StackFramesSymptom(obj)
         else:
-            raise RuntimeError("Unknown symptom type: %s" % stype)
+            raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
         return
 
 
 class OutputSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
-        self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
+        self.output = StringMatch(
+            JSONHelper.getObjectOrStringChecked(obj, "value", True)
+        )
         self.src = JSONHelper.getStringChecked(obj, "src")
 
         if self.src is not None:
             self.src = self.src.lower()
-            if self.src != "stderr" and self.src != "stdout" and self.src != "crashdata":
-                raise RuntimeError("Invalid source specified: %s" % self.src)
+            if (
+                self.src != "stderr"
+                and self.src != "stdout"
+                and self.src != "crashdata"
+            ):
+                raise RuntimeError(f"Invalid source specified: {self.src}")
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
         checkedOutput = []
 
         if self.src is None:
             checkedOutput.extend(crashInfo.rawStdout)
             checkedOutput.extend(crashInfo.rawStderr)
             checkedOutput.extend(crashInfo.rawCrashData)
-        elif (self.src == "stdout"):
+        elif self.src == "stdout":
             checkedOutput = crashInfo.rawStdout
-        elif (self.src == "stderr"):
+        elif self.src == "stderr":
             checkedOutput = crashInfo.rawStderr
         else:
             checkedOutput = crashInfo.rawCrashData
@@ -131,11 +135,13 @@ class OutputSymptom(Symptom):
 
 class StackFrameSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
-        self.functionName = StringMatch(JSONHelper.getNumberOrStringChecked(obj, "functionName", True))
+        self.functionName = StringMatch(
+            JSONHelper.getNumberOrStringChecked(obj, "functionName", True)
+        )
         self.frameNumber = JSONHelper.getNumberOrStringChecked(obj, "frameNumber")
 
         if self.frameNumber is not None:
@@ -145,13 +151,13 @@ class StackFrameSymptom(Symptom):
             self.frameNumber = NumberMatch(0)
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
 
         for idx in range(len(crashInfo.backtrace)):
             # Not the most efficient way for very long stacks with a small match area
@@ -164,39 +170,43 @@ class StackFrameSymptom(Symptom):
 
 class StackSizeSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
-        self.stackSize = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "size", True))
+        self.stackSize = NumberMatch(
+            JSONHelper.getNumberOrStringChecked(obj, "size", True)
+        )
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
         return self.stackSize.matches(len(crashInfo.backtrace))
 
 
 class CrashAddressSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
-        self.address = NumberMatch(JSONHelper.getNumberOrStringChecked(obj, "address", True))
+        self.address = NumberMatch(
+            JSONHelper.getNumberOrStringChecked(obj, "address", True)
+        )
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
         # In case the crash address is not available,
         # the NumberMatch class will return false to not match.
         return self.address.matches(crashInfo.crashAddress)
@@ -204,26 +214,30 @@ class CrashAddressSymptom(Symptom):
 
 class InstructionSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
         self.registerNames = JSONHelper.getArrayChecked(obj, "registerNames")
-        self.instructionName = JSONHelper.getObjectOrStringChecked(obj, "instructionName")
+        self.instructionName = JSONHelper.getObjectOrStringChecked(
+            obj, "instructionName"
+        )
 
         if self.instructionName is not None:
             self.instructionName = StringMatch(self.instructionName)
         elif self.registerNames is None or len(self.registerNames) == 0:
-            raise RuntimeError("Must provide at least instruction name or register names")
+            raise RuntimeError(
+                "Must provide at least instruction name or register names"
+            )
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
         if crashInfo.crashInstruction is None:
             # No crash instruction available, do not match
             return False
@@ -242,20 +256,22 @@ class InstructionSymptom(Symptom):
 
 class TestcaseSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
-        self.output = StringMatch(JSONHelper.getObjectOrStringChecked(obj, "value", True))
+        self.output = StringMatch(
+            JSONHelper.getObjectOrStringChecked(obj, "value", True)
+        )
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
 
         # No testcase means to fail matching
         if crashInfo.testcase is None:
@@ -272,9 +288,9 @@ class TestcaseSymptom(Symptom):
 
 class StackFramesSymptom(Symptom):
     def __init__(self, obj: dict[str, object]) -> None:
-        '''
+        """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
-        '''
+        """
         Symptom.__init__(self, obj)
         self.functionNames = []
 
@@ -284,40 +300,58 @@ class StackFramesSymptom(Symptom):
             self.functionNames.append(StringMatch(fn))
 
     def matches(self, crashInfo: CrashInfo) -> bool:
-        '''
+        """
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
 
         @return: True if the symptom matches, False otherwise
-        '''
+        """
 
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
-    def diff(self, crashInfo: CrashInfo) -> tuple[int | None, StackFramesSymptom | None]:
+    def diff(
+        self, crashInfo: CrashInfo
+    ) -> tuple[int | None, StackFramesSymptom | None]:
         if self.matches(crashInfo):
             return (0, None)
 
         for depth in range(1, 4):
-            (bestDepth, bestGuess) = StackFramesSymptom._diff(crashInfo.backtrace, self.functionNames, 0, 1, depth)
+            (bestDepth, bestGuess) = StackFramesSymptom._diff(
+                crashInfo.backtrace, self.functionNames, 0, 1, depth
+            )
             if bestDepth is not None:
                 assert bestGuess is not None
                 guessedFunctionNames = [repr(x) for x in bestGuess]
 
                 # Remove trailing wildcards as they are of no use
-                while guessedFunctionNames and (guessedFunctionNames[-1] == '?' or guessedFunctionNames[-1] == '???'):
+                while guessedFunctionNames and (
+                    guessedFunctionNames[-1] == "?" or guessedFunctionNames[-1] == "???"
+                ):
                     guessedFunctionNames.pop()
 
                 if not guessedFunctionNames:
-                    # Do not return empty matches. This happens if there's nothing left except wildcards.
+                    # Do not return empty matches. This happens if there's nothing left
+                    # except wildcards.
                     return (None, None)
 
-                return (bestDepth, StackFramesSymptom({"type": "stackFrames", 'functionNames': guessedFunctionNames}))
+                return (
+                    bestDepth,
+                    StackFramesSymptom(
+                        {"type": "stackFrames", "functionNames": guessedFunctionNames}
+                    ),
+                )
 
         return (None, None)
 
     @staticmethod
-    def _diff(stack: list[str], signatureGuess: list[StringMatch], startIdx: int, depth: int, maxDepth: int) -> tuple[int | None, list[StringMatch] | None]:
+    def _diff(
+        stack: list[str],
+        signatureGuess: list[StringMatch],
+        startIdx: int,
+        depth: int,
+        maxDepth: int,
+    ) -> tuple[int | None, list[StringMatch] | None]:
         singleWildcardMatch = StringMatch("?")
 
         newSignatureGuess = []
@@ -326,12 +360,16 @@ class StackFramesSymptom(Symptom):
         bestDepth = None
         bestGuess = None
 
-        hasVariableStackLengthQuantifier = '???' in [str(x) for x in newSignatureGuess]
+        hasVariableStackLengthQuantifier = "???" in [str(x) for x in newSignatureGuess]
 
         for idx in range(startIdx, len(newSignatureGuess)):
-            if idx == startIdx or (str(newSignatureGuess[idx - 1]) != '?' and str(newSignatureGuess[idx - 1]) != '???'):
+            if idx == startIdx or (
+                str(newSignatureGuess[idx - 1]) != "?"
+                and str(newSignatureGuess[idx - 1]) != "???"
+            ):
                 # Inserting '?' after another '?' or '???' does not make a difference
-                # because it is equivalent to inserting it before that last wildcard itself.
+                # because it is equivalent to inserting it before that last wildcard
+                # itself.
 
                 newSignatureGuess.insert(idx, singleWildcardMatch)
 
@@ -342,10 +380,13 @@ class StackFramesSymptom(Symptom):
                 # If we don't have a match but we're not at our current depth limit,
                 # add one more level of depth for our search.
                 if depth < maxDepth:
-                    (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx,
-                                                                            depth + 1, maxDepth)
+                    (newBestDepth, newBestGuess) = StackFramesSymptom._diff(
+                        stack, newSignatureGuess, idx, depth + 1, maxDepth
+                    )
 
-                    if newBestDepth is not None and (bestDepth is None or newBestDepth < bestDepth):
+                    if newBestDepth is not None and (
+                        bestDepth is None or newBestDepth < bestDepth
+                    ):
                         bestDepth = newBestDepth
                         bestGuess = newBestGuess
 
@@ -354,20 +395,25 @@ class StackFramesSymptom(Symptom):
             # Now repeat the same with replacing instead of adding
             # unless the match at idx is a wildcard itself
 
-            if str(newSignatureGuess[idx]) == '?' or str(newSignatureGuess[idx]) == '???':
+            if (
+                str(newSignatureGuess[idx]) == "?"
+                or str(newSignatureGuess[idx]) == "???"
+            ):
                 continue
 
             newMatch = singleWildcardMatch
             if not hasVariableStackLengthQuantifier and len(stack) > idx:
-                # We can perform some optimizations here if we have a signature that does
-                # not contain any quantifiers that can match multiple stack frames.
+                # We can perform some optimizations here if we have a signature that
+                # does not contain any quantifiers that can match multiple stack frames.
 
                 if newSignatureGuess[idx].matches(stack[idx]):
-                    # Our frame matches, so it doesn't make sense to try and mess with it
+                    # Our frame matches, so it doesn't make sense to try and mess with
+                    # it
                     continue
 
                 if not newSignatureGuess[idx].isPCRE:
-                    # If our match is not PCRE, try some heuristics to generalize the match
+                    # If our match is not PCRE, try some heuristics to generalize the
+                    # match
 
                     if stack[idx] in str(newSignatureGuess[idx]):
                         # The stack frame is a substring of the what we try to match,
@@ -385,10 +431,13 @@ class StackFramesSymptom(Symptom):
             # If we don't have a match but we're not at our current depth limit,
             # add one more level of depth for our search.
             if depth < maxDepth:
-                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(stack, newSignatureGuess, idx,
-                                                                        depth + 1, maxDepth)
+                (newBestDepth, newBestGuess) = StackFramesSymptom._diff(
+                    stack, newSignatureGuess, idx, depth + 1, maxDepth
+                )
 
-                if newBestDepth is not None and (bestDepth is None or newBestDepth < bestDepth):
+                if newBestDepth is not None and (
+                    bestDepth is None or newBestDepth < bestDepth
+                ):
                     bestDepth = newBestDepth
                     bestGuess = newBestGuess
 
@@ -397,18 +446,27 @@ class StackFramesSymptom(Symptom):
         return (bestDepth, bestGuess)
 
     @staticmethod
-    def _match(partialStack: Sequence[StringMatch | str], partialFunctionNames: Sequence[StringMatch | str]) -> bool:
+    def _match(
+        partialStack: Sequence[StringMatch | str],
+        partialFunctionNames: Sequence[StringMatch | str],
+    ) -> bool:
 
         while True:
 
-            # Process as many non-wildcard chars as we can find iteratively for performance reasons
-            while partialFunctionNames and partialStack and str(partialFunctionNames[0]) not in {'?', '???'}:
+            # Process as many non-wildcard chars as we can find iteratively for
+            # performance reasons
+            while (
+                partialFunctionNames
+                and partialStack
+                and str(partialFunctionNames[0]) not in {"?", "???"}
+            ):
                 assert isinstance(partialFunctionNames[0], StringMatch)
                 if not partialFunctionNames[0].matches(partialStack[0]):
                     return False
 
-                # Change the view on partialStack and partialFunctionNames without actually
-                # modifying the underlying arrays. They have to be preserved for the caller.
+                # Change the view on partialStack and partialFunctionNames without
+                # actually modifying the underlying arrays. They have to be preserved
+                # for the caller.
                 partialStack = partialStack[1:]
                 partialFunctionNames = partialFunctionNames[1:]
 
@@ -416,7 +474,7 @@ class StackFramesSymptom(Symptom):
                 # End of function names to match, accept
                 return True
 
-            if str(partialFunctionNames[0]) in {'?', '???'}:
+            if str(partialFunctionNames[0]) in {"?", "???"}:
                 if StackFramesSymptom._match(partialStack, partialFunctionNames[1:]):
                     # We recursively consumed 0 to N stack frames and can now
                     # get a match for the remaining stack without the current
@@ -430,7 +488,7 @@ class StackFramesSymptom(Symptom):
                     # Consume one stack frame and continue
                     partialStack = partialStack[1:]
 
-                    if str(partialFunctionNames[0]) == '?':
+                    if str(partialFunctionNames[0]) == "?":
                         # Consume the question mark too
                         partialFunctionNames = partialFunctionNames[1:]
 

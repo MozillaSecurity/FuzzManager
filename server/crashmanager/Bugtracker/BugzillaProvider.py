@@ -1,4 +1,4 @@
-'''
+"""
 Bugzilla Bug Provider Interface
 
 @author:     Christian Holler (:decoder)
@@ -10,7 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
@@ -20,18 +20,18 @@ from django.shortcuts import get_object_or_404
 from django.utils import dateparse
 from rest_framework.request import Request
 
+from ..models import BugzillaTemplate, CrashEntry, User
 from .BugzillaREST import BugzillaREST
 from .Provider import Provider
-from ..models import BugzillaTemplate, CrashEntry, User
 
 
 class BugzillaProvider(Provider):
     def __init__(self, pk: int, hostname: str) -> None:
-        super(BugzillaProvider, self).__init__(pk, hostname)
+        super().__init__(pk, hostname)
 
     def getTemplateForUser(self, request: Request, crashEntry: CrashEntry):
-        if 'template' in request.GET:
-            obj = get_object_or_404(BugzillaTemplate, pk=request.GET['template'])
+        if "template" in request.GET:
+            obj = get_object_or_404(BugzillaTemplate, pk=request.GET["template"])
             template = model_to_dict(obj)
             template["pk"] = obj.pk
         else:
@@ -56,11 +56,23 @@ class BugzillaProvider(Provider):
     def getTemplateList(self) -> QuerySet[BugzillaTemplate]:
         return BugzillaTemplate.objects.all()
 
-    def getBugData(self, bugId: str, username: str | None = None, password: str | None = None, api_key: str | None = None) -> str | None:
+    def getBugData(
+        self,
+        bugId: str,
+        username: str | None = None,
+        password: str | None = None,
+        api_key: str | None = None,
+    ) -> str | None:
         bz = BugzillaREST(self.hostname, username, password, api_key)
         return bz.getBug(bugId)
 
-    def getBugStatus(self, bugIds: list[str], username: str | None = None, password: str | None = None, api_key: str | None = None):
+    def getBugStatus(
+        self,
+        bugIds: list[str],
+        username: str | None = None,
+        password: str | None = None,
+        api_key: str | None = None,
+    ):
         ret = {}
         bz = BugzillaREST(self.hostname, username, password, api_key)
         bugs = bz.getBugStatus(bugIds)

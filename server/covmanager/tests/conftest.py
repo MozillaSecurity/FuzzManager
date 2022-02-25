@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Common test fixtures
+"""Common test fixtures
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,7 +7,7 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
@@ -17,24 +16,28 @@ import os
 import shutil
 import subprocess
 import tempfile
-import pytest
 from typing import cast
-from typing_extensions import TypedDict
-from django.contrib.auth.models import User, Permission
+
+import py as py_package
+import pytest
+from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import Storage
-import py as py_package
 from pytest_django.fixtures import SettingsWrapper
-from covmanager.models import Collection, CollectionFile, Repository
-from crashmanager.models import Client, Tool, User as cmUser
+from typing_extensions import TypedDict
 
+from covmanager.models import Collection, CollectionFile, Repository
+from crashmanager.models import Client, Tool
+from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.covmanager.tests")
 
 
 def _check_git() -> bool:
     try:
-        proc = subprocess.Popen(["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(
+            ["git"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
         output = proc.communicate()
         if output and proc.wait() == 1:
             return True
@@ -45,7 +48,9 @@ def _check_git() -> bool:
 
 def _check_hg() -> bool:
     try:
-        proc = subprocess.Popen(["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(
+            ["hg"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
         output = proc.communicate()
         if output and proc.wait() == 0:
             return True
@@ -61,12 +66,12 @@ HAVE_HG = _check_hg()
 @pytest.fixture
 def covmanager_test(db: None) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common setup/teardown tasks for all server unittests"""
-    user = User.objects.create_user('test', 'test@mozilla.com', 'test')
+    user = User.objects.create_user("test", "test@mozilla.com", "test")
     user.user_permissions.clear()
     content_type = ContentType.objects.get_for_model(cmUser)
-    perm = Permission.objects.get(content_type=content_type, codename='view_covmanager')
+    perm = Permission.objects.get(content_type=content_type, codename="view_covmanager")
     user.user_permissions.add(perm)
-    user_np = User.objects.create_user('test-noperm', 'test@mozilla.com', 'test')
+    user_np = User.objects.create_user("test-noperm", "test@mozilla.com", "test")
     user_np.user_permissions.clear()
 
 
@@ -81,50 +86,61 @@ class covType(TypedDict):
     name: str | None
 
 
-class _result(object):  # pylint: disable=invalid-name
+class _result:  # pylint: disable=invalid-name
     have_git: bool
     have_hg: bool
 
     @classmethod
     def create_repository(cls, repotype: str, name: str = "testrepo") -> Repository:
         ...
+
     @staticmethod
     def create_collection_file(data: str) -> CollectionFile:
         ...
+
     @classmethod
-    def create_collection(cls,
-                          created: bool | None = None,
-                          description: str = "",
-                          repository: Repository | None = None,
-                          revision: str = "",
-                          branch: str = "",
-                          tools: tuple[str]=("testtool",),
-                          client: str = "testclient",
-                          coverage: str = '{"linesTotal":0,'
-                                          '"name":null,'
-                                          '"coveragePercent":0.0,'
-                                          '"children":{},'
-                                          '"linesMissed":0,'
-                                          '"linesCovered":0}') -> Collection:
-            ...
+    def create_collection(
+        cls,
+        created: bool | None = None,
+        description: str = "",
+        repository: Repository | None = None,
+        revision: str = "",
+        branch: str = "",
+        tools: tuple[str] = ("testtool",),
+        client: str = "testclient",
+        coverage: str = '{"linesTotal":0,'
+        '"name":null,'
+        '"coveragePercent":0.0,'
+        '"children":{},'
+        '"linesMissed":0,'
+        '"linesCovered":0}',
+    ) -> Collection:
+        ...
+
     @staticmethod
     def git(repo: Repository, *args: str) -> str:
         ...
+
     @staticmethod
     def hg(repo: Repository, *args: str) -> str:
         ...
 
 
 @pytest.fixture
-def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_package.path.local):
-
-    class _result(object):
+def cm(
+    request: pytest.FixtureRequest,
+    settings: SettingsWrapper,
+    tmpdir: py_package.path.local,
+):
+    class _result:
         have_git = HAVE_GIT
         have_hg = HAVE_HG
 
         @classmethod
         def create_repository(cls, repotype: str, name: str = "testrepo") -> Repository:
-            location = tempfile.mkdtemp(prefix='testrepo', dir=os.path.dirname(__file__))
+            location = tempfile.mkdtemp(
+                prefix="testrepo", dir=os.path.dirname(__file__)
+            )
             request.addfinalizer(lambda: shutil.rmtree(location))
             if repotype == "git":
                 if not HAVE_GIT:
@@ -135,8 +151,15 @@ def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_pac
                     pytest.skip("hg is not available")
                 classname = "HGSourceCodeProvider"
             else:
-                raise Exception("unknown repository type: %s (expecting git or hg)" % repotype)
-            result = cast(Repository, Repository.objects.create(classname=classname, name=name, location=location))
+                raise Exception(
+                    f"unknown repository type: {repotype} (expecting git or hg)"
+                )
+            result = cast(
+                Repository,
+                Repository.objects.create(
+                    classname=classname, name=name, location=location
+                ),
+            )
             LOG.debug("Created Repository pk=%d", result.pk)
             if repotype == "git":
                 cls.git(result, "init")
@@ -147,8 +170,8 @@ def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_pac
         @staticmethod
         def create_collection_file(data: str) -> CollectionFile:
 
-            # Use a specific temporary directory to upload covmanager files
-            # This is required as Django now needs a path relative to that folder in FileField
+            # Use a specific temporary directory to upload covmanager files.  This is
+            # required as Django now needs a path relative to that folder in FileField
             location = str(tmpdir)
             assert isinstance(CollectionFile.file.field.storage, Storage)
             CollectionFile.file.field.storage.location = location
@@ -157,25 +180,30 @@ def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_pac
             os.close(tmp_fd)
             with open(path, "w") as fp:
                 fp.write(data)
-            result = cast(CollectionFile, CollectionFile.objects.create(file=os.path.basename(path)))
+            result = cast(
+                CollectionFile,
+                CollectionFile.objects.create(file=os.path.basename(path)),
+            )
             LOG.debug("Created CollectionFile pk=%d", result.pk)
             return result
 
         @classmethod
-        def create_collection(cls,
-                              created: bool | None = None,
-                              description: str = "",
-                              repository: Repository | None = None,
-                              revision: str = "",
-                              branch: str = "",
-                              tools: tuple[str]=("testtool",),
-                              client: str = "testclient",
-                              coverage: str = '{"linesTotal":0,'
-                                              '"name":null,'
-                                              '"coveragePercent":0.0,'
-                                              '"children":{},'
-                                              '"linesMissed":0,'
-                                              '"linesCovered":0}') -> Collection:
+        def create_collection(
+            cls,
+            created: bool | None = None,
+            description: str = "",
+            repository: Repository | None = None,
+            revision: str = "",
+            branch: str = "",
+            tools: tuple[str] = ("testtool",),
+            client: str = "testclient",
+            coverage: str = '{"linesTotal":0,'
+            '"name":null,'
+            '"coveragePercent":0.0,'
+            '"children":{},'
+            '"linesMissed":0,'
+            '"linesCovered":0}',
+        ) -> Collection:
             # create collectionfile
             coverage_ = cls.create_collection_file(coverage)
             # create client
@@ -185,12 +213,17 @@ def cm(request: pytest.FixtureRequest, settings: SettingsWrapper, tmpdir: py_pac
             # create repository
             if repository is None:
                 repository = cls.create_repository("git")
-            result = cast(Collection, Collection.objects.create(description=description,
-                                                                repository=repository,
-                                                                revision=revision,
-                                                                branch=branch,
-                                                                client=client_,
-                                                                coverage=coverage_))
+            result = cast(
+                Collection,
+                Collection.objects.create(
+                    description=description,
+                    repository=repository,
+                    revision=revision,
+                    branch=branch,
+                    client=client_,
+                    coverage=coverage_,
+                ),
+            )
             LOG.debug("Created Collection pk=%d", result.pk)
             # create tools
             for single_tool in tools:

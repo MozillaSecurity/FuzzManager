@@ -3,26 +3,26 @@
 from __future__ import annotations
 
 import django.core.files.storage
-from django.db import migrations, models
 from django.conf import settings
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('covmanager', '0005_report'),
+        ("covmanager", "0005_report"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collectionfile',
-            name='file',
+            model_name="collectionfile",
+            name="file",
             field=models.FileField(
                 max_length=255,
                 storage=django.core.files.storage.FileSystemStorage(
-                    location=getattr(settings, 'COV_STORAGE', None)
+                    location=getattr(settings, "COV_STORAGE", None)
                 ),
-                upload_to='coverage'
+                upload_to="coverage",
             ),
         ),
     ]

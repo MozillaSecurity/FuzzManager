@@ -1,4 +1,3 @@
-# coding: utf-8
 """Tests for Pools rest api.
 
 @author:     Jesse Schwartzentruber (:truber)
@@ -12,16 +11,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
-import itertools
 import datetime
+import itertools
 import json
 import logging
+
 import pytest
 import requests
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
-from . import create_pool, create_task
 
+from . import create_pool, create_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.pools.rest")
 pytestmark = pytest.mark.usefixtures("taskmanager_test")  # pylint: disable=invalid-name
@@ -49,7 +49,10 @@ def test_rest_pools_no_perm(api_client: APIClient) -> None:
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
 
 
-@pytest.mark.parametrize(("method", "item"), itertools.product(["post", "patch", "put", "delete"], [True, False]))
+@pytest.mark.parametrize(
+    ("method", "item"),
+    itertools.product(["post", "patch", "put", "delete"], [True, False]),
+)
 def test_rest_pool_methods(api_client: APIClient, method: str, item: bool) -> None:
     """post/put/patch/delete should not be allowed"""
     user = User.objects.get(username="test")
@@ -88,7 +91,16 @@ def test_rest_pool_read(api_client: APIClient, item: bool) -> None:
         assert len(resp["results"]) == 1
         resp = resp["results"][0]
     assert set(resp.keys()) == {
-        "pool_id", "pool_name", "platform", "size", "cpu", "cycle_time", "id", "running", "status", "max_run_time",
+        "pool_id",
+        "pool_name",
+        "platform",
+        "size",
+        "cpu",
+        "cycle_time",
+        "id",
+        "running",
+        "status",
+        "max_run_time",
     }
     assert resp["id"] == pool.pk
     assert resp["pool_id"] == pool.pool_id

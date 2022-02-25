@@ -1,5 +1,4 @@
-# encoding: utf-8
-'''
+"""
 GDB - Contains functions directly used by GDB for crash processing
 
 @author:     Christian Holler (:decoder)
@@ -11,7 +10,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
@@ -30,10 +29,11 @@ def isARM64() -> bool:
 
 def regAsHexStr(reg: str) -> str:
     if is64bit():
-        mask = 0xffffffffffffffff
+        mask = 0xFFFFFFFFFFFFFFFF
     else:
-        mask = 0xffffffff
-    return "0x%x" % (int(str(gdb.parse_and_eval("$" + reg)), 0) & mask)  # type: ignore[name-defined]  # noqa @UndefinedVariable
+        mask = 0xFFFFFFFF
+    val = int(str(gdb.parse_and_eval("$" + reg)), 0) & mask  # type: ignore[name-defined]  # noqa @UndefinedVariable
+    return f"0x{val:x}"
 
 
 def regAsIntStr(reg: str) -> str:
@@ -46,7 +46,11 @@ def regAsRaw(reg: str) -> str:
 
 def printImportantRegisters() -> None:
     if is64bit():
-        regs = "rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15 rip".split(" ")
+        regs = (
+            "rax rbx rcx rdx rsi rdi rbp rsp r8 r9 r10 r11 r12 r13 r14 r15 rip".split(
+                " "
+            )
+        )
     elif isARM():
         regs = "r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc cpsr".split(" ")
     elif isARM64():

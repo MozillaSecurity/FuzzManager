@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 from logging import getLogger
@@ -10,14 +8,12 @@ from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
 from mozillapulse.consumers import GenericConsumer, PulseConfiguration
 
-from ...tasks import update_task, update_pool_defns
-
+from ...tasks import update_pool_defns, update_task
 
 LOG = getLogger("taskmanager.management.commands.listen")
 
 
 class TaskClusterConsumer(GenericConsumer):
-
     def __init__(self, **kwargs: Any) -> None:
         repo_slug = Path(settings.TC_FUZZING_CFG_REPO.split(":", 1)[1])
         org = repo_slug.parent
@@ -30,8 +26,8 @@ class TaskClusterConsumer(GenericConsumer):
             "exchange/taskcluster-queue/v1/task-exception",
             "exchange/taskcluster-github/v1/push",
         ]
-        topics = ["primary.#.proj-%s.#" % settings.TC_PROJECT] * 5 + [
-            "primary.%s.%s" % (org, repo),
+        topics = [f"primary.#.proj-{settings.TC_PROJECT}.#"] * 5 + [
+            f"primary.{org}.{repo}",
         ]
         super().__init__(
             PulseConfiguration(**kwargs),
@@ -44,11 +40,15 @@ class TaskClusterConsumer(GenericConsumer):
 
 
 class Command(BaseCommand):
-    help = ("Listens for Mozilla Pulse messages relating to TaskManager tasks, "
-            "and schedule celery tasks to handle them")
+    help = (
+        "Listens for Mozilla Pulse messages relating to TaskManager tasks, "
+        "and schedule celery tasks to handle them"
+    )
 
     def callback(self, body, msg) -> None:
-        if msg.delivery_info["exchange"].startswith("exchange/taskcluster-queue/v1/task-"):
+        if msg.delivery_info["exchange"].startswith(
+            "exchange/taskcluster-queue/v1/task-"
+        ):
             LOG.info(
                 "%s on %s for %s",
                 msg.delivery_info["routing_key"],
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             msg.ack()
             return None
         raise RuntimeError(
-            "Unhandled message: %s on %s" % (
+            "Unhandled message: {} on {}".format(
                 msg.delivery_info["routing_key"],
                 msg.delivery_info["exchange"],
             )

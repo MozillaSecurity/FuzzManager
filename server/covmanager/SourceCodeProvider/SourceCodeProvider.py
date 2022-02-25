@@ -1,4 +1,4 @@
-'''
+"""
 Source Code Provider Interface
 
 @author:     Christian Holler (:decoder)
@@ -10,15 +10,13 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 
-import six
-from typing_extensions import NotRequired
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class UnknownRevisionException(Exception):
@@ -29,11 +27,12 @@ class UnknownFilenameException(Exception):
     pass
 
 
-@six.add_metaclass(ABCMeta)
-class SourceCodeProvider():
-    '''
-    Abstract base class that defines what interfaces Source Code Providers must implement
-    '''
+class SourceCodeProvider(metaclass=ABCMeta):
+    """
+    Abstract base class that defines what interfaces Source Code Providers must
+    implement
+    """
+
     def __init__(self, location: str) -> None:
         self.location = location
 
@@ -52,7 +51,7 @@ class SourceCodeProvider():
     @abstractmethod
     def testRevision(self, revision: str) -> bool:
         """
-        Check if the given revision exists in the resource associated with this provider.
+        Check if the given revision exists in the resource associated with this provider
 
         @param revision: The revision to check for.
         @return True, if the revision exists, False otherwise.
@@ -114,8 +113,7 @@ class CObj(TypedDict):
     not_coverable: NotRequired[list[int]]
 
 
-class Utils():
-
+class Utils:
     @staticmethod
     def getDiffLocations(diff: str) -> list[CObj]:
         """

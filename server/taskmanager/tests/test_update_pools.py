@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Tests for TaskManager tasks
+"""Tests for TaskManager tasks
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,25 +7,28 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
 import datetime
 import logging
 import os.path
-import pytest
 import sys
+
+import pytest
 from dateutil.parser import isoparse
 from pytest_mock import MockerFixture
+
 # from taskmanager.cron import delete_expired
-from taskmanager.tasks import update_task, update_pool_defns
 from taskmanager.models import Pool, Task
+from taskmanager.tasks import update_pool_defns, update_task
 
-
-LOG = logging.getLogger('fm.taskmanager.tests.tasks')
+LOG = logging.getLogger("fm.taskmanager.tests.tasks")
 pytestmark = [  # pylint: disable=invalid-name
-    pytest.mark.skipif(sys.version_info < (3, 6), reason="fuzzing-tc requires python3.6 or higher"),
+    pytest.mark.skipif(
+        sys.version_info < (3, 6), reason="fuzzing-tc requires python3.6 or higher"
+    ),
     pytest.mark.usefixtures("taskmanager_test"),
 ]
 
@@ -44,7 +46,8 @@ TASK_EVENT_DATA = {
                 "taskGroupId": "P_zY5AHsRxGBemA-bU1A2A",
                 "deadline": "2021-04-20T03:41:59.959Z",
                 "expires": "2021-04-27T00:41:59.959Z",
-                "retriesLeft": 5, "state": "completed",
+                "retriesLeft": 5,
+                "state": "completed",
                 "runs": [
                     {
                         "runId": 0,
@@ -245,7 +248,12 @@ TASK_EVENT_DATA = {
 
 
 @pytest.mark.parametrize("pulse_data, expected", TASK_EVENT_DATA.values())
-def test_update_task_0(mocker: MockerFixture, settings, pulse_data: str, expected: dict[str, dict[str, object]]) -> None:
+def test_update_task_0(
+    mocker: MockerFixture,
+    settings,
+    pulse_data: str,
+    expected: dict[str, dict[str, object]],
+) -> None:
     """test that Task events update the DB"""
     settings.TC_EXTRA_POOLS = ["extra"]
     settings.TC_ROOT_URL = "https://allizom.org/tc"
@@ -271,7 +279,9 @@ def test_update_task_0(mocker: MockerFixture, settings, pulse_data: str, expecte
 
 def test_update_pool_defns_0(mocker: MockerFixture, settings) -> None:
     """test that Pool definition is read from GH"""
-    settings.TC_FUZZING_CFG_STORAGE = os.path.join(os.path.dirname(__file__), "fixtures", "pool1")
+    settings.TC_FUZZING_CFG_STORAGE = os.path.join(
+        os.path.dirname(__file__), "fixtures", "pool1"
+    )
     settings.TC_FUZZING_CFG_REPO = "git@allizom.org:allizom/fuzzing-config.git"
     settings.TC_EXTRA_POOLS = ["extra"]
 

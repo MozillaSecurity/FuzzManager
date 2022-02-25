@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# encoding: utf-8
-'''
+"""
 best_every_n_hours -- Simulation handler that makes a new cheapest choice every
                       n hours. Region and instance type can be fixed with the
                       corresponding parameters. The n parameter is mandatory.
@@ -14,7 +13,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
@@ -46,12 +45,19 @@ def run(data, sim_config: dict[str, str], main_config: dict[str, str]) -> int | 
 
     cnt = 0
 
-    with open("%s.log" % sim_config["name"], mode='w') as logFileFd:
+    with open(f"{sim_config['name']}.log", mode="w") as logFileFd:
         for instance_time in data[region][zone][instance_type]:
             if cnt % n:
                 (_, price, _) = data[region][zone][instance_type][instance_time]
             else:
-                ret = select_better(data, None, fixed_region, None, fixed_instance_type, instance_time=instance_time)
+                ret = select_better(
+                    data,
+                    None,
+                    fixed_region,
+                    None,
+                    fixed_instance_type,
+                    instance_time=instance_time,
+                )
 
                 region = ret["region"]
                 zone = ret["zone"]
@@ -59,7 +65,10 @@ def run(data, sim_config: dict[str, str], main_config: dict[str, str]) -> int | 
                 price = ret["price"]
 
             total_price = total_price + price
-            print("%s %s %s %s %s" % (region, zone, instance_type, instance_time, price), file=logFileFd)
+            print(
+                f"{region} {zone} {instance_type} {instance_time} {price}",
+                file=logFileFd,
+            )
             cnt += 1
 
     return total_price

@@ -7,16 +7,20 @@ register = template.Library()
 
 
 class RecurseReportSummaryTree(template.Node):
-    def __init__(self, template_nodes: template.NodeList, config_var: template.Variable) -> None:
+    def __init__(
+        self, template_nodes: template.NodeList, config_var: template.Variable
+    ) -> None:
         self.template_nodes = template_nodes
         self.config_var = config_var
 
-    def _render_node(self, context: template.context.Context, node: template.Node) -> str:
+    def _render_node(
+        self, context: template.context.Context, node: template.Node
+    ) -> str:
         context.push()
-        context['node'] = node
+        context["node"] = node
         if "children" in node:
             children = [self._render_node(context, x) for x in node["children"]]
-            context['children'] = mark_safe(''.join(children))
+            context["children"] = mark_safe("".join(children))
         rendered = self.template_nodes.render(context)
         context.pop()
         return rendered
@@ -26,14 +30,16 @@ class RecurseReportSummaryTree(template.Node):
 
 
 @register.tag
-def recurseroot(parser: template.base.Parser, token: template.base.Token) -> RecurseReportSummaryTree:
+def recurseroot(
+    parser: template.base.Parser, token: template.base.Token
+) -> RecurseReportSummaryTree:
     bits = token.contents.split()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError(_('%s tag requires a root') % bits[0])  # noqa
+        raise template.TemplateSyntaxError(f"{bits[0]} tag requires a root")
 
     config_var = template.Variable(bits[1])
 
-    template_nodes = parser.parse(('endrecurseroot',))
+    template_nodes = parser.parse(("endrecurseroot",))
     parser.delete_first_token()
 
     return RecurseReportSummaryTree(template_nodes, config_var)

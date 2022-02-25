@@ -1,5 +1,4 @@
-# coding: utf-8
-'''
+"""
 Tests
 
 @author:     Christian Holler (:decoder)
@@ -11,13 +10,13 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import json
-from FTB import CoverageHelper
 
+from FTB import CoverageHelper
 
 covdata = r"""
 {
@@ -147,7 +146,7 @@ covdata = r"""
   "linesTotal": 25,
   "name": null
 }
-"""  # noqa
+"""
 
 
 def test_CoverageHelperFlattenNames() -> None:
@@ -155,15 +154,15 @@ def test_CoverageHelperFlattenNames() -> None:
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
     expected_names = [
-        'topdir1',
-        'topdir1/subdir2',
-        'topdir1/subdir2/file3.c',
-        'topdir1/subdir1/file2.c',
-        'topdir1/subdir1',
-        'topdir1/subdir1/file1.c',
-        'topdir2',
-        'topdir2/subdir1',
-        'topdir2/subdir1/file1.c'
+        "topdir1",
+        "topdir1/subdir2",
+        "topdir1/subdir2/file3.c",
+        "topdir1/subdir1/file2.c",
+        "topdir1/subdir1",
+        "topdir1/subdir1/file1.c",
+        "topdir2",
+        "topdir2/subdir1",
+        "topdir2/subdir1/file1.c",
     ]
 
     assert result == set(expected_names)
@@ -172,23 +171,26 @@ def test_CoverageHelperFlattenNames() -> None:
 def test_CoverageHelperApplyDirectivesMixed() -> None:
     node = json.loads(covdata)
 
-    # Check that mixed directives work properly (exclude multiple paths, include some back)
-    directives = ["-:topdir1/subdir1/**",
-                  "+:topdir1/subdir?/file1.c",
-                  "+:topdir1/subdir?/file3.c",
-                  "-:topdir1/subdir2/**"]
+    # Check that mixed directives work properly (exclude multiple paths, include some
+    # back)
+    directives = [
+        "-:topdir1/subdir1/**",
+        "+:topdir1/subdir?/file1.c",
+        "+:topdir1/subdir?/file3.c",
+        "-:topdir1/subdir2/**",
+    ]
 
     CoverageHelper.apply_include_exclude_directives(node, directives)
 
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
     expected_names = [
-        'topdir1',
-        'topdir1/subdir1/file1.c',
-        'topdir1/subdir1',
-        'topdir2',
-        'topdir2/subdir1',
-        'topdir2/subdir1/file1.c'
+        "topdir1",
+        "topdir1/subdir1/file1.c",
+        "topdir1/subdir1",
+        "topdir2",
+        "topdir2/subdir1",
+        "topdir2/subdir1/file1.c",
     ]
 
     assert result == set(expected_names)
@@ -204,11 +206,7 @@ def test_CoverageHelperApplyDirectivesPrune() -> None:
 
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
-    expected_names = [
-        'topdir2',
-        'topdir2/subdir1',
-        'topdir2/subdir1/file1.c'
-    ]
+    expected_names = ["topdir2", "topdir2/subdir1", "topdir2/subdir1/file1.c"]
 
     assert result == set(expected_names)
 
@@ -223,11 +221,7 @@ def test_CoverageHelperApplyDirectivesExcludeAll() -> None:
 
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
-    expected_names = [
-        'topdir2',
-        'topdir2/subdir1',
-        'topdir2/subdir1/file1.c'
-    ]
+    expected_names = ["topdir2", "topdir2/subdir1", "topdir2/subdir1/file1.c"]
 
     assert result == set(expected_names)
 

@@ -1,0 +1,13 @@
+Program terminated with signal SIGSEGV, Segmentation fault.
+#0  0x083c4a4b in js::ToPrimitiveSlow (cx=0xf7152000, preferredType=JSTYPE_NUMBER, vp=...) at js/src/jsobj.cpp:3084
+#1  0x083d2f59 in js::ToPrimitive (vp=..., preferredType=JSTYPE_NUMBER, cx=<optimized out>) at js/src/jsobj.h:1062
+eax            0xffe0104c       -2092980
+ecx            0xffe01058       -2092968
+edx            0xffe01050       -2092976
+ebx            0x8950ff4        143986676
+esp            0xffe01000       0xffe01000
+ebp            0xffe010c8       0xffe010c8
+esi            0xf7152000       -149610496
+edi            0xffe01040       -2092992
+eip            0x83c4a4b        0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>
+=> 0x83c4a4b <js::ToPrimitiveSlow(JSContext*, JSType, JS::MutableHandle<JS::Value>)+219>:       call   0x8120ca0 <js::GetProperty(JSContext*, JS::Handle<JSObject*>, JS::Handle<JSObject*>, JS::Handle<jsid>, JS::MutableHandle<JS::Value>)>

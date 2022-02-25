@@ -1,4 +1,4 @@
-'''
+"""
 Bugzilla REST Abstraction Layer
 
 @author:     Christian Holler (:decoder)
@@ -10,17 +10,23 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import requests
 
 
-class BugzillaREST():
-    def __init__(self, hostname: str, username: str | None = None, password: str | None = None, api_key: str | None = None) -> None:
+class BugzillaREST:
+    def __init__(
+        self,
+        hostname: str,
+        username: str | None = None,
+        password: str | None = None,
+        api_key: str | None = None,
+    ) -> None:
         self.hostname = hostname
-        self.baseUrl = 'https://%s/rest' % self.hostname
+        self.baseUrl = f"https://{self.hostname}/rest"
         self.username = username
         self.password = password
         self.api_key = api_key
@@ -36,7 +42,7 @@ class BugzillaREST():
         if self.api_key is not None:
             # Transmit the API key via request header instead of embedding
             # it in the URI for additional security.
-            self.request_headers['X-BUGZILLA-API-KEY'] = self.api_key
+            self.request_headers["X-BUGZILLA-API-KEY"] = self.api_key
 
     def login(self, loginRequired: bool = True, forceLogin: bool = False) -> bool:
         if (self.username is None or self.password is None) and self.api_key is None:
@@ -56,12 +62,14 @@ class BugzillaREST():
         if self.authToken is not None:
             return True
 
-        loginUrl = "%s/login?login=%s&password=%s" % (self.baseUrl, self.username, self.password)
+        loginUrl = (
+            f"{self.baseUrl}/login?login={self.username}&password={self.password}"
+        )
         response = requests.get(loginUrl)
         json = response.json()
 
-        if 'token' not in json:
-            raise RuntimeError('Login failed: %s', response.text)
+        if "token" not in json:
+            raise RuntimeError("Login failed: %s", response.text)
 
         self.authToken = json["token"]
         return True
@@ -75,28 +83,44 @@ class BugzillaREST():
         return bugs[int(bugId)]
 
     def getBugStatus(self, bugIds: list[str]):
-        return self.getBugs(bugIds, include_fields=["id", "is_open", "resolution", "dupe_of", "cf_last_resolved"])
+        return self.getBugs(
+            bugIds,
+            include_fields=[
+                "id",
+                "is_open",
+                "resolution",
+                "dupe_of",
+                "cf_last_resolved",
+            ],
+        )
 
-    def getBugs(self, bugIds: list[str] | str, include_fields: list[str] | None = None, exclude_fields: list[str] | None = None):
+    def getBugs(
+        self,
+        bugIds: list[str] | str,
+        include_fields: list[str] | None = None,
+        exclude_fields: list[str] | None = None,
+    ):
         if not isinstance(bugIds, list):
             bugIds = [bugIds]
 
-        bugUrl = "%s/bug?id=%s" % (self.baseUrl, ",".join(bugIds))
+        bugUrl = f"{self.baseUrl}/bug?id={','.join(bugIds)}"
 
         extraParams = []
 
         # Ensure we are logged in if we have any login data.
         # However, we might not need any credentials for reading bugs.
         if self.login(loginRequired=False):
-            extraParams.append("&token=%s" % self.authToken)
+            extraParams.append(f"&token={self.authToken}")
 
         if include_fields:
-            extraParams.append("&include_fields=%s" % ",".join(include_fields))
+            extraParams.append(f"&include_fields={','.join(include_fields)}")
 
         if exclude_fields:
-            extraParams.append("&exclude_fields=%s" % ",".join(exclude_fields))
+            extraParams.append(f"&exclude_fields={','.join(exclude_fields)}")
 
-        response = requests.get(bugUrl + "".join(extraParams), headers=self.request_headers)
+        response = requests.get(
+            bugUrl + "".join(extraParams), headers=self.request_headers
+        )
         json = response.json()
 
         if "bugs" not in json:

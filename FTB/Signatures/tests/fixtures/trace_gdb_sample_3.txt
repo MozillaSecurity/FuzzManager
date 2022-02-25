@@ -1,0 +1,11 @@
+Program terminated with signal 11, Segmentation fault.
+#0  0x083ba5a9 in AssertCanGC () at /srv/repos/ionmonkey/js/src/gc/Root.h:1029
+1029        JS_ASSERT_IF(isGCEnabled(), !InNoGCScope());
+#0  0x083ba5a9 in AssertCanGC () at /srv/repos/ionmonkey/js/src/gc/Root.h:1029
+#1  js::gc::NewGCThing<JSString, (js::AllowGC)1> (cx=0x9224850, kind=js::gc::FINALIZE_STRING, thingSize=16, heap=js::gc::TenuredHeap) at ../jsgcinlines.h:491
+#2  0x083b205d in js_NewGCString<(js::AllowGC)1> (cx=0x9224850) at ../jsgcinlines.h:578
+#3  0x08508069 in new_<(js::AllowGC)1> (length=33, right="result: ", left="\njstest: undefined bug:  ", cx=0x9224850) at /srv/repos/ionmonkey/js/src/vm/String-inl.h:194
+#4  js::ConcatStrings<(js::AllowGC)1> (cx=0x9224850,: left="\njstest: undefined bug:  ", right="result: ") at /srv/repos/ionmonkey/js/src/vm/String.cpp:339
+#5  0x08780467 in js::ion::DoConcatStrings (cx=0x9224850, lhs=$jsval(-nan(0xfff85f6bb4ff0)), rhs=$jsval(-nan(0xfff85f6c194e0)), res=$jsval(-nan(0xfff8200000000))) at /srv/repos/ionmonkey/js/src/ion/BaselineIC.cpp:2037
+#6  0xf772685f in ?? ()
+#7  0xf772bb76 in ?? ()

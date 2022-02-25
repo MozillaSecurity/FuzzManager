@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 from datetime import timedelta
@@ -7,10 +5,10 @@ from logging import getLogger
 from pathlib import Path
 from subprocess import check_output
 
+from celeryconf import app
 from django.conf import settings
-from celeryconf import app  # noqa
-from . import cron  # noqa ensure cron tasks get registered
 
+from . import cron  # noqa ensure cron tasks get registered
 
 LOG = getLogger("taskmanager.tasks")
 
@@ -53,6 +51,7 @@ def get_or_create_pool(worker_type: str):
 @app.task(ignore_result=True)
 def update_pool_defns() -> None:
     from fuzzing_decision.common.pool import PoolConfigLoader
+
     from .models import Pool, Task
 
     # don't remove pools while they have existing tasks
@@ -64,7 +63,15 @@ def update_pool_defns() -> None:
         storage.mkdir(parents=True, exist_ok=True)
         check_output(["git", "init"], cwd=storage)
         check_output(
-            ["git", "remote", "add", "-t", "master", "origin", settings.TC_FUZZING_CFG_REPO],
+            [
+                "git",
+                "remote",
+                "add",
+                "-t",
+                "master",
+                "origin",
+                settings.TC_FUZZING_CFG_REPO,
+            ],
             cwd=storage,
         )
     check_output(
@@ -87,7 +94,13 @@ def update_pool_defns() -> None:
             defaults=defaults,
         )
         pools_seen.add(pool.id)
-        LOG.info("> pool[%d] %s-%s (%s)", pool.pk, pool.platform, pool.pool_id, pool.pool_name)
+        LOG.info(
+            "> pool[%d] %s-%s (%s)",
+            pool.pk,
+            pool.platform,
+            pool.pool_id,
+            pool.pool_name,
+        )
 
     # if a pool is in the DB but not in Github/TC, it should be deleted
     to_delete = []
@@ -103,6 +116,7 @@ def update_pool_defns() -> None:
 @app.task(ignore_result=True)
 def update_task(pulse_data) -> None:
     import taskcluster
+
     from .models import Task
 
     status = pulse_data["status"]

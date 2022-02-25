@@ -1,4 +1,4 @@
-'''
+"""
 AssertionHelper
 
 Provides various functions around assertion handling and processing
@@ -12,12 +12,11 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import re
-
 
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
 RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\([^\)]")
@@ -29,14 +28,14 @@ RE_V8_END = re.compile(r"^")
 
 
 def getAssertion(output: list[str]) -> list[str] | str | None:
-    '''
+    """
     This helper method provides a way to extract and process the
     different types of assertions from a given buffer.
     The problem here is that pretty much every software has its
     own type of assertions with different output formats.
 
     @param output: List of strings to be searched
-    '''
+    """
     lastLine: list[str] | str | None = None
     endRegex = None
 
@@ -91,15 +90,19 @@ def getAssertion(output: list[str]) -> list[str] | str | None:
             # Firefox Skia assertion (SkASSERT)
             lastLine = line
             haveFatalAssertion = True
-        elif ": fatal error: \"assert" in line:
+        elif ': fatal error: "assert' in line:
             # Skia assertion
             lastLine = line
             haveFatalAssertion = True
         elif line.startswith("ASSERTION") and RE_ASSERTION.search(line):
             lastLine = line
             haveFatalAssertion = True
-        elif (not haveFatalAssertion and not haveMozCrashLine and
-                "MOZ_CRASH" in line and RE_MOZ_CRASH.search(line)):
+        elif (
+            not haveFatalAssertion
+            and not haveMozCrashLine
+            and "MOZ_CRASH" in line
+            and RE_MOZ_CRASH.search(line)
+        ):
             # MOZ_CRASH line, but with a message (we should only look at these)
             if RE_MOZ_CRASH_END.search(line) is None:
                 endRegex = RE_MOZ_CRASH_END
@@ -123,14 +126,14 @@ def getAssertion(output: list[str]) -> list[str] | str | None:
 
 
 def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
-    '''
+    """
     This helper method provides a way to extract and process additional
     abort messages or other useful messages produced by helper tools like
     sanitizers. These messages can be helpful in signatures if there is no
     abort message from the program itself.
 
     @param output: List of strings to be searched
-    '''
+    """
     lastLine: list[str] | str | None = None
     needASanRW = False
     needTSanRW = False
@@ -160,12 +163,15 @@ def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
             line = re.sub(r"\s*\(pid=\d+\)", "", line)
             lastLine = line.strip()
 
-            # If we have a data race, then we would like the read/write lines mentioning the threads involved
+            # If we have a data race, then we would like the read/write lines mentioning
+            # the threads involved
             needTSanRW = "data race" in line
 
             if needTSanRW:
                 lastLine = [lastLine]
-        elif needTSanRW and re.match(r"\s*(?:Previous )?(?:[Aa]tomic )?(?:[Rr]ead|[Ww]rite) of size", line):
+        elif needTSanRW and re.match(
+            r"\s*(?:Previous )?(?:[Aa]tomic )?(?:[Rr]ead|[Ww]rite) of size", line
+        ):
             lastLine.append(line.strip())
         elif "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
@@ -178,7 +184,7 @@ def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
 
 
 def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | str:
-    '''
+    """
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.
     for use in signature matching.
@@ -186,7 +192,7 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
     @param msgs: Assertion message(s) to be sanitized
 
     @return: Sanitized assertion message (regular expression)
-    '''
+    """
     assert msgs is not None
 
     returnList = True
@@ -204,10 +210,12 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
                 bsPositions.append(len(chunk))
             else:
                 bsPositions.append(len(chunk) + bsPositions[-1] + 1)
-        bsPositions.pop()  # msg.split(x) will return `# of matches(x) + 1` values: the last one is invalid
+        # msg.split(x) will return `# of matches(x) + 1` values: the last one is invalid
+        bsPositions.pop()
 
-        # replace backslashes with forward slashes for now so we can process paths consistently
-        # any backslashes not matched in a path pattern will be restored later
+        # replace backslashes with forward slashes for now so we can process paths
+        # consistently any backslashes not matched in a path pattern will be restored
+        # later
         sanitizedMsg = escapePattern(msg.replace("\\", "/"))
 
         # correct bsPositions for escaped characters
@@ -248,20 +256,21 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
         replacementPatterns.append(" " + pathPattern)
         replacementPatterns.append("'" + pathPattern)
         replacementPatterns.append('"' + pathPattern)
-        replacementPatterns.append(',' + pathPattern)
+        replacementPatterns.append("," + pathPattern)
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.
         replacementPatterns.append("[0-9]{2,}")
 
         for replacementPattern in replacementPatterns:
+
             def _handleMatch(match: re.Match[str]) -> str:
                 start = match.start(0)
                 end = match.end(0)
                 lengthDiff = len(replacementPattern) - len(match.group(0))
 
-                # we can't replace bsPositions with list comprehensions because we're in a nested scope
-                # iterate by index and modify it instead
+                # we can't replace bsPositions with list comprehensions because we're in
+                # a nested scope. iterate by index and modify it instead
                 idx = 0
                 while idx < len(bsPositions):
                     if bsPositions[idx] < start:
@@ -271,7 +280,8 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
                         # the backslash is covered by this match, remove it
                         bsPositions.pop(idx)
                     else:
-                        # the backslash is after the match, shift it by the length difference
+                        # the backslash is after the match, shift it by the length
+                        # difference
                         bsPositions[idx] += lengthDiff
                         idx += 1
 
@@ -279,18 +289,19 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
 
             sanitizedMsg = re.sub(replacementPattern, _handleMatch, sanitizedMsg)
 
-        # backslashes were replaced with / for unified path handling
-        # (and because backslash is the escape character, which makes pattern matching otherwise impossible)
+        # backslashes were replaced with / for unified path handling (and because
+        # backslash is the escape character, which makes pattern matching otherwise
+        # impossible)
         # if they were not used in a path pattern, restore them now
         # in other words, add back the windows bs
         while bsPositions:
             bsPos = bsPositions.pop()
             # escape it now too, since it would have gone through escapePattern above
-            sanitizedMsg = sanitizedMsg[:bsPos] + "\\\\" + sanitizedMsg[bsPos + 1:]
+            sanitizedMsg = sanitizedMsg[:bsPos] + "\\\\" + sanitizedMsg[bsPos + 1 :]
 
         # Some implementations wrap the path into parentheses. We cannot add this to
         # replacementPatterns because it would double-escape the leading parenthesis.
-        sanitizedMsg = re.sub('\\(' + pathPattern, '(' + pathPattern, sanitizedMsg)
+        sanitizedMsg = re.sub("\\(" + pathPattern, "(" + pathPattern, sanitizedMsg)
 
         sanitizedMsgs.append(sanitizedMsg)
 
@@ -301,17 +312,32 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
 
 
 def escapePattern(msg: str) -> str:
-    '''
+    """
     This method escapes regular expression characters in the string.
     And no, this is not re.escape, which would escape many more characters.
 
     @param msg: String that needs to be quoted
     @return: Escaped string for use in regular expressions
-    '''
+    """
 
     escapedStr = msg
 
-    activeChars = ("\\", "[", "]", "{", "}", "(", ")", "*", "+", "?", "^", "$", ".", "|")
+    activeChars = (
+        "\\",
+        "[",
+        "]",
+        "{",
+        "}",
+        "(",
+        ")",
+        "*",
+        "+",
+        "?",
+        "^",
+        "$",
+        ".",
+        "|",
+    )
 
     for activeChar in activeChars:
         if activeChar in escapedStr:

@@ -1,10 +1,9 @@
-from __future__ import annotations
-
-from celery import Celery
 import os
 
-# set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings_nondebug')
+from celery import Celery
 
-app = Celery('tasks')
-app.config_from_object('django.conf:settings', namespace='CELERY')
+# set the default Django settings module for the 'celery' program.
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings_nondebug")
+
+app = Celery("tasks")
+app.config_from_object("django.conf:settings", namespace="CELERY")

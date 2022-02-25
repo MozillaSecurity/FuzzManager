@@ -1,0 +1,8 @@
+thread '<unnamed>' panicked at 'assertion failed: `(left == right)`
+  left: `Inline`,
+ right: `Block`', /builds/worker/workspace/build/src/servo/components/style/style_adjuster.rs:352:8
+stack backtrace:
+   0:     0x7f7a3a170663 - std::sys::imp::backtrace::tracing::imp::unwind_backtrace::h8ed7485deb8ab958
+   1:     0x7f7a3a16adb0 - std::sys_common::backtrace::_print::h3d4f9ea58578e60f
+   2:     0x7f7a3a17db63 - std::panicking::default_hook::{{closure}}::h0088fe51b67c687c
+   3:     0x7f7a3a17d8d2 - std::panicking::default_hook::hf425c768c5ffbbad

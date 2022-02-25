@@ -1,0 +1,1 @@
+Assertion failure: false, at /srv/repos/mozilla-central/js/src/vm/SelfHosting.cpp:362

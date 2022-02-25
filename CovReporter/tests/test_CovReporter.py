@@ -1,5 +1,4 @@
-# coding: utf-8
-'''
+"""
 Tests
 
 @author:     Christian Holler (:decoder)
@@ -11,53 +10,30 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import json
 import os
 import tempfile
+from pathlib import Path
+
 from CovReporter.CovReporter import CovReporter
 
-
-coverallsData = json.loads("""
-{ "git": { "branch":"master", "head": { "id":"1a0d9545b9805f50a70de703a3c04fc0d22e3839"} },
-  "repo_token":"unused",
-  "service_job_number":"",
-  "service_name":"",
-  "service_number":"",
-  "source_files":[
-    {"name":"topdir1/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,12,12,10,2,0,0,null]},
-    {"name":"topdir1/subdir1/file2.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,20,20,15,15,15,15,0,null,null]},
-    {"name":"topdir1/subdir2/file3.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,12,12,10,2,0,0,null]},
-    {"name":"topdir2/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,0,0,0,0,0,0,null]}
-  ]
-}""")  # noqa
-
-
-coverallsAddData = json.loads("""
-{ "git": { "branch":"master", "head": { "id":"1a0d9545b9805f50a70de703a3c04fc0d22e3839"} },
-  "repo_token":"unused",
-  "service_job_number":"",
-  "service_name":"",
-  "service_number":"",
-  "source_files":[
-    {"name":"topdir1/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,6,0,0,0,0,2,null]},
-    {"name":"topdir1/subdir3/file4.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,6,6,0,0,0,1]},
-    {"name":"topdir3/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,1,1,1,1,1,1,null]}
-  ]
-}""")  # noqa
+FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
 def test_CovReporterCoverallsVersionData() -> None:
-    ret = CovReporter.version_info_from_coverage_data(coverallsData)
+    coveralls_data = json.loads((FIXTURE_PATH / "coveralls_data.json").read_text())
+    ret = CovReporter.version_info_from_coverage_data(coveralls_data)
     assert ret["revision"] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
     assert ret["branch"] == "master"
 
 
 def test_CovReporterPreprocessData() -> None:
-    result = CovReporter.preprocess_coverage_data(coverallsData)
+    coveralls_data = json.loads((FIXTURE_PATH / "coveralls_data.json").read_text())
+    result = CovReporter.preprocess_coverage_data(coveralls_data)
 
     children = "children"
     coverage = "coverage"
@@ -73,20 +49,56 @@ def test_CovReporterPreprocessData() -> None:
     assert "topdir2" in result[children], "topdir2 missing in result"
 
     # Check that we have all the subdirs
-    assert "subdir1" in result[children]["topdir1"][children], "subdir1 missing in result"
-    assert "subdir2" in result[children]["topdir1"][children], "subdir2 missing in result"
-    assert "subdir1" in result[children]["topdir2"][children], "subdir1 missing in result"
+    assert (
+        "subdir1" in result[children]["topdir1"][children]
+    ), "subdir1 missing in result"
+    assert (
+        "subdir2" in result[children]["topdir1"][children]
+    ), "subdir2 missing in result"
+    assert (
+        "subdir1" in result[children]["topdir2"][children]
+    ), "subdir1 missing in result"
 
     # Check that we haven't got more subdirs than expected for topdir2
     assert len(result[children]["topdir2"][children]) == 1
 
     # Check length of coverage list, name and summary values for file1.c
-    assert len(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage]) == 9
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name] == "file1.c"
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesTotal] == 6
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesMissed] == 2
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesCovered] == 4
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent] == 66.67
+    assert (
+        len(
+            result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+                coverage
+            ]
+        )
+        == 9
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name]
+        == "file1.c"
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesTotal
+        ]
+        == 6
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesMissed
+        ]
+        == 2
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesCovered
+        ]
+        == 4
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            coveragePercent
+        ]
+        == 66.67
+    )
 
     # Check name and summary values for topdir1/subdir1/
     assert result[children]["topdir1"][children]["subdir1"][name] == "subdir1"
@@ -112,31 +124,46 @@ def test_CovReporterPreprocessData() -> None:
     assert result[children]["topdir2"][coveragePercent] == 0.0
 
     # Check that our converter replaces null with -1 to save some space
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0] == -1
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][
+            0
+        ]
+        == -1
+    )
 
 
 def test_CovReporterMergeData() -> None:
-    #result = CovReporter.preprocess_coverage_data(coverallsData)
-    #result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
+    # result = CovReporter.preprocess_coverage_data(coverallsData)
+    # result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
 
-    (cov_file1_fd, cov_file1) = tempfile.mkstemp(suffix='.cov', prefix='tmpTestCovReporter')
-    (cov_file2_fd, cov_file2) = tempfile.mkstemp(suffix='.cov', prefix='tmpTestCovReporter')
+    (cov_file1_fd, cov_file1) = tempfile.mkstemp(
+        suffix=".cov", prefix="tmpTestCovReporter"
+    )
+    (cov_file2_fd, cov_file2) = tempfile.mkstemp(
+        suffix=".cov", prefix="tmpTestCovReporter"
+    )
+    coveralls_data = json.loads((FIXTURE_PATH / "coveralls_data.json").read_text())
+    coveralls_add_data = json.loads(
+        (FIXTURE_PATH / "coveralls_add_data.json").read_text()
+    )
 
     try:
-        with os.fdopen(cov_file1_fd, 'w') as f:
-            json.dump(coverallsData, f)
+        with os.fdopen(cov_file1_fd, "w") as f:
+            json.dump(coveralls_data, f)
 
-        with os.fdopen(cov_file2_fd, 'w') as f:
-            json.dump(coverallsAddData, f)
+        with os.fdopen(cov_file2_fd, "w") as f:
+            json.dump(coveralls_add_data, f)
 
-        (result, version, stats) = CovReporter.create_combined_coverage([cov_file1, cov_file2])
+        (result, version, stats) = CovReporter.create_combined_coverage(
+            [cov_file1, cov_file2]
+        )
     finally:
         os.remove(cov_file1)
         os.remove(cov_file2)
 
     assert isinstance(version, dict)
-    assert version['revision'] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
-    assert version['branch'] == "master"
+    assert version["revision"] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
+    assert version["branch"] == "master"
 
     children = "children"
     coverage = "coverage"
@@ -153,10 +180,18 @@ def test_CovReporterMergeData() -> None:
     assert "topdir3" in result[children], "topdir2 missing in result"
 
     # Check that we have all the subdirs
-    assert "subdir1" in result[children]["topdir1"][children], "subdir1 missing in result"
-    assert "subdir2" in result[children]["topdir1"][children], "subdir2 missing in result"
-    assert "subdir1" in result[children]["topdir2"][children], "subdir1 missing in result"
-    assert "subdir3" in result[children]["topdir1"][children], "subdir3 missing in result"
+    assert (
+        "subdir1" in result[children]["topdir1"][children]
+    ), "subdir1 missing in result"
+    assert (
+        "subdir2" in result[children]["topdir1"][children]
+    ), "subdir2 missing in result"
+    assert (
+        "subdir1" in result[children]["topdir2"][children]
+    ), "subdir1 missing in result"
+    assert (
+        "subdir3" in result[children]["topdir1"][children]
+    ), "subdir3 missing in result"
 
     # Check that we haven't got more subdirs than expected for topdirs
     assert len(result[children]["topdir1"][children]) == 3
@@ -164,17 +199,62 @@ def test_CovReporterMergeData() -> None:
     assert len(result[children]["topdir3"][children]) == 1
 
     # Check length of coverage list, name and summary values for file1.c
-    assert len(result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage]) == 9
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name] == "file1.c"
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesTotal] == 6
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesMissed] == 1
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][linesCovered] == 5
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coveragePercent] == 83.33
+    assert (
+        len(
+            result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+                coverage
+            ]
+        )
+        == 9
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][name]
+        == "file1.c"
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesTotal
+        ]
+        == 6
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesMissed
+        ]
+        == 1
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            linesCovered
+        ]
+        == 5
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][
+            coveragePercent
+        ]
+        == 83.33
+    )
 
     # Check updated counters in file1.c
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][2] == 18
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][3] == 12
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][7] == 2
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][
+            2
+        ]
+        == 18
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][
+            3
+        ]
+        == 12
+    )
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][
+            7
+        ]
+        == 2
+    )
 
     # Check name and summary values for topdir1/subdir1/
     assert result[children]["topdir1"][children]["subdir1"][name] == "subdir1"
@@ -206,4 +286,9 @@ def test_CovReporterMergeData() -> None:
     assert result[children]["topdir3"][coveragePercent] == 100.0
 
     # Check that our converter replaces null with -1 to save some space
-    assert result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][0] == -1
+    assert (
+        result[children]["topdir1"][children]["subdir1"][children]["file1.c"][coverage][
+            0
+        ]
+        == -1
+    )

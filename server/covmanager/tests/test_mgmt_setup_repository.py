@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Tests for CovManager setup_repository management command
+"""Tests for CovManager setup_repository management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,15 +7,16 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
 import os
-import pytest
-from django.core.management import call_command, CommandError
-from covmanager.models import Repository
 
+import pytest
+from django.core.management import CommandError, call_command
+
+from covmanager.models import Repository
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
@@ -46,12 +46,16 @@ def test_bad_args() -> None:
 
 def test_repo_exists() -> None:
     Repository.objects.create(name="test")
-    with pytest.raises(CommandError, match=r"Error: repository with name '.*' already exists!"):
+    with pytest.raises(
+        CommandError, match=r"Error: repository with name '.*' already exists!"
+    ):
         call_command("setup_repository", "test", "", "")
 
 
 def test_bad_provider() -> None:
-    with pytest.raises(CommandError, match=r"Error: 'bad' is not a valid source code provider!"):
+    with pytest.raises(
+        CommandError, match=r"Error: 'bad' is not a valid source code provider!"
+    ):
         call_command("setup_repository", "test", "bad", ".")
 
 

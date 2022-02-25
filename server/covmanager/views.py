@@ -1,98 +1,110 @@
 from __future__ import annotations
 
-from typing import Any
-from typing import TypeVar
-from typing import cast
+import json
+import os
+from typing import Any, TypeVar, cast
+from wsgiref.util import FileWrapper
 
 from django.conf import settings
-from django.core.exceptions import SuspiciousOperation, PermissionDenied
-from django.db.models import Model
-from django.db.models import Q
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
+from django.db.models import Model, Q
 from django.db.models.query import QuerySet
 from django.http import Http404
 from django.http.request import HttpRequest
-from django.http.response import HttpResponse
-from django.http.response import HttpResponsePermanentRedirect
-from django.http.response import HttpResponseRedirect
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http.response import (
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-import json
-import os
-from rest_framework import mixins, viewsets, filters
-from rest_framework.authentication import TokenAuthentication, \
-    SessionAuthentication
+from rest_framework import filters, mixins, viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from wsgiref.util import FileWrapper
 
+from crashmanager.models import Tool
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
-from .models import Collection, Repository, ReportConfiguration, ReportSummary, Report
-from .serializers import CollectionSerializer, RepositorySerializer, ReportConfigurationSerializer, ReportSerializer
-from .tasks import aggregate_coverage_data, calculate_report_summary
-from crashmanager.models import Tool
-
+from .models import Collection, Report, ReportConfiguration, ReportSummary, Repository
+from .serializers import (
+    CollectionSerializer,
+    ReportConfigurationSerializer,
+    ReportSerializer,
+    RepositorySerializer,
+)
 from .SourceCodeProvider import SourceCodeProvider
+from .tasks import aggregate_coverage_data, calculate_report_summary
 
 MT = TypeVar("MT", bound=Model)
 
 
 def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
-    return redirect('covmanager:%s' % getattr(settings, 'COV_DEFAULT_PAGE', "collections"))
+    return redirect(
+        f"covmanager:{getattr(settings, 'COV_DEFAULT_PAGE', 'collections')}"
+    )
 
 
 def reports(request: HttpRequest) -> HttpResponse:
-    return render(request, 'collections/report.html', {})
+    return render(request, "collections/report.html", {})
 
 
 def repositories(request: HttpRequest) -> HttpResponse:
     repositories = Repository.objects.all()
-    return render(request, 'repositories/index.html', {'repositories': repositories})
+    return render(request, "repositories/index.html", {"repositories": repositories})
 
 
 def reportconfigurations(request: HttpRequest) -> HttpResponse:
-    return render(request, 'reportconfigurations/index.html', {})
+    return render(request, "reportconfigurations/index.html", {})
 
 
 def collections(request: HttpRequest) -> HttpResponse:
-    return render(request, 'collections/index.html', {})
+    return render(request, "collections/index.html", {})
 
 
 def collections_browse(request: HttpRequest, collectionid: str) -> HttpResponse:
-    return render(request, 'collections/browse.html', {'collectionid': collectionid})
+    return render(request, "collections/browse.html", {"collectionid": collectionid})
 
 
 def collections_diff(request: HttpRequest) -> HttpResponse:
-    return render(request, 'collections/browse.html', {'diff_api': True})
+    return render(request, "collections/browse.html", {"diff_api": True})
 
 
 def collections_reportsummary(request: HttpRequest, collectionid: str) -> HttpResponse:
-    return render(request, 'reportconfigurations/summary.html', {'collectionid': collectionid})
+    return render(
+        request, "reportconfigurations/summary.html", {"collectionid": collectionid}
+    )
 
 
-def collections_reportsummary_html_list(request: HttpRequest, collectionid: str) -> HttpResponse:
+def collections_reportsummary_html_list(
+    request: HttpRequest, collectionid: str
+) -> HttpResponse:
     collection: Collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
             content=json.dumps({"error": "Specified collection is not ready yet."}),
-            content_type='application/json',
-            status=400
+            content_type="application/json",
+            status=400,
         )
 
-    if not hasattr(collection, 'reportsummary'):
+    if not hasattr(collection, "reportsummary"):
         return HttpResponse(
-            content=json.dumps({"message": "The requested collection has no report summary."}),
-            content_type='application/json',
-            status=400
+            content=json.dumps(
+                {"message": "The requested collection has no report summary."}
+            ),
+            content_type="application/json",
+            status=400,
         )
 
     if not collection.reportsummary.cached_result:
         return HttpResponse(
-            content=json.dumps({"message": "The requested report summary is currently being created."}),
-            content_type='application/json',
-            status=204
+            content=json.dumps(
+                {"message": "The requested report summary is currently being created."}
+            ),
+            content_type="application/json",
+            status=204,
         )
 
     root = json.loads(collection.reportsummary.cached_result)
@@ -103,23 +115,34 @@ def collections_reportsummary_html_list(request: HttpRequest, collectionid: str)
 
         if not diff_collection.coverage:
             return HttpResponse(
-                content=json.dumps({"error": "Specified diff collection is not ready yet."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"error": "Specified diff collection is not ready yet."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
-        if not hasattr(diff_collection, 'reportsummary'):
+        if not hasattr(diff_collection, "reportsummary"):
             return HttpResponse(
-                content=json.dumps({"message": "The requested diff collection has no report summary."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"message": "The requested diff collection has no report summary."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
         if not diff_collection.reportsummary.cached_result:
             return HttpResponse(
-                content=json.dumps({"message": "The requested diff report summary is currently being created."}),
-                content_type='application/json',
-                status=204
+                content=json.dumps(
+                    {
+                        "message": (
+                            "The requested diff report summary is currently being "
+                            "created."
+                        )
+                    }
+                ),
+                content_type="application/json",
+                status=204,
             )
 
         root["diffid"] = diff_collection.pk
@@ -128,9 +151,9 @@ def collections_reportsummary_html_list(request: HttpRequest, collectionid: str)
             delta = round(a["coveragePercent"] - b["coveragePercent"], 2)
 
             if delta >= 1.0:
-                a["coveragePercentDelta"] = "+%s %%" % delta
+                a["coveragePercentDelta"] = f"+{delta} %"
             elif delta <= -1.0:
-                a["coveragePercentDelta"] = "%s %%" % delta
+                a["coveragePercentDelta"] = f"{delta} %"
 
             if "children" not in a or "children" not in b:
                 return None
@@ -149,7 +172,9 @@ def collections_reportsummary_html_list(request: HttpRequest, collectionid: str)
         diff = json.loads(diff_collection.reportsummary.cached_result)
         annotate_delta(root, diff)
 
-    return render(request, 'reportconfigurations/summary_html_list.html', {'root': root})
+    return render(
+        request, "reportconfigurations/summary_html_list.html", {"root": root}
+    )
 
 
 def collections_download(request: HttpRequest, collectionid: str) -> HttpResponse:
@@ -157,30 +182,42 @@ def collections_download(request: HttpRequest, collectionid: str) -> HttpRespons
 
     if not collection.coverage:
         return HttpResponse(
-            content=json.dumps({"message": "The requested collection is currently being created."}),
-            content_type='application/json',
-            status=204
+            content=json.dumps(
+                {"message": "The requested collection is currently being created."}
+            ),
+            content_type="application/json",
+            status=204,
         )
 
-    cov_file = open(collection.coverage.file.path, 'rb')
-    response = HttpResponse(FileWrapper(cov_file), content_type='application/octet-stream')
-    response['Content-Disposition'] = 'attachment; filename="%s"' % os.path.basename(collection.coverage.file.path)
+    cov_file = open(collection.coverage.file.path, "rb")
+    response = HttpResponse(
+        FileWrapper(cov_file), content_type="application/octet-stream"
+    )
+    response["Content-Disposition"] = 'attachment; filename="%s"' % os.path.basename(
+        collection.coverage.file.path
+    )
     return response
 
 
-def collections_browse_api(request: HttpRequest, collectionid: str, path: str) -> HttpResponse:
+def collections_browse_api(
+    request: HttpRequest, collectionid: str, path: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
-            content=json.dumps({"message": "The requested collection is currently being created."}),
-            content_type='application/json',
-            status=204
+            content=json.dumps(
+                {"message": "The requested collection is currently being created."}
+            ),
+            content_type="application/json",
+            status=204,
         )
 
     report_configuration = None
     if "rc" in request.GET:
-        report_configuration = get_object_or_404(ReportConfiguration, pk=request.GET["rc"])
+        report_configuration = get_object_or_404(
+            ReportConfiguration, pk=request.GET["rc"]
+        )
 
     coverage = collection.subset(path, report_configuration)
 
@@ -196,7 +233,7 @@ def collections_browse_api(request: HttpRequest, collectionid: str, path: str) -
         collection.annotateSource(path, coverage)
 
     data = {"path": path, "coverage": coverage}
-    return HttpResponse(json.dumps(data), content_type='application/json')
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
@@ -213,7 +250,9 @@ def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
 
     report_configuration = None
     if "rc" in request.GET:
-        report_configuration = get_object_or_404(ReportConfiguration, pk=request.GET["rc"])
+        report_configuration = get_object_or_404(
+            ReportConfiguration, pk=request.GET["rc"]
+        )
 
     # coverage = collection.subset(path)
 
@@ -229,9 +268,11 @@ def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
     for collection in collections:
         if not collection.coverage:
             return HttpResponse(
-                content=json.dumps({"error": "One of the specified collections is not ready yet."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"error": "One of the specified collections is not ready yet."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
         coverage = collection.subset(path, report_configuration)
@@ -305,21 +346,23 @@ def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
         start_coverage["children"][child].update(add)
 
     data = {"path": path, "coverage": start_coverage, "ttdata": tooltipdata}
-    return HttpResponse(json.dumps(data), content_type='application/json')
+    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def collections_patch(request: HttpRequest) -> HttpResponse:
-    return render(request, 'collections/patch.html', {})
+    return render(request, "collections/patch.html", {})
 
 
-def collections_patch_api(request: HttpRequest, collectionid: str, patch_revision: str) -> HttpResponse:
+def collections_patch_api(
+    request: HttpRequest, collectionid: str, patch_revision: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
             content=json.dumps({"error": "Specified collection is not ready yet."}),
-            content_type='application/json',
-            status=400
+            content_type="application/json",
+            status=400,
         )
 
     prepatch = "prepatch" in request.GET
@@ -335,7 +378,9 @@ def collections_patch_api(request: HttpRequest, collectionid: str, patch_revisio
 
         diff_revision = parents[0]
 
-    diff = SourceCodeProvider.Utils.getDiffLocations(provider.getUnifiedDiff(patch_revision))
+    diff = SourceCodeProvider.Utils.getDiffLocations(
+        provider.getUnifiedDiff(patch_revision)
+    )
 
     total_locations = 0
     total_missed = 0
@@ -353,7 +398,7 @@ def collections_patch_api(request: HttpRequest, collectionid: str, patch_revisio
             response["filename"] = filename
             response["prepatch_source"] = prepatch_source
             response["coll_source"] = coll_source
-            return HttpResponse(json.dumps(response), content_type='application/json')
+            return HttpResponse(json.dumps(response), content_type="application/json")
 
         (basepath, basename) = os.path.split(filename)
         coverage = collection.subset(basepath)["children"][basename]["coverage"]
@@ -383,7 +428,10 @@ def collections_patch_api(request: HttpRequest, collectionid: str, patch_revisio
                         if location + offset in locations:
                             break
 
-                        if location + offset < len(coverage) and coverage[location + offset] >= 0:
+                        if (
+                            location + offset < len(coverage)
+                            and coverage[location + offset] >= 0
+                        ):
                             plus_offset = offset
                             break
 
@@ -427,25 +475,27 @@ def collections_patch_api(request: HttpRequest, collectionid: str, patch_revisio
         "total_locations": total_locations,
         "total_missed": total_missed,
         "percentage_missed": round(((float(total_missed) / total_locations) * 100), 2),
-        "results": diff
+        "results": diff,
     }
 
-    return HttpResponse(json.dumps(results), content_type='application/json')
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
 
-def collections_reportsummary_api(request: HttpRequest, collectionid: str) -> HttpResponse:
+def collections_reportsummary_api(
+    request: HttpRequest, collectionid: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
             content=json.dumps({"error": "Specified collection is not ready yet."}),
-            content_type='application/json',
-            status=400
+            content_type="application/json",
+            status=400,
         )
 
     task_scheduled = False
 
-    if not hasattr(collection, 'reportsummary'):
+    if not hasattr(collection, "reportsummary"):
         summary = ReportSummary(collection=collection, cached_result=None)
         summary.save()
         calculate_report_summary.delay(summary.pk)
@@ -453,7 +503,7 @@ def collections_reportsummary_api(request: HttpRequest, collectionid: str) -> Ht
     else:
         summary = collection.reportsummary
 
-    if request.method == 'POST':
+    if request.method == "POST":
         # This is a refresh request
         if not task_scheduled:
             summary.cached_result = None
@@ -463,12 +513,14 @@ def collections_reportsummary_api(request: HttpRequest, collectionid: str) -> Ht
 
     if not summary.cached_result:
         return HttpResponse(
-            content=json.dumps({"message": "The requested collection is currently being created."}),
-            content_type='application/json',
-            status=204
+            content=json.dumps(
+                {"message": "The requested collection is currently being created."}
+            ),
+            content_type="application/json",
+            status=204,
         )
 
-    return HttpResponse(summary.cached_result, content_type='application/json')
+    return HttpResponse(summary.cached_result, content_type="application/json")
 
 
 def repositories_search_api(request: HttpRequest) -> HttpResponse:
@@ -476,9 +528,15 @@ def repositories_search_api(request: HttpRequest) -> HttpResponse:
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = list(Repository.objects.filter(name__contains=name).values_list('name', flat=True))
+        results = list(
+            Repository.objects.filter(name__contains=name).values_list(
+                "name", flat=True
+            )
+        )
 
-    return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
+    return HttpResponse(
+        json.dumps({"results": results}), content_type="application/json"
+    )
 
 
 def tools_search_api(request: HttpRequest) -> HttpResponse:
@@ -486,18 +544,22 @@ def tools_search_api(request: HttpRequest) -> HttpResponse:
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = list(Tool.objects.filter(name__contains=name).values_list('name', flat=True))
+        results = list(
+            Tool.objects.filter(name__contains=name).values_list("name", flat=True)
+        )
 
-    return HttpResponse(json.dumps({"results": list(results)}), content_type='application/json')
+    return HttpResponse(
+        json.dumps({"results": results}), content_type="application/json"
+    )
 
 
 @csrf_exempt
 def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
-    if request.method != 'POST':
+    if request.method != "POST":
         return HttpResponse(
             content=json.dumps({"error": "This API only supports POST."}),
-            content_type='application/json',
-            status=400
+            content_type="application/json",
+            status=400,
         )
 
     if not request.is_ajax():
@@ -513,17 +575,21 @@ def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
 
     if not collections or len(collections) < 2:
         return HttpResponse(
-            content=json.dumps({"error": "Need at least two collections to aggregate."}),
-            content_type='application/json',
-            status=400
+            content=json.dumps(
+                {"error": "Need at least two collections to aggregate."}
+            ),
+            content_type="application/json",
+            status=400,
         )
 
     for collection in collections:
         if not collection.coverage:
             return HttpResponse(
-                content=json.dumps({"error": "One of the specified collections is not ready yet."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"error": "One of the specified collections is not ready yet."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
     provider = collections[0].repository.getInstance()
@@ -532,26 +598,39 @@ def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
     for collection in collections[1:]:
         if collection.repository != collections[0].repository:
             return HttpResponse(
-                content=json.dumps({"error": "Specified collections are based on different repositories."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {
+                        "error": (
+                            "Specified collections are based on different repositories."
+                        )
+                    }
+                ),
+                content_type="application/json",
+                status=400,
             )
 
-        if not provider.checkRevisionsEquivalent(collection.revision, collections[0].revision):
+        if not provider.checkRevisionsEquivalent(
+            collection.revision, collections[0].revision
+        ):
             return HttpResponse(
-                content=json.dumps({"error": "Specified collections are based on different revisions."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"error": "Specified collections are based on different revisions."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
         if collection.branch != collections[0].branch:
             return HttpResponse(
-                content=json.dumps({"error": "Specified collections are based on different branches."}),
-                content_type='application/json',
-                status=400
+                content=json.dumps(
+                    {"error": "Specified collections are based on different branches."}
+                ),
+                content_type="application/json",
+                status=400,
             )
 
-    # We allow either a new description to be specified or to auto-aggregate all existing descriptions
+    # We allow either a new description to be specified or to auto-aggregate all
+    # existing descriptions
     description = None
     descriptions = None
     if "description" in data:
@@ -594,14 +673,20 @@ def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
 
     aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
-    return HttpResponse(content=json.dumps({"newid": mergedCollection.pk}), content_type='application/json')
+    return HttpResponse(
+        content=json.dumps({"newid": mergedCollection.pk}),
+        content_type="application/json",
+    )
 
 
 class CollectionFilterBackend(filters.BaseFilterBackend):
     """
     Accepts filtering with several collection-specific fields from the URL
     """
-    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
+
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -631,29 +716,32 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
         if "ids" in request.GET:
             val = request.query_params.get("ids", None)
             if val:
-                filters["pk__in"] = val.split(',')
+                filters["pk__in"] = val.split(",")
 
         if filters:
             queryset = queryset.filter(**filters).distinct()
 
-        return queryset.order_by('-pk')
+        return queryset.order_by("-pk")
 
 
-class CollectionViewSet(mixins.CreateModelMixin,
-                        mixins.ListModelMixin,
-                        mixins.RetrieveModelMixin,
-                        viewsets.GenericViewSet):
+class CollectionViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint that allows adding/viewing Collections
     """
+
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
-    paginate_by_param = 'limit'
+    paginate_by_param = "limit"
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,
-        CollectionFilterBackend
+        CollectionFilterBackend,
     ]
 
 
@@ -661,7 +749,10 @@ class ReportFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
+
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -671,15 +762,17 @@ class ReportFilterBackend(filters.BaseFilterBackend):
 
         can_see_unpublished = False
         if request.user and request.user.is_authenticated:
-            can_see_unpublished = request.user.has_perm('crashmanager.view_crashmanager')
+            can_see_unpublished = request.user.has_perm(
+                "crashmanager.view_crashmanager"
+            )
 
         # We allow users to see unpublished reports, if they ask for it
         # and also have the permissions to do so.
-        unpublished_requested = request.method != 'GET' or "unpublished" in request.GET
+        unpublished_requested = request.method != "GET" or "unpublished" in request.GET
 
         # The regular collection/browse view should be able to fetch optional
         # report metadata limited to one or more collections.
-        if request.method == 'GET' and "coverage__ids" in request.GET:
+        if request.method == "GET" and "coverage__ids" in request.GET:
             coverage_ids = request.GET["coverage__ids"].split(",")
             queryset = queryset.filter(coverage_id__in=coverage_ids)
 
@@ -689,36 +782,43 @@ class ReportFilterBackend(filters.BaseFilterBackend):
         if not unpublished_requested or not can_see_unpublished:
             queryset = queryset.filter(public=True)
 
-        return queryset.order_by('-pk')
+        return queryset.order_by("-pk")
 
 
-class ReportViewSet(mixins.UpdateModelMixin,
-                    mixins.ListModelMixin,
-                    mixins.RetrieveModelMixin,
-                    viewsets.GenericViewSet):
+class ReportViewSet(
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint that allows viewing Reports
     """
+
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
-    paginate_by_param = 'limit'
+    paginate_by_param = "limit"
     filter_backends = [ReportFilterBackend]
 
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        if (not request.user or not request.user.is_authenticated or
-                not request.user.has_perm('crashmanager.view_crashmanager')):
+        if (
+            not request.user
+            or not request.user.is_authenticated
+            or not request.user.has_perm("crashmanager.view_crashmanager")
+        ):
             raise PermissionDenied()
 
-        return super(ReportViewSet, self).partial_update(request, *args, **kwargs)
+        return super().partial_update(request, *args, **kwargs)
 
 
-class RepositoryViewSet(mixins.ListModelMixin,
-                        mixins.RetrieveModelMixin,
-                        viewsets.GenericViewSet):
+class RepositoryViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     """
     API endpoint that allows viewing Repositories
     """
+
     authentication_classes = (TokenAuthentication,)
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
@@ -729,7 +829,10 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
     """
     Accepts broad filtering by q parameter to search multiple fields
     """
-    def filter_queryset(self, request: Request, queryset: QuerySet[MT], view: APIView) -> QuerySet[MT]:
+
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -740,23 +843,30 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
         q = request.query_params.get("q", None)
         if q:
             queryset = queryset.filter(
-                Q(description__contains=q) |
-                Q(repository__name__contains=q) |
-                Q(directives__contains=q)
+                Q(description__contains=q)
+                | Q(repository__name__contains=q)
+                | Q(directives__contains=q)
             )
 
-        return queryset.order_by('-pk')
+        return queryset.order_by("-pk")
 
 
-class ReportConfigurationViewSet(mixins.CreateModelMixin,
-                                 mixins.UpdateModelMixin,
-                                 mixins.ListModelMixin,
-                                 mixins.RetrieveModelMixin,
-                                 viewsets.GenericViewSet):
+class ReportConfigurationViewSet(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint that allows adding/updating/viewing Report Configurations
     """
+
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = ReportConfiguration.objects.all()
     serializer_class = ReportConfigurationSerializer
-    filter_backends = [JsonQueryFilterBackend, SimpleQueryFilterBackend, ReportConfigurationFilterBackend]
+    filter_backends = [
+        JsonQueryFilterBackend,
+        SimpleQueryFilterBackend,
+        ReportConfigurationFilterBackend,
+    ]

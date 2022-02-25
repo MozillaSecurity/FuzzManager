@@ -1,0 +1,12 @@
+{
+  "git": { "branch":"master", "head": { "id":"1a0d9545b9805f50a70de703a3c04fc0d22e3839"} },
+  "repo_token":"unused",
+  "service_job_number":"",
+  "service_name":"",
+  "service_number":"",
+  "source_files":[
+    {"name":"topdir1/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,6,0,0,0,0,2,null]},
+    {"name":"topdir1/subdir3/file4.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,6,6,0,0,0,1]},
+    {"name":"topdir3/subdir1/file1.c","source_digest":"d41d8cd98f00b204e9800998ecf8427e", "coverage":[null,null,1,1,1,1,1,1,null]}
+  ]
+}

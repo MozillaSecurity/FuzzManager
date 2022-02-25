@@ -1,0 +1,2 @@
+Self-hosted JavaScript assertion info: "/srv/repos/mozilla-central/js/src/builtin/Intl.js:847: non-canonical BestAvailableLocale locale"
+Assertion failure: false, at /srv/repos/mozilla-central/js/src/vm/SelfHosting.cpp:362

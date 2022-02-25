@@ -1,4 +1,4 @@
-'''
+"""
 HG Source Code Provider
 
 @author:     Christian Holler (:decoder)
@@ -10,29 +10,35 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 import re
 import subprocess
 
-from .SourceCodeProvider import SourceCodeProvider, UnknownRevisionException, UnknownFilenameException
+from .SourceCodeProvider import (
+    SourceCodeProvider,
+    UnknownFilenameException,
+    UnknownRevisionException,
+)
 
 
 class HGSourceCodeProvider(SourceCodeProvider):
     def __init__(self, location: str) -> None:
-        super(HGSourceCodeProvider, self).__init__(location)
+        super().__init__(location)
 
     def getSource(self, filename: str, revision: str) -> str:
-        revision = revision.replace('+', '')
+        revision = revision.replace("+", "")
 
         # Avoid passing in absolute filenames to HG
         if filename.startswith("/"):
             filename = filename[1:]
 
         try:
-            return subprocess.check_output(["hg", "cat", "-r", revision, filename], cwd=self.location).decode('utf-8')
+            return subprocess.check_output(
+                ["hg", "cat", "-r", revision, filename], cwd=self.location
+            ).decode("utf-8")
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
@@ -42,10 +48,14 @@ class HGSourceCodeProvider(SourceCodeProvider):
             raise UnknownFilenameException
 
     def testRevision(self, revision: str) -> bool:
-        revision = revision.replace('+', '')
+        revision = revision.replace("+", "")
 
         try:
-            subprocess.check_output(["hg", "log", "-r", revision], cwd=self.location, stderr=subprocess.STDOUT)
+            subprocess.check_output(
+                ["hg", "log", "-r", revision],
+                cwd=self.location,
+                stderr=subprocess.STDOUT,
+            )
         except subprocess.CalledProcessError:
             return False
         return True
@@ -55,11 +65,13 @@ class HGSourceCodeProvider(SourceCodeProvider):
         subprocess.check_call(["hg", "pull"], cwd=self.location)
 
     def getParents(self, revision: str) -> list[str]:
-        revision = revision.replace('+', '')
+        revision = revision.replace("+", "")
 
         try:
-            output = subprocess.check_output(["hg", "log", "-r", revision, "--template", r'{parents}\n', "--debug"],
-                                             cwd=self.location).decode('utf-8')
+            output = subprocess.check_output(
+                ["hg", "log", "-r", revision, "--template", r"{parents}\n", "--debug"],
+                cwd=self.location,
+            ).decode("utf-8")
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
@@ -68,21 +80,23 @@ class HGSourceCodeProvider(SourceCodeProvider):
         parents = []
 
         for line in output_str:
-            result = re.match(r'\d+:([0-9a-f]+)\s+', line)
+            result = re.match(r"\d+:([0-9a-f]+)\s+", line)
             if result:
                 parents.append(result.group(1))
 
         return parents
 
     def getUnifiedDiff(self, revision: str) -> str:
-        revision = revision.replace('+', '')
+        revision = revision.replace("+", "")
 
         try:
-            output = subprocess.check_output(["hg", "diff", "--git", "-U0", "-c", revision], cwd=self.location)
+            output = subprocess.check_output(
+                ["hg", "diff", "--git", "-U0", "-c", revision], cwd=self.location
+            )
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
-        return output.decode('utf-8')
+        return output.decode("utf-8")
 
     def checkRevisionsEquivalent(self, revisionA: str, revisionB: str) -> bool:
         # Check if revisions are equal

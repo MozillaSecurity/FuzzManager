@@ -1,0 +1,11 @@
+received signal SIGILL, Illegal instruction.
+0x000008ab336edd14 in ?? ()
+#0  0x000008ab336edd14 in ?? ()
+#1  0x0000000000554ac4 in Interpret (cx=0xffffffffcc20, state=...) at js/src/vm/Interpreter.cpp:2037
+x0	0x1	1
+sp	0xffffc780	281474976696192
+pc	0x3ef29d14	20513819893012
+cpsr	0x0	0
+fpcsr	void
+fpcr	0x0	0
+=> 0x8ab336edd14:	.inst	0xffff006c ; undefined

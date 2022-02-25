@@ -1,5 +1,4 @@
-# encoding: utf-8
-'''
+"""
 PersistentApplication -- Defines an interface for running multiple tests in
 a single target application process (persistent testing). Also includes an
 implementation that should work with simple programs. Supports multiple
@@ -17,18 +16,16 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
-from abc import ABCMeta
 import os
+import queue
 import signal
 import subprocess
 import time
-
-import six
-from six.moves import queue
+from abc import ABCMeta
 
 from FTB.Running.StreamCollector import StreamCollector
 from FTB.Running.WaitpidMonitor import WaitpidMonitor
@@ -63,16 +60,25 @@ class PersistentMode:
               successful data processing. This protocol type can also be used
               if no synchronization via stdin is possible
     """
+
     NONE, SPFP, SIGSTOP = range(1, 4)
 
 
-@six.add_metaclass(ABCMeta)
-class PersistentApplication():
-    '''
+class PersistentApplication(metaclass=ABCMeta):
+    """
     Abstract base class that defines the interface
-    '''
-    def __init__(self, binary, args=None, env=None, cwd=None, persistentMode=PersistentMode.NONE,
-                 processingTimeout=10, inputFile=None) -> None:
+    """
+
+    def __init__(
+        self,
+        binary,
+        args=None,
+        env=None,
+        cwd=None,
+        persistentMode=PersistentMode.NONE,
+        processingTimeout=10,
+        inputFile=None,
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
 
@@ -146,10 +152,19 @@ class PersistentApplication():
 
 
 class SimplePersistentApplication(PersistentApplication):
-    def __init__(self, binary, args=None, env=None, cwd=None, persistentMode=PersistentMode.NONE,
-                 processingTimeout=10, inputFile=None) -> None:
-        PersistentApplication.__init__(self, binary, args, env, cwd, persistentMode,
-                                       processingTimeout, inputFile)
+    def __init__(
+        self,
+        binary,
+        args=None,
+        env=None,
+        cwd=None,
+        persistentMode=PersistentMode.NONE,
+        processingTimeout=10,
+        inputFile=None,
+    ) -> None:
+        PersistentApplication.__init__(
+            self, binary, args, env, cwd, persistentMode, processingTimeout, inputFile
+        )
 
         # Used to store the second return value if waitpid, which has the real exit code
         self.childExit = None
@@ -163,12 +178,16 @@ class SimplePersistentApplication(PersistentApplication):
         self.testLog.append(test)
 
         if self.inputFile:
-            with open(self.inputFile, 'w') as inputFileFd:
+            with open(self.inputFile, "w") as inputFileFd:
                 inputFileFd.write(test)
         elif self.persistentMode == PersistentMode.SPFP:
-            # This won't work with pure binary data, but SPFP mode isn't suitable for that in general
+            # This won't work with pure binary data, but SPFP mode isn't suitable for
+            # that in general
             print(test, file=self.process.stdin)
-            print("%sspfp-endofdata%s" % (self.spfpPrefix, self.spfpSuffix), file=self.process.stdin)
+            print(
+                f"{self.spfpPrefix}spfp-endofdata{self.spfpSuffix}",
+                file=self.process.stdin,
+            )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             # Shameless copycat, oh hai lcamtuf ;)
             os.ftruncate(self.process.stdin, len(test))
@@ -221,15 +240,19 @@ class SimplePersistentApplication(PersistentApplication):
             stderr=subprocess.PIPE,
             cwd=self.cwd,
             env=self.env,
-            universal_newlines=True
+            universal_newlines=True,
         )
 
         # This queue is used to queue up responses that should be directly processed
         # by this class rather than being logged.
         self.responseQueue = queue.Queue()
 
-        self.outCollector = StreamCollector(self.process.stdout, self.responseQueue, logResponses=False, maxBacklog=256)
-        self.errCollector = StreamCollector(self.process.stderr, self.responseQueue, logResponses=False, maxBacklog=256)
+        self.outCollector = StreamCollector(
+            self.process.stdout, self.responseQueue, logResponses=False, maxBacklog=256
+        )
+        self.errCollector = StreamCollector(
+            self.process.stderr, self.responseQueue, logResponses=False, maxBacklog=256
+        )
 
         # Anything prefixed with "SPFP: " will be directly forwarded to us.
         # This is helpful for debugging, even with other PersistentMode settings.
@@ -241,23 +264,38 @@ class SimplePersistentApplication(PersistentApplication):
 
         if self.persistentMode == PersistentMode.SPFP:
             try:
-                print("%sspfp-selftest%s" % (self.spfpPrefix, self.spfpSuffix), file=self.process.stdin)
-            except IOError:
-                raise RuntimeError("SPFP Error: Selftest failed, application did not start properly.")
+                print(
+                    f"{self.spfpPrefix}spfp-selftest{self.spfpSuffix}",
+                    file=self.process.stdin,
+                )
+            except OSError:
+                raise RuntimeError(
+                    "SPFP Error: Selftest failed, application did not start properly."
+                )
 
             try:
-                response = self.responseQueue.get(block=True, timeout=self.processingTimeout)
+                response = self.responseQueue.get(
+                    block=True, timeout=self.processingTimeout
+                )
             except queue.Empty:
                 raise RuntimeError("SPFP Error: Selftest failed, no response.")
 
             if response != "PASSED":
-                raise RuntimeError("SPFP Error: Selftest failed, unsupported application response: %s" % response)
+                raise RuntimeError(
+                    "SPFP Error: Selftest failed, unsupported application response: "
+                    f"{response}"
+                )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             if not self._wait_child_stopped():
-                raise RuntimeError("SIGSTOP Error: Failed to wait for application to stop itself after startup")
+                raise RuntimeError(
+                    "SIGSTOP Error: Failed to wait for application to stop itself "
+                    "after startup"
+                )
 
             if self.process.poll() is not None:
-                raise RuntimeError("SIGSTOP Error: Application terminated instead of stopping itself")
+                raise RuntimeError(
+                    "SIGSTOP Error: Application terminated instead of stopping itself"
+                )
         else:
             if not self.inputFile:
                 self._write_log_test(test)
@@ -306,33 +344,42 @@ class SimplePersistentApplication(PersistentApplication):
 
         if self.persistentMode == PersistentMode.SPFP:
             try:
-                response = self.responseQueue.get(block=True, timeout=self.processingTimeout)
+                response = self.responseQueue.get(
+                    block=True, timeout=self.processingTimeout
+                )
             except queue.Empty:
                 assert self.process is not None
                 if self.process.poll() is None:
-                    # The process is still running, force it to stop and return timeout code
+                    # The process is still running, force it to stop and return timeout
+                    # code
                     self.stop()
                     return ApplicationStatus.TIMEDOUT
                 else:
-                    # The process has exited. We need to check if it crashed, but first we
-                    # call stop to join our collector threads.
+                    # The process has exited. We need to check if it crashed, but first
+                    # we call stop to join our collector threads.
                     self.stop()
 
                     if self._crashed():
                         return ApplicationStatus.CRASHED
                     elif self.process.returncode < 0:
-                        # The application was terminated by a signal, but not by one of the listed signals.
-                        # We consider this a fatal error. Either the signal should be supported here, or the
-                        # process is being terminated by something else, making the testing unreliable.
+                        # The application was terminated by a signal, but not by one of
+                        # the listed signals.  We consider this a fatal error. Either
+                        # the signal should be supported here, or the process is being
+                        # terminated by something else, making the testing unreliable.
                         #
                         # TODO: This could be triggered by the Linux kernel OOM killer
-                        raise RuntimeError("SPFP Error: Application terminated with signal: %s" %
-                                           self.process.returncode)
+                        raise RuntimeError(
+                            "SPFP Error: Application terminated with signal: "
+                            f"{self.process.returncode}"
+                        )
                     else:
-                        # The application exited, but didn't send us any message before doing so. We consider this
-                        # a protocol violation and raise an exception.
-                        raise RuntimeError("SPFP Error: Application exited without message. Exitcode: %s" %
-                                           self.process.returncode)
+                        # The application exited, but didn't send us any message before
+                        # doing so. We consider this a protocol violation and raise an
+                        # exception.
+                        raise RuntimeError(
+                            "SPFP Error: Application exited without message. "
+                            f"Exitcode: {self.process.returncode}"
+                        )
 
             # Update stdout/err available for the last run
             assert self.errCollector is not None
@@ -340,12 +387,14 @@ class SimplePersistentApplication(PersistentApplication):
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
-            if response == 'OK':
+            if response == "OK":
                 return ApplicationStatus.OK
-            elif response == 'ERROR':
+            elif response == "ERROR":
                 return ApplicationStatus.ERROR
 
-            raise RuntimeError("SPFP Error: Unsupported application response: %s" % response)
+            raise RuntimeError(
+                f"SPFP Error: Unsupported application response: {response}"
+            )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             # Resume the process
             assert self.process is not None

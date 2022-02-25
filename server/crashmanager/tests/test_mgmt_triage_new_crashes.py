@@ -1,5 +1,4 @@
-# coding: utf-8
-'''Tests for CrashManager triage_new_crashes management command
+"""Tests for CrashManager triage_new_crashes management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -8,18 +7,28 @@
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
-'''
+"""
 
 from __future__ import annotations
 
 import json
-from django.contrib.auth.models import User
-from django.core.management import call_command, CommandError
-from notifications.models import Notification
-import pytest
-from crashmanager.models import Bucket, BucketWatch, Client, CrashEntry, OS, Platform, \
-    Product, Tool, User as cmUser
 
+import pytest
+from django.contrib.auth.models import User
+from django.core.management import CommandError, call_command
+from notifications.models import Notification
+
+from crashmanager.models import (
+    OS,
+    Bucket,
+    BucketWatch,
+    Client,
+    CrashEntry,
+    Platform,
+    Product,
+    Tool,
+)
+from crashmanager.models import User as cmUser
 
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
@@ -35,22 +44,30 @@ def test_none() -> None:
 
 
 def test_some() -> None:
-    buckets = [Bucket.objects.create(signature=json.dumps({"symptoms": [
-               {'src': 'stderr',
-                'type': 'output',
-                'value': '/foo/'}]})),
-               Bucket.objects.create(signature=json.dumps({"symptoms": [
-                   {'src': 'stderr',
-                    'type': 'output',
-                    'value': '/match/'}]}))]
-    defaults = {"client": Client.objects.create(),
-                "os": OS.objects.create(),
-                "platform": Platform.objects.create(),
-                "product": Product.objects.create(),
-                "tool": Tool.objects.create()}
-    crashes = [CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
-               CrashEntry.objects.create(rawStderr="match", **defaults),
-               CrashEntry.objects.create(rawStderr="blah", **defaults)]
+    buckets = [
+        Bucket.objects.create(
+            signature=json.dumps(
+                {"symptoms": [{"src": "stderr", "type": "output", "value": "/foo/"}]}
+            )
+        ),
+        Bucket.objects.create(
+            signature=json.dumps(
+                {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+            )
+        ),
+    ]
+    defaults = {
+        "client": Client.objects.create(),
+        "os": OS.objects.create(),
+        "platform": Platform.objects.create(),
+        "product": Product.objects.create(),
+        "tool": Tool.objects.create(),
+    }
+    crashes = [
+        CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
+        CrashEntry.objects.create(rawStderr="match", **defaults),
+        CrashEntry.objects.create(rawStderr="blah", **defaults),
+    ]
     for c in crashes:
         assert not c.triagedOnce
 
@@ -67,25 +84,33 @@ def test_some() -> None:
 
 
 def test_some_with_notification() -> None:
-    buckets = [Bucket.objects.create(signature=json.dumps({"symptoms": [
-               {'src': 'stderr',
-                'type': 'output',
-                'value': '/foo/'}]})),
-               Bucket.objects.create(signature=json.dumps({"symptoms": [
-                   {'src': 'stderr',
-                    'type': 'output',
-                    'value': '/match/'}]}))]
-    defaults = {"client": Client.objects.create(),
-                "os": OS.objects.create(),
-                "platform": Platform.objects.create(),
-                "product": Product.objects.create(),
-                "tool": Tool.objects.create()}
-    crashes = [CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
-               CrashEntry.objects.create(rawStderr="match", **defaults),
-               CrashEntry.objects.create(rawStderr="blah", **defaults)]
+    buckets = [
+        Bucket.objects.create(
+            signature=json.dumps(
+                {"symptoms": [{"src": "stderr", "type": "output", "value": "/foo/"}]}
+            )
+        ),
+        Bucket.objects.create(
+            signature=json.dumps(
+                {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+            )
+        ),
+    ]
+    defaults = {
+        "client": Client.objects.create(),
+        "os": OS.objects.create(),
+        "platform": Platform.objects.create(),
+        "product": Product.objects.create(),
+        "tool": Tool.objects.create(),
+    }
+    crashes = [
+        CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
+        CrashEntry.objects.create(rawStderr="match", **defaults),
+        CrashEntry.objects.create(rawStderr="blah", **defaults),
+    ]
     for c in crashes:
         assert not c.triagedOnce
-    user, _ = cmUser.objects.get_or_create(user=User.objects.get(username='test'))
+    user, _ = cmUser.objects.get_or_create(user=User.objects.get(username="test"))
     user.bucket_hit = True
     user.save()
     BucketWatch.objects.create(bucket=buckets[1], user=user)
@@ -108,5 +133,8 @@ def test_some_with_notification() -> None:
     assert notification.unread
     assert notification.actor == buckets[1]
     assert notification.verb == "bucket_hit"
-    assert notification.description == f"The bucket {buckets[1].pk} received a new crash entry {crashes[1].pk}"
+    assert (
+        notification.description
+        == f"The bucket {buckets[1].pk} received a new crash entry {crashes[1].pk}"
+    )
     assert notification.target == crashes[1]

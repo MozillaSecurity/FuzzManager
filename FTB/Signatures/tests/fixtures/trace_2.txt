@@ -1,0 +1,34 @@
+Program terminated with signal 11, Segmentation fault.
+#0  JSObject::markChildren (this=0x7fc33ef5a060, trc=0x3538be0)
+    at /srv/repos/mozilla-central/js/src/jsobj.cpp:4081
+4081        if (clasp->trace)
+Loading JavaScript value pretty-printers; see js/src/gdb/README.
+If they cause trouble, type: disable pretty-printer .* SpiderMonkey
+#0  JSObject::markChildren (this=(JSObject * const) 0x7fc33ef5a060 Cannot access memory at address 0x4949494949494949, trc=0x3538be0) at /srv/repos/mozilla-central/js/src/jsobj.cpp:4081
+#1  0x00000000004e11e3 in MarkChildren (obj=(JSObject *) 0x7fc33ef5a060 Cannot access memory at address 0x4949494949494949, trc=0x3538be0) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:1323
+#2  js::TraceChildren (trc=0x3538be0, thing=0x7fc33ef5a060, kind=<optimized out>) at /srv/repos/mozilla-central/js/src/gc/Marking.cpp:1934
+#3  0x0000000000625d87 in js::gc::GCRuntime::startVerifyPreBarriers (this=this@entry=0x33ac568) at /srv/repos/mozilla-central/js/src/gc/Verifier.cpp:239
+#4  0x0000000000633a5e in maybeVerifyPreBarriers (always=<optimized out>, this=0x33ac568) at /srv/repos/mozilla-central/js/src/gc/Verifier.cpp:563
+#5  js::gc::MaybeVerifyBarriers (cx=<optimized out>, always=<optimized out>) at /srv/repos/mozilla-central/js/src/gc/Verifier.cpp:588
+#6  0x00000000007c8660 in js::jit::CheckOverRecursedWithExtra (cx=0x33ce390, frame=<optimized out>, extra=<optimized out>, earlyCheck=<optimized out>) at /srv/repos/mozilla-central/js/src/jit/VMFunctions.cpp:153
+#7  0x00007fc33ee95394 in ?? ()
+#8  0x0000000000000000 in ?? ()
+rax    0x4949494949494949    5280832617179597129
+rbx    0x7fc33ef5a060    140476551635040
+rcx    0x4949494949494949    5280832617179597129
+rdx    0x4    4
+rsi    0xa8ae16    11054614
+rdi    0x3538be0    55806944
+rbp    0x3538be0    55806944
+rsp    0x7fff9aec80c0    140735792578752
+r8    0x0    0
+r9    0x2cd1    11473
+r10    0x37d2580    58533248
+r11    0x4000    16384
+r12    0x7fc3240c5030    140476100137008
+r13    0x2    2
+r14    0x7fc3240c4ff0    140476100136944
+r15    0x0    0
+rip    0x84de35 <JSObject::markChildren(JSTracer*)+53>
+=> 0x84de35 <JSObject::markChildren(JSTracer*)+53>:    mov    (%rax),%rax
+   0x84de38 <JSObject::markChildren(JSTracer*)+56>:    mov    0x68(%rax),%rax

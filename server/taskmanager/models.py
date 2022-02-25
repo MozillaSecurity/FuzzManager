@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import cast
 
 from django.db import models
@@ -20,7 +17,9 @@ class Pool(models.Model):
 
 
 class Task(models.Model):
-    pool = cast(Pool, models.ForeignKey(Pool, on_delete=models.deletion.CASCADE, null=True))
+    pool = cast(
+        Pool, models.ForeignKey(Pool, on_delete=models.deletion.CASCADE, null=True)
+    )
     task_id = str(models.CharField(max_length=64))
     decision_id = str(models.CharField(max_length=64, null=True))
     run_id = int(str(models.PositiveIntegerField()))

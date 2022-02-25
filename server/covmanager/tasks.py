@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-from django.conf import settings  # noqa
-from django.core.files.base import ContentFile
-
-from celeryconf import app  # noqa
-from . import cron  # noqa ensure cron tasks get registered
-
 import copy
 import hashlib
 import json
+
+from celeryconf import app
+from django.conf import settings  # noqa
+from django.core.files.base import ContentFile
+
+from . import cron  # noqa ensure cron tasks get registered
 
 
 @app.task(ignore_result=True)
 def check_revision_update(pk: int) -> None:
     from covmanager.models import Collection, Repository  # noqa
+
     collection = Collection.objects.get(pk=pk)
 
     # Get the SourceCodeProvider associated with this collection
@@ -34,8 +35,8 @@ def check_revision_update(pk: int) -> None:
 
 @app.task(ignore_result=True)
 def aggregate_coverage_data(pk: int, pks: list[int]) -> None:
-    from covmanager.models import Collection, CollectionFile  # noqa
-    from FTB import CoverageHelper # noqa
+    from covmanager.models import Collection, CollectionFile
+    from FTB import CoverageHelper
 
     # Fetch our existing, but incomplete destination collection
     mergedCollection = Collection.objects.get(pk=pk)
@@ -50,7 +51,8 @@ def aggregate_coverage_data(pk: int, pks: list[int]) -> None:
     total_stats = None
 
     for collection in collections[1:]:
-        # Load coverage, perform the merge, then release reference to the JSON blob again
+        # Load coverage, perform the merge, then release reference to the JSON blob
+        # again
         collection.loadCoverage()
         stats = CoverageHelper.merge_coverage_data(newCoverage, collection.content)
         collection.content = None
@@ -63,16 +65,18 @@ def aggregate_coverage_data(pk: int, pks: list[int]) -> None:
                 total_stats[x] += stats[x]
 
     # Save the new coverage blob to disk and database
-    newCoverage = json.dumps(newCoverage, separators=(',', ':'))
-    h = hashlib.new('sha1')
-    h.update(newCoverage.encode('utf-8'))
+    newCoverage = json.dumps(newCoverage, separators=(",", ":"))
+    h = hashlib.new("sha1")
+    h.update(newCoverage.encode("utf-8"))
     dbobj = CollectionFile()
-    dbobj.file.save("%s.coverage" % h.hexdigest(), ContentFile(newCoverage))
+    dbobj.file.save(f"{h.hexdigest()}.coverage", ContentFile(newCoverage))
     dbobj.save()
 
-    mergedCollection.description += " (NC %s, LM %s, CM %s)" % (stats['null_coverable_count'],
-                                                                stats['length_mismatch_count'],
-                                                                stats['coverable_mismatch_count'])
+    mergedCollection.description += " (NC {}, LM {}, CM {})".format(
+        stats["null_coverable_count"],
+        stats["length_mismatch_count"],
+        stats["coverable_mismatch_count"],
+    )
 
     # Save the collection
     mergedCollection.coverage = dbobj
@@ -84,13 +88,16 @@ def aggregate_coverage_data(pk: int, pks: list[int]) -> None:
 @app.task(ignore_result=True)
 def calculate_report_summary(pk: int) -> None:
     from covmanager.models import ReportConfiguration, ReportSummary
+
     summary = ReportSummary.objects.get(pk=pk)
 
     # Load coverage data
     collection = summary.collection
     collection.loadCoverage()
 
-    rcs = ReportConfiguration.objects.filter(public=True, repository=collection.repository)
+    rcs = ReportConfiguration.objects.filter(
+        public=True, repository=collection.repository
+    )
 
     data = None
     waiting = {}
@@ -121,7 +128,9 @@ def calculate_report_summary(pk: int) -> None:
             # This is the root
             data = coverage
         else:
-            summary.cached_result = json.dumps({"error": "There are multiple root reports configured."})
+            summary.cached_result = json.dumps(
+                {"error": "There are multiple root reports configured."}
+            )
             summary.save()
             return
 

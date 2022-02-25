@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
-
 from __future__ import annotations
 
 import datetime
+
 from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Pool, Task
 
+from .models import Pool, Task
 
 # For enabled pools, we calculate whether the run-time/cycle-time ratio
 # is expected (compared to max_run_time). The threshold allows the ratio
@@ -25,7 +24,7 @@ class PoolSerializer(serializers.ModelSerializer[Pool]):
 
     def to_representation(self, instance: Pool):
         """Add dynamic fields"""
-        ret = super(PoolSerializer, self).to_representation(instance)
+        ret = super().to_representation(instance)
         ret["cycle_time"] = None
         if instance.cycle_time is not None:
             ret["cycle_time"] = int(instance.cycle_time.total_seconds())
@@ -46,9 +45,9 @@ class PoolSerializer(serializers.ModelSerializer[Pool]):
             # happen early, they will affect the ratio a lot, and if errors happen late,
             # fuzzing work probably happened and we should count it.
             query = (
-                Q(pool=instance) &
-                Q(started__isnull=False) &
-                (Q(resolved__isnull=True) | Q(resolved__gte=last_cycle_start))
+                Q(pool=instance)
+                & Q(started__isnull=False)
+                & (Q(resolved__isnull=True) | Q(resolved__gte=last_cycle_start))
             )
             for task in Task.objects.filter(query):
                 begin = max(task.started, last_cycle_start)
@@ -78,8 +77,8 @@ class PoolVueSerializer(PoolSerializer):
 
     class Meta(PoolSerializer.Meta):
         read_only_fields = (
-            'hook_url',
-            'view_url',
+            "hook_url",
+            "view_url",
         )
 
     def get_hook_url(self, pool: Pool) -> str:
@@ -90,7 +89,7 @@ class PoolVueSerializer(PoolSerializer):
         return f"{settings.TC_ROOT_URL}hooks/project-{settings.TC_PROJECT}/{hook}"
 
     def get_view_url(self, pool: Pool) -> str:
-        return reverse('taskmanager:pool-view-ui', kwargs={'pk': pool.id})
+        return reverse("taskmanager:pool-view-ui", kwargs={"pk": pool.id})
 
 
 class TaskSerializer(serializers.ModelSerializer[Task]):
@@ -101,8 +100,15 @@ class TaskSerializer(serializers.ModelSerializer[Task]):
         fields = "__all__"
         # all fields except "status_data"
         read_only_fields = (
-            "pool_id", "task_id", "decision_id", "run_id", "state", "created",
-            "started", "resolved", "expires",
+            "pool_id",
+            "task_id",
+            "decision_id",
+            "run_id",
+            "state",
+            "created",
+            "started",
+            "resolved",
+            "expires",
         )
 
 
@@ -110,9 +116,7 @@ class TaskVueSerializer(TaskSerializer):
     task_url = serializers.SerializerMethodField()
 
     class Meta(TaskSerializer.Meta):
-        read_only_fields = TaskSerializer.Meta.read_only_fields + (
-            'task_url',
-        )
+        read_only_fields = TaskSerializer.Meta.read_only_fields + ("task_url",)
 
     def get_task_url(self, task: Task) -> str:
         return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"

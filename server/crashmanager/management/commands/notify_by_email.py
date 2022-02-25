@@ -23,22 +23,22 @@ class Command(BaseCommand):
                 continue
 
             if not user.user.email:
-                print(f'No user email for {user.user.username}')
+                print(f"No user email for {user.user.username}")
                 continue
             if notification.verb == "bucket_hit" and not user.bucket_hit:
-                print(f'{user.user.username} not watching bucket_hit anymore')
+                print(f"{user.user.username} not watching bucket_hit anymore")
                 continue
             if notification.verb == "inaccessible_bug" and not user.inaccessible_bug:
-                print(f'{user.user.username} not watching inaccessible_bug anymore')
+                print(f"{user.user.username} not watching inaccessible_bug anymore")
                 continue
 
             sent = send_mail(
                 subject=f"New '{notification.verb}' notification",
                 message=render_to_string(
-                    'notification_mail.html',
+                    "notification_mail.html",
                     context={
-                        'user': user,
-                        'notification': notification,
+                        "user": user,
+                        "notification": notification,
                     },
                 ),
                 from_email=None,

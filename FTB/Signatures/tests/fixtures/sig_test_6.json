@@ -1,0 +1,16 @@
+{"symptoms": [
+    {
+    "functionName": "GetObjectAllocKindForCopy",
+    "frameNumber": 0,
+    "type": "stackFrame"
+  },
+    {
+    "functionName": "js::Nursery::moveToTenured",
+    "frameNumber": 1,
+    "type": "stackFrame"
+  },
+    {
+    "type": "testcase",
+    "value": "SIMD.float64x4"
+  }
+]}

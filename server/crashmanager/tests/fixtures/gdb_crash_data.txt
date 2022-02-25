@@ -1,0 +1,39 @@
+GNU gdb (Ubuntu 7.11.1-0ubuntu1~16.5) 7.11.1
+(gdb) backtrace 0
+No stack.
+(gdb) r
+Starting program: /home/ubuntu/shell-cache/js-32-linux-dc70d241f90d/js-32-linux-dc70d241f90d --fuzzing-safe --no-threads --ion-eager bb2608227.js
+Thread 1 "js-32-linux-dc7" received signal SIGSEGV, Segmentation fault.
+0x33674039 in ?? ()
+(gdb) backtrace
+#0  0x33674039 in ?? ()
+#1  0xf6b52820 in ?? ()
+#2  0xf6b52820 in ?? ()
+(gdb) info registers
+eax            0xf7047000	-150704128
+ecx            0xffef	65519
+edx            0xffff8000	-32768
+ebx            0x9837ff4	159612916
+esp            0xffffba74	0xffffba74
+ebp            0xffffba74	0xffffba74
+esi            0xf6b52820	-155899872
+edi            0xf6f896c0	-151480640
+eip            0x33674039	0x33674039
+eflags         0x10283	[ CF SF IF RF ]
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x63	99
+(gdb) print $_siginfo
+$1 = {si_signo = 11, si_errno = 0, si_code = 2, _sigfault = {si_addr = 0xf7057000, _addr_lsb = 0, _addr_bnd = {_lower = 0x0, _upper = 0x0}}}
+(gdb) x/8i $pc
+=> 0x33674039:	mov    %dx,0x10(%eax,%ecx,1)
+   0x3367403e:	pop    %ebp
+   0x3367403f:	pop    %esi
+   0x33674040:	ret
+   0x33674041:	jmp    0x33674200
+   0x33674046:	sub    $0x4,%esp
+   0x33674049:	call   0x336743f0
+   0x3367404e:	sub    $0x4,%esp

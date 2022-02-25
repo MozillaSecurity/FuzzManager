@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -14,31 +14,53 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Pool',
+            name="Pool",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('pool_id', models.CharField(max_length=255)),
-                ('pool_name', models.CharField(max_length=255)),
-                ('platform', models.CharField(max_length=15)),
-                ('size', models.PositiveIntegerField(null=True)),
-                ('cpu', models.CharField(max_length=15, null=True)),
-                ('cycle_time', models.DurationField(null=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("pool_id", models.CharField(max_length=255)),
+                ("pool_name", models.CharField(max_length=255)),
+                ("platform", models.CharField(max_length=15)),
+                ("size", models.PositiveIntegerField(null=True)),
+                ("cpu", models.CharField(max_length=15, null=True)),
+                ("cycle_time", models.DurationField(null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Task',
+            name="Task",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('task_id', models.CharField(max_length=64)),
-                ('decision_id', models.CharField(max_length=64)),
-                ('run_id', models.PositiveIntegerField()),
-                ('state', models.CharField(max_length=15)),
-                ('created', models.DateTimeField()),
-                ('status_data', models.CharField(blank=True, max_length=4095)),
-                ('started', models.DateTimeField(null=True)),
-                ('resolved', models.DateTimeField(null=True)),
-                ('expires', models.DateTimeField()),
-                ('pool', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='taskmanager.Pool')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("task_id", models.CharField(max_length=64)),
+                ("decision_id", models.CharField(max_length=64)),
+                ("run_id", models.PositiveIntegerField()),
+                ("state", models.CharField(max_length=15)),
+                ("created", models.DateTimeField()),
+                ("status_data", models.CharField(blank=True, max_length=4095)),
+                ("started", models.DateTimeField(null=True)),
+                ("resolved", models.DateTimeField(null=True)),
+                ("expires", models.DateTimeField()),
+                (
+                    "pool",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="taskmanager.Pool",
+                    ),
+                ),
             ],
         ),
     ]

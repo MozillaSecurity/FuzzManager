@@ -1,5 +1,4 @@
-# encoding: utf-8
-'''
+"""
 CovReporter -- Coverage reporting client for CoverageManager
 
 Provide process and class level interfaces to post-process and submit
@@ -14,11 +13,9 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
-
-from __future__ import annotations
-
+"""
 import sys
+
 from .CovReporter import main
 
 sys.exit(main())

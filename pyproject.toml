@@ -1,6 +1,44 @@
+[build-system]
+requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+target-version = ["py37"]
+
+[tool.coverage.run]
+omit = [
+    "*/setup.py",
+    "*/dist/*",
+    "*/tests/*",
+    "*/.tox/*",
+    "*/.eggs/*",
+]
+
+[tool.django-stubs]
+django_settings_module = "server.settings_test"
+
+[tool.isort]
+known_first_party = [
+    "Collector",
+    "CovReporter",
+    "EC2StatusReporter",
+    "FTB",
+    "Reporter",
+    "TaskStatusReporter",
+    "covmanager",
+    "crashmanager",
+    "ec2spotmanager",
+    "taskmanager",
+]
+profile = "black"
+
 [tool.mypy]
 strict = true
 show_error_codes = true
+plugins = [
+#    "mypy_django_plugin.main",
+#    "mypy_drf_plugin.main",
+]
 
 # Add Python modules to be ignored by mypy here
 [[tool.mypy.overrides]]
@@ -26,3 +64,17 @@ module = [
     "S3Manager",  # Located here in misc/afl_libfuzzer/S3Manager.py
 ]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+log_level = "DEBUG"
+DJANGO_SETTINGS_MODULE = "server.settings_test"
+python_paths = [".", "server"]
+addopts = ["-v", "--cov=.", "--cov-report", "term-missing"]
+filterwarnings = [
+    'ignore:"@coroutine" decorator:DeprecationWarning:aiohttp',
+    'ignore:You passed a bytestring:DeprecationWarning:flake8.options.config',
+    "ignore:Using or importing the ABCs from 'collections':DeprecationWarning:celery.canvas",
+    "ignore:Using or importing the ABCs from 'collections':DeprecationWarning:yaml",
+]
+
+[tool.setuptools_scm]

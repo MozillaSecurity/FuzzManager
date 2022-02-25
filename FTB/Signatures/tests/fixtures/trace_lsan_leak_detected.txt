@@ -1,0 +1,9 @@
+=================================================================
+==6148==ERROR: LeakSanitizer: detected memory leaks
+
+The 1 top leak(s):
+Direct leak of 232 byte(s) in 1 object(s) allocated from:
+    #0 0x4c1c93 in malloc /builds/asan_malloc_linux.cc:88:3
+    #1 0x4f26fd in moz_xmalloc /builds/mozalloc.cpp:70:17
+    #2 0x7fe6cdf7081f in operator new /builds/mozalloc.h:156:12
+    #3 0x7fe6cdf7081f in mozilla::net::nsStandardURL::StartClone() /builds/nsStandardURL.cpp:2356

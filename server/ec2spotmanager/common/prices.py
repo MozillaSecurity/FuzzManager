@@ -1,5 +1,4 @@
-# encoding: utf-8
-'''
+"""
 Prices -- Various methods for accessing price history on EC2
 
 @author:     Christian Holler (:decoder)
@@ -11,14 +10,20 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
-'''
+"""
 
 from __future__ import annotations
 
 
-def get_prices(regions: list[str], cloud_provider, instance_types: list[str] | None = None, use_multiprocess: bool = False) -> dict[str, str]:
+def get_prices(
+    regions: list[str],
+    cloud_provider,
+    instance_types: list[str] | None = None,
+    use_multiprocess: bool = False,
+) -> dict[str, str]:
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
+
         pool = Pool(cpu_count())
 
     try:
@@ -26,7 +31,9 @@ def get_prices(regions: list[str], cloud_provider, instance_types: list[str] | N
         for region in regions:
             args = [region, instance_types]
             if use_multiprocess:
-                results.append(pool.apply_async(cloud_provider.get_prices_per_region, args))
+                results.append(
+                    pool.apply_async(cloud_provider.get_prices_per_region, args)
+                )
             else:
                 results.append(cloud_provider.get_prices_per_region(*args))
 

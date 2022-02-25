@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from argparse import ArgumentParser
 import os
+from argparse import ArgumentParser
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
@@ -10,7 +10,7 @@ from covmanager.models import Repository
 
 
 class Command(BaseCommand):
-    help = 'Sets up a repository for CovManager'
+    help = "Sets up a repository for CovManager"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("name", help="repository identifier")
@@ -23,24 +23,30 @@ class Command(BaseCommand):
             raise CommandError("Error: invalid repository name")
 
         if Repository.objects.filter(name=name):
-            raise CommandError("Error: repository with name '%s' already exists!" % name)
+            raise CommandError(f"Error: repository with name '{name}' already exists!")
 
         if not provider:
             raise CommandError("Error: invalid provider class")
 
         # also accept friendly names
-        provider = {"git": "GITSourceCodeProvider",
-                    "hg": "HGSourceCodeProvider"}.get(provider, provider)
+        provider = {"git": "GITSourceCodeProvider", "hg": "HGSourceCodeProvider"}.get(
+            provider, provider
+        )
         try:
-            __import__('covmanager.SourceCodeProvider.%s' % provider, fromlist=[provider.encode("utf-8")])
+            __import__(
+                f"covmanager.SourceCodeProvider.{provider}",
+                fromlist=[provider.encode("utf-8")],
+            )
         except ImportError:
-            raise CommandError("Error: '%s' is not a valid source code provider!" % provider)
+            raise CommandError(
+                f"Error: '{provider}' is not a valid source code provider!"
+            )
 
         if not location:
             raise CommandError("Error: invalid location")
 
         if not os.path.isdir(location):
-            raise CommandError("Error: location not found: %s" % location)
+            raise CommandError(f"Error: location not found: {location}")
 
         repository = Repository()
         repository.name = name
@@ -49,4 +55,7 @@ class Command(BaseCommand):
 
         repository.save()
 
-        print("Successfully created repository '%s' with provider '%s' located at %s" % (name, provider, location))
+        print(
+            f"Successfully created repository '{name}' with provider '{provider}' "
+            f"located at {location}"
+        )
