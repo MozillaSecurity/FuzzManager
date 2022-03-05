@@ -261,28 +261,28 @@ def test_collector_refresh(capsys: pytest.CaptureFixture[str], tmp_path: Path) -
         collector.refresh()
 
     # check that bad zips raise errors
-    with (sigs_path / "other.txt").open("rb") as fp:
+    with (sigs_path / "other.txt").open("rb") as fp3:
 
         class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp3
 
         collector._session.get = lambda *_, **__: response_t()
 
         with pytest.raises(zipfile.BadZipfile, match="not a zip file"):
             collector.refresh()
 
-    with outzip_path.open("r+b") as fp_2:
+    with outzip_path.open("r+b") as fp4:
         # corrupt the CRC field for the signature file in the zip
-        fp_2.seek(0x42)
-        fp_2.write(b"\xFF")
-    with outzip_path.open("rb") as fp_3:
+        fp4.seek(0x42)
+        fp4.write(b"\xFF")
+    with outzip_path.open("rb") as fp5:
 
         class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp_3
+            raw = fp5
 
         collector._session.get = lambda *_, **__: response_t()
 
