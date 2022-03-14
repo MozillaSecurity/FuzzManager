@@ -1,5 +1,10 @@
+from __future__ import annotations
+
 import functools
+from argparse import ArgumentParser
+from collections.abc import Callable
 from logging import getLogger
+from typing import Any, Generator
 
 import taskcluster
 from django.conf import settings
@@ -11,7 +16,7 @@ from ...tasks import get_or_create_pool
 LOG = getLogger("taskmanager.management.commands.scrape_group")
 
 
-def paginated(func, result_key):
+def paginated(func: Callable[..., Any], result_key: str) -> Callable[..., Any]:
     """Wraps a Taskcluster API that returns a result like:
     {
        continuationToken: "",
@@ -22,7 +27,7 @@ def paginated(func, result_key):
     """
 
     @functools.wraps(func)
-    def _wrapped(*args, **kwds):
+    def _wrapped(*args: Any, **kwds: Any) -> Generator[Any, Any, Any]:
         kwds = kwds.copy()
         result = func(*args, **kwds)
         while result.get("continuationToken"):
@@ -38,7 +43,7 @@ def paginated(func, result_key):
 class Command(BaseCommand):
     help = "Scrape a task group and add created tasks to taskmanager"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "task_group",
             help="Taskcluster task group to add tasks for",
@@ -50,7 +55,7 @@ class Command(BaseCommand):
             "(ie. include task with taskId == taskGroupId)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         queue_svc = taskcluster.Queue({"rootUrl": settings.TC_ROOT_URL})
         task_group_id = options["task_group"]
 
@@ -67,7 +72,7 @@ class Command(BaseCommand):
                     task["status"]["taskId"],
                     task["status"]["workerType"],
                 )
-                return
+                return None
 
             for run in task["status"]["runs"]:
                 _, created = Task.objects.update_or_create(

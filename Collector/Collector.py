@@ -15,6 +15,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import argparse
 import base64
 import hashlib
@@ -22,8 +25,12 @@ import json
 import os
 import shutil
 import sys
+from collections.abc import Iterator
 from tempfile import mkstemp
+from typing import Dict, cast
 from zipfile import ZipFile
+
+from typing_extensions import NotRequired, TypedDict
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
@@ -31,20 +38,45 @@ from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
 from Reporter.Reporter import Reporter, remote_checks, signature_checks
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
 
 
+class DataType(TypedDict):
+    """Type information for the data dictionary."""
+
+    rawStdout: NotRequired[str]
+    rawStderr: NotRequired[str]
+    rawCrashData: NotRequired[str]
+    testcase: NotRequired[bytes | str]
+    testcase_isbinary: NotRequired[bool]
+    testcase_quality: NotRequired[int]
+    testcase_ext: NotRequired[str]
+    testcase_size: NotRequired[int]
+    platform: NotRequired[str]
+    product: NotRequired[str]
+    product_version: NotRequired[str]
+    os: NotRequired[str]
+    client: NotRequired[str]
+    tool: NotRequired[str]
+    metadata: NotRequired[str]
+    env: NotRequired[str]
+    args: NotRequired[str]
+
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
-    def refresh(self):
+    def refresh(self) -> None:
         """
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         """
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (
             self.serverProtocol,
             self.serverHost,
@@ -62,12 +94,13 @@ class Collector(Reporter):
         os.remove(zipFileName)
 
     @signature_checks
-    def refreshFromZip(self, zipFileName):
+    def refreshFromZip(self, zipFileName: str) -> None:
         """
         Refresh signatures from a local zip file, adding new signatures
         and invalidating old ones. (This is a non-standard use case;
         you probably want to use refresh() instead.)
         """
+        assert self.sigCacheDir is not None
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
                 raise RuntimeError(f"Bad CRC for downloaded zipfile {zipFileName}")
@@ -78,8 +111,7 @@ class Collector(Reporter):
                     os.remove(os.path.join(self.sigCacheDir, sigFile))
                 else:
                     print(
-                        "Warning: Skipping deletion of non-signature file:",
-                        sigFile,
+                        f"Warning: Skipping deletion of non-signature file: {sigFile}",
                         file=sys.stderr,
                     )
 
@@ -88,36 +120,30 @@ class Collector(Reporter):
     @remote_checks
     def submit(
         self,
-        crashInfo,
-        testCase=None,
-        testCaseQuality=0,
-        testCaseSize=None,
-        metaData=None,
-    ):
+        crashInfo: CrashInfo,
+        testCase: str | None = None,
+        testCaseQuality: int = 0,
+        testCaseSize: int | None = None,
+        metaData: dict[str, object] | None = None,
+    ) -> dict[str, object]:
         """
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
-        @type testCase: string
         @param testCase: A file containing a testcase for reproduction
-
-        @type testCaseQuality: int
         @param testCaseQuality: A value indicating the quality of the test (less is
                                 better)
-
-        @type testCaseSize: int or None
         @param testCaseSize: The size of the testcase to report. If None, use the file
                              size.
-
-        @type metaData: map
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format. This metadata is
                          combined with possible metadata stored in the
                          L{ProgramConfiguration} inside crashInfo.
         """
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/crashes/" % (
             self.serverProtocol,
             self.serverHost,
@@ -126,7 +152,7 @@ class Collector(Reporter):
 
         # Serialize our crash information, testcase and metadata into a dictionary to
         # POST
-        data = {}
+        data: DataType = {}
 
         data["rawStdout"] = os.linesep.join(crashInfo.rawStdout)
         data["rawStderr"] = os.linesep.join(crashInfo.rawStderr)
@@ -147,6 +173,7 @@ class Collector(Reporter):
             data["testcase_size"] = testCaseSize
             data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
+        assert crashInfo.configuration is not None
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
         data["os"] = crashInfo.configuration.os
@@ -154,11 +181,13 @@ class Collector(Reporter):
         if crashInfo.configuration.version:
             data["product_version"] = crashInfo.configuration.version
 
+        assert self.clientId is not None
+        assert self.tool is not None
         data["client"] = self.clientId
         data["tool"] = self.tool
 
         if crashInfo.configuration.metadata or metaData:
-            aggrMetaData = {}
+            aggrMetaData: dict[str, object] = {}
 
             if crashInfo.configuration.metadata:
                 aggrMetaData.update(crashInfo.configuration.metadata)
@@ -174,22 +203,21 @@ class Collector(Reporter):
         if crashInfo.configuration.args:
             data["args"] = json.dumps(crashInfo.configuration.args)
 
-        return self.post(url, data).json()
+        return cast(Dict[str, object], self.post(url, data).json())
 
     @signature_checks
-    def search(self, crashInfo):
+    def search(
+        self, crashInfo: CrashInfo
+    ) -> tuple[str | None, dict[str, object] | None]:
         """
         Searches within the local signature cache directory for a signature matching the
         given crash.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
-        @rtype: tuple
         @return: Tuple containing filename of the signature and metadata matching, or
                  None if no match.
         """
-
+        assert self.sigCacheDir is not None
         cachedSigFiles = os.listdir(self.sigCacheDir)
 
         for sigFile in cachedSigFiles:
@@ -215,27 +243,20 @@ class Collector(Reporter):
     @signature_checks
     def generate(
         self,
-        crashInfo,
-        forceCrashAddress=None,
-        forceCrashInstruction=None,
-        numFrames=None,
-    ):
+        crashInfo: CrashInfo,
+        forceCrashAddress: bool = False,
+        forceCrashInstruction: bool = False,
+        numFrames: int = 8,
+    ) -> str | None:
         """
         Generates a signature in the local cache directory. It will be deleted when
         L{refresh} is called on the same local cache directory.
 
-        @type crashInfo: CrashInfo
         @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
-
-        @type forceCrashAddress: bool
         @param forceCrashAddress: Force including the crash address into the signature
-        @type forceCrashInstruction: bool
         @param forceCrashInstruction: Force including the crash instruction into the
                                       signature (GDB only)
-        @type numFrames: int
         @param numFrames: How many frames to include in the signature
-
-        @rtype: string
         @return: File containing crash signature in JSON format
         """
 
@@ -250,17 +271,16 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, crashId: int) -> tuple[str, dict[str, str]] | None:
         """
-        Download the testcase for the specified crashId.
+        Download all testcases for the specified bucketId.
 
-        @type crashId: int
-        @param crashId: ID of the requested crash entry on the server side
-
-        @rtype: tuple
-        @return: Tuple containing name of the file where the test was stored and the raw
-                 JSON response
+        @param bucketId: ID of the requested bucket on the server side
+        @return: generator of filenames where tests were stored.
         """
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
         url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (
             self.serverProtocol,
             self.serverHost,
@@ -295,17 +315,19 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, bucketId: int) -> Iterator[str]:
         """
         Download all testcases for the specified bucketId.
 
-        @type bucketId: int
         @param bucketId: ID of the requested bucket on the server side
-
-        @rtype: generator
         @return: generator of filenames where tests were stored.
         """
-        params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
+        assert self.serverHost is not None
+        assert self.serverPort is not None
+        assert self.serverProtocol is not None
+        params: dict[str, str] | None = {
+            "query": json.dumps({"op": "OR", "bucket": bucketId})
+        }
         next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
             self.serverProtocol,
             self.serverHost,
@@ -349,17 +371,14 @@ class Collector(Reporter):
 
                 yield local_filename
 
-    def __store_signature_hashed(self, signature):
+    def __store_signature_hashed(self, signature: CrashSignature) -> str:
         """
         Store a signature, using the sha1 hash hex representation as filename.
 
-        @type signature: CrashSignature
         @param signature: CrashSignature to store
-
-        @rtype: string
         @return: Name of the file that the signature was written to
-
         """
+        assert self.sigCacheDir is not None
         h = hashlib.new("sha1")
         if str is bytes:
             h.update(str(signature))
@@ -372,14 +391,11 @@ class Collector(Reporter):
         return sigfile
 
     @staticmethod
-    def read_testcase(testCase):
+    def read_testcase(testCase: str) -> tuple[bytes, bool]:
         """
         Read a testcase file, return the content and indicate if it is binary or not.
 
-        @type testCase: string
         @param testCase: Filename of the file to open
-
-        @rtype: tuple(string, bool)
         @return: Tuple containing the file contents and a boolean indicating if the
                  content is binary
         """
@@ -393,7 +409,7 @@ class Collector(Reporter):
         return (testCaseData, isBinary)
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> int:
     """Command line options."""
 
     # setup argparser
@@ -605,10 +621,11 @@ def main(args=None):
     crashInfo = None
     args = None
     env = None
-    metadata = {}
+    metadata: dict[str, object] | None = {}
 
     if opts.search or opts.generate or opts.submit or opts.autosubmit:
         if opts.metadata:
+            assert metadata is not None
             metadata.update(dict(kv.split("=", 1) for kv in opts.metadata))
 
         if opts.autosubmit:
@@ -738,6 +755,7 @@ def main(args=None):
     if opts.autosubmit:
         runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
         if runner.run():
+            assert configuration is not None
             crashInfo = runner.getCrashInfo(configuration)
             collector.submit(
                 crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
@@ -750,29 +768,33 @@ def main(args=None):
             return 1
 
     if opts.download:
-        (retFile, retJSON) = collector.download(opts.download)
+        collector_download_ret_val = collector.download(opts.download)
+        if collector_download_ret_val:
+            (retFile, retJSON) = collector_download_ret_val
+        else:
+            raise AssertionError("collector.download function returned a None")
         if not retFile:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
             return 1
 
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
-            print(
-                "Command line arguments:",
-                " ".join(args),
-            )
+            assert args is not None
+            print(f"Command line arguments: {' '.join(args)}")
             print("")
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
+            assert env is not None
             print(
-                "Environment variables:",
+                "Environment variables: %s",
                 " ".join(f"{k} = {v}" for (k, v) in env.items()),
             )
             print("")
 
         if "metadata" in retJSON and retJSON["metadata"]:
             metadata = json.loads(retJSON["metadata"])
+            assert metadata is not None
             print("== Metadata ==")
             for k, v in metadata.items():
                 print(f"{k} = {v}")
@@ -797,6 +819,8 @@ def main(args=None):
     if opts.get_clientid:
         print(collector.clientId)
         return 0
+
+    return 0
 
 
 if __name__ == "__main__":

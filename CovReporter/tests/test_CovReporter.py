@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import json
 import os
 import tempfile
@@ -21,14 +24,14 @@ from CovReporter.CovReporter import CovReporter
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def test_CovReporterCoverallsVersionData():
+def test_CovReporterCoverallsVersionData() -> None:
     coveralls_data = json.loads((FIXTURE_PATH / "coveralls_data.json").read_text())
     ret = CovReporter.version_info_from_coverage_data(coveralls_data)
     assert ret["revision"] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
     assert ret["branch"] == "master"
 
 
-def test_CovReporterPreprocessData():
+def test_CovReporterPreprocessData() -> None:
     coveralls_data = json.loads((FIXTURE_PATH / "coveralls_data.json").read_text())
     result = CovReporter.preprocess_coverage_data(coveralls_data)
 
@@ -41,6 +44,7 @@ def test_CovReporterPreprocessData():
     coveragePercent = "coveragePercent"
 
     # Check that we have all the topdirs
+    assert isinstance(result, dict)
     assert "topdir1" in result[children], "topdir1 missing in result"
     assert "topdir2" in result[children], "topdir2 missing in result"
 
@@ -128,7 +132,7 @@ def test_CovReporterPreprocessData():
     )
 
 
-def test_CovReporterMergeData():
+def test_CovReporterMergeData() -> None:
     # result = CovReporter.preprocess_coverage_data(coverallsData)
     # result2 = CovReporter.preprocess_coverage_data(coverallsAddData)
 
@@ -157,6 +161,7 @@ def test_CovReporterMergeData():
         os.remove(cov_file1)
         os.remove(cov_file2)
 
+    assert isinstance(version, dict)
     assert version["revision"] == "1a0d9545b9805f50a70de703a3c04fc0d22e3839"
     assert version["branch"] == "master"
 
@@ -169,6 +174,7 @@ def test_CovReporterMergeData():
     coveragePercent = "coveragePercent"
 
     # Check that we have all the topdirs
+    assert isinstance(result, dict)
     assert "topdir1" in result[children], "topdir1 missing in result"
     assert "topdir2" in result[children], "topdir2 missing in result"
     assert "topdir3" in result[children], "topdir2 missing in result"

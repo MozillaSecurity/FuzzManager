@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 import json
 import logging
@@ -18,6 +20,7 @@ from .CloudProvider.CloudProvider import (
     CloudProviderError,
 )
 from .common.prices import get_price_median
+from .models import InstancePool
 
 logger = logging.getLogger("ec2spotmanager")
 
@@ -26,7 +29,7 @@ SPOTMGR_TAG = "SpotManager"
 
 
 @app.task
-def _terminate_instance_ids(provider, region, instance_ids):
+def _terminate_instance_ids(provider: str, region: str, instance_ids: str) -> None:
     cloud_provider = CloudProvider.get_instance(provider)
     try:
         cloud_provider.terminate_instances({region: instance_ids})
@@ -37,7 +40,9 @@ def _terminate_instance_ids(provider, region, instance_ids):
 
 
 @app.task
-def _terminate_instance_request_ids(provider, region, request_ids):
+def _terminate_instance_request_ids(
+    provider: str, region: str, request_ids: str
+) -> None:
     cloud_provider = CloudProvider.get_instance(provider)
     try:
         cloud_provider.cancel_requests({region: request_ids})
@@ -47,19 +52,21 @@ def _terminate_instance_request_ids(provider, region, request_ids):
         _update_provider_status(provider, "unclassified", str(msg))
 
 
-def _determine_best_location(config, count, cache=None):
+def _determine_best_location(
+    config, count: int, cache=None
+) -> tuple[str | None, str | None, str | None, str | None, dict[str, int]]:
     from .models import Instance, ProviderStatusEntry
 
     if cache is None:
         cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
-    best_provider = None
-    best_zone = None
-    best_region = None
-    best_type = None
-    best_median = None
-    best_instances = None
-    rejected_prices = {}
+    best_provider: str | None = None
+    best_zone: str | None = None
+    best_region: str | None = None
+    best_type: str | None = None
+    best_median: float | None = None
+    best_instances: int | None = None
+    rejected_prices: dict[str, int] = {}
 
     for provider in PROVIDERS:
         cloud_provider = CloudProvider.get_instance(provider)
@@ -76,7 +83,7 @@ def _determine_best_location(config, count, cache=None):
 
         # Filter machine sizes that would put us over the number of cores required. If
         # all do, then choose the smallest.
-        smallest = []
+        smallest: list[str] = []
         smallest_size = None
         acceptable_types = []
         for instance_type in cloud_provider.get_instance_types(config):
@@ -148,6 +155,7 @@ def _determine_best_location(config, count, cache=None):
                                 provider=provider, region=region, zone=zone
                             ).count()
                         )
+                        assert best_instances is not None
                         if median == best_median and instances >= best_instances:
                             continue
                         best_provider = provider
@@ -169,7 +177,7 @@ def _determine_best_location(config, count, cache=None):
     return (best_provider, best_region, best_zone, best_type, rejected_prices)
 
 
-def _start_pool_instances(pool, config, count=1):
+def _start_pool_instances(pool, config, count: int = 1) -> None:
     """Start an instance with the given configuration"""
     from .models import POOL_STATUS_ENTRY_TYPE, Instance, PoolStatusEntry
 
@@ -200,11 +208,12 @@ def _start_pool_instances(pool, config, count=1):
                 for zone in rejected_prices:
                     msg += f"\n{zone} at {rejected_prices[zone]}"
                 _update_pool_status(pool, "price-too-low", msg)
-            return
+            return None
 
         elif priceLowEntries:
             priceLowEntries.delete()
 
+        assert provider is not None
         cloud_provider = CloudProvider.get_instance(provider)
         image_name = cloud_provider.get_image_name(config)
         cores_per_instance = cloud_provider.get_cores_per_instance()
@@ -273,6 +282,7 @@ def _start_pool_instances(pool, config, count=1):
             instance.instance_id = instance_name
             instance.hostname = requested_instance["hostname"]
             instance.region = region
+            assert zone is not None
             instance.zone = zone
             instance.status_code = requested_instance["status_code"]
             instance.pool = pool
@@ -286,7 +296,7 @@ def _start_pool_instances(pool, config, count=1):
         _update_pool_status(pool, "unclassified", str(msg))
 
 
-def _update_provider_status(provider, type_, message):
+def _update_provider_status(provider: str, type_: str, message: str) -> None:
     from .models import POOL_STATUS_ENTRY_TYPE, ProviderStatusEntry
 
     is_critical = type_ not in {
@@ -319,7 +329,7 @@ def _update_provider_status(provider, type_, message):
         logger.warning("Ignoring provider error: already exists.")
 
 
-def _update_pool_status(pool, type_, message):
+def _update_pool_status(pool: InstancePool, type_: str, message: str) -> None:
     from .models import POOL_STATUS_ENTRY_TYPE, PoolStatusEntry
 
     is_critical = type_ not in {
@@ -353,16 +363,11 @@ def _update_pool_status(pool, type_, message):
 
 
 @app.task
-def update_requests(provider, region, pool_id):
+def update_requests(provider: str, region: str, pool_id: int) -> None:
     """Update all requests in a given provider/region/pool.
 
-    @ptype provider: str
     @param provider: CloudProvider name
-
-    @ptype region: str
     @param region: Region name within the given provider
-
-    @ptype pool_id: int
     @param pool_id: InstancePool pk
     """
     from .models import (
@@ -466,13 +471,10 @@ def update_requests(provider, region, pool_id):
 
 
 @app.task
-def update_instances(provider, region):
+def update_instances(provider: str, region: str) -> None:
     """Reconcile database instances with cloud provider for a given provider/region.
 
-    @ptype provider: str
     @param provider: CloudProvider name
-
-    @ptype region: str
     @param region: Region name within the given provider
     """
     from .models import Instance
@@ -620,13 +622,10 @@ def update_instances(provider, region):
 
 
 @app.task
-def cycle_and_terminate_disabled(provider, region):
+def cycle_and_terminate_disabled(provider: str, region: str) -> None:
     """Kill off instances if pools need to be cycled or disabled.
 
-    @ptype provider: str
     @param provider: CloudProvider name
-
-    @ptype region: str
     @param region: Region name within the given provider
     """
     from .models import Instance, PoolStatusEntry, ProviderStatusEntry
@@ -641,7 +640,7 @@ def cycle_and_terminate_disabled(provider, region):
         # check if the pool has any instances to be terminated
         requests_to_terminate = []
         instances_to_terminate = []
-        instances_by_pool = {}
+        instances_by_pool: dict[str, int] = {}
         pool_disable = {}  # pool_id -> reason (or blank for enabled)
         for instance in Instance.objects.filter(provider=provider, region=region):
             if instance.pool_id not in pool_disable:
@@ -704,11 +703,10 @@ def cycle_and_terminate_disabled(provider, region):
 
 
 @app.task
-def check_and_resize_pool(pool_id):
+def check_and_resize_pool(pool_id: int) -> list[int]:
     """Check pool size and either request more instances from cheapest provider/region,
     or terminate unneeded instances.
 
-    @ptype pool_id: int
     @param pool_id: InstancePool pk
     """
     from .models import Instance, InstancePool, PoolStatusEntry
@@ -748,7 +746,7 @@ def check_and_resize_pool(pool_id):
         instance_cores_missing = config.size
         running_instances = []
 
-        instances = Instance.objects.filter(pool=pool)
+        instances = list(Instance.objects.filter(pool=pool))
 
         for instance in instances:
             if instance.status_code in [
@@ -821,10 +819,9 @@ def check_and_resize_pool(pool_id):
 
 
 @app.task
-def terminate_instances(pool_instances):
+def terminate_instances(pool_instances: list[list[int]]) -> None:
     """Terminate a given list of instances.
 
-    @ptype pool_instances: list of lists of instance ids
     @param pool_instances: Takes the results from multiple calls to
                            check_and_resize_pool(), and aggregates the results into one
                            call to terminate instances/requests per provider/region.

@@ -9,6 +9,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import json
 import logging
 
@@ -17,16 +20,21 @@ import requests
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.test import APIClient
 
 from ec2spotmanager.models import InstancePool
 
 from . import create_config, create_pool
 
-LOG = logging.getLogger("fm.ec2spotmanager.tests.pools.rest")
-pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
+LOG = logging.getLogger(
+    "fm.ec2spotmanager.tests.pools.rest"
+)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures(
+    "ec2spotmanager_test"
+)  # pylint: disable=invalid-name
 
 
-def test_rest_pool_cycle_no_auth(api_client):
+def test_rest_pool_cycle_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/pool/1/cycle/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -36,7 +44,7 @@ def test_rest_pool_cycle_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_cycle_no_perm(api_client):
+def test_rest_pool_cycle_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -48,7 +56,7 @@ def test_rest_pool_cycle_no_perm(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
 
-def test_rest_pool_cycle_patch(api_client):
+def test_rest_pool_cycle_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -57,7 +65,7 @@ def test_rest_pool_cycle_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_cycle_post(api_client):
+def test_rest_pool_cycle_post(api_client: APIClient) -> None:
     """post should reset last_cycled"""
     config = create_config("testconfig")
     pool = create_pool(config, last_cycled=timezone.now())
@@ -76,7 +84,7 @@ def test_rest_pool_cycle_post(api_client):
     assert pool.last_cycled is None
 
 
-def test_rest_pool_cycle_put(api_client):
+def test_rest_pool_cycle_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -85,7 +93,7 @@ def test_rest_pool_cycle_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_cycle_delete(api_client):
+def test_rest_pool_cycle_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -94,7 +102,7 @@ def test_rest_pool_cycle_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_cycle_get(api_client):
+def test_rest_pool_cycle_get(api_client: APIClient) -> None:
     """get should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -103,7 +111,7 @@ def test_rest_pool_cycle_get(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_enable_no_auth(api_client):
+def test_rest_pool_enable_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/pool/1/enable/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -113,7 +121,7 @@ def test_rest_pool_enable_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_enable_no_perm(api_client):
+def test_rest_pool_enable_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -125,7 +133,7 @@ def test_rest_pool_enable_no_perm(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
 
-def test_rest_pool_enable_patch(api_client):
+def test_rest_pool_enable_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -134,7 +142,7 @@ def test_rest_pool_enable_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_enable_post(api_client):
+def test_rest_pool_enable_post(api_client: APIClient) -> None:
     """post should flip isEnabled"""
     config = create_config("testconfig")
     pool = create_pool(config)
@@ -152,7 +160,7 @@ def test_rest_pool_enable_post(api_client):
     assert pool.isEnabled
 
 
-def test_rest_pool_enable_put(api_client):
+def test_rest_pool_enable_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -161,7 +169,7 @@ def test_rest_pool_enable_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_enable_delete(api_client):
+def test_rest_pool_enable_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -170,7 +178,7 @@ def test_rest_pool_enable_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_enable_get(api_client):
+def test_rest_pool_enable_get(api_client: APIClient) -> None:
     """get should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -179,7 +187,7 @@ def test_rest_pool_enable_get(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_disable_no_auth(api_client):
+def test_rest_pool_disable_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/pool/1/disable/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -189,7 +197,7 @@ def test_rest_pool_disable_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_disable_no_perm(api_client):
+def test_rest_pool_disable_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -201,7 +209,7 @@ def test_rest_pool_disable_no_perm(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
 
-def test_rest_pool_disable_patch(api_client):
+def test_rest_pool_disable_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -210,7 +218,7 @@ def test_rest_pool_disable_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_disable_post(api_client):
+def test_rest_pool_disable_post(api_client: APIClient) -> None:
     """post should flip isEnabled"""
     config = create_config("testconfig")
     pool = create_pool(config, enabled=True)
@@ -228,7 +236,7 @@ def test_rest_pool_disable_post(api_client):
     assert not pool.isEnabled
 
 
-def test_rest_pool_disable_put(api_client):
+def test_rest_pool_disable_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -237,7 +245,7 @@ def test_rest_pool_disable_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_disable_delete(api_client):
+def test_rest_pool_disable_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -246,7 +254,7 @@ def test_rest_pool_disable_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_disable_get(api_client):
+def test_rest_pool_disable_get(api_client: APIClient) -> None:
     """get should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -258,7 +266,7 @@ def test_rest_pool_disable_get(api_client):
 @pytest.mark.xfail
 class TestRestPoolChartDetailed:
     @staticmethod
-    def test_rest_pool_chart_detailed_no_auth(api_client):
+    def test_rest_pool_chart_detailed_no_auth(api_client: APIClient) -> None:
         """must yield forbidden without authentication"""
         url = reverse("ec2spotmanager:line_chart_json_detailed", kwargs={"poolid": 1})
         assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -268,7 +276,7 @@ class TestRestPoolChartDetailed:
         assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_no_perm(api_client):
+    def test_rest_pool_chart_detailed_no_perm(api_client: APIClient) -> None:
         """must yield forbidden without permission"""
         user = User.objects.get(username="test-noperm")
         api_client.force_authenticate(user=user)
@@ -280,7 +288,7 @@ class TestRestPoolChartDetailed:
         assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_patch(api_client):
+    def test_rest_pool_chart_detailed_patch(api_client: APIClient) -> None:
         """patch should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -291,7 +299,7 @@ class TestRestPoolChartDetailed:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_post(api_client):
+    def test_rest_pool_chart_detailed_post(api_client: APIClient) -> None:
         """post should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -302,7 +310,7 @@ class TestRestPoolChartDetailed:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_put(api_client):
+    def test_rest_pool_chart_detailed_put(api_client: APIClient) -> None:
         """put should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -313,7 +321,7 @@ class TestRestPoolChartDetailed:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_delete(api_client):
+    def test_rest_pool_chart_detailed_delete(api_client: APIClient) -> None:
         """delete should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -324,7 +332,7 @@ class TestRestPoolChartDetailed:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_detailed_get(api_client):
+    def test_rest_pool_chart_detailed_get(api_client: APIClient) -> None:
         """get should not be allowed"""
         pool = create_pool(create_config("testconfig", size=1))
         user = User.objects.get(username="test")
@@ -343,7 +351,7 @@ class TestRestPoolChartDetailed:
 @pytest.mark.xfail
 class TestRestPoolChartAccumulated:
     @staticmethod
-    def test_rest_pool_chart_accumulated_no_auth(api_client):
+    def test_rest_pool_chart_accumulated_no_auth(api_client: APIClient) -> None:
         """must yield forbidden without authentication"""
         url = reverse(
             "ec2spotmanager:line_chart_json_accumulated", kwargs={"poolid": 1}
@@ -355,7 +363,7 @@ class TestRestPoolChartAccumulated:
         assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_no_perm(api_client):
+    def test_rest_pool_chart_accumulated_no_perm(api_client: APIClient) -> None:
         """must yield forbidden without permission"""
         user = User.objects.get(username="test-noperm")
         api_client.force_authenticate(user=user)
@@ -369,7 +377,7 @@ class TestRestPoolChartAccumulated:
         assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_patch(api_client):
+    def test_rest_pool_chart_accumulated_patch(api_client: APIClient) -> None:
         """patch should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -380,7 +388,7 @@ class TestRestPoolChartAccumulated:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_post(api_client):
+    def test_rest_pool_chart_accumulated_post(api_client: APIClient) -> None:
         """post should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -391,7 +399,7 @@ class TestRestPoolChartAccumulated:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_put(api_client):
+    def test_rest_pool_chart_accumulated_put(api_client: APIClient) -> None:
         """put should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -402,7 +410,7 @@ class TestRestPoolChartAccumulated:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_delete(api_client):
+    def test_rest_pool_chart_accumulated_delete(api_client: APIClient) -> None:
         """delete should not be allowed"""
         user = User.objects.get(username="test")
         api_client.force_authenticate(user=user)
@@ -413,7 +421,7 @@ class TestRestPoolChartAccumulated:
         assert resp.status_code == requests.codes["method_not_allowed"]
 
     @staticmethod
-    def test_rest_pool_chart_accumulated_get(api_client):
+    def test_rest_pool_chart_accumulated_get(api_client: APIClient) -> None:
         """get should be allowed"""
         pool = create_pool(create_config("testconfig"))
         user = User.objects.get(username="test")

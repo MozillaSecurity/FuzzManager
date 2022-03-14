@@ -8,19 +8,24 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 
 from crashmanager.models import Tool, User
+from crashmanager.tests.conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.usersettings")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
-def test_user_settings_no_login(client):
+def test_user_settings_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse("crashmanager:usersettings")
     resp = client.get(path)
@@ -28,7 +33,7 @@ def test_user_settings_no_login(client):
     assert resp.url == "/login/?next=" + path
 
 
-def test_user_settings_simple_get(client):
+def test_user_settings_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     path = reverse("crashmanager:usersettings")
@@ -38,7 +43,7 @@ def test_user_settings_simple_get(client):
     assert response.context["user"] == User.objects.get(user__username="test").user
 
 
-def test_user_settings_edit(client, cm):
+def test_user_settings_edit(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
     providers = [

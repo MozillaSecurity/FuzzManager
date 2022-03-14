@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -34,7 +37,7 @@ from FTB.Signatures.CrashSignature import CrashSignature
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def test_ASanParserTestAccessViolation():
+def test_ASanParserTestAccessViolation() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = ASanCrashInfo(
@@ -53,7 +56,7 @@ def test_ASanParserTestAccessViolation():
     assert crashInfo.registers["bp"] == 0x00F9915F0A20
 
 
-def test_ASanParserTestCrash():
+def test_ASanParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -75,7 +78,7 @@ def test_ASanParserTestCrash():
     assert crashInfo.registers["bp"] == 0xFFC57F18
 
 
-def test_ASanParserTestCrashWithWarning():
+def test_ASanParserTestCrashWithWarning() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -94,7 +97,7 @@ def test_ASanParserTestCrashWithWarning():
     assert crashInfo.registers["bp"] == 0xFFC57F18
 
 
-def test_ASanParserTestFailedAlloc():
+def test_ASanParserTestFailedAlloc() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -115,7 +118,7 @@ def test_ASanParserTestFailedAlloc():
     ) == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestAllocSize():
+def test_ASanParserTestAllocSize() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -135,7 +138,7 @@ def test_ASanParserTestAllocSize():
     ) == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestHeapCrash():
+def test_ASanParserTestHeapCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -153,7 +156,7 @@ def test_ASanParserTestHeapCrash():
     assert crashInfo.createShortSignature() == "[@ ??]"
 
 
-def test_ASanParserTestUAF():
+def test_ASanParserTestUAF() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -171,7 +174,7 @@ def test_ASanParserTestUAF():
     ) == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestInvalidFree():
+def test_ASanParserTestInvalidFree() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -190,7 +193,7 @@ def test_ASanParserTestInvalidFree():
     ) == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestOOM():
+def test_ASanParserTestOOM() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -214,7 +217,7 @@ def test_ASanParserTestOOM():
     ) == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestDebugAssertion():
+def test_ASanParserTestDebugAssertion() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -247,7 +250,9 @@ def test_ASanParserTestDebugAssertion():
         (None, "trace_ubsan_generic_crash.txt"),
     ],
 )
-def test_ASanDetectionTest(stderr_path, crash_data_path):
+def test_ASanDetectionTest(
+    stderr_path: str | None, crash_data_path: str | None
+) -> None:
     config = ProgramConfiguration("test", "x86", "linux")
     stderr = "" if stderr_path is None else (FIXTURE_PATH / stderr_path).read_text()
     crash_data = (
@@ -262,7 +267,7 @@ def test_ASanDetectionTest(stderr_path, crash_data_path):
     assert isinstance(crashInfo, ASanCrashInfo)
 
 
-def test_ASanParserTestParamOverlap():
+def test_ASanParserTestParamOverlap() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -293,7 +298,7 @@ def test_ASanParserTestParamOverlap():
     )
 
 
-def test_ASanParserTestMultiTrace():
+def test_ASanParserTestMultiTrace() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -306,7 +311,7 @@ def test_ASanParserTestMultiTrace():
     assert "[@ mozilla::ipc::Shmem::OpenExisting]" == crashInfo.createShortSignature()
 
 
-def test_ASanParserTestTruncatedTrace():
+def test_ASanParserTestTruncatedTrace() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = ASanCrashInfo(
@@ -320,10 +325,11 @@ def test_ASanParserTestTruncatedTrace():
     # Confirm that generating a crash signature will fail
     crashSig = crashInfo.createCrashSignature()
     assert crashSig is None
+    assert crashInfo.failureReason is not None
     assert "Insufficient data" in crashInfo.failureReason
 
 
-def test_GDBParserTestCrash():
+def test_GDBParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = GDBCrashInfo(
@@ -339,7 +345,7 @@ def test_GDBParserTestCrash():
     assert crashInfo.registers["eip"] == 0x818BC33
 
 
-def test_GDBParserTestCrashAddress():
+def test_GDBParserTestCrashAddress() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo1 = GDBCrashInfo(
@@ -375,7 +381,7 @@ def test_GDBParserTestCrashAddress():
     assert crashInfo5.crashAddress == 0x87AFA014
 
 
-def test_GDBParserTestCrashAddressSimple():
+def test_GDBParserTestCrashAddressSimple() -> None:
     registerMap64 = {}
     registerMap64["rax"] = 0x0
     registerMap64["rbx"] = -1
@@ -436,7 +442,7 @@ def test_GDBParserTestCrashAddressSimple():
     )
 
 
-def test_GDBParserTestRegression1():
+def test_GDBParserTestRegression1() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo1 = GDBCrashInfo(
@@ -449,7 +455,7 @@ def test_GDBParserTestRegression1():
     assert crashInfo1.backtrace[1] == "js::SetPropertyIgnoringNamedGetter"
 
 
-def test_GDBParserTestCrashAddressRegression2():
+def test_GDBParserTestCrashAddressRegression2() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo2 = GDBCrashInfo(
@@ -461,7 +467,7 @@ def test_GDBParserTestCrashAddressRegression2():
     assert crashInfo2.crashAddress == 0xFFFD579C
 
 
-def test_GDBParserTestCrashAddressRegression3():
+def test_GDBParserTestCrashAddressRegression3() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo3 = GDBCrashInfo(
@@ -473,7 +479,7 @@ def test_GDBParserTestCrashAddressRegression3():
     assert crashInfo3.crashAddress == 0x7FFFFFFFFFFF
 
 
-def test_GDBParserTestCrashAddressRegression4():
+def test_GDBParserTestCrashAddressRegression4() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo4 = GDBCrashInfo(
@@ -485,7 +491,7 @@ def test_GDBParserTestCrashAddressRegression4():
     assert crashInfo4.crashAddress == 0x0
 
 
-def test_GDBParserTestCrashAddressRegression5():
+def test_GDBParserTestCrashAddressRegression5() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo5 = GDBCrashInfo(
@@ -497,7 +503,7 @@ def test_GDBParserTestCrashAddressRegression5():
     assert crashInfo5.crashAddress == 0xFFFD573C
 
 
-def test_GDBParserTestCrashAddressRegression6():
+def test_GDBParserTestCrashAddressRegression6() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo6 = GDBCrashInfo(
@@ -509,7 +515,7 @@ def test_GDBParserTestCrashAddressRegression6():
     assert crashInfo6.crashAddress == 0xF7673132
 
 
-def test_GDBParserTestCrashAddressRegression7():
+def test_GDBParserTestCrashAddressRegression7() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     # This used to fail because CrashInfo.fromRawCrashData fails to detect a GDB trace
@@ -523,7 +529,7 @@ def test_GDBParserTestCrashAddressRegression7():
     assert crashInfo7.backtrace[1] == "js::ScopeIter::settle"
 
 
-def test_GDBParserTestCrashAddressRegression8():
+def test_GDBParserTestCrashAddressRegression8() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     # This used to fail because CrashInfo.fromRawCrashData fails to detect a GDB trace
@@ -543,7 +549,7 @@ def test_GDBParserTestCrashAddressRegression8():
     assert crashInfo8.backtrace[5] == "js::jit::CheckICacheLocked"
 
 
-def test_GDBParserTestCrashAddressRegression9():
+def test_GDBParserTestCrashAddressRegression9() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo9 = CrashInfo.fromRawCrashData(
@@ -555,7 +561,7 @@ def test_GDBParserTestCrashAddressRegression9():
     assert crashInfo9.crashInstruction == "call   0x8120ca0"
 
 
-def test_GDBParserTestCrashAddressRegression10():
+def test_GDBParserTestCrashAddressRegression10() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo10 = CrashInfo.fromRawCrashData(
@@ -568,7 +574,7 @@ def test_GDBParserTestCrashAddressRegression10():
     assert crashInfo10.crashAddress == 0x7FF7F20C1F81
 
 
-def test_GDBParserTestCrashAddressRegression11():
+def test_GDBParserTestCrashAddressRegression11() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo11 = CrashInfo.fromRawCrashData(
@@ -581,7 +587,7 @@ def test_GDBParserTestCrashAddressRegression11():
     assert crashInfo11.crashAddress == 0x7FF7F2091032
 
 
-def test_GDBParserTestCrashAddressRegression12():
+def test_GDBParserTestCrashAddressRegression12() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo12 = CrashInfo.fromRawCrashData(
@@ -596,7 +602,7 @@ def test_GDBParserTestCrashAddressRegression12():
     assert crashInfo12.backtrace[3] == "CaptureStack"
 
 
-def test_GDBParserTestCrashAddressRegression13():
+def test_GDBParserTestCrashAddressRegression13() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo13 = CrashInfo.fromRawCrashData(
@@ -614,7 +620,7 @@ def test_GDBParserTestCrashAddressRegression13():
     assert crashInfo13.crashAddress == 0xE5E5E5F5
 
 
-def test_CrashSignatureOutputTest():
+def test_CrashSignatureOutputTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashSignature1 = '{ "symptoms" : [ { "type" : "output", "value" : "test" } ] }'
@@ -630,7 +636,7 @@ def test_CrashSignatureOutputTest():
     outputSignature1Neg = CrashSignature(crashSignature1Neg)
     outputSignature2 = CrashSignature(crashSignature2)
 
-    gdbOutput = []
+    gdbOutput: list[str] = []
     stdout = []
     stderr = []
 
@@ -662,7 +668,7 @@ def test_CrashSignatureOutputTest():
     assert outputSignature2.matches(crashInfo)
 
 
-def test_CrashSignatureAddressTest():
+def test_CrashSignatureAddressTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashSignature1 = (
@@ -697,7 +703,7 @@ def test_CrashSignatureAddressTest():
     assert not addressSig1Neg.matches(crashInfo3)
 
 
-def test_CrashSignatureRegisterTest():
+def test_CrashSignatureRegisterTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashSignature1 = {"symptoms": [{"type": "instruction", "registerNames": ["r14"]}]}
@@ -767,7 +773,7 @@ def test_CrashSignatureRegisterTest():
     assert not instructionSig3.matches(crashInfo3)
 
 
-def test_CrashSignatureStackFrameTest():
+def test_CrashSignatureStackFrameTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashSignature1 = {
@@ -818,7 +824,7 @@ def test_CrashSignatureStackFrameTest():
     assert not stackFrameSig2Neg.matches(crashInfo1)
 
 
-def test_CrashSignatureStackSizeTest():
+def test_CrashSignatureStackSizeTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashSignature1 = '{ "symptoms" : [ { "type" : "stackSize", "size" : 8 } ] }'
@@ -851,7 +857,7 @@ def test_CrashSignatureStackSizeTest():
     assert not stackSizeSig2Neg.matches(crashInfo1)
 
 
-def test_RegisterHelperValueTest():
+def test_RegisterHelperValueTest() -> None:
     registerMap = {"rax": 0xFFFFFFFFFFFFFE00, "rbx": 0x7FFFF79A7640}
 
     assert RegisterHelper.getRegisterValue("rax", registerMap) == 0xFFFFFFFFFFFFFE00
@@ -867,7 +873,7 @@ def test_RegisterHelperValueTest():
     assert RegisterHelper.getRegisterValue("bl", registerMap) == 0x40
 
 
-def test_MinidumpParserTestCrash():
+def test_MinidumpParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = MinidumpCrashInfo(
@@ -883,7 +889,7 @@ def test_MinidumpParserTestCrash():
     assert crashInfo.crashAddress == 0x3E800006ACB
 
 
-def test_MinidumpSelectorTest():
+def test_MinidumpSelectorTest() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashData = (FIXTURE_PATH / "minidump-example.txt").read_text().splitlines()
@@ -892,7 +898,7 @@ def test_MinidumpSelectorTest():
     assert crashInfo.crashAddress == 0x3E800006ACB
 
 
-def test_MinidumpFromMacOSTest():
+def test_MinidumpFromMacOSTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "macosx")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -909,7 +915,7 @@ def test_MinidumpFromMacOSTest():
     assert crashInfo.crashAddress == 0
 
 
-def test_AppleParserTestCrash():
+def test_AppleParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86-64", "macosx")
 
     crashInfo = AppleCrashInfo(
@@ -939,7 +945,7 @@ def test_AppleParserTestCrash():
     assert crashInfo.crashAddress == 0x00007FFF5F3FFF98
 
 
-def test_AppleSelectorTest():
+def test_AppleSelectorTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "macosx")
 
     crashData = (
@@ -950,7 +956,7 @@ def test_AppleSelectorTest():
     assert crashInfo.crashAddress == 0x00007FFF5F3FFF98
 
 
-def test_AppleLionParserTestCrash():
+def test_AppleLionParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86-64", "macosx64")
 
     crashInfo = AppleCrashInfo(
@@ -984,7 +990,7 @@ def test_AppleLionParserTestCrash():
     assert crashInfo.crashAddress == 0x0000000000000000
 
 
-def test_AppleLionSelectorTest():
+def test_AppleLionSelectorTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "macosx64")
 
     crashData = (
@@ -999,7 +1005,7 @@ def test_AppleLionSelectorTest():
 # failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength
 #     01814577 cc              int     3
-def test_CDBParserTestCrash1a():
+def test_CDBParserTestCrash1a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1038,7 +1044,7 @@ def test_CDBParserTestCrash1a():
     assert crashInfo.crashAddress == 0x01814577
 
 
-def test_CDBSelectorTest1a():
+def test_CDBSelectorTest1a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-1a-crashlog.txt").read_text().splitlines()
@@ -1051,7 +1057,7 @@ def test_CDBSelectorTest1a():
 # failure:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
 #     01344577 cc              int     3
-def test_CDBParserTestCrash1b():
+def test_CDBParserTestCrash1b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1090,7 +1096,7 @@ def test_CDBParserTestCrash1b():
     assert crashInfo.crashAddress == 0x01344577
 
 
-def test_CDBSelectorTest1b():
+def test_CDBSelectorTest1b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-1b-crashlog.txt").read_text().splitlines()
@@ -1103,7 +1109,7 @@ def test_CDBSelectorTest1b():
 # failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength
 #     00000001`40144e62 cc              int     3
-def test_CDBParserTestCrash2a():
+def test_CDBParserTestCrash2a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1162,7 +1168,7 @@ def test_CDBParserTestCrash2a():
     assert crashInfo.crashAddress == 0x0000000140144E62
 
 
-def test_CDBSelectorTest2a():
+def test_CDBSelectorTest2a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-2a-crashlog.txt").read_text().splitlines()
@@ -1175,7 +1181,7 @@ def test_CDBSelectorTest2a():
 # failure:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+52
 #     00007ff7`1e424e62 cc              int     3
-def test_CDBParserTestCrash2b():
+def test_CDBParserTestCrash2b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1234,7 +1240,7 @@ def test_CDBParserTestCrash2b():
     assert crashInfo.crashAddress == 0x00007FF71E424E62
 
 
-def test_CDBSelectorTest2b():
+def test_CDBSelectorTest2b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-2b-crashlog.txt").read_text().splitlines()
@@ -1246,7 +1252,7 @@ def test_CDBSelectorTest2b():
 # Test 3a is for Win7 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena
 #     00f36a63 8b00            mov     eax,dword ptr [eax]
-def test_CDBParserTestCrash3a():
+def test_CDBParserTestCrash3a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1305,7 +1311,7 @@ def test_CDBParserTestCrash3a():
     assert crashInfo.crashAddress == 0x00F36A63
 
 
-def test_CDBSelectorTest3a():
+def test_CDBSelectorTest3a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-3a-crashlog.txt").read_text().splitlines()
@@ -1317,7 +1323,7 @@ def test_CDBSelectorTest3a():
 # Test 3b is for Win10 with 32-bit js debug deterministic shell crashing:
 #     js_dbg_32_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+13
 #     00ed6a63 8b00            mov     eax,dword ptr [eax]
-def test_CDBParserTestCrash3b():
+def test_CDBParserTestCrash3b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1376,7 +1382,7 @@ def test_CDBParserTestCrash3b():
     assert crashInfo.crashAddress == 0x00ED6A63
 
 
-def test_CDBSelectorTest3b():
+def test_CDBSelectorTest3b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-3b-crashlog.txt").read_text().splitlines()
@@ -1388,7 +1394,7 @@ def test_CDBSelectorTest3b():
 # Test 4a is for Win7 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
 #     00d44c59 8b39            mov     edi,dword ptr [ecx]
-def test_CDBParserTestCrash4a():
+def test_CDBParserTestCrash4a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1465,7 +1471,7 @@ def test_CDBParserTestCrash4a():
     assert crashInfo.crashAddress == 0x00D44C59
 
 
-def test_CDBSelectorTest4a():
+def test_CDBSelectorTest4a() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-4a-crashlog.txt").read_text().splitlines()
@@ -1477,7 +1483,7 @@ def test_CDBSelectorTest4a():
 # Test 4b is for Win10 with 32-bit js opt deterministic shell crashing:
 #     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
 #     00404c59 8b39            mov     edi,dword ptr [ecx]
-def test_CDBParserTestCrash4b():
+def test_CDBParserTestCrash4b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1538,7 +1544,7 @@ def test_CDBParserTestCrash4b():
     assert crashInfo.crashAddress == 0x00404C59
 
 
-def test_CDBSelectorTest4b():
+def test_CDBSelectorTest4b() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-4b-crashlog.txt").read_text().splitlines()
@@ -1550,7 +1556,7 @@ def test_CDBSelectorTest4b():
 # Test 5a is for Win7 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery
 #     00000001`3f4975db 8b11            mov     edx,dword ptr [rcx]
-def test_CDBParserTestCrash5a():
+def test_CDBParserTestCrash5a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1615,7 +1621,7 @@ def test_CDBParserTestCrash5a():
     assert crashInfo.crashAddress == 0x000000013F4975DB
 
 
-def test_CDBSelectorTest5a():
+def test_CDBSelectorTest5a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-5a-crashlog.txt").read_text().splitlines()
@@ -1627,7 +1633,7 @@ def test_CDBSelectorTest5a():
 # Test 5b is for Win10 with 64-bit js debug deterministic shell crashing:
 #     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
 #     00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx]
-def test_CDBParserTestCrash5b():
+def test_CDBParserTestCrash5b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1692,7 +1698,7 @@ def test_CDBParserTestCrash5b():
     assert crashInfo.crashAddress == 0x00007FF71DCF75DB
 
 
-def test_CDBSelectorTest5b():
+def test_CDBSelectorTest5b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-5b-crashlog.txt").read_text().splitlines()
@@ -1704,7 +1710,7 @@ def test_CDBSelectorTest5b():
 # Test 6a is for Win7 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
 #     00000001`3f869ff3 4c8b01          mov     r8,qword ptr [rcx]
-def test_CDBParserTestCrash6a():
+def test_CDBParserTestCrash6a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1793,7 +1799,7 @@ def test_CDBParserTestCrash6a():
     assert crashInfo.crashAddress == 0x000000013F869FF3
 
 
-def test_CDBSelectorTest6a():
+def test_CDBSelectorTest6a() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-6a-crashlog.txt").read_text().splitlines()
@@ -1805,7 +1811,7 @@ def test_CDBSelectorTest6a():
 # Test 6b is for Win10 with 64-bit js opt deterministic shell crashing:
 #     js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+13
 #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-def test_CDBParserTestCrash6b():
+def test_CDBParserTestCrash6b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1894,7 +1900,7 @@ def test_CDBParserTestCrash6b():
     assert crashInfo.crashAddress == 0x00007FF74D469FF3
 
 
-def test_CDBSelectorTest6b():
+def test_CDBSelectorTest6b() -> None:
     config = ProgramConfiguration("test", "x86-64", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-6b-crashlog.txt").read_text().splitlines()
@@ -1906,7 +1912,7 @@ def test_CDBSelectorTest6b():
 # Test 7 is for Windows Server 2012 R2 with 32-bit js debug deterministic shell:
 #     +205
 #     25d80b01 cc              int     3
-def test_CDBParserTestCrash7():
+def test_CDBParserTestCrash7() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -1975,7 +1981,7 @@ def test_CDBParserTestCrash7():
     assert crashInfo.crashAddress == 0x25D80B01
 
 
-def test_CDBSelectorTest7():
+def test_CDBSelectorTest7() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-7c-crashlog.txt").read_text().splitlines()
@@ -1989,7 +1995,7 @@ def test_CDBSelectorTest7():
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [
 #         c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
 #     0142865d cc              int     3
-def test_CDBParserTestCrash8():
+def test_CDBParserTestCrash8() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -2013,7 +2019,7 @@ def test_CDBParserTestCrash8():
     assert crashInfo.crashAddress == 0x0142865D
 
 
-def test_CDBSelectorTest8():
+def test_CDBSelectorTest8() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-8c-crashlog.txt").read_text().splitlines()
@@ -2025,7 +2031,7 @@ def test_CDBSelectorTest8():
 # Test 9 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +1d8
 #     0f2bb4f3 cc              int     3
-def test_CDBParserTestCrash9():
+def test_CDBParserTestCrash9() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -2092,7 +2098,7 @@ def test_CDBParserTestCrash9():
     assert crashInfo.crashAddress == 0x0F2BB4F3
 
 
-def test_CDBSelectorTest9():
+def test_CDBSelectorTest9() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-9c-crashlog.txt").read_text().splitlines()
@@ -2104,7 +2110,7 @@ def test_CDBSelectorTest9():
 # Test 10 is for Windows Server 2012 R2 with 32-bit js opt profiling shell:
 #     +82
 #     1c2fbbb0 cc              int     3
-def test_CDBParserTestCrash10():
+def test_CDBParserTestCrash10() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -2132,7 +2138,7 @@ def test_CDBParserTestCrash10():
     assert crashInfo.crashAddress == 0x1C2FBBB0
 
 
-def test_CDBSelectorTest10():
+def test_CDBSelectorTest10() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-10c-crashlog.txt").read_text().splitlines()
@@ -2146,7 +2152,7 @@ def test_CDBSelectorTest10():
 #     js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [
 #         c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
 #     0156865d cc              int     3
-def test_CDBParserTestCrash11():
+def test_CDBParserTestCrash11() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -2170,7 +2176,7 @@ def test_CDBParserTestCrash11():
     assert crashInfo.crashAddress == 0x0156865D
 
 
-def test_CDBSelectorTest11():
+def test_CDBSelectorTest11() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-11c-crashlog.txt").read_text().splitlines()
@@ -2182,7 +2188,7 @@ def test_CDBSelectorTest11():
 # Test 12 is for Windows Server 2012 R2 with 32-bit js opt profiling deterministic shell
 #     +1d8
 #     1fa0b7f8 cc              int     3
-def test_CDBParserTestCrash12():
+def test_CDBParserTestCrash12() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashInfo = CDBCrashInfo(
@@ -2209,7 +2215,7 @@ def test_CDBParserTestCrash12():
     assert crashInfo.crashAddress == 0x1FA0B7F8
 
 
-def test_CDBSelectorTest12():
+def test_CDBSelectorTest12() -> None:
     config = ProgramConfiguration("test", "x86", "windows")
 
     crashData = (FIXTURE_PATH / "cdb-12c-crashlog.txt").read_text().splitlines()
@@ -2218,7 +2224,7 @@ def test_CDBSelectorTest12():
     assert crashInfo.crashAddress == 0x1FA0B7F8
 
 
-def test_UBSanParserTestCrash1():
+def test_UBSanParserTestCrash1() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -2239,7 +2245,7 @@ def test_UBSanParserTestCrash1():
     assert crashInfo.crashAddress is None
 
 
-def test_UBSanParserTestCrash2():
+def test_UBSanParserTestCrash2() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -2256,7 +2262,7 @@ def test_UBSanParserTestCrash2():
     assert crashInfo.crashAddress is None
 
 
-def test_UBSanParserTestCrash3():
+def test_UBSanParserTestCrash3() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -2269,7 +2275,7 @@ def test_UBSanParserTestCrash3():
     assert crashInfo.crashAddress is None
 
 
-def test_UBSanParserTestCrash4():
+def test_UBSanParserTestCrash4() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -2288,7 +2294,7 @@ def test_UBSanParserTestCrash4():
     assert crashInfo.registers["sp"] == 0x7F0662600680
 
 
-def test_RustParserTests1():
+def test_RustParserTests1() -> None:
     """test RUST_BACKTRACE=1 is parsed correctly"""
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2318,7 +2324,7 @@ def test_RustParserTests1():
     assert crashInfo.crashAddress == 0
 
 
-def test_RustParserTests2():
+def test_RustParserTests2() -> None:
     """test RUST_BACKTRACE=full is parsed correctly"""
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2371,7 +2377,7 @@ def test_RustParserTests2():
     assert crashInfo.crashAddress == 0
 
 
-def test_RustParserTests3():
+def test_RustParserTests3() -> None:
     """test rust backtraces are weakly found, ie. minidump output wins even if it comes
     after"""
     config = ProgramConfiguration("test", "x86-64", "win")
@@ -2399,7 +2405,7 @@ def test_RustParserTests3():
     assert crashInfo.crashAddress == 0x7FFC41F2F276
 
 
-def test_RustParserTests4():
+def test_RustParserTests4() -> None:
     """test another rust backtrace"""
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2424,7 +2430,7 @@ def test_RustParserTests4():
     assert crashInfo.crashAddress == 0
 
 
-def test_RustParserTests5():
+def test_RustParserTests5() -> None:
     """test multi-line with minidump trace in sterror rust backtrace"""
     auxData = [
         "OS|Linux|0.0.0 Linux ... x86_64",
@@ -2464,7 +2470,7 @@ def test_RustParserTests5():
     assert crashInfo.crashAddress == 0
 
 
-def test_RustParserTests6():
+def test_RustParserTests6() -> None:
     """test parsing rust assertion failure backtrace"""
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2483,7 +2489,7 @@ def test_RustParserTests6():
     assert crashInfo.crashAddress == 0
 
 
-def test_MinidumpModuleInStackTest():
+def test_MinidumpModuleInStackTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2496,7 +2502,7 @@ def test_MinidumpModuleInStackTest():
     assert crashInfo.backtrace[1] == "swrast_dri.so+0x470ecc"
 
 
-def test_LSanParserTestLeakDetected():
+def test_LSanParserTestLeakDetected() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2514,7 +2520,7 @@ def test_LSanParserTestLeakDetected():
     assert crashInfo.crashAddress is None
 
 
-def test_TSanParserSimpleLeakTest():
+def test_TSanParserSimpleLeakTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2536,7 +2542,7 @@ def test_TSanParserSimpleLeakTest():
     assert crashInfo.crashAddress is None
 
 
-def test_TSanParserSimpleRaceTest():
+def test_TSanParserSimpleRaceTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     for fn in ["tsan-simple-race-report.txt", "tsan-simple-race-report-swapped.txt"]:
@@ -2559,7 +2565,7 @@ def test_TSanParserSimpleRaceTest():
         assert crashInfo.crashAddress is None
 
 
-def test_TSanParserLockReportTest():
+def test_TSanParserLockReportTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2581,7 +2587,7 @@ def test_TSanParserLockReportTest():
     assert crashInfo.crashAddress is None
 
 
-def test_TSanParserTestCrash():
+def test_TSanParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2602,7 +2608,7 @@ def test_TSanParserTestCrash():
     assert crashInfo.registers["sp"] == 0x7FE1A51BCF00
 
 
-def test_TSanParserTest():
+def test_TSanParserTest() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
 
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2624,7 +2630,7 @@ def test_TSanParserTest():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindCJMParser():
+def test_ValgrindCJMParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-cjm-01.txt").read_text().splitlines()
@@ -2660,7 +2666,7 @@ def test_ValgrindCJMParser():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindIRWParser():
+def test_ValgrindIRWParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-ir-01.txt").read_text().splitlines()
@@ -2706,7 +2712,7 @@ def test_ValgrindIRWParser():
     assert crashInfo.crashAddress == 0x41414141
 
 
-def test_ValgrindUUVParser():
+def test_ValgrindUUVParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-uuv-01.txt").read_text().splitlines()
@@ -2727,7 +2733,7 @@ def test_ValgrindUUVParser():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindIFParser():
+def test_ValgrindIFParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-if-01.txt").read_text().splitlines()
@@ -2776,7 +2782,7 @@ def test_ValgrindIFParser():
     assert crashInfo.crashAddress == 0xBADF00D
 
 
-def test_ValgrindSDOParser():
+def test_ValgrindSDOParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-sdo-01.txt").read_text().splitlines()
@@ -2792,7 +2798,7 @@ def test_ValgrindSDOParser():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindSCParser():
+def test_ValgrindSCParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-sc-01.txt").read_text().splitlines()
@@ -2825,7 +2831,7 @@ def test_ValgrindSCParser():
     assert crashInfo.crashAddress == 0x5E7B6B4
 
 
-def test_ValgrindNMParser():
+def test_ValgrindNMParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-nm-01.txt").read_text().splitlines()
@@ -2842,7 +2848,7 @@ def test_ValgrindNMParser():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindPTParser():
+def test_ValgrindPTParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-pt-01.txt").read_text().splitlines()
@@ -2859,7 +2865,7 @@ def test_ValgrindPTParser():
     assert crashInfo.crashAddress is None
 
 
-def test_ValgrindLeakParser():
+def test_ValgrindLeakParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [], [], config, (FIXTURE_PATH / "valgrind-leak-01.txt").read_text().splitlines()

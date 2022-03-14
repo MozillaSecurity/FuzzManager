@@ -15,12 +15,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import argparse
 import functools
 import os
 import random
 import sys
 import time
+from typing import Any
 
 import requests
 from fasteners import InterProcessLock
@@ -28,7 +32,7 @@ from fasteners import InterProcessLock
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 from Reporter.Reporter import Reporter, remote_checks
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
@@ -36,18 +40,17 @@ __updated__ = "2014-10-01"
 
 class EC2Reporter(Reporter):
     @functools.wraps(Reporter.__init__)
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault(
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by EC2Reporter
         super().__init__(*args, **kwargs)
 
     @remote_checks
-    def report(self, text):
+    def report(self, text: str) -> None:
         """
         Send textual report to server, overwriting any existing reports.
 
-        @type text: string
         @param text: Report text to send
         """
         url = "{}://{}:{}/ec2spotmanager/rest/report/".format(
@@ -65,11 +68,10 @@ class EC2Reporter(Reporter):
         self.post(url, data)
 
     @remote_checks
-    def cycle(self, poolid):
+    def cycle(self, poolid: int) -> None:
         """
         Cycle the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to cycle
         """
         url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/cycle/".format(
@@ -82,11 +84,10 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
-    def disable(self, poolid):
+    def disable(self, poolid: int) -> None:
         """
         Disable the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to disable
         """
         url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/disable/".format(
@@ -99,11 +100,10 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
     @remote_checks
-    def enable(self, poolid):
+    def enable(self, poolid: int) -> None:
         """
         Enable the pool with the given id.
 
-        @type poolid: int
         @param poolid: ID of the pool to enable
         """
         url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/enable/".format(
@@ -116,7 +116,7 @@ class EC2Reporter(Reporter):
         self.post(url, {}, expected=requests.codes["ok"])
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     """Command line options."""
 
     # setup argparser

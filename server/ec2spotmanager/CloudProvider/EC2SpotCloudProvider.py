@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import re
+from typing import cast
 
 import boto3
 import boto.ec2
@@ -23,15 +26,15 @@ from .CloudProvider import (
 
 
 class EC2SpotCloudProvider(CloudProvider):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("ec2spotmanager")
-        self.cluster = None
-        self.connected_region = None
+        self.cluster: EC2Manager | None = None
+        self.connected_region: str | None = None
 
-    def _connect(self, region):
+    def _connect(self, region: str) -> EC2Manager:
         if self.connected_region != region:
-            self.cluster = EC2Manager(
-                None
+            self.cluster = cast(
+                EC2Manager, EC2Manager(None)
             )  # create a new Manager to invalidate cached image names, etc.
             self.cluster.connect(
                 region=region,
@@ -42,7 +45,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return self.cluster
 
     @wrap_provider_errors
-    def terminate_instances(self, instances_ids_by_region):
+    def terminate_instances(self, instances_ids_by_region) -> None:
         for region, instance_ids in instances_ids_by_region.items():
             cluster = self._connect(region)
             self.logger.info(
@@ -72,7 +75,7 @@ class EC2SpotCloudProvider(CloudProvider):
             cluster.terminate(boto_instances)
 
     @wrap_provider_errors
-    def cancel_requests(self, requested_instances_by_region):
+    def cancel_requests(self, requested_instances_by_region) -> None:
         for region, instance_ids in requested_instances_by_region.items():
             cluster = self._connect(region)
             cluster.cancel_spot_requests(instance_ids)
@@ -83,9 +86,17 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @wrap_provider_errors
     def start_instances(
-        self, config, region, zone, userdata, image, instance_type, count, _tags
+        self,
+        config,
+        region: str,
+        zone: str,
+        userdata,
+        image: str,
+        instance_type: str,
+        count,
+        _tags: str,
     ):
-        images = self._create_laniakea_images(config)
+        images: dict[str, dict[str, str]] = self._create_laniakea_images(config)
 
         self.logger.info(
             "Using instance type %s in region %s with availability zone %s.",
@@ -157,8 +168,8 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @wrap_provider_errors
     def check_instances_requests(self, region, instances, tags):
-        successful_requests = {}
-        failed_requests = {}
+        successful_requests: dict[str, dict[str, str]] = {}
+        failed_requests: dict[str, dict[str, str]] = {}
 
         cluster = self._connect(region)
         try:
@@ -252,7 +263,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return (successful_requests, failed_requests)
 
     @wrap_provider_errors
-    def check_instances_state(self, pool_id, region):
+    def check_instances_state(self, pool_id: int | None, region: str):
 
         instance_states = {}
         cluster = self._connect(region)
@@ -284,13 +295,13 @@ class EC2SpotCloudProvider(CloudProvider):
         return instance_states
 
     @wrap_provider_errors
-    def get_image(self, region, config):
+    def get_image(self, region: str, config) -> str:
         cluster = self._connect(region)
-        ami = cluster.resolve_image_name(config.ec2_image_name)
+        ami = cast(str, cluster.resolve_image_name(config.ec2_image_name))
         return ami
 
     @staticmethod
-    def get_cores_per_instance():
+    def get_cores_per_instance() -> dict[str, int]:
         return CORES_PER_INSTANCE
 
     @staticmethod
@@ -314,11 +325,11 @@ class EC2SpotCloudProvider(CloudProvider):
         return config.instance_tags
 
     @staticmethod
-    def get_name():
+    def get_name() -> str:
         return "EC2Spot"
 
     @staticmethod
-    def config_supported(config):
+    def config_supported(config) -> bool:
         fields = [
             "ec2_allowed_regions",
             "max_price",
@@ -330,7 +341,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return all(config.get(key) for key in fields)
 
     @wrap_provider_errors
-    def get_prices_per_region(self, region_name, instance_types=None):
+    def get_prices_per_region(self, region_name: str, instance_types=None):
         """Gets spot prices of the specified region and instance type"""
         prices = {}  # {instance-type: region: {az: [prices]}}}
         zone_blacklist = ["us-east-1a", "us-east-1f"]
@@ -369,8 +380,8 @@ class EC2SpotCloudProvider(CloudProvider):
         return prices
 
     @staticmethod
-    def _create_laniakea_images(config):
-        images = {"default": {}}
+    def _create_laniakea_images(config) -> dict[str, dict[str, str]]:
+        images: dict[str, dict[str, str]] = {"default": {}}
 
         # These are the configuration keys we want to put into the target configuration
         # without further preprocessing, except for the adjustment of the key name

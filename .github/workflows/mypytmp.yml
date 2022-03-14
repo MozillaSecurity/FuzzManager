@@ -1,0 +1,69 @@
+name: mypytmp
+
+on:
+  push:
+    branches: [ mypy-support ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # pip cache dependencies to save time
+    - uses: actions/cache@v2
+      if: startsWith(runner.os, 'Linux')
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Get pip cache dir
+      id: pip-cache
+      run: |
+        echo "::set-output name=dir::$(pip cache dir)"
+    - name: pip cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # - name: Install OS prerequisites
+    #   if: startsWith(runner.os, 'Linux')
+    #   run: sudo apt-get install ripgrep
+
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        python -u -m pip install --upgrade pip setuptools wheel
+        pip install --upgrade -e .[dev,server,taskmanager,docker,test,mypy]
+
+    - name: Run flake8
+      run: |
+        flake8 .
+
+    - name: Run yesqa
+      run: |
+        find . -type f -name "*.py" -not -path "./build/*" | xargs yesqa
+
+    - name: Run isort and all the rest
+      run: |
+        isort . && black . && pyup_dirs --py37-plus . && flynt .
+
+    - name: Run mypy
+      run: |
+        mypy Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py

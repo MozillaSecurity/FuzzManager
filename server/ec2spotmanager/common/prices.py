@@ -12,8 +12,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
 
-def get_prices(regions, cloud_provider, instance_types=None, use_multiprocess=False):
+
+def get_prices(
+    regions: list[str],
+    cloud_provider,
+    instance_types: list[str] | None = None,
+    use_multiprocess: bool = False,
+) -> dict[str, str]:
     if use_multiprocess:
         from multiprocessing import Pool, cpu_count
 
@@ -45,7 +52,7 @@ def get_prices(regions, cloud_provider, instance_types=None, use_multiprocess=Fa
     return prices
 
 
-def get_price_median(data):
+def get_price_median(data: list[float]) -> float:
     sdata = sorted(data)
     n = len(sdata)
     if not n % 2:

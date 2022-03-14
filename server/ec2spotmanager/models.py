@@ -1,15 +1,21 @@
+from __future__ import annotations
+
 import json
 import os
+from datetime import datetime
+from decimal import Decimal
+from typing import Any, cast
 
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadedfile import UploadedFile
 from django.db import models
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 
 
-def get_storage_path(self, name):
+def get_storage_path(self: models.Model, name: str) -> str:
     return os.path.join(f"poolconfig-{self.pk}-files", name)
 
 
@@ -29,77 +35,94 @@ POOL_STATUS_ENTRY_TYPE = {val: key for key, val in POOL_STATUS_ENTRY_TYPE_CODE.i
 
 
 class OverwritingStorage(FileSystemStorage):
-    def get_available_name(self, name, max_length=None):
+    def get_available_name(self, name: str, max_length: int | None = None) -> str:
         if self.exists(name):
             os.remove(os.path.join(getattr(settings, "USERDATA_STORAGE", None), name))
         return name
 
 
 class PoolConfiguration(models.Model):
-    parent = models.ForeignKey(
-        "self", blank=True, null=True, on_delete=models.deletion.CASCADE
-    )
-    name = models.CharField(max_length=255, blank=False)
-    size = models.IntegerField(default=1, blank=True, null=True)
-    cycle_interval = models.IntegerField(default=86400, blank=True, null=True)
-    max_price = models.DecimalField(
-        max_digits=12, decimal_places=6, blank=True, null=True
-    )
-    instance_tags = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_key_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_security_groups = models.CharField(max_length=255, blank=True, null=True)
-    ec2_instance_types = models.TextField(blank=True, null=True)
-    ec2_image_name = models.CharField(max_length=255, blank=True, null=True)
-    ec2_userdata_file = models.FileField(
-        storage=OverwritingStorage(
-            location=getattr(settings, "USERDATA_STORAGE", None)
+    parent: PoolConfiguration | None = cast(
+        "PoolConfiguration",
+        models.ForeignKey(
+            "self", blank=True, null=True, on_delete=models.deletion.CASCADE
         ),
-        upload_to=get_storage_path,
-        blank=True,
-        null=True,
     )
-    ec2_userdata_macros = models.TextField(blank=True, null=True)
-    ec2_allowed_regions = models.CharField(max_length=1023, blank=True, null=True)
-    ec2_raw_config = models.TextField(blank=True, null=True)
-    gce_machine_types = models.TextField(blank=True, null=True)
-    gce_image_name = models.CharField(max_length=255, blank=True, null=True)
-    gce_container_name = models.CharField(max_length=512, blank=True, null=True)
-    gce_docker_privileged = models.BooleanField(default=False)
-    gce_disk_size = models.IntegerField(blank=True, null=True)
-    gce_cmd = models.TextField(blank=True, null=True)
-    gce_args = models.TextField(blank=True, null=True)
-    gce_env = models.TextField(blank=True, null=True)
+    name = str(models.CharField(max_length=255, blank=False))
+    size: int | None = int(str(models.IntegerField(default=1, blank=True, null=True)))
+    cycle_interval: int | None = int(
+        str(models.IntegerField(default=86400, blank=True, null=True))
+    )
+    max_price: Decimal | float | None = cast(
+        Decimal,
+        models.DecimalField(max_digits=12, decimal_places=6, blank=True, null=True),
+    )
+    instance_tags = str(models.CharField(max_length=1023, blank=True, null=True))
+    ec2_key_name: str | None = str(
+        models.CharField(max_length=255, blank=True, null=True)
+    )
+    ec2_security_groups = str(models.CharField(max_length=255, blank=True, null=True))
+    ec2_instance_types = str(models.TextField(blank=True, null=True))
+    ec2_image_name: str | None = str(
+        models.CharField(max_length=255, blank=True, null=True)
+    )
+    ec2_userdata_file: UploadedFile | None = cast(
+        UploadedFile,
+        models.FileField(
+            storage=OverwritingStorage(
+                location=getattr(settings, "USERDATA_STORAGE", None)
+            ),
+            upload_to=get_storage_path,
+            blank=True,
+            null=True,
+        ),
+    )
+    ec2_userdata_macros = str(models.TextField(blank=True, null=True))
+    ec2_allowed_regions = str(models.CharField(max_length=1023, blank=True, null=True))
+    ec2_raw_config = str(models.TextField(blank=True, null=True))
+    gce_machine_types = str(models.TextField(blank=True, null=True))
+    gce_image_name: str | None = str(
+        models.CharField(max_length=255, blank=True, null=True)
+    )
+    gce_container_name: str | None = str(
+        models.CharField(max_length=512, blank=True, null=True)
+    )
+    gce_docker_privileged = bool(models.BooleanField(default=False))
+    gce_disk_size: int | None = int(str(models.IntegerField(blank=True, null=True)))
+    gce_cmd = str(models.TextField(blank=True, null=True))
+    gce_args = str(models.TextField(blank=True, null=True))
+    gce_env = str(models.TextField(blank=True, null=True))
     # this is a special case that allows copying ec2_userdata_macros into gce_env during
     # flatten().  we typically use userdata_macros to be the env vars provided to the
     # userdata script
-    gce_env_include_macros = models.BooleanField(default=False)
-    gce_raw_config = models.TextField(blank=True, null=True)
+    gce_env_include_macros = bool(models.BooleanField(default=False))
+    gce_raw_config = str(models.TextField(blank=True, null=True))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # These variables can hold temporarily deserialized data
-        self.instance_tags_dict = None
-        self.instance_tags_override = None
-        self.ec2_raw_config_dict = None
-        self.ec2_raw_config_override = None
-        self.ec2_userdata_macros_dict = None
-        self.ec2_userdata_macros_override = None
-        self.ec2_userdata = None
-        self.ec2_security_groups_list = None
-        self.ec2_security_groups_override = None
-        self.ec2_allowed_regions_list = None
-        self.ec2_allowed_regions_override = None
-        self.ec2_instance_types_list = None
-        self.ec2_instance_types_override = None
-        self.gce_machine_types_list = None
-        self.gce_machine_types_override = None
-        self.gce_cmd_list = None
-        self.gce_cmd_override = None
-        self.gce_args_list = None
-        self.gce_args_override = None
-        self.gce_env_dict = None
-        self.gce_env_override = None
-        self.gce_raw_config_dict = None
-        self.gce_raw_config_override = None
+        self.instance_tags_dict: dict[str, str] | str | None = None
+        self.instance_tags_override: bool | None = None
+        self.ec2_raw_config_dict: dict[str, str] | str | None = None
+        self.ec2_raw_config_override: bool | None = None
+        self.ec2_userdata_macros_dict: dict[str, str] | str | None = None
+        self.ec2_userdata_macros_override: bool | None = None
+        self.ec2_userdata: bytes | str | None = None
+        self.ec2_security_groups_list: list[str] | str | None = None
+        self.ec2_security_groups_override: bool | None = None
+        self.ec2_allowed_regions_list: list[str] | str | None = None
+        self.ec2_allowed_regions_override: bool | None = None
+        self.ec2_instance_types_list: list[str] | str | None = None
+        self.ec2_instance_types_override: bool | None = None
+        self.gce_machine_types_list: list[str] | None = None
+        self.gce_machine_types_override: bool | None = None
+        self.gce_cmd_list: list[str] | None = None
+        self.gce_cmd_override: bool | None = None
+        self.gce_args_list: list[str] | None = None
+        self.gce_args_override: bool | None = None
+        self.gce_env_dict: dict[str, str] | None = None
+        self.gce_env_override: bool | None = None
+        self.gce_raw_config_dict: dict[str, str] | None = None
+        self.gce_raw_config_override: bool | None = None
 
         # This list is used to update the parent configuration with our own
         # values and to check for missing fields in our flat config.
@@ -226,7 +249,7 @@ class PoolConfiguration(models.Model):
 
         return flat_parent_config
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # Reserialize data, then call regular save method
         for field in self.dict_config_fields:
             obj = getattr(self, field + "_dict")
@@ -252,7 +275,7 @@ class PoolConfiguration(models.Model):
 
         super().save(*args, **kwargs)
 
-    def deserializeFields(self):
+    def deserializeFields(self) -> None:
         for field in self.dict_config_fields:
             sobj = getattr(self, field) or ""
             setattr(self, field + "_override", sobj.startswith("!"))
@@ -272,11 +295,12 @@ class PoolConfiguration(models.Model):
             self.ec2_userdata = self.ec2_userdata_file.read()
             self.ec2_userdata_file.close()
 
-    def storeTestAndSave(self):
+    def storeTestAndSave(self) -> None:
         if self.ec2_userdata:
             # Save the file using save() to avoid problems when initially
             # creating the directory. We use os.path.split to keep the
             # original filename assigned when saving the file.
+            assert self.ec2_userdata_file is not None
             self.ec2_userdata_file.save(
                 os.path.split(self.ec2_userdata_file.name)[-1],
                 ContentFile(self.ec2_userdata),
@@ -295,7 +319,7 @@ class PoolConfiguration(models.Model):
             return self.parent
         return cache.get(self.parent_id)
 
-    def isCyclic(self, cache=None):
+    def isCyclic(self, cache=None) -> bool:
         # cache is optionally a prefetched {config_id: config} dictionary used for
         # parent lookups
         if self._cache_parent(cache) is None:
@@ -310,9 +334,9 @@ class PoolConfiguration(models.Model):
                 break
             tortoise = tortoise._cache_parent(cache)
             hare = hare._cache_parent(cache)._cache_parent(cache)
-        return tortoise == hare
+        return bool(tortoise == hare)
 
-    def getMissingParameters(self):
+    def getMissingParameters(self) -> list[str]:
         flat_config = self.flatten()
         ec2_missing_fields = []
         gce_missing_fields = []
@@ -348,7 +372,9 @@ class PoolConfiguration(models.Model):
 
 
 @receiver(models.signals.post_delete, sender=PoolConfiguration)
-def deletePoolConfigurationFiles(sender, instance, **kwargs):
+def deletePoolConfigurationFiles(
+    sender: PoolConfiguration, instance: PoolConfiguration, **kwargs: Any
+) -> None:
     if instance.ec2_userdata:
         filename = instance.file.path
         filedir = os.path.dirname(filename)
@@ -360,60 +386,77 @@ def deletePoolConfigurationFiles(sender, instance, **kwargs):
 
 
 class InstancePool(models.Model):
-    config = models.ForeignKey(PoolConfiguration, on_delete=models.deletion.CASCADE)
-    isEnabled = models.BooleanField(default=False)
-    last_cycled = models.DateTimeField(blank=True, null=True)
+    config = cast(
+        PoolConfiguration,
+        models.ForeignKey(PoolConfiguration, on_delete=models.deletion.CASCADE),
+    )
+    isEnabled = bool(models.BooleanField(default=False))
+    last_cycled: datetime | None = cast(
+        datetime, models.DateTimeField(blank=True, null=True)
+    )
 
 
 class Instance(models.Model):
-    created = models.DateTimeField(default=timezone.now)
-    pool = models.ForeignKey(
-        InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    pool = cast(
+        InstancePool,
+        models.ForeignKey(
+            InstancePool, blank=True, null=True, on_delete=models.deletion.CASCADE
+        ),
     )
-    hostname = models.CharField(max_length=255, blank=True, null=True)
-    status_code = models.IntegerField()
-    status_data = models.TextField(blank=True, null=True)
-    instance_id = models.CharField(max_length=255, blank=True, null=True)
-    region = models.CharField(max_length=255)
-    zone = models.CharField(max_length=255)
-    size = models.IntegerField(default=1)
-    provider = models.CharField(max_length=255)
+    hostname = str(models.CharField(max_length=255, blank=True, null=True))
+    status_code = int(str(models.IntegerField()))
+    status_data: str | None = str(models.TextField(blank=True, null=True))
+    instance_id = str(models.CharField(max_length=255, blank=True, null=True))
+    region = str(models.CharField(max_length=255))
+    zone = str(models.CharField(max_length=255))
+    size = int(str(models.IntegerField(default=1)))
+    provider = str(models.CharField(max_length=255))
 
 
 class InstanceStatusEntry(models.Model):
-    instance = models.ForeignKey(Instance, on_delete=models.deletion.CASCADE)
-    created = models.DateTimeField(default=timezone.now)
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    instance = cast(
+        Instance, models.ForeignKey(Instance, on_delete=models.deletion.CASCADE)
+    )
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class PoolStatusEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
-    created = models.DateTimeField(default=timezone.now)
-    type = models.IntegerField()
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    pool = cast(
+        InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    )
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    type = int(str(models.IntegerField()))
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class ProviderStatusEntry(models.Model):
-    provider = models.CharField(max_length=255)
-    created = models.DateTimeField(default=timezone.now)
-    type = models.IntegerField()
-    msg = models.CharField(max_length=4095)
-    isCritical = models.BooleanField(default=False)
+    provider = str(models.CharField(max_length=255))
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    type = int(str(models.IntegerField()))
+    msg = str(models.CharField(max_length=4095))
+    isCritical = bool(models.BooleanField(default=False))
 
 
 class PoolUptimeDetailedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
-    created = models.DateTimeField(default=timezone.now)
-    target = models.IntegerField()
-    actual = models.IntegerField()
+    pool = cast(
+        InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    )
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    target = int(str(models.IntegerField()))
+    actual = int(str(models.IntegerField()))
 
 
 class PoolUptimeAccumulatedEntry(models.Model):
-    pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
-    created = models.DateTimeField(default=timezone.now)
-    accumulated_count = models.IntegerField(default=0)
-    uptime_percentage = models.DecimalField(
-        max_digits=5, decimal_places=2, blank=True, null=True
+    pool = cast(
+        InstancePool, models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
+    )
+    created = cast(datetime, models.DateTimeField(default=timezone.now))
+    accumulated_count = int(str(models.IntegerField(default=0)))
+    uptime_percentage = cast(
+        Decimal,
+        models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True),
     )

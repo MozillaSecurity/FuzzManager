@@ -8,6 +8,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import json
 
 import pytest
@@ -31,16 +34,16 @@ pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: unrecognized arguments: "):
         call_command("triage_new_crashes", "")
 
 
-def test_none():
+def test_none() -> None:
     call_command("triage_new_crashes")
 
 
-def test_some():
+def test_some() -> None:
     buckets = [
         Bucket.objects.create(
             signature=json.dumps(
@@ -80,7 +83,7 @@ def test_some():
     assert crashes[2].bucket is None
 
 
-def test_some_with_notification():
+def test_some_with_notification() -> None:
     buckets = [
         Bucket.objects.create(
             signature=json.dumps(

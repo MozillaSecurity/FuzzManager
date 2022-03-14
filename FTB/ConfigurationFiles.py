@@ -12,13 +12,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import configparser
 import sys
 
 
 class ConfigurationFiles:
-    def __init__(self, configFiles):
-        self.mainConfig = {}
+    def __init__(self, configFiles: list[str]) -> None:
+        self.mainConfig: dict[str, str] = {}
         self.metadataConfig = {}
 
         if configFiles:
@@ -45,7 +48,7 @@ class ConfigurationFiles:
                     file=sys.stderr,
                 )
 
-    def getSectionMap(self, section):
+    def getSectionMap(self, section: str):
         ret = {}
         try:
             options = self.parser.options(section)

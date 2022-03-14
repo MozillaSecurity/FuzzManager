@@ -8,11 +8,16 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
+from pytest_django.fixtures import SettingsWrapper
 
 from . import create_pool
 
@@ -21,7 +26,7 @@ pytestmark = pytest.mark.usefixtures("taskmanager_test")  # pylint: disable=inva
 
 
 @pytest.mark.parametrize("name", ["taskmanager:index", "taskmanager:pool-list-ui"])
-def test_views_no_login(name, client):
+def test_views_no_login(name: str, client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name)
     response = client.get(path, follow=False)
@@ -29,7 +34,7 @@ def test_views_no_login(name, client):
     assert response.url == "/login/?next=" + path
 
 
-def test_index_simple_get(client):
+def test_index_simple_get(client: Client) -> None:
     """Index redirects"""
     client.login(username="test", password="test")
     response = client.get(reverse("taskmanager:index"))
@@ -38,7 +43,7 @@ def test_index_simple_get(client):
     assert response["Location"] == reverse("taskmanager:pool-list-ui")
 
 
-def test_view_simple_get(client):
+def test_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     response = client.get(reverse("taskmanager:pool-list-ui"))
@@ -46,7 +51,7 @@ def test_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_detail_view_no_login(client):
+def test_detail_view_no_login(client: Client) -> None:
     pool = create_pool()
     path = reverse("taskmanager:pool-view-ui", args=(pool.pk,))
     response = client.get(path, follow=False)
@@ -54,7 +59,7 @@ def test_detail_view_no_login(client):
     assert response.url == "/login/?next=" + path
 
 
-def test_detail_view_simple_get(client, settings):
+def test_detail_view_simple_get(client: Client, settings: SettingsWrapper) -> None:
     settings.TC_EXTRA_POOLS = ["extra"]
     pool = create_pool()
     path = reverse("taskmanager:pool-view-ui", args=(pool.pk,))

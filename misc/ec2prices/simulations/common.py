@@ -13,27 +13,41 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
+from typing_extensions import NotRequired, TypedDict
+
+
+class RetType(TypedDict):
+    """Type information for ret."""
+
+    instance_type: NotRequired[str]
+    price: NotRequired[int]
+    region: NotRequired[str]
+    zone: NotRequired[str]
+
 
 def select_better(
     data,
-    current_price=None,
-    region=None,
-    zone=None,
-    instance_type=None,
-    instance_time=None,
-    indent=1,
-    verbose=False,
-):
+    current_price: int | None = None,
+    region: str | None = None,
+    zone: str | None = None,
+    instance_type: str | None = None,
+    instance_time: int | None = None,
+    indent: int = 1,
+    verbose: bool = False,
+) -> RetType:
     best_region = region
     best_zone = zone
     best_instance_type = instance_type
     best_price = current_price
 
-    def print_indent(s):
+    def print_indent(s: RetType | str) -> None:
         if verbose:
             print(f"{'*' * indent}{s}")
 
     if region is None:
+        assert best_price is not None
         for region_name in data:
             ret = select_better(
                 data,
@@ -107,7 +121,11 @@ def select_better(
                                 current_time
                             ]
 
-    new_ret = {}
+    assert best_region is not None
+    assert best_zone is not None
+    assert best_instance_type is not None
+    assert best_price is not None
+    new_ret: RetType = {}
     new_ret["region"] = best_region
     new_ret["zone"] = best_zone
     new_ret["instance_type"] = best_instance_type
@@ -116,9 +134,9 @@ def select_better(
     return new_ret
 
 
-def get_price_median(data):
+def get_price_median(data: list[float]) -> float:
     sdata = sorted(data)
     n = len(sdata)
     if not n % 2:
-        return (sdata[n / 2] + sdata[n / 2 - 1]) / 2.0
-    return sdata[n / 2]
+        return (sdata[int(n / 2)] + sdata[int(n / 2) - 1]) / 2.0
+    return sdata[int(n / 2)]

@@ -9,24 +9,33 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import functools
 import sys
+from typing import cast
 from unittest.mock import Mock
 
 import pytest
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
+from pytest_mock import MockerFixture
 
 from crashmanager.models import User as cmUser
 from ec2spotmanager.CloudProvider.CloudProvider import CloudProvider
+from ec2spotmanager.models import InstancePool, PoolConfiguration
 
 from . import UncatchableException
 
 
 def _create_user(
-    username, email="test@mozilla.com", password="test", has_permission=True
-):
-    user = User.objects.create_user(username, email, password)
+    username: str,
+    email: str = "test@mozilla.com",
+    password: str = "test",
+    has_permission: bool = True,
+) -> User:
+    user = cast(User, User.objects.create_user(username, email, password))
     user.user_permissions.clear()
     if has_permission:
         content_type = ContentType.objects.get_for_model(cmUser)
@@ -40,7 +49,9 @@ def _create_user(
 
 
 @pytest.fixture
-def ec2spotmanager_test(db):  # pylint: disable=invalid-name,unused-argument
+def ec2spotmanager_test(
+    db: None,
+) -> None:  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all ec2spotmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")
@@ -48,11 +59,11 @@ def ec2spotmanager_test(db):  # pylint: disable=invalid-name,unused-argument
 
 
 @pytest.fixture
-def mock_provider(mocker):
+def mock_provider(mocker: MockerFixture) -> Mock:
     prv_t = Mock(spec=CloudProvider)
 
-    def allowed_regions(cls, cfg):
-        result = []
+    def allowed_regions(cls, cfg: PoolConfiguration) -> list[str]:
+        result: list[str] = []
         if cls.provider == "prov1":
             result.extend(set(cfg.ec2_allowed_regions) & set("abcd"))
         if cls.provider == "prov2":
@@ -60,7 +71,7 @@ def mock_provider(mocker):
         result.sort()
         return result
 
-    def get_instance(cls, provider):
+    def get_instance(cls, provider: str):
         cls.provider = provider
         return cls
 
@@ -77,8 +88,8 @@ def mock_provider(mocker):
 
 
 @pytest.fixture
-def raise_on_status(mocker):
-    def _mock_pool_status(_pool, type_, message):
+def raise_on_status(mocker: MockerFixture) -> None:
+    def _mock_pool_status(_pool: InstancePool, type_: str, message: str) -> None:
         if sys.exc_info() != (None, None, None):
             raise  # pylint: disable=misplaced-bare-raise
         raise UncatchableException(f"{type_}: {message}")

@@ -9,20 +9,28 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import json
 import logging
 
 import pytest
 import requests
 from django.contrib.auth.models import User
+from rest_framework.test import APIClient
 
 from . import create_config
 
-LOG = logging.getLogger("fm.ec2spotmanager.tests.configs.rest")
-pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
+LOG = logging.getLogger(
+    "fm.ec2spotmanager.tests.configs.rest"
+)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures(
+    "ec2spotmanager_test"
+)  # pylint: disable=invalid-name
 
 
-def test_rest_pool_configs_no_auth(api_client):
+def test_rest_pool_configs_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/configurations/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -32,7 +40,7 @@ def test_rest_pool_configs_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_configs_no_perm(api_client):
+def test_rest_pool_configs_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -44,7 +52,7 @@ def test_rest_pool_configs_no_perm(api_client):
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
 
 
-def test_rest_pool_configs_auth(api_client):
+def test_rest_pool_configs_auth(api_client: APIClient) -> None:
     """test that authenticated requests work"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -52,7 +60,7 @@ def test_rest_pool_configs_auth(api_client):
     assert resp.status_code == requests.codes["ok"]
 
 
-def test_rest_pool_configs_patch(api_client):
+def test_rest_pool_configs_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -60,7 +68,7 @@ def test_rest_pool_configs_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_configs_put(api_client):
+def test_rest_pool_configs_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -68,7 +76,7 @@ def test_rest_pool_configs_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_configs_post(api_client):
+def test_rest_pool_configs_post(api_client: APIClient) -> None:
     """post should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -76,7 +84,7 @@ def test_rest_pool_configs_post(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_configs_delete(api_client):
+def test_rest_pool_configs_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -84,7 +92,7 @@ def test_rest_pool_configs_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_configs_list_no_configs(api_client):
+def test_rest_pool_configs_list_no_configs(api_client: APIClient) -> None:
     """test empty response to config list"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -99,7 +107,7 @@ def test_rest_pool_configs_list_no_configs(api_client):
     assert len(resp) == 0
 
 
-def test_rest_pool_configs_list_configs(api_client):
+def test_rest_pool_configs_list_configs(api_client: APIClient) -> None:
     """test that configs can be listed"""
     cfg1 = create_config(
         name="config #1",
@@ -185,7 +193,7 @@ def test_rest_pool_configs_list_configs(api_client):
     assert not resp[0]["ec2_userdata_macros_override"]
 
 
-def test_rest_pool_config_no_auth(api_client):
+def test_rest_pool_config_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/configurations/1/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -195,7 +203,7 @@ def test_rest_pool_config_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_config_no_perm(api_client):
+def test_rest_pool_config_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -207,7 +215,7 @@ def test_rest_pool_config_no_perm(api_client):
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
 
 
-def test_rest_pool_config_auth(api_client):
+def test_rest_pool_config_auth(api_client: APIClient) -> None:
     """test that authenticated requests work"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -215,7 +223,7 @@ def test_rest_pool_config_auth(api_client):
     assert resp.status_code == requests.codes["ok"]
 
 
-def test_rest_pool_config_delete(api_client):
+def test_rest_pool_config_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -223,7 +231,7 @@ def test_rest_pool_config_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_config_patch(api_client):
+def test_rest_pool_config_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -231,7 +239,7 @@ def test_rest_pool_config_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_config_put(api_client):
+def test_rest_pool_config_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -239,7 +247,7 @@ def test_rest_pool_config_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_config_post(api_client):
+def test_rest_pool_config_post(api_client: APIClient) -> None:
     """post should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -247,7 +255,7 @@ def test_rest_pool_config_post(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_pool_config_get_0(api_client):
+def test_rest_pool_config_get_0(api_client: APIClient) -> None:
     """test that non-existent PoolConfiguration is error"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -255,7 +263,7 @@ def test_rest_pool_config_get_0(api_client):
     assert resp.status_code == requests.codes["not_found"]
 
 
-def test_rest_pool_config_get_1(api_client):
+def test_rest_pool_config_get_1(api_client: APIClient) -> None:
     """test that individual PoolConfiguration can be fetched"""
     cfg1 = create_config(
         name="config #1",
@@ -335,7 +343,7 @@ def test_rest_pool_config_get_1(api_client):
     assert not resp["ec2_userdata_macros_override"]
 
 
-def test_rest_pool_config_get_sub(api_client):
+def test_rest_pool_config_get_sub(api_client: APIClient) -> None:
     """test that inherited Signature can be fetched unflattened"""
     cfg1 = create_config(
         name="config #1",
@@ -416,7 +424,7 @@ def test_rest_pool_config_get_sub(api_client):
     assert not resp["ec2_userdata_macros_override"]
 
 
-def test_rest_pool_config_get_sub_flat(api_client):
+def test_rest_pool_config_get_sub_flat(api_client: APIClient) -> None:
     """test that inherited Signature can be fetched flattened"""
     cfg1 = create_config(
         name="config #1",

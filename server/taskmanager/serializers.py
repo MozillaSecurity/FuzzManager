@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 
 from django.conf import settings
@@ -15,12 +17,12 @@ from .models import Pool, Task
 RUN_RATIO_THRESHOLD = 0.03
 
 
-class PoolSerializer(serializers.ModelSerializer):
+class PoolSerializer(serializers.ModelSerializer[Pool]):
     class Meta:
         model = Pool
         fields = "__all__"
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Pool):
         """Add dynamic fields"""
         ret = super().to_representation(instance)
         ret["cycle_time"] = None
@@ -79,18 +81,18 @@ class PoolVueSerializer(PoolSerializer):
             "view_url",
         )
 
-    def get_hook_url(self, pool):
+    def get_hook_url(self, pool: Pool) -> str:
         if pool.pool_id in settings.TC_EXTRA_POOLS:
             hook = pool.pool_id
         else:
             hook = f"{pool.platform}-{pool.pool_id}"
         return f"{settings.TC_ROOT_URL}hooks/project-{settings.TC_PROJECT}/{hook}"
 
-    def get_view_url(self, pool):
+    def get_view_url(self, pool: Pool) -> str:
         return reverse("taskmanager:pool-view-ui", kwargs={"pk": pool.id})
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskSerializer(serializers.ModelSerializer[Task]):
     status_data = serializers.CharField(trim_whitespace=False)
 
     class Meta:
@@ -116,5 +118,5 @@ class TaskVueSerializer(TaskSerializer):
     class Meta(TaskSerializer.Meta):
         read_only_fields = TaskSerializer.Meta.read_only_fields + ("task_url",)
 
-    def get_task_url(self, task):
+    def get_task_url(self, task: Task) -> str:
         return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"

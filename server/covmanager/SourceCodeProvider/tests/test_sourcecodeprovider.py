@@ -11,8 +11,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import shutil
+from pathlib import Path
+from typing import Iterator
 
 import pytest
 
@@ -21,8 +26,8 @@ from covmanager.SourceCodeProvider.HGSourceCodeProvider import HGSourceCodeProvi
 from covmanager.SourceCodeProvider.SourceCodeProvider import Utils
 
 
-@pytest.fixture
-def git_repo(tmp_path):
+@pytest.fixture()
+def git_repo(tmp_path: Path) -> Iterator[str]:
     shutil.copytree(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-git"),
         str(tmp_path / "test-git"),
@@ -31,8 +36,8 @@ def git_repo(tmp_path):
     yield str(tmp_path / "test-git")
 
 
-@pytest.fixture
-def hg_repo(tmp_path):
+@pytest.fixture()
+def hg_repo(tmp_path: Path) -> Iterator[str]:
     shutil.copytree(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "test-hg"),
         str(tmp_path / "test-hg"),
@@ -41,7 +46,7 @@ def hg_repo(tmp_path):
     yield str(tmp_path / "test-hg")
 
 
-def test_GITSourceCodeProvider(git_repo):
+def test_GITSourceCodeProvider(git_repo: str) -> None:
     provider = GITSourceCodeProvider(git_repo)
 
     tests = {
@@ -74,7 +79,7 @@ def test_GITSourceCodeProvider(git_repo):
     assert len(parents) == 0
 
 
-def test_HGSourceCodeProvider(hg_repo):
+def test_HGSourceCodeProvider(hg_repo: str) -> None:
     provider = HGSourceCodeProvider(hg_repo)
 
     tests = {
@@ -111,14 +116,14 @@ def test_HGSourceCodeProvider(hg_repo):
     not os.path.isdir("/home/decoder/Mozilla/repos/mozilla-central-fm"),
     reason="not decoder",
 )
-def test_HGDiff():
+def test_HGDiff() -> None:
     provider = HGSourceCodeProvider("/home/decoder/Mozilla/repos/mozilla-central-fm")
     diff = provider.getUnifiedDiff("4f8e0cb21016")
 
     print(Utils.getDiffLocations(diff))
 
 
-def test_HGRevisionEquivalence():
+def test_HGRevisionEquivalence() -> None:
     provider = HGSourceCodeProvider("")
 
     # Simple equality for short and long revision formats

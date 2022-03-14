@@ -8,6 +8,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import CommandError, call_command
@@ -15,12 +18,12 @@ from django.core.management import CommandError, call_command
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: .*arguments.*"):
         call_command("add_permission")
 
 
-def test_no_such_user():
+def test_no_such_user() -> None:
     with pytest.raises(User.DoesNotExist):
         call_command(
             "add_permission",
@@ -29,20 +32,20 @@ def test_no_such_user():
         )
 
 
-def test_no_perms():
+def test_no_perms() -> None:
     User.objects.create_user("test", "test@example.com", "test")
     with pytest.raises(CommandError, match=r"Error: .*arguments.*"):
         call_command("add_permission", "test")
 
 
-def test_one_perm():
+def test_one_perm() -> None:
     user = User.objects.create_user("test", "test@example.com", "test")
     user.user_permissions.clear()  # clear any default permissions
     call_command("add_permission", "test", "crashmanager.models.User:view_crashmanager")
     assert set(user.get_all_permissions()) == {"crashmanager.view_crashmanager"}
 
 
-def test_two_perms():
+def test_two_perms() -> None:
     user = User.objects.create_user("test", "test@example.com", "test")
     user.user_permissions.clear()  # clear any default permissions
     call_command(

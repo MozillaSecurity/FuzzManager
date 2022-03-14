@@ -9,10 +9,14 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 
 from . import assert_contains, create_config, create_pool, create_poolmsg
@@ -38,7 +42,7 @@ POOLS_ENTRIES_FMT = "Displaying all %d instance pools:"
         ("ec2spotmanager:poolmsgdel", {"msgid": 0}),
     ],
 )
-def test_pools_no_login(client, name, kwargs):
+def test_pools_no_login(client: Client, name: str, kwargs: dict[str, object]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
@@ -46,7 +50,7 @@ def test_pools_no_login(client, name, kwargs):
     assert resp.url == "/login/?next=" + path
 
 
-def test_pools_view_no_pools(client):
+def test_pools_view_no_pools(client: Client) -> None:
     """If no pools in db, an appropriate message is shown."""
     client.login(username="test", password="test")
     response = client.get(reverse("ec2spotmanager:pools"))
@@ -57,7 +61,7 @@ def test_pools_view_no_pools(client):
     assert_contains(response, POOLS_ENTRIES_FMT % 0)
 
 
-def test_pools_view_pool(client):
+def test_pools_view_pool(client: Client) -> None:
     """Create pool and see that it is shown."""
     config = create_config(name="config #1")
     pool = create_pool(config=config)
@@ -71,7 +75,7 @@ def test_pools_view_pool(client):
     assert set(poollist) == {pool}
 
 
-def test_pools_view_pools(client):
+def test_pools_view_pools(client: Client) -> None:
     """Create pool and see that it is shown."""
     configs = (create_config(name="config #1"), create_config(name="config #2"))
     pools = [create_pool(config=cfg) for cfg in configs]
@@ -85,7 +89,7 @@ def test_pools_view_pools(client):
     assert set(poollist) == set(pools)
 
 
-def test_create_pool_view_simple_get(client):
+def test_create_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     response = client.get(reverse("ec2spotmanager:poolcreate"))
@@ -93,7 +97,7 @@ def test_create_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_view_pool_view_simple_get(client):
+def test_view_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)
@@ -105,7 +109,7 @@ def test_view_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_pool_prices_view_simple_get(client):
+def test_pool_prices_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1", ec2_instance_types=["c4.2xlarge"])
     pool = create_pool(config=cfg)
@@ -117,7 +121,7 @@ def test_pool_prices_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_delete_pool_view_simple_get(client):
+def test_delete_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)
@@ -127,7 +131,7 @@ def test_delete_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_enable_pool_view_simple_get(client):
+def test_enable_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)
@@ -139,7 +143,7 @@ def test_enable_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_disable_pool_view_simple_get(client):
+def test_disable_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)
@@ -151,7 +155,7 @@ def test_disable_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_cycle_pool_view_simple_get(client):
+def test_cycle_pool_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)
@@ -163,7 +167,7 @@ def test_cycle_pool_view_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_delete_pool_message_view_simple_get(client):
+def test_delete_pool_message_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     pool = create_pool(config=cfg)

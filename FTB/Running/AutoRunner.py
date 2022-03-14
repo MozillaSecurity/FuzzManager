@@ -12,6 +12,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import re
 import signal
@@ -20,6 +23,7 @@ import sys
 from abc import ABCMeta
 from distutils import spawn
 
+from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 
 
@@ -29,7 +33,14 @@ class AutoRunner(metaclass=ABCMeta):
     for running the given program and obtaining crash information.
     """
 
-    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
         self.stdin = stdin
@@ -56,20 +67,26 @@ class AutoRunner(metaclass=ABCMeta):
         assert isinstance(self.args, list)
 
         # The command that we will run for obtaining crash information
-        self.cmdArgs = []
+        self.cmdArgs: list[str | bytes] = []
 
         # These will hold our results from running
-        self.stdout = None
-        self.stderr = None
-        self.auxCrashData = None
+        self.stdout: str | None = None
+        self.stderr: list[str] | str | None = None
+        self.auxCrashData: list[str] | str | None = None
 
-    def getCrashInfo(self, configuration):
+    def getCrashInfo(self, configuration: ProgramConfiguration) -> CrashInfo:
         return CrashInfo.fromRawCrashData(
             self.stdout, self.stderr, configuration, self.auxCrashData
         )
 
     @staticmethod
-    def fromBinaryArgs(binary, args=None, env=None, cwd=None, stdin=None):
+    def fromBinaryArgs(
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> ASanRunner | GDBRunner:
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
@@ -80,13 +97,13 @@ class AutoRunner(metaclass=ABCMeta):
         )
 
         (stdout, _) = process.communicate()
-        stdout = stdout.decode("utf-8", errors="ignore")
+        stdout_decoded = stdout.decode("utf-8", errors="ignore")
 
         force_gdb = bool(os.environ.get("FTB_FORCE_GDB", False))
 
         if not force_gdb and (
-            stdout.find(" __asan_init") >= 0
-            or stdout.find("__ubsan_default_options") >= 0
+            stdout_decoded.find(" __asan_init") >= 0
+            or stdout_decoded.find("__ubsan_default_options") >= 0
         ):
             return ASanRunner(binary, args, env, cwd, stdin)
 
@@ -94,7 +111,15 @@ class AutoRunner(metaclass=ABCMeta):
 
 
 class GDBRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None, core=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        core: bytes | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         # This can be used to force GDBRunner to first generate a core and then
@@ -141,11 +166,13 @@ class GDBRunner(AutoRunner):
             if core is not None:
                 self.cmdArgs.append(core)
             else:
+                assert self.args is not None
                 self.cmdArgs.extend(self.args)
 
-    def run(self):
+    def run(self) -> bool:
         if self.force_core:
             plainCmdArgs = [self.binary]
+            assert self.args is not None
             plainCmdArgs.extend(self.args)
 
             process = subprocess.Popen(
@@ -214,10 +241,18 @@ class GDBRunner(AutoRunner):
 
 
 class ASanRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: bytes | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         self.cmdArgs.append(self.binary)
+        assert self.args is not None
         self.cmdArgs.extend(self.args)
 
         if "ASAN_SYMBOLIZER_PATH" not in self.env:
@@ -228,9 +263,11 @@ class ASanRunner(AutoRunner):
                     os.path.dirname(binary), "llvm-symbolizer"
                 )
                 if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
-                    self.env["ASAN_SYMBOLIZER_PATH"] = spawn.find_executable(
+                    spawn_find_llvm_symbolizer = spawn.find_executable(
                         "llvm-symbolizer"
                     )
+                    assert spawn_find_llvm_symbolizer is not None
+                    self.env["ASAN_SYMBOLIZER_PATH"] = spawn_find_llvm_symbolizer
                     if not self.env["ASAN_SYMBOLIZER_PATH"]:
                         raise RuntimeError("Unable to locate llvm-symbolizer")
 
@@ -262,7 +299,7 @@ class ASanRunner(AutoRunner):
                 # for bucketing. This is helpful when assertions are hit in debug builds
                 self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1:handle_abort=1"
 
-    def run(self):
+    def run(self) -> bool:
         process = subprocess.Popen(
             self.cmdArgs,
             stdin=subprocess.PIPE,
@@ -275,14 +312,14 @@ class ASanRunner(AutoRunner):
         (stdout, stderr) = process.communicate(input=self.stdin)
 
         self.stdout = stdout.decode("utf-8", errors="ignore")
-        stderr = stderr.decode("utf-8", errors="ignore")
+        stderr_decoded = stderr.decode("utf-8", errors="ignore")
 
         inASanTrace = False
         inUBSanTrace = False
         inTSanTrace = False
         self.auxCrashData = []
         self.stderr = []
-        for line in stderr.splitlines():
+        for line in stderr_decoded.splitlines():
             if inASanTrace or inUBSanTrace or inTSanTrace:
                 self.auxCrashData.append(line)
                 if (inASanTrace or inUBSanTrace) and line.find("==ABORTING") >= 0:

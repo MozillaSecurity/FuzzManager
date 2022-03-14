@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import json
 import os
 import platform
@@ -21,6 +24,8 @@ from urllib.parse import urlsplit
 
 import pytest
 import requests
+from django.contrib.auth.models import User
+from pytest_django.live_server_helper import LiveServer
 
 from Collector.Collector import Collector, main
 from crashmanager.models import CrashEntry
@@ -38,7 +43,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = ("server.tests",)
 
 
-def test_collector_help(capsys):
+def test_collector_help(capsys: pytest.CaptureFixture[str]) -> None:
     """Test that help prints without throwing"""
     with pytest.raises(SystemExit):
         main()
@@ -48,7 +53,9 @@ def test_collector_help(capsys):
 
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
-def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
+def test_collector_submit(
+    mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User
+) -> None:
     """Test crash submission"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path
@@ -82,7 +89,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     # see that the issue was created in the server
     entry = CrashEntry.objects.get(pk=result["id"])
     assert entry.rawStdout == ""
-    assert entry.rawStderr == asan_trace_crash.rstrip()
+    assert entry.rawStderr == asan_trace_crash
     assert entry.rawCrashData == ""
     assert entry.tool.name == "test-tool"
     assert entry.client.name == "test-fuzzer1"
@@ -100,10 +107,11 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     assert entry.args == ""
 
     # create a test config
+    assert url.port is not None
     with (tmp_path / ".fuzzmanagerconf").open("w") as fp:
         fp.write("[Main]\n")
         fp.write(f"serverhost = {url.hostname}\n")
-        fp.write(f"serverport = {url.port:d}\n")
+        fp.write("serverport = %d\n" % url.port)
         fp.write(f"serverproto = {url.scheme}\n")
         fp.write(f"serverauthtoken = {fm_user.token}\n")
 
@@ -120,7 +128,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     crashdata_path = tmp_path / "crashdata.txt"
     with crashdata_path.open("w") as fp:
         fp.write(asan_trace_crash)
-    result = main(
+    result_return_code = main(
         [
             "--submit",
             "--tool",
@@ -153,13 +161,13 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
             str(crashdata_path),
         ]
     )
-    assert result == 0
+    assert result_return_code == 0
     entry = CrashEntry.objects.get(
         pk__gt=entry.id
     )  # newer than the last result, will fail if the test db is active
     assert entry.rawStdout == "stdout data"
     assert entry.rawStderr == "stderr data"
-    assert entry.rawCrashData == asan_trace_crash.rstrip()
+    assert entry.rawCrashData == asan_trace_crash
     assert entry.tool.name == "tool2"
     assert entry.client.name == platform.node()
     assert entry.product.name == "mozilla-inbound"
@@ -185,7 +193,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
         collector.submit(crashInfo, str(testcase_path))
 
 
-def test_collector_refresh(capsys, tmp_path):
+def test_collector_refresh(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
     """Test signature downloads"""
     # create a test signature zip
     test2_path = tmp_path / "test2.signature"
@@ -202,16 +210,18 @@ def test_collector_refresh(capsys, tmp_path):
     (sigs_path / "other.txt").touch()
     assert {f.name for f in sigs_path.iterdir()} == {"test1.signature", "other.txt"}
 
-    with outzip_path.open("rb") as fp:
+    with outzip_path.open("rb") as fp2:
 
         class response_t:
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp2
 
         # this asserts the expected arguments and returns the open handle to out.zip as
         # 'raw' which is read by refresh()
-        def myget(url, stream=None, headers=None):
+        def myget(
+            url: str, stream: bool | None = None, headers: dict[str, str] | None = None
+        ) -> response_t:
             assert url == "gopher://aol.com:70/crashmanager/rest/signatures/download/"
             assert stream is True
             assert headers == {"Authorization": "Token token"}
@@ -251,28 +261,28 @@ def test_collector_refresh(capsys, tmp_path):
         collector.refresh()
 
     # check that bad zips raise errors
-    with (sigs_path / "other.txt").open("rb") as fp:
+    with (sigs_path / "other.txt").open("rb") as fp3:
 
         class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp3
 
         collector._session.get = lambda *_, **__: response_t()
 
         with pytest.raises(zipfile.BadZipfile, match="not a zip file"):
             collector.refresh()
 
-    with outzip_path.open("r+b") as fp:
+    with outzip_path.open("r+b") as fp4:
         # corrupt the CRC field for the signature file in the zip
-        fp.seek(0x42)
-        fp.write(b"\xFF")
-    with outzip_path.open("rb") as fp:
+        fp4.seek(0x42)
+        fp4.write(b"\xFF")
+    with outzip_path.open("rb") as fp5:
 
         class response_t:  # noqa
             status_code = requests.codes["ok"]
             text = "OK"
-            raw = fp
+            raw = fp5
 
         collector._session.get = lambda *_, **__: response_t()
 
@@ -280,7 +290,7 @@ def test_collector_refresh(capsys, tmp_path):
             collector.refresh()
 
 
-def test_collector_generate_search(tmp_path):
+def test_collector_generate_search(tmp_path: Path) -> None:
     """Test sigcache generation and search"""
     # create a cache dir
     cache_dir = tmp_path / "sigcache"
@@ -304,6 +314,7 @@ def test_collector_generate_search(tmp_path):
     assert meta is None
 
     # write metadata and make sure that's returned if it exists
+    assert sig is not None
     sigBase, _ = os.path.splitext(sig)
     with open(sigBase + ".metadata", "w") as f:
         f.write("{}")
@@ -322,7 +333,7 @@ def test_collector_generate_search(tmp_path):
     assert result is None
 
 
-def test_collector_download(tmp_path, monkeypatch):
+def test_collector_download(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test testcase downloads"""
     # create Collector
     collector = Collector(
@@ -337,7 +348,7 @@ def test_collector_download(tmp_path, monkeypatch):
         status_code = requests.codes["ok"]
         text = "OK"
 
-        def json(self):
+        def json(self) -> dict[str, object]:
             return {"id": 123, "testcase": "path/to/testcase.txt"}
 
     class response2_t:
@@ -347,7 +358,7 @@ def test_collector_download(tmp_path, monkeypatch):
         content = b"testcase\xFF"
 
     # myget1 mocks requests.get to return the rest response to the crashentry get
-    def myget1(url, headers=None):
+    def myget1(url: str, headers: dict[str, str] | None = None) -> response1_t:
         assert url == "gopher://aol.com:70/crashmanager/rest/crashes/123/"
         assert headers == {"Authorization": "Token token"}
 
@@ -356,7 +367,7 @@ def test_collector_download(tmp_path, monkeypatch):
         return response1_t()
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
-    def myget2(url, headers=None):
+    def myget2(url: str, headers: dict[str, str] | None = None) -> response2_t:
         assert url == "gopher://aol.com:70/crashmanager/rest/crashes/123/download/"
         assert headers == {"Authorization": "Token token"}
         return response2_t()
@@ -385,7 +396,7 @@ def test_collector_download(tmp_path, monkeypatch):
         status_code = requests.codes["ok"]
         text = "OK"
 
-        def json(self):
+        def json(self) -> dict[str, str]:
             return {"testcase": ""}
 
     collector._session.get = myget1
@@ -397,7 +408,7 @@ def test_collector_download(tmp_path, monkeypatch):
         status_code = requests.codes["ok"]
         text = "OK"
 
-        def json(self):
+        def json(self) -> list[str]:
             return []
 
     collector._session.get = myget1

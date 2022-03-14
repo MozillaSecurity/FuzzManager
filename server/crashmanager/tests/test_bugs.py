@@ -8,13 +8,18 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 
 from crashmanager.models import BugzillaTemplate
+from crashmanager.tests.conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.bugs")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
@@ -32,7 +37,9 @@ pytestmark = pytest.mark.usefixtures("crashmanager_test")
         ("crashmanager:createbugcomment", {"crashid": 0}),
     ],
 )
-def test_bug_providers_no_login(client, name, kwargs):
+def test_bug_providers_no_login(
+    client: Client, name: str, kwargs: dict[str, int]
+) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
@@ -51,7 +58,9 @@ def test_bug_providers_no_login(client, name, kwargs):
         ("crashmanager:templatedel", {"templateId": 0}),
     ],
 )
-def test_bugzilla_templates_no_login(client, name, kwargs):
+def test_bugzilla_templates_no_login(
+    client: Client, name: str, kwargs: dict[str, int]
+) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
@@ -69,7 +78,9 @@ def test_bugzilla_templates_no_login(client, name, kwargs):
         ("crashmanager:bugproviderview", {"providerId": 0}),
     ],
 )
-def test_bug_providers_simple_get(client, cm, name, kwargs):
+def test_bug_providers_simple_get(
+    client: Client, cm: _cm_result, name: str, kwargs: dict[str, int]
+) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     if "providerId" in kwargs:
@@ -89,7 +100,9 @@ def test_bug_providers_simple_get(client, cm, name, kwargs):
         ("crashmanager:templatedel", {"templateId": 0}),
     ],
 )
-def test_bugzilla_templates_simple_get(client, cm, name, kwargs):
+def test_bugzilla_templates_simple_get(
+    client: Client, cm: _cm_result, name: str, kwargs: dict[str, int]
+) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     if "templateId" in kwargs:
@@ -99,7 +112,7 @@ def test_bugzilla_templates_simple_get(client, cm, name, kwargs):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_template_edit(client, cm):
+def test_template_edit(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     pk = cm.create_template().pk
     assert len(BugzillaTemplate.objects.all()) == 1
@@ -153,7 +166,7 @@ def test_template_edit(client, cm):
     assert template.version == "1.0"
 
 
-def test_template_dup(client, cm):
+def test_template_dup(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     pk = cm.create_template().pk
     assert len(BugzillaTemplate.objects.all()) == 1
@@ -196,7 +209,7 @@ def test_template_dup(client, cm):
         assert getattr(template, field) == getattr(clone, field)
 
 
-def test_template_del(client, cm):
+def test_template_del(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     pk = cm.create_template().pk
     assert len(BugzillaTemplate.objects.all()) == 1
@@ -211,7 +224,7 @@ def test_template_del(client, cm):
     assert len(BugzillaTemplate.objects.all()) == 0
 
 
-def test_template_create_bug_post(client, cm):
+def test_template_create_bug_post(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     assert len(BugzillaTemplate.objects.all()) == 0
     client.login(username="test", password="test")
@@ -237,7 +250,7 @@ def test_template_create_bug_post(client, cm):
     assert template.version == "1.0"
 
 
-def test_template_create_comment_post(client, cm):
+def test_template_create_comment_post(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     assert len(BugzillaTemplate.objects.all()) == 0
     client.login(username="test", password="test")
@@ -256,7 +269,7 @@ def test_template_create_comment_post(client, cm):
     assert template.comment == "A comment"
 
 
-def test_create_external_bug_simple_get(client, cm):
+def test_create_external_bug_simple_get(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     bucket = cm.create_bucket()
@@ -270,7 +283,7 @@ def test_create_external_bug_simple_get(client, cm):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_create_external_bug_comment_simple_get(client, cm):
+def test_create_external_bug_comment_simple_get(client: Client, cm: _cm_result) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     crash = cm.create_crash()

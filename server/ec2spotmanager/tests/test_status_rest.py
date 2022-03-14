@@ -9,22 +9,30 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import json
 import logging
 
 import pytest
 import requests
 from django.contrib.auth.models import User
+from rest_framework.test import APIClient
 
 from ec2spotmanager.models import Instance
 
 from . import create_instance
 
-LOG = logging.getLogger("fm.ec2spotmanager.tests.status.rest")
-pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
+LOG = logging.getLogger(
+    "fm.ec2spotmanager.tests.status.rest"
+)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures(
+    "ec2spotmanager_test"
+)  # pylint: disable=invalid-name
 
 
-def test_rest_status_no_auth(api_client):
+def test_rest_status_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/ec2spotmanager/rest/report/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -34,7 +42,7 @@ def test_rest_status_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_status_no_perm(api_client):
+def test_rest_status_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -46,7 +54,7 @@ def test_rest_status_no_perm(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
 
 
-def test_rest_status_get(api_client):
+def test_rest_status_get(api_client: APIClient) -> None:
     """get always returns an empty object"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -56,16 +64,16 @@ def test_rest_status_get(api_client):
     assert resp == {}
 
 
-def test_rest_status_report(api_client):
+def test_rest_status_report(api_client: APIClient) -> None:
     """post should update the status field on the instance"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     host = create_instance("host1")
-    resp = api_client.post(
+    resp_response = api_client.post(
         "/ec2spotmanager/rest/report/", {"client": "host1", "status_data": "data"}
     )
-    assert resp.status_code == requests.codes["created"]
-    resp = json.loads(resp.content.decode("utf-8"))
+    assert resp_response.status_code == requests.codes["created"]
+    resp = json.loads(resp_response.content.decode("utf-8"))
     assert resp == {"status_data": "data"}
     host = Instance.objects.get(pk=host.pk)  # re-read
     assert host.status_data == "data"
@@ -79,17 +87,17 @@ def test_rest_status_report(api_client):
     assert resp.status_code == requests.codes["not_found"]
 
 
-def test_rest_status_report2(api_client):
+def test_rest_status_report2(api_client: APIClient) -> None:
     """post should update the status field on the instance"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     host1 = create_instance("host1")
     host2 = create_instance("host2")
-    resp = api_client.post(
+    resp_response = api_client.post(
         "/ec2spotmanager/rest/report/", {"client": "host1", "status_data": "data"}
     )
-    assert resp.status_code == requests.codes["created"]
-    resp = json.loads(resp.content.decode("utf-8"))
+    assert resp_response.status_code == requests.codes["created"]
+    resp = json.loads(resp_response.content.decode("utf-8"))
     assert resp == {"status_data": "data"}
     host1 = Instance.objects.get(pk=host1.pk)  # re-read
     assert host1.status_data == "data"
@@ -105,7 +113,7 @@ def test_rest_status_report2(api_client):
     assert host1.status_data == "data"
 
 
-def test_rest_status_put(api_client):
+def test_rest_status_put(api_client: APIClient) -> None:
     """put should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -113,7 +121,7 @@ def test_rest_status_put(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_status_delete(api_client):
+def test_rest_status_delete(api_client: APIClient) -> None:
     """delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -121,7 +129,7 @@ def test_rest_status_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_status_patch(api_client):
+def test_rest_status_patch(api_client: APIClient) -> None:
     """patch should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)

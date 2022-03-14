@@ -1,0 +1,269 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\Administrator\AppData\Local\CrashDumps\js-32-windows-42c95d88aaaa.exe.2396.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 9600 MP (16 procs) Free x86 compatible
+Product: Server, suite: TerminalServer SingleUserTS
+Machine Name:
+Debug session time: Tue Oct  4 11:31:24.000 2016 (UTC + 0:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:01.000
+......................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=00000000 ecx=6802052b edx=00000000 esi=00000003 edi=00000003
+eip=77a5c7ec esp=0053d6c4 ebp=0053d84c iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+Unable to load image C:\Windows\System32\ntdll.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+ntdll+0x3c7ec:
+77a5c7ec c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\Administrator\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=00c8a948 ebx=0053e32c ecx=6802052b edx=00000000 esi=25d8094b edi=0053e370
+eip=25d80b01 esp=0053e370 ebp=ffe00000 iopl=0         nv up ei pl zr na pe cy
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000247
+25d80b01 cc              int     3
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+*** WARNING: Unable to verify timestamp for kernel32.dll
+*** ERROR: Module load completed but symbols could not be loaded for kernel32.dll
+*** WARNING: Unable to verify checksum for mozglue.dll
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll+0x3c7ec:
+77a5c7ec c21400          ret     14h
+77a5c7ef 90              nop
+77a5c7f0 b85b000000      mov     eax,5Bh
+77a5c7f5 64ff15c0000000  call    dword ptr fs:[0C0h]
+77a5c7fc c21000          ret     10h
+77a5c7ff 90              nop
+77a5c800 b85c000000      mov     eax,5Ch
+77a5c805 64ff15c0000000  call    dword ptr fs:[0C0h]
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+25d80b01  cc f2 0f 10                                      ....
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Unable to verify checksum for js-32-windows-42c95d88aaaa.exe
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*** WARNING: Unable to verify timestamp for KERNELBASE.dll
+*** ERROR: Module load completed but symbols could not be loaded for KERNELBASE.dll
+
+FAULTING_IP:
++205
+25d80b01 cc              int     3
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 25d80b01
+ExceptionCode: 80000003 (Break instruction exception)
+ExceptionFlags: 00000000
+NumberParameters: 1
+Parameter[0]: 00000000
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS
+
+PROCESS_NAME:  js-32-windows-42c95d88aaaa.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+MODULE_NAME: mozglue
+
+FAULTING_MODULE: 77a20000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57f38bd2
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  00000000
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  00000f68
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS
+
+LAST_CONTROL_TRANSFER:  from 746c37f5 to 25d80b01
+
+STACK_TEXT:
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+0053e39c 746c37f5 010000f0 08900850 01000044 0x25d80b01
+0053e430 014f5ac7 25d80010 00000003 0053e780 mozglue!arena_run_dalloc+0x205 [c:\users\administrator\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 3916]
+0053e508 014f78b1 08410000 0053e520 0053e6c8 js_32_windows_42c95d88aaaa!EnterIon+0xc7 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2823]
+0053e5a8 0136d44f 08410000 0053e668 0053e678 js_32_windows_42c95d88aaaa!js::jit::IonCannon+0x121 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2921]
+0053e640 0135f77e 08410000 0053e668 087121a8 js_32_windows_42c95d88aaaa!js::RunScript+0x12f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 384]
+0053e684 0135f51e 08410000 0053e6c8 00000000 js_32_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x24e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+0053e698 015eacd3 08410000 0053e6c8 087121a8 js_32_windows_42c95d88aaaa!InternalCall+0x5e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0053e72c 0066129f 08410000 0053e7f8 087121a8 js_32_windows_42c95d88aaaa!js::jit::DoCallFallback+0x2c3 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+0053e844 746c64d5 08700910 000c03a0 08410000 0x66129f
+0053e860 014f5ac7 14e2a1d0 00000003 0053ebb0 mozglue!je_free+0x15 [c:\users\administrator\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 6485]
+0053e938 014f78b1 08410000 0053e950 0053eaf8 js_32_windows_42c95d88aaaa!EnterIon+0xc7 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2823]
+0053e9d8 0136d44f 08410000 0053ea98 0053eaa8 js_32_windows_42c95d88aaaa!js::jit::IonCannon+0x121 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2921]
+0053ea70 0135f77e 08410000 0053ea98 08706700 js_32_windows_42c95d88aaaa!js::RunScript+0x12f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 384]
+0053eab4 0135f51e 08410000 0053eaf8 00000000 js_32_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x24e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+0053eac8 015eacd3 08410000 0053eaf8 08706700 js_32_windows_42c95d88aaaa!InternalCall+0x5e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0053ec48 014f5ac7 14e294e0 00000001 0053ef98 js_32_windows_42c95d88aaaa!js::jit::DoCallFallback+0x2c3 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+0053ed20 014f78b1 08410000 0053ed38 0053eee0 js_32_windows_42c95d88aaaa!EnterIon+0xc7 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2823]
+0053edc0 0136d44f 08410000 0053ee80 0053ee90 js_32_windows_42c95d88aaaa!js::jit::IonCannon+0x121 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2921]
+0053ee58 0135f77e 08410000 0053ee80 084f30b0 js_32_windows_42c95d88aaaa!js::RunScript+0x12f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 384]
+0053ee9c 0135f51e 08410000 0053eee0 00000000 js_32_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x24e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+0053eeb0 015eacd3 08410000 0053eee0 084f30b0 js_32_windows_42c95d88aaaa!InternalCall+0x5e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0053ef44 0066129f 08410000 0053efd8 084f30b0 js_32_windows_42c95d88aaaa!js::jit::DoCallFallback+0x2c3 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+0053efa0 084f30b0 3c8c63c4 00005021 00000000 0x66129f
+0053f0d0 014f5ac7 14e24e90 00000002 0053f420 0x84f30b0
+0053f1a8 014f78b1 08410000 0053f1c0 0053f368 js_32_windows_42c95d88aaaa!EnterIon+0xc7 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2823]
+0053f248 0136d44f 08410000 0053f308 0053f318 js_32_windows_42c95d88aaaa!js::jit::IonCannon+0x121 [c:\users\administrator\trees\mozilla-central\js\src\jit\ion.cpp @ 2921]
+0053f2e0 0135f77e 08410000 0053f308 08930010 js_32_windows_42c95d88aaaa!js::RunScript+0x12f [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 384]
+0053f324 0135f51e 08410000 0053f368 00000000 js_32_windows_42c95d88aaaa!js::InternalCallOrConstruct+0x24e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 479]
+0053f338 015eacd3 08410000 0053f368 08930010 js_32_windows_42c95d88aaaa!InternalCall+0x5e [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 503]
+0053f4a8 015ee5ae 3de10540 00000000 00000000 js_32_windows_42c95d88aaaa!js::jit::DoCallFallback+0x2c3 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselineic.cpp @ 6012]
+0053f580 015eebe1 08410000 0053f598 0866a0a0 js_32_windows_42c95d88aaaa!EnterBaseline+0x13e [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 157]
+0053f620 0136d4f5 08410000 0053f6c8 0053f6d8 js_32_windows_42c95d88aaaa!js::jit::EnterBaselineMethod+0x121 [c:\users\administrator\trees\mozilla-central\js\src\jit\baselinejit.cpp @ 193]
+0053f6b8 0135c26c 08410000 0053f6c8 0176a914 js_32_windows_42c95d88aaaa!js::RunScript+0x1d5 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 394]
+0053f704 0135c115 08410000 0053f7ac 086b80c0 js_32_windows_42c95d88aaaa!js::ExecuteKernel+0xac [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 688]
+0053f740 012ee21a 08410000 0053f7ac 086b80c0 js_32_windows_42c95d88aaaa!js::Execute+0xf5 [c:\users\administrator\trees\mozilla-central\js\src\vm\interpreter.cpp @ 717]
+0053f760 012f2d21 08410000 0053f784 0053f7ac js_32_windows_42c95d88aaaa!ExecuteScript+0x2a [c:\users\administrator\trees\mozilla-central\js\src\jsapi.cpp @ 4307]
+0053f784 0120cab5 08410000 0053f7ac 00739fbd js_32_windows_42c95d88aaaa!JS_ExecuteScript+0x51 [c:\users\administrator\trees\mozilla-central\js\src\jsapi.cpp @ 4340]
+0053f810 0120ba3f 08410000 00739fbd 06c9efc8 js_32_windows_42c95d88aaaa!RunFile+0x115 [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 644]
+0053f834 0120bcf2 08410000 00739fbd 00000000 js_32_windows_42c95d88aaaa!Process+0xaf [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 1062]
+0053f8e4 0120e416 08410000 0053f9ac 08410000 js_32_windows_42c95d88aaaa!ProcessArgs+0x242 [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7082]
+0053f964 0121396e 08410000 0053f9ac 00d1ee70 js_32_windows_42c95d88aaaa!Shell+0x1a6 [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7467]
+0053fa4c 01735cce 00000012 00739e18 00d1ee70 js_32_windows_42c95d88aaaa!main+0xc4e [c:\users\administrator\trees\mozilla-central\js\src\shell\js.cpp @ 7852]
+0053fa94 75b17c04 fef3e000 75b17be0 69dbe9d8 js_32_windows_42c95d88aaaa!__scrt_common_main_seh+0xf9 [f:\dd\vctools\crt\vcstartup\src\startup\exe_common.inl @ 253]
+0053faa8 77a7ab8f fef3e000 6bb63335 00000000 kernel32+0x17c04
+0053faf0 77a7ab5a ffffffff 77a60008 00000000 ntdll+0x5ab8f
+0053fb00 00000000 01735d44 fef3e000 00000000 ntdll+0x5ab5a
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FOLLOWUP_IP:
+mozglue!arena_run_dalloc+205 [c:\users\administrator\trees\mozilla-central\memory\mozjemalloc\jemalloc.c @ 3916]
+746c37f5 8b4624          mov     eax,dword ptr [esi+24h]
+
+FAULTING_SOURCE_CODE:
+3912: 	arena_avail_tree_insert(&arena->runs_avail, &chunk->map[run_ind]);
+3913:
+3914: 	/* Deallocate chunk if it is now completely unused. */
+3915: 	if ((chunk->map[arena_chunk_header_npages].bits & (~pagesize_mask |
+> 3916: 	    CHUNK_MAP_ALLOCATED)) == arena_maxclass)
+3917: 		arena_chunk_dealloc(arena, chunk);
+3918:
+3919: 	/* Enforce opt_dirty_max. */
+3920: 	if (arena->ndirty > opt_dirty_max)
+3921: 		arena_purge(arena, false);
+
+
+SYMBOL_STACK_INDEX:  1
+
+SYMBOL_NAME:  mozglue!arena_run_dalloc+205
+
+FOLLOWUP_NAME:  MachineOwner
+
+IMAGE_NAME:  mozglue.dll
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_80000003_mozglue.dll!arena_run_dalloc
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+# ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 0053d84c 75b17b89 ntdll+0x3c7ec
+01 0053d868 75b707bf kernel32+0x17b89
+02 0053dca8 75b70295 kernel32+0x707bf
+03 0053dcc0 75f6f605 kernel32+0x70295
+04 0053dd4c 77acf154 KERNELBASE+0xbf605
+05 0053faf0 77a7ab5a ntdll+0xaf154
+06 0053fb00 00000000 ntdll+0x5ab5a
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+0053d84c 75b17b89 00000003 0053d890 00000000 ntdll+0x3c7ec
+0053d868 75b707bf 00000003 0053d890 00000000 kernel32+0x17b89
+0053dca8 75b70295 00000000 00000001 00000000 kernel32+0x707bf
+0053dcc0 75f6f605 0053dd7c 00000001 69ecfe8a kernel32+0x70295
+0053dd4c 77acf154 0053dd7c 77a60830 0053faf0 KERNELBASE+0xbf605
+0053faf0 77a7ab5a ffffffff 77a60008 00000000 ntdll+0xaf154
+0053fb00 00000000 01735d44 fef3e000 00000000 ntdll+0x5ab5a
+0:000> q
+quit:

@@ -1,4 +1,8 @@
+from __future__ import annotations
+
+from argparse import ArgumentParser
 from collections import OrderedDict
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand
@@ -11,20 +15,20 @@ from crashmanager.models import Bucket, CrashEntry
 # although this cache looks pointless within this command,
 # the command is called in a loop from triage_new_crashes.py
 # and may be called multiple times in one process by celery
-TRIAGE_CACHE = OrderedDict()
+TRIAGE_CACHE: OrderedDict[str, list[int]] = OrderedDict()
 
 
 class Command(BaseCommand):
     help = "Triage a crash entry into an existing bucket."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "id",
             type=int,
             help="Crash ID",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         entry = CrashEntry.objects.get(pk=options["id"])
         crashInfo = entry.getCrashInfo(attachTestcase=True)
 

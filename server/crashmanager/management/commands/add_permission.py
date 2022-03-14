@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from argparse import ArgumentParser
+from typing import Any
+
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
@@ -6,7 +11,7 @@ from django.core.management import BaseCommand
 class Command(BaseCommand):
     help = "Adds permissions to the specified user."
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         user = User.objects.get(username=options["user"])
 
         for perm in options["permission"]:
@@ -22,7 +27,7 @@ class Command(BaseCommand):
 
         print("done")
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("user")
         parser.add_argument(
             "permission",

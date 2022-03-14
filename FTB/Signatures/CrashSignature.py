@@ -15,10 +15,17 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import difflib
 import json
+from pathlib import Path
+from typing import Sequence
+
+from typing_extensions import NotRequired, TypedDict
 
 from FTB.Signatures import JSONHelper
+from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.Symptom import (
     OutputSymptom,
     StackFramesSymptom,
@@ -27,12 +34,19 @@ from FTB.Signatures.Symptom import (
 )
 
 
+class SymptomsDiffType(TypedDict):
+    """Type information for SymptomsDiff"""
+
+    offending: bool
+    proposed: NotRequired[Symptom]
+    symptom: Symptom
+
+
 class CrashSignature:
-    def __init__(self, rawSignature):
+    def __init__(self, rawSignature: str) -> None:
         """
         Constructor
 
-        @type rawSignature: string
         @param rawSignature: A JSON-formatted string representing the crash signature
         """
 
@@ -66,23 +80,21 @@ class CrashSignature:
         self.products = JSONHelper.getArrayChecked(obj, "products")
 
     @staticmethod
-    def fromFile(signatureFile):
+    def fromFile(signatureFile: Path | str) -> CrashSignature:
         with open(signatureFile) as sigFd:
             return CrashSignature(sigFd.read())
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.rawSignature)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Match this signature against the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash info to match the signature against
-
-        @rtype: bool
         @return: True if the signature matches, False otherwise
         """
+        assert crashInfo.configuration is not None
         if (
             self.platforms is not None
             and crashInfo.configuration.platform not in self.platforms
@@ -121,14 +133,13 @@ class CrashSignature:
 
         return True
 
-    def matchRequiresTest(self):
+    def matchRequiresTest(self) -> bool:
         """
         Check if the signature requires a testcase to match.
 
         This method can be used to avoid attaching a testcase to the crashInfo
         before matching, avoiding unnecessary I/O on testcase files.
 
-        @rtype: bool
         @return: True if the signature requires a testcase to match
         """
         for symptom in self.symptoms:
@@ -137,14 +148,13 @@ class CrashSignature:
 
         return False
 
-    def getRequiredOutputSources(self):
+    def getRequiredOutputSources(self) -> list[str]:
         """
         Return a list of output sources required by this signature for matching.
 
         This method can be used to avoid loading raw output fields from the
         database if they are not required for the particular signature.
 
-        @rtype: list(str)
         @return: A list of output identifiers (e.g. stdout, stderr or crashdata)
                  required by this signature.
         """
@@ -160,7 +170,7 @@ class CrashSignature:
 
         return ret
 
-    def getDistance(self, crashInfo):
+    def getDistance(self, crashInfo: CrashInfo) -> int:
         distance = 0
 
         for symptom in self.symptoms:
@@ -175,6 +185,7 @@ class CrashSignature:
                 if not symptom.matches(crashInfo):
                     distance += 1
 
+        assert crashInfo.configuration is not None
         if (
             self.platforms is not None
             and crashInfo.configuration.platform not in self.platforms
@@ -195,9 +206,9 @@ class CrashSignature:
 
         return distance
 
-    def fit(self, crashInfo):
+    def fit(self, crashInfo: CrashInfo) -> CrashSignature | None:
         sigObj = {}
-        sigSymptoms = []
+        sigSymptoms: list[dict[str, object]] = []
 
         sigObj["symptoms"] = sigSymptoms
 
@@ -224,8 +235,8 @@ class CrashSignature:
 
         return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
-    def getSymptomsDiff(self, crashInfo):
-        symptomsDiff = []
+    def getSymptomsDiff(self, crashInfo: CrashInfo) -> list[SymptomsDiffType]:
+        symptomsDiff: list[SymptomsDiffType] = []
         for symptom in self.symptoms:
             if symptom.matches(crashInfo):
                 symptomsDiff.append({"offending": False, "symptom": symptom})
@@ -249,7 +260,9 @@ class CrashSignature:
                 symptomsDiff.append({"offending": True, "symptom": symptom})
         return symptomsDiff
 
-    def getSignatureUnifiedDiffTuples(self, crashInfo):
+    def getSignatureUnifiedDiffTuples(
+        self, crashInfo: CrashInfo
+    ) -> Sequence[tuple[str, list[str] | str]]:
         diffTuples = []
 
         # go through dumps(loads()) to standardize the format.

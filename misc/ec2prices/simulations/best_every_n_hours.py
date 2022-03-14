@@ -14,10 +14,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 from .common import select_better
 
 
-def run(data, sim_config, main_config):
+def run(data, sim_config: dict[str, str], main_config: dict[str, str]) -> int | None:
     region = list(data.keys())[0]
     zone = list(data[region].keys())[0]
     instance_type = list(data[region][zone].keys())[0]

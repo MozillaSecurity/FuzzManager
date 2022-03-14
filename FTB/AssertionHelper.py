@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import re
 
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
@@ -25,17 +27,16 @@ RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
 RE_V8_END = re.compile(r"^")
 
 
-def getAssertion(output):
+def getAssertion(output: list[str]) -> list[str] | str | None:
     """
     This helper method provides a way to extract and process the
     different types of assertions from a given buffer.
     The problem here is that pretty much every software has its
     own type of assertions with different output formats.
 
-    @type output: list
     @param output: List of strings to be searched
     """
-    lastLine = None
+    lastLine: list[str] | str | None = None
     endRegex = None
 
     # Use this to ignore the ASan head line in case of an assertion
@@ -124,17 +125,16 @@ def getAssertion(output):
     return lastLine
 
 
-def getAuxiliaryAbortMessage(output):
+def getAuxiliaryAbortMessage(output: list[str]) -> list[str] | str | None:
     """
     This helper method provides a way to extract and process additional
     abort messages or other useful messages produced by helper tools like
     sanitizers. These messages can be helpful in signatures if there is no
     abort message from the program itself.
 
-    @type output: list
     @param output: List of strings to be searched
     """
-    lastLine = None
+    lastLine: list[str] | str | None = None
     needASanRW = False
     needTSanRW = False
 
@@ -183,16 +183,13 @@ def getAuxiliaryAbortMessage(output):
     return lastLine
 
 
-def getSanitizedAssertionPattern(msgs):
+def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | str:
     """
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.
     for use in signature matching.
 
-    @type msgs: string or list
     @param msgs: Assertion message(s) to be sanitized
-
-    @rtype: string
     @return: Sanitized assertion message (regular expression)
     """
     assert msgs is not None
@@ -206,7 +203,7 @@ def getSanitizedAssertionPattern(msgs):
 
     for msg in msgs:
         # remember the position of all backslashes in the input
-        bsPositions = []
+        bsPositions: list[int] = []
         for chunk in msg.split("\\"):
             if not bsPositions:
                 bsPositions.append(len(chunk))
@@ -266,7 +263,7 @@ def getSanitizedAssertionPattern(msgs):
 
         for replacementPattern in replacementPatterns:
 
-            def _handleMatch(match):
+            def _handleMatch(match: re.Match[str]) -> str:
                 start = match.start(0)
                 end = match.end(0)
                 lengthDiff = len(replacementPattern) - len(match.group(0))
@@ -313,15 +310,12 @@ def getSanitizedAssertionPattern(msgs):
     return sanitizedMsgs
 
 
-def escapePattern(msg):
+def escapePattern(msg: str) -> str:
     """
     This method escapes regular expression characters in the string.
     And no, this is not re.escape, which would escape many more characters.
 
-    @type msg: string
     @param msg: String that needs to be quoted
-
-    @rtype: string
     @return: Escaped string for use in regular expressions
     """
 

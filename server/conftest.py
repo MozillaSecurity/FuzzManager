@@ -8,12 +8,18 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
+from pathlib import Path
 
 import pytest
 from django.apps import apps
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
+from pytest_django.fixtures import SettingsWrapper
+from rest_framework.request import Request
 from rest_framework.test import APIClient
 
 logging.getLogger("django").setLevel(logging.WARNING)
@@ -24,19 +30,19 @@ LOG = logging.getLogger("fm.tests")
 
 
 @pytest.fixture(autouse=True)
-def dj_static_tmp(tmp_path, settings):
+def dj_static_tmp(tmp_path: Path, settings: SettingsWrapper) -> None:
     dj_static = tmp_path / "dj-static"
     dj_static.mkdir()
     settings.STATIC_ROOT = str(dj_static)
 
 
 @pytest.fixture
-def api_client():
+def api_client() -> APIClient:
     return APIClient()
 
 
 @pytest.fixture
-def migration_hook(request):
+def migration_hook(request: Request):
     """
     Pause migration at the migration named in
         @pytest.mark.migrate_from('0001-initial-migration')
@@ -67,13 +73,17 @@ def migration_hook(request):
     assert len(migrate_to_mark.args) == 1, "migrate_to mark expects 1 arg"
     assert not migrate_to_mark.kwargs, "migrate_to mark takes no keywords"
 
-    app = apps.get_containing_app_config(request.module.__name__).name
+    apps_get_containing_app_config = apps.get_containing_app_config(
+        request.module.__name__
+    )
+    assert apps_get_containing_app_config is not None
+    app = apps_get_containing_app_config.name
 
     migrate_from = [(app, migrate_from_mark.args[0])]
     migrate_to = [(app, migrate_to_mark.args[0])]
 
     class migration_hook_result:
-        def __init__(self, _from, _to):
+        def __init__(self, _from, _to) -> None:
             self._to = _to
             executor = MigrationExecutor(connection)
             self.apps = executor.loader.project_state(_from).apps
@@ -81,7 +91,7 @@ def migration_hook(request):
             # Reverse to the original migration
             executor.migrate(_from)
 
-        def __call__(self):
+        def __call__(self) -> None:
             # Run the migration to test
             executor = MigrationExecutor(connection)
             executor.loader.build_graph()  # reload.

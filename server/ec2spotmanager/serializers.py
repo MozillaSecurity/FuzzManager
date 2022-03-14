@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import itertools
+from typing import Any
 
 from django.http.response import Http404  # noqa
 from rest_framework import serializers
 
-from ec2spotmanager.models import Instance
+from ec2spotmanager.models import Instance, PoolConfiguration
 
 
-class PoolConfigurationSerializer(serializers.BaseSerializer):
+class PoolConfigurationSerializer(serializers.BaseSerializer[PoolConfiguration]):
     id = serializers.IntegerField(read_only=True)
     parent = serializers.IntegerField(min_value=0, allow_null=True)
     name = serializers.CharField(max_length=255)
@@ -69,7 +72,7 @@ class PoolConfigurationSerializer(serializers.BaseSerializer):
     )
     gce_raw_config_override = serializers.BooleanField(default=False)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._flatten = kwargs.pop("flatten", False)
         super().__init__(*args, **kwargs)
 
@@ -104,14 +107,14 @@ class PoolConfigurationSerializer(serializers.BaseSerializer):
         return result
 
 
-class MachineStatusSerializer(serializers.ModelSerializer):
+class MachineStatusSerializer(serializers.ModelSerializer[Instance]):
     status_data = serializers.CharField(max_length=4095)
 
     class Meta:
         model = Instance
         fields = ["status_data"]
 
-    def update(self, instance, attrs):
+    def update(self, instance: Instance, attrs: dict[str, str]) -> Instance:
         """
         Update the status_data field of a given instance
         """

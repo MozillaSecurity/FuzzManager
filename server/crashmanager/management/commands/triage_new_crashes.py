@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from django.core.management import BaseCommand, call_command
 
 from crashmanager.models import CrashEntry
@@ -9,7 +13,7 @@ class Command(BaseCommand):
         "before to assign them into the existing buckets."
     )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         entries = CrashEntry.objects.filter(triagedOnce=False, bucket=None).values_list(
             "id", flat=True
         )

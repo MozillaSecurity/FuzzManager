@@ -1,8 +1,13 @@
+from __future__ import annotations
+
+from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.parse import urlsplit
 
 import pytest
+from django.contrib.auth.models import User
 from django.utils import timezone
+from pytest_django.live_server_helper import LiveServer
 
 from EC2Reporter.EC2Reporter import EC2Reporter, main
 from ec2spotmanager.models import Instance, InstancePool
@@ -12,7 +17,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = "server.tests"
 
 
-def test_ec2reporter_help(capsys):
+def test_ec2reporter_help(capsys: pytest.CaptureFixture[str]) -> None:
     """Test that help prints without throwing"""
     with pytest.raises(SystemExit):
         main()
@@ -22,7 +27,9 @@ def test_ec2reporter_help(capsys):
 
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
-def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_report(
+    mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User
+) -> None:
     """Test report submission"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path
@@ -68,7 +75,9 @@ def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
 
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
-def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_xable(
+    mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User
+) -> None:
     """Test EC2Reporter enable/disable"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path
@@ -113,7 +122,9 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
 
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
-def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
+def test_ec2reporter_cycle(
+    mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User
+) -> None:
     """Test EC2Reporter cycle"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path

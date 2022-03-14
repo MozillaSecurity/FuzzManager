@@ -13,10 +13,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import json
 from abc import ABCMeta, abstractmethod
+from typing import Sequence
 
 from FTB.Signatures import JSONHelper
+from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.Matchers import NumberMatch, StringMatch
 
 
@@ -26,23 +31,21 @@ class Symptom(metaclass=ABCMeta):
     It also supports generating a CrashSignature based on the stored information.
     """
 
-    def __init__(self, jsonObj):
+    def __init__(self, jsonObj: dict[str, object]) -> None:
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)
         self.jsonobj = jsonObj
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.jsonsrc
 
     @staticmethod
-    def fromJSONObject(obj):
+    def fromJSONObject(obj: dict[str, object]) -> Symptom:
         """
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
         @type obj: map
         @param obj: Object as decoded from JSON
-
-        @rtype: Symptom
         @return: Symptom subclass instance matching the given object
         """
         if "type" not in obj:
@@ -68,21 +71,18 @@ class Symptom(metaclass=ABCMeta):
             raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
         return
 
 
 class OutputSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -101,14 +101,11 @@ class OutputSymptom(Symptom):
             ):
                 raise RuntimeError(f"Invalid source specified: {self.src}")
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
         checkedOutput = []
@@ -124,6 +121,7 @@ class OutputSymptom(Symptom):
         else:
             checkedOutput = crashInfo.rawCrashData
 
+        assert crashInfo.configuration is not None
         windowsSlashWorkaround = crashInfo.configuration.os == "windows"
         for line in reversed(checkedOutput):
             if self.output.matches(line, windowsSlashWorkaround=windowsSlashWorkaround):
@@ -133,7 +131,7 @@ class OutputSymptom(Symptom):
 
 
 class StackFrameSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -149,14 +147,11 @@ class StackFrameSymptom(Symptom):
             # Default to 0
             self.frameNumber = NumberMatch(0)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
 
@@ -170,7 +165,7 @@ class StackFrameSymptom(Symptom):
 
 
 class StackSizeSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -179,21 +174,18 @@ class StackSizeSymptom(Symptom):
             JSONHelper.getNumberOrStringChecked(obj, "size", True)
         )
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
         return self.stackSize.matches(len(crashInfo.backtrace))
 
 
 class CrashAddressSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -202,14 +194,11 @@ class CrashAddressSymptom(Symptom):
             JSONHelper.getNumberOrStringChecked(obj, "address", True)
         )
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
         # In case the crash address is not available,
@@ -218,7 +207,7 @@ class CrashAddressSymptom(Symptom):
 
 
 class InstructionSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -235,14 +224,11 @@ class InstructionSymptom(Symptom):
                 "Must provide at least instruction name or register names"
             )
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
         if crashInfo.crashInstruction is None:
@@ -262,7 +248,7 @@ class InstructionSymptom(Symptom):
 
 
 class TestcaseSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -271,14 +257,11 @@ class TestcaseSymptom(Symptom):
             JSONHelper.getObjectOrStringChecked(obj, "value", True)
         )
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
 
@@ -296,7 +279,7 @@ class TestcaseSymptom(Symptom):
 
 
 class StackFramesSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, object]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
@@ -308,20 +291,19 @@ class StackFramesSymptom(Symptom):
         for fn in rawFunctionNames:
             self.functionNames.append(StringMatch(fn))
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
-        @type crashInfo: CrashInfo
         @param crashInfo: The crash information to check against
-
-        @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
 
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
-    def diff(self, crashInfo):
+    def diff(
+        self, crashInfo: CrashInfo
+    ) -> tuple[int | None, StackFramesSymptom | None]:
         if self.matches(crashInfo):
             return (0, None)
 
@@ -330,6 +312,7 @@ class StackFramesSymptom(Symptom):
                 crashInfo.backtrace, self.functionNames, 0, 1, depth
             )
             if bestDepth is not None:
+                assert bestGuess is not None
                 guessedFunctionNames = [repr(x) for x in bestGuess]
 
                 # Remove trailing wildcards as they are of no use
@@ -353,7 +336,13 @@ class StackFramesSymptom(Symptom):
         return (None, None)
 
     @staticmethod
-    def _diff(stack, signatureGuess, startIdx, depth, maxDepth):
+    def _diff(
+        stack: list[str],
+        signatureGuess: list[StringMatch],
+        startIdx: int,
+        depth: int,
+        maxDepth: int,
+    ) -> tuple[int | None, list[StringMatch] | None]:
         singleWildcardMatch = StringMatch("?")
 
         newSignatureGuess = []
@@ -448,7 +437,10 @@ class StackFramesSymptom(Symptom):
         return (bestDepth, bestGuess)
 
     @staticmethod
-    def _match(partialStack, partialFunctionNames):
+    def _match(
+        partialStack: Sequence[StringMatch | str],
+        partialFunctionNames: Sequence[StringMatch | str],
+    ) -> bool:
 
         while True:
 
@@ -459,6 +451,7 @@ class StackFramesSymptom(Symptom):
                 and partialStack
                 and str(partialFunctionNames[0]) not in {"?", "???"}
             ):
+                assert isinstance(partialFunctionNames[0], StringMatch)
                 if not partialFunctionNames[0].matches(partialStack[0]):
                     return False
 

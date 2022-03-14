@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import json
 
 from FTB import CoverageHelper
@@ -146,7 +149,7 @@ covdata = r"""
 """
 
 
-def test_CoverageHelperFlattenNames():
+def test_CoverageHelperFlattenNames() -> None:
     node = json.loads(covdata)
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
@@ -165,7 +168,7 @@ def test_CoverageHelperFlattenNames():
     assert result == set(expected_names)
 
 
-def test_CoverageHelperApplyDirectivesMixed():
+def test_CoverageHelperApplyDirectivesMixed() -> None:
     node = json.loads(covdata)
 
     # Check that mixed directives work properly (exclude multiple paths, include some
@@ -193,7 +196,7 @@ def test_CoverageHelperApplyDirectivesMixed():
     assert result == set(expected_names)
 
 
-def test_CoverageHelperApplyDirectivesPrune():
+def test_CoverageHelperApplyDirectivesPrune() -> None:
     node = json.loads(covdata)
 
     # Check that any empty childs are pruned (empty childs are not useful)
@@ -208,7 +211,7 @@ def test_CoverageHelperApplyDirectivesPrune():
     assert result == set(expected_names)
 
 
-def test_CoverageHelperApplyDirectivesExcludeAll():
+def test_CoverageHelperApplyDirectivesExcludeAll() -> None:
     node = json.loads(covdata)
 
     # Check that excluding all paths works (specialized case)
@@ -223,7 +226,7 @@ def test_CoverageHelperApplyDirectivesExcludeAll():
     assert result == set(expected_names)
 
 
-def test_CoverageHelperApplyDirectivesMakeEmpty():
+def test_CoverageHelperApplyDirectivesMakeEmpty() -> None:
     node = json.loads(covdata)
 
     # Check that making the set entirely empty doesn't crash things (tsmith mode)
@@ -233,6 +236,6 @@ def test_CoverageHelperApplyDirectivesMakeEmpty():
 
     result = CoverageHelper.get_flattened_names(node, prefix="")
 
-    expected_names = []
+    expected_names: list[str] = []
 
     assert result == set(expected_names)

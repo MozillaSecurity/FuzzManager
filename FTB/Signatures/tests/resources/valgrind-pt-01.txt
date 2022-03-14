@@ -1,0 +1,11 @@
+==20956== 
+==20956== Process terminating with default action of signal 11 (SIGSEGV)
+==20956==  Access not within mapped region at address 0x0
+==20956==    at 0x4C331C2: strlen (vg_replace_strmem.c:461)
+==20956==    by 0x4EBD9D1: puts (ioputs.c:35)
+==20956==    by 0x1086FF: main (free.c:9)
+==20956==  If you believe this happened as a result of a stack
+==20956==  overflow in your program's main thread (unlikely but
+==20956==  possible), you can try to increase the size of the
+==20956==  main thread stack using the --main-stacksize= flag.
+==20956==  The main thread stack size used in this run was 8388608.

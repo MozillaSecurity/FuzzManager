@@ -1,0 +1,59 @@
+Process:               js-dbg-64-dm-darwin-a523d4c7efe2 [27938]
+Path:                  /Users/USER/*/js-dbg-64-dm-darwin-a523d4c7efe2
+Identifier:            js-dbg-64-dm-darwin-a523d4c7efe2
+Version:               ???
+Code Type:             X86-64 (Native)
+Parent Process:        bash [27933]
+Responsible:           iTerm2 [91188]
+User ID:               501
+
+Date/Time:             2015-11-19 17:01:28.214 -0800
+OS Version:            Mac OS X 10.11.1 (15B42)
+Report Version:        11
+Anonymous UUID:        2D34C956-9487-7B72-EFCB-E61B989F1869
+
+
+Time Awake Since Boot: 25000 seconds
+
+System Integrity Protection: enabled
+
+Crashed Thread:        0  Dispatch queue: com.apple.main-thread
+
+Exception Type:        EXC_BAD_ACCESS (SIGSEGV)
+Exception Codes:       KERN_PROTECTION_FAILURE at 0x00007fff5f3fff98
+
+VM Regions Near 0x7fff5f3fff98:
+    Stack                  00007000034c5000-0000700003547000 [  520K] rw-/rwx SM=COW  thread 59
+--> STACK GUARD            00007fff5bc00000-00007fff5f400000 [ 56.0M] ---/rwx SM=NUL  stack guard for thread 0
+    Stack                  00007fff5f400000-00007fff5fc00000 [ 8192K] rw-/rwx SM=PRV  thread 0
+
+Thread 0 Crashed:: Dispatch queue: com.apple.main-thread
+0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)
+1   js-dbg-64-dm-darwin-a523d4c7efe2    0x0000000100395e01 js::jit::ICGetPropCallNativeCompiler::generateStubCode(js::jit::MacroAssembler&) + 1329 (SharedIC.cpp:3701)
+2   js-dbg-64-dm-darwin-a523d4c7efe2    0x0000000100385112 js::jit::ICStubCompiler::getStubCode() + 242 (SharedIC.cpp:734)
+3   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001003961e5 js::jit::ICGetPropCallNativeCompiler::getStub(js::jit::ICStubSpace*) + 245 (SharedIC.cpp:3721)
+4   js-dbg-64-dm-darwin-a523d4c7efe2    0x000000010038fe57 js::jit::DoGetPropFallback(JSContext*, js::jit::BaselineFrame*, js::jit::ICGetProp_Fallback*, JS::MutableHandle<JS::Value>, JS::MutableHandle<JS::Value>) + 7687 (SharedIC.h:2872)
+5   ???                             0x0000000101e48547 0 + 4326720839
+6   libsystem_c.dylib               0x00007fff841e10ff __cxa_finalize_ranges + 345
+7   XUL                             0x0000000102cff002 0x101c38000 + 17592322
+8   com.apple.AppKit                0x00007fff957c91c5 -[NSApplication _nextEventMatchingEventMask:untilDate:inMode:dequeue:] + 454
+
+Thread 1:
+0   libsystem_kernel.dylib          0x00007fff9700fc96 mach_msg_trap + 10
+1   libsystem_kernel.dylib          0x00007fff9700f0d7 mach_msg + 55
+2   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001000e0ebf AsmJSMachExceptionHandlerThread(void*) + 415 (AsmJSSignalHandlers.cpp:950)
+3   js-dbg-64-dm-darwin-a523d4c7efe2    0x0000000100720c3f nspr::Thread::ThreadRoutine(void*) + 31 (Utility.h:369)
+4   libsystem_pthread.dylib         0x00007fff96ef29b1 _pthread_body + 131
+5   libsystem_pthread.dylib         0x00007fff96ef292e _pthread_start + 168
+6   libsystem_pthread.dylib         0x00007fff96ef0385 thread_start + 13
+
+Thread 0 crashed with X86 Thread State (64-bit):
+  rax: 0x0000000000000000  rbx: 0x00007fff7bb75bd0  rcx: 0x0000010000000203  rdx: 0x0000020000000200
+  rdi: 0x00007fff7bb751e8  rsi: 0x0000000000012068  rbp: 0x00007fff5fbf95b0  rsp: 0x00007fff5fbf95a0
+   r8: 0x0000000000000040   r9: 0x00007fff7bb751e0  r10: 0xffffffffffffffff  r11: 0x00007fff8c7a7201
+  r12: 0x00000000001e374a  r13: 0x00007fff5fbf9680  r14: 0x00007fff5fbfa228  r15: 0x0000000000000002
+  rip: 0x00000001004b04c4  rfl: 0x0000000000010206  cr2: 0x0000000000000000
+  
+Logical CPU:     0
+Error Code:      0x00000006
+Trap Number:     14

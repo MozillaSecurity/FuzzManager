@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import re
 from pathlib import Path
 
@@ -19,7 +22,9 @@ from FTB import AssertionHelper
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
 
-def _check_regex_matches(error_lines, sanitized_message):
+def _check_regex_matches(
+    error_lines: list[str] | str, sanitized_message: list[str] | str
+) -> None:
     if isinstance(sanitized_message, (str, bytes)):
         sanitized_message = [sanitized_message]
     else:
@@ -38,14 +43,14 @@ def _check_regex_matches(error_lines, sanitized_message):
     )
 
 
-def test_AssertionHelperTestASanFFAbort():
+def test_AssertionHelperTestASanFFAbort() -> None:
     err = (FIXTURE_PATH / "assert_asan_ff_abort.txt").read_text().splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
     assert AssertionHelper.getAuxiliaryAbortMessage(err) is None
 
 
-def test_AssertionHelperTestASanNegativeSize():
+def test_AssertionHelperTestASanNegativeSize() -> None:
     err = (FIXTURE_PATH / "assert_asan_negative_size.txt").read_text().splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
@@ -58,7 +63,7 @@ def test_AssertionHelperTestASanNegativeSize():
     assert assertMsg == expectedAssertMsg
 
 
-def test_AssertionHelperTestASanStackOverflow():
+def test_AssertionHelperTestASanStackOverflow() -> None:
     err = (FIXTURE_PATH / "assert_asan_stack_overflow.txt").read_text().splitlines()
 
     assert AssertionHelper.getAssertion(err) is None
@@ -67,7 +72,7 @@ def test_AssertionHelperTestASanStackOverflow():
     assert assertMsg == expectedAssertMsg
 
 
-def test_AssertionHelperTestMozCrash():
+def test_AssertionHelperTestMozCrash() -> None:
     err = (FIXTURE_PATH / "assert_jsshell_moz_crash.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -81,7 +86,7 @@ def test_AssertionHelperTestMozCrash():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashMultiLine():
+def test_AssertionHelperTestMozCrashMultiLine() -> None:
     err = (FIXTURE_PATH / "assert_moz_crash_multiline.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -98,7 +103,7 @@ def test_AssertionHelperTestMozCrashMultiLine():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashWithPath():
+def test_AssertionHelperTestMozCrashWithPath() -> None:
     err = (FIXTURE_PATH / "assert_moz_crash_with_path.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -112,7 +117,7 @@ def test_AssertionHelperTestMozCrashWithPath():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMultiMozCrash():
+def test_AssertionHelperTestMultiMozCrash() -> None:
     err = (FIXTURE_PATH / "assert_moz_crash_multi.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -126,7 +131,7 @@ def test_AssertionHelperTestMultiMozCrash():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestJSSelfHosted():
+def test_AssertionHelperTestJSSelfHosted() -> None:
     err = (
         (FIXTURE_PATH / "assert_jsshell_self_hosted_assert.txt")
         .read_text()
@@ -145,7 +150,7 @@ def test_AssertionHelperTestJSSelfHosted():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestV8Abort():
+def test_AssertionHelperTestV8Abort() -> None:
     err = (FIXTURE_PATH / "assert_v8_abort.txt").read_text().splitlines()
 
     sanitizedMsgs = AssertionHelper.getSanitizedAssertionPattern(
@@ -166,7 +171,7 @@ def test_AssertionHelperTestV8Abort():
     _check_regex_matches(err, sanitizedMsgs)
 
 
-def test_AssertionHelperTestChakraAssert():
+def test_AssertionHelperTestChakraAssert() -> None:
     err = (FIXTURE_PATH / "assert_chakra_assert.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -181,7 +186,7 @@ def test_AssertionHelperTestChakraAssert():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestWindowsPathSanitizing():
+def test_AssertionHelperTestWindowsPathSanitizing() -> None:
     err1 = (
         (FIXTURE_PATH / "assert_windows_forward_slash_path.txt")
         .read_text()
@@ -216,7 +221,7 @@ def test_AssertionHelperTestWindowsPathSanitizing():
     # _check_regex_matches(err2, sanitizedMsg2)
 
 
-def test_AssertionHelperTestAuxiliaryAbortASan():
+def test_AssertionHelperTestAuxiliaryAbortASan() -> None:
     err = (
         (FIXTURE_PATH / "assert_asan_heap_buffer_overflow.txt").read_text().splitlines()
     )
@@ -233,7 +238,7 @@ def test_AssertionHelperTestAuxiliaryAbortASan():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestCPPUnhandledException():
+def test_AssertionHelperTestCPPUnhandledException() -> None:
     err = (FIXTURE_PATH / "assert_cpp_unhandled_exception.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
@@ -245,7 +250,7 @@ def test_AssertionHelperTestCPPUnhandledException():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic01():
+def test_AssertionHelperTestRustPanic01() -> None:
     err = (FIXTURE_PATH / "assert_rust_panic1.txt").read_text().splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
@@ -260,7 +265,7 @@ def test_AssertionHelperTestRustPanic01():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic02():
+def test_AssertionHelperTestRustPanic02() -> None:
     err = (FIXTURE_PATH / "assert_rust_panic2.txt").read_text().splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
@@ -274,7 +279,7 @@ def test_AssertionHelperTestRustPanic02():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestRustPanic03():
+def test_AssertionHelperTestRustPanic03() -> None:
     err = (FIXTURE_PATH / "assert_rust_panic3.txt").read_text().splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)

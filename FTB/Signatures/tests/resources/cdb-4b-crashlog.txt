@@ -1,0 +1,368 @@
+
+Microsoft (R) Windows Debugger Version 10.0.10586.567 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\fuzz1win\AppData\Local\CrashDumps\js-32-dm-windows-62f79d676e0e.exe.6972.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: srv*
+Executable search path is:
+Windows 10 Version 14393 MP (8 procs) Free x86 compatible
+Product: WinNt, suite: SingleUserTS
+Built by: 10.0.14393.0 (rs1_release.160715-1616)
+Machine Name:
+Debug session time: Tue Sep 20 17:59:27.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: not available
+....................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr.
+(1b3c.135c): Access violation - code c0000005 (first/second chance not available)
+eax=00000000 ebx=00000000 ecx=2b2b2b2b edx=016fe490 esi=00000003 edi=00000003
+eip=770fe1bc esp=016fcf28 ebp=016fd0b8 iopl=0         nv up ei pl nz na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000206
+ntdll!NtWaitForMultipleObjects+0xc:
+770fe1bc c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\fuzz1win\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+ *** !wow64exts is only useful targeting architectures that support WoW ***
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+*** WARNING: Unable to verify checksum for js-32-dm-windows-62f79d676e0e.exe
+eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
+js_32_dm_windows_62f79d676e0e!JSObject::is+0x2 [inlined in js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9]:
+00404c59 8b39            mov     edi,dword ptr [ecx]  ds:002b:2b2b2b2b=????????
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+js_32_dm_windows_62f79d676e0e!JSObject::is+0x2 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 3675] [inlined in js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 3675]]:
+00404c59 8b39            mov     edi,dword ptr [ecx]
+00404c5b 81ff708e7a00    cmp     edi,offset js_32_dm_windows_62f79d676e0e!js::ArrayObject::class_ (007a8e70)
+00404c61 7567            jne     js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x7a (00404cca)
+00404c63 8b442414        mov     eax,dword ptr [esp+14h]
+00404c67 8b4808          mov     ecx,dword ptr [eax+8]
+00404c6a 8b400c          mov     eax,dword ptr [eax+0Ch]
+00404c6d 8d3c81          lea     edi,[ecx+eax*4]
+00404c70 3bcf            cmp     ecx,edi
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+00404c59  8b 39 81 ff                                      .9..
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Unable to verify checksum for mozglue.dll
+
+DUMP_CLASS: 2
+
+DUMP_QUALIFIER: 400
+
+CONTEXT:  (.ecxr)
+eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
+js_32_dm_windows_62f79d676e0e!JSObject::is+0x2 [inlined in js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9]:
+00404c59 8b39            mov     edi,dword ptr [ecx]  ds:002b:2b2b2b2b=????????
+Resetting default scope
+
+FAULTING_IP:
+js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 3675]
+00404c59 8b39            mov     edi,dword ptr [ecx]
+
+EXCEPTION_RECORD:  (.exr -1)
+ExceptionAddress: 00404c59 (js_32_dm_windows_62f79d676e0e!JSObject::is+0x00000002)
+   ExceptionCode: c0000005 (Access violation)
+  ExceptionFlags: 00000000
+NumberParameters: 2
+   Parameter[0]: 00000000
+   Parameter[1]: 2b2b2b2b
+Attempt to read from address 2b2b2b2b
+
+PROCESS_NAME:  js-32-dm-windows-62f79d676e0e.exe
+
+ERROR_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%p referenced memory at 0x%p. The memory could not be %s.
+
+EXCEPTION_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%p referenced memory at 0x%p. The memory could not be %s.
+
+EXCEPTION_CODE_STR:  c0000005
+
+EXCEPTION_PARAMETER1:  00000000
+
+EXCEPTION_PARAMETER2:  2b2b2b2b
+
+READ_ADDRESS:  2b2b2b2b
+
+FOLLOWUP_IP:
+js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 3675]
+00404c59 8b39            mov     edi,dword ptr [ecx]
+
+WATSON_BKT_PROCSTAMP:  57e1a1c7
+
+WATSON_BKT_PROCVER:  0.0.0.0
+
+WATSON_BKT_MODULE:  js-32-dm-windows-62f79d676e0e.exe
+
+WATSON_BKT_MODSTAMP:  57e1a1c7
+
+WATSON_BKT_MODOFFSET:  1f4c59
+
+WATSON_BKT_MODVER:  0.0.0.0
+
+BUILD_VERSION_STRING:  10.0.14393.0 (rs1_release.160715-1616)
+
+MODLIST_WITH_TSCHKSUM_HASH:  73a35fd2f0627611ab79875a8836e6e4d52e327f
+
+MODLIST_SHA1_HASH:  558287c6466b4e03fd3bbf5c37f2840a8cd2b134
+
+NTGLOBALFLAG:  0
+
+APPLICATION_VERIFIER_FLAGS:  0
+
+DUMP_FLAGS:  94
+
+DUMP_TYPE:  1
+
+APP:  js-32-dm-windows-62f79d676e0e.exe
+
+ANALYSIS_SESSION_HOST:  F1BRIX
+
+ANALYSIS_SESSION_TIME:  09-20-2016 17:59:28.0621
+
+ANALYSIS_VERSION: 10.0.10586.567 amd64fre
+
+THREAD_ATTRIBUTES:
+OS_LOCALE:  ENU
+
+PROBLEM_CLASSES:
+
+
+
+INVALID_POINTER_READ
+    Tid    [0x135c]
+    Frame  [0x00]: js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
+
+
+
+FILL_PATTERN
+    Tid    [0x135c]
+    Frame  [0x00]: js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure
+    String [2b2b2b2b]
+    Failure Bucketing
+    Data Bucketing
+
+
+BUGCHECK_STR:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+DEFAULT_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+LAST_CONTROL_TRANSFER:  from 004b2387 to 00404c59
+
+STACK_TEXT:
+016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9
+016fdc5c 004a7d13 02e00310 004a94fa 016fdc78 js_32_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x17
+016fdc64 004a94fa 016fdc78 02e00310 016fddb8 js_32_dm_windows_62f79d676e0e!js::TenuringTraversalFunctor<JS::Value>::operator()<JSObject>+0x33
+016fdc7c 004a8710 016fddb8 016fe490 016fdca0 js_32_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * const>+0x3a
+016fdc98 004ac158 016fddb8 016fe490 007bad80 js_32_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x30
+016fdcc0 0060fae1 016fddb8 00000006 016fe478 js_32_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0x48
+016fdce4 004564b4 01e66269 00000003 01e104e8 js_32_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x211
+016fdd14 004565e2 016fddb8 016fdd28 01e107a0 js_32_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0xa4
+016fdd2c 004b5439 01e10108 016fddb8 01e10108 js_32_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x42
+016fdd8c 004afb70 016fddb8 00000000 016fddec js_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0x39
+016fde40 004af45c 01e10108 00000007 016fde8c js_32_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x320
+016fdf10 002535c9 01e10108 00000007 01e104c0 js_32_dm_windows_62f79d676e0e!js::Nursery::collect+0x10c
+016fdf6c 00257549 00000007 00000030 01e10000 js_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x89
+016fdfa0 003a14c6 01e10000 01e104c0 0039e17d js_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::runDebugGC+0x29
+016fdfac 0039e17d 01e10000 01e10000 0075f658 js_32_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x36
+016fdfc4 0024de4d 01e104c0 00000003 00000003 js_32_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x8d
+016fdff8 003ff92c 01e10000 00000003 00000000 js_32_dm_windows_62f79d676e0e!JSObject::create+0x7d
+016fe034 003ffe56 01e10000 016fe078 00000003 js_32_dm_windows_62f79d676e0e!NewObject+0x11c
+016fe078 00426156 01e10000 0075f658 016fe0e8 js_32_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x166
+016fe120 00275c95 01e10000 00845648 016fe15c js_32_dm_windows_62f79d676e0e!js::ProxyObject::New+0x1a6
+016fe138 0031a923 01e10000 00845648 016fe15c js_32_dm_windows_62f79d676e0e!js::NewProxyObject+0x25
+016fe160 0031acac 01e10000 02e00360 00845648 js_32_dm_windows_62f79d676e0e!js::Wrapper::New+0x63
+016fe198 0034c792 01e10000 016fe1f4 016fe258 js_32_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0x3c
+016fe230 002327f4 01e10000 016fe258 0075561c js_32_dm_windows_62f79d676e0e!JSCompartment::wrap+0x392
+016fe284 002770ba 01e10000 016fe450 01e10000 js_32_dm_windows_62f79d676e0e!JSCompartment::wrap+0x1c4
+016fe2b0 00277244 01e10000 016fe2f4 016fe2f8 js_32_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x12a
+016fe2d8 0027a0b6 01e10000 016fe2f4 016fe2f8 js_32_dm_windows_62f79d676e0e!js::Proxy::call+0xc4
+016fe300 00436bd6 01e10000 00000001 016fe450 js_32_dm_windows_62f79d676e0e!js::proxy_Call+0x66
+016fe350 00436ad3 01e1b000 0027a050 00000000 js_32_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0xf6
+016fe36c 005f18ad 01e10000 016fe3a0 01e7b278 js_32_dm_windows_62f79d676e0e!InternalCall+0x63
+016fe500 667264d5 03100238 016fe638 05bc07a0 js_32_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0x2cd
+016fe5f0 005051f1 01e10000 016fe608 016fe7c8 mozglue!je_free+0x15
+016fe694 00444a6f 01e10000 016fe75c 016fe76c js_32_dm_windows_62f79d676e0e!js::jit::IonCannon+0x121
+016fe72c 00436d2d 01e10000 016fe75c 01e7a418 js_32_dm_windows_62f79d676e0e!js::RunScript+0x12f
+016fe778 00436ad3 01e10000 016fe7c8 00000000 js_32_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x24d
+016fe794 005f18ad 01e10000 016fe7c8 01e7a418 js_32_dm_windows_62f79d676e0e!InternalCall+0x63
+016fe900 00616dde 05bc7259 00000001 016fea04 js_32_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0x2cd
+00000000 00000000 00000000 00000000 00000000 js_32_dm_windows_62f79d676e0e!EnterBaseline+0x13e
+
+
+THREAD_SHA1_HASH_MOD_FUNC:  dadec48c6b3dc5c97ce17c572672a507b7d5f3ff
+
+THREAD_SHA1_HASH_MOD_FUNC_OFFSET:  8debbd6bdb2e48af97b2e3ae2821e15d1265ac9a
+
+THREAD_SHA1_HASH_MOD:  5ce0af82a5736dbf77ca89eb64acd8f32b6d3b1a
+
+FAULT_INSTR_CODE:  ff81398b
+
+FAULTING_SOURCE_LINE:  c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp
+
+FAULTING_SOURCE_FILE:  c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp
+
+FAULTING_SOURCE_LINE_NUMBER:  3675
+
+FAULTING_SOURCE_CODE:
+   559:      * js::GetBuiltinClass).
+   560:      */
+   561:
+   562:     template <class T>
+>  563:     inline bool is() const { return getClass() == &T::class_; }
+   564:
+   565:     template <class T>
+   566:     T& as() {
+   567:         MOZ_ASSERT(this->is<T>());
+   568:         return *static_cast<T*>(this);
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_32_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-32-dm-windows-62f79d676e0e.exe
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e1a1c7
+
+STACK_COMMAND:  .ecxr ; kb
+
+BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
+
+PRIMARY_PROBLEM_CLASS:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+9
+
+BUCKET_ID_OFFSET:  9
+
+BUCKET_ID_MODULE_STR:  js_32_dm_windows_62f79d676e0e
+
+BUCKET_ID_MODTIMEDATESTAMP:  57e1a1c7
+
+BUCKET_ID_MODCHECKSUM:  0
+
+BUCKET_ID_MODVER_STR:  0.0.0.0
+
+BUCKET_ID_PREFIX_STR:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_
+
+FAILURE_PROBLEM_CLASS:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b
+
+FAILURE_EXCEPTION_CODE:  c0000005
+
+FAILURE_IMAGE_NAME:  js-32-dm-windows-62f79d676e0e.exe
+
+FAILURE_FUNCTION_NAME:  JSObject::allocKindForTenure
+
+BUCKET_ID_FUNCTION_STR:  JSObject::allocKindForTenure
+
+FAILURE_SYMBOL_NAME:  js-32-dm-windows-62f79d676e0e.exe!JSObject::allocKindForTenure
+
+FAILURE_BUCKET_ID:  INVALID_POINTER_READ_FILL_PATTERN_2b2b2b2b_c0000005_js-32-dm-windows-62f79d676e0e.exe!JSObject::allocKindForTenure
+
+WATSON_STAGEONE_URL:  http://watson.microsoft.com/StageOne/js-32-dm-windows-62f79d676e0e.exe/0.0.0.0/57e1a1c7/js-32-dm-windows-62f79d676e0e.exe/0.0.0.0/57e1a1c7/c0000005/001f4c59.htm?Retriage=1
+
+TARGET_TIME:  2016-09-21T00:59:27.000Z
+
+OSBUILD:  14393
+
+OSSERVICEPACK:  0
+
+SERVICEPACK_NUMBER: 0
+
+OS_REVISION: 0
+
+SUITE_MASK:  256
+
+PRODUCT_TYPE:  1
+
+OSPLATFORM_TYPE:  x86
+
+OSNAME:  Windows 10
+
+OSEDITION:  Windows 10 WinNt SingleUserTS
+
+USER_LCID:  0
+
+OSBUILD_TIMESTAMP:  2016-07-15 18:33:42
+
+BUILDDATESTAMP_STR:  160715-1616
+
+BUILDLAB_STR:  rs1_release
+
+BUILDOSVER_STR:  10.0.14393.0
+
+ANALYSIS_SESSION_ELAPSED_TIME: f92
+
+ANALYSIS_SOURCE:  UM
+
+FAILURE_ID_HASH_STRING:  um:invalid_pointer_read_fill_pattern_2b2b2b2b_c0000005_js-32-dm-windows-62f79d676e0e.exe!jsobject::allockindfortenure
+
+FAILURE_ID_HASH:  {f1454121-9563-76f2-52d0-22e8be20d6fc}
+
+Followup:     MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # ChildEBP RetAddr
+00 016fcf24 76761a30 ntdll!NtWaitForMultipleObjects+0xc
+01 016fd0b8 76761928 KERNELBASE!WaitForMultipleObjectsEx+0xf0
+02 016fd0d4 76de7062 KERNELBASE!WaitForMultipleObjects+0x18
+03 016fd550 76de6aa6 kernel32!WerpReportFaultInternal+0x59d
+04 016fd56c 76dbe7a9 kernel32!WerpReportFault+0x9b
+05 016fd574 767ed90a kernel32!BasepReportFault+0x19
+06 016fd60c 7712dc00 KERNELBASE!UnhandledExceptionFilter+0x25a
+07 016ffa04 770f05d4 ntdll!__RtlUserThreadStart+0x3d626
+08 016ffa14 00000000 ntdll!_RtlUserThreadStart+0x1b
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+016fcf24 76761a30 00000003 016fd514 00000001 ntdll!NtWaitForMultipleObjects+0xc
+016fd0b8 76761928 00000003 016fd514 00000000 KERNELBASE!WaitForMultipleObjectsEx+0xf0
+016fd0d4 76de7062 00000003 016fd514 00000000 KERNELBASE!WaitForMultipleObjects+0x18
+016fd550 76de6aa6 00000000 00000000 00000001 kernel32!WerpReportFaultInternal+0x59d
+016fd56c 76dbe7a9 016fd60c 767ed90a 016fd63c kernel32!WerpReportFault+0x9b
+016fd574 767ed90a 016fd63c 00000001 fdeab771 kernel32!BasepReportFault+0x19
+016fd60c 7712dc00 016fd63c 771020b0 016ffa04 KERNELBASE!UnhandledExceptionFilter+0x25a
+016ffa04 770f05d4 ffffffff 77112535 00000000 ntdll!__RtlUserThreadStart+0x3d626
+016ffa14 00000000 00751e84 015a3000 00000000 ntdll!_RtlUserThreadStart+0x1b
+0:000> q
+quit:

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
@@ -21,7 +25,7 @@ class Row(Div):
     css_class = "row"
 
 
-class BugzillaTemplateBugForm(ModelForm):
+class BugzillaTemplateBugForm(ModelForm[BugzillaTemplate]):
     helper = FormHelper()
     helper.layout = Layout(
         HTML("""<div v-pre>"""),
@@ -143,7 +147,7 @@ class BugzillaTemplateBugForm(ModelForm):
         widgets["attrs"] = Textarea(attrs={"rows": 2})
 
 
-class BugzillaTemplateCommentForm(ModelForm):
+class BugzillaTemplateCommentForm(ModelForm[BugzillaTemplate]):
     helper = FormHelper()
     helper.layout = Layout(
         HTML("""<div v-pre>"""),
@@ -177,7 +181,7 @@ class BugzillaTemplateCommentForm(ModelForm):
         }
 
 
-class UserSettingsForm(ModelForm):
+class UserSettingsForm(ModelForm[User]):
     helper = FormHelper()
     helper.layout = Layout(
         "defaultToolsFilter",
@@ -213,7 +217,7 @@ class UserSettingsForm(ModelForm):
             "bucket_hit",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
@@ -251,7 +255,7 @@ class UserSettingsForm(ModelForm):
         data = self.cleaned_data["defaultProviderId"].id
         return data
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> User:
         self.instance.user.email = self.cleaned_data["email"]
         self.instance.user.save()
         return super().save(*args, **kwargs)

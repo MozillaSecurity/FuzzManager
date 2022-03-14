@@ -1,0 +1,11 @@
+==123== Thread 11 blah #1:
+==123== Conditional jump or move depends on uninitialised value(s)
+==123==    at 0x5A7C18: PyObject_Free (blah.c:123)
+==123==    by 0x56D9E8: ??? (in /usr/bin/python3.6)
+==123==    by 0x574D35: PyDict_SetDefault (in /usr/bin/python3.6)
+==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
+==123==  Uninitialised value was created by a heap allocation
+==123==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==123==    by 0x637823: ??? (in /usr/bin/python3.6)
+==123==    by 0x4A6F0F: main (in /usr/bin/python3.6)
+==123== 

@@ -9,6 +9,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import pytest
 
 from ec2spotmanager.models import PoolStatusEntry, ProviderStatusEntry
@@ -16,10 +19,12 @@ from ec2spotmanager.tasks import _update_pool_status, _update_provider_status
 
 from . import create_config, create_pool
 
-pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
+pytestmark = pytest.mark.usefixtures(
+    "ec2spotmanager_test"
+)  # pylint: disable=invalid-name
 
 
-def test_update_pool_status():
+def test_update_pool_status() -> None:
     """test that update_pool_status utility function works"""
     config = create_config(
         name="config #1",
@@ -41,7 +46,7 @@ def test_update_pool_status():
     assert not entry.isCritical
 
 
-def test_update_provider_status():
+def test_update_provider_status() -> None:
     """test that update_provider_status utility function works"""
     _update_provider_status("EC2Spot", "price-too-low", "testing")
     entry = ProviderStatusEntry.objects.get()
