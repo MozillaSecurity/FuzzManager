@@ -66,4 +66,4 @@ jobs:
 
     - name: Run mypy
       run: |
-        mypy Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py
+        mypy --install-types --non-interactive Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py
