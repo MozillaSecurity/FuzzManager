@@ -99,7 +99,6 @@ class S3Manager:
         """
         Synchronize files from open libFuzzer queues directly back into the local corpus
         directory.
-
         @param corpus_dir: libFuzzer corpus directory
         """
         remote_keys = list(self.bucket.list(self.remote_path_queues))
@@ -330,8 +329,6 @@ class S3Manager:
         into the specified build directory.
 
         @param base_dir: Build directory
-        @param bucket_name: Name of the S3 bucket to use
-        @param project_name: Name of the project folder inside the S3 bucket
         """
         # Clear any previous builds
         if os.path.exists(build_dir):

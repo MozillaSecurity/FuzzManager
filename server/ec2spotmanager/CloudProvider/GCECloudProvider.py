@@ -377,7 +377,7 @@ class GCECloudProvider(CloudProvider):
         zones = {}
         service_id = "6F81-5844-456A"  # Compute Engine
         compute_skus_url = (
-            f"https://cloudbilling.googleapis.com/v1/services/{service_id}/skus"
+            "https://cloudbilling.googleapis.com/v1/services/" + service_id + "/skus"
         )
 
         def _get_skus_paginated():

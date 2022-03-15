@@ -70,7 +70,8 @@ class Command(BaseCommand):
             msg.ack()
             return None
         raise RuntimeError(
-            "Unhandled message: {} on {}".format(
+            "Unhandled message: %s on %s"
+            % (
                 msg.delivery_info["routing_key"],
                 msg.delivery_info["exchange"],
             )

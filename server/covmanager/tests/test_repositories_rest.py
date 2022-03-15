@@ -19,9 +19,11 @@ import requests
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from .conftest import _result
+from covmanager.tests.conftest import _result
 
-LOG = logging.getLogger("fm.covmanager.tests.repos.rest")
+LOG = logging.getLogger(
+    "fm.covmanager.tests.repos.rest"
+)  # pylint: disable=invalid-name
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
 
 

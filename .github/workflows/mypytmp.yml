@@ -2,7 +2,7 @@ name: mypytmp
 
 on:
   push:
-    branches: [ basic-mypy-infrastructure ]
+    branches: [ mypy-support ]
   pull_request:
     branches: [ master ]
 
@@ -50,9 +50,20 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: |
         python -u -m pip install --upgrade pip setuptools wheel
-        pip install -r server/requirements3.7.txt
-        pip install --upgrade -e .
+        pip install --upgrade -e .[dev,server,taskmanager,docker,test,mypy]
+
+    - name: Run flake8
+      run: |
+        flake8 .
+
+    - name: Run yesqa
+      run: |
+        find . -type f -name "*.py" -not -path "./build/*" | xargs yesqa
+
+    - name: Run isort and all the rest
+      run: |
+        isort . && black . && pyup_dirs --py37-plus . && flynt .
 
     - name: Run mypy
       run: |
-        mypy Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py
+        mypy --install-types --non-interactive Collector/ CovReporter/ EC2Reporter/ FTB/ Reporter/ TaskStatusReporter/ misc/ server/ setup.py

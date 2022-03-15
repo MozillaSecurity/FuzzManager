@@ -74,12 +74,11 @@ def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> P
     parameters 'page' and 'page_size'.
     """
     page_size = request.GET.get("page_size")
-    if page_size:
+    if not page_size:
+        assert page_size is not None
         page_size_int = int(page_size)
-    else:
         page_size_int = 100
     paginator = Paginator(entries, page_size_int)
-
     page = request.GET.get("page")
 
     try:
@@ -134,7 +133,8 @@ def json_to_query(json_str: str):
         raise RuntimeError(f"Invalid JSON: {e}")
 
     def get_query_obj(
-        obj: str | list[str] | int | dict[str, str] | None, key: str | None = None
+        obj: str | list[str] | int | dict[str, str] | None,
+        key: str | None = None,
     ) -> Q:
 
         if obj is None or isinstance(obj, (str, list, int)):

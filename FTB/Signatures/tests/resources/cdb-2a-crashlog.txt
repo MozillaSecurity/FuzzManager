@@ -1,0 +1,308 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\mozillaadmin\AppData\Local\CrashDumps\js-dbg-64-dm-windows-62f79d676e0e.exe.2076.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 7601 (Service Pack 1) MP (8 procs) Free x64
+Product: WinNt, suite: SingleUserTS
+Machine Name:
+Debug session time: Fri Sep 23 15:40:34.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:01.000
+.........................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+*** WARNING: Unable to verify checksum for js-dbg-64-dm-windows-62f79d676e0e.exe
+js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52:
+00000001`40144e62 cc              int     3
+0:000> cdb: Reading initial command '$<c:\Users\mozillaadmin\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+The current thread doesn't have an x86 context.
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+rax=0000000000000000 rbx=0000000006c139ac rcx=000007fef38241f0
+rdx=000007fef38255f0 rsi=0000000006c1399e rdi=0000000006cf2101
+rip=0000000140144e62 rsp=000000000027e500 rbp=0000000006cf2120
+ r8=000000000027ce88  r9=00000000020cc069 r10=0000000000000000
+r11=000000000027e3f0 r12=0000000006c0d088 r13=0000000006c139ad
+r14=0000000000000000 r15=0000000006c13991
+iopl=0         nv up ei pl nz na po nc
+cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000204
+js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52:
+00000001`40144e62 cc              int     3
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]:
+00000001`40144e62 cc              int     3
+00000001`40144e63 c70425000000005c020000 mov dword ptr [0],25Ch
+00000001`40144e6e ff158c02eb00    call    qword ptr [js_dbg_64_dm_windows_62f79d676e0e!_imp_GetCurrentProcess (00000001`40ff5100)]
+00000001`40144e74 488bc8          mov     rcx,rax
+00000001`40144e77 ba03000000      mov     edx,3
+00000001`40144e7c ff157602eb00    call    qword ptr [js_dbg_64_dm_windows_62f79d676e0e!_imp_TerminateProcess (00000001`40ff50f8)]
+00000001`40144e82 cc              int     3
+00000001`40144e83 488d15168ab600  lea     rdx,[js_dbg_64_dm_windows_62f79d676e0e!js::CodeSpec (00000001`40cad8a0)]
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+00000000`40144e62  ?? ?? ?? ??                                      ????
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+00000001`40144e62  cc c7 04 25 00 00 00 00                          ...%....
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ntdll.dll -
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: nt!IMAGE_NT_HEADERS32                         ***
+***                                                                   ***
+*************************************************************************
+*** ERROR: Symbol file could not be found.  Defaulted to export symbols for ucrtbase.dll -
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+
+FAULTING_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+00000001`40144e62 cc              int     3
+
+EXCEPTION_RECORD:  ffffffffffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 0000000140144e62 (js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x0000000000000052)
+   ExceptionCode: 80000003 (Break instruction exception)
+  ExceptionFlags: 00000000
+NumberParameters: 1
+   Parameter[0]: 0000000000000000
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS
+
+PROCESS_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols.
+
+FAULTING_MODULE: 0000000077c90000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e303d8
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  0000000000000000
+
+MOD_LIST: <ANALYSIS/>
+
+FAULTING_THREAD:  0000000000000f2c
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS
+
+LAST_CONTROL_TRANSFER:  from 00000001401d8fdd to 0000000140144e62
+
+STACK_TEXT:
+00000000`0027e500 00000001`401d8fdd : 00000000`06c13900 00000000`00000046 00000000`0697f101 00000000`00000002 : js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+00000000`0027e540 00000001`4015d3ca : 00000000`06c0d088 00000000`0697f1a8 00000000`00000002 00000000`00000002 : js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovSource::writeScript+0x8ad [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 346]
+00000000`0027e610 00000001`401fb883 : 00000000`0697f1a8 00000000`0027e740 00000000`068031b0 00000000`06807000 : js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovCompartment::collectCodeCoverageInfo+0x6a [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 420]
+00000000`0027e640 00000001`401fd30d : 00000000`0027e5f0 00000000`00000000 00000000`06999c18 00000000`0027ed98 : js_dbg_64_dm_windows_62f79d676e0e!GenerateLcovInfo+0x913 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2084]
+00000000`0027e940 00000001`3fc08085 : 00000000`06853800 00000000`0027ed68 00000000`06807000 00000000`0000001d : js_dbg_64_dm_windows_62f79d676e0e!js::GetCodeCoverageSummary+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2123]
+00000000`0027e9b0 00000001`402c23c5 : 00000000`0027ebe8 00000000`0027ebe8 00000000`00000000 00000000`06999c18 : js_dbg_64_dm_windows_62f79d676e0e!GetLcovInfo+0x265 [c:\users\mozillaadmin\trees\mozilla-central\js\src\builtin\testingfunctions.cpp @ 3421]
+00000000`0027ea20 00000001`402d677a : 00000000`0027eb80 00000000`00000000 00000000`00000001 00000000`06853800 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+00000000`0027ea80 00000001`40756744 : 00000000`0000003a 00000000`00000000 00000000`00000000 00000000`06c1427d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+00000000`0027eb10 000000c1`814a777e : 00000000`0027ed01 00000000`0697f100 00000000`000006d0 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+00000000`0027ecd0 00000000`0027ed01 : 00000000`0697f100 00000000`000006d0 00000000`00000008 00000000`0027ed58 : 0xc1`814a777e
+00000000`0027ecd8 00000000`0697f100 : 00000000`000006d0 00000000`00000008 00000000`0027ed58 00000000`0027ed10 : 0x27ed01
+00000000`0027ece0 00000000`000006d0 : 00000000`00000008 00000000`0027ed58 00000000`0027ed10 00000321`8aa30ceb : 0x697f100
+00000000`0027ece8 00000000`00000008 : 00000000`0027ed58 00000000`0027ed10 00000321`8aa30ceb 00000000`0027ed10 : 0x6d0
+00000000`0027ecf0 00000000`0027ed58 : 00000000`0027ed10 00000321`8aa30ceb 00000000`0027ed10 fff90000`00000000 : 0x8
+00000000`0027ecf8 00000000`0027ed10 : 00000321`8aa30ceb 00000000`0027ed10 fff90000`00000000 00000001`40f2f940 : 0x27ed58
+00000000`0027ed00 00000321`8aa30ceb : 00000000`0027ed10 fff90000`00000000 00000001`40f2f940 00000000`06969bb0 : 0x27ed10
+00000000`0027ed08 00000000`0027ed10 : fff90000`00000000 00000001`40f2f940 00000000`06969bb0 000000c1`814ae873 : 0x321`8aa30ceb
+00000000`0027ed10 fff90000`00000000 : 00000001`40f2f940 00000000`06969bb0 000000c1`814ae873 00000000`00004022 : 0x27ed10
+00000000`0027ed18 00000001`40f2f940 : 00000000`06969bb0 000000c1`814ae873 00000000`00004022 00000000`0027ed98 : 0xfff90000`00000000
+00000000`0027ed20 00000000`06969bb0 : 000000c1`814ae873 00000000`00004022 00000000`0027ed98 00000000`06c0c188 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallbackInfo
+00000000`0027ed28 000000c1`814ae873 : 00000000`00004022 00000000`0027ed98 00000000`06c0c188 00000000`00000000 : 0x6969bb0
+00000000`0027ed30 00000000`00004022 : 00000000`0027ed98 00000000`06c0c188 00000000`00000000 00000000`0027ed58 : 0xc1`814ae873
+00000000`0027ed38 00000000`0027ed98 : 00000000`06c0c188 00000000`00000000 00000000`0027ed58 fffe0000`069948c0 : 0x4022
+00000000`0027ed40 00000000`06c0c188 : 00000000`00000000 00000000`0027ed58 fffe0000`069948c0 fff90000`00000000 : 0x27ed98
+00000000`0027ed48 00000000`00000000 : 00000000`0027ed58 fffe0000`069948c0 fff90000`00000000 00000000`0027edc8 : 0x6c0c188
+
+
+STACK_COMMAND:  ~0s; .ecxr ; kb
+
+FOLLOWUP_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+00000001`40144e62 cc              int     3
+
+FAULTING_SOURCE_CODE:
+   600: static inline unsigned
+   601: GetBytecodeLength(jsbytecode* pc)
+   602: {
+   603:     JSOp op = (JSOp)*pc;
+>  604:     MOZ_ASSERT(op < JSOP_LIMIT);
+   605:
+   606:     if (CodeSpec[op].length != -1)
+   607:         return CodeSpec[op].length;
+   608:     return GetVariableBytecodeLength(pc);
+   609: }
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_64_dm_windows!js::GetBytecodeLength+52
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_64_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+BUCKET_ID:  WRONG_SYMBOLS
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_80000003_js-dbg-64-dm-windows-62f79d676e0e.exe!js::GetBytecodeLength
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # Child-SP          RetAddr           Call Site
+00 00000000`0027e500 00000001`401d8fdd js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+01 00000000`0027e540 00000001`4015d3ca js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovSource::writeScript+0x8ad [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 346]
+02 00000000`0027e610 00000001`401fb883 js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovCompartment::collectCodeCoverageInfo+0x6a [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 420]
+03 00000000`0027e640 00000001`401fd30d js_dbg_64_dm_windows_62f79d676e0e!GenerateLcovInfo+0x913 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2084]
+04 00000000`0027e940 00000001`3fc08085 js_dbg_64_dm_windows_62f79d676e0e!js::GetCodeCoverageSummary+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2123]
+05 00000000`0027e9b0 00000001`402c23c5 js_dbg_64_dm_windows_62f79d676e0e!GetLcovInfo+0x265 [c:\users\mozillaadmin\trees\mozilla-central\js\src\builtin\testingfunctions.cpp @ 3421]
+06 00000000`0027ea20 00000001`402d677a js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+07 00000000`0027ea80 00000001`40756744 js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+08 00000000`0027eb10 000000c1`814a777e js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+09 00000000`0027ecd0 00000000`0027ed01 0xc1`814a777e
+0a 00000000`0027ecd8 00000000`0697f100 0x27ed01
+0b 00000000`0027ece0 00000000`000006d0 0x697f100
+0c 00000000`0027ece8 00000000`00000008 0x6d0
+0d 00000000`0027ecf0 00000000`0027ed58 0x8
+0e 00000000`0027ecf8 00000000`0027ed10 0x27ed58
+0f 00000000`0027ed00 00000321`8aa30ceb 0x27ed10
+10 00000000`0027ed08 00000000`0027ed10 0x321`8aa30ceb
+11 00000000`0027ed10 fff90000`00000000 0x27ed10
+12 00000000`0027ed18 00000001`40f2f940 0xfff90000`00000000
+13 00000000`0027ed20 00000000`06969bb0 js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallbackInfo
+14 00000000`0027ed28 000000c1`814ae873 0x6969bb0
+15 00000000`0027ed30 00000000`00004022 0xc1`814ae873
+16 00000000`0027ed38 00000000`0027ed98 0x4022
+17 00000000`0027ed40 00000000`06c0c188 0x27ed98
+18 00000000`0027ed48 00000000`00000000 0x6c0c188
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+RetAddr           : Args to Child                                                           : Call Site
+00000001`401d8fdd : 00000000`06c13900 00000000`00000046 00000000`0697f101 00000000`00000002 : js_dbg_64_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x52 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.h @ 604]
+00000001`4015d3ca : 00000000`06c0d088 00000000`0697f1a8 00000000`00000002 00000000`00000002 : js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovSource::writeScript+0x8ad [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 346]
+00000001`401fb883 : 00000000`0697f1a8 00000000`0027e740 00000000`068031b0 00000000`06807000 : js_dbg_64_dm_windows_62f79d676e0e!js::coverage::LCovCompartment::collectCodeCoverageInfo+0x6a [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\codecoverage.cpp @ 420]
+00000001`401fd30d : 00000000`0027e5f0 00000000`00000000 00000000`06999c18 00000000`0027ed98 : js_dbg_64_dm_windows_62f79d676e0e!GenerateLcovInfo+0x913 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2084]
+00000001`3fc08085 : 00000000`06853800 00000000`0027ed68 00000000`06807000 00000000`0000001d : js_dbg_64_dm_windows_62f79d676e0e!js::GetCodeCoverageSummary+0x4d [c:\users\mozillaadmin\trees\mozilla-central\js\src\jsopcode.cpp @ 2123]
+00000001`402c23c5 : 00000000`0027ebe8 00000000`0027ebe8 00000000`00000000 00000000`06999c18 : js_dbg_64_dm_windows_62f79d676e0e!GetLcovInfo+0x265 [c:\users\mozillaadmin\trees\mozilla-central\js\src\builtin\testingfunctions.cpp @ 3421]
+00000001`402d677a : 00000000`0027eb80 00000000`00000000 00000000`00000001 00000000`06853800 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+00000001`40756744 : 00000000`0000003a 00000000`00000000 00000000`00000000 00000000`06c1427d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\mozillaadmin\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+000000c1`814a777e : 00000000`0027ed01 00000000`0697f100 00000000`000006d0 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\mozillaadmin\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+00000000`0027ed01 : 00000000`0697f100 00000000`000006d0 00000000`00000008 00000000`0027ed58 : 0xc1`814a777e
+00000000`0697f100 : 00000000`000006d0 00000000`00000008 00000000`0027ed58 00000000`0027ed10 : 0x27ed01
+00000000`000006d0 : 00000000`00000008 00000000`0027ed58 00000000`0027ed10 00000321`8aa30ceb : 0x697f100
+00000000`00000008 : 00000000`0027ed58 00000000`0027ed10 00000321`8aa30ceb 00000000`0027ed10 : 0x6d0
+00000000`0027ed58 : 00000000`0027ed10 00000321`8aa30ceb 00000000`0027ed10 fff90000`00000000 : 0x8
+00000000`0027ed10 : 00000321`8aa30ceb 00000000`0027ed10 fff90000`00000000 00000001`40f2f940 : 0x27ed58
+00000321`8aa30ceb : 00000000`0027ed10 fff90000`00000000 00000001`40f2f940 00000000`06969bb0 : 0x27ed10
+00000000`0027ed10 : fff90000`00000000 00000001`40f2f940 00000000`06969bb0 000000c1`814ae873 : 0x321`8aa30ceb
+fff90000`00000000 : 00000001`40f2f940 00000000`06969bb0 000000c1`814ae873 00000000`00004022 : 0x27ed10
+00000001`40f2f940 : 00000000`06969bb0 000000c1`814ae873 00000000`00004022 00000000`0027ed98 : 0xfff90000`00000000
+00000000`06969bb0 : 000000c1`814ae873 00000000`00004022 00000000`0027ed98 00000000`06c0c188 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallbackInfo
+000000c1`814ae873 : 00000000`00004022 00000000`0027ed98 00000000`06c0c188 00000000`00000000 : 0x6969bb0
+00000000`00004022 : 00000000`0027ed98 00000000`06c0c188 00000000`00000000 00000000`0027ed58 : 0xc1`814ae873
+00000000`0027ed98 : 00000000`06c0c188 00000000`00000000 00000000`0027ed58 fffe0000`069948c0 : 0x4022
+00000000`06c0c188 : 00000000`00000000 00000000`0027ed58 fffe0000`069948c0 fff90000`00000000 : 0x27ed98
+00000000`00000000 : 00000000`0027ed58 fffe0000`069948c0 fff90000`00000000 00000000`0027edc8 : 0x6c0c188
+0:000> q
+quit:

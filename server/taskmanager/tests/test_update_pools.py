@@ -20,8 +20,9 @@ import pytest
 from dateutil.parser import isoparse
 from pytest_mock import MockerFixture
 
-# from taskmanager.cron import delete_expired
 from taskmanager.models import Pool, Task
+
+# from taskmanager.cron import delete_expired
 from taskmanager.tasks import update_pool_defns, update_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.tasks")

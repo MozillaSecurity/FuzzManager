@@ -14,9 +14,6 @@ omit = [
     "*/.eggs/*",
 ]
 
-[tool.django-stubs]
-django_settings_module = "server.settings_test"
-
 [tool.isort]
 known_first_party = [
     "Collector",
@@ -35,10 +32,6 @@ profile = "black"
 [tool.mypy]
 strict = true
 show_error_codes = true
-plugins = [
-#    "mypy_django_plugin.main",
-#    "mypy_drf_plugin.main",
-]
 
 # Add Python modules to be ignored by mypy here
 [[tool.mypy.overrides]]

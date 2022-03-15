@@ -1,0 +1,329 @@
+
+Microsoft (R) Windows Debugger Version 10.0.10586.567 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\fuzz1win\AppData\Local\CrashDumps\js-dbg-32-dm-windows-62f79d676e0e.exe.4192.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: srv*
+Executable search path is:
+Windows 10 Version 14393 MP (8 procs) Free x86 compatible
+Product: WinNt, suite: SingleUserTS
+Built by: 10.0.14393.0 (rs1_release.160715-1616)
+Machine Name:
+Debug session time: Tue Sep 20 17:58:22.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: not available
+...................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=00000000 ecx=765e06ef edx=00000060 esi=00000003 edi=00000003
+eip=770fe1bc esp=02b2e118 ebp=02b2e2a8 iopl=0         nv up ei pl nz na pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000206
+ntdll!NtWaitForMultipleObjects+0xc:
+770fe1bc c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\fuzz1win\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+ *** !wow64exts is only useful targeting architectures that support WoW ***
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+*** WARNING: Unable to verify checksum for js-dbg-32-dm-windows-62f79d676e0e.exe
+eax=00000000 ebx=00000001 ecx=765e06ef edx=00000060 esi=039604ec edi=039604d1
+eip=01344577 esp=02b2ee1c ebp=02b2ee1c iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47:
+01344577 cc              int     3
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsopcode.h @ 604]:
+01344577 cc              int     3
+01344578 6a03            push    3
+0134457a c705000000005c020000 mov dword ptr ds:[0],25Ch
+01344584 ff158070cb01    call    dword ptr [js_dbg_32_dm_windows_62f79d676e0e!_imp__GetCurrentProcess (01cb7080)]
+0134458a 50              push    eax
+0134458b ff157c70cb01    call    dword ptr [js_dbg_32_dm_windows_62f79d676e0e!_imp__TerminateProcess (01cb707c)]
+01344591 8a04c5d0e7b701  mov     al,byte ptr js_dbg_32_dm_windows_62f79d676e0e!js::CodeSpec (01b7e7d0)[eax*8]
+01344598 3cff            cmp     al,0FFh
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+01344577  cc 6a 03 c7                                      .j..
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+
+DUMP_CLASS: 2
+
+DUMP_QUALIFIER: 400
+
+CONTEXT:  (.ecxr)
+eax=00000000 ebx=00000001 ecx=765e06ef edx=00000060 esi=039604ec edi=039604d1
+eip=01344577 esp=02b2ee1c ebp=02b2ee1c iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47:
+01344577 cc              int     3
+Resetting default scope
+
+FAULTING_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsopcode.h @ 604]
+01344577 cc              int     3
+
+EXCEPTION_RECORD:  (.exr -1)
+ExceptionAddress: 01344577 (js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x00000047)
+   ExceptionCode: 80000003 (Break instruction exception)
+  ExceptionFlags: 00000000
+NumberParameters: 1
+   Parameter[0]: 00000000
+
+DEFAULT_BUCKET_ID:  STATUS_BREAKPOINT
+
+PROCESS_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_CODE_STR:  80000003
+
+EXCEPTION_PARAMETER1:  00000000
+
+WATSON_BKT_PROCSTAMP:  57e1a04d
+
+WATSON_BKT_PROCVER:  0.0.0.0
+
+WATSON_BKT_MODULE:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+WATSON_BKT_MODSTAMP:  57e1a04d
+
+WATSON_BKT_MODOFFSET:  524577
+
+WATSON_BKT_MODVER:  0.0.0.0
+
+BUILD_VERSION_STRING:  10.0.14393.0 (rs1_release.160715-1616)
+
+MODLIST_WITH_TSCHKSUM_HASH:  49a2e61967a9127904a3e4021eee1b18fbbadd16
+
+MODLIST_SHA1_HASH:  7a765fdbd5266a0acb1114b3be4f770812eac374
+
+NTGLOBALFLAG:  0
+
+APPLICATION_VERIFIER_FLAGS:  0
+
+DUMP_FLAGS:  94
+
+DUMP_TYPE:  1
+
+APP:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+ANALYSIS_SESSION_HOST:  F1BRIX
+
+ANALYSIS_SESSION_TIME:  09-20-2016 17:58:23.0553
+
+ANALYSIS_VERSION: 10.0.10586.567 amd64fre
+
+THREAD_ATTRIBUTES:
+OS_LOCALE:  ENU
+
+PROBLEM_CLASSES:
+
+
+
+
+    Tid    [0x0]
+    Frame  [0x00]
+    String [STATUS_BREAKPOINT]
+    Data Bucketing
+
+
+BUGCHECK_STR:  STATUS_BREAKPOINT
+
+LAST_CONTROL_TRANSFER:  from 0139f798 to 01344577
+
+STACK_TEXT:
+02b2ee1c 0139f798 039604ec 03512000 03761100 js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+0x47
+02b2ee9c 01353483 03761100 03761100 03512000 js_dbg_32_dm_windows_62f79d676e0e!js::coverage::LCovSource::writeScript+0x788
+02b2eeb4 013b6782 03538000 037600a0 03761100 js_dbg_32_dm_windows_62f79d676e0e!js::coverage::LCovCompartment::collectCodeCoverageInfo+0x43
+02b2f078 013b75f3 03512000 03538000 02b2f098 js_dbg_32_dm_windows_62f79d676e0e!GenerateLcovInfo+0x5c2
+02b2f0b4 00fa60ac 03512000 02b2f104 02b2f204 js_dbg_32_dm_windows_62f79d676e0e!js::GetCodeCoverageSummary+0x33
+02b2f0f4 0143b2b6 03512000 00000000 00000000 js_dbg_32_dm_windows_62f79d676e0e!GetLcovInfo+0x14c
+02b2f11c 01446811 03538000 00fa5f60 02b2f204 js_dbg_32_dm_windows_62f79d676e0e!js::CallJSNative+0x86
+02b2f180 01446429 03512000 00006000 00000000 js_dbg_32_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x391
+02b2f1a4 0190cce4 03512000 02b2f204 039710e8 js_dbg_32_dm_windows_62f79d676e0e!InternalCall+0x119
+02b2f23c 372c167c 02b2f1f0 02b2f2b8 0394a775 js_dbg_32_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0x364
+WARNING: Frame IP not in any known module. Following frames may be wrong.
+02b2f300 015e4acf 372ca000 00000000 00000000 0x372c167c
+02b2f260 ffffff82 01cb5128 0374e4e8 372c9163 js_dbg_32_dm_windows_62f79d676e0e!EnterIon+0x2cf
+00000000 00000000 00000000 00000000 00000000 0xffffff82
+
+
+THREAD_SHA1_HASH_MOD_FUNC:  982e0189f904ab5332c90b1402b462d775829a88
+
+THREAD_SHA1_HASH_MOD_FUNC_OFFSET:  84a065044ee6439455c4e2f7b9308b0181a554af
+
+THREAD_SHA1_HASH_MOD:  4922854b45388f6eb662cfb814183eb2916f95ec
+
+FOLLOWUP_IP:
+js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsopcode.h @ 604]
+01344577 cc              int     3
+
+FAULT_INSTR_CODE:  c7036acc
+
+FAULTING_SOURCE_LINE:  c:\users\fuzz1win\trees\mozilla-central\js\src\jsopcode.h
+
+FAULTING_SOURCE_FILE:  c:\users\fuzz1win\trees\mozilla-central\js\src\jsopcode.h
+
+FAULTING_SOURCE_LINE_NUMBER:  604
+
+FAULTING_SOURCE_CODE:
+   600: static inline unsigned
+   601: GetBytecodeLength(jsbytecode* pc)
+   602: {
+   603:     JSOp op = (JSOp)*pc;
+>  604:     MOZ_ASSERT(op < JSOP_LIMIT);
+   605:
+   606:     if (CodeSpec[op].length != -1)
+   607:         return CodeSpec[op].length;
+   608:     return GetVariableBytecodeLength(pc);
+   609: }
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_32_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e1a04d
+
+STACK_COMMAND:  .ecxr ; kb
+
+BUCKET_ID:  STATUS_BREAKPOINT_js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
+
+PRIMARY_PROBLEM_CLASS:  STATUS_BREAKPOINT_js_dbg_32_dm_windows_62f79d676e0e!js::GetBytecodeLength+47
+
+BUCKET_ID_OFFSET:  47
+
+BUCKET_ID_MODULE_STR:  js_dbg_32_dm_windows_62f79d676e0e
+
+BUCKET_ID_MODTIMEDATESTAMP:  57e1a04d
+
+BUCKET_ID_MODCHECKSUM:  0
+
+BUCKET_ID_MODVER_STR:  0.0.0.0
+
+BUCKET_ID_PREFIX_STR:  STATUS_BREAKPOINT_
+
+FAILURE_PROBLEM_CLASS:  STATUS_BREAKPOINT
+
+FAILURE_EXCEPTION_CODE:  80000003
+
+FAILURE_IMAGE_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe
+
+FAILURE_FUNCTION_NAME:  js::GetBytecodeLength
+
+BUCKET_ID_FUNCTION_STR:  js::GetBytecodeLength
+
+FAILURE_SYMBOL_NAME:  js-dbg-32-dm-windows-62f79d676e0e.exe!js::GetBytecodeLength
+
+FAILURE_BUCKET_ID:  STATUS_BREAKPOINT_80000003_js-dbg-32-dm-windows-62f79d676e0e.exe!js::GetBytecodeLength
+
+WATSON_STAGEONE_URL:  http://watson.microsoft.com/StageOne/js-dbg-32-dm-windows-62f79d676e0e.exe/0.0.0.0/57e1a04d/js-dbg-32-dm-windows-62f79d676e0e.exe/0.0.0.0/57e1a04d/80000003/00524577.htm?Retriage=1
+
+TARGET_TIME:  2016-09-21T00:58:22.000Z
+
+OSBUILD:  14393
+
+OSSERVICEPACK:  0
+
+SERVICEPACK_NUMBER: 0
+
+OS_REVISION: 0
+
+SUITE_MASK:  256
+
+PRODUCT_TYPE:  1
+
+OSPLATFORM_TYPE:  x86
+
+OSNAME:  Windows 10
+
+OSEDITION:  Windows 10 WinNt SingleUserTS
+
+USER_LCID:  0
+
+OSBUILD_TIMESTAMP:  2016-07-15 18:33:42
+
+BUILDDATESTAMP_STR:  160715-1616
+
+BUILDLAB_STR:  rs1_release
+
+BUILDOSVER_STR:  10.0.14393.0
+
+ANALYSIS_SESSION_ELAPSED_TIME: 987
+
+ANALYSIS_SOURCE:  UM
+
+FAILURE_ID_HASH_STRING:  um:status_breakpoint_80000003_js-dbg-32-dm-windows-62f79d676e0e.exe!js::getbytecodelength
+
+FAILURE_ID_HASH:  {7407c034-3269-381a-c35e-dc0f05c0c82a}
+
+Followup:     MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # ChildEBP RetAddr
+00 02b2e114 76761a30 ntdll!NtWaitForMultipleObjects+0xc
+01 02b2e2a8 76761928 KERNELBASE!WaitForMultipleObjectsEx+0xf0
+02 02b2e2c4 76de7062 KERNELBASE!WaitForMultipleObjects+0x18
+03 02b2e740 76de6aa6 kernel32!WerpReportFaultInternal+0x59d
+04 02b2e75c 76dbe7a9 kernel32!WerpReportFault+0x9b
+05 02b2e764 767ed90a kernel32!BasepReportFault+0x19
+06 02b2e7fc 7712dc00 KERNELBASE!UnhandledExceptionFilter+0x25a
+07 02b2fb1c 770f05d4 ntdll!__RtlUserThreadStart+0x3d626
+08 02b2fb2c 00000000 ntdll!_RtlUserThreadStart+0x1b
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+02b2e114 76761a30 00000003 02b2e704 00000001 ntdll!NtWaitForMultipleObjects+0xc
+02b2e2a8 76761928 00000003 02b2e704 00000000 KERNELBASE!WaitForMultipleObjectsEx+0xf0
+02b2e2c4 76de7062 00000003 02b2e704 00000000 KERNELBASE!WaitForMultipleObjects+0x18
+02b2e740 76de6aa6 00000000 00000000 00000001 kernel32!WerpReportFaultInternal+0x59d
+02b2e75c 76dbe7a9 02b2e7fc 767ed90a 02b2e82c kernel32!WerpReportFault+0x9b
+02b2e764 767ed90a 02b2e82c 00000001 b88633d1 kernel32!BasepReportFault+0x19
+02b2e7fc 7712dc00 02b2e82c 771020b0 02b2fb1c KERNELBASE!UnhandledExceptionFilter+0x25a
+02b2fb1c 770f05d4 ffffffff 77112518 00000000 ntdll!__RtlUserThreadStart+0x3d626
+02b2fb2c 00000000 00e21f5a 02c1b000 00000000 ntdll!_RtlUserThreadStart+0x1b
+0:000> q
+quit:

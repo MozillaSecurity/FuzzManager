@@ -26,8 +26,7 @@ from rest_framework.test import APIClient
 from Collector.Collector import DataType
 from crashmanager.models import CrashEntry
 from crashmanager.models import TestCase as cmTestCase
-
-from .conftest import _cm_result
+from crashmanager.tests.conftest import _cm_result
 
 # What should be allowed:
 #
@@ -516,7 +515,7 @@ def test_rest_crashes_report_crash_long_sig(
 ) -> None:
     """test that crash reporting works with an assertion message too long for
     shortSignature"""
-    data = {
+    data: DataType = {
         "rawStdout": "data on\nstdout",
         "rawStderr": "data on\nstderr",
         "rawCrashData": "Assertion failure: " + ("A" * 4096),

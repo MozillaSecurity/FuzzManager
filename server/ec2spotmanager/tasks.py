@@ -117,9 +117,8 @@ def _determine_best_location(
                     # zone+type is blacklisted because a previous spot request timed-out
                     if (
                         cache.get(
-                            "{}:blacklist:{}:{}:{}".format(
-                                cloud_provider.get_name(), region, zone, instance_type
-                            )
+                            "%s:blacklist:%s:%s:%s"
+                            % (cloud_provider.get_name(), region, zone, instance_type)
                         )
                         is not None
                     ):

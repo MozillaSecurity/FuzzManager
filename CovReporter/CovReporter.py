@@ -91,9 +91,10 @@ class CovReporter(Reporter):
         @param description: Optional description for this coverage data
         @param stats: An optional stats object as returned by create_combined_coverage
         """
-        url = (
-            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
-            "/covmanager/rest/collections/"
+        url = "{}://{}:{}/covmanager/rest/collections/".format(
+            self.serverProtocol,
+            self.serverHost,
+            self.serverPort,
         )
 
         if version is None:

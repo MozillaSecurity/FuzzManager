@@ -29,7 +29,8 @@ class Repository(models.Model):
     def getInstance(self):
         # Dynamically instantiate the provider as requested
         providerModule = __import__(
-            f"covmanager.SourceCodeProvider.{self.classname}", fromlist=[self.classname]
+            f"covmanager.SourceCodeProvider.{self.classname}",
+            fromlist=[self.classname],
         )
         providerClass = getattr(providerModule, self.classname)
         return providerClass(self.location)

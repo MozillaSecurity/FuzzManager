@@ -1,0 +1,18 @@
+WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock) (pid=16628)
+  Cycle in lock order graph: M1924 (0x7b2c00038ad0) => M1864 (0x7b2c00038130) => M1903 (0x7b2c000386b0) => M1924
+  Mutex M1864 acquired here while holding mutex M1924 in main thread:
+    #0 pthread_mutex_lock compiler-rt/lib/tsan/../sanitizer_common/sanitizer_common_interceptors.inc:4139:3 (SanctionsTestServer+0x7abe6)
+    #1 PR_Lock nsprpub/pr/src/pthreads/ptsynch.c:176:10 (libnspr4.so+0x2bf48)
+    #2 sftk_hasAttribute security/nss/lib/softoken/pkcs11u.c:327:5 (libsoftokn3.so+0x38453)
+    #3 sftk_CopyObject security/nss/lib/softoken/pkcs11u.c:1607:22 (libsoftokn3.so+0x3b124)
+  Mutex M1903 acquired here while holding mutex M1864 in main thread:
+    #0 pthread_mutex_lock compiler-rt/lib/tsan/../sanitizer_common/sanitizer_common_interceptors.inc:4139:3 (SanctionsTestServer+0x7abe6)
+    #1 PR_Lock nsprpub/pr/src/pthreads/ptsynch.c:176:10 (libnspr4.so+0x2bf48)
+    #2 sftk_hasAttribute security/nss/lib/softoken/pkcs11u.c:327:5 (libsoftokn3.so+0x38453)
+    #3 sftk_CopyObject security/nss/lib/softoken/pkcs11u.c:1607:22 (libsoftokn3.so+0x3b124)
+  Mutex M1924 acquired here while holding mutex M1930 in main thread:
+    #0 pthread_mutex_lock compiler-rt/lib/tsan/../sanitizer_common/sanitizer_common_interceptors.inc:4139:3 (SanctionsTestServer+0x7abe6)
+    #1 PR_Lock nsprpub/pr/src/pthreads/ptsynch.c:176:10 (libnspr4.so+0x2bf48)
+    #2 sftk_hasAttribute security/nss/lib/softoken/pkcs11u.c:327:5 (libsoftokn3.so+0x38453)
+    #3 sftk_CopyObject security/nss/lib/softoken/pkcs11u.c:1607:22 (libsoftokn3.so+0x3b124)
+SUMMARY: ThreadSanitizer: lock-order-inversion (potential deadlock) nsprpub/pr/src/pthreads/ptsynch.c:176:10 in PR_Lock

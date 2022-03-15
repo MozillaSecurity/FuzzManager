@@ -46,7 +46,6 @@ class Symptom(metaclass=ABCMeta):
 
         @type obj: map
         @param obj: Object as decoded from JSON
-
         @return: Symptom subclass instance matching the given object
         """
         if "type" not in obj:
@@ -77,7 +76,6 @@ class Symptom(metaclass=ABCMeta):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
         return
@@ -108,7 +106,6 @@ class OutputSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
         checkedOutput = []
@@ -155,7 +152,6 @@ class StackFrameSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
 
@@ -183,7 +179,6 @@ class StackSizeSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
         return self.stackSize.matches(len(crashInfo.backtrace))
@@ -204,7 +199,6 @@ class CrashAddressSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
         # In case the crash address is not available,
@@ -235,7 +229,6 @@ class InstructionSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
         if crashInfo.crashInstruction is None:
@@ -269,7 +262,6 @@ class TestcaseSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
 
@@ -304,7 +296,6 @@ class StackFramesSymptom(Symptom):
         Check if the symptom matches the given crash information
 
         @param crashInfo: The crash information to check against
-
         @return: True if the symptom matches, False otherwise
         """
 

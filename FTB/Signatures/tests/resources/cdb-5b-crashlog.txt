@@ -1,0 +1,425 @@
+
+Microsoft (R) Windows Debugger Version 10.0.10586.567 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\fuzz1win\AppData\Local\CrashDumps\js-dbg-64-dm-windows-62f79d676e0e.exe.7448.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: srv*
+Executable search path is:
+Windows 10 Version 14393 MP (8 procs) Free x64
+Product: WinNt, suite: SingleUserTS
+Built by: 10.0.14393.0 (rs1_release.160715-1616)
+Machine Name:
+Debug session time: Tue Sep 20 18:00:12.000 2016 (UTC - 7:00)
+System Uptime: not available
+Process Uptime: not available
+...................
+This dump file has an exception of interest stored in it.
+The stored exception information can be accessed via .ecxr.
+(1d18.19ec): Access violation - code c0000005 (first/second chance not available)
+*** WARNING: Unable to verify checksum for js-dbg-64-dm-windows-62f79d676e0e.exe
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b:
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx] ds:fffe2b2b`2b2fffe8=????????
+0:000> cdb: Reading initial command '$<c:\Users\fuzz1win\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+The current thread doesn't have a guest (WoW) context.
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+rax=0000000000000001 rbx=fffe2b2b2b2b2b2b rcx=fffe2b2b2b2fffe8
+rdx=0000000000000001 rsi=000000c4a47fc528 rdi=0000021699700420
+rip=00007ff71dcf75db rsp=000000c4a47fc0f0 rbp=0000000000000006
+ r8=0000021699633200  r9=00007ff71effa590 r10=0000000000000031
+r11=0000000000000033 r12=fffa7fffffffffff r13=fffc000000000000
+r14=000000c4a47fc528 r15=00007ff71effa590
+iopl=0         nv up ei ng nz na po nc
+cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010284
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b:
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx] ds:fffe2b2b`2b2fffe8=????????
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]:
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx]
+00007ff7`1dcf75dd 8d42ff          lea     eax,[rdx-1]
+00007ff7`1dcf75e0 83f801          cmp     eax,1
+00007ff7`1dcf75e3 7665            jbe     js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x8a (00007ff7`1dcf764a)
+00007ff7`1dcf75e5 b902000000      mov     ecx,2
+00007ff7`1dcf75ea ff1528d55d01    call    qword ptr [js_dbg_64_dm_windows_62f79d676e0e!_imp___acrt_iob_func (00007ff7`1f2d4b18)]
+00007ff7`1dcf75f0 4c8d0df9941e01  lea     r9,[js_dbg_64_dm_windows_62f79d676e0e!`string' (00007ff7`1eee0af0)]
+00007ff7`1dcf75f7 c744242053010000 mov     dword ptr [rsp+20h],153h
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+00000000`1dcf75db  ?? ?? ?? ??                                      ????
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+00007ff7`1dcf75db  8b 11 8d 42 ff 83 f8 01                          ...B....
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+
+DUMP_CLASS: 2
+
+DUMP_QUALIFIER: 400
+
+CONTEXT:  (.ecxr)
+rax=0000000000000001 rbx=fffe2b2b2b2b2b2b rcx=fffe2b2b2b2fffe8
+rdx=0000000000000001 rsi=000000c4a47fc528 rdi=0000021699700420
+rip=00007ff71dcf75db rsp=000000c4a47fc0f0 rbp=0000000000000006
+ r8=0000021699633200  r9=00007ff71effa590 r10=0000000000000031
+r11=0000000000000033 r12=fffa7fffffffffff r13=fffc000000000000
+r14=000000c4a47fc528 r15=00007ff71effa590
+iopl=0         nv up ei ng nz na po nc
+cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010284
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b:
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx] ds:fffe2b2b`2b2fffe8=????????
+Resetting default scope
+
+FAULTING_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx]
+
+EXCEPTION_RECORD:  (.exr -1)
+ExceptionAddress: 00007ff71dcf75db (js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x000000000000001b)
+   ExceptionCode: c0000005 (Access violation)
+  ExceptionFlags: 00000000
+NumberParameters: 2
+   Parameter[0]: 0000000000000000
+   Parameter[1]: ffffffffffffffff
+Attempt to read from address ffffffffffffffff
+
+DEFAULT_BUCKET_ID:  INVALID_POINTER_READ
+
+PROCESS_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+ERROR_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%p referenced memory at 0x%p. The memory could not be %s.
+
+EXCEPTION_CODE: (NTSTATUS) 0xc0000005 - The instruction at 0x%p referenced memory at 0x%p. The memory could not be %s.
+
+EXCEPTION_CODE_STR:  c0000005
+
+EXCEPTION_PARAMETER1:  0000000000000000
+
+EXCEPTION_PARAMETER2:  ffffffffffffffff
+
+READ_ADDRESS:  ffffffffffffffff
+
+FOLLOWUP_IP:
+js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+00007ff7`1dcf75db 8b11            mov     edx,dword ptr [rcx]
+
+BUGCHECK_STR:  INVALID_POINTER_READ
+
+WATSON_BKT_PROCSTAMP:  57e18eec
+
+WATSON_BKT_PROCVER:  0.0.0.0
+
+WATSON_BKT_MODULE:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+WATSON_BKT_MODSTAMP:  57e18eec
+
+WATSON_BKT_MODOFFSET:  875db
+
+WATSON_BKT_MODVER:  0.0.0.0
+
+BUILD_VERSION_STRING:  10.0.14393.0 (rs1_release.160715-1616)
+
+MODLIST_WITH_TSCHKSUM_HASH:  c3ee048275799904ba4743295b065feeec8aa69b
+
+MODLIST_SHA1_HASH:  821636ff4f1bd5145f680b8840b1e121f5a2b869
+
+NTGLOBALFLAG:  0
+
+APPLICATION_VERIFIER_FLAGS:  0
+
+DUMP_FLAGS:  94
+
+DUMP_TYPE:  1
+
+APP:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+ANALYSIS_SESSION_HOST:  F1BRIX
+
+ANALYSIS_SESSION_TIME:  09-20-2016 18:00:13.0679
+
+ANALYSIS_VERSION: 10.0.10586.567 amd64fre
+
+THREAD_ATTRIBUTES:
+OS_LOCALE:  ENU
+
+PROBLEM_CLASSES:
+
+
+
+INVALID_POINTER_READ
+    Tid    [0x19ec]
+    Frame  [0x00]: js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery
+
+
+LAST_CONTROL_TRANSFER:  from 00007ff71dd5c95e to 00007ff71dcf75db
+
+STACK_TEXT:
+000000c4`a47fc0f0 00007ff7`1dd5c95e : 00000216`9987b2a0 000000c4`a47fe0aa 000000c4`a47fc458 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b
+000000c4`a47fc130 00007ff7`1e73123e : 00007ff7`1ef9c090 00000000`00000000 00000216`9967b040 000000c4`a47fc240 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe
+000000c4`a47fc170 00007ff7`1e71ae69 : 000000c4`a47fc248 00007ff7`1dd5a268 000000c4`a47fc458 000000c4`a47fc270 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e
+000000c4`a47fc1c0 00007ff7`1e6f0a4b : 000000c4`a47fc528 00007ff7`1dd5c9cf 000000c4`a47fc500 000000c4`a47fc298 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9
+000000c4`a47fc200 00007ff7`1e6ee54d : 00000216`998a7128 00000216`99700420 000000c4`a47fd620 000000c4`a47fd620 : js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b
+000000c4`a47fc240 00007ff7`1e710592 : 000000c4`a47fc528 00000000`00000000 000000c4`a47fc2d8 00007ff7`1e6ee54d : js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d
+000000c4`a47fc290 00007ff7`1ea876a8 : 000000c4`a47fc6c0 00000000`00fffa00 00000000`00000006 00000216`99897380 : js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2
+000000c4`a47fc300 00007ff7`1e61c517 : 00000216`99b8a72d 000000c4`a47fc6c0 000000c4`a47fc528 00007ff7`1e0750aa : js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8
+000000c4`a47fc360 00007ff7`1e61c70d : 000000c4`a47fc528 000000c4`a47fc489 000000c4`a47fc528 000000c4`a47fc4b0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107
+000000c4`a47fc3d0 00007ff7`1e73bbcc : 00000216`99607a68 000000c4`a47fc528 00000000`00000000 00007ff7`1e723ee0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d
+000000c4`a47fc410 00007ff7`1e7275f9 : 00000216`99607a68 00000216`99607208 00000216`99607208 00000216`99607208 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc
+000000c4`a47fc4f0 00007ff7`1e726266 : 01d213a3`8201cc20 00000216`99685040 00000216`99607a68 00007ff7`00001901 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9
+000000c4`a47fc680 00007ff7`1de589b5 : 00000216`99685040 00000000`00000012 00000216`99607990 00000216`99685040 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6
+000000c4`a47fc820 00007ff7`1e377a12 : 00000000`00000003 00000216`99607990 00000000`00000003 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125
+000000c4`a47fc8f0 00007ff7`1e36848d : 00000216`99b0b048 00000216`99607000 00000000`00000000 00007ff7`1e36c729 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42
+000000c4`a47fc940 00007ff7`1e363c86 : 00000216`99607000 00000216`99607000 00007ff7`1ef23e20 00000000`00000001 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d
+000000c4`a47fc980 00007ff7`1de35cd8 : 000000c4`a47fca88 00000000`00000000 00000000`00000000 00007ff7`1dfdd24c : js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6
+000000c4`a47fc9e0 00007ff7`1e4ed13c : 00007ff7`1f1ff918 000000c4`a47fcda0 00007ff7`1ef23e20 000000c4`a47fca88 : js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828
+000000c4`a47fca40 00007ff7`1e4edf54 : 00000216`99607000 000000c4`a47fcb38 00000000`00000003 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc
+000000c4`a47fcad0 00007ff7`1e57475e : fff90000`00000000 00007ff7`1f1ff918 000000c4`a47fcbe8 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4
+000000c4`a47fcb80 00007ff7`1e0b49e9 : 000000c4`a47fd068 000000c4`a47fccf0 000000c4`a47fcd50 00007ff7`1dd1c62c : js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e
+000000c4`a47fccd0 00007ff7`1df9b4e1 : 00000216`99b0b030 00007ff7`1dce3881 00000216`998aa1c0 00000216`99b0b068 : js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89
+000000c4`a47fcd10 00007ff7`1df9c740 : 000000c4`a47fcd50 00000216`99607000 00007ff7`1ef6ac38 000000c4`a47fd5d0 : js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101
+000000c4`a47fcd70 00007ff7`1e2f100c : 00000000`00000002 000000c4`a47fcef0 000000c4`a47fcff8 000000c4`a47fce40 : js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0
+000000c4`a47fcdf0 00007ff7`1dd1cefa : 00000000`00000002 000000c4`a47fd079 000000c4`a47fcff8 00007ff7`1eed67a8 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c
+000000c4`a47fcfb0 00007ff7`1e0b9fa0 : 00000000`00000001 00000216`998757f0 000000c4`a47fd5d0 00000216`9967b068 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a
+000000c4`a47fd0e0 00007ff7`1e0ba460 : 00000216`99607000 000000c4`a47fd5e0 000000c4`a47fd260 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0
+000000c4`a47fd150 00007ff7`1e0c312d : 00000216`998fe5d0 000000c4`a47fd260 00400000`00000000 00007ff8`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150
+000000c4`a47fd220 00007ff7`1e5a23c5 : 000000c4`a47fd458 00007ff7`1dc8b0ae 000000c4`a47fd5d0 000000c4`a47fd260 : js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d
+000000c4`a47fd290 00007ff7`1e5b677a : 00000216`99b39000 00000000`00000000 00000000`00000002 00000216`9964a000 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95
+000000c4`a47fd2f0 00007ff7`1ea36744 : 00000000`0000003a 00000000`00000001 00000000`00000000 00000216`99b8a72d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa
+000000c4`a47fd380 0000039b`922a7cc8 : 00000216`99607900 00000000`00000000 000055b5`62c38357 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24
+000000c4`a47fd540 00000216`99607900 : 00000000`00000000 000055b5`62c38357 00000000`00000008 000000c4`a47fd5d0 : 0x0000039b`922a7cc8
+000000c4`a47fd548 00000000`00000000 : 000055b5`62c38357 00000000`00000008 000000c4`a47fd5d0 000000c4`a47fd588 : 0x00000216`99607900
+
+
+THREAD_SHA1_HASH_MOD_FUNC:  5056f69f618ba8c41a2b5a444c483e0375247881
+
+THREAD_SHA1_HASH_MOD_FUNC_OFFSET:  dcd40979492662defecc13af165b022c960612ad
+
+THREAD_SHA1_HASH_MOD:  a40e3f321ec4083628359c103278f2e630eb749b
+
+FAULT_INSTR_CODE:  428d118b
+
+FAULTING_SOURCE_LINE:  c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h
+
+FAULTING_SOURCE_FILE:  c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h
+
+FAULTING_SOURCE_LINE_NUMBER:  338
+
+FAULTING_SOURCE_CODE:
+   334:         return false;
+   335:     uintptr_t addr = uintptr_t(cell);
+   336:     addr &= ~js::gc::ChunkMask;
+   337:     addr |= js::gc::ChunkLocationOffset;
+>  338:     auto location = *reinterpret_cast<ChunkLocation*>(addr);
+   339:     MOZ_ASSERT(location == ChunkLocation::Nursery || location == ChunkLocation::TenuredHeap);
+   340:     return location == ChunkLocation::Nursery;
+   341: }
+   342:
+   343: } /* namespace gc */
+
+
+SYMBOL_STACK_INDEX:  0
+
+SYMBOL_NAME:  js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
+
+FOLLOWUP_NAME:  MachineOwner
+
+MODULE_NAME: js_dbg_64_dm_windows_62f79d676e0e
+
+IMAGE_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  57e18eec
+
+STACK_COMMAND:  .ecxr ; kb
+
+BUCKET_ID:  INVALID_POINTER_READ_js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
+
+PRIMARY_PROBLEM_CLASS:  INVALID_POINTER_READ_js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+1b
+
+BUCKET_ID_OFFSET:  1b
+
+BUCKET_ID_MODULE_STR:  js_dbg_64_dm_windows_62f79d676e0e
+
+BUCKET_ID_MODTIMEDATESTAMP:  57e18eec
+
+BUCKET_ID_MODCHECKSUM:  0
+
+BUCKET_ID_MODVER_STR:  0.0.0.0
+
+BUCKET_ID_PREFIX_STR:  INVALID_POINTER_READ_
+
+FAILURE_PROBLEM_CLASS:  INVALID_POINTER_READ
+
+FAILURE_EXCEPTION_CODE:  c0000005
+
+FAILURE_IMAGE_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe
+
+FAILURE_FUNCTION_NAME:  js::gc::IsInsideNursery
+
+BUCKET_ID_FUNCTION_STR:  js::gc::IsInsideNursery
+
+FAILURE_SYMBOL_NAME:  js-dbg-64-dm-windows-62f79d676e0e.exe!js::gc::IsInsideNursery
+
+FAILURE_BUCKET_ID:  INVALID_POINTER_READ_c0000005_js-dbg-64-dm-windows-62f79d676e0e.exe!js::gc::IsInsideNursery
+
+WATSON_STAGEONE_URL:  http://watson.microsoft.com/StageOne/js-dbg-64-dm-windows-62f79d676e0e.exe/0.0.0.0/57e18eec/js-dbg-64-dm-windows-62f79d676e0e.exe/0.0.0.0/57e18eec/c0000005/000875db.htm?Retriage=1
+
+TARGET_TIME:  2016-09-21T01:00:12.000Z
+
+OSBUILD:  14393
+
+OSSERVICEPACK:  0
+
+SERVICEPACK_NUMBER: 0
+
+OS_REVISION: 0
+
+SUITE_MASK:  256
+
+PRODUCT_TYPE:  1
+
+OSPLATFORM_TYPE:  x64
+
+OSNAME:  Windows 10
+
+OSEDITION:  Windows 10 WinNt SingleUserTS
+
+USER_LCID:  0
+
+OSBUILD_TIMESTAMP:  2016-07-15 19:21:29
+
+BUILDDATESTAMP_STR:  160715-1616
+
+BUILDLAB_STR:  rs1_release
+
+BUILDOSVER_STR:  10.0.14393.0
+
+ANALYSIS_SESSION_ELAPSED_TIME: 3ec
+
+ANALYSIS_SOURCE:  UM
+
+FAILURE_ID_HASH_STRING:  um:invalid_pointer_read_c0000005_js-dbg-64-dm-windows-62f79d676e0e.exe!js::gc::isinsidenursery
+
+FAILURE_ID_HASH:  {de3fa82d-c01b-b80c-43d1-0ed172dbd9d3}
+
+Followup:     MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+ # Child-SP          RetAddr           Call Site
+00 000000c4`a47fc0f0 00007ff7`1dd5c95e js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+01 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!js::gc::Cell::isTenured+0x5 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 251]
+02 000000c4`a47fc130 00007ff7`1e73123e js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+03 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::zone+0xd [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 1263]
+04 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!JSObject::zone+0xd [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.h @ 312]
+05 000000c4`a47fc170 00007ff7`1e71ae69 js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+06 000000c4`a47fc1c0 00007ff7`1e6f0a4b js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+07 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTraversalFunctor<JS::Value>::operator()+0x12 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2232]
+08 000000c4`a47fc200 00007ff7`1e6ee54d js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+09 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse+0x14 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2241]
+0a 000000c4`a47fc240 00007ff7`1e710592 js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+0b 000000c4`a47fc290 00007ff7`1ea876a8 js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 534]
+0c (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!MarkLocals+0x23 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 26]
+0d 000000c4`a47fc300 00007ff7`1e61c517 js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 86]
+0e 000000c4`a47fc360 00007ff7`1e61c70d js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+0f 000000c4`a47fc3d0 00007ff7`1e73bbcc js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1455]
+10 000000c4`a47fc410 00007ff7`1e7275f9 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+11 (Inline Function) --------`-------- js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeForMinorGC+0x2c [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 304]
+12 000000c4`a47fc4f0 00007ff7`1e726266 js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+13 000000c4`a47fc680 00007ff7`1de589b5 js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\nursery.cpp @ 581]
+14 000000c4`a47fc820 00007ff7`1e377a12 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+15 000000c4`a47fc8f0 00007ff7`1e36848d js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+16 000000c4`a47fc940 00007ff7`1e363c86 js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+17 000000c4`a47fc980 00007ff7`1de35cd8 js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+18 000000c4`a47fc9e0 00007ff7`1e4ed13c js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+19 000000c4`a47fca40 00007ff7`1e4edf54 js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+1a 000000c4`a47fcad0 00007ff7`1e57475e js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+1b 000000c4`a47fcb80 00007ff7`1e0b49e9 js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e [c:\users\fuzz1win\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+1c 000000c4`a47fccd0 00007ff7`1df9b4e1 js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 775]
+1d 000000c4`a47fcd10 00007ff7`1df9c740 js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+1e 000000c4`a47fcd70 00007ff7`1e2f100c js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+1f 000000c4`a47fcdf0 00007ff7`1dd1cefa js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c [c:\users\fuzz1win\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+20 000000c4`a47fcfb0 00007ff7`1e0b9fa0 js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a [c:\users\fuzz1win\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+21 000000c4`a47fd0e0 00007ff7`1e0ba460 js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+22 000000c4`a47fd150 00007ff7`1e0c312d js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+23 000000c4`a47fd220 00007ff7`1e5a23c5 js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+24 000000c4`a47fd290 00007ff7`1e5b677a js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\fuzz1win\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+25 000000c4`a47fd2f0 00007ff7`1ea36744 js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\fuzz1win\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+26 000000c4`a47fd380 0000039b`922a7cc8 js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+27 000000c4`a47fd540 00000216`99607900 0x0000039b`922a7cc8
+28 000000c4`a47fd548 00000000`00000000 0x00000216`99607900
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+RetAddr           : Args to Child                                                           : Call Site
+00007ff7`1dd5c95e : 00000216`9987b2a0 000000c4`a47fe0aa 000000c4`a47fc458 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::IsInsideNursery+0x1b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\heapapi.h @ 338]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!js::gc::Cell::isTenured+0x5 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 251]
+00007ff7`1e73123e : 00007ff7`1ef9c090 00000000`00000000 00000216`9967b040 000000c4`a47fc240 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::arena+0xe [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 1242]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!js::gc::TenuredCell::zone+0xd [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\heap.h @ 1263]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!JSObject::zone+0xd [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.h @ 312]
+00007ff7`1e71ae69 : 000000c4`a47fc248 00007ff7`1dd5a268 000000c4`a47fc458 000000c4`a47fc270 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::moveToTenured+0x8e [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2393]
+00007ff7`1e6f0a4b : 000000c4`a47fc528 00007ff7`1dd5c9cf 000000c4`a47fc500 000000c4`a47fc298 : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse<JSObject>+0x1b9 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2226]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTraversalFunctor<JS::Value>::operator()+0x12 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2232]
+00007ff7`1e6ee54d : 00000216`998a7128 00000216`99700420 000000c4`a47fd620 000000c4`a47fd620 : js_dbg_64_dm_windows_62f79d676e0e!js::DispatchTyped<js::TenuringTraversalFunctor<JS::Value>,js::TenuringTracer * __ptr64 const>+0x6b [c:\users\fuzz1win\shell-cache\js-dbg-64-dm-windows-62f79d676e0e\objdir-js\dist\include\js\value.h @ 1916]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!js::TenuringTracer::traverse+0x14 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 2241]
+00007ff7`1e710592 : 000000c4`a47fc528 00000000`00000000 000000c4`a47fc2d8 00007ff7`1e6ee54d : js_dbg_64_dm_windows_62f79d676e0e!DispatchToTracer<JS::Value>+0x5d [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 663]
+00007ff7`1ea876a8 : 000000c4`a47fc6c0 00000000`00fffa00 00000000`00000006 00000216`99897380 : js_dbg_64_dm_windows_62f79d676e0e!js::TraceRootRange<JS::Value>+0xe2 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\marking.cpp @ 534]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!MarkLocals+0x23 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 26]
+00007ff7`1e61c517 : 00000216`99b8a72d 000000c4`a47fc6c0 000000c4`a47fc528 00007ff7`1e0750aa : js_dbg_64_dm_windows_62f79d676e0e!js::jit::BaselineFrame::trace+0x2b8 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineframe.cpp @ 86]
+00007ff7`1e61c70d : 000000c4`a47fc528 000000c4`a47fc489 000000c4`a47fc528 000000c4`a47fc4b0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivation+0x107 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1429]
+00007ff7`1e73bbcc : 00000216`99607a68 000000c4`a47fc528 00000000`00000000 00007ff7`1e723ee0 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::MarkJitActivations+0x4d [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\jitframes.cpp @ 1455]
+00007ff7`1e7275f9 : 00000216`99607a68 00000216`99607208 00000216`99607208 00000216`99607208 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeCommon+0xcc [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 353]
+(Inline Function) : --------`-------- --------`-------- --------`-------- --------`-------- : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::traceRuntimeForMinorGC+0x2c [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\rootmarking.cpp @ 304]
+00007ff7`1e726266 : 01d213a3`8201cc20 00000216`99685040 00000216`99607a68 00007ff7`00001901 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::doCollection+0x2f9 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\nursery.cpp @ 693]
+00007ff7`1de589b5 : 00000216`99685040 00000000`00000012 00000216`99607990 00000216`99685040 : js_dbg_64_dm_windows_62f79d676e0e!js::Nursery::collect+0x1e6 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\nursery.cpp @ 581]
+00007ff7`1e377a12 : 00000000`00000003 00000216`99607990 00000000`00000003 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::minorGC+0x125 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsgc.cpp @ 6519]
+00007ff7`1e36848d : 00000216`99b0b048 00000216`99607000 00000000`00000000 00007ff7`1e36c729 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::gcIfNeededPerAllocation+0x42 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 230]
+00007ff7`1e363c86 : 00000216`99607000 00000216`99607000 00007ff7`1ef23e20 00000000`00000001 : js_dbg_64_dm_windows_62f79d676e0e!js::gc::GCRuntime::checkAllocatorState<1>+0x1d [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 189]
+00007ff7`1de35cd8 : 000000c4`a47fca88 00000000`00000000 00000000`00000000 00007ff7`1dfdd24c : js_dbg_64_dm_windows_62f79d676e0e!js::Allocate<JSObject,1>+0x1d6 [c:\users\fuzz1win\trees\mozilla-central\js\src\gc\allocator.cpp @ 47]
+00007ff7`1e4ed13c : 00007ff7`1f1ff918 000000c4`a47fcda0 00007ff7`1ef23e20 000000c4`a47fca88 : js_dbg_64_dm_windows_62f79d676e0e!JSObject::create+0x828 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobjinlines.h @ 378]
+00007ff7`1e4edf54 : 00000216`99607000 000000c4`a47fcb38 00000000`00000003 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!NewObject+0x2fc [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 667]
+00007ff7`1e57475e : fff90000`00000000 00007ff7`1f1ff918 000000c4`a47fcbe8 00000000`00000003 : js_dbg_64_dm_windows_62f79d676e0e!js::NewObjectWithGivenTaggedProto+0x1f4 [c:\users\fuzz1win\trees\mozilla-central\js\src\jsobj.cpp @ 727]
+00007ff7`1e0b49e9 : 000000c4`a47fd068 000000c4`a47fccf0 000000c4`a47fcd50 00007ff7`1dd1c62c : js_dbg_64_dm_windows_62f79d676e0e!js::ProxyObject::New+0x52e [c:\users\fuzz1win\trees\mozilla-central\js\src\vm\proxyobject.cpp @ 60]
+00007ff7`1df9b4e1 : 00000216`99b0b030 00007ff7`1dce3881 00000216`998aa1c0 00000216`99b0b068 : js_dbg_64_dm_windows_62f79d676e0e!js::NewProxyObject+0x89 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 775]
+00007ff7`1df9c740 : 000000c4`a47fcd50 00000216`99607000 00007ff7`1ef6ac38 000000c4`a47fd5d0 : js_dbg_64_dm_windows_62f79d676e0e!js::Wrapper::New+0x101 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 311]
+00007ff7`1e2f100c : 00000000`00000002 000000c4`a47fcef0 000000c4`a47fcff8 000000c4`a47fce40 : js_dbg_64_dm_windows_62f79d676e0e!js::TransparentObjectWrapper+0xf0 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\wrapper.cpp @ 394]
+00007ff7`1dd1cefa : 00000000`00000002 000000c4`a47fd079 000000c4`a47fcff8 00007ff7`1eed67a8 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x125c [c:\users\fuzz1win\trees\mozilla-central\js\src\jscompartment.cpp @ 445]
+00007ff7`1e0b9fa0 : 00000000`00000001 00000216`998757f0 000000c4`a47fd5d0 00000216`9967b068 : js_dbg_64_dm_windows_62f79d676e0e!JSCompartment::wrap+0x48a [c:\users\fuzz1win\trees\mozilla-central\js\src\jscompartmentinlines.h @ 119]
+00007ff7`1e0ba460 : 00000216`99607000 000000c4`a47fd5e0 000000c4`a47fd260 00000000`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::CrossCompartmentWrapper::call+0x1b0 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\crosscompartmentwrapper.cpp @ 337]
+00007ff7`1e0c312d : 00000216`998fe5d0 000000c4`a47fd260 00400000`00000000 00007ff8`00000000 : js_dbg_64_dm_windows_62f79d676e0e!js::Proxy::call+0x150 [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 401]
+00007ff7`1e5a23c5 : 000000c4`a47fd458 00007ff7`1dc8b0ae 000000c4`a47fd5d0 000000c4`a47fd260 : js_dbg_64_dm_windows_62f79d676e0e!js::proxy_Call+0x18d [c:\users\fuzz1win\trees\mozilla-central\js\src\proxy\proxy.cpp @ 690]
+00007ff7`1e5b677a : 00000216`99b39000 00000000`00000000 00000000`00000002 00000216`9964a000 : js_dbg_64_dm_windows_62f79d676e0e!js::CallJSNative+0x95 [c:\users\fuzz1win\trees\mozilla-central\js\src\jscntxtinlines.h @ 235]
+00007ff7`1ea36744 : 00000000`0000003a 00000000`00000001 00000000`00000000 00000216`99b8a72d : js_dbg_64_dm_windows_62f79d676e0e!js::InternalCallOrConstruct+0x3aa [c:\users\fuzz1win\trees\mozilla-central\js\src\vm\interpreter.cpp @ 458]
+0000039b`922a7cc8 : 00000216`99607900 00000000`00000000 000055b5`62c38357 00000000`00000008 : js_dbg_64_dm_windows_62f79d676e0e!js::jit::DoCallFallback+0xf24 [c:\users\fuzz1win\trees\mozilla-central\js\src\jit\baselineic.cpp @ 5998]
+00000216`99607900 : 00000000`00000000 000055b5`62c38357 00000000`00000008 000000c4`a47fd5d0 : 0x0000039b`922a7cc8
+00000000`00000000 : 000055b5`62c38357 00000000`00000008 000000c4`a47fd5d0 000000c4`a47fd588 : 0x00000216`99607900
+0:000> q
+quit:

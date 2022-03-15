@@ -1,0 +1,4 @@
+==1111== Source and destination overlap in memcpy(0x41bb2b0, 0x41bb070, 123)
+==1111==    at 0x4027BD6: memcpy (file.c:635)
+==1111==    by 0x804AEE8: main (file.c:1512)
+==1111== 

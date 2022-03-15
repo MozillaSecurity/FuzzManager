@@ -19,7 +19,9 @@ from ec2spotmanager.tasks import _update_pool_status, _update_provider_status
 
 from . import create_config, create_pool
 
-pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
+pytestmark = pytest.mark.usefixtures(
+    "ec2spotmanager_test"
+)  # pylint: disable=invalid-name
 
 
 def test_update_pool_status() -> None:

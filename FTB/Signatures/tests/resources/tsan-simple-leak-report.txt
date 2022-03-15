@@ -1,0 +1,4 @@
+WARNING: ThreadSanitizer: thread leak (pid=9509)
+  Thread T1 (tid=0, finished) created at:
+    #0 pthread_create tsan_interceptors.cc:683 (exe+0x00000001fb33)
+    #1 main thread_leak3.c:10 (exe+0x000000003c7e)

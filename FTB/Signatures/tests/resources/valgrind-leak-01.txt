@@ -1,0 +1,5 @@
+==24674== 102,400 bytes in 1,024 blocks are definitely lost in loss record 1 of 1
+==24674==    at 0x4C2FDFB: malloc (vg_replace_malloc.c:309)
+==24674==    by 0x1086F4: test (free.c:9)
+==24674==    by 0x108761: main (free.c:23)
+==24674== 

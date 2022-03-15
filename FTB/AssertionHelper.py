@@ -190,7 +190,6 @@ def getSanitizedAssertionPattern(msgs: list[str] | str | None) -> list[str] | st
     for use in signature matching.
 
     @param msgs: Assertion message(s) to be sanitized
-
     @return: Sanitized assertion message (regular expression)
     """
     assert msgs is not None

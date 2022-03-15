@@ -89,7 +89,7 @@ def test_collector_submit(
     # see that the issue was created in the server
     entry = CrashEntry.objects.get(pk=result["id"])
     assert entry.rawStdout == ""
-    assert entry.rawStderr == asan_trace_crash.rstrip()
+    assert entry.rawStderr == asan_trace_crash
     assert entry.rawCrashData == ""
     assert entry.tool.name == "test-tool"
     assert entry.client.name == "test-fuzzer1"
@@ -111,7 +111,7 @@ def test_collector_submit(
     with (tmp_path / ".fuzzmanagerconf").open("w") as fp:
         fp.write("[Main]\n")
         fp.write(f"serverhost = {url.hostname}\n")
-        fp.write(f"serverport = {url.port:d}\n")
+        fp.write("serverport = %d\n" % url.port)
         fp.write(f"serverproto = {url.scheme}\n")
         fp.write(f"serverauthtoken = {fm_user.token}\n")
 
@@ -167,7 +167,7 @@ def test_collector_submit(
     )  # newer than the last result, will fail if the test db is active
     assert entry.rawStdout == "stdout data"
     assert entry.rawStderr == "stderr data"
-    assert entry.rawCrashData == asan_trace_crash.rstrip()
+    assert entry.rawCrashData == asan_trace_crash
     assert entry.tool.name == "tool2"
     assert entry.client.name == platform.node()
     assert entry.product.name == "mozilla-inbound"

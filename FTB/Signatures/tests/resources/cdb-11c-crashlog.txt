@@ -1,0 +1,208 @@
+
+Microsoft (R) Windows Debugger Version 6.12.0002.633 AMD64
+Copyright (c) Microsoft Corporation. All rights reserved.
+
+
+Loading Dump File [c:\Users\Administrator\AppData\Local\CrashDumps\js-dbg-32-prof-dm-windows-42c95d88aaaa.exe.6940.dmp]
+User Mini Dump File: Only registers, stack and portions of memory are available
+
+Symbol search path is: *** Invalid ***
+****************************************************************************
+* Symbol loading may be unreliable without a symbol search path.           *
+* Use .symfix to have the debugger choose a symbol path.                   *
+* After setting your symbol path, use .reload to refresh symbol locations. *
+****************************************************************************
+Executable search path is:
+Windows 7 Version 9600 MP (16 procs) Free x86 compatible
+Product: Server, suite: TerminalServer SingleUserTS
+Machine Name:
+Debug session time: Tue Oct  4 16:10:34.000 2016 (UTC + 0:00)
+System Uptime: not available
+Process Uptime: 0 days 0:00:02.000
+.......................................
+This dump file has a breakpoint exception stored in it.
+The stored exception information can be accessed via .ecxr.
+eax=00000000 ebx=00000000 ecx=738f705d edx=00e7b0e0 esi=00000003 edi=00000003
+eip=76f0c7ec esp=00e7b9a4 ebp=00e7bb2c iopl=0         nv up ei pl nz na po nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000202
+Unable to load image C:\Windows\System32\ntdll.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+ntdll+0x3c7ec:
+76f0c7ec c21400          ret     14h
+0:000> cdb: Reading initial command '$<c:\Users\Administrator\funfuzz\util\cdbCmds.txt'
+0:000> .echo Toggle for 32-bit/64-bit modes
+Toggle for 32-bit/64-bit modes
+0:000> .echo See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+See http://people.mozilla.org/~aklotz/windbgcheatsheet.html
+0:000> !wow64exts.sw
+!wow64exts.sw : command invalid on non-64bit target
+0:000> .echo Display lines in stack trace
+Display lines in stack trace
+0:000> .lines
+Line number information will be loaded
+0:000> .echo .ecxr switches to the exception context frame
+.ecxr switches to the exception context frame
+0:000> .ecxr
+eax=00000000 ebx=00000000 ecx=738f705d edx=00e7b0e0 esi=00000383 edi=0ba37110
+eip=0156865d esp=00e7c650 ebp=00e7c6bc iopl=0         nv up ei pl nz ac pe nc
+cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00000216
+*** WARNING: Unable to verify checksum for js-dbg-32-prof-dm-windows-42c95d88aaaa.exe
+js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+0x3d:
+0156865d cc              int     3
+*** WARNING: Unable to verify timestamp for ntdll.dll
+*** ERROR: Module load completed but symbols could not be loaded for ntdll.dll
+*** WARNING: Unable to verify timestamp for kernel32.dll
+*** ERROR: Module load completed but symbols could not be loaded for kernel32.dll
+0:000> .echo Inspect program counter, equivalent of gdb's "x/i $pc"
+Inspect program counter, equivalent of gdb's "x/i $pc"
+0:000> u
+ntdll+0x3c7ec:
+76f0c7ec c21400          ret     14h
+76f0c7ef 90              nop
+76f0c7f0 b85b000000      mov     eax,5Bh
+76f0c7f5 64ff15c0000000  call    dword ptr fs:[0C0h]
+76f0c7fc c21000          ret     10h
+76f0c7ff 90              nop
+76f0c800 b85c000000      mov     eax,5Ch
+76f0c805 64ff15c0000000  call    dword ptr fs:[0C0h]
+0:000> .echo Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+Inspect eip (32-bit) register, equivalent of gdb's "x/b $eax"
+0:000> db @@c++(@eip) L4
+0156865d  cc 6a 03 c7                                      .j..
+0:000> .echo Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+Inspect rip (64-bit) register, equivalent of gdb's "x/b $rax"
+0:000> db @@c++(@rip) L8
+Bad register error at '@rip) '
+0:000> .echo To switch frames: .frame /r /c <frame number>
+To switch frames: .frame /r /c <frame number>
+0:000> .echo Then inspect locals using: dv <locals in this frame>
+Then inspect locals using: dv <locals in this frame>
+0:000> .echo Running !analyze
+Running !analyze
+0:000> !analyze -v
+*******************************************************************************
+*                                                                             *
+*                        Exception Analysis                                   *
+*                                                                             *
+*******************************************************************************
+
+*** WARNING: Unable to verify checksum for mozglue.dll
+***** OS symbols are WRONG. Please fix symbols to do analysis.
+
+*************************************************************************
+***                                                                   ***
+***                                                                   ***
+***    Your debugger is not using the correct symbols                 ***
+***                                                                   ***
+***    In order for this command to work properly, your symbol path   ***
+***    must point to .pdb files that have full type information.      ***
+***                                                                   ***
+***    Certain .pdb files (such as the public OS symbols) do not      ***
+***    contain the required information.  Contact the group that      ***
+***    provided you with these symbols if you need this command to    ***
+***    work.                                                          ***
+***                                                                   ***
+***    Type referenced: ntdll!_PEB                                    ***
+***                                                                   ***
+*************************************************************************
+*********************************************************************
+* Symbols can not be loaded because symbol path is not initialized. *
+*                                                                   *
+* The Symbol Path can be set by:                                    *
+*   using the _NT_SYMBOL_PATH environment variable.                 *
+*   using the -y <symbol_path> argument when starting the debugger. *
+*   using .sympath and .sympath+                                    *
+*********************************************************************
+*** WARNING: Unable to verify timestamp for KERNELBASE.dll
+*** ERROR: Module load completed but symbols could not be loaded for KERNELBASE.dll
+Unable to load image C:\Windows\System32\ucrtbase.dll, Win32 error 0n2
+*** WARNING: Unable to verify timestamp for ucrtbase.dll
+*** ERROR: Module load completed but symbols could not be loaded for ucrtbase.dll
+
+FAULTING_IP:
+js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+3d [c:\users\administrator\trees\mozilla-central\js\src\jit\rangeanalysis.h @ 578]
+0156865d cc              int     3
+
+EXCEPTION_RECORD:  ffffffff -- (.exr 0xffffffffffffffff)
+ExceptionAddress: 0156865d (js_dbg_32_prof_dm_windows_42c95d88aaaa!js::jit::Range::upper+0x0000003d)
+ExceptionCode: 80000003 (Break instruction exception)
+ExceptionFlags: 00000000
+NumberParameters: 1
+Parameter[0]: 00000000
+
+PROCESS_NAME:  js-dbg-32-prof-dm-windows-42c95d88aaaa.exe
+
+MODULE_NAME: unknown
+
+FAULTING_MODULE: 76ed0000 ntdll
+
+DEBUG_FLR_IMAGE_TIMESTAMP:  0
+
+ERROR_CODE: (NTSTATUS) 0x80000003 - {EXCEPTION}  Breakpoint  A breakpoint has been reached.
+
+EXCEPTION_CODE: (HRESULT) 0x80000003 (2147483651) - One or more arguments are invalid
+
+EXCEPTION_PARAMETER1:  00000000
+
+MOD_LIST: <ANALYSIS/>
+
+ADDITIONAL_DEBUG_TEXT:
+Use '!findthebuild' command to search for the target build information.
+If the build information is available, run '!findthebuild -s ; .reload' to set symbol path and load symbols. ; Followup set based on attribute [Is_ChosenCrashFollowupThread] from Frame:[0] on thread:[PSEUDO_THREAD]
+
+LAST_CONTROL_TRANSFER:  from 01546a04 to 0156865d
+
+FAULTING_THREAD:  ffffffff
+
+BUGCHECK_STR:  APPLICATION_FAULT_WRONG_SYMBOLS_STACKIMMUNE
+
+PRIMARY_PROBLEM_CLASS:  WRONG_SYMBOLS_STACKIMMUNE
+
+DEFAULT_BUCKET_ID:  WRONG_SYMBOLS_STACKIMMUNE
+
+STACK_TEXT:
+00000000 00000000 unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe+0x0
+
+
+SYMBOL_NAME:  unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe
+
+FOLLOWUP_NAME:  MachineOwner
+
+IMAGE_NAME:  unknown
+
+STACK_COMMAND:  ** Pseudo Context ** ; kb
+
+FAILURE_BUCKET_ID:  WRONG_SYMBOLS_STACKIMMUNE_80000003_unknown!Unloaded
+
+BUCKET_ID:  APPLICATION_FAULT_WRONG_SYMBOLS_STACKIMMUNE_unknown!js-dbg-32-prof-dm-windows-42c95d88aaaa.exe
+
+Followup: MachineOwner
+---------
+
+0:000> .echo Backtrace of faulting thread, limited to 50 frames
+Backtrace of faulting thread, limited to 50 frames
+0:000> ~#kn 50
+# ChildEBP RetAddr
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00 00e7bb2c 752d7b89 ntdll+0x3c7ec
+01 00e7bb48 753307bf kernel32+0x17b89
+02 00e7bf88 75330295 kernel32+0x707bf
+03 00e7bfa0 7491f605 kernel32+0x70295
+04 00e7c02c 76f7f154 KERNELBASE+0xbf605
+05 00e7ff10 76f2ab5a ntdll+0xaf154
+06 00e7ff20 00000000 ntdll+0x5ab5a
+0:000> .echo Backtrace, limited to 50 frames (should execute after .ecxr)
+Backtrace, limited to 50 frames (should execute after .ecxr)
+0:000> kb 50
+ChildEBP RetAddr  Args to Child
+WARNING: Stack unwind information not available. Following frames may be wrong.
+00e7bb2c 752d7b89 00000003 00e7bb70 00000000 ntdll+0x3c7ec
+00e7bb48 753307bf 00000003 00e7bb70 00000000 kernel32+0x17b89
+00e7bf88 75330295 00000000 00000001 00000000 kernel32+0x707bf
+00e7bfa0 7491f605 00e7c05c 00000001 fa5997c7 kernel32+0x70295
+00e7c02c 76f7f154 00e7c05c 76f10830 00e7ff10 KERNELBASE+0xbf605
+00e7ff10 76f2ab5a ffffffff 76f10007 00000000 ntdll+0xaf154
+00e7ff20 00000000 01191f50 ff929000 00000000 ntdll+0x5ab5a
+0:000> q
+quit:

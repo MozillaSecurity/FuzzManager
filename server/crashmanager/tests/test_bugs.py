@@ -19,8 +19,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from crashmanager.models import BugzillaTemplate
-
-from .conftest import _cm_result
+from crashmanager.tests.conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.bugs")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")
