@@ -18,9 +18,8 @@ import requests
 from django.test.client import Client
 from django.urls import reverse
 
-from crashmanager.tests.conftest import _cm_result
-
 from . import assert_contains
+from .conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.crashes")
 pytestmark = pytest.mark.usefixtures(

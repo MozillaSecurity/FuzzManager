@@ -27,6 +27,7 @@ def test_SignatureCreateTest() -> None:
         config,
         auxCrashData=(FIXTURE_PATH / "trace_1.txt").read_text().splitlines(),
     )
+
     crashSig1 = crashInfo.createCrashSignature(
         forceCrashAddress=True, maxFrames=4, minimumSupportedVersion=10
     )

@@ -8,7 +8,8 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from crashmanager.models import BugProvider
-from crashmanager.tests.conftest import _cm_result
+
+from .conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.bugproviders.rest")
 

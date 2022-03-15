@@ -46,8 +46,9 @@ def get_spot_price_per_region(
     """Gets spot prices of the specified region and instance type"""
 
     print(
-        "Region %s Instance Type %s Start %s End %s"
-        % (region_name, instance_type, start_time.isoformat(), end_time.isoformat())
+        "Region {} Instance Type {} Start {} End {}".format(
+            region_name, instance_type, start_time.isoformat(), end_time.isoformat()
+        )
     )
     r = None
 
@@ -189,8 +190,8 @@ class ConfigurationFile:
                 else:
                     if "handler" not in sectionMap:
                         print(
-                            "Warning: Simulation '%s' has no handler set, ignoring..."
-                            % section
+                            f"Warning: Simulation '{section}' has no handler set, "
+                            "ignoring..."
                         )
                         continue
 
@@ -247,7 +248,7 @@ def main() -> int:
         priceData = {}
 
         if os.path.isfile(cacheFile):
-            with open(cacheFile, mode="r") as cacheFd:
+            with open(cacheFile) as cacheFd:
                 priceData = json.load(cacheFd, object_pairs_hook=OrderedDict)
         else:
             for hour in range(interval - 1, -1, -1):

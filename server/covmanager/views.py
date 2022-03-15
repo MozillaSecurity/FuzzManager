@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -238,12 +238,12 @@ def collections_browse_api(
 
 def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
 
-    collections: QuerySet[Collection]
+    collections: list[Collection]
     coverages = []
 
     if "ids" in request.GET:
         ids = request.GET["ids"].split(",")
-        collections = Collection.objects.filter(pk__in=ids)
+        collections = cast(list[Collection], Collection.objects.filter(pk__in=ids))
 
     if collections and len(collections) < 2:
         raise Http404("Need at least two collections")
@@ -535,7 +535,7 @@ def repositories_search_api(request: HttpRequest) -> HttpResponse:
         )
 
     return HttpResponse(
-        json.dumps({"results": list(results)}), content_type="application/json"
+        json.dumps({"results": results}), content_type="application/json"
     )
 
 
@@ -549,7 +549,7 @@ def tools_search_api(request: HttpRequest) -> HttpResponse:
         )
 
     return HttpResponse(
-        json.dumps({"results": list(results)}), content_type="application/json"
+        json.dumps({"results": results}), content_type="application/json"
     )
 
 

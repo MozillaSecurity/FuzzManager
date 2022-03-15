@@ -22,7 +22,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from crashmanager.models import Bucket, Bug, CrashEntry, User
-from crashmanager.tests.conftest import _cm_result, _create_user
+
+from .conftest import _cm_result, _create_user
 
 # What should be allowed:
 #

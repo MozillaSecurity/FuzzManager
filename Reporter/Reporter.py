@@ -196,6 +196,7 @@ class Reporter(ABC):
         """requests.get, with added support for FuzzManager authentication and retry on
         5xx errors.
 
+        @type expected: int
         @param expected: HTTP status code for successful response
                          (default: requests.codes["ok"])
         """
@@ -209,6 +210,7 @@ class Reporter(ABC):
         """requests.post, with added support for FuzzManager authentication and retry on
         5xx errors.
 
+        @type expected: int
         @param expected: HTTP status code for successful response
                          (default: requests.codes["created"])
         """
@@ -222,6 +224,7 @@ class Reporter(ABC):
         """requests.patch, with added support for FuzzManager authentication and retry
         on 5xx errors.
 
+        @type expected: int
         @param expected: HTTP status code for successful response
                          (default: requests.codes["created"])
         """

@@ -290,20 +290,7 @@ class CrashInfo(metaclass=ABCMeta):
         if stderr is not None:
             lines.extend(stderr)
 
-        result: (
-            UBSanCrashInfo
-            | ASanCrashInfo
-            | LSanCrashInfo
-            | TSanCrashInfo
-            | AppleCrashInfo
-            | CDBCrashInfo
-            | GDBCrashInfo
-            | RustCrashInfo
-            | MinidumpCrashInfo
-            | ValgrindCrashInfo
-            | NoCrashInfo
-            | None
-        ) = None
+        result: CrashInfo | None = None
         for line in lines:
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
@@ -736,7 +723,7 @@ class ASanCrashInfo(CrashInfo):
 
                 if not expectedIndex == index:
                     raise RuntimeError(
-                        f"Fatal error parsing ASan trace (Index mismatch, got index "
+                        "Fatal error parsing ASan trace (Index mismatch, got index "
                         f"{index} but expected {expectedIndex})"
                     )
 
@@ -892,7 +879,7 @@ class LSanCrashInfo(CrashInfo):
 
                 if expectedIndex != index:
                     raise RuntimeError(
-                        f"Fatal error parsing LSan trace (Index mismatch, got index "
+                        "Fatal error parsing LSan trace (Index mismatch, got index "
                         f"{index} but expected {expectedIndex})"
                     )
 
@@ -1636,15 +1623,16 @@ class AppleCrashInfo(CrashInfo):
         apple_crash_data = crashData or stderr
 
         inCrashingThread = False
-        for line in apple_crash_data:
-            # Crash address
-            if line.startswith("Exception Codes:"):
-                # Example:
-                #     Exception Type:        EXC_BAD_ACCESS (SIGABRT)
-                #     Exception Codes:       KERN_INVALID_ADDRESS at 0x00000001374b893e
-                address = line.split(" ")[-1]
-                if address.startswith("0x"):
-                    self.crashAddress = int(address, 16)
+        if apple_crash_data is not None:
+            for line in apple_crash_data:
+                # Crash address
+                if line.startswith("Exception Codes:"):
+                    # Example:
+                    #     Exception Type:    EXC_BAD_ACCESS (SIGABRT)
+                    #     Exception Codes:   KERN_INVALID_ADDRESS at 0x00000001374b893e
+                    address = line.split(" ")[-1]
+                    if address.startswith("0x"):
+                        self.crashAddress = int(address, 16)
 
                 # Start of stack for crashing thread
                 if re.match(r"Thread \d+ Crashed:", line):
@@ -1719,111 +1707,112 @@ class CDBCrashInfo(CrashInfo):
 
         cdb_crash_data = crashData or stderr
 
-        for line in cdb_crash_data:
-            # Start of .ecxr data
-            if re.match(r"0:000> \.ecxr", line):
-                inEcxrData = True
-                continue
-
-            if inEcxrData:
-                # 32-bit example:
-                #      0:000> .ecxr
-                # noqa eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
-                # noqa eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
-                # noqa cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
-                # 64-bit example:
-                #      0:000> .ecxr
-                #      rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
-                #      rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
-                #      rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
-                #       r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
-                #      r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
-                #      r14=000000e87fbfd0e0 r15=0000000000000003
-                #      iopl=0         nv up ei pl nz na pe nc
-                # noqa cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
-                if line.startswith("cs="):
-                    inEcxrData = False
+        if cdb_crash_data is not None:
+            for line in cdb_crash_data:
+                # Start of .ecxr data
+                if re.match(r"0:000> \.ecxr", line):
+                    inEcxrData = True
                     continue
 
-                # Crash address
-                # Extract the eip/rip specifically for use later
-                if "eip=" in line:
-                    address = line.split("eip=")[1].split()[0]
-                    self.crashAddress = int(address, 16)
-                elif "rip=" in line:
-                    address = line.split("rip=")[1].split()[0]
-                    self.crashAddress = int(address, 16)
-
-                # First extract the line
-                # 32-bit example:
-                #     eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b esi=02e00310 edi=02e00310
-                # 64-bit example:
-                #     rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
-                matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
-                if matchLine is not None:
-                    ecxrData.extend(line.split())
-
-                # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their own,
-                # then iterate
-                match = re.search(cdbRegisterPattern, line)
-                for instr in ecxrData:
-                    match = re.search(cdbRegisterPattern, instr)
-                    if match is not None:
-                        register = match.group(1)
-                        value = int(match.group(2), 16)
-                        self.registers[register] = value
-
-            # Crash instruction
-            # Start of crash instruction details
-            if line.startswith("FAULTING_IP"):
-                inCrashInstruction = True
-                continue
-
-            if inCrashInstruction and not cInstruction:
-                if "PROCESS_NAME" in line:
-                    inCrashInstruction = False
-                    continue
-
-                # 64-bit binaries have a backtick in their addresses,
-                # e.g. 00007ff7`1e424e62
-                lineWithoutBacktick = line.replace("`", "", 1)
-                if address and lineWithoutBacktick.startswith(address):
-                    # 32-bit examples:
-                    #     25d80b01 cc              int     3
-                    #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                if inEcxrData:
+                    # 32-bit example:
+                    #      0:000> .ecxr
+                    # noqa eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                    # noqa eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
+                    # noqa cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
                     # 64-bit example:
-                    #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-                    cInstruction = line.split(None, 2)[-1]
-                    # There may be multiple spaces inside the faulting instruction
-                    cInstruction = " ".join(cInstruction.split())
-                    self.crashInstruction = cInstruction
+                    #      0:000> .ecxr
+                    # noqa rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                    # noqa rdx=00000285ef21b940 rsi=000000e87fbfc340 rdi=00000285ef400420
+                    # noqa rip=00007ff74d469ff3 rsp=000000e87fbfc040 rbp=fffe000000000000
+                    # noqa  r8=000000e87fbfc140  r9=000000000001fffc r10=0000000000000649
+                    # noqa r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
+                    # r14=000000e87fbfd0e0 r15=0000000000000003
+                    # iopl=0         nv up ei pl nz na pe nc
+                    # noqa cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
+                    if line.startswith("cs="):
+                        inEcxrData = False
+                        continue
 
-            # Start of stack for crashing thread
-            if line.startswith("STACK_TEXT:"):
-                inCrashingThread = True
-                continue
+                    # Crash address
+                    # Extract the eip/rip specifically for use later
+                    if "eip=" in line:
+                        address = line.split("eip=")[1].split()[0]
+                        self.crashAddress = int(address, 16)
+                    elif "rip=" in line:
+                        address = line.split("rip=")[1].split()[0]
+                        self.crashAddress = int(address, 16)
 
-            if inCrashingThread:
-                # 32-bit example:
-                # noqa  "016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9"
-                # 64-bit example:
-                # noqa  "000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13"
-                if (
-                    "STACK_COMMAND" in line
-                    or "SYMBOL_NAME" in line
-                    or "THREAD_SHA1_HASH_MOD_FUNC" in line
-                    or "FAULTING_SOURCE_CODE" in line
-                ):
-                    inCrashingThread = False
+                    # First extract the line
+                    # 32-bit example:
+                    # noqa eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
+                    # 64-bit example:
+                    # noqa rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
+                    matchLine = re.search(RegisterHelper.getRegisterPattern(), line)
+                    if matchLine is not None:
+                        ecxrData.extend(line.split())
+
+                    # Next, put the eax/rax, ebx/rbx, etc. entries into a list of their
+                    # own, then iterate
+                    match = re.search(cdbRegisterPattern, line)
+                    for instr in ecxrData:
+                        match = re.search(cdbRegisterPattern, instr)
+                        if match is not None:
+                            register = match.group(1)
+                            value = int(match.group(2), 16)
+                            self.registers[register] = value
+
+                # Crash instruction
+                # Start of crash instruction details
+                if line.startswith("FAULTING_IP"):
+                    inCrashInstruction = True
                     continue
 
-                # Ignore cdb error and empty lines
-                if "Following frames may be wrong." in line or line.strip() == "":
+                if inCrashInstruction and not cInstruction:
+                    if "PROCESS_NAME" in line:
+                        inCrashInstruction = False
+                        continue
+
+                    # 64-bit binaries have a backtick in their addresses,
+                    # e.g. 00007ff7`1e424e62
+                    lineWithoutBacktick = line.replace("`", "", 1)
+                    if address and lineWithoutBacktick.startswith(address):
+                        # 32-bit examples:
+                        #     25d80b01 cc              int     3
+                        #     00404c59 8b39            mov     edi,dword ptr [ecx]
+                        # 64-bit example:
+                        # noqa 00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
+                        cInstruction = line.split(None, 2)[-1]
+                        # There may be multiple spaces inside the faulting instruction
+                        cInstruction = " ".join(cInstruction.split())
+                        self.crashInstruction = cInstruction
+
+                # Start of stack for crashing thread
+                if line.startswith("STACK_TEXT:"):
+                    inCrashingThread = True
                     continue
 
-                stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
-                stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
-                self.backtrace.append(stackEntry)
+                if inCrashingThread:
+                    # 32-bit example:
+                    # noqa  "016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9"
+                    # 64-bit example:
+                    # noqa  "000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13"
+                    if (
+                        "STACK_COMMAND" in line
+                        or "SYMBOL_NAME" in line
+                        or "THREAD_SHA1_HASH_MOD_FUNC" in line
+                        or "FAULTING_SOURCE_CODE" in line
+                    ):
+                        inCrashingThread = False
+                        continue
+
+                    # Ignore cdb error and empty lines
+                    if "Following frames may be wrong." in line or line.strip() == "":
+                        continue
+
+                    stackEntry = CDBCrashInfo.removeFilenameAndOffset(line)
+                    stackEntry = CrashInfo.sanitizeStackFrame(stackEntry)
+                    self.backtrace.append(stackEntry)
 
     @staticmethod
     def removeFilenameAndOffset(stackEntry: str) -> str:
@@ -1975,7 +1964,7 @@ class TSanCrashInfo(CrashInfo):
 
                 if not expectedIndex == index:
                     raise RuntimeError(
-                        f"Fatal error parsing TSan trace (Index mismatch, got index "
+                        "Fatal error parsing TSan trace (Index mismatch, got index "
                         f"{index} but expected {expectedIndex})"
                     )
 

@@ -21,7 +21,7 @@ import requests
 from django.test.client import Client
 from django.urls import reverse
 
-from covmanager.tests.conftest import _result
+from .conftest import _result
 
 LOG = logging.getLogger("fm.covmanager.tests.collections")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name

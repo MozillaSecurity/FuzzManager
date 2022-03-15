@@ -92,6 +92,7 @@ class CrashSignature:
         Match this signature against the given crash information
 
         @param crashInfo: The crash info to match the signature against
+
         @return: True if the signature matches, False otherwise
         """
         assert crashInfo.configuration is not None

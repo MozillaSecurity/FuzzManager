@@ -32,7 +32,8 @@ def regAsHexStr(reg: str) -> str:
         mask = 0xFFFFFFFFFFFFFFFF
     else:
         mask = 0xFFFFFFFF
-    return f"0x{int(str(gdb.parse_and_eval('$' + reg)), 0) & mask:x}"  # type: ignore[name-defined]  # noqa @UndefinedVariable
+    val = int(str(gdb.parse_and_eval("$" + reg)), 0) & mask  # type: ignore[name-defined]  # noqa @UndefinedVariable
+    return f"0x{val:x}"
 
 
 def regAsIntStr(reg: str) -> str:

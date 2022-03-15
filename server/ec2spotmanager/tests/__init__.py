@@ -11,8 +11,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime
+import logging
 from typing import cast
 
 from django.core.files.base import ContentFile

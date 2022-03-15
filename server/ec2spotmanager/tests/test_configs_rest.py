@@ -22,12 +22,8 @@ from rest_framework.test import APIClient
 
 from . import create_config
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.configs.rest"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.configs.rest")
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
 
 
 def test_rest_pool_configs_no_auth(api_client: APIClient) -> None:

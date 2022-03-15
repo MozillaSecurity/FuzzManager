@@ -28,10 +28,9 @@ pytest_plugins = "server.tests"  # pylint: disable=invalid-name
 @pytest.mark.skip
 def test_RESTCrashEntryInterface(live_server: LiveServer, fm_user: User) -> None:
     url_split = urlsplit(live_server.url)
-    url = "{}://{}:{}/crashmanager/rest/crashes/".format(
-        url_split.scheme,
-        url_split.hostname,
-        url_split.port,
+    url = (
+        f"{url_split.scheme}://{url_split.hostname}:{url_split.port}"
+        "/crashmanager/rest/crashes/"
     )
 
     # Must yield forbidden without authentication
@@ -78,10 +77,9 @@ def test_RESTCrashEntryInterface(live_server: LiveServer, fm_user: User) -> None
 
 def test_RESTSignatureInterface(live_server: LiveServer) -> None:
     url_split = urlsplit(live_server.url)
-    url = "{}://{}:{}/crashmanager/rest/signatures/".format(
-        url_split.scheme,
-        url_split.hostname,
-        url_split.port,
+    url = (
+        f"{url_split.scheme}://{url_split.hostname}:{url_split.port}"
+        "/crashmanager/rest/signatures/"
     )
 
     # Must yield forbidden without authentication

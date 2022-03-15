@@ -26,12 +26,8 @@ from ec2spotmanager.models import InstancePool
 
 from . import create_config, create_pool
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.pools.rest"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.pools.rest")
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
 
 
 def test_rest_pool_cycle_no_auth(api_client: APIClient) -> None:

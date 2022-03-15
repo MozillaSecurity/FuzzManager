@@ -56,6 +56,6 @@ class Command(BaseCommand):
         repository.save()
 
         print(
-            "Successfully created repository '%s' with provider '%s' located at %s"
-            % (name, provider, location)
+            f"Successfully created repository '{name}' with provider '{provider}' "
+            f"located at {location}"
         )

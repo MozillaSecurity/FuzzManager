@@ -25,12 +25,8 @@ from ec2spotmanager.models import PoolConfiguration
 
 from . import assert_contains, create_config
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.configs"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.configs")
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
 
 
 @pytest.mark.parametrize(

@@ -33,7 +33,8 @@ from crashmanager.models import (
     Product,
     Tool,
 )
-from crashmanager.tests.conftest import _cm_result
+
+from .conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
 

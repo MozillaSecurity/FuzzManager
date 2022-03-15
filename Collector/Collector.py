@@ -111,7 +111,8 @@ class Collector(Reporter):
                     os.remove(os.path.join(self.sigCacheDir, sigFile))
                 else:
                     print(
-                        f"Warning: Skipping deletion of non-signature file: {sigFile}",
+                        "Warning: Skipping deletion of non-signature file:",
+                        sigFile,
                         file=sys.stderr,
                     )
 
@@ -273,10 +274,11 @@ class Collector(Reporter):
     @remote_checks
     def download(self, crashId: int) -> tuple[str, dict[str, str]] | None:
         """
-        Download all testcases for the specified bucketId.
+        Download the testcase for the specified crashId.
 
-        @param bucketId: ID of the requested bucket on the server side
-        @return: generator of filenames where tests were stored.
+        @param crashId: ID of the requested crash entry on the server side
+        @return: Tuple containing name of the file where the test was stored and the raw
+                 JSON response
         """
         assert self.serverHost is not None
         assert self.serverPort is not None
@@ -780,14 +782,17 @@ def main(args: list[str] | None = None) -> int:
         if "args" in retJSON and retJSON["args"]:
             args = json.loads(retJSON["args"])
             assert args is not None
-            print(f"Command line arguments: {' '.join(args)}")
+            print(
+                "Command line arguments:",
+                " ".join(args),
+            )
             print("")
 
         if "env" in retJSON and retJSON["env"]:
             env = json.loads(retJSON["env"])
             assert env is not None
             print(
-                "Environment variables: %s",
+                "Environment variables:",
                 " ".join(f"{k} = {v}" for (k, v) in env.items()),
             )
             print("")

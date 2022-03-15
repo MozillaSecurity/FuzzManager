@@ -24,12 +24,8 @@ from ec2spotmanager.models import Instance
 
 from . import create_instance
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.status.rest"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.status.rest")
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
 
 
 def test_rest_status_no_auth(api_client: APIClient) -> None:

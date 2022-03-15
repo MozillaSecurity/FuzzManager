@@ -19,7 +19,8 @@ from django.test.client import Client
 from django.urls import reverse
 
 from crashmanager.models import Tool, User
-from crashmanager.tests.conftest import _cm_result
+
+from .conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.usersettings")
 pytestmark = pytest.mark.usefixtures("crashmanager_test")

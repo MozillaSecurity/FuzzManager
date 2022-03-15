@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import django.core.files.storage
 import django.utils.timezone
 from django.db import migrations, models

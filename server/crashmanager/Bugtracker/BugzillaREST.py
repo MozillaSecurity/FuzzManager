@@ -62,10 +62,8 @@ class BugzillaREST:
         if self.authToken is not None:
             return True
 
-        loginUrl = "{}/login?login={}&password={}".format(
-            self.baseUrl,
-            self.username,
-            self.password,
+        loginUrl = (
+            f"{self.baseUrl}/login?login={self.username}&password={self.password}"
         )
         response = requests.get(loginUrl)
         json = response.json()

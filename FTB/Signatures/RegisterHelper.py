@@ -86,7 +86,7 @@ def getRegisterPattern() -> str:
     return (
         "("
         + "|".join(["%s"] * len(validRegisters))
-        % tuple(["|".join(i) for i in validRegisters.values()])
+        % tuple("|".join(i) for i in validRegisters.values())
         + ")"
     )
 

@@ -203,7 +203,7 @@ def command_file_to_list(cmd_file: str) -> tuple[int | None, list[str]]:
     @param cmd_file: Command line file containing list of commands
     @return: Test index in list and the command as a list of strings
     """
-    cmdline = []
+    cmdline = list()
     idx = 0
     test_idx = None
     with open(cmd_file) as cmd_fp:
@@ -289,7 +289,7 @@ def write_aggregated_stats_afl(
     fields.extend(wanted_fields_max)
 
     # Warnings to include
-    warnings: list[str] = []
+    warnings: list[str] = list()
 
     aggregated_stats = {}
 
@@ -1217,8 +1217,8 @@ def main(argv: list[str] | None = None) -> int:
         s3m.clean_queue_dirs()
 
         print(
-            "Downloading queues from s3://%s/%s/queues/ to %s"
-            % (opts.s3_bucket, opts.project, queues_dir)
+            f"Downloading queues from s3://{opts.s3_bucket}/{opts.project}/queues/ to "
+            f"{queues_dir}"
         )
         s3m.download_queue_dirs(opts.s3_corpus_refresh)
 
@@ -1281,8 +1281,8 @@ def main(argv: list[str] | None = None) -> int:
 
         # Download our current corpus into the queues directory as well
         print(
-            "Downloading corpus from s3://%s/%s/corpus/ to %s"
-            % (opts.s3_bucket, opts.project, queues_dir)
+            f"Downloading corpus from s3://{opts.s3_bucket}/{opts.project}/corpus/ to "
+            f"{queues_dir}"
         )
         s3m.download_corpus(queues_dir)
 

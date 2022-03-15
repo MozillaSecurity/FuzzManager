@@ -22,7 +22,8 @@ from django.utils import dateparse, timezone
 from rest_framework.test import APIClient
 
 from covmanager.models import Collection
-from covmanager.tests.conftest import _result, covType
+
+from .conftest import _result, covType
 
 LOG = logging.getLogger("fm.covmanager.tests.collections.rest")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
