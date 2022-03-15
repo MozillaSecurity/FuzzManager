@@ -33,12 +33,12 @@ known_first_party = [
 profile = "black"
 
 [tool.mypy]
-strict = true
-show_error_codes = true
 plugins = [
    "mypy_django_plugin.main",
    "mypy_drf_plugin.main",
 ]
+strict = true
+show_error_codes = true
 
 # Add Python modules to be ignored by mypy here
 [[tool.mypy.overrides]]
