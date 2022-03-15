@@ -36,8 +36,8 @@ profile = "black"
 strict = true
 show_error_codes = true
 plugins = [
-#    "mypy_django_plugin.main",
-#    "mypy_drf_plugin.main",
+   "mypy_django_plugin.main",
+   "mypy_drf_plugin.main",
 ]
 
 # Add Python modules to be ignored by mypy here
