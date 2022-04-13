@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from itertools import zip_longest
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -181,16 +182,22 @@ class Bucket(models.Model):
                 "-id"
             )  # used by the preview list
 
+        entry_ids = entries.values_list("id", flat=True)
+
+        # from the python documentation (itertools)
+        def grouper(iterable, n, fillvalue=None):
+            """Collect data into fixed-length chunks or blocks"""
+            # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+            args = [iter(iterable)] * n
+            return zip_longest(*args, fillvalue=fillvalue)
+
         # If we are saving, we only care about the id of each entry
         # Otherwise, we save the entire object. Limit to the first 100 entries to avoid
         # OOM.
-        entriesOffset = 0
-        while True:
-            entriesChunk = entries[entriesOffset : entriesOffset + 100]
-            if not entriesChunk:
-                break
-            entriesOffset += 100
-            for entry in entriesChunk:
+        for entry_ids_chunk in grouper(entry_ids, 100):
+            entries_chunk = entries.filter(id__in=entry_ids_chunk)
+
+            for entry in entries_chunk:
                 match = signature.matches(
                     entry.getCrashInfo(
                         attachTestcase=needTest, requiredOutputSources=requiredOutputs
