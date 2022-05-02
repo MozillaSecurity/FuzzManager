@@ -3,7 +3,7 @@ from __future__ import annotations
 import codecs
 import json
 from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
@@ -22,9 +22,9 @@ if getattr(settings, "USE_CELERY", None):
 
 
 class Repository(models.Model):
-    classname = str(models.CharField(max_length=255, blank=False))
-    name = str(models.CharField(max_length=255, blank=False))
-    location = str(models.CharField(max_length=1023, blank=False))
+    classname = models.CharField(max_length=255, blank=False)
+    name = models.CharField(max_length=255, blank=False)
+    location = models.CharField(max_length=1023, blank=False)
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
@@ -41,24 +41,19 @@ class CollectionFile(models.Model):
         max_length=255,
         upload_to="coverage",
     )
-    format = int(str(models.IntegerField(default=0)))
+    format = models.IntegerField(default=0)
 
 
 class Collection(models.Model):
-    created = cast(datetime, models.DateTimeField(default=timezone.now))
-    description = str(models.CharField(max_length=1023, blank=True))
-    repository = cast(
-        Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
-    )
-    revision = str(models.CharField(max_length=255, blank=False))
-    branch = str(models.CharField(max_length=255, blank=True))
-    tools = cast(QuerySet[Tool], models.ManyToManyField(Tool))
-    client = cast(Client, models.ForeignKey(Client, on_delete=models.deletion.CASCADE))
-    coverage: CollectionFile | None = cast(
-        CollectionFile,
-        models.ForeignKey(
-            CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE
-        ),
+    created = models.DateTimeField(default=timezone.now)
+    description = models.CharField(max_length=1023, blank=True)
+    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
+    revision = models.CharField(max_length=255, blank=False)
+    branch = models.CharField(max_length=255, blank=True)
+    tools = models.ManyToManyField(Tool)
+    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
+    coverage: CollectionFile | None = models.ForeignKey(
+        CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -212,17 +207,12 @@ if getattr(settings, "USE_CELERY", None):
 
 
 class ReportConfiguration(models.Model):
-    description = str(models.CharField(max_length=1023, blank=True))
-    repository = cast(
-        Repository, models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
-    )
-    directives = str(models.TextField())
-    public = bool(models.BooleanField(blank=False, default=False))
-    logical_parent = cast(
-        "ReportConfiguration",
-        models.ForeignKey(
-            "self", blank=True, null=True, on_delete=models.deletion.CASCADE
-        ),
+    description = models.CharField(max_length=1023, blank=True)
+    repository = models.ForeignKey(Repository, on_delete=models.deletion.CASCADE)
+    directives = models.TextField()
+    public = models.BooleanField(blank=False, default=False)
+    logical_parent = models.ForeignKey(
+        "self", blank=True, null=True, on_delete=models.deletion.CASCADE
     )
 
     def apply(self, collection: Collection) -> None:
@@ -233,10 +223,8 @@ class ReportConfiguration(models.Model):
 
 
 class ReportSummary(models.Model):
-    collection = cast(
-        Collection, models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
-    )
-    cached_result: str | None = str(models.TextField(null=True, blank=True))
+    collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
+    cached_result: str | None = models.TextField(null=True, blank=True)
 
 
 class Report(models.Model):
@@ -245,14 +233,11 @@ class Report(models.Model):
     # because aggregated collections can be created later, losing the original
     # creation dates. This date will be used as a reference time frame to
     # determine week, month, quarter, etc. for displaying purposes.
-    data_created = cast(datetime, models.DateTimeField(default=timezone.now))
-    public = bool(models.BooleanField(blank=False, default=False))
-    coverage = cast(
-        Collection,
-        models.ForeignKey(
-            Collection, blank=False, null=False, on_delete=models.deletion.CASCADE
-        ),
+    data_created = models.DateTimeField(default=timezone.now)
+    public = models.BooleanField(blank=False, default=False)
+    coverage = models.ForeignKey(
+        Collection, blank=False, null=False, on_delete=models.deletion.CASCADE
     )
 
-    is_monthly = bool(models.BooleanField(blank=False, default=False))
-    is_quarterly = bool(models.BooleanField(blank=False, default=False))
+    is_monthly = models.BooleanField(blank=False, default=False)
+    is_quarterly = models.BooleanField(blank=False, default=False)
