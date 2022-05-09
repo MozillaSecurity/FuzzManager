@@ -323,6 +323,22 @@ def test_ASanParserTestTruncatedTrace():
     assert "Insufficient data" in crashInfo.failureReason
 
 
+def test_ASanParserTestClang14():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo(
+        [], (FIXTURE_PATH / "trace_asan_clang14.txt").read_text().splitlines(), config
+    )
+    assert crashInfo.crashAddress == 0x03E800004610
+    assert crashInfo.backtrace == [
+        "raise",
+        "abort",
+        "llvm::report_fatal_error",
+        "llvm::report_fatal_error",
+    ]
+    assert "[@ raise]" == crashInfo.createShortSignature()
+
+
 def test_GDBParserTestCrash():
     config = ProgramConfiguration("test", "x86", "linux")
 
@@ -2622,6 +2638,31 @@ def test_TSanParserTest():
 
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None
+
+
+def test_TSanParserTestClang14():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_tsan_clang14.txt").read_text().splitlines(),
+    )
+    assert (
+        "ThreadSanitizer: data race [@ operator new] vs. [@ pthread_mutex_lock]"
+        == crashInfo.createShortSignature()
+    )
+    assert crashInfo.crashAddress is None
+    assert crashInfo.crashInstruction is None
+    assert len(crashInfo.backtrace) == 166
+    assert crashInfo.backtrace[0] == "operator new"
+    assert crashInfo.backtrace[5:9] == [
+        "pthread_mutex_lock",
+        "libLLVM-12.so.1+0xb6f3ea",
+        "nsThread::ThreadFunc",
+        "_pt_root",
+    ]
 
 
 def test_ValgrindCJMParser():

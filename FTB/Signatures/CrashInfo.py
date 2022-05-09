@@ -26,6 +26,11 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
+def _is_unfinished(symbol, operators):
+    start, end = operators
+    return bool(symbol.count(start) > symbol.count(end))
+
+
 def uint32(val):
     """Force `val` into unsigned 32-bit range.
 
@@ -690,15 +695,8 @@ class ASanCrashInfo(CrashInfo):
                     # Some lines in eg. debug+asan builds might error if we continue.
                     continue
 
-            parts = traceLine.strip().split()
-
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
-
-            try:
-                index = int(parts[0][1:])
-            except ValueError:
+            index, parts = self.split_frame(traceLine)
+            if index is None:
                 continue
 
             # We may see multiple traces in ASAN
@@ -727,7 +725,7 @@ class ASanCrashInfo(CrashInfo):
             elif len(parts) > 2:
                 if parts[2] == "in":
                     component = " ".join(parts[3:-1])
-                elif parts[2:] == ["(<unknown", "module>)"]:
+                elif parts[2] == "(<unknown module>)":
                     component = "<missing>"
                 else:
                     # Remove parentheses around component
@@ -741,6 +739,44 @@ class ASanCrashInfo(CrashInfo):
 
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
+
+    @staticmethod
+    def split_frame(line):
+        parts = line.strip().split()
+
+        # We only want stack frames
+        if not parts or not parts[0].startswith("#"):
+            return None, None
+
+        try:
+            frame_no = int(parts[0][1:])
+        except ValueError:
+            return None, None
+
+        # try to put parts back together which contain spaces contained in () or <>
+        idx = 1
+        while len(parts) > idx + 1:
+            if _is_unfinished(parts[idx], "()") or _is_unfinished(parts[idx], "<>"):
+                parts = (
+                    parts[:idx] + [f"{parts[idx]} {parts[idx + 1]}"] + parts[idx + 2 :]
+                )
+            else:
+                idx += 1
+
+        # put "const" back with the function signature
+        if "const" in parts:
+            idx = parts.index("const")
+            assert idx > 0
+            if parts[idx - 1].endswith(")"):
+                parts = (
+                    parts[: idx - 1] + [f"{parts[idx - 1]} const"] + parts[idx + 1 :]
+                )
+
+        # clang 14 adds BuildId as last segment
+        if parts[-1].startswith("(BuildId: "):
+            parts.pop()
+
+        return frame_no, parts
 
     def createShortSignature(self):
         """
@@ -847,13 +883,9 @@ class LSanCrashInfo(CrashInfo):
                     lsanPatternSeen = True
                 continue
 
-            parts = traceLine.strip().split()
-
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
+            index, parts = ASanCrashInfo.split_frame(traceLine)
+            if index is None:
                 continue
-
-            index = int(parts[0][1:])
 
             if expectedIndex != index:
                 raise RuntimeError(
@@ -938,13 +970,9 @@ class UBSanCrashInfo(CrashInfo):
                     ubsanPatternSeen = True
                 continue
 
-            parts = traceLine.strip().split()
-
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
+            index, parts = ASanCrashInfo.split_frame(traceLine)
+            if index is None:
                 continue
-
-            index = int(parts[0][1:])
 
             if expectedIndex != index:
                 raise RuntimeError(
@@ -1864,15 +1892,8 @@ class TSanCrashInfo(CrashInfo):
                 # TSan failed to symbolize at least one stack
                 brokenStack = True
 
-            parts = traceLine.strip().split()
-
-            # We only want stack frames
-            if not parts or not parts[0].startswith("#"):
-                continue
-
-            try:
-                index = int(parts[0][1:])
-            except ValueError:
+            index, parts = ASanCrashInfo.split_frame(traceLine)
+            if index is None:
                 continue
 
             # We may see multiple traces in TSAN
