@@ -33,9 +33,11 @@ def create_weekly_report_mc(revision):
     repository = Repository.objects.get(name="mozilla-central")
     client = Client.objects.get_or_create(name="Server")[0]
 
-    collections = Collection.objects.filter(
-        Q(revision=revision) | Q(revision=short_revision)
-    ).filter(repository=repository, coverage__isnull=False)
+    collections = (
+        Collection.objects.filter(Q(revision=revision) | Q(revision=short_revision))
+        .filter(repository=repository, coverage__isnull=False)
+        .exclude(description__contains="IGNORE_MERGE")
+    )
 
     last_monday = collections.first().created + relativedelta(weekday=MO(-1))
 
