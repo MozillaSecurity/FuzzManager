@@ -115,7 +115,7 @@ msrestazure==0.4.34
     # via azure-mgmt-resource
 mysqlclient==2.0.3
     # via FuzzManager (setup.py)
-oauthlib==3.2.0
+oauthlib==3.2.1
     # via requests-oauthlib
 packaging==21.3
     # via
