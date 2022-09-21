@@ -455,12 +455,13 @@ def newSignature(request):
 
 
 def deleteSignature(request, sigid):
-    bucket = Bucket.objects.filter(pk=sigid).annotate(size=Count("crashentry"))
-    if not bucket:
-        raise Http404
-    bucket = bucket[0]
+    user = User.get_or_create_restricted(request.user)[0]
+    if user.restricted:
+        raise PermissionDenied(
+            {"message": "You don't have permission to delete signatures."}
+        )
 
-    check_authorized_for_signature(request, bucket)
+    bucket = Bucket.objects.get(pk=sigid)
 
     if request.method == "POST":
         if "delentries" not in request.POST:
@@ -472,8 +473,33 @@ def deleteSignature(request, sigid):
 
         bucket.delete()
         return redirect("crashmanager:signatures")
+
     elif request.method == "GET":
-        return render(request, "signatures/remove.html", {"bucket": bucket})
+        in_filter = 0
+        other_tool_counts = {}
+
+        tools_breakdown = Tool.objects.filter(crashentry__bucket=bucket).annotate(
+            crashes=Count("crashentry")
+        )
+        toolfilter_ids = set(user.defaultToolsFilter.values_list("id", flat=True))
+        for tool in tools_breakdown:
+            if tool.id in toolfilter_ids:
+                in_filter += tool.crashes
+            else:
+                other_tool_counts[tool.name] = tool.crashes
+        out_of_filter = sum(other_tool_counts.values())
+        other_tools = set(other_tool_counts.keys())
+
+        return render(
+            request,
+            "signatures/remove.html",
+            {
+                "bucket": bucket,
+                "in_filter": in_filter,
+                "out_of_filter": out_of_filter,
+                "other_tools": ", ".join(sorted(other_tools)),
+            },
+        )
     else:
         raise SuspiciousOperation
 
