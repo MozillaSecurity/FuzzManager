@@ -57,18 +57,73 @@ def test_signatures_view(client):  # pylint: disable=invalid-name
 def test_del_signature_simple_get(client, cm):  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username="test", password="test")
+
     bucket = cm.create_bucket(shortDescription="bucket #1")
+    crash1 = cm.create_crash(shortSignature="crash #1", tool="tool1")
+    crash2 = cm.create_crash(shortSignature="crash #2", tool="tool2")
+    crash3 = cm.create_crash(shortSignature="crash #3", tool="tool3")
+
+    # no crashes
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
     assert_contains(response, "Are you sure that you want to delete this signature?")
-    assert_contains(response, "Also delete all %d entries with this bucket" % 0)
-    cm.create_crash(shortSignature="crash #1", bucket=bucket)
+    assert_contains(response, "Bucket contains no crash entries.")
+
+    # 1 crash not in toolfilter
+    cm.create_toolfilter(crash1.tool)
+    crash2.bucket = bucket
+    crash2.save()
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
     assert_contains(response, "Are you sure that you want to delete this signature?")
-    assert_contains(response, "Also delete all %d entries with this bucket" % 1)
+    assert_contains(
+        response,
+        "Also delete all crash entries with this bucket: 0 in tool filter, "
+        "1 in other tools (tool2).",
+    )
+
+    # 1 crash in toolfilter
+    crash1.bucket = bucket
+    crash1.save()
+    crash2.bucket = None
+    crash2.save()
+    response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
+    LOG.debug(response)
+    assert response.status_code == requests.codes["ok"]
+    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        response,
+        "Also delete all crash entries with this bucket: 1 in tool filter "
+        "(none in other tools).",
+    )
+
+    # 1 crash in toolfilter, 1 not in toolfilter
+    crash2.bucket = bucket
+    crash2.save()
+    response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
+    LOG.debug(response)
+    assert response.status_code == requests.codes["ok"]
+    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        response,
+        "Also delete all crash entries with this bucket: 1 in tool filter, "
+        "1 in other tools (tool2).",
+    )
+
+    # 1 crash in toolfilter, 2 not in toolfilter
+    crash3.bucket = bucket
+    crash3.save()
+    response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
+    LOG.debug(response)
+    assert response.status_code == requests.codes["ok"]
+    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        response,
+        "Also delete all crash entries with this bucket: 1 in tool filter, "
+        "2 in other tools (tool2, tool3).",
+    )
 
 
 def test_find_signature_simple_get(client, cm):  # pylint: disable=invalid-name
