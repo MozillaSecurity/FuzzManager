@@ -1,0 +1,198 @@
+==43282==AddressSanitizer: soft rss limit exhausted (12288Mb vs 12297Mb)
+
+
+HEAP PROFILE at RSS 12297Mb
+Live Heap Allocations: 10183322482 bytes in 440936 chunks; quarantined: 284247149 bytes in 502580 chunks; 1279579 other chunks; total chunks: 2223095; showing top 90% (at most 20 unique contexts)
+1431757824 byte(s) (14%) in 6609 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+1282932736 byte(s) (12%) in 5906 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+1278573568 byte(s) (12%) in 5901 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+1002323968 byte(s) (9%) in 4639 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+816873472 byte(s) (8%) in 3760 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+807226312 byte(s) (7%) in 3758 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+430229560 byte(s) (4%) in 1978 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+351921208 byte(s) (3%) in 1612 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+351247304 byte(s) (3%) in 1610 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+348544112 byte(s) (3%) in 1610 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+347523984 byte(s) (3%) in 1612 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+288970752 byte(s) (2%) in 1344 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+184696832 byte(s) (1%) in 844 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+118675456 byte(s) (1%) in 538 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+118423552 byte(s) (1%) in 536 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+117899264 byte(s) (1%) in 536 allocation(s)
+    #0 0x55bc24eac018 in __interceptor_calloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:77:3
+    #1 0x7f5259ebdd26 in alloc::alloc::alloc_zeroed::ha80ec4146d92dd37 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:166:14
+    #2 0x7f5259ebdd26 in alloc::alloc::Global::alloc_impl::h8778dcfa578b0d6e /builds/worker/fetches/rust/library/alloc/src/alloc.rs:177:43
+    #3 0x7f5259ebdd26 in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::allocate_zeroed::h739e755889aaab3f /builds/worker/fetches/rust/library/alloc/src/alloc.rs:242:9
+    #4 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::allocate_in::h70424d8c43d452b5 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:186:38
+    #5 0x7f5259ebdd26 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::with_capacity_zeroed_in::hf37feacff5c032bb /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:139:9
+    #6 0x7f5259ebdd26 in _$LT$u8$u20$as$u20$alloc..vec..spec_from_elem..SpecFromElem$GT$::from_elem::h0744fb2c8bcc85c1 /builds/worker/fetches/rust/library/alloc/src/vec/spec_from_elem.rs:52:31
+    #7 0x7f5259ebdd26 in alloc::vec::from_elem::hb493e95d224fa559 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:2457:5
+    #8 0x7f5259ebdd26 in webrender_bindings::moz2d_renderer::rasterize_blob::h612d32852870479e /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/moz2d_renderer.rs:605:22
+
+=================================================================
+==43282==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000028 (pc 0x7f526fe1de1d bp 0x000000000000 sp 0x7ffd92d54e60 T0)
+==43282==The signal is caused by a READ memory access.
+==43282==Hint: address points to the zero page.
+    #0 0x7f526fe1de1d in wl_proxy_add_listener (/lib/x86_64-linux-gnu/libwayland-client.so.0+0x6e1d) (BuildId: 296271640039da17030592ae7c798e4d785d3835)
+    #1 0x7f5250d78ead in wl_callback_add_listener /builds/worker/fetches/sysroot-x86_64-linux-gnu/usr/include/wayland-client-protocol.h:317:9
+    #2 0x7f5250d78ead in mozilla::WaylandVsyncSource::SetupFrameCallback(mozilla::detail::BaseAutoLock<mozilla::Mutex&> const&) /builds/worker/checkouts/gecko/widget/gtk/WaylandVsyncSource.cpp:223:5
+    #3 0x7f5250d799a4 in mozilla::WaylandVsyncSource::FrameCallback(unsigned int) /builds/worker/checkouts/gecko/widget/gtk/WaylandVsyncSource.cpp:247:3
+    #4 0x7f526c0187e9  (/lib/x86_64-linux-gnu/libffi.so.8+0x77e9) (BuildId: bb0fa5371874ba431e7cd9dc2df93922de436fa9)
+    #5 0x7f526c017922  (/lib/x86_64-linux-gnu/libffi.so.8+0x6922) (BuildId: bb0fa5371874ba431e7cd9dc2df93922de436fa9)
+    #6 0x7f526fe21760  (/lib/x86_64-linux-gnu/libwayland-client.so.0+0xa760) (BuildId: 296271640039da17030592ae7c798e4d785d3835)
+    #7 0x7f526fe1daa9  (/lib/x86_64-linux-gnu/libwayland-client.so.0+0x6aa9) (BuildId: 296271640039da17030592ae7c798e4d785d3835)
+    #8 0x7f526fe1f41b in wl_display_dispatch_queue_pending (/lib/x86_64-linux-gnu/libwayland-client.so.0+0x841b) (BuildId: 296271640039da17030592ae7c798e4d785d3835)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/lib/x86_64-linux-gnu/libwayland-client.so.0+0x6e1d) (BuildId: 296271640039da17030592ae7c798e4d785d3835) in wl_proxy_add_listener
+==43282==ABORTING

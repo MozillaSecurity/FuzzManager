@@ -418,10 +418,10 @@ def newSignature(request):
 
         if "stackframes" in request.GET:
             maxStackFrames = int(request.GET["stackframes"])
-        elif set(crashInfo.backtrace) & {
-            "std::panicking::rust_panic",
-            "std::panicking::rust_panic_with_hook",
-        }:
+        elif any(
+            entry.startswith("std::panicking") or entry.startswith("alloc::alloc")
+            for entry in crashInfo.backtrace
+        ):
             # rust panic adds 5-6 frames of noise at the top of the stack
             maxStackFrames += 6
 

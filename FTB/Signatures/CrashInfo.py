@@ -651,7 +651,7 @@ class ASanCrashInfo(CrashInfo):
         asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
-            \s[A-Za-z]+Sanitizer.*\s
+            [A-Za-z]+Sanitizer.*\s
               (?:on\saddress             # Most common format, used for all overflows
                 |on\sunknown\saddress    # Used in case of a SIGSEGV
                 |double-free\son         # Used in case of a double-free
@@ -664,7 +664,8 @@ class ASanCrashInfo(CrashInfo):
                 |not\sowned:             # Used when calling __asan_get_allocated_size()
                                          #   on a pointer that isn't owned
                 |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
-                |requested\sallocation\ssize\s0x[0-9a-f]+\s)
+                |requested\sallocation\ssize\s0x[0-9a-f]+\s
+                |soft\srss\slimit\sexhausted)
             (\s*0x([0-9a-f]+))?"""
         asanRegisterPattern = (
             r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+"
