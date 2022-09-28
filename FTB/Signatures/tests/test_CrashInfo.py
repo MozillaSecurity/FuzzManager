@@ -2928,3 +2928,27 @@ def test_ValgrindLeakParser():
     assert crashInfo.backtrace[2] == "main"
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None
+
+
+def test_SanitizerSoftRssLimitHeapProfile():
+    """test that heap profile given after soft rss limit is exceeded
+    is used in place of the (useless) SEGV stack"""
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_soft_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    assert crashInfo.createShortSignature() == (
+        "AddressSanitizer: soft rss limit exhausted"
+    )
+    assert len(crashInfo.backtrace) == 153
+    assert crashInfo.backtrace[0] == "__interceptor_calloc"
+    assert (
+        crashInfo.backtrace[8] == "webrender_bindings::moz2d_renderer::rasterize_blob"
+    )
+    assert crashInfo.backtrace[-1] == "wl_display_dispatch_queue_pending"
+    assert crashInfo.crashInstruction is None
+    assert crashInfo.crashAddress == 40

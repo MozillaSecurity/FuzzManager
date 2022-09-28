@@ -541,3 +541,23 @@ def test_SignatureMatchAssertionSlashes():
     assert not windows_sig.matches(bs_linux)  # this is invalid and should not match
     assert windows_sig.matches(fs_windows)
     assert windows_sig.matches(bs_windows)
+
+
+def test_SignatureSanitizerSoftRssLimitHeapProfile():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_soft_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    testSig = crashInfo.createCrashSignature()
+
+    assert len(testSig.symptoms) == 2
+    assert isinstance(testSig.symptoms[0], OutputSymptom)
+    assert (
+        testSig.symptoms[0].output.value == "AddressSanitizer: soft rss limit exhausted"
+    )
+    assert testSig.symptoms[0].output.isPCRE
+    assert isinstance(testSig.symptoms[1], StackFramesSymptom)
