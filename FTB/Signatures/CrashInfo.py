@@ -258,6 +258,7 @@ class CrashInfo(metaclass=ABCMeta):
         weakResult = None
 
         asanString = "ERROR: AddressSanitizer"
+        asanString2 = "Sanitizer: hard rss limit exhausted"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
@@ -291,7 +292,12 @@ class CrashInfo(metaclass=ABCMeta):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif asanString in line or ubsanString2 in line or tsanString2 in line:
+            elif (
+                asanString in line
+                or asanString2 in line
+                or ubsanString2 in line
+                or tsanString2 in line
+            ):
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif lsanString in line:
@@ -665,7 +671,8 @@ class ASanCrashInfo(CrashInfo):
                                          #   on a pointer that isn't owned
                 |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
                 |requested\sallocation\ssize\s0x[0-9a-f]+\s
-                |soft\srss\slimit\sexhausted)
+                |soft\srss\slimit\sexhausted
+                |hard\srss\slimit\sexhausted)
             (\s*0x([0-9a-f]+))?"""
         asanRegisterPattern = (
             r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+"

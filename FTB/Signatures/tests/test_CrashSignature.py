@@ -554,10 +554,25 @@ def test_SignatureSanitizerSoftRssLimitHeapProfile():
 
     testSig = crashInfo.createCrashSignature()
 
+    assert len(testSig.symptoms) == 1
+    assert isinstance(testSig.symptoms[0], StackFramesSymptom)
+
+
+def test_SignatureSanitizerHardRssLimitHeapProfile():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_hard_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    testSig = crashInfo.createCrashSignature()
+
     assert len(testSig.symptoms) == 2
     assert isinstance(testSig.symptoms[0], OutputSymptom)
     assert (
-        testSig.symptoms[0].output.value == "AddressSanitizer: soft rss limit exhausted"
+        testSig.symptoms[0].output.value == "AddressSanitizer: hard rss limit exhausted"
     )
     assert testSig.symptoms[0].output.isPCRE
     assert isinstance(testSig.symptoms[1], StackFramesSymptom)

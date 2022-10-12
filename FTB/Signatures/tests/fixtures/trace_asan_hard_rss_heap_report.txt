@@ -1,0 +1,46 @@
+==405440==AddressSanitizer: hard rss limit exhausted (6144Mb vs 6222Mb)
+==405440==Process memory map follows:
+	0x00007fff7000-0x00008fff7000	
+	0x7fb89f468000-0x7fb89f46b000	/usr/lib/x86_64-linux-gnu/libxcb-xfixes.so.0.0.0
+	0x7fb8a8790000-0x7fb8a8796000	/var/cache/fontconfig/b4bdf721-e8fb-4f4f-adcc-f7bac34056c6-le64.cache-7
+	0x7fb8a8796000-0x7fb8a8797000	/var/cache/fontconfig/fd290ba8-5bd2-481b-a31a-902fa62a1757-le64.cache-7
+	0xffffffffff600000-0xffffffffff601000	[vsyscall]
+==405440==End of process memory map.
+
+
+HEAP PROFILE at RSS 6222Mb
+Live Heap Allocations: 11371167816 bytes in 351810 chunks; quarantined: 15652971 bytes in 46339 chunks; 2192642 other chunks; total chunks: 2590791; showing top 90% (at most 20 unique contexts)
+11274289152 byte(s) (99%) in 2 allocation(s)
+    #0 0x55c80188d206 in __interceptor_realloc /builds/worker/fetches/llvm-project/compiler-rt/lib/asan/asan_malloc_linux.cpp:85:3
+    #1 0x7fb8d714468a in alloc::alloc::realloc::ha45a1a5628e8cb50 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:132:14
+    #2 0x7fb8d714468a in alloc::alloc::Global::grow_impl::h996e82a0af71ded9 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:209:31
+    #3 0x7fb8d714468a in _$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$::grow::h69708e14930300e4 /builds/worker/fetches/rust/library/alloc/src/alloc.rs:262:18
+    #4 0x7fb8d714468a in alloc::raw_vec::finish_grow::h3fd633c5866c79d3 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:466:13
+    #5 0x7fb8d717f280 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::grow_amortized::h9037d54a368c0692 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:400:19
+    #6 0x7fb8d717f280 in alloc::raw_vec::RawVec$LT$T$C$A$GT$::reserve_for_push::hdb2d90b7642280c3 /builds/worker/fetches/rust/library/alloc/src/raw_vec.rs:298:24
+    #7 0x7fb8d7cde6bd in alloc::vec::Vec$LT$T$C$A$GT$::push::h647b822e413bb959 /builds/worker/fetches/rust/library/alloc/src/vec/mod.rs:1767:13
+    #8 0x7fb8d7cde6bd in webrender::api_resources::ApiResources::create_blob_scene_builder_requests::_$u7b$$u7b$closure$u7d$$u7d$::hc5c2fad2eae293e7 /builds/worker/checkouts/gecko/gfx/wr/webrender/src/api_resources.rs:264:17
+    #9 0x7fb8d7cde6bd in webrender::image_tiling::for_each_tile_in_range::hcd1e2d12c3319fe6 /builds/worker/checkouts/gecko/gfx/wr/webrender/src/image_tiling.rs:593:13
+    #10 0x7fb8d7cde6bd in webrender::api_resources::ApiResources::create_blob_scene_builder_requests::hf5833aa169e73e91 /builds/worker/checkouts/gecko/gfx/wr/webrender/src/api_resources.rs:245:13
+    #11 0x7fb8d7cde6bd in webrender::api_resources::ApiResources::update::he3bcf52312b388dc /builds/worker/checkouts/gecko/gfx/wr/webrender/src/api_resources.rs:145:38
+    #12 0x7fb8d7cde6bd in webrender::render_api::RenderApi::send_transaction::hc30431daec8a5827 /builds/worker/checkouts/gecko/gfx/wr/webrender/src/render_api.rs:1249:9
+    #13 0x7fb8d6e3a36e in wr_api_send_transaction /builds/worker/checkouts/gecko/gfx/webrender_bindings/src/bindings.rs:2178:5
+    #14 0x7fb8c7928282 in mozilla::layers::WebRenderBridgeParent::SetDisplayList(mozilla::gfx::RectTyped<mozilla::LayoutDevicePixel, float> const&, mozilla::ipc::ByteBuf&&, mozilla::ipc::ByteBuf&&, mozilla::ipc::ByteBuf&&, mozilla::wr::BuiltDisplayListDescriptor const&, nsTArray<mozilla::layers::OpUpdateResource> const&, nsTArray<mozilla::layers::RefCountedShmem> const&, nsTArray<mozilla::ipc::Shmem> const&, mozilla::TimeStamp const&, mozilla::wr::TransactionBuilder&, mozilla::wr::Epoch, bool) /builds/worker/checkouts/gecko/gfx/layers/wr/WebRenderBridgeParent.cpp:1134:9
+    #15 0x7fb8c7928fb7 in mozilla::layers::WebRenderBridgeParent::ProcessDisplayListData(mozilla::layers::DisplayListData&, mozilla::wr::Epoch, mozilla::TimeStamp const&, bool, bool) /builds/worker/checkouts/gecko/gfx/layers/wr/WebRenderBridgeParent.cpp:1165:15
+    #16 0x7fb8c792a74b in mozilla::layers::WebRenderBridgeParent::RecvSetDisplayList(mozilla::layers::DisplayListData&&, nsTArray<mozilla::layers::OpDestroy>&&, unsigned long const&, mozilla::layers::BaseTransactionId<mozilla::layers::TransactionIdType> const&, bool const&, mozilla::layers::BaseTransactionId<mozilla::VsyncIdType> const&, mozilla::TimeStamp const&, mozilla::TimeStamp const&, mozilla::TimeStamp const&, nsTSubstring<char> const&, mozilla::TimeStamp const&, nsTArray<mozilla::layers::CompositionPayload>&&) /builds/worker/checkouts/gecko/gfx/layers/wr/WebRenderBridgeParent.cpp:1224:18
+    #17 0x7fb8c75f596e in mozilla::layers::PWebRenderBridgeParent::OnMessageReceived(IPC::Message const&) /builds/worker/workspace/obj-build/ipc/ipdl/PWebRenderBridgeParent.cpp:461:52
+    #18 0x7fb8c757e764 in mozilla::layers::PCompositorManagerParent::OnMessageReceived(IPC::Message const&) /builds/worker/workspace/obj-build/ipc/ipdl/PCompositorManagerParent.cpp:194:32
+    #19 0x7fb8c694cd09 in mozilla::ipc::MessageChannel::DispatchAsyncMessage(mozilla::ipc::ActorLifecycleProxy*, IPC::Message const&) /builds/worker/checkouts/gecko/ipc/glue/MessageChannel.cpp:1756:25
+    #20 0x7fb8c6949d77 in mozilla::ipc::MessageChannel::DispatchMessage(mozilla::ipc::ActorLifecycleProxy*, mozilla::UniquePtr<IPC::Message, mozilla::DefaultDelete<IPC::Message> >) /builds/worker/checkouts/gecko/ipc/glue/MessageChannel.cpp:1681:9
+    #21 0x7fb8c694a9c4 in mozilla::ipc::MessageChannel::RunMessage(mozilla::ipc::ActorLifecycleProxy*, mozilla::ipc::MessageChannel::MessageTask&) /builds/worker/checkouts/gecko/ipc/glue/MessageChannel.cpp:1481:3
+    #22 0x7fb8c694bc52 in mozilla::ipc::MessageChannel::MessageTask::Run() /builds/worker/checkouts/gecko/ipc/glue/MessageChannel.cpp:1579:14
+    #23 0x7fb8c51a2d0e in nsThread::ProcessNextEvent(bool, bool*) /builds/worker/checkouts/gecko/xpcom/threads/nsThread.cpp:1199:16
+    #24 0x7fb8c51ac964 in NS_ProcessNextEvent(nsIThread*, bool) /builds/worker/checkouts/gecko/xpcom/threads/nsThreadUtils.cpp:465:10
+    #25 0x7fb8c6955dc1 in mozilla::ipc::MessagePumpForNonMainThreads::Run(base::MessagePump::Delegate*) /builds/worker/checkouts/gecko/ipc/glue/MessagePump.cpp:330:5
+    #26 0x7fb8c67d1931 in RunInternal /builds/worker/checkouts/gecko/ipc/chromium/src/base/message_loop.cc:381:10
+    #27 0x7fb8c67d1931 in RunHandler /builds/worker/checkouts/gecko/ipc/chromium/src/base/message_loop.cc:374:3
+    #28 0x7fb8c67d1931 in MessageLoop::Run() /builds/worker/checkouts/gecko/ipc/chromium/src/base/message_loop.cc:356:3
+    #29 0x7fb8c5199e58 in nsThread::ThreadFunc(void*) /builds/worker/checkouts/gecko/xpcom/threads/nsThread.cpp:384:10
+    #30 0x7fb8ecdd8b7e in _pt_root /builds/worker/checkouts/gecko/nsprpub/pr/src/pthreads/ptthread.c:201:5
+    #31 0x7fb8eda89608 in start_thread /build/glibc-SzIz7B/glibc-2.31/nptl/pthread_create.c:477:8
+

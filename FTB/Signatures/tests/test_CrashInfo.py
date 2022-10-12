@@ -2941,9 +2941,7 @@ def test_SanitizerSoftRssLimitHeapProfile():
         (FIXTURE_PATH / "trace_asan_soft_rss_heap_report.txt").read_text().splitlines(),
     )
 
-    assert crashInfo.createShortSignature() == (
-        "AddressSanitizer: soft rss limit exhausted"
-    )
+    assert crashInfo.createShortSignature() == "[@ __interceptor_calloc]"
     assert len(crashInfo.backtrace) == 153
     assert crashInfo.backtrace[0] == "__interceptor_calloc"
     assert (
@@ -2952,3 +2950,25 @@ def test_SanitizerSoftRssLimitHeapProfile():
     assert crashInfo.backtrace[-1] == "wl_display_dispatch_queue_pending"
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress == 40
+
+
+def test_SanitizerHardRssLimitHeapProfile():
+    """test that heap profile given after hard rss limit is exceeded
+    is used in place of the (useless) SEGV stack"""
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_hard_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    assert crashInfo.createShortSignature() == (
+        "AddressSanitizer: hard rss limit exhausted"
+    )
+    assert len(crashInfo.backtrace) == 32
+    assert crashInfo.backtrace[0] == "__interceptor_realloc"
+    assert crashInfo.backtrace[9] == "webrender::image_tiling::for_each_tile_in_range"
+    assert crashInfo.backtrace[-1] == "start_thread"
+    assert crashInfo.crashInstruction is None
+    assert crashInfo.crashAddress is None
