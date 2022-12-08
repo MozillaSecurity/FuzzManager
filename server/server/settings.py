@@ -397,3 +397,5 @@ REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/s
 # Email
 EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

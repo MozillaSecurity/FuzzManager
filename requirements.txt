@@ -56,7 +56,7 @@ cryptography==36.0.1
     #   secretstorage
 deprecated==1.2.13
     # via redis
-django==3.1.14
+django==3.2.16
     # via
     #   FuzzManager (setup.py)
     #   django-model-utils
@@ -70,9 +70,7 @@ django-crispy-forms==1.11.2
 django-enumfields==2.1.1
     # via FuzzManager (setup.py)
 django-model-utils==4.2.0
-    # via
-    #   FuzzManager (setup.py)
-    #   django-notifications-hq
+    # via django-notifications-hq
 django-notifications-hq==1.6.0
     # via FuzzManager (setup.py)
 djangorestframework==3.11.2
