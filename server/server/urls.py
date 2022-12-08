@@ -1,9 +1,10 @@
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import include
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import re_path
 from notifications import views as notifications_views
 
 from .views import index, login
@@ -13,31 +14,31 @@ admin.autodiscover()
 
 urlpatterns = [
     # uncomment to use mozilla_django_oidc
-    # url(r'^oidc/', include('mozilla_django_oidc.urls')),
-    url(r"^$", index, name="index"),
-    # url(r'^admin/', include(admin.site.urls)),
-    url(r"^login/$", login, name="login"),
-    url(r"^logout/$", LogoutView.as_view(), name="logout"),
-    url(r"^covmanager/", include("covmanager.urls")),
-    url(r"^crashmanager/", include("crashmanager.urls")),
-    url(r"^taskmanager/", include("taskmanager.urls")),
-    url(r"^ec2spotmanager/", include("ec2spotmanager.urls")),
-    url(
+    # re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
+    re_path(r"^$", index, name="index"),
+    # re_path(r'^admin/', include(admin.site.urls)),
+    re_path(r"^login/$", login, name="login"),
+    re_path(r"^logout/$", LogoutView.as_view(), name="logout"),
+    re_path(r"^covmanager/", include("covmanager.urls")),
+    re_path(r"^crashmanager/", include("crashmanager.urls")),
+    re_path(r"^taskmanager/", include("taskmanager.urls")),
+    re_path(r"^ec2spotmanager/", include("ec2spotmanager.urls")),
+    re_path(
         "inbox/notifications/",
         include(
             (
                 [
-                    url(
+                    re_path(
                         r"^unread/$",
                         notifications_views.UnreadNotificationsList.as_view(),
                         name="unread",
                     ),
-                    url(
+                    re_path(
                         r"^mark-all-as-read/$",
                         notifications_views.mark_all_as_read,
                         name="mark_all_as_read",
                     ),
-                    url(
+                    re_path(
                         r"^api/unread_count/$",
                         notifications_views.live_unread_notification_count,
                         name="live_unread_notification_count",

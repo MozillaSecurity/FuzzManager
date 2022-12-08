@@ -537,7 +537,7 @@ def collections_aggregate_api(request):
             status=400,
         )
 
-    if not request.is_ajax():
+    if request.headers.get("x-requested-with") != "XMLHttpRequest":
         raise SuspiciousOperation
 
     data = json.loads(request.body)
