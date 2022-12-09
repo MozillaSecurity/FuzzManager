@@ -280,6 +280,9 @@ LOGGING = {
     },
 }
 
+# Setup CSRF trusted origins explicitly as it's needed from Django 4
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
+
 # If you are running FuzzManager behind a TLS loadbalancer,
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
@@ -398,4 +401,4 @@ REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/s
 EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
