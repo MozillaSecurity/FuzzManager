@@ -3,7 +3,7 @@ requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-target-version = ["py37"]
+target-version = ["py38"]
 
 [tool.coverage.run]
 omit = [
