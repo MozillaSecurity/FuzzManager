@@ -42,10 +42,10 @@ tasks:
     then:
       $flatten:
         - $map:
-          - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 3.x'}
-          - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 3.x'}
-          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 3.x'}
-          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 3.x'}
+          - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 4.x'}
+          - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 4.x'}
+          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 4.x'}
+          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 4.x'}
           each(build):
             taskId: {$eval: as_slugid(build.toxenv)}
             provisionerId: proj-fuzzing
