@@ -166,7 +166,6 @@ tasks:
           dependencies:
             - {$eval: as_slugid("linting")}
             - {$eval: as_slugid("node14")}
-            - {$eval: as_slugid("py37")}
             - {$eval: as_slugid("py38")}
             - {$eval: as_slugid("py39")}
             - {$eval: as_slugid("py310")}
@@ -211,7 +210,6 @@ tasks:
               dependencies:
                 - {$eval: as_slugid("linting")}
                 - {$eval: as_slugid("node14")}
-                - {$eval: as_slugid("py37")}
                 - {$eval: as_slugid("py38")}
                 - {$eval: as_slugid("py39")}
                 - {$eval: as_slugid("py310")}
