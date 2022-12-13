@@ -205,6 +205,35 @@ tasks:
             description: FuzzManager Docker build
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - taskId: {$eval: as_slugid("docker_push")}
+          provisionerId: proj-fuzzing
+          workerType: ci
+          dependencies:
+            - {$eval: as_slugid("docker")}
+          created: {$fromNow: ''}
+          deadline: {$fromNow: '1 hour'}
+          payload:
+            image:
+              namespace: project.fuzzing.orion.orion-builder.master
+              path: public/orion-builder.tar.zst
+              type: indexed-image
+            maxRunTime: 3600
+            features:
+              taskclusterProxy: true
+            env:
+              TASK_ID: {$eval: as_slugid("docker")}
+              TASKCLUSTER_SECRET: "project/fuzzing/docker-hub"
+            command:
+              - sh
+              - -c
+              - uname -a && exec push
+          scopes:
+            - secrets:get:project/fuzzing/docker-hub
+          metadata:
+            name: FuzzManager Docker push
+            description: FuzzManager Docker push
+            owner: '${user}@users.noreply.github.com'
+            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
           then:
             - provisionerId: proj-fuzzing
