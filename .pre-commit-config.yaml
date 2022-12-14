@@ -37,6 +37,10 @@ repos:
         - eslint-import-resolver-webpack@0.13.0
         - babel-eslint@10.1.0
         - prettier@2.2.1
+  - repo: https://github.com/marco-c/taskcluster_yml_validator
+    rev: v0.0.9
+    hooks:
+      - id: taskcluster_yml
   - repo: meta
     hooks:
       - id: check-useless-excludes
