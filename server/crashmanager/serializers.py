@@ -1,6 +1,7 @@
 import base64
 import hashlib
 
+from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
 from django.forms import widgets  # noqa
@@ -24,6 +25,7 @@ from crashmanager.models import (
 )
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
+from taskmanager.models import Pool, Task
 
 
 class InvalidArgumentException(APIException):
@@ -387,12 +389,19 @@ class NotificationSerializer(serializers.ModelSerializer):
             return reverse(
                 "crashmanager:sigview", kwargs={"sigid": notification.actor.id}
             )
+        if isinstance(notification.actor, Task):
+            task = notification.actor
+            return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"
         return None
 
     def get_target_url(self, notification):
         if isinstance(notification.target, CrashEntry):
             return reverse(
                 "crashmanager:crashview", kwargs={"crashid": notification.target.id}
+            )
+        if isinstance(notification.target, Pool):
+            return reverse(
+                "taskmanager:pool-view-ui", kwargs={"pk": notification.target.id}
             )
         return None
 

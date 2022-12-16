@@ -15,11 +15,13 @@ import sys
 
 import pytest
 from dateutil.parser import isoparse
+from notifications.models import Notification
 
+from crashmanager.models import User as cmUser
 from taskmanager.models import Pool, Task
 
 # from taskmanager.cron import delete_expired
-from taskmanager.tasks import update_pool_defns, update_task
+from taskmanager.tasks import task_failed, update_pool_defns, update_task
 
 LOG = logging.getLogger("fm.taskmanager.tests.tasks")
 pytestmark = [  # pylint: disable=invalid-name
@@ -241,6 +243,61 @@ TASK_EVENT_DATA = {
             },
         },
     ],
+    "task-failed": [
+        {
+            "status": {
+                "taskId": "Ojsib1WPSRS_k_nvDoq-CA",
+                "provisionerId": "proj-fuzzing",
+                "workerType": "linux-pool7",
+                "taskQueueId": "proj-fuzzing/linux-pool7",
+                "schedulerId": "fuzzing",
+                "projectId": "none",
+                "taskGroupId": "dJ4FDQS8TUykl1NEGokV2A",
+                "deadline": "2022-12-21T16:01:54.377Z",
+                "expires": "2023-01-03T16:01:54.377Z",
+                "retriesLeft": 5,
+                "state": "failed",
+                "runs": [
+                    {
+                        "runId": 0,
+                        "state": "failed",
+                        "reasonCreated": "scheduled",
+                        "workerGroup": "us-east1",
+                        "workerId": "6512745422775094435",
+                        "takenUntil": "2022-12-20T23:49:57.584Z",
+                        "scheduled": "2022-12-20T16:01:54.431Z",
+                        "started": "2022-12-20T22:29:56.450Z",
+                        "resolved": "2022-12-20T23:34:26.512Z",
+                    },
+                ],
+            },
+            "runId": 0,
+            "workerGroup": "us-east1",
+            "workerId": "5287870404102452225",
+            "takenUntil": "2021-04-20T03:52:24.713+00:00",
+            "version": 1,
+        },
+        {
+            "pool": {
+                "platform": "linux",
+                "pool_name": "pool7",
+                "size": None,
+                "cpu": None,
+                "cycle_time": None,
+                "max_run_time": None,
+            },
+            "task": {
+                "task_id": "Ojsib1WPSRS_k_nvDoq-CA",
+                "run_id": 0,
+                "decision_id": "dJ4FDQS8TUykl1NEGokV2A",
+                "expires": isoparse("2023-01-03T16:01:54.377Z"),
+                "started": isoparse("2022-12-20T22:29:56.450Z"),
+                "resolved": isoparse("2022-12-20T23:34:26.512Z"),
+                "created": isoparse("1970-01-01T12:00:00Z"),
+                "state": "failed",
+            },
+        },
+    ],
 }
 
 
@@ -249,6 +306,7 @@ def test_update_task_0(mocker, settings, pulse_data, expected):
     """test that Task events update the DB"""
     settings.TC_EXTRA_POOLS = ["extra"]
     settings.TC_ROOT_URL = "https://allizom.org/tc"
+    failed_callback = mocker.patch("taskmanager.tasks.task_failed")
 
     mock_queue = mocker.patch("taskcluster.Queue")
     mock_queue.return_value.task.return_value = {"created": "1970-01-01T12:00:00Z"}
@@ -257,6 +315,10 @@ def test_update_task_0(mocker, settings, pulse_data, expected):
 
     assert mock_queue.call_count == 1
     assert mock_queue.return_value.task.call_count == 1
+    if expected["task"]["state"] == "failed":
+        assert failed_callback.delay.call_count == 1
+    else:
+        assert failed_callback.delay.call_count == 0
 
     assert Pool.objects.count() == 1
     assert Task.objects.count() == 1
@@ -293,6 +355,50 @@ def test_update_pool_defns_0(mocker, settings):
     assert pool.cpu == "x64"
     assert pool.cycle_time == datetime.timedelta(hours=1)
     assert pool.max_run_time == datetime.timedelta(hours=1)
+
+
+def test_update_task_1(mocker, settings):
+    """test that failed Task events generate notifications"""
+    mock_queue = mocker.patch("taskcluster.Queue")
+    mock_queue.return_value.task.return_value = {"created": "1970-01-01T12:00:00Z"}
+    settings.TC_EXTRA_POOLS = ["extra"]
+    settings.TC_ROOT_URL = "https://allizom.org/tc"
+    failed_callback = mocker.patch("taskmanager.tasks.task_failed")
+
+    # subscribe some users to receive notification
+    subbed_user = cmUser.objects.get(user__username="test-sub")
+
+    # generate failed task
+    update_task(TASK_EVENT_DATA["task-failed"][0])
+    assert failed_callback.delay.call_count == 1
+    task = Task.objects.get()
+    task_failed(task.pk)
+
+    # ensure subscribed users receive notification
+    notifications = Notification.objects.all()
+    assert notifications.count() == 1
+    notification = notifications[0]
+    assert notification.verb == "tasks_failed"
+    assert notification.actor == task
+    assert notification.target == task.pool
+    assert notification.recipient == subbed_user.user
+
+    # generate another failed task -> no notification (<24h)
+    task_failed(task.pk)
+    assert notifications.count() == 1
+
+    # move existing notification to >24h in past
+    notification.timestamp -= datetime.timedelta(days=1, hours=1)
+    notification.save()
+
+    # generate another failed task -> notification
+    task_failed(task.pk)
+    assert notifications.count() == 2
+    notification = notifications.order_by("id")[1]
+    assert notification.verb == "tasks_failed"
+    assert notification.actor == task
+    assert notification.target == task.pool
+    assert notification.recipient == subbed_user.user
 
 
 # existing pools with no tasks in GH are not deleted

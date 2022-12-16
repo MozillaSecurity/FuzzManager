@@ -5,6 +5,9 @@ from subprocess import check_output
 
 from celeryconf import app
 from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
+from notifications.signals import notify
 
 from . import cron  # noqa ensure cron tasks get registered
 
@@ -112,6 +115,54 @@ def update_pool_defns():
 
 
 @app.task(ignore_result=True)
+def task_failed(task_pk):
+    from django.contrib.auth.models import User as DjangoUser
+    from django.contrib.contenttypes.models import ContentType
+    from notifications.models import Notification
+
+    from crashmanager.models import User
+
+    from .models import Pool, Task
+
+    # we got a failed task. maybe generate a notification for this
+    # Listing all notifications sent to alert that this pool has failed tasks
+    # in the last 24h (not limited by task)
+    task = Task.objects.get(pk=task_pk)
+    last_day = timezone.now() - timedelta(days=1)
+    pool_content_type = ContentType.objects.get_for_model(Pool)
+    sent_notification_ids = Notification.objects.filter(
+        verb="tasks_failed",
+        target_content_type=pool_content_type,
+        target_object_id=task.pool.id,
+        timestamp__gt=last_day,
+    ).values_list("id", flat=True)
+
+    # can't know who is interested in which pool without more info
+    # filter by all who have permission to see
+    # Excluding users who have already receive this notification
+    cm_user_ids = User.objects.filter(
+        tasks_failed=True,  # subscribed to these notifications
+    ).values_list("user_id", flat=True)
+    dj_users = DjangoUser.objects.filter(id__in=cm_user_ids).distinct()
+
+    recipients = dj_users.filter(
+        user_permissions__codename="view_taskmanager",
+    ).exclude(
+        notifications__id__in=sent_notification_ids,
+    )
+
+    pool_url = reverse("taskmanager:pool-view-ui", kwargs={"pk": task.pool_id})
+    notify.send(
+        task,
+        recipient=recipients,
+        verb="tasks_failed",
+        target=task.pool,
+        level="warning",
+        description=(f"Pool {task.pool.pool_name} has failed tasks. Check {pool_url}"),
+    )
+
+
+@app.task(ignore_result=True)
 def update_task(pulse_data):
     import taskcluster
 
@@ -157,3 +208,6 @@ def update_task(pulse_data):
         task = queue_svc.task(status["taskId"])
         Task.objects.filter(id=task_obj.id).update(created=task["created"])
         LOG.info("task %s was created at %s", status["taskId"], task["created"])
+
+    if run_obj["state"] == "failed":
+        task_failed.delay(task_obj.id)
