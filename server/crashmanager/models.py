@@ -667,6 +667,7 @@ class User(models.Model):
     # Notifications
     inaccessible_bug = models.BooleanField(blank=False, default=False)
     bucket_hit = models.BooleanField(blank=False, default=False)
+    tasks_failed = models.BooleanField(blank=False, default=False)
 
     @staticmethod
     def get_or_create_restricted(request_user):

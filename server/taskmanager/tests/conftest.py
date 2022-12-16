@@ -17,7 +17,11 @@ from crashmanager.models import User as cmUser
 
 
 def _create_user(
-    username, email="test@mozilla.com", password="test", has_permission=True
+    username,
+    email="test@mozilla.com",
+    password="test",
+    has_permission=True,
+    subscribed=True,
 ):
     user = User.objects.create_user(username, email, password)
     user.user_permissions.clear()
@@ -28,6 +32,8 @@ def _create_user(
         )
         user.user_permissions.add(perm)
     (user, _) = cmUser.get_or_create_restricted(user)
+    if subscribed:
+        user.tasks_failed = True
     user.save()
     return user
 
@@ -36,5 +42,7 @@ def _create_user(
 def taskmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all taskmanager unittests"""
     # Create one unrestricted and one restricted test user
-    _create_user("test")
-    _create_user("test-noperm", has_permission=False)
+    _create_user("test", subscribed=False)
+    _create_user("test-noperm", has_permission=False, subscribed=False)
+    _create_user("test-sub")
+    _create_user("test-sub-noperm", has_permission=False)
