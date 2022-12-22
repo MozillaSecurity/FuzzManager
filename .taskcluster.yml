@@ -5,6 +5,8 @@ tasks:
   $let:
     user: ${event.sender.login}
 
+    task_group: {$eval: as_slugid("group")}
+
     fetch_rev:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.head.sha}
@@ -21,6 +23,27 @@ tasks:
         then: ${event.ref}
         else: "refs/tags/${event.release.tag_name}:refs/tags/${event.release.tag_name}"
 
+    branch_name:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.base.ref}
+      else:
+        $if: 'tasks_for == "github-push"'
+        then:
+          $if: 'event.ref[:11] == "refs/heads/"'
+          then: {$eval: 'event.ref[11:]'}
+          else: ${event.ref}
+        else: ${event.release.tag_name}
+
+    pull_request:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.number}
+      else: 'false'
+
+    tag:
+      $if: 'tasks_for == "github-release"'
+      then: ${event.release.tag_name}
+      else: ''
+
     http_repo:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.base.repo.clone_url}
@@ -35,7 +58,7 @@ tasks:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
   in:
-    $if: 'tasks_for in ["github-pull-request", "github-push", "github-release"]'
+    $if: 'tasks_for in ["github-push", "github-release"] || (tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"])'
     then:
       $flatten:
         - $map:
@@ -46,6 +69,7 @@ tasks:
           - {image: ci-py-311, toxenv: 'py311', name: 'tests python 3.11 (no django)'}
           each(build):
             taskId: {$eval: as_slugid(build.toxenv)}
+            taskGroupId: ${task_group}
             provisionerId: proj-fuzzing
             workerType: ci
             created: {$fromNow: ''}
@@ -65,6 +89,15 @@ tasks:
                 FETCH_REV: ${fetch_rev}
                 FETCH_REF: ${fetch_rev}
                 TOXENV: ${build.toxenv}
+                CI: "true"
+                CI_BUILD_ID: ${task_group}
+                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.toxenv)'}
+                CI_JOB_ID: {$eval: as_slugid(build.toxenv)}
+                VCS_COMMIT_ID: ${fetch_ref}
+                VCS_SLUG: ${event.repository.full_name}
+                VCS_BRANCH_NAME: ${branch_name}
+                VCS_PULL_REQUEST: ${pull_request}
+                VCS_TAG: ${tag}
               command:
                 - /bin/bash
                 - '--login'
@@ -85,6 +118,7 @@ tasks:
           - {image: ci-node-14, slug: node14, name: 'build frontend node 14'}
           each(build):
             taskId: {$eval: as_slugid(build.slug)}
+            taskGroupId: ${task_group}
             provisionerId: proj-fuzzing
             workerType: ci
             created: {$fromNow: ''}
@@ -99,6 +133,16 @@ tasks:
                 type: indexed-image
               features:
                 taskclusterProxy: true
+              env:
+                CI: "true"
+                CI_BUILD_ID: ${task_group}
+                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.slug)'}
+                CI_JOB_ID: {$eval: as_slugid(build.slug)}
+                VCS_COMMIT_ID: ${fetch_ref}
+                VCS_SLUG: ${event.repository.full_name}
+                VCS_BRANCH_NAME: ${branch_name}
+                VCS_PULL_REQUEST: ${pull_request}
+                VCS_TAG: ${tag}
               command:
                 - /bin/bash
                 - '--login'
@@ -131,6 +175,7 @@ tasks:
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - taskId: {$eval: as_slugid("linting")}
+          taskGroupId: ${task_group}
           provisionerId: proj-fuzzing
           workerType: ci
           created: {$fromNow: ''}
@@ -162,6 +207,7 @@ tasks:
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - taskId: {$eval: as_slugid("docker")}
+          taskGroupId: ${task_group}
           provisionerId: proj-fuzzing
           workerType: ci
           dependencies:
@@ -209,6 +255,7 @@ tasks:
         - $if: 'tasks_for in ["github-push"] && fetch_ref == "refs/heads/master"'
           then:
             - taskId: {$eval: as_slugid("docker_push")}
+              taskGroupId: ${task_group}
               provisionerId: proj-fuzzing
               workerType: ci
               dependencies:
@@ -241,7 +288,9 @@ tasks:
                 source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
           then:
-            - provisionerId: proj-fuzzing
+            - taskId: {$eval: as_slugid("pypi_push")}
+              taskGroupId: ${task_group}
+              provisionerId: proj-fuzzing
               workerType: ci
               dependencies:
                 - {$eval: as_slugid("linting")}
