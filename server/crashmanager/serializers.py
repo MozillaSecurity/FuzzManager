@@ -205,6 +205,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "best_entry",
             "best_quality",
             "bug",
+            "doNotReduce",
             "frequent",
             "id",
             "permanent",

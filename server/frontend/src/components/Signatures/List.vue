@@ -20,17 +20,18 @@
         <HelpJSONQueryPopover
           :parameters="[
             { name: 'id', type: 'Integer (ID)' },
-            { name: 'signature', type: 'String' },
-            { name: 'optimizedSignature', type: 'String' },
-            { name: 'shortDescription', type: 'String' },
-            { name: 'frequent', type: 'Boolean' },
-            { name: 'permanent', type: 'Boolean' },
             { name: 'bug', type: 'Integer (ID)' },
-            { name: 'bug__externalId', type: 'String' },
             { name: 'bug__closed', type: 'Date' },
+            { name: 'bug__externalId', type: 'String' },
             { name: 'bug__externalType', type: 'Integer (ID)' },
             { name: 'bug__externalType__classname', type: 'String' },
             { name: 'bug__externalType__hostname', type: 'String' },
+            { name: 'doNotReduce', type: 'Boolean' },
+            { name: 'frequent', type: 'Boolean' },
+            { name: 'optimizedSignature', type: 'String' },
+            { name: 'permanent', type: 'Boolean' },
+            { name: 'shortDescription', type: 'String' },
+            { name: 'signature', type: 'String' },
           ]"
         />
         <textarea
