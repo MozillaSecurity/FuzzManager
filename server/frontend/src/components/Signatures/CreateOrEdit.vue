@@ -54,6 +54,17 @@
         </div>
 
         <div class="field">
+          <input
+            type="checkbox"
+            id="id_do_not_reduce"
+            v-model="bucket.doNotReduce"
+          />
+          <label for="id_do_not_reduce">
+            Mark this bucket &ldquo;do not reduce&rdquo;
+          </label>
+        </div>
+
+        <div class="field">
           <input type="checkbox" id="id_reassign" v-model="reassign" />
           <label for="id_reassign">
             Reassign matching crashes (unassigned crashes and crashes assigned
@@ -148,10 +159,11 @@ export default {
   },
   data: () => ({
     bucket: {
-      signature: "",
-      shortDescription: "",
+      doNotReduce: false,
       frequent: false,
       permanent: false,
+      shortDescription: "",
+      signature: "",
     },
     reassign: true,
     warning: "",
@@ -173,10 +185,11 @@ export default {
     async create(save) {
       this.loading = save ? "create" : "preview";
       const payload = {
-        signature: this.bucket.signature,
-        shortDescription: this.bucket.shortDescription,
+        doNotReduce: this.bucket.doNotReduce,
         frequent: this.bucket.frequent,
         permanent: this.bucket.permanent,
+        shortDescription: this.bucket.shortDescription,
+        signature: this.bucket.signature,
       };
 
       try {
@@ -201,10 +214,11 @@ export default {
     async update(save) {
       this.loading = save ? "save" : "preview";
       const payload = {
-        signature: this.bucket.signature,
-        shortDescription: this.bucket.shortDescription,
+        doNotReduce: this.bucket.doNotReduce,
         frequent: this.bucket.frequent,
         permanent: this.bucket.permanent,
+        shortDescription: this.bucket.shortDescription,
+        signature: this.bucket.signature,
       };
 
       try {

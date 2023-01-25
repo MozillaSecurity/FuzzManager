@@ -122,6 +122,7 @@ class Bucket(models.Model):
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
     permanent = models.BooleanField(blank=False, default=False)
+    doNotReduce = models.BooleanField(blank=False, default=False)
 
     @property
     def watchers(self):
