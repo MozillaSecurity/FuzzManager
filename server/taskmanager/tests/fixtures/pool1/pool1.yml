@@ -6,6 +6,7 @@ cores_per_task: 10
 metal: false
 name: Test Pool
 tasks: 2
+demand: false
 command:
   - cmd1
   - arg1
