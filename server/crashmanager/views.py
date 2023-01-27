@@ -1300,6 +1300,8 @@ class BucketViewSet(
             bucket.frequent = serializer.validated_data["frequent"]
         if "permanent" in serializer.validated_data:
             bucket.permanent = serializer.validated_data["permanent"]
+        if "doNotReduce" in serializer.validated_data:
+            bucket.doNotReduce = serializer.validated_data["doNotReduce"]
 
         save = request.query_params.get("save", "true").lower() not in ("false", "0")
         reassign = request.query_params.get("reassign", "true").lower() not in (

@@ -469,7 +469,17 @@ def test_new_signature_preview(
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
-def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-name
+@pytest.mark.parametrize("do_not_reduce", [True, False])
+@pytest.mark.parametrize("frequent", [True, False])
+@pytest.mark.parametrize("permanent", [True, False])
+def test_edit_signature_edit(
+    api_client,
+    cm,  # pylint: disable=invalid-name
+    user,
+    do_not_reduce,
+    frequent,
+    permanent,
+):
     bucket = cm.create_bucket()
     crash = cm.create_crash(shortSignature="crash #1", stderr="blah")
     sig = json.dumps(
@@ -481,9 +491,9 @@ def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-n
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
-            "doNotReduce": False,
-            "frequent": False,
-            "permanent": False,
+            "doNotReduce": do_not_reduce,
+            "frequent": frequent,
+            "permanent": permanent,
         },
         format="json",
     )
@@ -494,9 +504,9 @@ def test_edit_signature_edit(api_client, cm, user):  # pylint: disable=invalid-n
     assert crash.bucket is None
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
-    assert not bucket.doNotReduce
-    assert not bucket.frequent
-    assert not bucket.permanent
+    assert bucket.doNotReduce is do_not_reduce
+    assert bucket.frequent is frequent
+    assert bucket.permanent is permanent
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {
         "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
