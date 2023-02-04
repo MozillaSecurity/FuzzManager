@@ -562,7 +562,7 @@ def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
             status=400,
         )
 
-    if not request.is_ajax():
+    if request.headers.get("x-requested-with") != "XMLHttpRequest":
         raise SuspiciousOperation
 
     data = json.loads(request.body)
@@ -760,14 +760,7 @@ class ReportFilterBackend(filters.BaseFilterBackend):
         if not queryset:
             return queryset
 
-        can_see_unpublished = False
-        if request.user and request.user.is_authenticated:
-            can_see_unpublished = request.user.has_perm(
-                "crashmanager.view_crashmanager"
-            )
-
         # We allow users to see unpublished reports, if they ask for it
-        # and also have the permissions to do so.
         unpublished_requested = request.method != "GET" or "unpublished" in request.GET
 
         # The regular collection/browse view should be able to fetch optional
@@ -776,10 +769,7 @@ class ReportFilterBackend(filters.BaseFilterBackend):
             coverage_ids = request.GET["coverage__ids"].split(",")
             queryset = queryset.filter(coverage_id__in=coverage_ids)
 
-        # TODO: Right now we use the view_crashmanager permission because that
-        # typically indicates full/internal access. But in the future, this
-        # might be replaced by its own permission.
-        if not unpublished_requested or not can_see_unpublished:
+        if not unpublished_requested:
             queryset = queryset.filter(public=True)
 
         return queryset.order_by("-pk")

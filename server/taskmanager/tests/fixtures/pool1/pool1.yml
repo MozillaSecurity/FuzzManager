@@ -6,6 +6,7 @@ cores_per_task: 10
 metal: false
 name: Test Pool
 tasks: 2
+demand: false
 command:
   - cmd1
   - arg1
@@ -13,6 +14,7 @@ container: MozillaSecurity/fuzzer:latest
 minimum_memory_per_core: 1g
 imageset: generic-worker-A
 cpu: x64
+gpu: false
 platform: linux
 preprocess: ""
 macros:

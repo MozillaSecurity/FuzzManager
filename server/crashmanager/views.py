@@ -445,10 +445,10 @@ def newSignature(request: HttpRequest) -> HttpResponse:
 
         if "stackframes" in request.GET:
             maxStackFrames = int(request.GET["stackframes"])
-        elif set(crashInfo.backtrace) & {
-            "std::panicking::rust_panic",
-            "std::panicking::rust_panic_with_hook",
-        }:
+        elif any(
+            entry.startswith("std::panicking") or entry.startswith("alloc::alloc")
+            for entry in crashInfo.backtrace
+        ):
             # rust panic adds 5-6 frames of noise at the top of the stack
             maxStackFrames += 6
 
@@ -484,12 +484,13 @@ def newSignature(request: HttpRequest) -> HttpResponse:
 def deleteSignature(
     request: HttpRequest, sigid: int
 ) -> HttpResponseRedirect | HttpResponsePermanentRedirect | HttpResponse:
-    buckets = Bucket.objects.filter(pk=sigid).annotate(size=Count("crashentry"))
-    if not buckets:
-        raise Http404
-    bucket = buckets[0]
+    user = User.get_or_create_restricted(request.user)[0]
+    if user.restricted:
+        raise PermissionDenied(
+            {"message": "You don't have permission to delete signatures."}
+        )
 
-    check_authorized_for_signature(request, bucket)
+    bucket = Bucket.objects.get(pk=sigid)
 
     if request.method == "POST":
         if "delentries" not in request.POST:
@@ -501,8 +502,33 @@ def deleteSignature(
 
         bucket.delete()
         return redirect("crashmanager:signatures")
+
     elif request.method == "GET":
-        return render(request, "signatures/remove.html", {"bucket": bucket})
+        in_filter = 0
+        other_tool_counts = {}
+
+        tools_breakdown = Tool.objects.filter(crashentry__bucket=bucket).annotate(
+            crashes=Count("crashentry")
+        )
+        toolfilter_ids = set(user.defaultToolsFilter.values_list("id", flat=True))
+        for tool in tools_breakdown:
+            if tool.id in toolfilter_ids:
+                in_filter += tool.crashes
+            else:
+                other_tool_counts[tool.name] = tool.crashes
+        out_of_filter = sum(other_tool_counts.values())
+        other_tools = set(other_tool_counts.keys())
+
+        return render(
+            request,
+            "signatures/remove.html",
+            {
+                "bucket": bucket,
+                "in_filter": in_filter,
+                "out_of_filter": out_of_filter,
+                "other_tools": ", ".join(sorted(other_tools)),
+            },
+        )
     else:
         raise SuspiciousOperation
 
@@ -1331,6 +1357,8 @@ class BucketViewSet(
             bucket.frequent = serializer.validated_data["frequent"]
         if "permanent" in serializer.validated_data:
             bucket.permanent = serializer.validated_data["permanent"]
+        if "doNotReduce" in serializer.validated_data:
+            bucket.doNotReduce = serializer.validated_data["doNotReduce"]
 
         save = request.query_params.get("save", "true").lower() not in ("false", "0")
         reassign = request.query_params.get("reassign", "true").lower() not in (

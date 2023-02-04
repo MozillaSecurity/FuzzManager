@@ -131,6 +131,7 @@ class Bucket(models.Model):
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
     permanent = models.BooleanField(blank=False, default=False)
+    doNotReduce = models.BooleanField(blank=False, default=False)
 
     @property
     def watchers(self) -> QuerySet[DjangoUser]:
@@ -690,6 +691,7 @@ class User(models.Model):
     # Notifications
     inaccessible_bug = models.BooleanField(blank=False, default=False)
     bucket_hit = models.BooleanField(blank=False, default=False)
+    tasks_failed = models.BooleanField(blank=False, default=False)
 
     @staticmethod
     def get_or_create_restricted(

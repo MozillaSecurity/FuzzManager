@@ -32,6 +32,11 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
+def _is_unfinished(symbol: list[str], operators: str) -> bool:
+    start, end = operators
+    return bool(symbol.count(start) > symbol.count(end))
+
+
 def uint32(val: int) -> int:
     """Force `val` into unsigned 32-bit range.
 
@@ -262,6 +267,7 @@ class CrashInfo(metaclass=ABCMeta):
         weakResult = None
 
         asanString = "ERROR: AddressSanitizer"
+        asanString2 = "Sanitizer: hard rss limit exhausted"
         gdbString = "received signal SIG"
         gdbCoreString = "Program terminated with signal "
         lsanString = "ERROR: LeakSanitizer:"
@@ -295,7 +301,12 @@ class CrashInfo(metaclass=ABCMeta):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif asanString in line or ubsanString2 in line or tsanString2 in line:
+            elif (
+                asanString in line
+                or asanString2 in line
+                or ubsanString2 in line
+                or tsanString2 in line
+            ):
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
             elif lsanString in line:
@@ -660,7 +671,7 @@ class ASanCrashInfo(CrashInfo):
         asanOutput = crashData if crashData else stderr
 
         asanCrashAddressPattern = r"""(?x)
-            \s[A-Za-z]+Sanitizer.*\s
+            [A-Za-z]+Sanitizer.*\s
               (?:on\saddress             # Most common format, used for all overflows
                 |on\sunknown\saddress    # Used in case of a SIGSEGV
                 |double-free\son         # Used in case of a double-free
@@ -673,7 +684,9 @@ class ASanCrashInfo(CrashInfo):
                 |not\sowned:             # Used when calling __asan_get_allocated_size()
                                          #   on a pointer that isn't owned
                 |\w+-param-overlap:      # Bad memcpy/strcpy/strcat... etc
-                |requested\sallocation\ssize\s0x[0-9a-f]+\s)
+                |requested\sallocation\ssize\s0x[0-9a-f]+\s
+                |soft\srss\slimit\sexhausted
+                |hard\srss\slimit\sexhausted)
             (\s*0x([0-9a-f]+))?"""
         asanRegisterPattern = (
             r"(?:\s+|\()pc\s+0x([0-9a-f]+)\s+(sp|bp)\s+0x([0-9a-f]+)\s+(sp|bp)\s+"
@@ -706,15 +719,8 @@ class ASanCrashInfo(CrashInfo):
                         # Some lines in eg. debug+asan builds might error if we continue
                         continue
 
-                parts = traceLine.strip().split()
-
-                # We only want stack frames
-                if not parts or not parts[0].startswith("#"):
-                    continue
-
-                try:
-                    index = int(parts[0][1:])
-                except ValueError:
+                index, parts = self.split_frame(traceLine)
+                if index is None:
                     continue
 
                 # We may see multiple traces in ASAN
@@ -757,6 +763,44 @@ class ASanCrashInfo(CrashInfo):
 
                 self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
                 expectedIndex += 1
+
+    @staticmethod
+    def split_frame(line: str) -> tuple[int, list[str]]:
+        parts = line.strip().split()
+
+        # We only want stack frames
+        if not parts or not parts[0].startswith("#"):
+            return None, None
+
+        try:
+            frame_no = int(parts[0][1:])
+        except ValueError:
+            return None, None
+
+        # try to put parts back together which contain spaces contained in () or <>
+        idx = 1
+        while len(parts) > idx + 1:
+            if _is_unfinished(parts[idx], "()") or _is_unfinished(parts[idx], "<>"):
+                parts = (
+                    parts[:idx] + [f"{parts[idx]} {parts[idx + 1]}"] + parts[idx + 2 :]
+                )
+            else:
+                idx += 1
+
+        # put "const" back with the function signature
+        if "const" in parts:
+            idx = parts.index("const")
+            assert idx > 0
+            if parts[idx - 1].endswith(")"):
+                parts = (
+                    parts[: idx - 1] + [f"{parts[idx - 1]} const"] + parts[idx + 1 :]
+                )
+
+        # clang 14 adds BuildId as last segment
+        if parts[-1].startswith("(BuildId: "):
+            parts.pop()
+
+        return frame_no, parts
 
     def createShortSignature(self) -> str:
         """
@@ -869,18 +913,14 @@ class LSanCrashInfo(CrashInfo):
                         lsanPatternSeen = True
                     continue
 
-                parts = traceLine.strip().split()
-
-                # We only want stack frames
-                if not parts or not parts[0].startswith("#"):
+                index, parts = ASanCrashInfo.split_frame(traceLine)
+                if index is None:
                     continue
-
-                index = int(parts[0][1:])
 
                 if expectedIndex != index:
                     raise RuntimeError(
-                        "Fatal error parsing LSan trace (Index mismatch, got index "
-                        f"{index} but expected {expectedIndex})"
+                        f"Fatal error parsing LSan trace (Index mismatch, got index {index}"
+                        f" but expected {expectedIndex})"
                     )
 
                 component = None
@@ -966,13 +1006,9 @@ class UBSanCrashInfo(CrashInfo):
                         ubsanPatternSeen = True
                     continue
 
-                parts = traceLine.strip().split()
-
-                # We only want stack frames
-                if not parts or not parts[0].startswith("#"):
+                index, parts = ASanCrashInfo.split_frame(traceLine)
+                if index is None:
                     continue
-
-                index = int(parts[0][1:])
 
                 if expectedIndex != index:
                     raise RuntimeError(
@@ -1944,15 +1980,8 @@ class TSanCrashInfo(CrashInfo):
                     # TSan failed to symbolize at least one stack
                     brokenStack = True
 
-                parts = traceLine.strip().split()
-
-                # We only want stack frames
-                if not parts or not parts[0].startswith("#"):
-                    continue
-
-                try:
-                    index = int(parts[0][1:])
-                except ValueError:
+                index, parts = ASanCrashInfo.split_frame(traceLine)
+                if index is None:
                     continue
 
                 # We may see multiple traces in TSAN

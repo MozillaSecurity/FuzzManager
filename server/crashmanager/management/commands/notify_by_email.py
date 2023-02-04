@@ -25,11 +25,8 @@ class Command(BaseCommand):
             if not user.user.email:
                 print(f"No user email for {user.user.username}")
                 continue
-            if notification.verb == "bucket_hit" and not user.bucket_hit:
-                print(f"{user.user.username} not watching bucket_hit anymore")
-                continue
-            if notification.verb == "inaccessible_bug" and not user.inaccessible_bug:
-                print(f"{user.user.username} not watching inaccessible_bug anymore")
+            if not getattr(user, notification.verb):
+                print(f"{user.user.username} not watching {notification.verb} anymore")
                 continue
 
             sent = send_mail(

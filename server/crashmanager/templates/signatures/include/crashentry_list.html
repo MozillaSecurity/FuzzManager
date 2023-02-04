@@ -18,7 +18,7 @@
 	{% for entry in entries %}<tr class="{% cycle 'odd' 'even' %}">
 	<td><a href="{% url 'crashmanager:crashview' entry.pk %}">{{ entry.pk }}</a></td>
 		  <td>{{ entry.created|date:"r" }}</td>
-	<td>{{ entry.shortSignature|escape }}</td>
+	<td v-pre>{{ entry.shortSignature|escape }}</td>
 	<td>{{ entry.crashAddress|escape }}</td>
 	<td>
 		{% if entry.testcase %}

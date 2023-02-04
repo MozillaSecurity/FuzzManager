@@ -5,6 +5,8 @@ tasks:
   $let:
     user: ${event.sender.login}
 
+    task_group: {$eval: as_slugid("group")}
+
     fetch_rev:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.head.sha}
@@ -21,6 +23,27 @@ tasks:
         then: ${event.ref}
         else: "refs/tags/${event.release.tag_name}:refs/tags/${event.release.tag_name}"
 
+    branch_name:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.pull_request.base.ref}
+      else:
+        $if: 'tasks_for == "github-push"'
+        then:
+          $if: 'event.ref[:11] == "refs/heads/"'
+          then: {$eval: 'event.ref[11:]'}
+          else: ${event.ref}
+        else: ${event.release.tag_name}
+
+    pull_request:
+      $if: 'tasks_for == "github-pull-request"'
+      then: ${event.number}
+      else: 'false'
+
+    tag:
+      $if: 'tasks_for == "github-release"'
+      then: ${event.release.tag_name}
+      else: ''
+
     http_repo:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.base.repo.clone_url}
@@ -34,20 +57,19 @@ tasks:
     codecov_secret_url:
       http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
 
-    pypi_secret_url:
-      http://taskcluster/secrets/v1/secret/project/fuzzing/pypi-fuzzmanager
-
   in:
-    $if: 'tasks_for in ["github-pull-request", "github-push", "github-release"]'
+    $if: 'tasks_for in ["github-push", "github-release"] || (tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"])'
     then:
       $flatten:
         - $map:
-          - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 django 2.x'}
-          - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 2.x'}
-          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 2.x'}
-          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 2.x'}
+          - {image: ci-py-37, toxenv: 'py37', name: 'tests python 3.7 (no django)'}
+          - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 4.x'}
+          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 4.x'}
+          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 4.x'}
+          - {image: ci-py-311, toxenv: 'py311', name: 'tests python 3.11 (no django)'}
           each(build):
             taskId: {$eval: as_slugid(build.toxenv)}
+            taskGroupId: ${task_group}
             provisionerId: proj-fuzzing
             workerType: ci
             created: {$fromNow: ''}
@@ -62,23 +84,31 @@ tasks:
                 type: indexed-image
               features:
                 taskclusterProxy: true
+              env:
+                CODECOV_SECRET: codecov-fuzzmanager
+                FETCH_REV: ${fetch_rev}
+                FETCH_REF: ${fetch_rev}
+                TOXENV: ${build.toxenv}
+                CI: "true"
+                CI_BUILD_ID: ${task_group}
+                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.toxenv)'}
+                CI_JOB_ID: {$eval: as_slugid(build.toxenv)}
+                VCS_COMMIT_ID: ${fetch_ref}
+                VCS_SLUG: ${event.repository.full_name}
+                VCS_BRANCH_NAME: ${branch_name}
+                VCS_PULL_REQUEST: ${pull_request}
+                VCS_TAG: ${tag}
               command:
                 - /bin/bash
                 - '--login'
                 - '-x'
+                - '-e'
                 - '-c'
                 - >-
-                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; } &&
-                  git init repo &&
-                  cd repo &&
-                  git remote add origin ${http_repo} &&
-                  retry git fetch -q --depth=1 origin "${fetch_ref}" &&
-                  git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                  set +x &&
-                  export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
-                  set -x &&
-                  tox -e ${build.toxenv} &&
-                  retry tox -e codecov
+                  . py-ci.sh;
+                  clone ${http_repo};
+                  tox;
+                  tox_codecov;
             metadata:
               name: FuzzManager ${build.name}
               description: FuzzManager ${build.name}
@@ -88,6 +118,7 @@ tasks:
           - {image: ci-node-14, slug: node14, name: 'build frontend node 14'}
           each(build):
             taskId: {$eval: as_slugid(build.slug)}
+            taskGroupId: ${task_group}
             provisionerId: proj-fuzzing
             workerType: ci
             created: {$fromNow: ''}
@@ -102,26 +133,37 @@ tasks:
                 type: indexed-image
               features:
                 taskclusterProxy: true
+              env:
+                CI: "true"
+                CI_BUILD_ID: ${task_group}
+                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.slug)'}
+                CI_JOB_ID: {$eval: as_slugid(build.slug)}
+                VCS_COMMIT_ID: ${fetch_ref}
+                VCS_SLUG: ${event.repository.full_name}
+                VCS_BRANCH_NAME: ${branch_name}
+                VCS_PULL_REQUEST: ${pull_request}
+                VCS_TAG: ${tag}
               command:
                 - /bin/bash
                 - '--login'
                 - '-x'
+                - '-e'
                 - '-c'
                 - >-
-                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
-                  git init repo &&
-                  cd repo &&
-                  git remote add origin ${http_repo} &&
-                  retry git fetch -q --depth=1 origin "${fetch_ref}" &&
-                  git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                  cd server/frontend &&
-                  retry npm install &&
-                  npm run test &&
-                  npm run production &&
-                  set +x &&
-                  export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
-                  set -x &&
-                  npm run codecov
+                  retry () { for _ in {1..9}; do if "$@"; then return; else sleep 30; fi; done; "$@"; };
+                  git init repo;
+                  cd repo;
+                  git remote add origin ${http_repo};
+                  retry git fetch -q --depth=1 origin "${fetch_rev}";
+                  git -c advice.detachedHead=false checkout ${fetch_rev};
+                  cd server/frontend;
+                  retry npm install;
+                  npm run test;
+                  npm run production;
+                  set +x;
+                  export CODECOV_TOKEN="$(curl --retry 5 -sSL ${codecov_secret_url} | jshon -e secret -e token -u)";
+                  set -x;
+                  npm run codecov;
               artifacts:
                 public/dist:
                   expires: {$fromNow: '6 months'}
@@ -133,6 +175,7 @@ tasks:
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - taskId: {$eval: as_slugid("linting")}
+          taskGroupId: ${task_group}
           provisionerId: proj-fuzzing
           workerType: ci
           created: {$fromNow: ''}
@@ -143,25 +186,28 @@ tasks:
             command:
               - /bin/sh
               - '-x'
+              - '-e'
               - '-c'
               - >-
-                apk add --quiet python3 py3-pip git bash &&
-                pip3 install -q pre-commit &&
-                git init repo &&
-                cd repo &&
-                git remote add origin ${http_repo} &&
-                git fetch -q --depth=1 origin "${fetch_ref}" &&
-                git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                cd server/frontend &&
-                npm ci &&
-                cd ../.. &&
-                pre-commit run -a
+                retry () { i=0; while [ $i -lt 9 ]; do if "$@"; then return; else sleep 30; fi; i="$${i+1}"; done; "$@"; };
+                retry apk add --quiet python3 py3-pip git bash;
+                retry pip3 install -q pre-commit;
+                git init repo;
+                cd repo;
+                git remote add origin ${http_repo};
+                retry git fetch -q --depth=1 origin "${fetch_rev}";
+                git -c advice.detachedHead=false checkout ${fetch_rev};
+                cd server/frontend;
+                npm ci;
+                cd ../..;
+                pre-commit run -a;
           metadata:
             name: FuzzManager source code linting
             description: FuzzManager source code linting
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - taskId: {$eval: as_slugid("docker")}
+          taskGroupId: ${task_group}
           provisionerId: proj-fuzzing
           workerType: ci
           dependencies:
@@ -171,6 +217,7 @@ tasks:
             - {$eval: as_slugid("py38")}
             - {$eval: as_slugid("py39")}
             - {$eval: as_slugid("py310")}
+            - {$eval: as_slugid("py311")}
           created: {$fromNow: ''}
           deadline: {$fromNow: '1 hour'}
           payload:
@@ -185,7 +232,7 @@ tasks:
               LOAD_DEPS: "0"
               GIT_REPOSITORY: ${head_repo}
               GIT_REVISION: ${fetch_rev}
-              BUILD_TOOL: img
+              BUILD_TOOL: podman
               DOCKERFILE: Dockerfile
               IMAGE_NAME: mozillasecurity/fuzzmanager
               ARCHIVE_PATH: /image.tar
@@ -205,9 +252,45 @@ tasks:
             description: FuzzManager Docker build
             owner: '${user}@users.noreply.github.com'
             source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+        - $if: 'tasks_for in ["github-push"] && fetch_ref == "refs/heads/master"'
+          then:
+            - taskId: {$eval: as_slugid("docker_push")}
+              taskGroupId: ${task_group}
+              provisionerId: proj-fuzzing
+              workerType: ci
+              dependencies:
+                - {$eval: as_slugid("docker")}
+              created: {$fromNow: ''}
+              deadline: {$fromNow: '1 hour'}
+              payload:
+                image:
+                  namespace: project.fuzzing.orion.orion-builder.master
+                  path: public/orion-builder.tar.zst
+                  type: indexed-image
+                maxRunTime: 3600
+                features:
+                  taskclusterProxy: true
+                env:
+                  TASK_ID: {$eval: as_slugid("docker")}
+                  TASKCLUSTER_SECRET: "project/fuzzing/docker-hub"
+                  GIT_REPOSITORY: ${head_repo}
+                  GIT_REVISION: ${fetch_rev}
+                command:
+                  - sh
+                  - -c
+                  - uname -a && exec push
+              scopes:
+                - secrets:get:project/fuzzing/docker-hub
+              metadata:
+                name: FuzzManager Docker push
+                description: FuzzManager Docker push
+                owner: '${user}@users.noreply.github.com'
+                source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
           then:
-            - provisionerId: proj-fuzzing
+            - taskId: {$eval: as_slugid("pypi_push")}
+              taskGroupId: ${task_group}
+              provisionerId: proj-fuzzing
               workerType: ci
               dependencies:
                 - {$eval: as_slugid("linting")}
@@ -216,6 +299,7 @@ tasks:
                 - {$eval: as_slugid("py38")}
                 - {$eval: as_slugid("py39")}
                 - {$eval: as_slugid("py310")}
+                - {$eval: as_slugid("py311")}
               created: {$fromNow: ''}
               deadline: {$fromNow: '1 hour'}
               scopes:
@@ -228,23 +312,20 @@ tasks:
                   type: indexed-image
                 features:
                   taskclusterProxy: true
+                env:
+                  FETCH_REV: ${fetch_rev}
+                  FETCH_REF: ${fetch_rev}
+                  PYPI_SECRET: ${pypi-fuzzmanager}
                 command:
                   - /bin/bash
                   - '--login'
                   - '-x'
+                  - '-e'
                   - '-c'
                   - >-
-                    retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
-                    git init repo &&
-                    cd repo &&
-                    git remote add origin ${http_repo} &&
-                    retry git fetch -q --depth=1 origin "${fetch_ref}" &&
-                    git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                    set +x &&
-                    export TWINE_USERNAME="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e username -u)" &&
-                    export TWINE_PASSWORD="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e password -u)" &&
-                    set -x &&
-                    retry tox -e pypi
+                    . py-ci.sh;
+                    clone ${http_repo};
+                    tox_pypi;
               metadata:
                 name: FuzzManager PyPI upload
                 description: FuzzManager PyPI upload

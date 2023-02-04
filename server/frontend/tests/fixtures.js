@@ -26,11 +26,25 @@ export const inaccessibleBugNotification = {
   verb: "inaccessible_bug",
 };
 
+export const tasksFailedNotification = {
+  actor_url: "/taskmanager/pools/1/",
+  description: "Pool 1 has failed tasks",
+  external_bug_url: null,
+  id: 3,
+  target_url: "/taskmanager/pools/1/",
+  timestamp: "2021-06-23T10:42:00Z",
+  verb: "tasks_failed",
+};
+
 export const unreadNotifications = {
-  count: 2,
+  count: 3,
   next: null,
   previous: null,
-  results: [bucketHitNotification, inaccessibleBugNotification],
+  results: [
+    bucketHitNotification,
+    inaccessibleBugNotification,
+    tasksFailedNotification,
+  ],
 };
 
 export const emptyBuckets = [];
@@ -42,6 +56,7 @@ export const buckets = [
     bug_closed: null,
     bug_hostname: "bugzilla-dev.allizom.org",
     bug_urltemplate: "https://bugzilla-dev.allizom.org/1630739",
+    doNotReduce: false,
     frequent: false,
     has_optimization: false,
     id: 1,
@@ -59,6 +74,7 @@ export const buckets = [
     bug_closed: null,
     bug_hostname: null,
     bug_urltemplate: null,
+    doNotReduce: false,
     frequent: false,
     has_optimization: false,
     id: 2,

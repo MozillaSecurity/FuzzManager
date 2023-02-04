@@ -71,6 +71,14 @@
             />
             <hr />
           </template>
+          <template v-else-if="notification.verb === 'tasks_failed'">
+            <TasksFailed
+              :notification="notification"
+              v-on:remove-notification="removeNotification($event)"
+              v-on:update-dismiss-error="dismissError = $event"
+            />
+            <hr />
+          </template>
         </div>
       </div>
     </div>
@@ -82,6 +90,7 @@ import { errorParser } from "../../helpers";
 import * as api from "../../api";
 import BucketHit from "./BucketHit.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
+import TasksFailed from "./TasksFailed.vue";
 
 const pageSize = 25;
 
@@ -89,6 +98,7 @@ export default {
   components: {
     BucketHit,
     InaccessibleBug,
+    TasksFailed,
   },
   data: () => ({
     notifications: null,

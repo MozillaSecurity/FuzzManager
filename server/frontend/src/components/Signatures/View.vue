@@ -16,6 +16,10 @@
             <td>Permanent bucket</td>
             <td></td>
           </tr>
+          <tr v-if="bucket.doNotReduce">
+            <td>Do not reduce</td>
+            <td></td>
+          </tr>
           <tr>
             <td>External Bug Status</td>
             <td v-if="bucket.bug">
@@ -120,6 +124,7 @@ export default {
   data: () => ({
     frequent: false,
     permanent: false,
+    doNotReduce: false,
     shortDescription: "",
   }),
   props: {

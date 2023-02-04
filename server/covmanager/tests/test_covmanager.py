@@ -37,4 +37,4 @@ def test_covmanager_noperm(client: Client) -> None:
     assert resp.status_code == 403
 
 
-# url(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),
+# re_path(r'^tools/search/api/$', views.tools_search_api, name="tools_search_api"),

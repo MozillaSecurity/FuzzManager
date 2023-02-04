@@ -157,7 +157,7 @@ class CovReporter(Reporter):
 
                 # Split the filename into path parts and file part
                 name = source_file["name"]
-                name_parts = name.split(os.sep)
+                name_parts = name.split("/")
                 path_parts = name_parts[:-1]
                 file_part = name_parts[-1]
 

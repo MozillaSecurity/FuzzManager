@@ -28,4 +28,4 @@ class Task(models.Model):
     expires = models.DateTimeField()
 
     class Meta:
-        unique_together = (("task_id", "run_id"),)
+        unique_together = ["task_id", "run_id"]

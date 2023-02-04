@@ -121,6 +121,11 @@ def getAssertion(output: list[str]) -> list[str] | str | None:
         elif line.startswith("[Non-crash bug] "):
             # Magic string "added" to stderr by some fuzzers.
             lastLine = line
+        elif "Sanitizer: hard rss limit exhausted" in line:
+            line = re.sub(r" \(\d+Mb vs \d+Mb\)", "", line)
+            line = re.sub(r"=+\d+=+", "", line)
+            lastLine = line
+            haveFatalAssertion = True
 
     return lastLine
 

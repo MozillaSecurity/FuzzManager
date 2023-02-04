@@ -329,6 +329,22 @@ def test_ASanParserTestTruncatedTrace() -> None:
     assert "Insufficient data" in crashInfo.failureReason
 
 
+def test_ASanParserTestClang14() -> None:
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo(
+        [], (FIXTURE_PATH / "trace_asan_clang14.txt").read_text().splitlines(), config
+    )
+    assert crashInfo.crashAddress == 0x03E800004610
+    assert crashInfo.backtrace == [
+        "raise",
+        "abort",
+        "llvm::report_fatal_error",
+        "llvm::report_fatal_error",
+    ]
+    assert "[@ raise]" == crashInfo.createShortSignature()
+
+
 def test_GDBParserTestCrash() -> None:
     config = ProgramConfiguration("test", "x86", "linux")
 
@@ -2630,6 +2646,31 @@ def test_TSanParserTest() -> None:
     assert crashInfo.crashAddress is None
 
 
+def test_TSanParserTestClang14() -> None:
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_tsan_clang14.txt").read_text().splitlines(),
+    )
+    assert (
+        "ThreadSanitizer: data race [@ operator new] vs. [@ pthread_mutex_lock]"
+        == crashInfo.createShortSignature()
+    )
+    assert crashInfo.crashAddress is None
+    assert crashInfo.crashInstruction is None
+    assert len(crashInfo.backtrace) == 166
+    assert crashInfo.backtrace[0] == "operator new"
+    assert crashInfo.backtrace[5:9] == [
+        "pthread_mutex_lock",
+        "libLLVM-12.so.1+0xb6f3ea",
+        "nsThread::ThreadFunc",
+        "_pt_root",
+    ]
+
+
 def test_ValgrindCJMParser() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
@@ -2891,5 +2932,49 @@ def test_ValgrindLeakParser() -> None:
     assert len(crashInfo.backtrace) == 3
     assert crashInfo.backtrace[0] == "malloc"
     assert crashInfo.backtrace[2] == "main"
+    assert crashInfo.crashInstruction is None
+    assert crashInfo.crashAddress is None
+
+
+def test_SanitizerSoftRssLimitHeapProfile():
+    """test that heap profile given after soft rss limit is exceeded
+    is used in place of the (useless) SEGV stack"""
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_soft_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    assert crashInfo.createShortSignature() == "[@ __interceptor_calloc]"
+    assert len(crashInfo.backtrace) == 153
+    assert crashInfo.backtrace[0] == "__interceptor_calloc"
+    assert (
+        crashInfo.backtrace[8] == "webrender_bindings::moz2d_renderer::rasterize_blob"
+    )
+    assert crashInfo.backtrace[-1] == "wl_display_dispatch_queue_pending"
+    assert crashInfo.crashInstruction is None
+    assert crashInfo.crashAddress == 40
+
+
+def test_SanitizerHardRssLimitHeapProfile():
+    """test that heap profile given after hard rss limit is exceeded
+    is used in place of the (useless) SEGV stack"""
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_asan_hard_rss_heap_report.txt").read_text().splitlines(),
+    )
+
+    assert crashInfo.createShortSignature() == (
+        "AddressSanitizer: hard rss limit exhausted"
+    )
+    assert len(crashInfo.backtrace) == 32
+    assert crashInfo.backtrace[0] == "__interceptor_realloc"
+    assert crashInfo.backtrace[9] == "webrender::image_tiling::for_each_tile_in_range"
+    assert crashInfo.backtrace[-1] == "start_thread"
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None

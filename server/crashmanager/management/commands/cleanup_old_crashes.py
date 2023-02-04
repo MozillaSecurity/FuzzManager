@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import logging
 from typing import Any
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from django.db.models.aggregates import Count
 from django.utils import timezone
 
 from crashmanager.models import Bucket, Bug, CrashEntry
+
+LOG = logging.getLogger("fm.crashmanager.cleanup_old_crashes")
 
 
 class Command(BaseCommand):
@@ -41,7 +44,14 @@ class Command(BaseCommand):
             # we have a post-delete receiver on CrashEntry that has to be called for
             # every single deleted entry with the full instance. Maybe Django loads
             # a copy of all instances to be deleted into memory for this purpose.
-            while CrashEntry.objects.filter(bucket__bug=bug).count() > 500:
+            crash_count = CrashEntry.objects.filter(bucket__bug=bug).count()
+            if crash_count:
+                LOG.info(
+                    "Removing %d CrashEntry objects from buckets assigned to bug %s",
+                    crash_count,
+                    bug.externalId,
+                )
+            while crash_count > 500:
                 # Deleting things in buckets is complicated:
                 #
                 # Attempting to combine a subset (LIMIT) with a delete yields
@@ -61,13 +71,16 @@ class Command(BaseCommand):
                     )[:500]
                 )
                 CrashEntry.objects.filter(pk__in=pks).delete()
+                crash_count = CrashEntry.objects.filter(bucket__bug=bug).count()
 
             bug.delete()
 
         # Select all buckets that are empty and delete them
-        Bucket.objects.annotate(size=Count("crashentry")).filter(
+        for bucket in Bucket.objects.annotate(size=Count("crashentry")).filter(
             size=0, bug=None, permanent=False
-        ).delete()
+        ):
+            LOG.info("Removing empty bucket %d", bucket.id)
+            bucket.delete()
 
         # Select all entries that are older than x days and either not in any bucket
         # or the bucket has no bug associated with it. If the bucket has a bug
@@ -83,15 +96,25 @@ class Command(BaseCommand):
             seconds=now.second,
             microseconds=now.microsecond,
         )
-        while CrashEntry.objects.filter(
+        old_crashes = CrashEntry.objects.filter(
             created__lt=expiryDate, bucket__bug=None
-        ).count():
+        ).count()
+        if old_crashes:
+            LOG.info("Removing %d old, unbucketed crashes", old_crashes)
+        while old_crashes:
             pks = list(
                 CrashEntry.objects.filter(
                     created__lt=expiryDate, bucket__bug=None
                 ).values_list("pk", flat=True)[:500]
             )
             CrashEntry.objects.filter(pk__in=pks).delete()
+            old_crashes = CrashEntry.objects.filter(
+                created__lt=expiryDate, bucket__bug=None
+            ).count()
 
         # Cleanup all bugs that don't belong to any bucket anymore
-        Bug.objects.filter(bucket__isnull=True).delete()
+        orphan_bugs = Bug.objects.filter(bucket__isnull=True)
+        orphan_bug_count = orphan_bugs.count()
+        if orphan_bug_count:
+            LOG.info("Removing %d orphaned Bug objects", orphan_bug_count)
+            orphan_bugs.delete()

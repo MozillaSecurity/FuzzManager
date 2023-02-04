@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from crashmanager.models import Bug, BugProvider
+
+LOG = logging.getLogger("fm.crashmanager.bug_update_status")
 
 
 class Command(BaseCommand):
@@ -57,11 +60,19 @@ class Command(BaseCommand):
                         # The bug has been marked as a duplicate, so we change the
                         # externalId to match the duped bug. If that bug is also closed,
                         # then it will be picked up the next time this command runs.
+                        LOG.info(
+                            "setting bug %s dupe to %s",
+                            bug.externalId,
+                            bugStatus[bugId],
+                        )
                         bugDupMap[bug.externalId] = bugStatus[bugId]
                         bug.externalId = bugStatus[bugId]
                         bug.closed = None
                         bug.save()
                     elif bug.closed is None:
+                        LOG.info(
+                            "setting bug %s closed=%s", bug.externalId, bugStatus[bugId]
+                        )
                         bug.closed = bugStatus[bugId]
                         bug.save()
 

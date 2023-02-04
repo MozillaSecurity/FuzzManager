@@ -95,6 +95,7 @@ def _compare_rest_result_to_bucket(
         "best_entry",
         "best_quality",
         "bug",
+        "doNotReduce",
         "frequent",
         "id",
         "permanent",
@@ -120,6 +121,7 @@ def _compare_rest_result_to_bucket(
     assert result["id"] == bucket.pk
     assert result["best_quality"] == quality
     assert result["best_entry"] == best_entry
+    assert result["doNotReduce"] == bucket.doNotReduce
     assert result["latest_entry"] == latest
     assert result["bug"] == bucket.bug_id
     assert result["frequent"] == bucket.frequent
@@ -371,6 +373,7 @@ def test_new_signature_create(
             "shortDescription": desc,
             "frequent": False,
             "permanent": False,
+            "doNotReduce": False,
         },
         format="json",
     )
@@ -381,6 +384,7 @@ def test_new_signature_create(
     assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == desc
+    assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
     assert resp.status_code == status.HTTP_201_CREATED
@@ -410,6 +414,7 @@ def test_new_signature_create_w_reassign(
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
+            "doNotReduce": False,
             "frequent": False,
             "permanent": False,
         },
@@ -427,6 +432,7 @@ def test_new_signature_create_w_reassign(
         assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
+    assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
     assert resp.status_code == status.HTTP_201_CREATED
@@ -456,6 +462,7 @@ def test_new_signature_preview(
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
+            "doNotReduce": False,
             "frequent": False,
             "permanent": False,
         },
@@ -489,8 +496,16 @@ def test_new_signature_preview(
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
+@pytest.mark.parametrize("do_not_reduce", [True, False])
+@pytest.mark.parametrize("frequent", [True, False])
+@pytest.mark.parametrize("permanent", [True, False])
 def test_edit_signature_edit(
-    api_client: APIClient, cm: _cm_result, user: User
+    api_client: APIClient,
+    cm: _cm_result,  # pylint: disable=invalid-name
+    user: User,
+    do_not_reduce: bool,
+    frequent: bool,
+    permanent: bool,
 ) -> None:  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     crash = cm.create_crash(shortSignature="crash #1", stderr="blah")
@@ -503,8 +518,9 @@ def test_edit_signature_edit(
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
-            "frequent": False,
-            "permanent": False,
+            "doNotReduce": do_not_reduce,
+            "frequent": frequent,
+            "permanent": permanent,
         },
         format="json",
     )
@@ -515,8 +531,9 @@ def test_edit_signature_edit(
     assert crash.bucket is None
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
-    assert not bucket.frequent
-    assert not bucket.permanent
+    assert bucket.doNotReduce is do_not_reduce
+    assert bucket.frequent is frequent
+    assert bucket.permanent is permanent
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {
         "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
@@ -545,6 +562,7 @@ def test_edit_signature_edit_w_reassign(
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
+            "doNotReduce": False,
             "frequent": False,
             "permanent": False,
         },
@@ -562,6 +580,7 @@ def test_edit_signature_edit_w_reassign(
         assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
+    assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
     assert resp.status_code == status.HTTP_200_OK
@@ -597,6 +616,7 @@ def test_edit_signature_edit_preview(
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
+            "doNotReduce": False,
             "frequent": False,
             "permanent": False,
         },

@@ -2,23 +2,33 @@
 
 {% block body_content %}
 <div class="panel panel-default">
-    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Remove Signature</div>
-	<div class="panel-body">
-		{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-		<form action="{% url 'crashmanager:sigdel' bucket.pk %}" method="post">
-		{% csrf_token %}
-		<div class="alert alert-danger" role="alert">Are you sure that you want to delete this signature?</div>
-		<div class="field">
-			<strong>Description:</strong> {{ bucket.shortDescription|escape }}
-		</div>
+  <div class="panel-heading"><i class="bi bi-tag-fill"></i> Remove Signature</div>
+  <div class="panel-body">
+    {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+    <form action="{% url 'crashmanager:sigdel' bucket.pk %}" method="post">
+      {% csrf_token %}
+      <div class="alert alert-danger" role="alert">Are you sure that you want to delete this signature?</div>
+      <div class="field">
+        <strong>Description:</strong> {{ bucket.shortDescription|escape }}
+      </div>
 
-		<div class="field">
-		    <input type="checkbox" id="id_delentries" name="delentries"/>
-		    <label for="id_delentries">Also delete all {{ bucket.size }} entries with this bucket</label>
-		</div>
-		<input type="submit" value="Delete" class="btn btn-danger"/>
-		<input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
-		</form>
-	</div>
+      <div class="field">
+        {% if out_of_filter > 0 or in_filter > 0 %}
+        <input type="checkbox" id="id_delentries" name="delentries"/>
+        <label for="id_delentries">
+        {% if out_of_filter > 0 %}
+          Also delete all crash entries with this bucket: {{ in_filter }} in tool filter, {{ out_of_filter }} in other tools ({{ other_tools }}).
+        {% else %}
+          Also delete all crash entries with this bucket: {{ in_filter }} in tool filter (none in other tools).
+        {% endif %}
+        </label>
+        {% else %}
+        Bucket contains no crash entries.
+        {% endif %}
+      </div>
+      <input type="submit" value="Delete" class="btn btn-danger"/>
+      <input type="button" value="Cancel" class="btn btn-default" onClick="javascript:history.go(-1)"/>
+    </form>
+  </div>
 </div>
 {% endblock body_content %}
