@@ -113,7 +113,7 @@ class CloudProvider(metaclass=ABCMeta):
         instance_type: str,
         count: int,
         tags: dict[str, str],
-    ) -> None:
+    ) -> dict[str, Any]:
         """
         Start instances using specified configuration.
 
@@ -184,7 +184,7 @@ class CloudProvider(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def get_cores_per_instance() -> dict[str, float]:
+    def get_cores_per_instance() -> dict[str, int]:
         """
         returns dictionary of instance types and their number of cores
 

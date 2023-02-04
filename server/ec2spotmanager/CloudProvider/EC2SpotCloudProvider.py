@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 import re
-from typing import cast
+from typing import Any, cast
 
 import boto3
 import boto.ec2
@@ -45,7 +45,7 @@ class EC2SpotCloudProvider(CloudProvider):
         return self.cluster
 
     @wrap_provider_errors
-    def terminate_instances(self, instances_ids_by_region) -> None:
+    def terminate_instances(self, instances_ids_by_region: dict[str, Any]) -> None:
         for region, instance_ids in instances_ids_by_region.items():
             cluster = self._connect(region)
             self.logger.info(
@@ -75,7 +75,7 @@ class EC2SpotCloudProvider(CloudProvider):
             cluster.terminate(boto_instances)
 
     @wrap_provider_errors
-    def cancel_requests(self, requested_instances_by_region) -> None:
+    def cancel_requests(self, requested_instances_by_region: dict[str, Any]) -> None:
         for region, instance_ids in requested_instances_by_region.items():
             cluster = self._connect(region)
             cluster.cancel_spot_requests(instance_ids)
@@ -93,9 +93,9 @@ class EC2SpotCloudProvider(CloudProvider):
         userdata,
         image: str,
         instance_type: str,
-        count,
+        count: str,
         _tags: str,
-    ):
+    ) -> dict[str, Any]:
         images: dict[str, dict[str, str]] = self._create_laniakea_images(config)
 
         self.logger.info(
@@ -265,7 +265,7 @@ class EC2SpotCloudProvider(CloudProvider):
     @wrap_provider_errors
     def check_instances_state(self, pool_id: int | None, region: str):
 
-        instance_states = {}
+        instance_states: dict[str, Any] = {}
         cluster = self._connect(region)
 
         try:
@@ -341,9 +341,11 @@ class EC2SpotCloudProvider(CloudProvider):
         return all(config.get(key) for key in fields)
 
     @wrap_provider_errors
-    def get_prices_per_region(self, region_name: str, instance_types=None):
+    def get_prices_per_region(
+        self, region_name: str, instance_types: str | None = None
+    ) -> dict[str, Any]:
         """Gets spot prices of the specified region and instance type"""
-        prices = {}  # {instance-type: region: {az: [prices]}}}
+        prices: dict[str, Any] = {}  # {instance-type: region: {az: [prices]}}}
         zone_blacklist = ["us-east-1a", "us-east-1f"]
 
         now = timezone.now()

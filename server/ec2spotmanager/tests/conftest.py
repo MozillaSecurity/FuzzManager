@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import functools
 import sys
-from typing import cast
 from unittest.mock import Mock
 
 import pytest
@@ -35,7 +34,7 @@ def _create_user(
     password: str = "test",
     has_permission: bool = True,
 ) -> User:
-    user = cast(User, User.objects.create_user(username, email, password))
+    user = User.objects.create_user(username, email, password)
     user.user_permissions.clear()
     if has_permission:
         content_type = ContentType.objects.get_for_model(cmUser)
