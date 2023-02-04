@@ -2936,7 +2936,7 @@ def test_ValgrindLeakParser() -> None:
     assert crashInfo.crashAddress is None
 
 
-def test_SanitizerSoftRssLimitHeapProfile():
+def test_SanitizerSoftRssLimitHeapProfile() -> None:
     """test that heap profile given after soft rss limit is exceeded
     is used in place of the (useless) SEGV stack"""
     config = ProgramConfiguration("test", "x86-64", "linux")
@@ -2958,7 +2958,7 @@ def test_SanitizerSoftRssLimitHeapProfile():
     assert crashInfo.crashAddress == 40
 
 
-def test_SanitizerHardRssLimitHeapProfile():
+def test_SanitizerHardRssLimitHeapProfile() -> None:
     """test that heap profile given after hard rss limit is exceeded
     is used in place of the (useless) SEGV stack"""
     config = ProgramConfiguration("test", "x86-64", "linux")
