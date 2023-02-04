@@ -563,7 +563,7 @@ def test_SignatureMatchAssertionSlashes() -> None:
     assert windows_sig.matches(bs_windows)
 
 
-def test_SignatureSanitizerSoftRssLimitHeapProfile():
+def test_SignatureSanitizerSoftRssLimitHeapProfile() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
@@ -578,7 +578,7 @@ def test_SignatureSanitizerSoftRssLimitHeapProfile():
     assert isinstance(testSig.symptoms[0], StackFramesSymptom)
 
 
-def test_SignatureSanitizerHardRssLimitHeapProfile():
+def test_SignatureSanitizerHardRssLimitHeapProfile() -> None:
     config = ProgramConfiguration("test", "x86-64", "linux")
     crashInfo = CrashInfo.fromRawCrashData(
         [],
