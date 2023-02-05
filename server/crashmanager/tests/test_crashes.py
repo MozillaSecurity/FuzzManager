@@ -16,6 +16,7 @@ import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
 from django.test.client import Client
 from django.urls import reverse
 
@@ -35,7 +36,7 @@ def test_crashes_view(client: Client) -> None:  # pylint: disable=invalid-name
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
     assert response.context["restricted"] is False
-    assert_contains(response, "crasheslist")
+    assert_contains(typing.cast(HttpResponse, response), "crasheslist")
 
 
 @pytest.mark.parametrize(

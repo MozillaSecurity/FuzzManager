@@ -17,6 +17,7 @@ import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
 from django.test.client import Client
 from django.urls import reverse
 
@@ -48,7 +49,7 @@ def test_stats_view_no_crashes(client: Client) -> None:
     response = client.get(reverse(VIEW_NAME))
     assert response.status_code == requests.codes["ok"]
     assert response.context["total_reports_per_hour"] == 0
-    assert_contains(response, VIEW_ENTRIES_FMT % 0)
+    assert_contains(typing.cast(HttpResponse, response), VIEW_ENTRIES_FMT % 0)
     assert not response.context["frequentBuckets"]
 
 
@@ -61,7 +62,7 @@ def test_stats_view_with_crash(
     response = client.get(reverse(VIEW_NAME))
     assert response.status_code == requests.codes["ok"]
     assert response.context["total_reports_per_hour"] == 1
-    assert_contains(response, VIEW_ENTRIES_FMT % 1)
+    assert_contains(typing.cast(HttpResponse, response), VIEW_ENTRIES_FMT % 1)
     assert not response.context["frequentBuckets"]
 
 
@@ -79,7 +80,7 @@ def test_stats_view_with_crashes(
     response = client.get(reverse(VIEW_NAME))
     assert response.status_code == requests.codes["ok"]
     assert response.context["total_reports_per_hour"] == 4
-    assert_contains(response, VIEW_ENTRIES_FMT % 4)
+    assert_contains(typing.cast(HttpResponse, response), VIEW_ENTRIES_FMT % 4)
     response_buckets = response.context["frequentBuckets"]
     assert len(response_buckets) == 1
     assert response_buckets[0] == bucket
@@ -95,12 +96,12 @@ def test_stats_view_old(
     response = client.get(reverse(VIEW_NAME))
     assert response.status_code == requests.codes["ok"]
     assert response.context["total_reports_per_hour"] == 1
-    assert_contains(response, VIEW_ENTRIES_FMT % 1)
+    assert_contains(typing.cast(HttpResponse, response), VIEW_ENTRIES_FMT % 1)
     assert not response.context["frequentBuckets"]
     crash.created -= datetime.timedelta(hours=1, seconds=1)
     crash.save()
     response = client.get(reverse(VIEW_NAME))
     assert response.status_code == requests.codes["ok"]
     assert response.context["total_reports_per_hour"] == 0
-    assert_contains(response, VIEW_ENTRIES_FMT % 0)
+    assert_contains(typing.cast(HttpResponse, response), VIEW_ENTRIES_FMT % 0)
     assert not response.context["frequentBuckets"]

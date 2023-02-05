@@ -17,6 +17,7 @@ import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
 from django.test.client import Client
 from django.urls import reverse
 
@@ -62,7 +63,7 @@ def test_pools_view_no_pools(client: Client) -> None:
     assert response.status_code == requests.codes["ok"]
     poollist = response.context["poollist"]
     assert len(poollist) == 0  # 0 pools
-    assert_contains(response, POOLS_ENTRIES_FMT % 0)
+    assert_contains(typing.cast(HttpResponse, response), POOLS_ENTRIES_FMT % 0)
 
 
 def test_pools_view_pool(client: Client) -> None:
@@ -75,7 +76,7 @@ def test_pools_view_pool(client: Client) -> None:
     assert response.status_code == requests.codes["ok"]
     poollist = response.context["poollist"]
     assert len(poollist) == 1  # 1 pools
-    assert_contains(response, POOLS_ENTRIES_FMT % 1)
+    assert_contains(typing.cast(HttpResponse, response), POOLS_ENTRIES_FMT % 1)
     assert set(poollist) == {pool}
 
 
@@ -89,7 +90,7 @@ def test_pools_view_pools(client: Client) -> None:
     assert response.status_code == requests.codes["ok"]
     poollist = response.context["poollist"]
     assert len(poollist) == 2  # 2 pools
-    assert_contains(response, POOLS_ENTRIES_FMT % 2)
+    assert_contains(typing.cast(HttpResponse, response), POOLS_ENTRIES_FMT % 2)
     assert set(poollist) == set(pools)
 
 

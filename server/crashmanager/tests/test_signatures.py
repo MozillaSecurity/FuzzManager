@@ -18,6 +18,7 @@ import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
 from django.test.client import Client
 from django.urls import reverse
 
@@ -60,7 +61,7 @@ def test_signatures_view(client: Client) -> None:  # pylint: disable=invalid-nam
     response = client.get(reverse("crashmanager:signatures"))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "signatureslist")
+    assert_contains(typing.cast(HttpResponse, response), "signatureslist")
 
 
 def test_del_signature_simple_get(
@@ -78,8 +79,13 @@ def test_del_signature_simple_get(
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Are you sure that you want to delete this signature?")
-    assert_contains(response, "Bucket contains no crash entries.")
+    assert_contains(
+        typing.cast(HttpResponse, response),
+        "Are you sure that you want to delete this signature?",
+    )
+    assert_contains(
+        typing.cast(HttpResponse, response), "Bucket contains no crash entries."
+    )
 
     # 1 crash not in toolfilter
     cm.create_toolfilter(crash1.tool)
@@ -88,7 +94,10 @@ def test_del_signature_simple_get(
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        typing.cast(HttpResponse, response),
+        "Are you sure that you want to delete this signature?",
+    )
     assert_contains(
         response,
         "Also delete all crash entries with this bucket: 0 in tool filter, "
@@ -103,7 +112,10 @@ def test_del_signature_simple_get(
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        typing.cast(HttpResponse, response),
+        "Are you sure that you want to delete this signature?",
+    )
     assert_contains(
         response,
         "Also delete all crash entries with this bucket: 1 in tool filter "
@@ -116,7 +128,10 @@ def test_del_signature_simple_get(
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        typing.cast(HttpResponse, response),
+        "Are you sure that you want to delete this signature?",
+    )
     assert_contains(
         response,
         "Also delete all crash entries with this bucket: 1 in tool filter, "
@@ -129,7 +144,10 @@ def test_del_signature_simple_get(
     response = client.get(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Are you sure that you want to delete this signature?")
+    assert_contains(
+        typing.cast(HttpResponse, response),
+        "Are you sure that you want to delete this signature?",
+    )
     assert_contains(
         response,
         "Also delete all crash entries with this bucket: 1 in tool filter, "
@@ -195,7 +213,7 @@ def test_new_signature_view(client: Client) -> None:
     response = client.get(reverse("crashmanager:signew"))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "createoredit")
+    assert_contains(typing.cast(HttpResponse, response), "createoredit")
 
 
 def test_edit_signature_view(
@@ -210,7 +228,7 @@ def test_edit_signature_view(
     response = client.get(reverse("crashmanager:sigedit", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "createoredit")
+    assert_contains(typing.cast(HttpResponse, response), "createoredit")
     assert response.context["bucketId"] == bucket.pk
 
 
@@ -338,7 +356,7 @@ def test_watch_signature_del(
         "Are you sure that you want to stop watching this signature for new crash "
         "entries?",
     )
-    assert_contains(response, bucket.shortDescription)
+    assert_contains(typing.cast(HttpResponse, response), bucket.shortDescription)
     response = client.post(
         reverse("crashmanager:sigwatchdel", kwargs={"sigid": bucket.pk})
     )
@@ -420,4 +438,4 @@ def test_watch_signature_crashes(
     assert response.status_code == requests.codes["ok"]
     assert response.context["watchId"] == watch.id
     assert response.context["restricted"] is False
-    assert_contains(response, "crasheslist")
+    assert_contains(typing.cast(HttpResponse, response), "crasheslist")

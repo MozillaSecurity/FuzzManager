@@ -19,6 +19,7 @@ import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
 from django.test.client import Client
 from django.urls import reverse
 
@@ -73,7 +74,7 @@ def test_configs_view_config(client: Client) -> None:
     assert len(configtree) == 1  # 1 config
     assert set(configtree) == {config}  # same config
     assert len(configtree[0].children) == 0
-    assert_contains(response, "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
 
 
 def test_configs_view_configs(client: Client) -> None:
@@ -88,8 +89,8 @@ def test_configs_view_configs(client: Client) -> None:
     assert set(configtree) == set(configs)  # same configs
     assert len(configtree[0].children) == 0
     assert len(configtree[1].children) == 0
-    assert_contains(response, "config #1")
-    assert_contains(response, "config #2")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #2")
 
 
 def test_configs_view_config_tree(client: Client) -> None:
@@ -119,9 +120,9 @@ def test_configs_view_config_tree(client: Client) -> None:
             raise Exception(f"unexpected configuration: {cfg.name}")
     assert seen1
     assert seen3
-    assert_contains(response, "config #1")
-    assert_contains(response, "config #2")
-    assert_contains(response, "config #3")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #2")
+    assert_contains(typing.cast(HttpResponse, response), "config #3")
 
 
 def test_create_config_view_create_form(client: Client) -> None:
@@ -130,10 +131,10 @@ def test_create_config_view_create_form(client: Client) -> None:
     response = client.get(reverse("ec2spotmanager:configcreate"))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Create Configuration")
-    assert_contains(response, 'name="name"')
-    assert_contains(response, 'name="size"')
-    assert_contains(response, 'name="cycle_interval"')
+    assert_contains(typing.cast(HttpResponse, response), "Create Configuration")
+    assert_contains(typing.cast(HttpResponse, response), 'name="name"')
+    assert_contains(typing.cast(HttpResponse, response), 'name="size"')
+    assert_contains(typing.cast(HttpResponse, response), 'name="cycle_interval"')
 
 
 def test_create_config_view_create(client: Client) -> None:
@@ -216,21 +217,21 @@ def test_create_config_view_clone(client: Client) -> None:
     response = client.get(reverse("ec2spotmanager:configcreate"), {"clone": cfg.pk})
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Clone Configuration")
-    assert_contains(response, "config #1 (Cloned)")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "Clone Configuration")
+    assert_contains(typing.cast(HttpResponse, response), "config #1 (Cloned)")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
 def test_view_config_view(client: Client) -> None:
@@ -255,20 +256,20 @@ def test_view_config_view(client: Client) -> None:
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "config #1")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
 def test_edit_config_view(client: Client) -> None:
@@ -293,21 +294,21 @@ def test_edit_config_view(client: Client) -> None:
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Edit Configuration")
-    assert_contains(response, "config #1")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "Edit Configuration")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
 def test_del_config_view_delete(client: Client) -> None:
