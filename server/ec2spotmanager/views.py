@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from operator import attrgetter
-from typing import Any
+from typing import Any, cast
 
 import fasteners
 import redis
@@ -78,7 +78,10 @@ def pools(request: HttpRequest) -> HttpResponse:
         .order_by("config__name")
     )
     # fetch all pool configs since most will be used by flatten later
-    configs = {cfg.id: cfg for cfg in PoolConfiguration.objects.all()}
+    configs = {
+        cast(int, getattr(cfg, "id", None)): cfg
+        for cfg in PoolConfiguration.objects.all()
+    }
 
     # These are all keys that are allowed for exact filtering
     exactFilterKeys = [
@@ -167,7 +170,7 @@ def viewPool(request: HttpRequest, poolid: int) -> HttpResponse:
 
     pool.msgs = PoolStatusEntry.objects.filter(pool=pool).order_by("-created")
 
-    provider_msgs: dict[str, list[str]] = {}
+    provider_msgs: dict[str, list[ProviderStatusEntry]] = {}
     relevant_providers = {}
     for msg in ProviderStatusEntry.objects.all().order_by("-created"):
         # a status provider is relevant to this pool if it is supported by the config,
