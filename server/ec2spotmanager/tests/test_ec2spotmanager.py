@@ -13,6 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -29,7 +30,9 @@ def test_ec2spotmanager_index(client: Client) -> None:
     response = client.get(reverse("ec2spotmanager:index"))
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("ec2spotmanager:pools")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:pools")
 
 
 def test_ec2spotmanager_logout(client: Client) -> None:
@@ -41,7 +44,10 @@ def test_ec2spotmanager_logout(client: Client) -> None:
     LOG.debug(response)
     response = client.get(index)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + index
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + index
+    )
 
 
 def test_ec2spotmanager_noperm(client: Client) -> None:

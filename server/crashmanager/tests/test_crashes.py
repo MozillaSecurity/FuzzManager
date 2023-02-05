@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -51,7 +52,10 @@ def test_crashes_no_login(client: Client, name: str, kwargs: dict[str, int]) -> 
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(

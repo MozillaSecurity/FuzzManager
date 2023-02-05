@@ -15,6 +15,7 @@ from __future__ import annotations
 import decimal
 import json
 import logging
+import typing
 
 import pytest
 import requests
@@ -45,7 +46,10 @@ def test_configs_no_login(client: Client, name: str, kwargs: dict[str, object]) 
     response = client.get(path)
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_configs_view_no_configs(client: Client) -> None:
@@ -184,9 +188,9 @@ def test_create_config_view_create(client: Client) -> None:
     assert cfg.gce_disk_size == 12
     assert json.loads(cfg.gce_env) == {"tag1": "value1", "tag2": "value2"}
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse(
-        "ec2spotmanager:configview", kwargs={"configid": cfg.pk}
-    )
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:configview", kwargs={"configid": cfg.pk})
     assert json.loads(cfg.gce_cmd) == ["cat"]
     assert json.loads(cfg.gce_args) == ["foo", "bar"]
     assert json.loads(cfg.gce_raw_config) == {"tag3": "value3", "tag4": "value4"}
@@ -315,7 +319,9 @@ def test_del_config_view_delete(client: Client) -> None:
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("ec2spotmanager:configs")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:configs")
     assert PoolConfiguration.objects.count() == 0
 
 

@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -31,7 +32,10 @@ def test_views_no_login(name: str, client: Client) -> None:
     path = reverse(name)
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_index_simple_get(client: Client) -> None:
@@ -56,7 +60,10 @@ def test_detail_view_no_login(client: Client) -> None:
     path = reverse("taskmanager:pool-view-ui", args=(pool.pk,))
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_detail_view_simple_get(client: Client, settings: SettingsWrapper) -> None:

@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -31,7 +32,10 @@ def test_user_settings_no_login(client: Client) -> None:
     path = reverse("crashmanager:usersettings")
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_user_settings_simple_get(client: Client) -> None:
@@ -75,7 +79,10 @@ def test_user_settings_edit(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to user settings when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/usersettings/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/usersettings/"
+    )
     user.refresh_from_db()
     assert Tool.objects.count() == 2
     assert list(user.defaultToolsFilter.all()) == list(Tool.objects.all())

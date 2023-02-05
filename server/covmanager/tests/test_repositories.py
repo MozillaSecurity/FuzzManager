@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import typing
 
 import pytest
 import requests
@@ -33,7 +34,10 @@ def test_repositories_no_login(name: str, client: Client) -> None:
     path = reverse(name)
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_repositories_view_simpleget(client: Client) -> None:

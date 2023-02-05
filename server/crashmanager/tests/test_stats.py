@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import typing
 
 import pytest
 import requests
@@ -35,7 +36,10 @@ def test_stats_view_no_login(client: Client) -> None:
     path = reverse(VIEW_NAME)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_stats_view_no_crashes(client: Client) -> None:

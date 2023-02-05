@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -45,7 +46,10 @@ def test_bug_providers_no_login(
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(
@@ -66,7 +70,10 @@ def test_bugzilla_templates_no_login(
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(
@@ -157,7 +164,10 @@ def test_template_edit(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to template list when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/bugzilla/templates/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/bugzilla/templates/"
+    )
     assert len(BugzillaTemplate.objects.all()) == 1
     template = BugzillaTemplate.objects.get()
     assert template.mode.value == "bug"
@@ -178,7 +188,10 @@ def test_template_dup(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to template list when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/bugzilla/templates/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/bugzilla/templates/"
+    )
     assert len(BugzillaTemplate.objects.all()) == 2
     template = BugzillaTemplate.objects.get(pk=pk)
     clone = BugzillaTemplate.objects.get(pk=pk + 1)
@@ -221,7 +234,10 @@ def test_template_del(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to template list when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/bugzilla/templates/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/bugzilla/templates/"
+    )
     assert len(BugzillaTemplate.objects.all()) == 0
 
 
@@ -241,7 +257,10 @@ def test_template_create_bug_post(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to template list when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/bugzilla/templates/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/bugzilla/templates/"
+    )
     assert len(BugzillaTemplate.objects.all()) == 1
     template = BugzillaTemplate.objects.get()
     assert template.mode.value == "bug"
@@ -262,7 +281,10 @@ def test_template_create_comment_post(client: Client, cm: _cm_result) -> None:
     LOG.debug(response)
     # Redirecting to template list when the action is successful
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/crashmanager/bugzilla/templates/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/crashmanager/bugzilla/templates/"
+    )
     assert len(BugzillaTemplate.objects.all()) == 1
     template = BugzillaTemplate.objects.get()
     assert template.mode.value == "comment"

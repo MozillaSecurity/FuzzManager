@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import typing
 
 import pytest
 import requests
@@ -47,7 +48,10 @@ def test_signatures_no_login(client: Client, name: str, kwargs: dict[str, int]) 
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_signatures_view(client: Client) -> None:  # pylint: disable=invalid-name
@@ -219,7 +223,9 @@ def test_del_signature_empty(
     response = client.post(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:signatures")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:signatures")
     assert not Bucket.objects.count()
 
 
@@ -233,7 +239,9 @@ def test_del_signature_leave_entries(
     response = client.post(reverse("crashmanager:sigdel", kwargs={"sigid": bucket.pk}))
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:signatures")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:signatures")
     assert not Bucket.objects.count()
     crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
     assert crash.bucket is None
@@ -251,7 +259,9 @@ def test_del_signature_del_entries(
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:signatures")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:signatures")
     assert not Bucket.objects.count()
     assert not CrashEntry.objects.count()
 
@@ -336,7 +346,9 @@ def test_watch_signature_del(
     assert not BucketWatch.objects.count()
     assert Bucket.objects.get() == bucket
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:sigwatch")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:sigwatch")
 
 
 def test_watch_signature_delsig(
@@ -365,7 +377,9 @@ def test_watch_signature_update(
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:sigwatch")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:sigwatch")
     watch = BucketWatch.objects.get(pk=watch.pk)
     assert watch.bucket == bucket
     assert watch.lastCrash == crash2.pk
@@ -384,7 +398,9 @@ def test_watch_signature_new(
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("crashmanager:sigwatch")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("crashmanager:sigwatch")
     watch = BucketWatch.objects.get()
     assert watch.bucket == bucket
     assert watch.lastCrash == crash.pk

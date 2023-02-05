@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -27,7 +28,9 @@ def test_covmanager_index(client: Client) -> None:
     client.login(username="test", password="test")
     resp = client.get(reverse("covmanager:index"))
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == reverse("covmanager:collections")
+    assert typing.cast(typing.Union[str, None], getattr(resp, "url", None)) == reverse(
+        "covmanager:collections"
+    )
 
 
 def test_covmanager_noperm(client: Client) -> None:

@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import re
+import typing
 
 import pytest
 import requests
@@ -41,7 +42,10 @@ def test_collections_no_login(name: str, client: Client) -> None:
     path = reverse(name)
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(
@@ -66,7 +70,10 @@ def test_collections_diff_no_login(client: Client) -> None:
     path = reverse("covmanager:collections_diff_api", kwargs={"path": ""})
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_collections_diff_simple_get(client: Client, cm: _result) -> None:
@@ -91,7 +98,10 @@ def test_collections_patch_no_login(client: Client) -> None:
     )
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_collections_patch_simple_get(client: Client, cm: _result) -> None:
@@ -136,7 +146,10 @@ def test_collections_browse_no_login(client: Client) -> None:
     path = reverse("covmanager:collections_browse", kwargs={"collectionid": 0})
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_collections_browse_simple_get(client: Client) -> None:
@@ -156,7 +169,10 @@ def test_collections_browse_api_no_login(client: Client) -> None:
     )
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 def test_collections_browse_api_simple_get(client: Client, cm: _result) -> None:

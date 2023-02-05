@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
 import logging
+import typing
 
 import pytest
 import requests
@@ -28,7 +29,10 @@ def test_crashmanager_redirect(client: Client) -> None:
     """Request without login hits the login redirect"""
     resp = client.get("/")
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=/"
+    )
 
 
 def test_crashmanager_no_login(client: Client) -> None:
@@ -36,7 +40,9 @@ def test_crashmanager_no_login(client: Client) -> None:
     client.login(username="test", password="test")
     resp = client.get("/")
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == reverse("crashmanager:index")
+    assert typing.cast(typing.Union[str, None], getattr(resp, "url", None)) == reverse(
+        "crashmanager:index"
+    )
 
 
 def test_crashmanager_logout(client: Client) -> None:
@@ -50,7 +56,10 @@ def test_crashmanager_logout(client: Client) -> None:
     response = client.get("/")
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=/"
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=/"
+    )
 
 
 def test_crashmanager_noperm(client: Client) -> None:
