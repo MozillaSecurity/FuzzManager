@@ -5,6 +5,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """setuptools install script"""
 
+from __future__ import annotations
+
 import site
 
 from setuptools import setup

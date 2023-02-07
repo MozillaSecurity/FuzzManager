@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from logging import getLogger
 from pathlib import Path
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
@@ -11,7 +14,7 @@ LOG = getLogger("taskmanager.management.commands.listen")
 
 
 class TaskClusterConsumer(GenericConsumer):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         repo_slug = Path(settings.TC_FUZZING_CFG_REPO.split(":", 1)[1])
         org = repo_slug.parent
         repo = repo_slug.stem
@@ -42,7 +45,7 @@ class Command(BaseCommand):
         "and schedule celery tasks to handle them"
     )
 
-    def callback(self, body, msg):
+    def callback(self, body, msg) -> None:
         if msg.delivery_info["exchange"].startswith(
             "exchange/taskcluster-queue/v1/task-"
         ):
@@ -54,7 +57,7 @@ class Command(BaseCommand):
             )
             update_task.delay(body)
             msg.ack()
-            return
+            return None
         if msg.delivery_info["exchange"] == "exchange/taskcluster-github/v1/push":
             LOG.info(
                 "%s on %s for %s",
@@ -65,16 +68,15 @@ class Command(BaseCommand):
             if body["body"]["ref"] == "refs/heads/master":
                 update_pool_defns.delay()
             msg.ack()
-            return
+            return None
         raise RuntimeError(
-            "Unhandled message: %s on %s"
-            % (
+            "Unhandled message: {} on {}".format(
                 msg.delivery_info["routing_key"],
                 msg.delivery_info["exchange"],
             )
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         LOG.info("pulse listener starting")
         try:
             TaskClusterConsumer(

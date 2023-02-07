@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import re
 import traceback
+from types import TracebackType
+from typing import Any, Callable
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
+from django.http.request import HttpRequest
+from rest_framework.request import Request
+from rest_framework.views import APIView
 
 from crashmanager.models import User
 
@@ -16,13 +23,19 @@ class ExceptionLoggingMiddleware:
     when running a Django instance with runserver.py
     """
 
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[..., Any]) -> None:
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest):
         return self.get_response(request)
 
-    def process_exception(self, request, exception):
+    def process_exception(
+        self,
+        request: HttpRequest,
+        exception: tuple[
+            type[BaseException] | None, type[BaseException] | None, TracebackType | None
+        ],
+    ) -> None:
         print(traceback.format_exc())
         return None
 
@@ -44,16 +57,22 @@ class RequireLoginMiddleware:
 
     # Based on snippet from https://stackoverflow.com/a/46976284
     # Docstring and original idea from https://stackoverflow.com/a/2164224
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[..., Any]) -> None:
         self.get_response = get_response
         self.exceptions = re.compile(
             "(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")"
         )
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest):
         return self.get_response(request)
 
-    def process_view(self, request, view_func, view_args, view_kwargs):
+    def process_view(
+        self,
+        request: HttpRequest,
+        view_func: Callable[..., Any],
+        view_args: Any,
+        view_kwargs: Any,
+    ) -> Any:
         # No need to process URLs if user already logged in
         if request.user.is_authenticated:
             return None
@@ -67,16 +86,18 @@ class RequireLoginMiddleware:
 
 
 class CheckAppPermissionsMiddleware:
-    def __init__(self, get_response):
+    def __init__(self, get_response: Callable[..., Any]) -> None:
         self.get_response = get_response
         self.exceptions = re.compile(
             "(" + "|".join(settings.LOGIN_REQUIRED_URLS_EXCEPTIONS) + ")"
         )
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest):
         return self.get_response(request)
 
-    def process_view(self, request, view_func, view_args, view_kwargs):
+    def process_view(
+        self, request: Request, view_func: APIView, view_args: Any, view_kwargs: Any
+    ) -> HttpResponseForbidden | None:
         # Get the app name
         app = view_func.__module__.split(".", 1)[0]
 

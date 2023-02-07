@@ -11,6 +11,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import subprocess
 
 from .SourceCodeProvider import (
@@ -21,10 +24,10 @@ from .SourceCodeProvider import (
 
 
 class GITSourceCodeProvider(SourceCodeProvider):
-    def __init__(self, location):
+    def __init__(self, location: str) -> None:
         super().__init__(location)
 
-    def getSource(self, filename, revision):
+    def getSource(self, filename: str, revision: str) -> str:
         try:
             return subprocess.check_output(
                 ["git", "show", f"{revision}:{filename}"], cwd=self.location
@@ -37,7 +40,7 @@ class GITSourceCodeProvider(SourceCodeProvider):
             # Otherwise assume the file doesn't exist
             raise UnknownFilenameException
 
-    def testRevision(self, revision):
+    def testRevision(self, revision: str) -> bool:
         try:
             subprocess.check_output(
                 ["git", "show", revision], cwd=self.location, stderr=subprocess.STDOUT
@@ -46,11 +49,11 @@ class GITSourceCodeProvider(SourceCodeProvider):
             return False
         return True
 
-    def update(self):
+    def update(self) -> None:
         # TODO: This will fail without remotes
         subprocess.check_call(["git", "fetch"], cwd=self.location)
 
-    def getParents(self, revision):
+    def getParents(self, revision: str) -> list[str]:
         try:
             output = subprocess.check_output(
                 ["git", "log", revision, "--format=%P"], cwd=self.location
@@ -58,19 +61,19 @@ class GITSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             raise UnknownRevisionException
 
-        output = output.decode("utf-8").splitlines()
+        output_str = output.decode("utf-8").splitlines()
 
         # No parents
-        if not output[0]:
+        if not output_str[0]:
             return []
 
-        return output[0].split(" ")
+        return output_str[0].split(" ")
 
-    def getUnifiedDiff(self, revision):
+    def getUnifiedDiff(self, revision: str) -> str:
         # TODO: Implement this method for GIT
         pass
 
-    def checkRevisionsEquivalent(self, revisionA, revisionB):
+    def checkRevisionsEquivalent(self, revisionA: str, revisionB: str) -> bool:
         # We do not implement any kind of revision equivalence
         # for GIT other than equality.
         return revisionA == revisionB

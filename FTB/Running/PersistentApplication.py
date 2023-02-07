@@ -17,6 +17,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import queue
 import signal
@@ -75,7 +78,7 @@ class PersistentApplication(metaclass=ABCMeta):
         persistentMode=PersistentMode.NONE,
         processingTimeout=10,
         inputFile=None,
-    ):
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
 
@@ -114,19 +117,20 @@ class PersistentApplication(metaclass=ABCMeta):
         self.spfpPrefix = ""
         self.spfpSuffix = ""  # To support <!-- -->
 
-    def start(self, test=None):
+    def start(self, test: str | None = None) -> int:
         pass
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
-    def runTest(self, test):
+    def runTest(self, test: str) -> int:
         pass
 
-    def status(self):
+    def status(self) -> None:
         pass
 
-    def _crashed(self):
+    def _crashed(self) -> bool:
+        assert self.process is not None
         if self.process.returncode < 0:
             crashSignals = [
                 # POSIX.1-1990 signals
@@ -157,7 +161,7 @@ class SimplePersistentApplication(PersistentApplication):
         persistentMode=PersistentMode.NONE,
         processingTimeout=10,
         inputFile=None,
-    ):
+    ) -> None:
         PersistentApplication.__init__(
             self, binary, args, env, cwd, persistentMode, processingTimeout, inputFile
         )
@@ -169,7 +173,8 @@ class SimplePersistentApplication(PersistentApplication):
         self.outCollector = None
         self.errCollector = None
 
-    def _write_log_test(self, test):
+    def _write_log_test(self, test: str) -> None:
+        assert self.testLog is not None
         self.testLog.append(test)
 
         if self.inputFile:
@@ -193,7 +198,8 @@ class SimplePersistentApplication(PersistentApplication):
             self.process.stdin.write(test)
             self.process.stdin.close()
 
-    def _wait_child_stopped(self):
+    def _wait_child_stopped(self) -> bool:
+        assert self.process is not None
         monitor = WaitpidMonitor(self.process.pid, os.WUNTRACED)
         monitor.start()
         monitor.join(self.processingTimeout)
@@ -208,10 +214,11 @@ class SimplePersistentApplication(PersistentApplication):
 
         return True
 
-    def start(self, test=None):
+    def start(self, test: str | None = None) -> int:
         assert self.process is None or self.process.poll() is not None
 
         # Reset the test log
+        assert self.testLog is not None
         self.testLog = []
 
         if self.persistentMode == PersistentMode.NONE:
@@ -315,7 +322,7 @@ class SimplePersistentApplication(PersistentApplication):
 
             return ret
 
-    def stop(self):
+    def stop(self) -> None:
         self._terminateProcess()
 
         # Ensure we leave no dangling threads when stopping
@@ -328,7 +335,7 @@ class SimplePersistentApplication(PersistentApplication):
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
-    def runTest(self, test):
+    def runTest(self, test: str) -> int:
         if self.process is None or self.process.poll() is not None:
             self.start()
 
@@ -341,6 +348,7 @@ class SimplePersistentApplication(PersistentApplication):
                     block=True, timeout=self.processingTimeout
                 )
             except queue.Empty:
+                assert self.process is not None
                 if self.process.poll() is None:
                     # The process is still running, force it to stop and return timeout
                     # code
@@ -374,6 +382,8 @@ class SimplePersistentApplication(PersistentApplication):
                         )
 
             # Update stdout/err available for the last run
+            assert self.errCollector is not None
+            assert self.outCollector is not None
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
@@ -387,6 +397,7 @@ class SimplePersistentApplication(PersistentApplication):
             )
         elif self.persistentMode == PersistentMode.SIGSTOP:
             # Resume the process
+            assert self.process is not None
             os.kill(self.process.pid, signal.SIGCONT)
 
             # Wait for process to stop itself again
@@ -415,7 +426,7 @@ class SimplePersistentApplication(PersistentApplication):
 
             return ApplicationStatus.OK
 
-    def _terminateProcess(self):
+    def _terminateProcess(self) -> None:
         if self.process:
             if self.process.poll() is None:
                 # Try to terminate the process gracefully first

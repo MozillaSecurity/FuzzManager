@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import hashlib
+from typing import Any
 
 from django.core.exceptions import MultipleObjectsReturned  # noqa
 from django.core.files.base import ContentFile
@@ -14,7 +17,7 @@ class InvalidArgumentException(APIException):
     status_code = 400
 
 
-class CollectionSerializer(serializers.ModelSerializer):
+class CollectionSerializer(serializers.ModelSerializer[Collection]):
     # We need to redefine several fields explicitly because we flatten our
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
@@ -54,7 +57,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
         return serialized
 
-    def create(self, attrs):
+    def create(self, attrs) -> Collection:
         """
         Create a Collection instance based on the given dictionary of values
         received. We need to unflatten foreign relationships like repository,
@@ -104,14 +107,14 @@ class CollectionSerializer(serializers.ModelSerializer):
         return super().create(attrs)
 
 
-class RepositorySerializer(serializers.ModelSerializer):
+class RepositorySerializer(serializers.ModelSerializer[Repository]):
     class Meta:
         model = Repository
         fields = ("name",)
         read_only_fields = ("name",)
 
 
-class ReportConfigurationSerializer(serializers.ModelSerializer):
+class ReportConfigurationSerializer(serializers.ModelSerializer[ReportConfiguration]):
     repository = serializers.CharField(source="repository.name", max_length=255)
 
     class Meta:
@@ -126,7 +129,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         request = self.context.get("request")
@@ -139,7 +142,7 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
             for field in exclude_fields:
                 self.fields.pop(field)
 
-    def handle_repository(self, attrs):
+    def handle_repository(self, attrs) -> None:
         """
         When creating or updating a ReportConfiguration instance, we need to unflatten
         the foreign relationship to the repository and validate that it exists.
@@ -159,20 +162,20 @@ class ReportConfigurationSerializer(serializers.ModelSerializer):
 
         attrs["repository"] = repository[0]
 
-    def update(self, instance, attrs):
+    def update(self, instance, attrs) -> ReportConfiguration:
         self.handle_repository(attrs)
 
         # Update our ReportConfiguration instance
         return super().update(instance, attrs)
 
-    def create(self, attrs):
+    def create(self, attrs) -> ReportConfiguration:
         self.handle_repository(attrs)
 
         # Create our ReportConfiguration instance
         return super().create(attrs)
 
 
-class ReportSerializer(serializers.ModelSerializer):
+class ReportSerializer(serializers.ModelSerializer[Report]):
     class Meta:
         model = Report
         fields = (
@@ -185,7 +188,7 @@ class ReportSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "data_created", "coverage")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         request = self.context.get("request")

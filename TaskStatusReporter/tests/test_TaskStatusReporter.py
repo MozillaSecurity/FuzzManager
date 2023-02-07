@@ -1,7 +1,12 @@
+from __future__ import annotations
+
+from pathlib import Path
 from unittest.mock import Mock, patch
 from urllib.parse import urlsplit
 
 import pytest
+from django.contrib.auth.models import User
+from pytest_django.live_server_helper import LiveServer
 
 from taskmanager.models import Task
 from taskmanager.tests import create_pool, create_task
@@ -11,7 +16,7 @@ pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = "server.tests"
 
 
-def test_taskstatusreporter_help(capsys):
+def test_taskstatusreporter_help(capsys: pytest.CaptureFixture[str]) -> None:
     """Test that help prints without throwing"""
     with pytest.raises(SystemExit):
         main()
@@ -22,7 +27,9 @@ def test_taskstatusreporter_help(capsys):
 # @pytest.mark.skipif(str is bytes, reason="TaskManager requires python3")
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
-def test_taskstatusreporter_report(mock_expanduser, live_server, tmp_path, fm_user):
+def test_taskstatusreporter_report(
+    mock_expanduser: Mock, live_server: LiveServer, tmp_path: Path, fm_user: User
+) -> None:
     """Test report submission"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path

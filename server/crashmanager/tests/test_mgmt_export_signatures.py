@@ -9,6 +9,8 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -23,12 +25,12 @@ from crashmanager.models import Bucket
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
-def test_args():
+def test_args() -> None:
     with pytest.raises(CommandError, match=r"Error: .* arguments"):
         call_command("export_signatures")
 
 
-def test_none():
+def test_none() -> None:
     fd, tmpf = tempfile.mkstemp()
     os.close(fd)
     try:
@@ -40,7 +42,7 @@ def test_none():
         os.unlink(tmpf)
 
 
-def test_some():
+def test_some() -> None:
     sig1 = Bucket.objects.create(signature="sig1", frequent=True)
     sig2 = Bucket.objects.create(signature="sig2", shortDescription="desc")
     members = set()

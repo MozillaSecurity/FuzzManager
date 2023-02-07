@@ -37,3 +37,7 @@ coverage/
 # NPM
 server/frontend/node_modules
 server/frontend/dist
+
+# IDE / Editor
+.vscode/
+.idea/

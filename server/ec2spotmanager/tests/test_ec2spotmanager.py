@@ -9,30 +9,33 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
+import typing
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.ec2spotmanager"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.ec2spotmanager")
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
 
 
-def test_ec2spotmanager_index(client):
+def test_ec2spotmanager_index(client: Client) -> None:
     """Request of root url redirects to pools view"""
     client.login(username="test", password="test")
     response = client.get(reverse("ec2spotmanager:index"))
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("ec2spotmanager:pools")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:pools")
 
 
-def test_ec2spotmanager_logout(client):
+def test_ec2spotmanager_logout(client: Client) -> None:
     """Logout url actually logs us out"""
     client.login(username="test", password="test")
     index = reverse("ec2spotmanager:pools")
@@ -41,10 +44,13 @@ def test_ec2spotmanager_logout(client):
     LOG.debug(response)
     response = client.get(index)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + index
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + index
+    )
 
 
-def test_ec2spotmanager_noperm(client):
+def test_ec2spotmanager_noperm(client: Client) -> None:
     """Request without permission results in 403"""
     client.login(username="test-noperm", password="test")
     resp = client.get(reverse("ec2spotmanager:index"))

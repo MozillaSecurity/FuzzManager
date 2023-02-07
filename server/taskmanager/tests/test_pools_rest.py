@@ -8,6 +8,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import datetime
 import itertools
 import json
@@ -16,6 +19,7 @@ import logging
 import pytest
 import requests
 from django.contrib.auth.models import User
+from rest_framework.test import APIClient
 
 from . import create_pool, create_task
 
@@ -23,7 +27,7 @@ LOG = logging.getLogger("fm.taskmanager.tests.pools.rest")
 pytestmark = pytest.mark.usefixtures("taskmanager_test")  # pylint: disable=invalid-name
 
 
-def test_rest_pools_no_auth(api_client):
+def test_rest_pools_no_auth(api_client: APIClient) -> None:
     """must yield forbidden without authentication"""
     url = "/taskmanager/rest/pools/"
     assert api_client.get(url).status_code == requests.codes["unauthorized"]
@@ -33,7 +37,7 @@ def test_rest_pools_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pools_no_perm(api_client):
+def test_rest_pools_no_perm(api_client: APIClient) -> None:
     """must yield forbidden without permission"""
     user = User.objects.get(username="test-noperm")
     api_client.force_authenticate(user=user)
@@ -49,7 +53,7 @@ def test_rest_pools_no_perm(api_client):
     ("method", "item"),
     itertools.product(["post", "patch", "put", "delete"], [True, False]),
 )
-def test_rest_pool_methods(api_client, method, item):
+def test_rest_pool_methods(api_client: APIClient, method: str, item: bool) -> None:
     """post/put/patch/delete should not be allowed"""
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
@@ -59,14 +63,14 @@ def test_rest_pool_methods(api_client, method, item):
     else:
         url = "/taskmanager/rest/pools/"
 
-    method = getattr(api_client, method)
-    resp = method(url)
+    method_ = getattr(api_client, method)
+    resp = method_(url)
     LOG.debug(resp)
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
 @pytest.mark.parametrize("item", [True, False])
-def test_rest_pool_read(api_client, item):
+def test_rest_pool_read(api_client: APIClient, item: bool) -> None:
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     pool = create_pool()
@@ -109,7 +113,7 @@ def test_rest_pool_read(api_client, item):
     assert datetime.timedelta(seconds=int(resp["cycle_time"])) == pool.cycle_time
 
 
-def test_rest_pool_running_status(api_client):
+def test_rest_pool_running_status(api_client: APIClient) -> None:
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     pool = create_pool()

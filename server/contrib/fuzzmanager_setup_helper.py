@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import random
 import string
@@ -7,7 +9,7 @@ import sys
 import django
 
 
-def create_fuzzmanager():
+def create_fuzzmanager() -> None:
     # This is a throw away password, that is soon reset to the auth_token for
     # fuzzmanager
     password = "".join(random.sample(string.letters, 20))
@@ -80,7 +82,7 @@ def create_fuzzmanager():
         print("Something went wrong creating the fuzzmanager account")
 
 
-def main():
+def main() -> None:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
     from django.contrib.auth.models import User
 

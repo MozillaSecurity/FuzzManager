@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import hashlib
 import json
@@ -10,7 +12,7 @@ from . import cron  # noqa ensure cron tasks get registered
 
 
 @app.task(ignore_result=True)
-def check_revision_update(pk):
+def check_revision_update(pk: int) -> None:
     from covmanager.models import Collection, Repository  # noqa
 
     collection = Collection.objects.get(pk=pk)
@@ -32,7 +34,7 @@ def check_revision_update(pk):
 
 
 @app.task(ignore_result=True)
-def aggregate_coverage_data(pk, pks):
+def aggregate_coverage_data(pk: int, pks: list[int]) -> None:
     from covmanager.models import Collection, CollectionFile
     from FTB import CoverageHelper
 
@@ -84,7 +86,7 @@ def aggregate_coverage_data(pk, pks):
 
 
 @app.task(ignore_result=True)
-def calculate_report_summary(pk):
+def calculate_report_summary(pk: int) -> None:
     from covmanager.models import ReportConfiguration, ReportSummary
 
     summary = ReportSummary.objects.get(pk=pk)
@@ -142,6 +144,7 @@ def calculate_report_summary(pk):
 
     if waiting:
         # We shouldn't have orphaned reports
+        assert data is not None
         data["warning"] = "There are orphaned reports that won't be displayed."
 
     summary.cached_result = json.dumps(data)

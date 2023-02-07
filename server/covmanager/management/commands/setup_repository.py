@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import os
+from argparse import ArgumentParser
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -8,12 +12,12 @@ from covmanager.models import Repository
 class Command(BaseCommand):
     help = "Sets up a repository for CovManager"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("name", help="repository identifier")
         parser.add_argument("provider", help="SourceCodeProvider subclass")
         parser.add_argument("location", help="path to the repository root")
 
-    def handle(self, name, provider, location, **opts):
+    def handle(self, name, provider, location, **opts: Any) -> None:
 
         if not name:
             raise CommandError("Error: invalid repository name")
@@ -52,6 +56,6 @@ class Command(BaseCommand):
         repository.save()
 
         print(
-            "Successfully created repository '%s' with provider '%s' located at %s"
-            % (name, provider, location)
+            f"Successfully created repository '{name}' with provider '{provider}' "
+            f"located at {location}"
         )

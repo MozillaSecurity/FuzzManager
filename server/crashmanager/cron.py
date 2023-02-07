@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import shutil
 from tempfile import mkstemp
@@ -12,22 +14,22 @@ SIGNATURES_ZIP = os.path.realpath(
 
 
 @app.task(ignore_result=True)
-def bug_update_status():
+def bug_update_status() -> None:
     call_command("bug_update_status")
 
 
 @app.task(ignore_result=True)
-def cleanup_old_crashes():
+def cleanup_old_crashes() -> None:
     call_command("cleanup_old_crashes")
 
 
 @app.task(ignore_result=True)
-def triage_new_crashes():
+def triage_new_crashes() -> None:
     call_command("triage_new_crashes")
 
 
 @app.task(ignore_result=True)
-def export_signatures():
+def export_signatures() -> None:
     fd, tmpf = mkstemp(prefix="fm-sigs-", suffix=".zip")
     os.close(fd)
     try:
@@ -39,5 +41,5 @@ def export_signatures():
 
 
 @app.task(ignore_result=True)
-def notify_by_email():
+def notify_by_email() -> None:
     call_command("notify_by_email")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import requests
@@ -20,7 +22,7 @@ logger = logging.getLogger("covmanager")
 # a summarized report for your testing efforts.
 
 
-def create_weekly_report_mc(revision):
+def create_weekly_report_mc(revision: str) -> None:
     from crashmanager.models import Client
 
     from .models import Collection, Report, Repository
@@ -39,7 +41,9 @@ def create_weekly_report_mc(revision):
         .exclude(description__contains="IGNORE_MERGE")
     )
 
-    last_monday = collections.first().created + relativedelta(weekday=MO(-1))
+    collections_first = collections.first()
+    assert collections_first is not None
+    last_monday = collections_first.created + relativedelta(weekday=MO(-1))
 
     mergedCollection = Collection()
     mergedCollection.description = "Weekly Report (Week of {}, {} reports)".format(
@@ -70,7 +74,7 @@ def create_weekly_report_mc(revision):
 
 
 @app.task(ignore_result=True)
-def create_current_weekly_report_mc():
+def create_current_weekly_report_mc() -> None:
     COVERAGE_REVISION_URL = getattr(settings, "COVERAGE_REVISION_URL", None)
 
     if not COVERAGE_REVISION_URL:

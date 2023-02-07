@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from logging import getLogger
 
@@ -10,7 +12,7 @@ LOG = getLogger("taskmanager.cron")
 
 
 @app.task(ignore_result=True)
-def update_tasks():
+def update_tasks() -> None:
     import taskcluster
 
     from .models import Task
@@ -25,9 +27,9 @@ def update_tasks():
     # normal, try to update the task directly from taskcluster
 
     task_status = {}
-    done = set()
+    done: set[tuple[int, int]] = set()
 
-    def _update_task_run(task_id, run_id):
+    def _update_task_run(task_id: int, run_id: int) -> None:
         if (task_id, run_id) in done:
             return
 
@@ -71,7 +73,7 @@ def update_tasks():
 
 
 @app.task(ignore_result=True)
-def delete_expired():
+def delete_expired() -> None:
     from .models import Task
 
     # if the tasks no longer exist, or are expired, remove them from our DB too

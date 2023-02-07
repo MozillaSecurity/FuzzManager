@@ -12,20 +12,23 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import threading
 
 
 class WaitpidMonitor(threading.Thread):
-    def __init__(self, pid, options):
+    def __init__(self, pid: int, options: int) -> None:
         threading.Thread.__init__(self)
 
-        self.pid = pid
-        self.options = options
+        self.pid: int = pid
+        self.options: int = options
 
-        self.childPid = None
-        self.childExit = None
+        self.childPid: int | None = None
+        self.childExit: int | None = None
 
-    def run(self):
+    def run(self) -> None:
         while not self.childPid:
             (self.childPid, self.childExit) = os.waitpid(self.pid, self.options)

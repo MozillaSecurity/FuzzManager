@@ -1,4 +1,8 @@
+from __future__ import annotations
+
+import argparse
 import json
+from typing import Any
 from zipfile import ZipFile
 
 from django.core.management.base import BaseCommand
@@ -10,12 +14,12 @@ from crashmanager.models import Bucket, CrashEntry
 class Command(BaseCommand):
     help = "Export signatures and their metadata."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "filename", help="output filename to write signatures zip to"
         )
 
-    def handle(self, filename, **options):
+    def handle(self, filename: str, **options: Any) -> None:
 
         with ZipFile(filename, "w") as zipFile:
             for bucket in Bucket.objects.annotate(

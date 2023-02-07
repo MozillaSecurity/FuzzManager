@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import base64
 import hashlib
+from datetime import datetime
+from typing import Any
 
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned  # noqa
@@ -32,7 +36,7 @@ class InvalidArgumentException(APIException):
     status_code = 400
 
 
-class CrashEntrySerializer(serializers.ModelSerializer):
+class CrashEntrySerializer(serializers.ModelSerializer[CrashEntry]):
     # We need to redefine several fields explicitly because we flatten our
     # foreign keys into these fields instead of using primary keys, hyperlinks
     # or slug fields. All of the other solutions would require the client to
@@ -57,7 +61,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         source="testcase.isBinary", required=False, default=False
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
 
         include_raw = kwargs.pop("include_raw", True)
 
@@ -97,7 +101,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         ordering = ["-id"]
         read_only_fields = ("bucket", "id", "shortSignature", "crashAddress")
 
-    def create(self, attrs):
+    def create(self, attrs) -> CrashEntry:
         """
         Create a CrashEntry instance based on the given dictionary of values
         received. We need to unflatten foreign relationships like product,
@@ -179,7 +183,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             raise
 
 
-class BucketSerializer(serializers.ModelSerializer):
+class BucketSerializer(serializers.ModelSerializer[Bucket]):
     signature = serializers.CharField(
         style={"base_template": "textarea.html"}, required=False
     )
@@ -258,28 +262,28 @@ class BucketVueSerializer(BucketSerializer):
             "view_url",
         )
 
-    def get_bug_closed(self, sig):
+    def get_bug_closed(self, sig: Bucket) -> datetime | None:
         if sig.bug:
             return sig.bug.closed
         return None
 
-    def get_bug_hostname(self, sig):
+    def get_bug_hostname(self, sig: Bucket) -> str | None:
         if sig.bug and sig.bug.externalType:
-            return sig.bug.externalType.hostname
+            return str(sig.bug.externalType.hostname)
         return None
 
-    def get_bug_urltemplate(self, sig):
+    def get_bug_urltemplate(self, sig: Bucket) -> str | None:
         if sig.bug and sig.bug.externalType:
             try:
-                return sig.bug.externalType.urlTemplate % sig.bug.externalId
+                return str(sig.bug.externalType.urlTemplate % sig.bug.externalId)
             except Exception:
                 return None
         return None
 
-    def get_opt_pre_url(self, sig):
+    def get_opt_pre_url(self, sig: Bucket) -> str:
         return reverse("crashmanager:sigoptpre", kwargs={"sigid": sig.id})
 
-    def get_view_url(self, sig):
+    def get_view_url(self, sig: Bucket) -> str:
         return reverse("crashmanager:sigview", kwargs={"sigid": sig.id})
 
 
@@ -303,22 +307,22 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
             "find_sigs_url",
         )
 
-    def get_view_url(self, entry):
+    def get_view_url(self, entry: CrashEntry) -> str:
         return reverse("crashmanager:crashview", kwargs={"crashid": entry.id})
 
-    def get_sig_view_url(self, entry):
+    def get_sig_view_url(self, entry: CrashEntry) -> str | None:
         if entry.bucket:
             return reverse("crashmanager:sigview", kwargs={"sigid": entry.bucket.id})
         return None
 
-    def get_sig_new_url(self, entry):
+    def get_sig_new_url(self, entry: CrashEntry) -> str:
         return f"{reverse('crashmanager:signew')}?crashid={entry.id}"
 
-    def get_find_sigs_url(self, entry):
+    def get_find_sigs_url(self, entry: CrashEntry) -> str:
         return reverse("crashmanager:findsigs", kwargs={"crashid": entry.id})
 
 
-class BugProviderSerializer(serializers.ModelSerializer):
+class BugProviderSerializer(serializers.ModelSerializer[BugProvider]):
     class Meta:
         model = BugProvider
         fields = (
@@ -329,7 +333,7 @@ class BugProviderSerializer(serializers.ModelSerializer):
         )
 
 
-class BugzillaTemplateSerializer(serializers.ModelSerializer):
+class BugzillaTemplateSerializer(serializers.ModelSerializer[BugzillaTemplate]):
     mode = serializers.SerializerMethodField()
 
     class Meta:
@@ -368,7 +372,7 @@ class BugzillaTemplateSerializer(serializers.ModelSerializer):
         return obj.mode.value
 
 
-class NotificationSerializer(serializers.ModelSerializer):
+class NotificationSerializer(serializers.ModelSerializer[Notification]):
     actor_url = serializers.SerializerMethodField()
     target_url = serializers.SerializerMethodField()
     external_bug_url = serializers.SerializerMethodField()
@@ -385,7 +389,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "external_bug_url",
         )
 
-    def get_actor_url(self, notification):
+    def get_actor_url(self, notification: Notification) -> str | None:
         if isinstance(notification.actor, Bucket):
             return reverse(
                 "crashmanager:sigview", kwargs={"sigid": notification.actor.id}
@@ -395,7 +399,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"
         return None
 
-    def get_target_url(self, notification):
+    def get_target_url(self, notification: Notification) -> str | None:
         if isinstance(notification.target, CrashEntry):
             return reverse(
                 "crashmanager:crashview", kwargs={"crashid": notification.target.id}
@@ -406,7 +410,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             )
         return None
 
-    def get_external_bug_url(self, notification):
+    def get_external_bug_url(self, notification: Notification) -> str | None:
         if isinstance(notification.target, Bug):
             return (
                 f"https://{notification.target.externalType.hostname}"

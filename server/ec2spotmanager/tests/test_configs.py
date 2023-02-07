@@ -9,12 +9,18 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import decimal
 import json
 import logging
+import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
+from django.test.client import Client
 from django.urls import reverse
 
 from ec2spotmanager.models import PoolConfiguration
@@ -35,16 +41,19 @@ pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")
         ("ec2spotmanager:configdel", {"configid": 0}),
     ],
 )
-def test_configs_no_login(client, name, kwargs):
+def test_configs_no_login(client: Client, name: str, kwargs: dict[str, object]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     response = client.get(path)
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
-def test_configs_view_no_configs(client):
+def test_configs_view_no_configs(client: Client) -> None:
     """If no configs in db, an appropriate message is shown."""
     client.login(username="test", password="test")
     response = client.get(reverse("ec2spotmanager:configs"))
@@ -54,7 +63,7 @@ def test_configs_view_no_configs(client):
     assert len(configtree) == 0  # 0 configs
 
 
-def test_configs_view_config(client):
+def test_configs_view_config(client: Client) -> None:
     """Create config and see that it is shown."""
     client.login(username="test", password="test")
     config = create_config("config #1")
@@ -65,10 +74,10 @@ def test_configs_view_config(client):
     assert len(configtree) == 1  # 1 config
     assert set(configtree) == {config}  # same config
     assert len(configtree[0].children) == 0
-    assert_contains(response, "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
 
 
-def test_configs_view_configs(client):
+def test_configs_view_configs(client: Client) -> None:
     """Create configs and see that they are shown."""
     client.login(username="test", password="test")
     configs = (create_config("config #1"), create_config("config #2"))
@@ -80,11 +89,11 @@ def test_configs_view_configs(client):
     assert set(configtree) == set(configs)  # same configs
     assert len(configtree[0].children) == 0
     assert len(configtree[1].children) == 0
-    assert_contains(response, "config #1")
-    assert_contains(response, "config #2")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #2")
 
 
-def test_configs_view_config_tree(client):
+def test_configs_view_config_tree(client: Client) -> None:
     """Create nested configs and see that they are shown."""
     client.login(username="test", password="test")
     config1 = create_config("config #1")
@@ -111,24 +120,24 @@ def test_configs_view_config_tree(client):
             raise Exception(f"unexpected configuration: {cfg.name}")
     assert seen1
     assert seen3
-    assert_contains(response, "config #1")
-    assert_contains(response, "config #2")
-    assert_contains(response, "config #3")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "config #2")
+    assert_contains(typing.cast(HttpResponse, response), "config #3")
 
 
-def test_create_config_view_create_form(client):
+def test_create_config_view_create_form(client: Client) -> None:
     """Config creation form should be shown"""
     client.login(username="test", password="test")
     response = client.get(reverse("ec2spotmanager:configcreate"))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Create Configuration")
-    assert_contains(response, 'name="name"')
-    assert_contains(response, 'name="size"')
-    assert_contains(response, 'name="cycle_interval"')
+    assert_contains(typing.cast(HttpResponse, response), "Create Configuration")
+    assert_contains(typing.cast(HttpResponse, response), 'name="name"')
+    assert_contains(typing.cast(HttpResponse, response), 'name="size"')
+    assert_contains(typing.cast(HttpResponse, response), 'name="cycle_interval"')
 
 
-def test_create_config_view_create(client):
+def test_create_config_view_create(client: Client) -> None:
     """Config created via form should be added to db"""
     client.login(username="test", password="test")
     response = client.post(
@@ -180,15 +189,15 @@ def test_create_config_view_create(client):
     assert cfg.gce_disk_size == 12
     assert json.loads(cfg.gce_env) == {"tag1": "value1", "tag2": "value2"}
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse(
-        "ec2spotmanager:configview", kwargs={"configid": cfg.pk}
-    )
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:configview", kwargs={"configid": cfg.pk})
     assert json.loads(cfg.gce_cmd) == ["cat"]
     assert json.loads(cfg.gce_args) == ["foo", "bar"]
     assert json.loads(cfg.gce_raw_config) == {"tag3": "value3", "tag4": "value4"}
 
 
-def test_create_config_view_clone(client):
+def test_create_config_view_clone(client: Client) -> None:
     """Creation form should contain source data"""
     client.login(username="test", password="test")
     cfg = create_config(
@@ -208,24 +217,24 @@ def test_create_config_view_clone(client):
     response = client.get(reverse("ec2spotmanager:configcreate"), {"clone": cfg.pk})
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Clone Configuration")
-    assert_contains(response, "config #1 (Cloned)")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "Clone Configuration")
+    assert_contains(typing.cast(HttpResponse, response), "config #1 (Cloned)")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
-def test_view_config_view(client):
+def test_view_config_view(client: Client) -> None:
     """Create a config and view it"""
     cfg = create_config(
         name="config #1",
@@ -247,23 +256,23 @@ def test_view_config_view(client):
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "config #1")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
-def test_edit_config_view(client):
+def test_edit_config_view(client: Client) -> None:
     """Edit an existing config"""
     cfg = create_config(
         name="config #1",
@@ -285,24 +294,24 @@ def test_edit_config_view(client):
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
-    assert_contains(response, "Edit Configuration")
-    assert_contains(response, "config #1")
-    assert_contains(response, "1234567")
-    assert_contains(response, "7654321")
-    assert_contains(response, "key #1")
-    assert_contains(response, "group #1")
-    assert_contains(response, "machine #1")
-    assert_contains(response, "ami #1")
-    assert_contains(response, "yup=123")
-    assert_contains(response, "nope=456")
-    assert_contains(response, "nowhere")
-    assert_contains(response, "0.01")
-    assert_contains(response, "bad=false")
-    assert_contains(response, "good=true")
-    assert_contains(response, "hello=world")
+    assert_contains(typing.cast(HttpResponse, response), "Edit Configuration")
+    assert_contains(typing.cast(HttpResponse, response), "config #1")
+    assert_contains(typing.cast(HttpResponse, response), "1234567")
+    assert_contains(typing.cast(HttpResponse, response), "7654321")
+    assert_contains(typing.cast(HttpResponse, response), "key #1")
+    assert_contains(typing.cast(HttpResponse, response), "group #1")
+    assert_contains(typing.cast(HttpResponse, response), "machine #1")
+    assert_contains(typing.cast(HttpResponse, response), "ami #1")
+    assert_contains(typing.cast(HttpResponse, response), "yup=123")
+    assert_contains(typing.cast(HttpResponse, response), "nope=456")
+    assert_contains(typing.cast(HttpResponse, response), "nowhere")
+    assert_contains(typing.cast(HttpResponse, response), "0.01")
+    assert_contains(typing.cast(HttpResponse, response), "bad=false")
+    assert_contains(typing.cast(HttpResponse, response), "good=true")
+    assert_contains(typing.cast(HttpResponse, response), "hello=world")
 
 
-def test_del_config_view_delete(client):
+def test_del_config_view_delete(client: Client) -> None:
     """Delete an existing config"""
     cfg = create_config(name="config #1")
     client.login(username="test", password="test")
@@ -311,11 +320,13 @@ def test_del_config_view_delete(client):
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
-    assert response.url == reverse("ec2spotmanager:configs")
+    assert typing.cast(
+        typing.Union[str, None], getattr(response, "url", None)
+    ) == reverse("ec2spotmanager:configs")
     assert PoolConfiguration.objects.count() == 0
 
 
-def test_del_config_view_simple_get(client):
+def test_del_config_view_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     cfg = create_config(name="config #1")
     client.login(username="test", password="test")

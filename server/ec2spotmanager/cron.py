@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import json
 import logging
@@ -26,7 +28,7 @@ CHECK_POOL_LOCK_EXPIRY = 30 * 60
 
 
 @app.task(ignore_result=True)
-def update_stats():
+def update_stats() -> None:
     from .models import (
         Instance,
         InstancePool,
@@ -77,7 +79,7 @@ def update_stats():
         # Now check if we need to aggregate some of the detail entries we have
         entries = PoolUptimeDetailedEntry.objects.filter(pool=pool).order_by("created")
 
-        n = entries.count() - (STATS_TOTAL_DETAILED * 60 * 60) / STATS_DELTA_SECS
+        n = int(entries.count() - (STATS_TOTAL_DETAILED * 60 * 60) / STATS_DELTA_SECS)
         if n > 0:
             # We need to aggregate some entries
             entriesAggr = entries[:n]
@@ -132,7 +134,7 @@ def update_stats():
 
 
 @app.task
-def _release_lock(lock_key):
+def _release_lock(lock_key: str) -> None:
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
     lock = RedisLock(cache, "ec2spotmanager:check_instance_pools", unique_id=lock_key)
     if not lock.release():
@@ -143,7 +145,7 @@ def _release_lock(lock_key):
 
 
 @app.task(ignore_result=True)
-def check_instance_pools():
+def check_instance_pools() -> None:
     """EC2SpotManager daemon.
 
     - checks all instance pools
@@ -281,7 +283,7 @@ def check_instance_pools():
 
 
 @app.task(ignore_result=True)
-def update_prices():
+def update_prices() -> None:
     """Periodically refresh spot price history and store it in redis to be consumed when
     spot instances are created.
 
@@ -304,7 +306,7 @@ def update_prices():
         if not regions:
             continue
 
-        prices = {}
+        prices: dict[str, dict[str, str]] = {}
         for region in regions:
             for instance_type, price_data in cloud_provider.get_prices_per_region(
                 region

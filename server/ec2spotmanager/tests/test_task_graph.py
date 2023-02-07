@@ -9,10 +9,14 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
 from unittest.mock import call
 
 import pytest
+from pytest_mock import MockerFixture
 
 from ec2spotmanager.CloudProvider.CloudProvider import INSTANCE_STATE
 from ec2spotmanager.cron import check_instance_pools
@@ -26,7 +30,7 @@ pytestmark = pytest.mark.usefixtures(
 )  # pylint: disable=invalid-name
 
 
-def test_update_pool_graph(mocker):
+def test_update_pool_graph(mocker: MockerFixture) -> None:
     mock_group = mocker.patch("celery.group")
     mock_chain = mocker.patch("celery.chain")
     mock_chord = mocker.patch("celery.chord")
@@ -195,7 +199,7 @@ def test_update_pool_graph(mocker):
     assert mock_chain.return_value.on_error.return_value.call_args == call()
 
 
-def test_update_pool_graph_unsupported_running(mocker):
+def test_update_pool_graph_unsupported_running(mocker: MockerFixture) -> None:
     """check that unsupported but running instances are still updated
     eg. if a config is edited to exclude a provider, but there are already instances.
     we should still update them.
@@ -308,7 +312,7 @@ def test_update_pool_graph_unsupported_running(mocker):
     assert mock_chain.return_value.on_error.return_value.call_args == call()
 
 
-def test_terminate_instances(mocker):
+def test_terminate_instances(mocker: MockerFixture) -> None:
     """test that terminate instances triggers the appropriate subtasks"""
     mock_group = mocker.patch("celery.group")
     mock_term_instance = mocker.patch("ec2spotmanager.tasks._terminate_instance_ids")

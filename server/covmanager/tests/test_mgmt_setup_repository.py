@@ -8,6 +8,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import os
 
 import pytest
@@ -18,7 +21,7 @@ from covmanager.models import Repository
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
-def test_bad_args():
+def test_bad_args() -> None:
     with pytest.raises(CommandError, match=r"Error: .*? arguments"):
         call_command("setup_repository")
 
@@ -41,7 +44,7 @@ def test_bad_args():
         call_command("setup_repository", "", "", "", "")
 
 
-def test_repo_exists():
+def test_repo_exists() -> None:
     Repository.objects.create(name="test")
     with pytest.raises(
         CommandError, match=r"Error: repository with name '.*' already exists!"
@@ -49,14 +52,14 @@ def test_repo_exists():
         call_command("setup_repository", "test", "", "")
 
 
-def test_bad_provider():
+def test_bad_provider() -> None:
     with pytest.raises(
         CommandError, match=r"Error: 'bad' is not a valid source code provider!"
     ):
         call_command("setup_repository", "test", "bad", ".")
 
 
-def test_git_create():
+def test_git_create() -> None:
     call_command("setup_repository", "test", "git", ".")
     repo = Repository.objects.get(name="test")
     assert repo.classname == "GITSourceCodeProvider"
@@ -68,7 +71,7 @@ def test_git_create():
     assert repo.location == os.path.realpath(".")
 
 
-def test_hg_create():
+def test_hg_create() -> None:
     call_command("setup_repository", "test", "hg", ".")
     repo = Repository.objects.get(name="test")
     assert repo.classname == "HGSourceCodeProvider"

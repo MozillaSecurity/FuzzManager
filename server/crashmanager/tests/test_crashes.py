@@ -8,13 +8,20 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import logging
+import typing
 
 import pytest
 import requests
+from django.http.response import HttpResponse
+from django.test.client import Client
 from django.urls import reverse
 
 from . import assert_contains
+from .conftest import _cm_result
 
 LOG = logging.getLogger("fm.crashmanager.tests.crashes")
 pytestmark = pytest.mark.usefixtures(
@@ -22,14 +29,14 @@ pytestmark = pytest.mark.usefixtures(
 )  # pylint: disable=invalid-name
 
 
-def test_crashes_view(client):  # pylint: disable=invalid-name
+def test_crashes_view(client: Client) -> None:  # pylint: disable=invalid-name
     """Check that the Vue component is called"""
     client.login(username="test", password="test")
     response = client.get(reverse("crashmanager:crashes"))
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
     assert response.context["restricted"] is False
-    assert_contains(response, "crasheslist")
+    assert_contains(typing.cast(HttpResponse, response), "crasheslist")
 
 
 @pytest.mark.parametrize(
@@ -41,19 +48,24 @@ def test_crashes_view(client):  # pylint: disable=invalid-name
         ("crashmanager:crashview", {"crashid": 0}),
     ],
 )
-def test_crashes_no_login(client, name, kwargs):
+def test_crashes_no_login(client: Client, name: str, kwargs: dict[str, int]) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name, kwargs=kwargs)
     resp = client.get(path)
     assert resp.status_code == requests.codes["found"]
-    assert resp.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(resp, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(
     "name",
     ["crashmanager:crashdel", "crashmanager:crashedit", "crashmanager:crashview"],
 )
-def test_crash_simple_get(client, cm, name):  # pylint: disable=invalid-name
+def test_crash_simple_get(
+    client: Client, cm: _cm_result, name: str
+) -> None:  # pylint: disable=invalid-name
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     crash = cm.create_crash()
@@ -62,7 +74,7 @@ def test_crash_simple_get(client, cm, name):  # pylint: disable=invalid-name
     assert response.status_code == requests.codes["ok"]
 
 
-def test_delete_testcase(cm):
+def test_delete_testcase(cm: _cm_result) -> None:
     """Testcases should be delete when TestCase object is removed"""
     testcase = cm.create_testcase("test.txt", "hello world")
     test_file = testcase.test.name
@@ -76,7 +88,7 @@ def test_delete_testcase(cm):
         )
 
 
-def test_delete_testcase_crash(cm):
+def test_delete_testcase_crash(cm: _cm_result) -> None:
     """Testcases should be delete when CrashInfo object is removed"""
     testcase = cm.create_testcase("test.txt", "hello world")
     test_file = testcase.test.name

@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import codecs
 import json
+from datetime import datetime
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import User as DjangoUser  # noqa
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.db.models.query import QuerySet
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
@@ -47,11 +52,11 @@ class Collection(models.Model):
     branch = models.CharField(max_length=255, blank=True)
     tools = models.ManyToManyField(Tool)
     client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    coverage = models.ForeignKey(
+    coverage: CollectionFile | None = models.ForeignKey(
         CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # This variable can hold the deserialized contents of the coverage blob
         self.content = None
 
@@ -72,19 +77,19 @@ class Collection(models.Model):
 
         super().__init__(*args, **kwargs)
 
-    def loadCoverage(self):
+    def loadCoverage(self) -> None:
+        assert self.coverage is not None
         self.coverage.file.open(mode="rb")
         self.content = json.load(codecs.getreader("utf-8")(self.coverage.file))
         self.coverage.file.close()
 
-    def annotateSource(self, path, coverage):
+    def annotateSource(self, path: str, coverage) -> None:
         """
         Annotate the source code to the given (leaf) coverage object by querying
         the SourceCodeProvider registered for the repository associated with this
         collection. The resulting source code is added to a "source" property in
         the object.
 
-        @type path: string
         @param path: The path to the source code that this coverage belongs to.
 
         @type coverage: dict
@@ -95,12 +100,11 @@ class Collection(models.Model):
         provider = self.repository.getInstance()
         coverage["source"] = provider.getSource(path, self.revision)
 
-    def subset(self, path, report_configuration=None):
+    def subset(self, path: str, report_configuration=None):
         """
         Calculate a subset of the coverage stored in this collection
         based on the given path.
 
-        @type path: string
         @param path: The path to reduce to. It is expected to use forward
                      slashes. The path is interpreted as relative to the root
                      of the collection.
@@ -128,6 +132,7 @@ class Collection(models.Model):
             names[0] = ""
 
         try:
+            assert self.content is not None
             ret = self.content["children"]
             for name in names[:-1]:
                 ret = ret[name]["children"]
@@ -160,7 +165,7 @@ class Collection(models.Model):
                     coverage["children"][child]["children"] = True
 
     @staticmethod
-    def strip(coverage):
+    def strip(coverage) -> None:
         """
         This method strips all detailed coverage information from the given
         coverage data. Only the summarized coverage fields are left intact.
@@ -185,7 +190,7 @@ class Collection(models.Model):
 # This post_delete handler ensures that the corresponding coverage
 # file is deleted when the Collection is gone.
 @receiver(post_delete, sender=Collection)
-def Collection_delete(sender, instance, **kwargs):
+def Collection_delete(sender: Collection, instance: Collection, **kwargs: Any) -> None:
     if instance.coverage:
         instance.coverage.file.delete(False)
         instance.coverage.delete(False)
@@ -195,7 +200,9 @@ def Collection_delete(sender, instance, **kwargs):
 if getattr(settings, "USE_CELERY", None):
 
     @receiver(post_save, sender=Collection)
-    def Collection_save(sender, instance, **kwargs):
+    def Collection_save(
+        sender: Collection, instance: Collection, **kwargs: Any
+    ) -> None:
         check_revision_update.delay(instance.pk)
 
 
@@ -208,7 +215,7 @@ class ReportConfiguration(models.Model):
         "self", blank=True, null=True, on_delete=models.deletion.CASCADE
     )
 
-    def apply(self, collection):
+    def apply(self, collection: Collection) -> None:
         CoverageHelper.apply_include_exclude_directives(
             collection, self.directives.splitlines()
         )
@@ -217,7 +224,7 @@ class ReportConfiguration(models.Model):
 
 class ReportSummary(models.Model):
     collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
-    cached_result = models.TextField(null=True, blank=True)
+    cached_result: str | None = models.TextField(null=True, blank=True)
 
 
 class Report(models.Model):

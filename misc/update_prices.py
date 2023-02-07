@@ -10,6 +10,7 @@ i2.2xlarge,r3.2xlarge,m3.2xlarge,m5.2xlarge,m2.4xlarge,d2.2xlarge,i3.2xlarge,r4.
 p3.2xlarge,m4.2xlarge,f1.2xlarge,h1.2xlarge,x1e.2xlarge,m5d.2xlarge,t2.2xlarge
 """
 
+from __future__ import annotations
 
 import json
 import sys
@@ -54,7 +55,9 @@ FIELDS_BLACKLIST = {
 }
 
 
-def get_instance_types(regions=True, index_json=None):
+def get_instance_types(
+    regions: bool = True, index_json: dict[str, object] | None = None
+) -> dict[str, object]:
     """Fetch instance type data from EC2 pricing API.
 
     regions: if True, this will add a "regions" field to each instance type, stating
@@ -91,8 +94,9 @@ def get_instance_types(regions=True, index_json=None):
         ).json()
 
     data = index_json["products"]
+    assert isinstance(data, dict)
 
-    instance_types = {}
+    instance_types: dict[str, object] = {}
 
     for product in data.values():
         if (
@@ -107,6 +111,7 @@ def get_instance_types(regions=True, index_json=None):
         instance_data = instance_types.setdefault(
             product["attributes"]["instanceType"], {}
         )
+        assert isinstance(instance_data, dict)
         if instance_data:
             # assert that all fields are the same!
             new_data = {
@@ -141,6 +146,7 @@ def get_instance_types(regions=True, index_json=None):
 
     # normalize units
     for instance_data in instance_types.values():
+        assert isinstance(instance_data, dict)
         if regions:
             instance_data["regions"] = list(instance_data["regions"])
         instance_data["vcpu"] = int(instance_data["vcpu"])
@@ -155,7 +161,7 @@ def get_instance_types(regions=True, index_json=None):
     return instance_types
 
 
-def main():
+def main() -> None:
     index_json = None
     if len(sys.argv) > 1:
         with open(sys.argv[1]) as data_fp:

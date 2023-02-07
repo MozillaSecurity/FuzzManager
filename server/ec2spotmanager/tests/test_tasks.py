@@ -9,12 +9,18 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import datetime
 import logging
+from collections.abc import Callable
+from typing import Iterable
 
 import boto.ec2
 import pytest
 from django.utils import timezone
+from pytest_mock import MockerFixture
 
 from ec2spotmanager.CloudProvider.CloudProvider import (
     INSTANCE_STATE,
@@ -42,7 +48,7 @@ pytestmark = pytest.mark.usefixtures(
 
 
 @pytest.mark.usefixtures("mock_provider")
-def test_nothing_to_do():
+def test_nothing_to_do() -> None:
     """nothing is done if no pools are enabled"""
 
     config = create_config(
@@ -62,7 +68,7 @@ def test_nothing_to_do():
     assert not Instance.objects.exists()
 
 
-def test_bad_config():
+def test_bad_config() -> None:
     """invalid configs create a pool status entry"""
     config = create_config(name="config #1")
     pool = create_pool(config=config)
@@ -78,10 +84,10 @@ def test_bad_config():
     assert not Instance.objects.exists()
 
 
-def test_create_instance(mocker):
+def test_create_instance(mocker: MockerFixture) -> None:
     """spot instance requests are created when required"""
     # set-up redis mock to return price data and image name
-    def _mock_redis_get(key):
+    def _mock_redis_get(key: str) -> bool | str | None:
         if ":blacklist:redmond:mshq:" in key:
             return True
         if ":blacklist:" in key:
@@ -140,19 +146,21 @@ def test_create_instance(mocker):
     assert instance.instance_id == "req123"
 
 
-def test_fulfilled_spot_instance(mocker):
+def test_fulfilled_spot_instance(mocker: MockerFixture) -> None:
     """spot instance requests are turned into instances when fulfilled"""
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
-        def __init__(self, *args, **kwds):
+        def __init__(self, *args: str, **kwds: str) -> None:
             super().__init__(*args, **kwds)
-            self._test_tags = {}
+            self._test_tags: dict[str, str] = {}
 
         @property
-        def state_code(self):
-            return INSTANCE_STATE["running"]
+        def state_code(self) -> int:
+            return int(INSTANCE_STATE["running"])
 
-        def add_tags(self, tags, dry_run=False):
+        def add_tags(
+            self, tags: Iterable[tuple[str, str]], dry_run: bool = False
+        ) -> None:
             self._test_tags.update(tags)
 
     boto_instance = _MockInstance()
@@ -207,21 +215,23 @@ def test_fulfilled_spot_instance(mocker):
     }  # pylint: disable=protected-access
 
 
-def test_instance_shutting_down(mocker):
+def test_instance_shutting_down(mocker: MockerFixture) -> None:
     """instances are replaced when shut down or terminated"""
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         @property
-        def state_code(self):
-            return INSTANCE_STATE["shutting-down"]
+        def state_code(self) -> int:
+            return int(INSTANCE_STATE["shutting-down"])
 
-        def add_tags(self, _tags, _dry_run=False):
+        def add_tags(
+            self, _tags: Iterable[tuple[str, str]], _dry_run: bool = False
+        ) -> None:
             pass
 
     class _MockInstance2(_MockInstance):
         @property
-        def state_code(self):
-            return INSTANCE_STATE["terminated"]
+        def state_code(self) -> int:
+            return int(INSTANCE_STATE["terminated"])
 
     boto_instance1 = _MockInstance()
     boto_instance1.id = "i-123"
@@ -241,7 +251,7 @@ def test_instance_shutting_down(mocker):
     mock_ec2mgr.return_value.find.return_value = (boto_instance1, boto_instance2)
 
     # set-up redis mock to return price data and image name
-    def _mock_redis_get(key):
+    def _mock_redis_get(key: str) -> str | None:
         if ":blacklist:" in key:
             return None
         if ":price:" in key:
@@ -320,13 +330,13 @@ def test_instance_shutting_down(mocker):
     assert not remaining
 
 
-def test_instance_not_updatable(mocker):
+def test_instance_not_updatable(mocker: MockerFixture) -> None:
     """instances are not touched while they are not tagged Updatable"""
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         @property
-        def state_code(self):
-            return INSTANCE_STATE["stopping"]
+        def state_code(self) -> int:
+            return int(INSTANCE_STATE["stopping"])
 
     boto_instance = _MockInstance()
     boto_instance.id = "i-123"
@@ -377,10 +387,10 @@ def test_instance_not_updatable(mocker):
     assert count == 1
 
 
-def test_instance_price_high(mocker):
+def test_instance_price_high(mocker: MockerFixture) -> None:
     """check that instances are not created if the price is too high"""
     # set-up redis mock to return price data and image name
-    def _mock_redis_get(key):
+    def _mock_redis_get(key: str) -> str | None:
         if ":blacklist:" in key:
             return None
         if ":price:" in key:
@@ -430,14 +440,14 @@ def test_instance_price_high(mocker):
     assert not Instance.objects.exists()
 
 
-def test_spot_instance_blacklist(mocker):
+def test_spot_instance_blacklist(mocker: MockerFixture) -> None:
     """check that spot requests being cancelled will result in temporary blacklisting"""
     # ensure EC2Manager returns a request ID
     class _status_code:
         code = "instance-terminated-by-service"
 
     class _MockReq(boto.ec2.spotinstancerequest.SpotInstanceRequest):
-        def __init__(self, *args, **kwds):
+        def __init__(self, *args: str, **kwds: str) -> None:
             super().__init__(*args, **kwds)
             self.state = "cancelled"
             self.status = _status_code
@@ -455,7 +465,7 @@ def test_spot_instance_blacklist(mocker):
     mock_ec2mgr.return_value.check_spot_requests.return_value = (req,)
 
     # set-up redis mock to return price data and image name
-    def _mock_redis_get(key):
+    def _mock_redis_get(key: str) -> bool | str:
         if ":blacklist:" in key:
             return True
         if ":price:" in key:
@@ -464,7 +474,7 @@ def test_spot_instance_blacklist(mocker):
             return "warp"
         raise UncatchableException(f"unhandle key in mock_get(): {key}")
 
-    def _mock_redis_set(key, value, ex=None):
+    def _mock_redis_set(key: str, value: str, ex: str | None = None) -> None:
         assert ":blacklist:redmond:mshq:" in key
 
     mock_redis = mocker.patch("redis.StrictRedis.from_url")
@@ -522,7 +532,7 @@ def test_spot_instance_blacklist(mocker):
     assert len(mock_redis.return_value.set.mock_calls) == 1
 
 
-def test_pool_disabled(mocker):
+def test_pool_disabled(mocker: MockerFixture) -> None:
     """check that pool disabled results in running and pending instances being
     terminated"""
     # ensure EC2Manager returns a request ID
@@ -579,7 +589,7 @@ def test_pool_disabled(mocker):
     mock_term_request.delay.assert_called_once_with("EC2Spot", "redmond", ["r-456"])
 
 
-def test_pool_trim():
+def test_pool_trim() -> None:
     """check that pool down-size trims older instances until we meet the requirement"""
     # create database state
     config = create_config(
@@ -643,22 +653,24 @@ def test_pool_trim():
         (_terminate_instance_request_ids, "cancel_requests"),
     ],
 )
-def test_terminate(mocker, term_task, provider_func):
+def test_terminate(
+    mocker: MockerFixture, term_task: Callable[..., None], provider_func: str
+) -> None:
     """check that terminate instances task works properly"""
     fake_provider_cls = mocker.patch("ec2spotmanager.tasks.CloudProvider")
     fake_provider = fake_provider_cls.get_instance.return_value = mocker.Mock()
     term_task("provider", "region", ["inst1", "inst2"])
     fake_provider_cls.get_instance.assert_called_once_with("provider")
-    provider_func = getattr(fake_provider, provider_func)
-    provider_func.assert_called_once_with({"region": ["inst1", "inst2"]})
+    provider_func_ = getattr(fake_provider, provider_func)
+    provider_func_.assert_called_once_with({"region": ["inst1", "inst2"]})
 
-    provider_func.side_effect = CloudProviderTemporaryFailure("blah")
+    provider_func_.side_effect = CloudProviderTemporaryFailure("blah")
     with pytest.raises(
         CloudProviderTemporaryFailure,
         match=r"CloudProviderTemporaryFailure: blah \(temporary-failure\)",
     ):
         term_task("provider", "region", [])
 
-    provider_func.side_effect = Exception("blah")
+    provider_func_.side_effect = Exception("blah")
     with pytest.raises(Exception, match=r"blah"):
         term_task("provider", "region", [])

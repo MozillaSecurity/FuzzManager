@@ -1,16 +1,28 @@
+from __future__ import annotations
+
 import json
 import os
+from typing import Any, TypeVar, cast
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
-from django.db.models import Q
+from django.db.models import Model, Q
+from django.db.models.query import QuerySet
 from django.http import Http404
-from django.http.response import HttpResponse
+from django.http.request import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from crashmanager.models import Tool
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
@@ -25,46 +37,50 @@ from .serializers import (
 from .SourceCodeProvider import SourceCodeProvider
 from .tasks import aggregate_coverage_data, calculate_report_summary
 
+MT = TypeVar("MT", bound=Model)
 
-def index(request):
+
+def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     return redirect(
         f"covmanager:{getattr(settings, 'COV_DEFAULT_PAGE', 'collections')}"
     )
 
 
-def reports(request):
+def reports(request: HttpRequest) -> HttpResponse:
     return render(request, "collections/report.html", {})
 
 
-def repositories(request):
+def repositories(request: HttpRequest) -> HttpResponse:
     repositories = Repository.objects.all()
     return render(request, "repositories/index.html", {"repositories": repositories})
 
 
-def reportconfigurations(request):
+def reportconfigurations(request: HttpRequest) -> HttpResponse:
     return render(request, "reportconfigurations/index.html", {})
 
 
-def collections(request):
+def collections(request: HttpRequest) -> HttpResponse:
     return render(request, "collections/index.html", {})
 
 
-def collections_browse(request, collectionid):
+def collections_browse(request: HttpRequest, collectionid: str) -> HttpResponse:
     return render(request, "collections/browse.html", {"collectionid": collectionid})
 
 
-def collections_diff(request):
+def collections_diff(request: HttpRequest) -> HttpResponse:
     return render(request, "collections/browse.html", {"diff_api": True})
 
 
-def collections_reportsummary(request, collectionid):
+def collections_reportsummary(request: HttpRequest, collectionid: str) -> HttpResponse:
     return render(
         request, "reportconfigurations/summary.html", {"collectionid": collectionid}
     )
 
 
-def collections_reportsummary_html_list(request, collectionid):
-    collection = get_object_or_404(Collection, pk=collectionid)
+def collections_reportsummary_html_list(
+    request: HttpRequest, collectionid: str
+) -> HttpResponse:
+    collection: Collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
         return HttpResponse(
@@ -131,7 +147,7 @@ def collections_reportsummary_html_list(request, collectionid):
 
         root["diffid"] = diff_collection.pk
 
-        def annotate_delta(a, b):
+        def annotate_delta(a, b) -> None:
             delta = round(a["coveragePercent"] - b["coveragePercent"], 2)
 
             if delta >= 1.0:
@@ -140,7 +156,7 @@ def collections_reportsummary_html_list(request, collectionid):
                 a["coveragePercentDelta"] = f"{delta} %"
 
             if "children" not in a or "children" not in b:
-                return
+                return None
 
             # Map children to their ids so we can iterate them side-by-side
             a_child_dict = {c["id"]: c for c in a["children"]}
@@ -161,7 +177,7 @@ def collections_reportsummary_html_list(request, collectionid):
     )
 
 
-def collections_download(request, collectionid):
+def collections_download(request: HttpRequest, collectionid: str) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -183,7 +199,9 @@ def collections_download(request, collectionid):
     return response
 
 
-def collections_browse_api(request, collectionid, path):
+def collections_browse_api(
+    request: HttpRequest, collectionid: str, path: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -218,16 +236,16 @@ def collections_browse_api(request, collectionid, path):
     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
-def collections_diff_api(request, path):
+def collections_diff_api(request: HttpRequest, path: str) -> HttpResponse:
 
-    collections = None
+    collections: list[Collection]
     coverages = []
 
     if "ids" in request.GET:
         ids = request.GET["ids"].split(",")
-        collections = Collection.objects.filter(pk__in=ids)
+        collections = cast(list[Collection], Collection.objects.filter(pk__in=ids))
 
-    if len(collections) < 2:
+    if collections and len(collections) < 2:
         raise Http404("Need at least two collections")
 
     report_configuration = None
@@ -331,11 +349,13 @@ def collections_diff_api(request, path):
     return HttpResponse(json.dumps(data), content_type="application/json")
 
 
-def collections_patch(request):
+def collections_patch(request: HttpRequest) -> HttpResponse:
     return render(request, "collections/patch.html", {})
 
 
-def collections_patch_api(request, collectionid, patch_revision):
+def collections_patch_api(
+    request: HttpRequest, collectionid: str, patch_revision: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -372,6 +392,7 @@ def collections_patch_api(request, collectionid, patch_revision):
         prepatch_source = provider.getSource(filename, diff_revision)
         coll_source = provider.getSource(filename, collection.revision)
 
+        assert filename is not None
         if prepatch_source != coll_source:
             response = {"error": "Source code mismatch."}
             response["filename"] = filename
@@ -460,7 +481,9 @@ def collections_patch_api(request, collectionid, patch_revision):
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 
-def collections_reportsummary_api(request, collectionid):
+def collections_reportsummary_api(
+    request: HttpRequest, collectionid: str
+) -> HttpResponse:
     collection = get_object_or_404(Collection, pk=collectionid)
 
     if not collection.coverage:
@@ -500,36 +523,38 @@ def collections_reportsummary_api(request, collectionid):
     return HttpResponse(summary.cached_result, content_type="application/json")
 
 
-def repositories_search_api(request):
-    results = []
+def repositories_search_api(request: HttpRequest) -> HttpResponse:
+    results: list[Repository] = []
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = Repository.objects.filter(name__contains=name).values_list(
-            "name", flat=True
+        results = list(
+            Repository.objects.filter(name__contains=name).values_list(
+                "name", flat=True
+            )
         )
 
     return HttpResponse(
-        json.dumps({"results": list(results)}), content_type="application/json"
+        json.dumps({"results": results}), content_type="application/json"
     )
 
 
-def tools_search_api(request):
-    results = []
+def tools_search_api(request: HttpRequest) -> HttpResponse:
+    results: list[Tool] = []
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = Tool.objects.filter(name__contains=name).values_list(
-            "name", flat=True
+        results = list(
+            Tool.objects.filter(name__contains=name).values_list("name", flat=True)
         )
 
     return HttpResponse(
-        json.dumps({"results": list(results)}), content_type="application/json"
+        json.dumps({"results": results}), content_type="application/json"
     )
 
 
 @csrf_exempt
-def collections_aggregate_api(request):
+def collections_aggregate_api(request: HttpRequest) -> HttpResponse:
     if request.method != "POST":
         return HttpResponse(
             content=json.dumps({"error": "This API only supports POST."}),
@@ -659,7 +684,9 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
     Accepts filtering with several collection-specific fields from the URL
     """
 
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -723,7 +750,9 @@ class ReportFilterBackend(filters.BaseFilterBackend):
     Accepts broad filtering by q parameter to search multiple fields
     """
 
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -762,7 +791,7 @@ class ReportViewSet(
     paginate_by_param = "limit"
     filter_backends = [ReportFilterBackend]
 
-    def partial_update(self, request, *args, **kwargs):
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         if (
             not request.user
             or not request.user.is_authenticated
@@ -791,7 +820,9 @@ class ReportConfigurationFilterBackend(filters.BaseFilterBackend):
     Accepts broad filtering by q parameter to search multiple fields
     """
 
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """

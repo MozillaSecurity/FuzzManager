@@ -11,8 +11,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    truber@mozilla.com
 """
+
+from __future__ import annotations
+
 import logging
 import time
+from decimal import Decimal
+from typing import Any
 
 import requests
 import yaml
@@ -23,6 +28,7 @@ from laniakea.core.providers.gce import (
 )
 
 from ..common.gce import CORES_PER_INSTANCE, RAM_PER_INSTANCE
+from ..models import PoolConfiguration
 from ..tasks import SPOTMGR_TAG
 from .CloudProvider import (
     INSTANCE_STATE,
@@ -42,7 +48,7 @@ from .CloudProvider import (
 
 
 class _LowercaseDict(dict):
-    def __init__(self, *args, **kwds):
+    def __init__(self, *args: Any, **kwds: Any) -> None:
         super().__init__()
         if len(args) > 1:
             raise TypeError(f"dict expected at most 1 arguments, got {len(args)}")
@@ -57,13 +63,13 @@ class _LowercaseDict(dict):
             for (k, v) in kwds.items():
                 self[k] = v
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return super().__getitem__(key.lower())
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: str):
         return super().__setitem__(key.lower(), value.lower())
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
         return super().__delitem__(key.lower())
 
     def __contains__(self, item):
@@ -82,11 +88,11 @@ class GCECloudProvider(CloudProvider):
         "UNKNOWN": INSTANCE_STATE["pending"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger("ec2spotmanager.gce")
         self.cluster = None
 
-    def _connect(self):
+    def _connect(self) -> ComputeEngineManager:
         if self.cluster is None:
             self.cluster = ComputeEngineManager(
                 settings.GCE_CLIENT_EMAIL,
@@ -96,6 +102,7 @@ class GCECloudProvider(CloudProvider):
             retries = [1, 5, 10, 30, None]
             for retry in retries:
                 try:
+                    assert self.cluster is not None
                     self.cluster.connect(credential_file=settings.GCE_AUTH_CACHE)
                     break
                 except ComputeEngineManagerException as error:
@@ -109,7 +116,9 @@ class GCECloudProvider(CloudProvider):
         return self.cluster
 
     @wrap_provider_errors
-    def terminate_instances(self, instances_ids_by_region):
+    def terminate_instances(
+        self, instances_ids_by_region: dict[str, list[int]]
+    ) -> None:
         for region, instance_ids in instances_ids_by_region.items():
             assert (
                 region == "global"
@@ -129,7 +138,9 @@ class GCECloudProvider(CloudProvider):
             cluster.terminate_nowait(nodes)
 
     @wrap_provider_errors
-    def cancel_requests(self, requested_instances_by_region):
+    def cancel_requests(
+        self, requested_instances_by_region: dict[str, list[int]]
+    ) -> None:
         # no difference in how pending nodes are terminated in GCE
         self.logger.info(
             "Canceling %d requests in GCE", len(requested_instances_by_region)
@@ -143,12 +154,20 @@ class GCECloudProvider(CloudProvider):
             ".".join(reversed(ip_addr.split("."))) + ".bc.googleusercontent.com"
         )
         instance["instance_id"] = node.name
-        instance["status_code"] = self.NODE_STATE_MAP[node.extra["status"]]
+        instance["status_code"] = str(self.NODE_STATE_MAP[node.extra["status"]])
         return instance
 
     @wrap_provider_errors
     def start_instances(
-        self, config, region, zone, _userdata, image, instance_type, count, tags
+        self,
+        config,
+        region: str,
+        zone: str,
+        _userdata: str,
+        image: str,
+        instance_type: str,
+        count: int,
+        tags: dict[str, str],
     ):
         assert (
             region == "global"
@@ -205,9 +224,9 @@ class GCECloudProvider(CloudProvider):
         conf = cluster.build_container_vm(
             yaml.safe_dump(container_spec), disk, zone=zone, preemptible=True
         )
-        tags = _LowercaseDict(tags)
-        tags[SPOTMGR_TAG + "-Updatable"] = "1"
-        conf["ex_labels"] = tags
+        tags_ = _LowercaseDict(tags)
+        tags_[SPOTMGR_TAG + "-Updatable"] = "1"
+        conf["ex_labels"] = tags_
         self.logger.info(
             "Creating %dx %s instances... (%d cores total)",
             count,
@@ -218,7 +237,9 @@ class GCECloudProvider(CloudProvider):
         return {node.name: self._node_to_instance(node) for node in nodes}
 
     @wrap_provider_errors
-    def check_instances_requests(self, region, instances, tags):
+    def check_instances_requests(
+        self, region: str, instances: list[str], tags: dict[str, str]
+    ) -> tuple[dict[str, str], dict[str, str]]:
         # this isn't a spot provider, and tags were already set at instance creation
         assert (
             region == "global"
@@ -250,7 +271,7 @@ class GCECloudProvider(CloudProvider):
         return (requests, {})
 
     @wrap_provider_errors
-    def check_instances_state(self, pool_id, region):
+    def check_instances_state(self, pool_id: int, region: str):
         # TODO: if we could return a hostname, `check_instances_requests` would be
         # unnecessary for this provider
         assert (
@@ -288,42 +309,42 @@ class GCECloudProvider(CloudProvider):
 
         return instance_states
 
-    def get_image(self, region, config):
+    def get_image(self, region: str, config: PoolConfiguration) -> str | None:
         assert (
             region == "global"
         ), f"Invalid region name for GCE: {region} (only 'global' supported)"
         return config.gce_image_name
 
     @staticmethod
-    def get_cores_per_instance():
+    def get_cores_per_instance() -> dict[str, float]:
         return CORES_PER_INSTANCE
 
     @staticmethod
-    def get_allowed_regions(_config):
+    def get_allowed_regions(_config: PoolConfiguration) -> list[str]:
         return ["global"]
 
     @staticmethod
-    def get_image_name(config):
+    def get_image_name(config: PoolConfiguration) -> str | None:
         return config.gce_image_name
 
     @staticmethod
-    def get_instance_types(config):
+    def get_instance_types(config: PoolConfiguration) -> str:
         return config.gce_machine_types
 
     @staticmethod
-    def get_max_price(config):
+    def get_max_price(config: PoolConfiguration) -> Decimal:
         return config.max_price
 
     @staticmethod
-    def get_tags(config):
+    def get_tags(config: PoolConfiguration) -> str:
         return config.instance_tags
 
     @staticmethod
-    def get_name():
+    def get_name() -> str:
         return "GCE"
 
     @staticmethod
-    def config_supported(config):
+    def config_supported(config) -> bool:
         fields = [
             "gce_machine_types",
             "max_price",
@@ -333,7 +354,9 @@ class GCECloudProvider(CloudProvider):
         ]
         return all(config.get(key) for key in fields)
 
-    def get_prices_per_region(self, region_name, instance_types=None):
+    def get_prices_per_region(
+        self, region_name: str, instance_types: list[str] | None = None
+    ) -> dict[str, dict[str, dict[str, float]]]:
         # Pricing information is not perfect. The API Zones don't map to the data
         # provided by Cloud Billing API. We usually get one price per zone (eg.
         # us-east1), so we just assume that -a, -b, and -c have the same price. In some
@@ -342,7 +365,7 @@ class GCECloudProvider(CloudProvider):
         # worst price and apply it to the whole zone to be conservative.
         assert region_name == "global"
 
-        def get_price(sku):
+        def get_price(sku) -> tuple[float, str]:
             assert len(sku["pricingInfo"]) == 1
             expr = sku["pricingInfo"][0]["pricingExpression"]
             assert len(expr["tieredRates"]) == 1, expr["tieredRates"]
@@ -440,7 +463,9 @@ class GCECloudProvider(CloudProvider):
 
         # now we have all the data, and just have to calculate for our instance types
         # and return
-        result = {}  # {instance-type: {region: {az: [prices]}}}
+        result: dict[
+            str, dict[str, dict[str, float]]
+        ] = {}  # {instance-type: {region: {az: [prices]}}}
         for instance_type, cores in CORES_PER_INSTANCE.items():
             mem = RAM_PER_INSTANCE[instance_type]
 
@@ -474,7 +499,7 @@ class GCECloudProvider(CloudProvider):
 
         # since we can't distinguish between zones using the billing API (see TODO
         # above) return the pricing data for all zones within the GCE region
-        all_zones_result = {}
+        all_zones_result: dict[str, dict[str, dict[str, float]]] = {}
         for instance_type, all_regions in result.items():
             for region, region_data in all_regions.items():
                 all_zones_result[instance_type] = {}

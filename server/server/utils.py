@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import time
 import uuid
@@ -18,7 +20,9 @@ class RedisLock:
     release the lock in an async chain.
     """
 
-    def __init__(self, conn, name, unique_id=None):
+    def __init__(
+        self, conn: redis.Redis[bytes], name: str, unique_id: str | None = None
+    ) -> None:
         self.conn = conn
         self.name = name
         if unique_id is None:
@@ -26,7 +30,9 @@ class RedisLock:
         else:
             self.unique_id = unique_id
 
-    def acquire(self, acquire_timeout=10, lock_expiry=None):
+    def acquire(
+        self, acquire_timeout: int = 10, lock_expiry: int | None = None
+    ) -> str | None:
         end = time.time() + acquire_timeout
         while time.time() < end:
             if self.conn.set(self.name, self.unique_id, ex=lock_expiry, nx=True):
@@ -38,7 +44,7 @@ class RedisLock:
         LOG.debug("Failed to acquire lock: %s(%s)", self.name, self.unique_id)
         return None
 
-    def release(self):
+    def release(self) -> bool:
         with self.conn.pipeline() as pipe:
             while True:
                 try:

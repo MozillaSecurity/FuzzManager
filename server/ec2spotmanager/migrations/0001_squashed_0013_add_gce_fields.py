@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = []
+    dependencies: list[tuple[str, str]] = []
 
     operations = [
         migrations.CreateModel(

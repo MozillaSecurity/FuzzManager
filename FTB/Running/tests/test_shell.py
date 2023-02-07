@@ -11,29 +11,33 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import signal
 import sys
 import time
+from typing import TextIO
 
 
-def crash():
+def crash() -> None:
     import ctypes
 
     # Causes a NULL deref
     ctypes.string_at(0)
 
 
-def hang():
+def hang() -> None:
     while True:
         time.sleep(1)
 
 
-def stop():
+def stop() -> None:
     os.kill(os.getpid(), signal.SIGSTOP)
 
 
-def processInput(mode, inputFd):
+def processInput(mode: str, inputFd: TextIO) -> None:
     received_aa = False
 
     if mode == "none":
@@ -90,7 +94,7 @@ def processInput(mode, inputFd):
         sys.exit(0)
 
 
-def main():
+def main() -> int:
     if len(sys.argv) < 2:
         print("Need at least one argument (mode)", file=sys.stderr)
         sys.exit(1)

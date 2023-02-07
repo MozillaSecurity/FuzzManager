@@ -14,6 +14,9 @@ omit = [
     "*/.eggs/*",
 ]
 
+[tool.django-stubs]
+django_settings_module = "server.settings_test"
+
 [tool.isort]
 known_first_party = [
     "Collector",
@@ -28,6 +31,58 @@ known_first_party = [
     "taskmanager",
 ]
 profile = "black"
+
+[tool.mypy]
+plugins = [
+   "mypy_django_plugin.main",
+   "mypy_drf_plugin.main",
+]
+strict = true
+show_error_codes = true
+
+# Add Python modules to be ignored by mypy here
+[[tool.mypy.overrides]]
+module = [
+    "celeryconf",
+    "chartjs.colors",  # Package: django-chartjs
+    "chartjs.views.base",  # Package: django-chartjs
+    "covmanager.SourceCodeProvider.GITSourceCodeProvider",
+    "covmanager.SourceCodeProvider.HGSourceCodeProvider",
+    "covmanager.SourceCodeProvider.SourceCodeProvider",
+    "covmanager.models",
+    "crashmanager",
+    "crashmanager.models",
+    "crispy_forms.helper",  # Package: django-crispy-forms
+    "crispy_forms.layout",  # Package: django-crispy-forms
+    "ec2spotmanager",
+    "ec2spotmanager.CloudProvider.CloudProvider",
+    "ec2spotmanager.cron",
+    "ec2spotmanager.models",
+    "ec2spotmanager.tasks",
+    "ec2spotmanager.tests",
+    "enumfields",  # Package: django-enumfields
+    "enumfields.fields",  # Package: django-enumfields
+    "fasteners",  # Package: fasteners
+    "fuzzing_decision.common.pool",  # Package: orion (Mozilla, needs FuzzManager types)
+    "laniakea.core.providers.ec2",  # Package: laniakea (Mozilla, currently archived)
+    "laniakea.core.providers.gce",  # Package: laniakea (Mozilla, currently archived)
+    "laniakea.core.userdata",  # Package: laniakea (Mozilla, currently archived)
+    "mozilla_django_oidc.auth",  # Package: mozilla-django-oidc
+    "mozillapulse.consumers",  # Package: mozillapulse
+    "notifications",  # Package: django-notifications-hq
+    "notifications.models",  # Package: django-notifications-hq
+    "notifications.signals",  # Package: django-notifications-hq
+    "server.auth",
+    "server.covmanager.models",  # Located here in server/covmanager/models.py
+    "server.utils",
+    "server.views",
+    "taskcluster",  # Package: taskcluster
+    "taskmanager.models",
+    "taskmanager.tasks",
+    "taskmanager.tests",
+    "S3Manager",  # Located here in misc/afl_libfuzzer/S3Manager.py
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 log_level = "DEBUG"

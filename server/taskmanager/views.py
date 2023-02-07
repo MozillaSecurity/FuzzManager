@@ -1,13 +1,23 @@
+from __future__ import annotations
+
 import datetime
 import logging
 import re
+from typing import Any
 
+from django.http.request import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from server.auth import CheckAppPermission
@@ -35,17 +45,17 @@ UNKNOWN_TASK_STATUS_EXPIRES = datetime.timedelta(hours=1)
 
 
 @deny_restricted_users
-def index(request):
+def index(request: HttpRequest) -> HttpResponsePermanentRedirect | HttpResponseRedirect:
     return redirect("taskmanager:pool-list-ui")
 
 
 @deny_restricted_users
-def list_pools(request):
+def list_pools(request: HttpRequest) -> HttpResponse:
     return render(request, "pool/index.html", {})
 
 
 @deny_restricted_users
-def view_pool(request, pk):
+def view_pool(request: HttpRequest, pk: int) -> HttpResponse:
     pool = get_object_or_404(Pool, pk=pk)
     return render(
         request,
@@ -72,7 +82,7 @@ class PoolViewSet(viewsets.ReadOnlyModelViewSet):
         OrderingFilter,
     ]
 
-    def get_serializer(self, *args, **kwds):
+    def get_serializer(self, *args: Any, **kwds: Any):
         vue = self.request.query_params.get("vue", "false").lower() not in (
             "false",
             "0",
@@ -100,7 +110,7 @@ class TaskViewSet(
         OrderingFilter,
     ]
 
-    def get_serializer(self, *args, **kwds):
+    def get_serializer(self, *args: Any, **kwds: Any):
         vue = self.request.query_params.get("vue", "false").lower() not in (
             "false",
             "0",
@@ -112,7 +122,7 @@ class TaskViewSet(
     @action(
         detail=False, methods=["post"], authentication_classes=(TokenAuthentication,)
     )
-    def update_status(self, request):
+    def update_status(self, request: Request) -> Response:
         if set(request.data.keys()) != {"client", "status_data"}:
             LOG.debug("request.data.keys(): %s", request.data.keys())
             errors = {}

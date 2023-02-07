@@ -8,6 +8,9 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import datetime
 import logging
 import os.path
@@ -15,6 +18,8 @@ import sys
 
 import pytest
 from dateutil.parser import isoparse
+from pytest_mock import MockerFixture
+
 from notifications.models import Notification
 
 from crashmanager.models import User as cmUser
@@ -302,7 +307,12 @@ TASK_EVENT_DATA = {
 
 
 @pytest.mark.parametrize("pulse_data, expected", TASK_EVENT_DATA.values())
-def test_update_task_0(mocker, settings, pulse_data, expected):
+def test_update_task_0(
+    mocker: MockerFixture,
+    settings,
+    pulse_data: str,
+    expected: dict[str, dict[str, object]],
+) -> None:
     """test that Task events update the DB"""
     settings.TC_EXTRA_POOLS = ["extra"]
     settings.TC_ROOT_URL = "https://allizom.org/tc"
@@ -331,7 +341,7 @@ def test_update_task_0(mocker, settings, pulse_data, expected):
         assert getattr(task_obj, field) == value
 
 
-def test_update_pool_defns_0(mocker, settings):
+def test_update_pool_defns_0(mocker: MockerFixture, settings) -> None:
     """test that Pool definition is read from GH"""
     settings.TC_FUZZING_CFG_STORAGE = os.path.join(
         os.path.dirname(__file__), "fixtures", "pool1"

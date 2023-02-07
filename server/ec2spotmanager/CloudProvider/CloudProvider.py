@@ -11,11 +11,18 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    truber@mozilla.com
 """
+
+from __future__ import annotations
+
 import functools
 import logging
 import ssl
 import traceback
 from abc import ABCMeta, abstractmethod
+from decimal import Decimal
+from typing import Any, Callable, TypeVar
+
+from ec2spotmanager.models import PoolConfiguration
 
 INSTANCE_STATE_CODE = {
     -1: "requested",
@@ -26,34 +33,35 @@ INSTANCE_STATE_CODE = {
     64: "stopping",
     80: "stopped",
 }
-INSTANCE_STATE = {val: key for key, val in INSTANCE_STATE_CODE.items()}
+INSTANCE_STATE: dict[str, int] = {val: key for key, val in INSTANCE_STATE_CODE.items()}
 
 # List of currently supported providers. This and what is returned by get_name() must
 # match
 PROVIDERS = ["EC2Spot", "GCE"]
+RetType = TypeVar("RetType")
 
 
 class CloudProviderError(Exception):
-    TYPE = "unclassified"
+    TYPE: str = "unclassified"
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{type(self).__name__}: {self.message} ({self.TYPE})"
 
 
 class CloudProviderTemporaryFailure(CloudProviderError):
-    TYPE = "temporary-failure"
+    TYPE: str = "temporary-failure"
 
 
 class CloudProviderInstanceCountError(CloudProviderError):
-    TYPE = "max-spot-instance-count-exceeded"
+    TYPE: str = "max-spot-instance-count-exceeded"
 
 
-def wrap_provider_errors(wrapped):
+def wrap_provider_errors(wrapped: Callable[..., RetType]) -> Callable[..., RetType]:
     @functools.wraps(wrapped)
-    def wrapper(*args, **kwds):
+    def wrapper(*args: Any, **kwds: Any) -> RetType:
         try:
             return wrapped(*args, **kwds)
         except (ssl.SSLError, OSError) as exc:
@@ -77,61 +85,49 @@ class CloudProvider(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def terminate_instances(self, instances_ids_by_region):
+    def terminate_instances(self, instances_ids_by_region: dict[str, int]) -> None:
         """
         Take a list of running instances and stop them in the cloud provider.
 
-        @ptype instances_ids_by_region: dictionary
         @param instances_ids_by_region: keys are regions and values are instances.
-
-        @rtype: none
-        @return: none
         """
         return
 
     @abstractmethod
-    def cancel_requests(self, requested_instances_by_region):
+    def cancel_requests(self, requested_instances_by_region: dict[str, int]) -> None:
         """
         Cancel requests that have not become running instances.
 
-        @ptype requested_instances_region: dictionary
         @param requested_instances_region: keys are regions and values are request ids.
         """
         return
 
     @abstractmethod
     def start_instances(
-        self, config, region, zone, userdata, image, instance_type, count, tags
-    ):
+        self,
+        config: PoolConfiguration,
+        region: str,
+        zone: str,
+        userdata,
+        image: str,
+        instance_type: str,
+        count: int,
+        tags: dict[str, str],
+    ) -> dict[str, Any]:
         """
         Start instances using specified configuration.
 
-        @ptype config: FlatObject
         @param config: flattened config. We use this for any cloud provider specific
                        fields needed to create an instance
-
-        @ptype region: string
         @param region: region where instances are to be started
-
-        @ptype zone: string
         @param zone: zone the instances will be started in
 
         @ptype userdata: UserData object
         @param userdata: userdata script for instances
-
-        @ptype image: string
         @param image: image reference used to start instances
-
-        @ptype instance_type: string
         @param instance_type: type of instance
-
-        @ptype count: int
         @param count: number of instances to start
-
-        @ptype tags: dictionary
         @param tags: instance tags.
-
-        @rtype: list
         @return: Request IDs given to us by the cloud provider. This can be the instance
                  ID if the provider does not use different IDs for instances and
                  requests.
@@ -139,7 +135,9 @@ class CloudProvider(metaclass=ABCMeta):
         return
 
     @abstractmethod
-    def check_instances_requests(self, region, instances, tags):
+    def check_instances_requests(
+        self, region: str, instances: list[str], tags: dict[str, str]
+    ) -> tuple[dict[str, str], dict[str, str]]:
         """
         Take a list of requested instances and determines the state of each instance.
         Since this is the first point we see an actual running instance
@@ -152,182 +150,142 @@ class CloudProvider(metaclass=ABCMeta):
         Failed requests will have an action and instance type. Currently, we
         support actions of 'blacklist' and disable_pool.
 
-        @ptype region: string
         @param region: the region the instances are in
-
-        @ptype instances: list
-        @param isntances: instance request IDs
-
-        @ptype tags: dictionary
+        @param instances: instance request IDs
         @param tags: instance tags.
-
-        @rtype: tuple
         @return: tuple containing 2 dicts: successful request IDs and failed request IDs
         """
         return
 
     @abstractmethod
-    def check_instances_state(self, pool_id, region):
+    def check_instances_state(self, pool_id: int, region: str) -> None:
         """
         Takes a pool ID, searches the cloud provider for instances in that pool (using
         the tag) and returns a dictionary of instances with their state as value.
 
-        @ptype pool_id: int
         @param list of pool instances are located in. We search for
         instances using the poolID tag
-
-        @ptype region: string
         @param region: region where instances are located
-
-        @rtype: dictionary
         @return: running instances and their states. State must comply with
                  INSTANCE_STATE defined in CloudProvider
         """
         return
 
     @abstractmethod
-    def get_image(self, region, config):
+    def get_image(self, region: str, config: PoolConfiguration) -> str | None:
         """
         Takes a configuration and returns a provider specific image name.
 
-        @ptype region: string
         @param region: region
-
-        @ptype config: FlatObject
         @param config: flattened config
-
-        @rtype: string
         @return: cloud provider ID for image
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_cores_per_instance():
+    def get_cores_per_instance() -> dict[str, int]:
         """
         returns dictionary of instance types and their number of cores
 
-        @rtype: dictionary
         @return: instance types and how many cores per instance type
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_allowed_regions(config):
+    def get_allowed_regions(config: PoolConfiguration) -> list[str]:
         """
         Takes a configuration and returns cloud provider specific regions.
 
-        @ptype config: FlatObject
         @param config: pulling regions from config
-
-        @rtype: list
         @return: regions pulled from config
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_image_name(config):
+    def get_image_name(config: PoolConfiguration) -> str | None:
         """
         Takes a configuration and returns cloud provider specific image name.
 
-        @ptype config: FlatObject
         @param config: pulling image name from config
-
-        @rtype: string
         @return: cloud specific image name from config
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_instance_types(config):
+    def get_instance_types(config: PoolConfiguration) -> str:
         """
         Takes a configuration and returns a list of cloud provider specific
         instance_types.
 
-        @ptype config: FlatObject
         @param config: pulling instance types from config
-
-        @rtype: list
         @return: list of cloud specific instance_types from config
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_max_price(config):
+    def get_max_price(config: PoolConfiguration) -> Decimal:
         """
         Takes a configuration and returns the cloud provider specific max_price.
 
-        @ptype config: FlatObject
         @param config: pulling max_price from config
-
-        @rtype: float
         @return: cloud specific max_price
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_tags(config):
+    def get_tags(config: PoolConfiguration) -> str:
         """
         Takes a configuration and returns a dictionary of cloud provider specific tags.
 
-        @ptype config: FlatObject
         @param config: pulling tags field
-
-        @rtype: dictionary
         @return: cloud specific tags field
         """
         return
 
     @staticmethod
     @abstractmethod
-    def get_name():
+    def get_name() -> str:
         """
         used to return name of cloud provider
 
-        @rtype: string
         @return: string representation of the cloud provider
         """
         return
 
     @staticmethod
     @abstractmethod
-    def config_supported(config):
+    def config_supported(config: PoolConfiguration) -> bool:
         """Compares the fields provided in the config with those required by the cloud
         provider. If any field is missing, return False.
 
-        @ptype config: FlatObject
         @param config: Flattened config
-
-        @rtype: bool
         @return: True if all required cloud specific fields in config
         """
         return
 
     @abstractmethod
-    def get_prices_per_region(self, region_name, instance_types):
+    def get_prices_per_region(
+        self, region_name: str, instance_types: list[str] | None
+    ) -> dict[str, dict[str, dict[str, float]]]:
         """
         takes region and instance_types and returns a dictionary of prices
         prices are stored with keys like 'provider:price:{instance-type}'
         and values {region: {zone (if used): [price value, ...]}}
 
-        @ptype region_name: string
         @param region_name: region to grab prices
-
-        @ptype instance_types: list
         @param instance_types: list of instance_types
-
-        @rtype: dictionary
         @return: dictionary of prices as specified above.
         """
         return
 
     @staticmethod
-    def get_instance(provider):
+    def get_instance(provider: str):
         """
         This is a method that is used to instantiate the provider class.
         """

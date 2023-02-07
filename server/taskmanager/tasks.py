@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
@@ -14,7 +16,7 @@ from . import cron  # noqa ensure cron tasks get registered
 LOG = getLogger("taskmanager.tasks")
 
 
-def get_or_create_pool(worker_type):
+def get_or_create_pool(worker_type: str):
     from .models import Pool
 
     params = {}
@@ -50,7 +52,7 @@ def get_or_create_pool(worker_type):
 
 
 @app.task(ignore_result=True)
-def update_pool_defns():
+def update_pool_defns() -> None:
     from fuzzing_decision.common.pool import PoolConfigLoader
 
     from .models import Pool, Task
@@ -115,7 +117,7 @@ def update_pool_defns():
 
 
 @app.task(ignore_result=True)
-def task_failed(task_pk):
+def task_failed(task_pk) -> None:
     from django.contrib.auth.models import User as DjangoUser
     from django.contrib.contenttypes.models import ContentType
     from notifications.models import Notification
@@ -163,7 +165,7 @@ def task_failed(task_pk):
 
 
 @app.task(ignore_result=True)
-def update_task(pulse_data):
+def update_task(pulse_data) -> None:
     import taskcluster
 
     from .models import Task

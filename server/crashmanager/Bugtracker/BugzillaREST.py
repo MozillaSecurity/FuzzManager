@@ -11,11 +11,20 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import requests
 
 
 class BugzillaREST:
-    def __init__(self, hostname, username=None, password=None, api_key=None):
+    def __init__(
+        self,
+        hostname: str,
+        username: str | None = None,
+        password: str | None = None,
+        api_key: str | None = None,
+    ) -> None:
         self.hostname = hostname
         self.baseUrl = f"https://{self.hostname}/rest"
         self.username = username
@@ -35,7 +44,7 @@ class BugzillaREST:
             # it in the URI for additional security.
             self.request_headers["X-BUGZILLA-API-KEY"] = self.api_key
 
-    def login(self, loginRequired=True, forceLogin=False):
+    def login(self, loginRequired: bool = True, forceLogin: bool = False) -> bool:
         if (self.username is None or self.password is None) and self.api_key is None:
             if loginRequired:
                 raise RuntimeError("Need username/password or API key to login.")
@@ -65,7 +74,7 @@ class BugzillaREST:
         self.authToken = json["token"]
         return True
 
-    def getBug(self, bugId):
+    def getBug(self, bugId: str) -> str | None:
         bugs = self.getBugs([bugId])
 
         if not bugs:
@@ -73,7 +82,7 @@ class BugzillaREST:
 
         return bugs[int(bugId)]
 
-    def getBugStatus(self, bugIds):
+    def getBugStatus(self, bugIds: list[str]):
         return self.getBugs(
             bugIds,
             include_fields=[
@@ -85,7 +94,12 @@ class BugzillaREST:
             ],
         )
 
-    def getBugs(self, bugIds, include_fields=None, exclude_fields=None):
+    def getBugs(
+        self,
+        bugIds: list[str] | str,
+        include_fields: list[str] | None = None,
+        exclude_fields: list[str] | None = None,
+    ):
         if not isinstance(bugIds, list):
             bugIds = [bugIds]
 

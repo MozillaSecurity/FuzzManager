@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import Any
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -14,7 +17,7 @@ LOG = logging.getLogger("fm.crashmanager.bug_update_status")
 class Command(BaseCommand):
     help = "Check the status of all bugs we have"
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         if args:
             raise CommandError("Command doesn't accept any arguments")
 

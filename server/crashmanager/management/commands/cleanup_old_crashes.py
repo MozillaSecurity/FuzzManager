@@ -1,5 +1,8 @@
-import logging
+from __future__ import annotations
+
 from datetime import timedelta
+import logging
+from typing import Any
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
@@ -14,7 +17,7 @@ LOG = logging.getLogger("fm.crashmanager.cleanup_old_crashes")
 class Command(BaseCommand):
     help = "Cleanup old crash entries."
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
 
         cleanup_crashes_after_days = getattr(settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)
         cleanup_fixed_buckets_after_days = getattr(

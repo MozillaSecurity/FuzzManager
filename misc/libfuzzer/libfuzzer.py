@@ -15,11 +15,15 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import argparse
 import os
 import subprocess
 import sys
 import threading
+from typing import IO, cast
 
 from Collector.Collector import Collector
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -27,17 +31,17 @@ from FTB.Signatures.CrashInfo import CrashInfo
 
 
 class LibFuzzerMonitor(threading.Thread):
-    def __init__(self, fd):
+    def __init__(self, fd: IO[str]) -> None:
         assert callable(fd.readline)
 
         threading.Thread.__init__(self)
 
         self.fd = fd
-        self.trace = []
+        self.trace: list[str] = []
         self.inTrace = False
-        self.testcase = None
+        self.testcase: str | None = None
 
-    def run(self):
+    def run(self) -> None:
         while True:
             line = self.fd.readline(4096)
 
@@ -60,20 +64,20 @@ class LibFuzzerMonitor(threading.Thread):
 
         self.fd.close()
 
-    def getASanTrace(self):
+    def getASanTrace(self) -> list[str]:
         return self.trace
 
-    def getTestcase(self):
+    def getTestcase(self) -> str | None:
         return self.testcase
 
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = "2016-07-28"
 __updated__ = "2016-07-28"
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int | None:
     """Command line options."""
 
     program_name = os.path.basename(sys.argv[0])
@@ -281,7 +285,7 @@ def main(argv=None):
             universal_newlines=True,
         )
 
-        monitor = LibFuzzerMonitor(process.stderr)
+        monitor = LibFuzzerMonitor(cast(IO[str], process.stderr))
         monitor.start()
         monitor.join()
 
@@ -294,7 +298,7 @@ def main(argv=None):
             [], [], configuration, auxCrashData=trace
         )
 
-        (sigfile, metadata) = collector.search(crashInfo)
+        (sigfile, _metadata) = collector.search(crashInfo)
 
         if sigfile is not None:
             if last_signature == sigfile:
@@ -321,6 +325,8 @@ def main(argv=None):
                 "Too many crashes with the same signature, exiting...", file=sys.stderr
             )
             break
+
+    return None
 
 
 if __name__ == "__main__":

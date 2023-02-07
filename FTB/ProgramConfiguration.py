@@ -14,6 +14,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import os
 import sys
 
@@ -22,14 +25,18 @@ from FTB.ConfigurationFiles import ConfigurationFiles
 
 class ProgramConfiguration:
     def __init__(
-        self, product, platform, os, version=None, env=None, args=None, metadata=None
+        self,
+        product: str,
+        platform: str,
+        os: str,
+        version: str | None = None,
+        env: dict[str, str] | None = None,
+        args: list[str] | None = None,
+        metadata: dict[str, object] | None = None,
     ):
         """
-        @type product: string
         @param product: The name of the product/program/branch tested
-        @type platform: string
         @param platform: Platform on which is tested (e.g. x86, x86-64 or arm)
-        @type os: string
         @param os: Operating system on which is tested (e.g. linux, windows, macosx)
         """
         self.product = product.lower()
@@ -55,7 +62,7 @@ class ProgramConfiguration:
         self.metadata = metadata
 
     @staticmethod
-    def fromBinary(binaryPath):
+    def fromBinary(binaryPath: str) -> ProgramConfiguration | None:
         binaryConfig = f"{binaryPath}.fuzzmanagerconf"
         if not os.path.exists(binaryConfig):
             print(
@@ -86,33 +93,30 @@ class ProgramConfiguration:
             metadata=config.metadataConfig,
         )
 
-    def addEnvironmentVariables(self, env):
+    def addEnvironmentVariables(self, env: dict[str, str]) -> None:
         """
         Add (additional) environment variable definitions. Existing definitions
         will be overwritten if they are redefined in the given environment.
 
-        @type env: dict
         @param env: Dictionary containing the environment variables
         """
         assert isinstance(env, dict)
         self.env.update(env)
 
-    def addProgramArguments(self, args):
+    def addProgramArguments(self, args: list[str]) -> None:
         """
         Add (additional) program arguments.
 
-        @type args: list
         @param args: List containing the program arguments
         """
         assert isinstance(args, list)
         self.args.extend(args)
 
-    def addMetadata(self, metadata):
+    def addMetadata(self, metadata: dict[str, object]) -> None:
         """
         Add (additional) metadata definitions. Existing definitions
         will be overwritten if they are redefined in the given metadata.
 
-        @type metadata: dict
         @param metadata: Dictionary containing the metadata
         """
         assert isinstance(metadata, dict)

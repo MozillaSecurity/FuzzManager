@@ -15,12 +15,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    jschwartzentruber@mozilla.com
 """
+
+from __future__ import annotations
+
 import argparse
 import functools
 import os
 import random
 import sys
 import time
+from typing import Any
 
 import requests
 from fasteners import InterProcessLock
@@ -28,7 +32,7 @@ from fasteners import InterProcessLock
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
 from Reporter.Reporter import Reporter, remote_checks
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
@@ -36,18 +40,17 @@ __updated__ = "2014-10-01"
 
 class TaskStatusReporter(Reporter):
     @functools.wraps(Reporter.__init__)
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault(
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by TaskStatusReporter
         super().__init__(*args, **kwargs)
 
     @remote_checks
-    def report(self, text):
+    def report(self, text: str) -> None:
         """
         Send textual report to server, overwriting any existing reports.
 
-        @type text: string
         @param text: Report text to send
         """
         url = "{}://{}:{}/taskmanager/rest/tasks/update_status/".format(
@@ -64,7 +67,7 @@ class TaskStatusReporter(Reporter):
         self.post(url, data, expected=requests.codes["ok"])
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     """Command line options."""
 
     # setup argparser

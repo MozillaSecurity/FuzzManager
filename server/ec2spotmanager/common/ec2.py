@@ -1,9 +1,16 @@
 # data exported from: https://ec2instances.info/ at 2018-08-16 17:54:16 UTC
 # .. see disclaimers
 
-import collections
+from __future__ import annotations
 
-InstanceType = collections.namedtuple("InstanceType", ("api_name", "vCPUs"))
+from typing import NamedTuple
+
+
+class InstanceType(NamedTuple):
+    """InstanceType NamedTuple type information."""
+
+    api_name: str
+    vCPUs: int
 
 
 INSTANCE_TYPES = (

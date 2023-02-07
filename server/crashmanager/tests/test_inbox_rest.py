@@ -9,16 +9,20 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
 import pytest
 import requests
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from notifications.models import Notification
 from notifications.signals import notify
+from rest_framework.test import APIClient
 
 from crashmanager.models import (
     OS,
@@ -33,11 +37,15 @@ from crashmanager.models import (
 )
 from taskmanager.models import Pool, Task
 
+from .conftest import _cm_result
+
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
-def test_rest_notifications_no_auth(db, api_client, method):
+def test_rest_notifications_no_auth(
+    db: None, api_client: APIClient, method: str
+) -> None:
     """must yield unauthorized without authentication"""
     assert (
         getattr(api_client, method)("/crashmanager/rest/inbox/", {}).status_code
@@ -46,7 +54,9 @@ def test_rest_notifications_no_auth(db, api_client, method):
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
-def test_rest_notifications_no_perm(user_noperm, api_client, method):
+def test_rest_notifications_no_perm(
+    user_noperm: User, api_client: APIClient, method: str
+) -> None:
     """must yield forbidden without permission"""
     assert (
         getattr(api_client, method)("/crashmanager/rest/inbox/", {}).status_code
@@ -68,7 +78,9 @@ def test_rest_notifications_no_perm(user_noperm, api_client, method):
     ],
     indirect=["user"],
 )
-def test_rest_notifications_methods(api_client, user, method, url):
+def test_rest_notifications_methods(
+    api_client: APIClient, user: User, method: str, url: str
+) -> None:
     """must yield method-not-allowed for unsupported methods"""
     assert (
         getattr(api_client, method)(url, {}).status_code
@@ -92,7 +104,9 @@ def test_rest_notifications_methods(api_client, user, method, url):
     ],
     indirect=["user"],
 )
-def test_rest_notifications_methods_not_found(api_client, user, method, url):
+def test_rest_notifications_methods_not_found(
+    api_client: APIClient, user: User, method: str, url: str
+) -> None:
     """must yield not-found for undeclared methods"""
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["not_found"]
@@ -100,7 +114,9 @@ def test_rest_notifications_methods_not_found(api_client, user, method, url):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_list_unread(api_client, user, cm):
+def test_rest_notifications_list_unread(
+    api_client: APIClient, user: User, cm: _cm_result
+) -> None:
     """test that list returns the right notifications"""
     provider = BugProvider.objects.create(
         classname="BugzillaProvider", hostname="provider.com", urlTemplate="%s"
@@ -209,7 +225,9 @@ def test_rest_notifications_list_unread(api_client, user, cm):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_mark_as_read(api_client, user, cm):
+def test_rest_notifications_mark_as_read(
+    api_client: APIClient, user: User, cm: _cm_result
+) -> None:
     """test that mark_as_read only marks the targetted notification as read"""
     bucket = Bucket.objects.create(
         signature=json.dumps(
@@ -252,7 +270,9 @@ def test_rest_notifications_mark_as_read(api_client, user, cm):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-def test_rest_notifications_mark_all_as_read(api_client, user, cm):
+def test_rest_notifications_mark_all_as_read(
+    api_client: APIClient, user: User, cm: _cm_result
+) -> None:
     """test that mark_all_as_read marks all user notifications as read"""
     bucket = Bucket.objects.create(
         signature=json.dumps(

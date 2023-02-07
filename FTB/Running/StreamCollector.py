@@ -11,12 +11,22 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import queue
 import threading
+from typing import TextIO
 
 
 class StreamCollector(threading.Thread):
-    def __init__(self, fd, responseQueue, logResponses=False, maxBacklog=None):
+    def __init__(
+        self,
+        fd: TextIO,
+        responseQueue: queue.Queue,
+        logResponses: bool = False,
+        maxBacklog: int | None = None,
+    ) -> None:
         assert callable(fd.readline)
         assert isinstance(responseQueue, queue.Queue)
 
@@ -24,12 +34,12 @@ class StreamCollector(threading.Thread):
 
         self.fd = fd
         self.queue = responseQueue
-        self.output = []
-        self.responsePrefixes = []
+        self.output: list[str] = []
+        self.responsePrefixes: list[str] = []
         self.logResponses = logResponses
         self.maxBacklog = maxBacklog
 
-    def run(self):
+    def run(self) -> None:
         while True:
             line = self.fd.readline(4096)
 
@@ -53,5 +63,5 @@ class StreamCollector(threading.Thread):
 
         self.fd.close()
 
-    def addResponsePrefix(self, prefix):
+    def addResponsePrefix(self, prefix: str) -> None:
         self.responsePrefixes.append(prefix)

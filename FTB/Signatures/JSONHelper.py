@@ -13,20 +13,20 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import numbers
 
 
-def getArrayChecked(obj, key, mandatory=False):
+def getArrayChecked(obj, key: str, mandatory: bool = False):
     """
     Retrieve a list from the given object using the given key
 
     @type obj: map
     @param obj: Source object
 
-    @type key: string
     @param key: Key to retrieve from obj
-
-    @type mandatory: bool
     @param mandatory: If True, throws an exception if the key is not found
 
     @rtype: list
@@ -35,17 +35,14 @@ def getArrayChecked(obj, key, mandatory=False):
     return __getTypeChecked(obj, key, [list], mandatory)
 
 
-def getStringChecked(obj, key, mandatory=False):
+def getStringChecked(obj, key: str, mandatory: bool = False):
     """
     Retrieve a string from the given object using the given key
 
     @type obj: map
     @param obj: Source object
 
-    @type key: string
     @param key: Key to retrieve from obj
-
-    @type mandatory: bool
     @param mandatory: If True, throws an exception if the key is not found
 
     @rtype: string
@@ -54,17 +51,14 @@ def getStringChecked(obj, key, mandatory=False):
     return __getTypeChecked(obj, key, [str, bytes], mandatory)
 
 
-def getNumberChecked(obj, key, mandatory=False):
+def getNumberChecked(obj, key: str, mandatory: bool = False):
     """
     Retrieve an integer from the given object using the given key
 
     @type obj: map
     @param obj: Source object
 
-    @type key: string
     @param key: Key to retrieve from obj
-
-    @type mandatory: bool
     @param mandatory: If True, throws an exception if the key is not found
 
     @rtype: int
@@ -73,17 +67,14 @@ def getNumberChecked(obj, key, mandatory=False):
     return __getTypeChecked(obj, key, [numbers.Integral], mandatory)
 
 
-def getObjectOrStringChecked(obj, key, mandatory=False):
+def getObjectOrStringChecked(obj, key: str, mandatory: bool = False):
     """
     Retrieve an object or string from the given object using the given key
 
     @type obj: map
     @param obj: Source object
 
-    @type key: string
     @param key: Key to retrieve from obj
-
-    @type mandatory: bool
     @param mandatory: If True, throws an exception if the key is not found
 
     @rtype: string or dict
@@ -92,17 +83,14 @@ def getObjectOrStringChecked(obj, key, mandatory=False):
     return __getTypeChecked(obj, key, [str, bytes, dict], mandatory)
 
 
-def getNumberOrStringChecked(obj, key, mandatory=False):
+def getNumberOrStringChecked(obj, key: str, mandatory: bool = False):
     """
     Retrieve a number or string from the given object using the given key
 
     @type obj: map
     @param obj: Source object
 
-    @type key: string
     @param key: Key to retrieve from obj
-
-    @type mandatory: bool
     @param mandatory: If True, throws an exception if the key is not found
 
     @rtype: string or number
@@ -111,7 +99,7 @@ def getNumberOrStringChecked(obj, key, mandatory=False):
     return __getTypeChecked(obj, key, [str, bytes, numbers.Integral], mandatory)
 
 
-def __getTypeChecked(obj, key, valTypes, mandatory=False):
+def __getTypeChecked(obj, key: str, valTypes, mandatory: bool = False):
     if key not in obj:
         if mandatory:
             raise RuntimeError(f'Expected key "{key}" in object')

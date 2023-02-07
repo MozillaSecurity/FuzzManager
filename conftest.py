@@ -11,8 +11,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import sys
 from pathlib import Path
 
+from _pytest.config import Config
 
-def pytest_ignore_collect(path, config):
+
+def pytest_ignore_collect(path: str, config: Config) -> bool:
     # Django 4.1 requires 3.8
     # 3.11 causes an ImportError in vine (via celery)
     if sys.version_info < (3, 8) or sys.version_info >= (3, 11):

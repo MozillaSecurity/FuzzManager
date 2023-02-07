@@ -8,14 +8,21 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
+from __future__ import annotations
+
 import json
 import logging
 import os
 import re
+import typing
 
 import pytest
 import requests
+from django.test.client import Client
 from django.urls import reverse
+
+from .conftest import _result
 
 LOG = logging.getLogger("fm.covmanager.tests.collections")
 pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=invalid-name
@@ -30,12 +37,15 @@ pytestmark = pytest.mark.usefixtures("covmanager_test")  # pylint: disable=inval
         "covmanager:collections_patch",
     ],
 )
-def test_collections_no_login(name, client):
+def test_collections_no_login(name: str, client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse(name)
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
 @pytest.mark.parametrize(
@@ -47,7 +57,7 @@ def test_collections_no_login(name, client):
         "covmanager:collections_patch",
     ],
 )
-def test_collections_view_simple_get(name, client):
+def test_collections_view_simple_get(name: str, client: Client) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     response = client.get(reverse(name))
@@ -55,15 +65,18 @@ def test_collections_view_simple_get(name, client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_collections_diff_no_login(client):
+def test_collections_diff_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse("covmanager:collections_diff_api", kwargs={"path": ""})
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
-def test_collections_diff_simple_get(client, cm):
+def test_collections_diff_simple_get(client: Client, cm: _result) -> None:
     """No errors are thrown in template"""
     repo = cm.create_repository("git")
     col1 = cm.create_collection(repository=repo, coverage=json.dumps({"children": []}))
@@ -77,7 +90,7 @@ def test_collections_diff_simple_get(client, cm):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_collections_patch_no_login(client):
+def test_collections_patch_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse(
         "covmanager:collections_patch_api",
@@ -85,10 +98,13 @@ def test_collections_patch_no_login(client):
     )
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
-def test_collections_patch_simple_get(client, cm):
+def test_collections_patch_simple_get(client: Client, cm: _result) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     repo = cm.create_repository("hg")
@@ -112,7 +128,9 @@ def test_collections_patch_simple_get(client, cm):
     with open(os.path.join(repo.location, "test.c"), "w") as fp:
         fp.write("world")
     cm.hg(repo, "commit", "-m", "update")
-    rev = re.match(r"changeset:   1:([0-9a-f]+)", cm.hg(repo, "log")).group(1)
+    re_match = re.match(r"changeset:   1:([0-9a-f]+)", cm.hg(repo, "log"))
+    assert re_match is not None
+    rev = re_match.group(1)
     response = client.get(
         reverse(
             "covmanager:collections_patch_api",
@@ -123,15 +141,18 @@ def test_collections_patch_simple_get(client, cm):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_collections_browse_no_login(client):
+def test_collections_browse_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse("covmanager:collections_browse", kwargs={"collectionid": 0})
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
-def test_collections_browse_simple_get(client):
+def test_collections_browse_simple_get(client: Client) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     response = client.get(
@@ -141,17 +162,20 @@ def test_collections_browse_simple_get(client):
     assert response.status_code == requests.codes["ok"]
 
 
-def test_collections_browse_api_no_login(client):
+def test_collections_browse_api_no_login(client: Client) -> None:
     """Request without login hits the login redirect"""
     path = reverse(
         "covmanager:collections_browse_api", kwargs={"collectionid": 0, "path": ""}
     )
     response = client.get(path, follow=False)
     assert response.status_code == requests.codes["found"]
-    assert response.url == "/login/?next=" + path
+    assert (
+        typing.cast(typing.Union[str, None], getattr(response, "url", None))
+        == "/login/?next=" + path
+    )
 
 
-def test_collections_browse_api_simple_get(client, cm):
+def test_collections_browse_api_simple_get(client: Client, cm: _result) -> None:
     """No errors are thrown in template"""
     client.login(username="test", password="test")
     repo = cm.create_repository("git")

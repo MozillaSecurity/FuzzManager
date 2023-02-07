@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .settings import *  # noqa
 
 # Run in production mode

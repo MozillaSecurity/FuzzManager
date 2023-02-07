@@ -13,6 +13,9 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
+from __future__ import annotations
+
 import numbers
 import re
 from abc import ABCMeta, abstractmethod
@@ -22,14 +25,14 @@ from FTB.Signatures import JSONHelper
 
 class Match(metaclass=ABCMeta):
     @abstractmethod
-    def matches(self, value):
+    def matches(self, value: bytes | int | str | None) -> re.Match[str] | bool | None:
         pass
 
 
 class StringMatch(Match):
-    def __init__(self, obj):
+    def __init__(self, obj: bytes | int | numbers.Integral | str) -> None:
         self.isPCRE = False
-        self.compiledValue = None
+        self.compiledValue: re.Pattern[str] | None = None
         self.patternContainsSlash = False
 
         if isinstance(obj, bytes):
@@ -63,28 +66,34 @@ class StringMatch(Match):
                 else:
                     raise RuntimeError(f"Unknown match operator specified: {matchType}")
 
-    def matches(self, value, windowsSlashWorkaround=False):
+    def matches(
+        self, value: bytes | int | str | None, windowsSlashWorkaround: bool = False
+    ) -> re.Match[str] | bool | None:
         if isinstance(value, bytes):
             # If the input is not already unicode, try to interpret it as UTF-8
             # If there are errors, replace them with U+FFFD so we neither raise nor
             # false positive.
-            value = value.decode("utf-8", errors="replace")
+            value_decoded = value.decode("utf-8", errors="replace")
 
         if self.isPCRE:
-            if self.compiledValue.search(value) is not None:
+            assert self.compiledValue is not None
+            if self.compiledValue.search(value_decoded) is not None:
                 return True
             elif windowsSlashWorkaround and self.patternContainsSlash:
                 # NB this will fail if the pattern is supposed to match a backslash and
                 #    a windows-style path in the same line
-                return self.compiledValue.search(value.replace("\\", "/")) is not None
+                return (
+                    self.compiledValue.search(value_decoded.replace("\\", "/"))
+                    is not None
+                )
             return False
         else:
-            return self.value in value
+            return self.value in value_decoded
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.isPCRE:
             return f"/{self.value}/"
 
@@ -96,8 +105,9 @@ class NumberMatchType:
 
 
 class NumberMatch(Match):
-    def __init__(self, obj):
-        self.matchType = None
+    def __init__(self, obj: bytes | int | numbers.Integral | str) -> None:
+        self.matchType: int | None = None
+        self.value: int | numbers.Integral | None
 
         if isinstance(obj, bytes):
             obj = obj.decode("utf-8")
@@ -144,10 +154,12 @@ class NumberMatch(Match):
         else:
             raise RuntimeError(f"Invalid type {type(obj)} in NumberMatch.")
 
-    def matches(self, value):
+    def matches(self, value: bytes | int | str | None) -> bool:
         if value is None:
             return self.value is None
 
+        assert isinstance(value, int)
+        assert isinstance(self.value, int)
         if self.matchType == NumberMatchType.GE:
             return value >= self.value
         elif self.matchType == NumberMatchType.GT:

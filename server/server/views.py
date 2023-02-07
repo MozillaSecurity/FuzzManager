@@ -1,20 +1,35 @@
+from __future__ import annotations
+
 import collections
 import functools
 import json
+from typing import Any, TypeVar, cast
 
 from django.conf import settings
 from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q
-from django.shortcuts import redirect
+from django.core.paginator import EmptyPage, Page, PageNotAnInteger, Paginator
+from django.db.models import Model, Q
+from django.db.models.query import QuerySet
+from django.http.request import HttpRequest
+from django.http.response import (
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+)
+from django.shortcuts import redirect, render
 from django.urls import resolve, reverse
 from rest_framework import filters
+from rest_framework.request import Request
+from rest_framework.views import APIView
 
 from crashmanager.models import User
+from server.covmanager.models import Collection
+
+MT = TypeVar("MT", bound=Model)
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponseRedirect | HttpResponsePermanentRedirect:
     user = User.get_or_create_restricted(request.user)[0]
     # return crashmanager, covmanager, or ec2spotmanager, as allowed, in that order.
     # if no permission to view any apps, then use crashmanager and let that fail
@@ -26,16 +41,18 @@ def index(request):
     return redirect("crashmanager:index")
 
 
-def login(request):
+def login(request: HttpRequest):
     if settings.USE_OIDC:
         auth_view = resolve(reverse("oidc_authentication_init")).func
         return auth_view(request)
     return LoginView.as_view()(request)
 
 
-def deny_restricted_users(wrapped):
+def deny_restricted_users(
+    wrapped: collections.abc.Callable[..., Any]
+) -> collections.abc.Callable[..., Any]:
     @functools.wraps(wrapped)
-    def decorator(request, *args, **kwargs):
+    def decorator(request: HttpRequest, *args: Any, **kwargs: Any) -> Any:
         user = User.get_or_create_restricted(request.user)[0]
         if user.restricted:
             raise PermissionDenied(
@@ -46,23 +63,27 @@ def deny_restricted_users(wrapped):
     return decorator
 
 
-def renderError(request, err):
-    return render(request, "error.html", {"error_message": err})  # noqa
+def renderError(request: HttpRequest, err: str) -> HttpResponse:
+    return render(request, "error.html", {"error_message": err})
 
 
-def paginate_requested_list(request, entries):
+def paginate_requested_list(request: HttpRequest, entries: QuerySet[Model]) -> Page:
     """
     This method generically paginates a given QuerySet and returns a list
     suitable for passing to a template. The set is paginated by request
     parameters 'page' and 'page_size'.
     """
     page_size = request.GET.get("page_size")
-    if not page_size:
-        page_size = 100
-    paginator = Paginator(entries, page_size)
+    if page_size:
+        page_size_int = int(page_size)
+    else:
+        page_size_int = 100
+    paginator = Paginator(entries, page_size_int)
+
     page = request.GET.get("page")
 
     try:
+        assert page is not None
         page_entries = paginator.page(page)
     except PageNotAnInteger:
         # If page is not an integer, deliver first page.
@@ -83,7 +104,7 @@ def paginate_requested_list(request, entries):
     return page_entries
 
 
-def json_to_query(json_str):
+def json_to_query(json_str: str):
     """
     This method converts JSON objects into trees of Django Q objects.
     It can be used to provide the user the ability to perform complex
@@ -112,7 +133,9 @@ def json_to_query(json_str):
     except ValueError as e:
         raise RuntimeError(f"Invalid JSON: {e}")
 
-    def get_query_obj(obj, key=None):
+    def get_query_obj(
+        obj: str | list[str] | int | dict[str, str] | None, key: str | None = None
+    ) -> Q:
 
         if obj is None or isinstance(obj, (str, list, int)):
             kwargs = {key: obj}
@@ -157,7 +180,9 @@ class JsonQueryFilterBackend(filters.BaseFilterBackend):
     (see json_to_query)
     """
 
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -177,7 +202,9 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
     "contains" searches
     """
 
-    def filter_queryset(self, request, queryset, view):
+    def filter_queryset(
+        self, request: Request, queryset: QuerySet[MT], view: APIView
+    ) -> QuerySet[MT]:
         """
         Return a filtered queryset.
         """
@@ -188,7 +215,7 @@ class SimpleQueryFilterBackend(filters.BaseFilterBackend):
         querystr = request.query_params.get("squery", None)
         if querystr is not None:
             queryobj = None
-            for field in queryset[0].simple_query_fields:
+            for field in cast(Collection, queryset[0]).simple_query_fields:
                 kwargs = {f"{field}__contains": querystr}
                 if queryobj is None:
                     queryobj = Q(**kwargs)
