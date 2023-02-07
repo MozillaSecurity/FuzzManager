@@ -33,7 +33,7 @@ INSTANCE_STATE_CODE = {
     64: "stopping",
     80: "stopped",
 }
-INSTANCE_STATE = {val: key for key, val in INSTANCE_STATE_CODE.items()}
+INSTANCE_STATE: dict[str, int] = {val: key for key, val in INSTANCE_STATE_CODE.items()}
 
 # List of currently supported providers. This and what is returned by get_name() must
 # match

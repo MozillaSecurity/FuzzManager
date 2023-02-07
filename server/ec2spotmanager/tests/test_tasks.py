@@ -156,7 +156,7 @@ def test_fulfilled_spot_instance(mocker: MockerFixture) -> None:
 
         @property
         def state_code(self) -> int:
-            return INSTANCE_STATE["running"]
+            return int(INSTANCE_STATE["running"])
 
         def add_tags(
             self, tags: Iterable[tuple[str, str]], dry_run: bool = False
@@ -221,7 +221,7 @@ def test_instance_shutting_down(mocker: MockerFixture) -> None:
     class _MockInstance(boto.ec2.instance.Instance):
         @property
         def state_code(self) -> int:
-            return INSTANCE_STATE["shutting-down"]
+            return int(INSTANCE_STATE["shutting-down"])
 
         def add_tags(
             self, _tags: Iterable[tuple[str, str]], _dry_run: bool = False
@@ -231,7 +231,7 @@ def test_instance_shutting_down(mocker: MockerFixture) -> None:
     class _MockInstance2(_MockInstance):
         @property
         def state_code(self) -> int:
-            return INSTANCE_STATE["terminated"]
+            return int(INSTANCE_STATE["terminated"])
 
     boto_instance1 = _MockInstance()
     boto_instance1.id = "i-123"
@@ -336,7 +336,7 @@ def test_instance_not_updatable(mocker: MockerFixture) -> None:
     class _MockInstance(boto.ec2.instance.Instance):
         @property
         def state_code(self) -> int:
-            return INSTANCE_STATE["stopping"]
+            return int(INSTANCE_STATE["stopping"])
 
     boto_instance = _MockInstance()
     boto_instance.id = "i-123"

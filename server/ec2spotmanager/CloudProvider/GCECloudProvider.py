@@ -154,7 +154,7 @@ class GCECloudProvider(CloudProvider):
             ".".join(reversed(ip_addr.split("."))) + ".bc.googleusercontent.com"
         )
         instance["instance_id"] = node.name
-        instance["status_code"] = self.NODE_STATE_MAP[node.extra["status"]]
+        instance["status_code"] = str(self.NODE_STATE_MAP[node.extra["status"]])
         return instance
 
     @wrap_provider_errors
