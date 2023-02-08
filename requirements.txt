@@ -52,7 +52,7 @@ charset-normalizer==2.0.12
     # via requests
 coverage==6.3.1
     # via pytest-cov
-cryptography==36.0.1
+cryptography==39.0.1
     # via
     #   adal
     #   secretstorage
