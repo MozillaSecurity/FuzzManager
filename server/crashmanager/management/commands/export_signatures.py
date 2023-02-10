@@ -16,7 +16,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, filename, **options):
-
         with ZipFile(filename, "w") as zipFile:
             for bucket in Bucket.objects.annotate(
                 size=Count("crashentry"), quality=Min("crashentry__testcase__quality")

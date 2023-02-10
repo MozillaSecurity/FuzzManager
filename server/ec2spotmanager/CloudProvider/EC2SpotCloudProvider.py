@@ -253,7 +253,6 @@ class EC2SpotCloudProvider(CloudProvider):
 
     @wrap_provider_errors
     def check_instances_state(self, pool_id, region):
-
         instance_states = {}
         cluster = self._connect(region)
 

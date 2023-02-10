@@ -14,7 +14,6 @@ class Command(BaseCommand):
         parser.add_argument("location", help="path to the repository root")
 
     def handle(self, name, provider, location, **opts):
-
         if not name:
             raise CommandError("Error: invalid repository name")
 

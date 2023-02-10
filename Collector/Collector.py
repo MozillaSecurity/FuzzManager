@@ -313,7 +313,6 @@ class Collector(Reporter):
         )
 
         while next_url:
-
             resp_json = self.get(next_url, params=params).json()
 
             if not isinstance(resp_json, dict):
@@ -325,7 +324,6 @@ class Collector(Reporter):
             params = None
 
             for crash in resp_json["results"]:
-
                 if not crash["testcase"]:
                     continue
 

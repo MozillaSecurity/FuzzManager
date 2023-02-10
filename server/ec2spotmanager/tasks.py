@@ -503,7 +503,6 @@ def update_instances(provider, region):
                 SPOTMGR_TAG + "-Updatable" not in cloud_data["tags"]
                 or int(cloud_data["tags"][SPOTMGR_TAG + "-Updatable"]) <= 0
             ):
-
                 logger.warning(
                     "************** INSTANCE %s in %s/%s NOT UPDATABLE **************",
                     cloud_id,
@@ -538,7 +537,6 @@ def update_instances(provider, region):
                     INSTANCE_STATE["shutting-down"],
                     INSTANCE_STATE["terminated"],
                 }:
-
                     # As a last resort, try to find the instance in our database. If the
                     # instance was saved to our database between the entrance to this
                     # function and the search query sent to provider, then the instance

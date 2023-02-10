@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("crashmanager", "0001_squashed_0020_add_app_permissions"),
     ]

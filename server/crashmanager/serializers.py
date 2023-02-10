@@ -58,7 +58,6 @@ class CrashEntrySerializer(serializers.ModelSerializer):
     )
 
     def __init__(self, *args, **kwargs):
-
         include_raw = kwargs.pop("include_raw", True)
 
         super().__init__(*args, **kwargs)
@@ -137,7 +136,6 @@ class CrashEntrySerializer(serializers.ModelSerializer):
 
         # If a testcase is supplied, create a testcase object and store it
         if "test" in attrs["testcase"]:
-
             testcase = attrs["testcase"]
             testcase_ext = attrs.pop("testcase_ext", None)
             testcase_size = testcase.get("size", 0)

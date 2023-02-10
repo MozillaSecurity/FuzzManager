@@ -1494,7 +1494,6 @@ class GDBCrashInfo(CrashInfo):
 
     @staticmethod
     def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
-
         match = re.match(
             "((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)",
             complexDerefOp,
@@ -1803,7 +1802,6 @@ class CDBCrashInfo(CrashInfo):
 
 
 class RustCrashInfo(CrashInfo):
-
     RE_FRAME = re.compile(
         r"^( +\d+:( +0x[0-9a-f]+ -)? (?P<symbol>.+?)"
         r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$"

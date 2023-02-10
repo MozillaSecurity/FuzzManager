@@ -487,7 +487,6 @@ def __handleConfigPOST(request, config):
             for y in [x.strip() for x in request.POST["instance_tags"].split(",")]
         )
     else:
-
         config.instance_tags_dict = None
     config.instance_tags_override = (
         request.POST.get("instance_tags_override", "off") == "on"

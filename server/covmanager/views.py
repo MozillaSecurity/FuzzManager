@@ -219,7 +219,6 @@ def collections_browse_api(request, collectionid, path):
 
 
 def collections_diff_api(request, path):
-
     collections = None
     coverages = []
 

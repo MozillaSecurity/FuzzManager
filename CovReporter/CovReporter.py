@@ -162,7 +162,6 @@ class CovReporter(Reporter):
             # Process every source file and store the coverage data in our tree
             # structure
             for source_file in source_files:
-
                 # Split the filename into path parts and file part
                 name = source_file["name"]
                 name_parts = name.split("/")

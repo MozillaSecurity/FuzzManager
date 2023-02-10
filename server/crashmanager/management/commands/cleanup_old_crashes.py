@@ -15,7 +15,6 @@ class Command(BaseCommand):
     help = "Cleanup old crash entries."
 
     def handle(self, *args, **options):
-
         cleanup_crashes_after_days = getattr(settings, "CLEANUP_CRASHES_AFTER_DAYS", 14)
         cleanup_fixed_buckets_after_days = getattr(
             settings, "CLEANUP_FIXED_BUCKETS_AFTER_DAYS", 3

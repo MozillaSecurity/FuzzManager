@@ -43,7 +43,6 @@ def update_tasks():
     for task_obj in Task.objects.filter(
         state__in=["pending", "running"]
     ).select_related("pool"):
-
         if (
             task_obj.state == "running"
             and task_obj.created is not None

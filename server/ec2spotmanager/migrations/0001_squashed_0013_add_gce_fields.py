@@ -11,7 +11,6 @@ import ec2spotmanager.models
 
 
 class Migration(migrations.Migration):
-
     replaces = [
         ("ec2spotmanager", "0001_initial"),
         ("ec2spotmanager", "0002_instancestatusentry_poolstatusentry"),

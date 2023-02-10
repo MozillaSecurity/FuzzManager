@@ -48,13 +48,13 @@ class _LowercaseDict(dict):
             raise TypeError(f"dict expected at most 1 arguments, got {len(args)}")
         if args:
             if hasattr(args[0], "items"):
-                for (k, v) in args[0].items():
+                for k, v in args[0].items():
                     self[k] = v
             else:
-                for (k, v) in args[0]:
+                for k, v in args[0]:
                     self[k] = v
         elif kwds:
-            for (k, v) in kwds.items():
+            for k, v in kwds.items():
                 self[k] = v
 
     def __getitem__(self, key):
@@ -279,7 +279,6 @@ class GCECloudProvider(CloudProvider):
             raise
 
         for node in libcloud_nodes:
-
             instance_states[node.name] = {}
             instance_states[node.name]["status"] = self.NODE_STATE_MAP[
                 node.extra["status"]
@@ -373,7 +372,6 @@ class GCECloudProvider(CloudProvider):
                 sku["category"]["resourceFamily"] == "Compute"
                 and sku["category"]["usageType"] == "Preemptible"
             ):
-
                 # group by sku["serviceRegions"] and sku["category"]["resourceGroup"]
                 price, unit = get_price(sku)
 

@@ -148,7 +148,7 @@ def test_SignatureStackFramesAlgorithmsTest():
         ),
     ]
 
-    for (stack, rawSig, expectedDepth, expectedSig) in testArray:
+    for stack, rawSig, expectedDepth, expectedSig in testArray:
         for maxDepth in (expectedDepth, 3):
             (actualDepth, actualSig) = StackFramesSymptom._diff(
                 stack, [StringMatch(x) for x in rawSig], 0, 1, maxDepth

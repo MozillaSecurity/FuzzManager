@@ -449,9 +449,7 @@ class StackFramesSymptom(Symptom):
 
     @staticmethod
     def _match(partialStack, partialFunctionNames):
-
         while True:
-
             # Process as many non-wildcard chars as we can find iteratively for
             # performance reasons
             while (

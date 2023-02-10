@@ -7,7 +7,6 @@ import ec2spotmanager.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("ec2spotmanager", "0001_squashed_0013_add_gce_fields"),
     ]

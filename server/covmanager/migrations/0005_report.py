@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("covmanager", "0004_reportconfiguration_reportsummary"),
     ]
