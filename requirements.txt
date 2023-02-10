@@ -148,7 +148,7 @@ multidict==6.0.4
     #   yarl
 mysqlclient==2.0.3
     # via FuzzManager (setup.py)
-oauthlib==3.2.0
+oauthlib==3.2.2
     # via requests-oauthlib
 packaging==21.3
     # via
