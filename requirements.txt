@@ -100,8 +100,6 @@ frozenlist==1.3.3
     # via
     #   aiohttp
     #   aiosignal
-fuzzing-decision @ git+https://github.com/MozillaSecurity/orion#subdirectory=services/fuzzing-decision
-    # via FuzzManager (setup.py)
 gunicorn==20.1.0
     # via FuzzManager (setup.py)
 idna==3.3
