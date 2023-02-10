@@ -164,7 +164,7 @@ pycparser==2.21
     # via cffi
 pycryptodome==3.7.3
     # via laniakea
-pyjwt==2.3.0
+pyjwt==2.4.0
     # via adal
 pyopenssl==23.0.0
     # via josepy
