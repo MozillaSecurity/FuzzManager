@@ -1177,7 +1177,7 @@ def main(argv=None):
         status_data = s3m.get_corpus_status()
         total_corpus_files = 0
 
-        for (status_dt, status_cnt) in sorted(status_data.items()):
+        for status_dt, status_cnt in sorted(status_data.items()):
             print(f"Added {status_dt}: {status_cnt}")
             total_corpus_files += status_cnt
         print(f"Total corpus files: {total_corpus_files}")

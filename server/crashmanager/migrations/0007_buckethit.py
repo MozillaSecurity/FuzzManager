@@ -28,7 +28,6 @@ def add_crash_bucket_hits(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("crashmanager", "0006_auto_20210913_1554"),
     ]

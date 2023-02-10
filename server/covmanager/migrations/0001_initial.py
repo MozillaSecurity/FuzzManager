@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("crashmanager", "0018_auto_20170620_1503")]
 
     operations = [

@@ -80,6 +80,7 @@ def test_bad_config():
 
 def test_create_instance(mocker):
     """spot instance requests are created when required"""
+
     # set-up redis mock to return price data and image name
     def _mock_redis_get(key):
         if ":blacklist:redmond:mshq:" in key:
@@ -142,6 +143,7 @@ def test_create_instance(mocker):
 
 def test_fulfilled_spot_instance(mocker):
     """spot instance requests are turned into instances when fulfilled"""
+
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         def __init__(self, *args, **kwds):
@@ -209,6 +211,7 @@ def test_fulfilled_spot_instance(mocker):
 
 def test_instance_shutting_down(mocker):
     """instances are replaced when shut down or terminated"""
+
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         @property
@@ -322,6 +325,7 @@ def test_instance_shutting_down(mocker):
 
 def test_instance_not_updatable(mocker):
     """instances are not touched while they are not tagged Updatable"""
+
     # ensure EC2Manager returns a request ID
     class _MockInstance(boto.ec2.instance.Instance):
         @property
@@ -379,6 +383,7 @@ def test_instance_not_updatable(mocker):
 
 def test_instance_price_high(mocker):
     """check that instances are not created if the price is too high"""
+
     # set-up redis mock to return price data and image name
     def _mock_redis_get(key):
         if ":blacklist:" in key:
@@ -432,6 +437,7 @@ def test_instance_price_high(mocker):
 
 def test_spot_instance_blacklist(mocker):
     """check that spot requests being cancelled will result in temporary blacklisting"""
+
     # ensure EC2Manager returns a request ID
     class _status_code:
         code = "instance-terminated-by-service"

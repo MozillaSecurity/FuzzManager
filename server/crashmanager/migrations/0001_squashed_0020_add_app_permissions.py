@@ -9,7 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     replaces = [
         ("crashmanager", "0001_initial"),
         ("crashmanager", "0002_bugzillatemplate_security"),

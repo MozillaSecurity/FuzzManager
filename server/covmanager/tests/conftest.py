@@ -103,7 +103,6 @@ def cm(request, settings, tmpdir):
 
         @staticmethod
         def create_collection_file(data):
-
             # Use a specific temporary directory to upload covmanager files.  This is
             # required as Django now needs a path relative to that folder in FileField
             location = str(tmpdir)

@@ -238,7 +238,7 @@ def main():
     aws_access_key_id = configFile.main["aws_access_key_id"]
     aws_secret_key = configFile.main["aws_secret_key"]
 
-    for (simulation_name, simulation) in configFile.simulations.items():
+    for simulation_name, simulation in configFile.simulations.items():
         sim_module = importlib.import_module(f"simulations.{simulation['handler']}")
 
         print(f"Performing simulation '{simulation_name}' ...")

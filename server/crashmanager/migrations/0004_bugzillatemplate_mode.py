@@ -14,7 +14,6 @@ def update_mode(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("crashmanager", "0003_auto_20210429_0908"),
     ]
