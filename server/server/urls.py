@@ -13,8 +13,6 @@ admin.autodiscover()
 
 
 urlpatterns = [
-    # uncomment to use mozilla_django_oidc
-    # re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
     re_path(r"^$", index, name="index"),
     # re_path(r'^admin/', include(admin.site.urls)),
     re_path(r"^login/$", login, name="login"),
@@ -49,5 +47,9 @@ urlpatterns = [
         ),
     ),
 ]
+
+if settings.USE_OIDC:
+    urlpatterns.append(re_path(r"^oidc/", include("mozilla_django_oidc.urls")))
+
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
