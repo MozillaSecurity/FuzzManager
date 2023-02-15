@@ -74,7 +74,7 @@ cryptography==39.0.1
     #   secretstorage
 deprecated==1.2.13
     # via redis
-django==4.1.4
+django==4.1.7
     # via
     #   FuzzManager (setup.py)
     #   django-model-utils
