@@ -13,6 +13,12 @@ COV_STORAGE = "/data/coverage"
 TEST_STORAGE = "/data/crashes"
 USERDATA_STORAGE = "/data/userdata"
 
+REDIS_URL = (
+    "redis://fuzzmanager-redis:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
+)
+CELERY_BROKER_URL = "redis://fuzzmanager-redis/2"
+CELERY_RESULT_BACKEND = "redis://fuzzmanager-redis/1"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -21,4 +27,18 @@ DATABASES = {
         "PASSWORD": "mozilla1234",
         "HOST": "database",
     }
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
 }

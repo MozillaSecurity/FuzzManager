@@ -5,9 +5,12 @@ services:
   backend:
     container_name: fuzzmanager
     build: .
+    pull_policy: never
+    image: mozillasecurity/fuzzmanager:compose
 
     depends_on:
       - database
+      - redis
 
     volumes:
       - userdata:/data
@@ -15,6 +18,52 @@ services:
 
     ports:
       - "8000:80"
+
+  celery-beat:
+    container_name: fm-celery-beat
+    image: mozillasecurity/fuzzmanager:compose
+    pull_policy: never
+
+    command: celery -A celeryconf -l info beat
+
+    depends_on:
+      - backend
+      - redis
+
+    volumes:
+      - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
+
+  celery-cron-worker:
+    container_name: fm-celery-cron-worker
+    image: mozillasecurity/fuzzmanager:compose
+    pull_policy: never
+
+    command: celery -A celeryconf -l info -c 4 -n cron@%h -Q cron worker
+
+    depends_on:
+      - backend
+      - database
+      - redis
+
+    volumes:
+      - userdata:/data
+      - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
+
+  celery-worker:
+    container_name: fm-celery-worker
+    image: mozillasecurity/fuzzmanager:compose
+    pull_policy: never
+
+    command: celery -A celeryconf -l info -n worker@%h -Q celery worker
+
+    depends_on:
+      - backend
+      - database
+      - redis
+
+    volumes:
+      - userdata:/data
+      - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
 
   database:
     container_name: fuzzmanager-db
@@ -29,6 +78,10 @@ services:
 
     volumes:
       - mysql:/var/lib/mysql
+
+  redis:
+    container_name: fuzzmanager-redis
+    image: redis:7-alpine
 
 volumes:
   userdata:

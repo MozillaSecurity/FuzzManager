@@ -349,53 +349,53 @@ SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
 
 # Celery configuration
-# USE_CELERY = True
-# CELERY_ACCEPT_CONTENT = ["json", "pickle"]
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
+USE_CELERY = True
+CELERY_ACCEPT_CONTENT = ["json", "pickle"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 # For CELERY_BROKER_URL unix sockets, use redis+socket:///path/to/socket?virtual_host=0
-# CELERY_BROKER_URL = 'redis://'
-# CELERY_RESULT_BACKEND = 'redis://'
-# CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
-# CELERY_TASK_ROUTES = {
-#     'crashmanager.cron.*': {'queue': 'cron'},
-#     'ec2spotmanager.cron.*': {'queue': 'cron'},
-#     'taskmanager.cron.*': {'queue': 'cron'},
-# }
-# CELERY_BEAT_SCHEDULE = {
-#     'Poll Bugzilla every 15 minutes': {
-#         'task': 'crashmanager.cron.bug_update_status',
-#         'schedule': 15 * 60,
-#     },
-#     'Cleanup CrashEntry/Bucket objects every 30 minutes': {
-#         'task': 'crashmanager.cron.cleanup_old_crashes',
-#         'schedule': 30 * 60,
-#     },
-#     'Create signatures.zip hourly': {
-#         'task': 'crashmanager.cron.export_signatures',
-#         'schedule': 60 * 60,
-#     },
-#     'Update EC2SpotManager statistics': {
-#         'task': 'ec2spotmanager.cron.update_stats',
-#         'schedule': 60,
-#     },
-#     'Check EC2SpotManager pools': {
-#         'task': 'ec2spotmanager.cron.check_instance_pools',
-#         'schedule': 60,
-#     },
-#     'Cache EC2 spot market pricing in Redis': {
-#         'task': 'ec2spotmanager.cron.update_prices',
-#         'schedule': 15 * 60,
-#     },
-#     'Poll TaskManager tasks with missed pulses': {
-#         'task': 'taskmanager.cron.update_tasks',
-#         'schedule': 15 * 60,
-#     },
-#     'Cleanup expired TaskManager tasks': {
-#         'task': 'taskmanager.cron.delete_expired',
-#         'schedule': 5 * 60,
-#     },
-# }
+CELERY_BROKER_URL = "redis:///2"
+CELERY_RESULT_BACKEND = "redis:///1"
+CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
+CELERY_TASK_ROUTES = {
+    "crashmanager.cron.*": {"queue": "cron"},
+    "ec2spotmanager.cron.*": {"queue": "cron"},
+    "taskmanager.cron.*": {"queue": "cron"},
+}
+CELERY_BEAT_SCHEDULE = {
+    # 'Poll Bugzilla every 15 minutes': {
+    #     'task': 'crashmanager.cron.bug_update_status',
+    #     'schedule': 15 * 60,
+    # },
+    "Cleanup CrashEntry/Bucket objects every 30 minutes": {
+        "task": "crashmanager.cron.cleanup_old_crashes",
+        "schedule": 30 * 60,
+    },
+    "Create signatures.zip hourly": {
+        "task": "crashmanager.cron.export_signatures",
+        "schedule": 60 * 60,
+    },
+    # 'Update EC2SpotManager statistics': {
+    #     'task': 'ec2spotmanager.cron.update_stats',
+    #     'schedule': 60,
+    # },
+    # 'Check EC2SpotManager pools': {
+    #     'task': 'ec2spotmanager.cron.check_instance_pools',
+    #     'schedule': 60,
+    # },
+    # 'Cache EC2 spot market pricing in Redis': {
+    #     'task': 'ec2spotmanager.cron.update_prices',
+    #     'schedule': 15 * 60,
+    # },
+    # 'Poll TaskManager tasks with missed pulses': {
+    #     'task': 'taskmanager.cron.update_tasks',
+    #     'schedule': 15 * 60,
+    # },
+    "Cleanup expired TaskManager tasks": {
+        "task": "taskmanager.cron.delete_expired",
+        "schedule": 5 * 60,
+    },
+}
 
 # Email
 EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
