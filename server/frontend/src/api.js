@@ -6,6 +6,9 @@ const mainAxios = axios.create({
   withCredentials: true,
 });
 
+export const pollAsyncOp = async (id) =>
+  (await mainAxios.get(`/crashmanager/rest/op/${id}/`)).status === 200;
+
 export const retrieveBucket = async (id) =>
   (await mainAxios.get(`/crashmanager/rest/buckets/${id}/`)).data;
 
@@ -34,6 +37,9 @@ export const retrieveCrashTestCaseBinary = async (id) =>
       })
     ).data
   );
+
+export const deleteCrashes = async (params) =>
+  (await mainAxios.delete("/crashmanager/rest/crashes/", { params })).data;
 
 export const listCrashes = async (params) =>
   (await mainAxios.get("/crashmanager/rest/crashes/", { params })).data;

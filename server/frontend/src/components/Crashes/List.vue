@@ -102,26 +102,37 @@
       >
         Query
       </button>
+      <button
+        v-on:click="deleteQuery"
+        :disabled="modified || loading || !haveResults"
+        :title="deleteButtonTitle"
+      >
+        Delete
+      </button>
     </div>
     <div class="panel-body">
-      <p
-        v-if="
-          advancedQuery ||
-          searchStr.trim() !== '' ||
-          Object.keys(filters).length
-        "
-      >
-        Displaying {{ currentEntries }}/{{ totalEntries }} entries matching
-        query.
+      <p>
+        <span v-if="deleteAsyncToken === null">
+          Displaying {{ currentEntries }} /
+        </span>
+        <span v-else>Deleting</span>
+        <span
+          v-if="
+            advancedQuery ||
+            searchStr.trim() !== '' ||
+            Object.keys(filters).length
+          "
+        >
+          {{ totalEntries }} entries matching query.
+        </span>
+        <span v-else-if="!showBucketed">
+          {{ totalEntries }} unbucketed entries.
+        </span>
+        <span v-else-if="watchId !== null && crashes">
+          {{ totalEntries }} new entries in bucket {{ crashes[0].bucket }}.
+        </span>
+        <span v-else>{{ totalEntries }} entries.</span>
       </p>
-      <p v-else-if="!showBucketed">
-        Displaying {{ currentEntries }}/{{ totalEntries }} unbucketed entries.
-      </p>
-      <p v-else-if="watchId !== null && crashes">
-        Displaying {{ currentEntries }} new entries in bucket
-        {{ crashes[0].bucket }}.
-      </p>
-      <p v-else>Displaying {{ currentEntries }}/{{ totalEntries }} entries.</p>
 
       <div class="pagination">
         <span class="step-links">
@@ -305,10 +316,12 @@ import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
 import swal from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
+import Vue from "vue";
 import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
+import DeleteConfirmation from "./DeleteConfirmation.vue";
 
 const pageSize = 100;
 const validSortKeys = [
@@ -362,15 +375,21 @@ export default {
     },
   },
   data: () => ({
-    modifiedCache: {},
     advancedQuery: false,
     advancedQueryError: "",
     advancedQueryStr: "",
+    cachedAdvancedQueryStr: null,
+    cachedIgnoreToolFilter: null,
+    cachedSearchStr: null,
+    cachedShowBucketed: null,
     canUnshowBucketed: true,
     crashes: null,
     currentEntries: "?",
     currentPage: 1,
+    deleteAsyncTimer: null,
+    deleteAsyncToken: null,
     filters: {},
+    haveResults: false,
     ignoreToolFilter: false,
     loading: true,
     searchStr: "",
@@ -434,23 +453,49 @@ export default {
   },
   computed: {
     modified() {
-      if (this.ignoreToolFilter !== this.modifiedCache.ignoreToolFilter)
+      if (this.ignoreToolFilter !== this.cachedIgnoreToolFilter) {
+        // eslint-disable-next-line no-console
+        console.debug("modified because toolfilter differs");
         return true;
+      }
       if (this.advancedQuery) {
         const queryStr = (() => {
           try {
             return JSON.parse(this.advancedQueryStr);
           } catch (e) {} // eslint-disable-line no-empty
         })();
-        return !_isEqual(queryStr, this.modifiedCache.advancedQueryStr);
+        if (!_isEqual(queryStr, this.cachedAdvancedQueryStr)) {
+          // eslint-disable-next-line no-console
+          console.debug("modified because query differs (advanced)");
+          return true;
+        } else {
+          // eslint-disable-next-line no-console
+          console.debug("not modified (advanced)");
+          return false;
+        }
       }
-      return (
-        this.showBucketed !== this.modifiedCache.showBucketed ||
-        this.searchStr.trim() !== this.modifiedCache.searchStr
-      );
+      if (this.showBucketed !== this.cachedShowBucketed) {
+        // eslint-disable-next-line no-console
+        console.debug("modified because show_bucketed differs (basic)");
+        return true;
+      }
+      if (this.searchStr.trim() !== this.cachedSearchStr) {
+        // eslint-disable-next-line no-console
+        console.debug("modified because query differs (basic)");
+        return true;
+      }
+      // eslint-disable-next-line no-console
+      console.debug("not modified (basic)");
+      return false;
+    },
+    deleteButtonTitle() {
+      if (!this.haveResults) return "No results";
+      if (this.loading) return "Operation in progress";
+      if (this.modified) return "Query is modified";
+      return "Delete crashes matching current query";
     },
     queryButtonTitle() {
-      if (this.loading) return "Query in progress";
+      if (this.loading) return "Operation in progress";
       if (!this.modified) return "Results match current query";
       return "Submit query";
     },
@@ -464,13 +509,8 @@ export default {
       }
       this.fetch();
     },
-    buildParams() {
+    buildCommonParams() {
       return {
-        vue: "1",
-        include_raw: "0",
-        limit: pageSize,
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: this.sortKeys.join(),
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.advancedQuery
           ? this.advancedQueryStr
@@ -478,14 +518,34 @@ export default {
         watch: this.watchId === null ? false : this.watchId,
       };
     },
+    buildDeleteParams() {
+      const result = this.buildCommonParams();
+      result.query = JSON.stringify({
+        op: "AND",
+        _: JSON.parse(result.query),
+        created__lte: this.queryTime,
+      });
+      return result;
+    },
+    buildQueryParams() {
+      const result = this.buildCommonParams();
+      result.vue = "1";
+      result.include_raw = "0";
+      result.limit = pageSize;
+      result.offset = `${(this.currentPage - 1) * pageSize}`;
+      result.ordering = this.sortKeys.join();
+      return result;
+    },
     updateModifiedCache() {
+      // eslint-disable-next-line no-console
+      console.debug("update modified cache");
       try {
         // ignore query errors
-        this.modifiedCache.advancedQueryStr = JSON.parse(this.advancedQueryStr);
+        this.cachedAdvancedQueryStr = JSON.parse(this.advancedQueryStr);
       } catch (e) {} // eslint-disable-line no-empty
-      this.modifiedCache.ignoreToolFilter = this.ignoreToolFilter;
-      this.modifiedCache.searchStr = this.searchStr.trim();
-      this.modifiedCache.showBucketed = this.showBucketed;
+      this.cachedIgnoreToolFilter = this.ignoreToolFilter;
+      this.cachedSearchStr = this.searchStr.trim();
+      this.cachedShowBucketed = this.showBucketed;
     },
     buildSimpleQuery: function () {
       let query = Object.assign({ op: "AND" }, this.filters);
@@ -517,6 +577,72 @@ export default {
       this.canUnshowBucketed = true;
       this.updateHash();
     },
+    deleteQuery: async function () {
+      // - show confirmation modal with affected tool breakdown
+      const FormCtor = Vue.extend(DeleteConfirmation);
+      const deleteConfirmForm = new FormCtor({
+        parent: this,
+        propsData: {
+          toolCrashes: this.toolCrashes,
+        },
+      }).$mount();
+      const value = await swal({
+        title: "Delete these crashes?",
+        content: deleteConfirmForm.$el,
+        buttons: true,
+      });
+      if (value) {
+        // - if confirmed, submit delete and get async token
+        this.loading = true;
+        try {
+          this.deleteAsyncToken = await api.deleteCrashes(
+            this.buildDeleteParams()
+          );
+        } catch (err) {
+          if (
+            err.response &&
+            err.response.status === 400 &&
+            err.response.data
+          ) {
+            if (this.advancedQuery) {
+              this.advancedQueryError = err.response.data.detail;
+            } else {
+              // eslint-disable-next-line no-console
+              console.debug(err.response.data);
+              swal("Oops", E_SERVER_ERROR, "error");
+            }
+            this.loading = false;
+          } else {
+            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+            // eslint-disable-next-line no-console
+            console.debug(errorParser(err));
+            this.$router.go(0);
+            return;
+          }
+        }
+        // - start timer loop to poll token
+        this.deleteAsyncTimer = setTimeout(this.pollDeleteDone, 1000);
+      }
+    },
+    pollDeleteDone: async function () {
+      this.deleteAsyncTimer = null;
+      let deleteDone;
+      try {
+        deleteDone = await api.pollAsyncOp(this.deleteAsyncToken);
+      } catch (err) {
+        // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+        // eslint-disable-next-line no-console
+        console.debug(errorParser(err));
+        this.$router.go(0);
+        return;
+      }
+      if (deleteDone) {
+        this.deleteAsyncToken = null;
+        this.fetch();
+      } else {
+        this.deleteAsyncTimer = setTimeout(this.pollDeleteDone, 1000);
+      }
+    },
     fetch: _throttle(
       async function () {
         this.loading = true;
@@ -524,10 +650,13 @@ export default {
         this.crashes = null;
         this.advancedQueryError = "";
         try {
-          const data = await api.listCrashes(this.buildParams());
+          const data = await api.listCrashes(this.buildQueryParams());
           this.crashes = data.results;
+          this.queryTime = data.query_time;
+          this.toolCrashes = data.tools;
           this.currentEntries = this.crashes.length;
           this.totalEntries = data.count;
+          this.haveResults = data.count > 0 ? true : false;
           this.totalPages = Math.max(
             Math.ceil(this.totalEntries / pageSize),
             1
@@ -669,6 +798,9 @@ export default {
           this.$router.push({ path: this.$route.path, hash: "" });
       }
     },
+  },
+  beforeDestroy() {
+    if (this.deleteAsyncTimer !== null) clearTimeout(this.deleteAsyncTimer);
   },
 };
 </script>

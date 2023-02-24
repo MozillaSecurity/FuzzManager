@@ -2,8 +2,10 @@ import json
 import os
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from uuid import uuid4
 from wsgiref.util import FileWrapper
 
+import redis
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
@@ -55,6 +57,7 @@ from .serializers import (
     InvalidArgumentException,
     NotificationSerializer,
 )
+from .tasks import bulk_delete_crashes
 
 
 class JSONDateEncoder(json.JSONEncoder):
@@ -958,7 +961,7 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
         return filter_crash_entries_by_toolfilter(
             request,
             queryset,
-            restricted_only=bool(view.ignore_toolfilter) or view.action != "list",
+            restricted_only=view.ignore_toolfilter or view.detail,
         )
 
 
@@ -1023,6 +1026,22 @@ class DeferRawFilterBackend(BaseFilterBackend):
         return queryset
 
 
+class AsyncOpViewSet(
+    viewsets.GenericViewSet,
+):
+    """API endpoint for polling async operations"""
+
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    lookup_value_regex = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
+    def retrieve(self, request, pk=None):
+        assert isinstance(pk, str)
+        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
+        if cache.sismember("cm_async_operations", pk):
+            return Response(status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_200_OK)
+
+
 class CrashEntryViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
@@ -1046,14 +1065,51 @@ class CrashEntryViewSet(
 
     def get_serializer(self, *args, **kwds):
         kwds["include_raw"] = getattr(self, "include_raw", True)
-        vue = self.request.query_params.get("vue", "false").lower() not in (
+        self.vue = self.request.query_params.get("vue", "false").lower() not in (
             "false",
             "0",
         )
-        if vue:
+        if self.vue:
             return CrashEntryVueSerializer(*args, **kwds)
         else:
             return super().get_serializer(*args, **kwds)
+
+    @action(detail=False, methods=["delete"])
+    def delete(self, request, pk=None):
+        if pk is not None:
+            raise MethodNotAllowed(request.method)
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise MethodNotAllowed(request.method)
+        queryset = self.filter_queryset(self.get_queryset())
+        token = f"{uuid4()}"
+        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
+        cache.sadd("cm_async_operations", token)
+        bulk_delete_crashes.delay(queryset.query, token)
+        return Response(
+            status=status.HTTP_202_ACCEPTED,
+            data=token,
+        )
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+
+        if self.vue:
+            response.data["query_time"] = timezone.now()
+
+            user = User.get_or_create_restricted(request.user)[0]
+            queryset = self.filter_queryset(self.get_queryset())
+            tools_breakdown = Tool.objects.filter(crashentry__in=queryset).annotate(
+                crashes=Count("crashentry")
+            )
+            toolfilter_ids = set(user.defaultToolsFilter.values_list("id", flat=True))
+            response.data["tools"] = {
+                tool.name: tool.crashes
+                for tool in tools_breakdown
+                if self.ignore_toolfilter or tool.id in toolfilter_ids
+            }
+
+        return response
 
     def partial_update(self, request, pk=None):
         """Update individual crash fields."""
