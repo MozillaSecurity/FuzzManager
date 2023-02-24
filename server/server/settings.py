@@ -350,7 +350,7 @@ REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/s
 
 # Celery configuration
 # USE_CELERY = True
-# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_ACCEPT_CONTENT = ["json", "pickle"]
 # CELERY_TASK_SERIALIZER = 'json'
 # CELERY_RESULT_SERIALIZER = 'json'
 # For CELERY_BROKER_URL unix sockets, use redis+socket:///path/to/socket?virtual_host=0

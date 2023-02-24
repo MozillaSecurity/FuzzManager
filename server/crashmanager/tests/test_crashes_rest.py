@@ -18,6 +18,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests
+from django.utils.http import urlencode
 
 from crashmanager.models import CrashEntry
 from crashmanager.models import TestCase as cmTestCase
@@ -44,7 +45,7 @@ from crashmanager.models import TestCase as cmTestCase
 # |        +------+----------+---------+---------+--------------+-------------------+
 # |        | /id/ | update   | 401     | 403     | all          | all               |
 # +--------+------+----------+---------+---------+--------------+-------------------+
-# | DELETE | /    | -        | 401     | 403     | 405          | 405               |
+# | DELETE | /    | bulk del | 401     | 403     | toolfilter   | all               |
 # |        +------+----------+---------+---------+--------------+-------------------+
 # |        | /id/ | delete   | 401     | 403     | all (TODO)   | all (TODO)        |
 # +--------+------+----------+---------+---------+--------------+-------------------+
@@ -69,7 +70,7 @@ from crashmanager.models import TestCase as cmTestCase
 # |        +------+----------+------------+-------------------+
 # |        | /id/ | update   | 405        | 405               |
 # +--------+------+----------+------------+-------------------+
-# | DELETE | /    | -        | 405        | 405               |
+# | DELETE | /    | bulk del | 405        | 405               |
 # |        +------+----------+------------+-------------------+
 # |        | /id/ | delete   | 405        | 405               |
 # +--------+------+----------+------------+-------------------+
@@ -105,7 +106,6 @@ def test_rest_crashes_no_perm(user_noperm, api_client, method, url):
 @pytest.mark.parametrize(
     "method, url, user",
     [
-        ("delete", "/crashmanager/rest/crashes/", "normal"),
         ("delete", "/crashmanager/rest/crashes/", "restricted"),
         (
             "delete",
@@ -250,6 +250,64 @@ def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw)
     assert len(resp["results"]) == expected
     for result, crash in zip(resp["results"], crashes[:expected]):
         _compare_rest_result_to_crash(result, crash, raw=include_raw)
+
+
+@pytest.mark.parametrize("ignore_toolfilter", [True, False])
+def test_rest_crashes_delete(api_client, user_normal, cm, ignore_toolfilter, mocker):
+    """test that delete crashes api works as expected"""
+    fake_cache = mocker.patch("redis.StrictRedis.from_url")
+    fake_delete_task = mocker.patch("crashmanager.views.bulk_delete_crashes")
+    testcases = [
+        cm.create_testcase("test3.txt", quality=5),
+        cm.create_testcase("test4.txt", quality=5),
+    ]
+    tools = ["tool2", "tool1"]
+    for i in range(2):
+        cm.create_crash(
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
+            tool=tools[i],
+            testcase=testcases[i],
+        )
+    # Create toolfilter, check that delete affects only tool-filtered crashes
+    cm.create_toolfilter("tool2", user=user_normal.username)
+    params = {}
+    if ignore_toolfilter:
+        params["ignore_toolfilter"] = "1"
+
+    # DRF APIClient only handles URL params for GET
+    # for DELETE, have to build them ourselves
+    query_string = urlencode(params, doseq=True)
+
+    resp = api_client.delete("/crashmanager/rest/crashes/", QUERY_STRING=query_string)
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes["accepted"]
+    token = resp.json()
+    assert fake_cache.return_value.sadd.call_args_list == [
+        mocker.call("cm_async_operations", token)
+    ]
+    assert len(fake_delete_task.delay.call_args_list) == 1
+    call_args, call_kwds = fake_delete_task.delay.call_args_list[0]
+    assert not call_kwds
+    assert len(call_args) == 2
+    assert call_args[1] == token
+    crashes = CrashEntry.objects.all()
+    crashes.query = call_args[0]
+    LOG.debug(crashes.query)
+    if ignore_toolfilter:
+        assert (
+            crashes.count() == 2
+        ), f"deleting: {','.join(str(crash.id) for crash in crashes)}"
+    else:
+        assert (
+            crashes.count() == 1
+        ), f"deleting: {','.join(str(crash.id) for crash in crashes)}"
+        entry = crashes.get()
+        assert entry.tool.name == "tool2"
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
