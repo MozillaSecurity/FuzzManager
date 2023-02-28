@@ -21,9 +21,7 @@ export default {
   },
   computed: {
     tools() {
-      const result = Object.keys(this.toolCrashes);
-      result.sort();
-      return result;
+      return Object.keys(this.toolCrashes).sort();
     },
   },
 };
