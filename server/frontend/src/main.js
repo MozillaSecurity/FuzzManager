@@ -7,6 +7,8 @@ import AssignBtn from "./components/Signatures/AssignBtn.vue";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
 import CommentPublicationForm from "./components/Bugs/Comments/PublicationForm.vue";
 import CrashesList from "./components/Crashes/List.vue";
+import CrashStats from "./components/CrashStats.vue";
+import CrashStatsGraph from "./components/CrashStatsGraph.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
 import Inbox from "./components/Notifications/Inbox.vue";
@@ -29,6 +31,8 @@ document.addEventListener("DOMContentLoaded", function () {
       bugpublicationform: BugPublicationForm,
       commentpublicationform: CommentPublicationForm,
       crasheslist: CrashesList,
+      crashstats: CrashStats,
+      crashstatsgraph: CrashStatsGraph,
       createoredit: CreateOrEdit,
       inbox: Inbox,
       poolslist: PoolsList,

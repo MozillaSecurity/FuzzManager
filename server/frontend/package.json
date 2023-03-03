@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "axios": "^0.21.2",
-        "d3": "^4.13.0",
+        "d3": "^7.8.2",
         "handlebars": "^4.7.7",
         "js-base64": "^3.6.1",
         "lodash": "^4.17.21",
@@ -56,6 +56,9 @@
             "!**/dist/**",
             "!**/webpack.*.js"
         ],
+        "moduleNameMapper": {
+            "d3": "<rootDir>/node_modules/d3/dist/d3.min.js"
+        },
         "transformIgnorePatterns": [
             "/node_modules/(?!vue-spinner)"
         ],

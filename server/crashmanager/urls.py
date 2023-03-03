@@ -21,6 +21,11 @@ urlpatterns = [
         r"^rest/api-auth/", include("rest_framework.urls", namespace="rest_framework")
     ),
     re_path(
+        r"^rest/crashes/stats/$",
+        views.CrashStatsViewSet.as_view({"get": "retrieve"}),
+        name="crash_stats_rest",
+    ),
+    re_path(
         r"^rest/signatures/download/$",
         views.SignaturesDownloadView.as_view(),
         name="download_signatures_rest",
