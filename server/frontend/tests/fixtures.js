@@ -87,3 +87,24 @@ export const buckets = [
     crash_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
   },
 ];
+
+export const emptyCrashStats = {
+  totals: [0, 0, 0],
+  inFilterGraphData: new Array(14).fill(0),
+  outFilterGraphData: new Array(14).fill(0),
+  frequentBuckets: [[], [], []],
+};
+
+export const crashStatsData = {
+  totals: [12, 24, 48],
+  inFilterGraphData: new Array(24 * 14).fill(5),
+  outFilterGraphData: new Array(24 * 14).fill(1),
+  frequentBuckets: [
+    [
+      [1, 1],
+      [2, 3],
+    ],
+    [[1, 2]],
+    [[1, 3]],
+  ],
+};
