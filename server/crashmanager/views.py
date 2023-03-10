@@ -44,6 +44,7 @@ from .models import (
     BugzillaTemplate,
     BugzillaTemplateMode,
     CrashEntry,
+    CrashHit,
     Tool,
     User,
 )
@@ -170,42 +171,18 @@ def renderError(request, err):
 
 
 def stats(request):
-    lastHourDelta = timezone.now() - timedelta(hours=1)
-    print(lastHourDelta)
-    entries = CrashEntry.objects.filter(created__gt=lastHourDelta).select_related(
-        "bucket"
-    )
-    entries = CrashEntry.deferRawFields(entries)
-    entries = filter_crash_entries_by_toolfilter(request, entries, restricted_only=True)
-
-    bucketFrequencyMap = {}
-    for entry in entries:
-        if entry.bucket is not None:
-            if entry.bucket.pk in bucketFrequencyMap:
-                bucketFrequencyMap[entry.bucket.pk] += 1
-            else:
-                bucketFrequencyMap[entry.bucket.pk] = 1
-
-    frequentBuckets = []
-
-    if bucketFrequencyMap:
-        bucketFrequencyMap = sorted(
-            bucketFrequencyMap.items(), key=lambda t: t[1], reverse=True
-        )[:10]
-        for pk, freq in bucketFrequencyMap:
-            obj = Bucket.objects.get(pk=pk)
-            obj.rph = freq
-            frequentBuckets.append(obj)
-
+    user = User.get_or_create_restricted(request.user)[0]
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
     return render(
         request,
         "stats.html",
         {
-            "total_reports_per_hour": len(entries),
-            "frequentBuckets": frequentBuckets,
+            "activity_range": getattr(
+                django_settings, "CLEANUP_CRASHES_AFTER_DAYS", 14
+            ),
             "providers": json.dumps(providers),
+            "restricted": user.restricted,
         },
     )
 
@@ -1205,15 +1182,15 @@ class BucketViewSet(
             )
 
             bucket_hits = {}
-            for bucket, begin, count in hits.values_list("bucket_id", "begin", "count"):
+            for bucket, begin, num in hits.values_list("bucket_id", "begin", "count"):
                 bucket_hits.setdefault(bucket, {})
                 bucket_hits[bucket].setdefault(begin, 0)
-                bucket_hits[bucket][begin] += count
+                bucket_hits[bucket][begin] += num
 
             for bucket in response.data:
                 bucket["crash_history"] = [
-                    {"begin": begin, "count": count}
-                    for begin, count in bucket_hits.get(bucket["id"], {}).items()
+                    {"begin": begin, "count": num}
+                    for begin, num in bucket_hits.get(bucket["id"], {}).items()
                 ]
 
         return response
@@ -1660,3 +1637,132 @@ class UserSettingsEditView(UpdateView):
 
 class InboxView(TemplateView):
     template_name = "inbox.html"
+
+
+class _FreqCount:
+    def __init__(self):
+        self.hour = 0
+        self.day = 0
+        self.week = 0
+        self.bucket_hour = {}
+        self.bucket_day = {}
+        self.bucket_week = {}
+
+    def add_hour(self, bucket):
+        self.hour += 1
+        if bucket is not None:
+            self.bucket_hour.setdefault(bucket.pk, 0)
+            self.bucket_hour[bucket.pk] += 1
+        self.add_day(bucket)
+
+    def add_day(self, bucket):
+        self.day += 1
+        if bucket is not None:
+            self.bucket_day.setdefault(bucket.pk, 0)
+            self.bucket_day[bucket.pk] += 1
+        self.add_week(bucket)
+
+    def add_week(self, bucket):
+        self.week += 1
+        if bucket is not None:
+            self.bucket_week.setdefault(bucket.pk, 0)
+            self.bucket_week[bucket.pk] += 1
+
+
+class CrashStatsViewSet(viewsets.GenericViewSet):
+    """
+    API endpoint that allows retrieving CrashManager statistics
+    """
+
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    queryset = CrashEntry.objects.all()
+    filter_backends = [
+        ToolFilterCrashesBackend,
+    ]
+
+    def retrieve(self, request, *_args, **_kwds):
+        user = User.get_or_create_restricted(request.user)[0]
+        entries = self.filter_queryset(self.get_queryset())
+
+        now = timezone.now()
+        last_hour = now - timedelta(hours=1)
+        last_day = now - timedelta(days=1)
+        last_week = now - timedelta(days=7)
+        entries = entries.filter(created__gt=last_week).select_related("bucket")
+        entries = CrashEntry.deferRawFields(entries)
+
+        totals = _FreqCount()
+        for entry in entries:
+            if entry.created > last_hour:
+                totals.add_hour(entry.bucket)
+            elif entry.created > last_day:
+                totals.add_day(entry.bucket)
+            else:
+                totals.add_week(entry.bucket)
+
+        # this gives all the bucket ids
+        #   where the bucket is top10 for any period (hour, day, week)
+        top10s = (
+            {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_hour.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+            | {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_day.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+            | {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_week.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+        )
+
+        frequent_buckets = {}
+        for b_id in top10s:
+            frequent_buckets[b_id] = [
+                totals.bucket_hour.get(b_id, 0),
+                totals.bucket_day.get(b_id, 0),
+                totals.bucket_week[b_id],  # only one that's guaranteed to exist
+            ]
+
+        default_tools_filter = user.defaultToolsFilter.all()
+
+        n_periods = getattr(django_settings, "CRASH_STATS_MAX_HISTORY_DAYS", 14) * 24
+        cur_period = CrashHit.get_period(now)
+        periods = [cur_period - timedelta(hours=n) for n in range(n_periods)]
+        periods.reverse()
+        in_filter_hits_per_hour = [0 for _ in periods]
+        out_filter_hits_per_hour = in_filter_hits_per_hour.copy()
+        hit_idx = 0
+        for hit in CrashHit.objects.filter(
+            lastUpdate__gt=periods[0] - timedelta(hours=1),
+            lastUpdate__lte=periods[-1],
+        ).order_by("lastUpdate"):
+            hit_period = CrashHit.get_period(hit.lastUpdate)
+            hit_idx = periods.index(hit_period, hit_idx)
+
+            if hit.tool in default_tools_filter:
+                in_filter_hits_per_hour[hit_idx] += hit.count
+            elif not user.restricted:
+                out_filter_hits_per_hour[hit_idx] += hit.count
+
+        return Response(
+            {
+                # [int, int, int] (hour, day, week)
+                "totals": [totals.hour, totals.day, totals.week],
+                # { bucket_id: [hour, day, week] }
+                # includes the top 10 for each time-frame, which usually overlap
+                "frequentBuckets": frequent_buckets,
+                # [int, ...] hits per hour for last week
+                "outFilterGraphData": out_filter_hits_per_hour,
+                # ditto
+                "inFilterGraphData": in_filter_hits_per_hour,
+            },
+            status=status.HTTP_200_OK,
+        )

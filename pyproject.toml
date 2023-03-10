@@ -5,6 +5,14 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 target-version = ["py37"]
 
+[tool.coverage.report]
+exclude_lines = [
+    "@(abc.)?abstract*",
+    "except ImportError(.*):",
+    "if __name__ == .__main__.:",
+    "pragma: no cover",
+]
+
 [tool.coverage.run]
 omit = [
     "*/setup.py",

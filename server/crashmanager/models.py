@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from datetime import timedelta
 from itertools import zip_longest
 
 from django.conf import settings
@@ -371,6 +372,33 @@ class BucketHit(models.Model):
         )
         counter.count += 1
         counter.save()
+
+
+class CrashHit(models.Model):
+    lastUpdate = models.DateTimeField(default=timezone.now)
+    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
+    count = models.BigIntegerField(default=0)
+
+    @staticmethod
+    def get_period(time):
+        if not time.minute and not time.second and not time.microsecond:
+            # we're on the hour. this is the time
+            return time
+        # next hour
+        return time + timedelta(
+            hours=1,
+            minutes=-time.minute,
+            seconds=-time.second,
+            microseconds=-time.microsecond,
+        )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lastUpdate", "tool"],
+                name="unique_crashhits_per_tool",
+            ),
+        ]
 
 
 class CrashEntry(models.Model):
