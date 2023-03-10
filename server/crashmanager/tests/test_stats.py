@@ -149,25 +149,18 @@ def test_rest_stats_with_crashes(
     del resp["outFilterGraphData"]
     del resp["inFilterGraphData"]
 
-    # use set instead of list. result is unordered
-    for i in range(3):
-        assert len(resp["frequentBuckets"][i]) == len(
-            {tuple(b) for b in resp["frequentBuckets"][i]}
-        )
-        resp["frequentBuckets"][i] = {tuple(b) for b in resp["frequentBuckets"][i]}
     if restricted or not ignore_toolfilter:
         assert resp == {
             "totals": [3, 3, 3],
-            "frequentBuckets": [{(bucket.pk, 2)}, {(bucket.pk, 2)}, {(bucket.pk, 2)}],
+            "frequentBuckets": {str(bucket.pk): [2, 2, 2]},
         }
     else:
         assert resp == {
             "totals": [7, 8, 9],
-            "frequentBuckets": [
-                {(bucket.pk, 2), (bucket2.pk, 3)},
-                {(bucket.pk, 2), (bucket2.pk, 4)},
-                {(bucket.pk, 2), (bucket2.pk, 5)},
-            ],
+            "frequentBuckets": {
+                str(bucket.pk): [2, 2, 2],
+                str(bucket2.pk): [3, 4, 5],
+            },
         }
 
 

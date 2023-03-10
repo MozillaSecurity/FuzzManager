@@ -1639,6 +1639,36 @@ class InboxView(TemplateView):
     template_name = "inbox.html"
 
 
+class _FreqCount:
+    def __init__(self):
+        self.hour = 0
+        self.day = 0
+        self.week = 0
+        self.bucket_hour = {}
+        self.bucket_day = {}
+        self.bucket_week = {}
+
+    def add_hour(self, bucket):
+        self.hour += 1
+        if bucket is not None:
+            self.bucket_hour.setdefault(bucket.pk, 0)
+            self.bucket_hour[bucket.pk] += 1
+        self.add_day(bucket)
+
+    def add_day(self, bucket):
+        self.day += 1
+        if bucket is not None:
+            self.bucket_day.setdefault(bucket.pk, 0)
+            self.bucket_day[bucket.pk] += 1
+        self.add_week(bucket)
+
+    def add_week(self, bucket):
+        self.week += 1
+        if bucket is not None:
+            self.bucket_week.setdefault(bucket.pk, 0)
+            self.bucket_week[bucket.pk] += 1
+
+
 class CrashStatsViewSet(viewsets.GenericViewSet):
     """
     API endpoint that allows retrieving CrashManager statistics
@@ -1661,33 +1691,45 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
         entries = entries.filter(created__gt=last_week).select_related("bucket")
         entries = CrashEntry.deferRawFields(entries)
 
-        totals = [0, 0, 0]  # hour, day, week
-        bucket_frequencies = ({}, {}, {})
+        totals = _FreqCount()
         for entry in entries:
             if entry.created > last_hour:
-                totals[0] += 1
-                totals[1] += 1
-                totals[2] += 1
-                freq_maps = bucket_frequencies
+                totals.add_hour(entry.bucket)
             elif entry.created > last_day:
-                totals[1] += 1
-                totals[2] += 1
-                freq_maps = bucket_frequencies[1:]
+                totals.add_day(entry.bucket)
             else:
-                totals[2] += 1
-                freq_maps = bucket_frequencies[2:]
-            if entry.bucket is not None:
-                for freq_map in freq_maps:
-                    freq_map.setdefault(entry.bucket.pk, 0)
-                    freq_map[entry.bucket.pk] += 1
+                totals.add_week(entry.bucket)
 
-        frequent_buckets = ([], [], [])
+        # this gives all the bucket ids
+        #   where the bucket is top10 for any period (hour, day, week)
+        top10s = (
+            {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_hour.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+            | {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_day.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+            | {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_week.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
+        )
 
-        for freq_map, bucket_list in zip(bucket_frequencies, frequent_buckets):
-            for pk, freq in sorted(freq_map.items(), key=lambda t: t[1], reverse=True)[
-                :10
-            ]:
-                bucket_list.append((pk, freq))
+        frequent_buckets = {}
+        for b_id in top10s:
+            frequent_buckets[b_id] = [
+                totals.bucket_hour.get(b_id, 0),
+                totals.bucket_day.get(b_id, 0),
+                totals.bucket_week[b_id],  # only one that's guaranteed to exist
+            ]
 
         default_tools_filter = user.defaultToolsFilter.all()
 
@@ -1713,8 +1755,9 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
         return Response(
             {
                 # [int, int, int] (hour, day, week)
-                "totals": totals,
-                # [ [(bucket_id, freq), ...] (top 10), x3 ] (hour, day, week)
+                "totals": [totals.hour, totals.day, totals.week],
+                # { bucket_id: [hour, day, week] }
+                # includes the top 10 for each time-frame, which usually overlap
                 "frequentBuckets": frequent_buckets,
                 # [int, ...] hits per hour for last week
                 "outFilterGraphData": out_filter_hits_per_hour,

@@ -251,9 +251,6 @@ export default {
           });
 
           // process result
-          const buckets = [
-            ...new Set(stats.frequentBuckets.flat().map((bc) => bc[0])),
-          ];
           this.totals = stats.totals;
           this.graphData = {
             inFilter: stats.inFilterGraphData,
@@ -261,24 +258,18 @@ export default {
           };
 
           // then get buckets for those stats
-          if (buckets.length) {
-            const countsByBucket = Object.fromEntries(
-              buckets.map((b) => [b, [0, 0, 0]])
-            );
-            stats.frequentBuckets.forEach((bucketCounts, i) =>
-              bucketCounts.forEach(([b, c]) => (countsByBucket[b][i] = c))
-            );
+          if (Object.keys(stats.frequentBuckets).length) {
             const signatureData = await api.listBuckets({
               vue: "1",
               ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
               query: JSON.stringify({
                 op: "AND",
-                id__in: [...buckets],
+                id__in: Object.keys(stats.frequentBuckets),
               }),
             });
-            buckets.forEach((x) =>
+            Object.keys(stats.frequentBuckets).forEach((x) =>
               signatureData.forEach((b) => {
-                if (b.id == x) b.counts = countsByBucket[x];
+                if (b.id == x) b.counts = stats.frequentBuckets[x];
               })
             );
             this.signatureData = signatureData;
