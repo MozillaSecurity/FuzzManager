@@ -97,7 +97,7 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="6">
+            <td colspan="7">
               <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
             </td>
           </tr>

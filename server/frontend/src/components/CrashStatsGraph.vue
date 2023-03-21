@@ -17,9 +17,9 @@ export default {
        */
 
       // set the dimensions and margins of the graph
-      const margin = { top: 5, right: 5, bottom: 20, left: 40 };
-      const width = 2500;
-      const height = 300;
+      const margin = { top: 3, right: 3, bottom: 10, left: 20 };
+      const width = 800;
+      const height = 150;
 
       d3.select("svg").remove();
       const svg = d3
@@ -32,18 +32,31 @@ export default {
         ["In Tool Filter", "#7AAAD0"],
       ]);
 
-      const data = [];
+      const inFilterDataByDay = [];
+      const outFilterDataByDay = [];
+      const days = Math.floor(this.data.outFilter.length / 24);
       for (let i = 0; i < this.data.outFilter.length; ++i) {
-        const p = i - this.data.outFilter.length + 1;
+        const day = Math.floor(i / 24);
+        if (day >= inFilterDataByDay.length) {
+          inFilterDataByDay.push(0);
+          outFilterDataByDay.push(0);
+        }
+        inFilterDataByDay[day] += this.data.inFilter[i];
+        outFilterDataByDay[day] += this.data.outFilter[i];
+      }
+
+      const data = [];
+      for (let i = 0; i < outFilterDataByDay.length; ++i) {
+        const p = i - outFilterDataByDay.length + 1;
         data.push({
           name: "Out of Tool Filter",
-          time: p,
-          value: this.data.outFilter[i],
+          time: p - 0.5,
+          value: outFilterDataByDay[i],
         });
         data.push({
           name: "In Tool Filter",
-          time: p,
-          value: this.data.inFilter[i],
+          time: p - 0.5,
+          value: inFilterDataByDay[i],
         });
       }
 
@@ -70,18 +83,32 @@ export default {
         .range(colors.values());
 
       // Add X axis
-      const x = d3
+      const xData = d3
         .scaleBand()
         .domain(data.map((d) => d.time))
-        .rangeRound([margin.left, width - margin.right]);
+        .range([margin.left, width - margin.right]);
+      const xAxisData = d3
+        .scaleLinear()
+        .domain([0, days])
+        .range([margin.left, width - margin.right]);
       const xAxis = (g) =>
-        g.attr("transform", `translate(0,${height - margin.bottom})`).call(
-          d3
-            .axisBottom(x)
-            .tickFormat((x) => (x ? `${x / -24}d` : "now"))
-            .tickValues(x.domain().filter((d, i) => !((i + 1) % 24)))
-            .tickSizeOuter(0)
-        );
+        g
+          .attr("transform", `translate(0,${height - margin.bottom})`)
+          .call(
+            d3
+              .axisBottom(xAxisData)
+              .ticks(days + 1)
+              .tickFormat((x) => `${x - days}d`)
+              .tickSize(2)
+          )
+          .call((g) => {
+            g.select(".domain").attr("stroke-width", 0.5);
+            g.select(".tick:first-of-type text").remove();
+            g.select(".tick:last-of-type text").remove();
+            g.selectAll(".tick text").attr("y", 4);
+            g.selectAll(".tick line").attr("stroke-width", 0.5);
+          })
+          .attr("font-size", 6);
 
       // Add Y axis
       const y = d3
@@ -91,8 +118,13 @@ export default {
       const yAxis = (g) =>
         g
           .attr("transform", `translate(${margin.left},0)`)
-          .call(d3.axisLeft(y).tickSizeOuter(0))
-          .call((g) => g.select(".domain").remove());
+          .call(d3.axisLeft(y).tickSize(2))
+          .call((g) => {
+            g.select(".domain").remove();
+            g.selectAll(".tick text").attr("x", -3);
+            g.selectAll(".tick line").attr("stroke-width", 0.5);
+          })
+          .attr("font-size", 6);
 
       // create the chart
       svg
@@ -106,9 +138,9 @@ export default {
             .selectAll("rect")
             .data((d) => d)
             .join("rect")
-            .attr("x", (d) => x(d.data.time))
+            .attr("x", (d) => xData(d.data.time))
             .attr("y", (d) => y(d[1]))
-            .attr("width", x.bandwidth())
+            .attr("width", xData.bandwidth())
             .attr("height", (d) => y(d[0]) - y(d[1]))
             .append("title")
             .text((d) => `${d.data.name}: ${d.data.value}`)
