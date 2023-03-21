@@ -1651,22 +1651,22 @@ class _FreqCount:
     def add_hour(self, bucket):
         self.hour += 1
         if bucket is not None:
-            self.bucket_hour.setdefault(bucket.pk, 0)
-            self.bucket_hour[bucket.pk] += 1
+            self.bucket_hour.setdefault(bucket, 0)
+            self.bucket_hour[bucket] += 1
         self.add_day(bucket)
 
     def add_day(self, bucket):
         self.day += 1
         if bucket is not None:
-            self.bucket_day.setdefault(bucket.pk, 0)
-            self.bucket_day[bucket.pk] += 1
+            self.bucket_day.setdefault(bucket, 0)
+            self.bucket_day[bucket] += 1
         self.add_week(bucket)
 
     def add_week(self, bucket):
         self.week += 1
         if bucket is not None:
-            self.bucket_week.setdefault(bucket.pk, 0)
-            self.bucket_week[bucket.pk] += 1
+            self.bucket_week.setdefault(bucket, 0)
+            self.bucket_week[bucket] += 1
 
 
 class CrashStatsViewSet(viewsets.GenericViewSet):
@@ -1688,17 +1688,16 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
         last_hour = now - timedelta(hours=1)
         last_day = now - timedelta(days=1)
         last_week = now - timedelta(days=7)
-        entries = entries.filter(created__gt=last_week).select_related("bucket")
-        entries = CrashEntry.deferRawFields(entries)
+        entries = entries.filter(created__gt=last_week)
 
         totals = _FreqCount()
-        for entry in entries:
-            if entry.created > last_hour:
-                totals.add_hour(entry.bucket)
-            elif entry.created > last_day:
-                totals.add_day(entry.bucket)
+        for created, bucket_id in entries.values_list("created", "bucket_id"):
+            if created > last_hour:
+                totals.add_hour(bucket_id)
+            elif created > last_day:
+                totals.add_day(bucket_id)
             else:
-                totals.add_week(entry.bucket)
+                totals.add_week(bucket_id)
 
         # this gives all the bucket ids
         #   where the bucket is top10 for any period (hour, day, week)
@@ -1731,7 +1730,7 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
                 totals.bucket_week[b_id],  # only one that's guaranteed to exist
             ]
 
-        default_tools_filter = user.defaultToolsFilter.all()
+        default_tools_filter = set(user.defaultToolsFilter.values_list("id", flat=True))
 
         n_periods = getattr(django_settings, "CRASH_STATS_MAX_HISTORY_DAYS", 14) * 24
         cur_period = CrashHit.get_period(now)
@@ -1747,7 +1746,7 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
             hit_period = CrashHit.get_period(hit.lastUpdate)
             hit_idx = periods.index(hit_period, hit_idx)
 
-            if hit.tool in default_tools_filter:
+            if hit.tool_id in default_tools_filter:
                 in_filter_hits_per_hour[hit_idx] += hit.count
             elif not user.restricted:
                 out_filter_hits_per_hour[hit_idx] += hit.count
