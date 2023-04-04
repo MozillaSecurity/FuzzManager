@@ -33,21 +33,20 @@
   <template v-else-if="source">
     <table class="table table-coverage">
       <tbody>
-        <tr v-for="(line, line_nr) in source">
-          <td :id="line_nr"
-              :class="['cov', 'cov-linenumber', add_coverage_status_class(line_nr)]"
-              @click="line_click_handler(line_nr)">
-            !{ line_nr }!
+        <tr v-for="item in source">
+          <td :id="item.idx" :class="['cov', 'cov-linenumber', item.lclass]"
+              @click="line_click_handler(item.idx)">
+            !{ item.idx }!
           </td>
-          <td :class="['cov', 'cov-occurence', add_coverage_status_class(line_nr)]">
-            <span class="label label-success" v-if="cov_hits(line_nr)">
+          <td :class="['cov', 'cov-occurence', item.lclass]">
+            <span class="label label-success" v-if="item.hits">
               <!-- FIXME -->
-              !{ cov_hits(line_nr) | formatNumber }!
+              !{ item.hits | formatNumber }!
             </span>
           </td>
-          <td :class="['cov', 'cov-codeline', add_coverage_status_class(line_nr)]">
-            <div v-html="highlight_code(line)">
-              !{ highlight_code(line) }!
+          <td :class="['cov', 'cov-codeline', item.lclass]">
+            <div v-html="highlight_code(item.line)">
+              !{ highlight_code(item.line) }!
             </div>
           </td>
         </tr>
@@ -356,7 +355,21 @@ let covmanager = new Vue({
 
         this.coverage = json['coverage']
         if ('source' in this.coverage) {
-          this.source = this.coverage['source'].split('\n')
+          let lsource = this.coverage['source'].split('\n')
+          let psource = []
+          for (let i = 0; i < lsource.length; i++) {
+            let lclass = ''
+            let lhits = ''
+            if (this.coverage.coverage[i] > 0) {
+              lclass = 'cov-status-covered'
+              lhits = this.coverage.coverage[i]
+            } else if (this.coverage.coverage[i] == 0) {
+              lclass = 'cov-status-non-coverable'
+            }
+            psource.push({line: lsource[i], lclass: lclass, hits: lhits, idx: i})
+          }
+
+          this.source = psource
         } else {
           this.source = null
         }
@@ -594,7 +607,7 @@ let covmanager = new Vue({
       return this.coverage.coverage[i] > 0 ? this.coverage.coverage[i] : ''
     },
     add_coverage_status_class: function (i) {
-      let classArray = this.class ? this.class.split(' ') : []
+      let classArray = []
       if (this.coverage.coverage[i] > 0) {           // Line is covered.
         classArray.push('cov-status-covered')
       }
