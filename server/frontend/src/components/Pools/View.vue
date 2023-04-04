@@ -128,6 +128,16 @@
           <tr v-for="task in tasks" :key="task.id">
             <td>
               <a :href="task.task_url">{{ task.task_id }}</a>
+              <a
+                v-if="task.started !== null"
+                :href="
+                  `https://console.cloud.google.com/logs/query;query=jsonPayload.host%3D%22task-${task.task_id}-run-${task.run_id}%22;timeRange=${task.started}%2F` +
+                  (task.resolved !== null ? task.resolved : '') +
+                  '?project=fuzzmanager-cluster&supportedpurview=project'
+                "
+              >
+                (logs)</a
+              >
             </td>
             <td>{{ task.run_id }}</td>
             <td>
