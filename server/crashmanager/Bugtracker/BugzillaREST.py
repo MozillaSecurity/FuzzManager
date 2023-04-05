@@ -60,7 +60,7 @@ class BugzillaREST:
         json = response.json()
 
         if "token" not in json:
-            raise RuntimeError("Login failed: %s", response.text)
+            raise RuntimeError(f"Login failed: {response.text}")
 
         self.authToken = json["token"]
         return True
@@ -110,7 +110,7 @@ class BugzillaREST:
         json = response.json()
 
         if "bugs" not in json:
-            return None
+            raise RuntimeError(f"Query failed: {response.text}")
 
         ret = {}
         for bug in json["bugs"]:
