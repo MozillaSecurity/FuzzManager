@@ -358,6 +358,7 @@ CELERY_BROKER_URL = "redis:///2"
 CELERY_RESULT_BACKEND = "redis:///1"
 CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
+    "covmanager.cron.*": {"queue": "cron"},
     "crashmanager.cron.*": {"queue": "cron"},
     "ec2spotmanager.cron.*": {"queue": "cron"},
     "taskmanager.cron.*": {"queue": "cron"},
