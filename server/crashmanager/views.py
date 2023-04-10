@@ -213,21 +213,19 @@ def watchedSignatures(request):
         filters["crashentry__tool__in"] = defaultToolsFilter
     buckets = Bucket.objects.filter(**filters)
     buckets = buckets.annotate(newCrashes=Count("crashentry"))
-    buckets = buckets.extra(select={"lastCrash": "crashmanager_bucketwatch.lastCrash"})
     # what's left is only watched buckets with new crashes. we need to include other
     # watched buckets too .. which means evaluating the buckets query now
     newBuckets = list(buckets)
     # get all buckets watched by this user
     # this is the result, but we will replace any buckets also found in newBuckets
     bucketsAll = Bucket.objects.filter(user=user).order_by("-id")
-    bucketsAll = bucketsAll.extra(
-        select={"lastCrash": "crashmanager_bucketwatch.lastCrash"}
-    )
+    bucketsAll = bucketsAll.annotate(lastCrash=F("bucketwatch__lastCrash"))
     buckets = list(bucketsAll)
     for idx, bucket in enumerate(buckets):
         for newIdx, newBucket in enumerate(newBuckets):
             if newBucket == bucket:
                 # replace with this one
+                newBucket.lastCrash = bucket.lastCrash
                 buckets[idx] = newBucket
                 newBuckets.pop(newIdx)
                 break
