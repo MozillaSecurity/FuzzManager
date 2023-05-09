@@ -75,7 +75,7 @@ cryptography==39.0.1
     #   mozilla-django-oidc
     #   pyopenssl
     #   secretstorage
-django==4.1.7
+django==4.1.9
     # via
     #   FuzzManager (setup.py)
     #   django-model-utils
