@@ -6,7 +6,7 @@ from crashmanager.models import User as cmUser
 
 
 class Command(BaseCommand):
-    help = "Adds permissions to the specified user."
+    help = "Remove permissions from the specified user."
 
     def handle(self, *args, **options):
         user = User.objects.get(username=options["user"])
@@ -14,8 +14,8 @@ class Command(BaseCommand):
         for perm in options["permission"]:
             content_type = ContentType.objects.get_for_model(cmUser)
             perm = Permission.objects.get(content_type=content_type, codename=perm)
-            user.user_permissions.add(perm)
-            print(f"user {user.username} added permission {perm}")
+            user.user_permissions.remove(perm)
+            print(f"user {user.username} removed permission {perm}")
 
         print("done")
 

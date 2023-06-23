@@ -1,4 +1,4 @@
-"""Tests for CrashManager add_permission management command
+"""Tests for CrashManager rm_permission management command
 
 @author:     Jesse Schwartzentruber (:truber)
 
@@ -17,13 +17,13 @@ pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 def test_args():
     with pytest.raises(CommandError, match=r"Error: .*arguments.*"):
-        call_command("add_permission")
+        call_command("rm_permission")
 
 
 def test_no_such_user():
     with pytest.raises(User.DoesNotExist):
         call_command(
-            "add_permission",
+            "rm_permission",
             "test@example.com",
             "view_crashmanager",
         )
@@ -32,26 +32,28 @@ def test_no_such_user():
 def test_no_perms():
     User.objects.create_user("test", "test@example.com", "test")
     with pytest.raises(CommandError, match=r"Error: .*arguments.*"):
-        call_command("add_permission", "test")
+        call_command("rm_permission", "test")
+
+
+def test_rm_perms_from_empty():
+    user = User.objects.create_user("test", "test@example.com", "test")
+    user.user_permissions.clear()  # clear any default permissions
+    call_command("rm_permission", "test", "view_crashmanager")
+    assert set(user.get_all_permissions()) == set()
 
 
 def test_one_perm():
     user = User.objects.create_user("test", "test@example.com", "test")
-    user.user_permissions.clear()  # clear any default permissions
-    call_command("add_permission", "test", "view_crashmanager")
-    assert set(user.get_all_permissions()) == {"crashmanager.view_crashmanager"}
+    call_command("rm_permission", "test", "view_covmanager")
+    assert set(user.get_all_permissions()) == {"crashmanager.covmanager_all"}
 
 
 def test_two_perms():
     user = User.objects.create_user("test", "test@example.com", "test")
-    user.user_permissions.clear()  # clear any default permissions
     call_command(
-        "add_permission",
+        "rm_permission",
         "test",
-        "view_crashmanager",
+        "covmanager_all",
         "view_covmanager",
     )
-    assert set(user.get_all_permissions()) == {
-        "crashmanager.view_crashmanager",
-        "crashmanager.view_covmanager",
-    }
+    assert set(user.get_all_permissions()) == set()

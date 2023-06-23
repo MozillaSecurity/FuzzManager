@@ -137,7 +137,12 @@ def _compare_rest_result_to_bucket(
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize(
-    "url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"]
+    "url",
+    [
+        "/crashmanager/rest/buckets/",
+        "/crashmanager/rest/buckets/1/",
+        "/crashmanager/rest/signatures/download/",
+    ],
 )
 def test_rest_signatures_no_auth(db, api_client, method, url):
     """must yield unauthorized without authentication"""
@@ -149,40 +154,42 @@ def test_rest_signatures_no_auth(db, api_client, method, url):
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
 @pytest.mark.parametrize(
-    "url", ["/crashmanager/rest/buckets/", "/crashmanager/rest/buckets/1/"]
+    "url",
+    [
+        "/crashmanager/rest/buckets/",
+        "/crashmanager/rest/buckets/1/",
+        "/crashmanager/rest/signatures/download/",
+    ],
 )
-def test_rest_signatures_no_perm(user_noperm, api_client, method, url):
+@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
+def test_rest_signatures_no_perm(user, api_client, method, url):
     """must yield forbidden without permission"""
+    if url.endswith("download/") and user.username == "test-only-sigs":
+        pytest.skip()
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]
     )
 
 
+@pytest.mark.parametrize("method", ["delete", "patch", "post", "put"])
 @pytest.mark.parametrize(
-    "method, url, user",
+    "url",
     [
-        ("delete", "/crashmanager/rest/buckets/", "normal"),
-        ("delete", "/crashmanager/rest/buckets/", "restricted"),
-        (
-            "delete",
-            "/crashmanager/rest/buckets/1/",
-            "normal",
-        ),  # TODO: this should be allowed, but hasn't been implemented
-        ("delete", "/crashmanager/rest/buckets/1/", "restricted"),
-        ("patch", "/crashmanager/rest/buckets/", "normal"),
-        ("patch", "/crashmanager/rest/buckets/", "restricted"),
-        ("patch", "/crashmanager/rest/buckets/1/", "restricted"),
-        ("post", "/crashmanager/rest/buckets/1/", "normal"),
-        ("post", "/crashmanager/rest/buckets/1/", "restricted"),
-        ("put", "/crashmanager/rest/buckets/", "normal"),
-        ("put", "/crashmanager/rest/buckets/", "restricted"),
-        ("put", "/crashmanager/rest/buckets/1/", "normal"),
-        ("put", "/crashmanager/rest/buckets/1/", "restricted"),
+        "/crashmanager/rest/buckets/1/",
+        "/crashmanager/rest/buckets/",
+        "/crashmanager/rest/signatures/download/",
     ],
-    indirect=["user"],
 )
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 def test_rest_signatures_methods(api_client, user, method, url):
     """must yield method-not-allowed for unsupported methods"""
+    if url.endswith("buckets/") and method == "post":
+        pytest.skip()
+    if url.endswith("1/") and method == "patch" and user.username == "test":
+        pytest.skip()
+    # TODO: this should be allowed, but hasn't been implemented
+    # if url.endswith("1/") and method == "delete" and user.username == "test":
+    #     pytest.skip()
     assert (
         getattr(api_client, method)(url, {}).status_code
         == requests.codes["method_not_allowed"]
@@ -710,3 +717,22 @@ def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     assert createdBug.externalType == provider
     bucket.refresh_from_db()
     assert bucket.bug == createdBug
+
+
+def test_signatures_download_restricted(user_restricted, api_client):
+    """must yield forbidden for restricted user"""
+    assert (
+        api_client.get("/crashmanager/rest/signatures/download/", {}).status_code
+        == requests.codes["forbidden"]
+    )
+
+
+@pytest.mark.parametrize("user", ["normal", "only_sigs"], indirect=True)
+def test_signatures_download_perms(api_client, user, settings, tmp_path):
+    """test signatures.zip download permissions"""
+    settings.SIGNATURE_STORAGE = str(tmp_path)
+    (tmp_path / "signatures.zip").touch()
+    assert (
+        api_client.get("/crashmanager/rest/signatures/download/", {}).status_code
+        == requests.codes["ok"]
+    )

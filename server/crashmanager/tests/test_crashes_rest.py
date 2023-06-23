@@ -96,8 +96,15 @@ def test_rest_crashes_no_auth(db, api_client, method, url):
 @pytest.mark.parametrize(
     "url", ["/crashmanager/rest/crashes/", "/crashmanager/rest/crashes/1/"]
 )
-def test_rest_crashes_no_perm(user_noperm, api_client, method, url):
+@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
+def test_rest_crashes_no_perm(user, api_client, method, url):
     """must yield forbidden without permission"""
+    if (
+        url.endswith("crashes/")
+        and method == "post"
+        and user.username == "test-only-report"
+    ):
+        pytest.skip()
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]
     )
@@ -416,7 +423,7 @@ def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
         _compare_rest_result_to_crash(resp["results"][0], crashes[expected])
 
 
-@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("user", ["normal", "restricted", "only_report"], indirect=True)
 @pytest.mark.parametrize(
     "data",
     [

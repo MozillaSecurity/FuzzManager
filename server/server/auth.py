@@ -35,7 +35,36 @@ class CheckAppPermission(permissions.BasePermission):
         if request.user and request.user.is_authenticated:
             app = view.__module__.split(".", 1)[0]
 
-            if request.user.has_perm("crashmanager.view_" + app):
-                return True
-
+            if request.user.has_perm(f"crashmanager.view_{app}"):
+                if request.user.has_perm(f"crashmanager.{app}_all"):
+                    return True
+                view_name = type(view).__name__
+                if app == "crashmanager":
+                    if view_name == "SignaturesDownloadView" and request.user.has_perm(
+                        f"{app}.{app}_download_signatures"
+                    ):
+                        return True
+                    if (
+                        view_name == "CrashEntryViewSet"
+                        and request.method == "POST"
+                        and not view.detail
+                        and request.user.has_perm(f"{app}.{app}_report_crashes")
+                    ):
+                        return True
+                elif app == "taskmanager":
+                    if (
+                        view_name == "TaskViewSet"
+                        and request.method == "POST"
+                        and view.action == "update_status"
+                        and not view.detail
+                        and request.user.has_perm(f"crashmanager.{app}_report_status")
+                    ):
+                        return True
+                elif app == "ec2spotmanager":
+                    if (
+                        view_name == "MachineStatusViewSet"
+                        and request.method == "POST"
+                        and request.user.has_perm(f"crashmanager.{app}_report_status")
+                    ):
+                        return True
         return False

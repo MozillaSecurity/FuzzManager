@@ -33,11 +33,17 @@ def test_rest_pools_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pools_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+@pytest.mark.parametrize("item", [True, False])
+def test_rest_pools_no_perm(api_client, username, item):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
-    url = "/taskmanager/rest/pools/"
+    if item:
+        pool = create_pool()
+        url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
+    else:
+        url = "/taskmanager/rest/pools/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
     assert api_client.post(url).status_code == requests.codes["forbidden"]
     assert api_client.put(url).status_code == requests.codes["forbidden"]
