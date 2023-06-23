@@ -40,16 +40,18 @@ def _create_user(
     email="test@mozilla.com",
     password="test",
     restricted=False,
-    has_permission=True,
+    permissions=("view_crashmanager", "crashmanager_all"),
 ):
     user = User.objects.create_user(username, email, password)
     user.user_permissions.clear()
-    if has_permission:
+    if permissions:
         content_type = ContentType.objects.get_for_model(cmUser)
-        perm = Permission.objects.get(
-            content_type=content_type, codename="view_crashmanager"
-        )
-        user.user_permissions.add(perm)
+        for perm_name in permissions:
+            perm = Permission.objects.get(
+                content_type=content_type,
+                codename=perm_name,
+            )
+            user.user_permissions.add(perm)
     (user, _) = cmUser.get_or_create_restricted(user)
     user.restricted = restricted
     user.save()
@@ -62,7 +64,7 @@ def crashmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     # Create one unrestricted and one restricted test user
     _create_user("test")
     _create_user("test-restricted", restricted=True)
-    _create_user("test-noperm", has_permission=False)
+    _create_user("test-noperm", permissions=None)
 
 
 @pytest.fixture
@@ -84,15 +86,43 @@ def user_restricted(db, api_client):  # pylint: disable=invalid-name,unused-argu
 @pytest.fixture
 def user_noperm(db, api_client):  # pylint: disable=invalid-name,unused-argument
     """Create an authenticated user with no crashmanager ACL"""
-    user = _create_user("test-noperm", has_permission=False)
+    user = _create_user("test-noperm", permissions=None)
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def user_only_sigs(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create an authenticated user with only permission for signatures.zip"""
+    user = _create_user(
+        "test-only-sigs",
+        permissions=("view_crashmanager", "crashmanager_download_signatures"),
+    )
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def user_only_report(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create an authenticated user with only permission for reporting crashes"""
+    user = _create_user(
+        "test-only-report",
+        permissions=("view_crashmanager", "crashmanager_report_crashes"),
+    )
     api_client.force_authenticate(user=user)
     return user
 
 
 @pytest.fixture
 def user(request):
-    assert request.param in {"normal", "restricted", "noperm"}
-    return request.getfixturevalue("user_" + request.param)
+    assert request.param in {
+        "normal",
+        "restricted",
+        "noperm",
+        "only_report",
+        "only_sigs",
+    }
+    return request.getfixturevalue(f"user_{request.param}")
 
 
 @pytest.fixture

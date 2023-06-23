@@ -18,10 +18,19 @@ def fm_user():
         )
     )
     user.user_permissions.add(
+        Permission.objects.get(content_type=content_type, codename="ec2spotmanager_all")
+    )
+    user.user_permissions.add(
         Permission.objects.get(content_type=content_type, codename="view_crashmanager")
     )
     user.user_permissions.add(
+        Permission.objects.get(content_type=content_type, codename="crashmanager_all")
+    )
+    user.user_permissions.add(
         Permission.objects.get(content_type=content_type, codename="view_taskmanager")
+    )
+    user.user_permissions.add(
+        Permission.objects.get(content_type=content_type, codename="taskmanager_all")
     )
     user.password_raw = "test"
 

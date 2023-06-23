@@ -34,13 +34,15 @@ def test_rest_status_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_status_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_status_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/report/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
-    assert api_client.post(url, {}).status_code == requests.codes["forbidden"]
+    if username == "test-noperm":
+        assert api_client.post(url, {}).status_code == requests.codes["forbidden"]
     assert api_client.put(url, {}).status_code == requests.codes["forbidden"]
     assert api_client.patch(url, {}).status_code == requests.codes["forbidden"]
     assert api_client.delete(url, {}).status_code == requests.codes["forbidden"]
@@ -56,9 +58,10 @@ def test_rest_status_get(api_client):
     assert resp == {}
 
 
-def test_rest_status_report(api_client):
+@pytest.mark.parametrize("username", ["test", "test-only-report"])
+def test_rest_status_report(api_client, username):
     """post should update the status field on the instance"""
-    user = User.objects.get(username="test")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     host = create_instance("host1")
     resp = api_client.post(

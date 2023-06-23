@@ -32,9 +32,10 @@ def test_rest_pool_configs_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_configs_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_pool_configs_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/configurations/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -195,9 +196,10 @@ def test_rest_pool_config_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_config_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_pool_config_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/configurations/1/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]

@@ -16,7 +16,8 @@ def test_rest_bugproviders_no_auth(db, api_client, method):
 
 
 @pytest.mark.parametrize("method", ["delete", "get", "patch", "post", "put"])
-def test_rest_bugproviders_no_perm(user_noperm, api_client, method):
+@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
+def test_rest_bugproviders_no_perm(user, api_client, method):
     """must yield forbidden without permission"""
     assert (
         getattr(api_client, method)("/crashmanager/rest/bugproviders/", {}).status_code

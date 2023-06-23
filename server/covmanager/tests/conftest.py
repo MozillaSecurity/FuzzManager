@@ -63,6 +63,8 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     content_type = ContentType.objects.get_for_model(cmUser)
     perm = Permission.objects.get(content_type=content_type, codename="view_covmanager")
     user.user_permissions.add(perm)
+    perm = Permission.objects.get(content_type=content_type, codename="covmanager_all")
+    user.user_permissions.add(perm)
     user_np = User.objects.create_user("test-noperm", "test@mozilla.com", "test")
     user_np.user_permissions.clear()
 

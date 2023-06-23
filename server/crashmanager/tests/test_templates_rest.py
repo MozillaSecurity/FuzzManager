@@ -30,7 +30,8 @@ def test_rest_templates_no_auth(db, api_client, method, url):
         "/crashmanager/rest/bugzilla/templates/1/",
     ],
 )
-def test_rest_templates_no_perm(user_noperm, api_client, method, url):
+@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
+def test_rest_templates_no_perm(user, api_client, method, url):
     """must yield forbidden without permission"""
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]

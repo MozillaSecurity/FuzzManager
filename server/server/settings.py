@@ -154,7 +154,10 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
 )
 
 # permissions given to new users by default
-DEFAULT_PERMISSIONS = ["crashmanager.models.User:view_covmanager"]
+DEFAULT_PERMISSIONS = [
+    "crashmanager.models.User:view_covmanager",
+    "crashmanager.models.User:covmanager_all",
+]
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases

@@ -36,9 +36,10 @@ def test_rest_pool_cycle_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_cycle_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_pool_cycle_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/pool/1/cycle/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -113,9 +114,10 @@ def test_rest_pool_enable_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_enable_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_pool_enable_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/pool/1/enable/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -189,9 +191,10 @@ def test_rest_pool_disable_no_auth(api_client):
     assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_pool_disable_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_pool_disable_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/ec2spotmanager/rest/pool/1/disable/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -267,10 +270,11 @@ class TestRestPoolChartDetailed:
         assert api_client.patch(url, {}).status_code == requests.codes["unauthorized"]
         assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
+    @pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
     @staticmethod
-    def test_rest_pool_chart_detailed_no_perm(api_client):
+    def test_rest_pool_chart_detailed_no_perm(api_client, username):
         """must yield forbidden without permission"""
-        user = User.objects.get(username="test-noperm")
+        user = User.objects.get(username=username)
         api_client.force_authenticate(user=user)
         url = reverse("ec2spotmanager:line_chart_json_detailed", kwargs={"poolid": 1})
         assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -354,10 +358,11 @@ class TestRestPoolChartAccumulated:
         assert api_client.patch(url, {}).status_code == requests.codes["unauthorized"]
         assert api_client.delete(url, {}).status_code == requests.codes["unauthorized"]
 
+    @pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
     @staticmethod
-    def test_rest_pool_chart_accumulated_no_perm(api_client):
+    def test_rest_pool_chart_accumulated_no_perm(api_client, username):
         """must yield forbidden without permission"""
-        user = User.objects.get(username="test-noperm")
+        user = User.objects.get(username=username)
         api_client.force_authenticate(user=user)
         url = reverse(
             "ec2spotmanager:line_chart_json_accumulated", kwargs={"poolid": 1}

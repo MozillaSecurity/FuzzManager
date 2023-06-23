@@ -24,16 +24,21 @@ from . import UncatchableException
 
 
 def _create_user(
-    username, email="test@mozilla.com", password="test", has_permission=True
+    username,
+    email="test@mozilla.com",
+    password="test",
+    permissions=("view_ec2spotmanager", "ec2spotmanager_all"),
 ):
     user = User.objects.create_user(username, email, password)
     user.user_permissions.clear()
-    if has_permission:
+    if permissions:
         content_type = ContentType.objects.get_for_model(cmUser)
-        perm = Permission.objects.get(
-            content_type=content_type, codename="view_ec2spotmanager"
-        )
-        user.user_permissions.add(perm)
+        for perm_name in permissions:
+            perm = Permission.objects.get(
+                content_type=content_type,
+                codename=perm_name,
+            )
+            user.user_permissions.add(perm)
     (user, _) = cmUser.get_or_create_restricted(user)
     user.save()
     return user
@@ -44,7 +49,11 @@ def ec2spotmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all ec2spotmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test")
-    _create_user("test-noperm", has_permission=False)
+    _create_user("test-noperm", permissions=None)
+    _create_user(
+        "test-only-report",
+        permissions=("view_ec2spotmanager", "ec2spotmanager_report_status"),
+    )
 
 
 @pytest.fixture

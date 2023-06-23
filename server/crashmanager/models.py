@@ -678,10 +678,30 @@ class BugzillaTemplate(models.Model):
 class User(models.Model):
     class Meta:
         permissions = (
-            ("view_crashmanager", "Can see CrashManager app"),
-            ("view_covmanager", "Can see CovManager app"),
-            ("view_ec2spotmanager", "Can see EC2SpotManager app"),
-            ("view_taskmanager", "Can see TaskManager app"),
+            (
+                "view_crashmanager",
+                "Can see CrashManager app (required for crashmanager_* perms)",
+            ),
+            (
+                "view_covmanager",
+                "Can see CovManager app (required for covmanager_* perms",
+            ),
+            (
+                "view_ec2spotmanager",
+                "Can see EC2SpotManager app (required for ec2spotmanager_* perms)",
+            ),
+            (
+                "view_taskmanager",
+                "Can see TaskManager app (required for taskmanager_* perms)",
+            ),
+            ("crashmanager_report_crashes", "Can report CrashManager crashes"),
+            ("crashmanager_download_signatures", "Can download signatures.zip"),
+            ("crashmanager_all", "Full access to CrashManager"),
+            ("covmanager_all", "Full access to CovManager"),
+            ("taskmanager_report_status", "Can report TaskManager status"),
+            ("taskmanager_all", "Full access to TaskManager"),
+            ("ec2spotmanager_report_status", "Can report EC2SpotManager status"),
+            ("ec2spotmanager_all", "Full access to EC2SpotManager"),
         )
 
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)

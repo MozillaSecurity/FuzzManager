@@ -20,17 +20,19 @@ def _create_user(
     username,
     email="test@mozilla.com",
     password="test",
-    has_permission=True,
+    permissions=("view_taskmanager", "taskmanager_all"),
     subscribed=True,
 ):
     user = User.objects.create_user(username, email, password)
     user.user_permissions.clear()
-    if has_permission:
+    if permissions:
         content_type = ContentType.objects.get_for_model(cmUser)
-        perm = Permission.objects.get(
-            content_type=content_type, codename="view_taskmanager"
-        )
-        user.user_permissions.add(perm)
+        for perm_name in permissions:
+            perm = Permission.objects.get(
+                content_type=content_type,
+                codename=perm_name,
+            )
+            user.user_permissions.add(perm)
     (user, _) = cmUser.get_or_create_restricted(user)
     if subscribed:
         user.tasks_failed = True
@@ -43,6 +45,11 @@ def taskmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     """Common testcase class for all taskmanager unittests"""
     # Create one unrestricted and one restricted test user
     _create_user("test", subscribed=False)
-    _create_user("test-noperm", has_permission=False, subscribed=False)
+    _create_user("test-noperm", permissions=None, subscribed=False)
     _create_user("test-sub")
-    _create_user("test-sub-noperm", has_permission=False)
+    _create_user("test-sub-noperm", permissions=None)
+    _create_user(
+        "test-only-report",
+        permissions=("view_taskmanager", "taskmanager_report_status"),
+        subscribed=False,
+    )

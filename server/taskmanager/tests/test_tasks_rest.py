@@ -35,16 +35,29 @@ def test_rest_tasks_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_tasks_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/taskmanager/rest/tasks/",
+        "/taskmanager/rest/tasks/1/",
+        "/taskmanager/rest/tasks/update_status/",
+    ],
+)
+def test_rest_tasks_no_perm(api_client, username, url):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
-    url = "/taskmanager/rest/tasks/"
+    if url.endswith("/1/"):
+        pool = create_pool()
+        task = create_task(pool=pool)
+        url = url.replace("/1/", f"/{task.pk}/")
     assert api_client.get(url).status_code == requests.codes["forbidden"]
-    assert api_client.post(url).status_code == requests.codes["forbidden"]
     assert api_client.put(url).status_code == requests.codes["forbidden"]
     assert api_client.patch(url).status_code == requests.codes["forbidden"]
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
+    if not (username == "test-only-report" and url.endswith("update_status/")):
+        assert api_client.post(url).status_code == requests.codes["forbidden"]
 
 
 @pytest.mark.parametrize(
@@ -132,9 +145,10 @@ def test_rest_task_status_methods(api_client, method):
         ),
     ],
 )
-def test_rest_task_status(api_client, make_data, result, status_data):
+@pytest.mark.parametrize("username", ["test", "test-only-report"])
+def test_rest_task_status(api_client, make_data, result, status_data, username):
     """post should require well-formed parameters"""
-    user = User.objects.get(username="test")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     pool = create_pool()
     task = create_task(pool=pool)
