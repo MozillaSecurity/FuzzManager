@@ -67,6 +67,14 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     user.user_permissions.add(perm)
     user_np = User.objects.create_user("test-noperm", "test@mozilla.com", "test")
     user_np.user_permissions.clear()
+    user_ro = User.objects.create_user("test-only-report", "test@mozilla.com", "test")
+    user_ro.user_permissions.clear()
+    perm = Permission.objects.get(content_type=content_type, codename="view_covmanager")
+    user_ro.user_permissions.add(perm)
+    perm = Permission.objects.get(
+        content_type=content_type, codename="covmanager_submit_collection"
+    )
+    user_ro.user_permissions.add(perm)
 
 
 @pytest.fixture

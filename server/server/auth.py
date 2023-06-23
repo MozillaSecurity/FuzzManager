@@ -67,4 +67,14 @@ class CheckAppPermission(permissions.BasePermission):
                         and request.user.has_perm(f"crashmanager.{app}_report_status")
                     ):
                         return True
+                elif app == "covmanager":
+                    if (
+                        view_name == "CollectionViewSet"
+                        and request.method == "POST"
+                        and not view.detail
+                        and request.user.has_perm(
+                            f"crashmanager.{app}_submit_collection"
+                        )
+                    ):
+                        return True
         return False

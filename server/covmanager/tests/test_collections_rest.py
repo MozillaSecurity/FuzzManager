@@ -33,13 +33,15 @@ def test_rest_collections_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_collections_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_collections_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/covmanager/rest/collections/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
-    assert api_client.post(url).status_code == requests.codes["forbidden"]
+    if username == "test-noperm":
+        assert api_client.post(url).status_code == requests.codes["forbidden"]
     assert api_client.put(url).status_code == requests.codes["forbidden"]
     assert api_client.patch(url).status_code == requests.codes["forbidden"]
     assert api_client.delete(url).status_code == requests.codes["forbidden"]
@@ -54,9 +56,10 @@ def test_rest_collections_patch(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_collections_post(api_client, cm):
+@pytest.mark.parametrize("username", ["test", "test-only-report"])
+def test_rest_collections_post(api_client, cm, username):
     """post should be allowed"""
-    user = User.objects.get(username="test")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     repo = cm.create_repository("git", name="testrepo")
     cov = {
@@ -164,9 +167,10 @@ def test_rest_collection_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_collection_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_collection_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/covmanager/rest/collections/1/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]

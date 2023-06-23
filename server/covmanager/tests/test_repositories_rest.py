@@ -30,9 +30,10 @@ def test_rest_repositories_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_repositories_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_repositories_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/covmanager/rest/repositories/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -102,9 +103,10 @@ def test_rest_repository_no_auth(api_client):
     assert api_client.delete(url).status_code == requests.codes["unauthorized"]
 
 
-def test_rest_repository_no_perm(api_client):
+@pytest.mark.parametrize("username", ["test-noperm", "test-only-report"])
+def test_rest_repository_no_perm(api_client, username):
     """must yield forbidden without permission"""
-    user = User.objects.get(username="test-noperm")
+    user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
     url = "/covmanager/rest/repositories/1/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
