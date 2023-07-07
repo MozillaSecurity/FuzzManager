@@ -91,6 +91,13 @@ class Command(BaseCommand):
                         recipient = bug.tools_filter_users.exclude(
                             notifications__id__in=sent_notifications_ids
                         )
+                        if bug.bucket_set.count() == 1:
+                            bucket_desc = f"bucket {bug.bucket_set.get().id}"
+                        else:
+                            bucket_ids = ",".join(
+                                str(b.id) for b in bug.bucket_set.all()
+                            )
+                            bucket_desc = f"buckets {bucket_ids}"
                         notify.send(
                             bug,
                             recipient=recipient,
@@ -99,8 +106,8 @@ class Command(BaseCommand):
                             target=bug,
                             level="info",
                             description=(
-                                f"The bucket {bug.bucket_set.get().id} assigned to the "
-                                f"external bug {bug.externalId} on {provider.hostname} "
-                                "has become inaccessible"
+                                f"The external bug {bug.externalId} on "
+                                f"{provider.hostname} has become inaccessible, but is "
+                                f"in use by {bucket_desc}"
                             ),
                         )

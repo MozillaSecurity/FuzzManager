@@ -42,21 +42,17 @@ def test_none():
     call_command("bug_update_status")
 
 
+@pytest.mark.parametrize("bucket_count", [1, 2])
 @patch(
     "crashmanager.Bugtracker.BugzillaProvider.BugzillaProvider.getBugStatus",
     return_value={"0": None},
 )
-def test_fake_with_notification(mock_get_bug_status):
+def test_fake_with_notification(mock_get_bug_status, bucket_count):
     provider = BugProvider.objects.create(
         classname="BugzillaProvider", hostname="provider.com", urlTemplate="%s"
     )
     bug = Bug.objects.create(externalId="123456", externalType=provider)
-    bucket = Bucket.objects.create(
-        bug=bug,
-        signature=json.dumps(
-            {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
-        ),
-    )
+    buckets = []
     defaults = {
         "client": Client.objects.create(),
         "os": OS.objects.create(),
@@ -64,7 +60,15 @@ def test_fake_with_notification(mock_get_bug_status):
         "product": Product.objects.create(),
         "tool": Tool.objects.create(),
     }
-    CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
+    for _ in range(bucket_count):
+        bucket = Bucket.objects.create(
+            bug=bug,
+            signature=json.dumps(
+                {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
+            ),
+        )
+        CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
+        buckets.append(str(bucket.id))
     user, _ = cmUser.objects.get_or_create(user=User.objects.get(username="test"))
     user.defaultToolsFilter.add(defaults["tool"])
     user.inaccessible_bug = True
@@ -79,11 +83,18 @@ def test_fake_with_notification(mock_get_bug_status):
     assert notification.unread
     assert notification.actor == bug
     assert notification.verb == "inaccessible_bug"
-    assert (
-        notification.description
-        == f"The bucket {bucket.pk} assigned to the external bug {bug.externalId}"
-        f" on {bug.externalType.hostname} has become inaccessible"
-    )
+    if bucket_count == 1:
+        assert (
+            notification.description
+            == f"The external bug {bug.externalId} on {bug.externalType.hostname} has "
+            f"become inaccessible, but is in use by bucket {bucket.pk}"
+        )
+    else:
+        assert (
+            notification.description
+            == f"The external bug {bug.externalId} on {bug.externalType.hostname} has "
+            f"become inaccessible, but is in use by buckets {buckets[0]},{buckets[1]}"
+        )
     assert notification.target == bug
 
     # Calling the command again should not generate a duplicate notification
