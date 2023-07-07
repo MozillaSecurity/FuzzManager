@@ -47,9 +47,9 @@ billiard==3.6.4.0
     # via celery
 boto==2.49.0
     # via laniakea
-boto3==1.26.159
+boto3==1.28.1
     # via FuzzManager (setup.py)
-botocore==1.29.159
+botocore==1.31.1
     # via
     #   boto3
     #   s3transfer
@@ -75,7 +75,7 @@ cryptography==41.0.1
     #   mozilla-django-oidc
     #   pyopenssl
     #   secretstorage
-django==4.1.9
+django==4.1.10
     # via
     #   FuzzManager (setup.py)
     #   django-model-utils
@@ -109,9 +109,9 @@ idna==3.4
     # via
     #   requests
     #   yarl
-importlib-metadata==6.7.0
+importlib-metadata==6.8.0
     # via keyring
-importlib-resources==5.12.0
+importlib-resources==6.0.0
     # via keyring
 iniconfig==2.0.0
     # via pytest
@@ -131,7 +131,7 @@ josepy==1.13.0
     # via mozilla-django-oidc
 jsonfield==3.1.0
     # via django-notifications-hq
-keyring==24.1.0
+keyring==24.2.0
     # via msrestazure
 kombu==4.6.11
     # via
@@ -139,7 +139,7 @@ kombu==4.6.11
     #   mozillapulse
 laniakea==1.17.1
     # via FuzzManager (setup.py)
-mercurial==6.4.5
+mercurial==6.5
     # via FuzzManager (setup.py)
 mohawk==1.1.0
     # via taskcluster
@@ -208,7 +208,7 @@ pyyaml==6.0
     # via
     #   FuzzManager (setup.py)
     #   fuzzing-decision
-redis==4.5.5
+redis==4.6.0
     # via FuzzManager (setup.py)
 requests==2.31.0
     # via
@@ -240,7 +240,7 @@ sqlparse==0.4.4
     # via django
 swapper==1.3.0
     # via django-notifications-hq
-taskcluster==53.1.0
+taskcluster==54.1.2
     # via fuzzing-decision
 taskcluster-urls==13.0.1
     # via taskcluster
@@ -248,7 +248,7 @@ toml==0.10.2
     # via pytest
 tomli==2.0.1
     # via coverage
-typing-extensions==4.6.3
+typing-extensions==4.7.1
     # via
     #   asgiref
     #   azure-core
