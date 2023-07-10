@@ -2,24 +2,31 @@
 
 import sys
 
-from django.contrib.auth.models import Permission, User
-from django.contrib.contenttypes.models import ContentType
 from django.db import migrations
 
 
 def grant_existing_perms(apps, schema_editor):
+    # updating permissions in a migration is not straightforward
+    # because new permissions are not actually committed until
+    # the post_migrate signal
+    # ref: https://stackoverflow.com/a/31543063
     cmUser = apps.get_model("crashmanager", "User")
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    Permission = apps.get_model("auth", "Permission")
+    User = apps.get_model("auth", "User")
+
     content_type = ContentType.objects.get_for_model(cmUser)
 
     for user in User.objects.all():
         added = []
+        user_perms = {perm.codename for perm in user.user_permissions.all()}
 
         for app in ["crashmanager", "covmanager", "taskmanager", "ec2spotmanager"]:
-            if user.has_perm(f"crashmanager.view_{app}"):
+            if f"view_{app}" in user_perms:
                 user.user_permissions.add(
-                    Permission.objects.get(
+                    Permission.objects.get_or_create(
                         content_type=content_type, codename=f"{app}_all"
-                    )
+                    )[0]
                 )
                 added.append(f"{app}_all")
 
