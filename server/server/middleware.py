@@ -95,3 +95,14 @@ class CheckAppPermissionsMiddleware:
             return HttpResponseForbidden()
 
         return None
+
+
+class AddXUsernameMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if request.user.is_authenticated:
+            response["X-Username"] = request.user.username
+        return response
