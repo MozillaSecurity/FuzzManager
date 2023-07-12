@@ -88,7 +88,7 @@ def collections_reportsummary_html_list(request, collectionid):
                 {"message": "The requested report summary is currently being created."}
             ),
             content_type="application/json",
-            status=204,
+            status=202,
         )
 
     root = json.loads(collection.reportsummary.cached_result)
@@ -126,7 +126,7 @@ def collections_reportsummary_html_list(request, collectionid):
                     }
                 ),
                 content_type="application/json",
-                status=204,
+                status=202,
             )
 
         root["diffid"] = diff_collection.pk
@@ -170,7 +170,7 @@ def collections_download(request, collectionid):
                 {"message": "The requested collection is currently being created."}
             ),
             content_type="application/json",
-            status=204,
+            status=202,
         )
 
     cov_file = open(collection.coverage.file.path, "rb")
@@ -192,7 +192,7 @@ def collections_browse_api(request, collectionid, path):
                 {"message": "The requested collection is currently being created."}
             ),
             content_type="application/json",
-            status=204,
+            status=202,
         )
 
     report_configuration = None
@@ -493,7 +493,7 @@ def collections_reportsummary_api(request, collectionid):
                 {"message": "The requested collection is currently being created."}
             ),
             content_type="application/json",
-            status=204,
+            status=202,
         )
 
     return HttpResponse(summary.cached_result, content_type="application/json")
