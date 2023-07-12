@@ -337,7 +337,7 @@ let covmanager = new Vue({
         credentials: 'same-origin'
       }).then(response => {
         if (response.ok) {
-          if (response.status === 204) {
+          if (response.status === 202) {
             // Collection is still being processed, retry in a few
             setTimeout(this.fetch, 1000)
             this.loading_incomplete = true
