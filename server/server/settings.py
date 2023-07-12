@@ -73,6 +73,7 @@ MIDDLEWARE = (
     "django.contrib.messages.middleware.MessageMiddleware",
     "server.middleware.ExceptionLoggingMiddleware",
     "server.middleware.CheckAppPermissionsMiddleware",
+    "server.middleware.AddXUsernameMiddleware",
     # 'livesync.core.middleware.DjangoLiveSyncMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
 )
