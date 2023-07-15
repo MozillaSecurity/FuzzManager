@@ -68,7 +68,7 @@ charset-normalizer==2.1.1
     #   requests
 coverage==7.2.7
     # via pytest-cov
-cryptography==41.0.1
+cryptography==41.0.2
     # via
     #   adal
     #   josepy
