@@ -1,4 +1,4 @@
-import Vue from "vue";
+import { nextTick } from "vue";
 import { fireEvent, render } from "@testing-library/vue";
 import Inbox from "../src/components/Notifications/Inbox.vue";
 import BucketHit from "../src/components/Notifications/BucketHit.vue";
@@ -195,7 +195,7 @@ test("bucketHit emits a 'update-dismiss-error' event for a failed dismiss", asyn
 
   getByText("Bucket hit");
   await fireEvent.click(getByTitle("Dismiss"));
-  await Vue.nextTick();
+  await nextTick();
   expect(emitted()["update-dismiss-error"]).toBeTruthy();
   expect(emitted()["update-dismiss-error"].length).toBe(1);
   expect(emitted()["update-dismiss-error"][0]).toEqual([
@@ -241,7 +241,7 @@ test("inaccessibleBug emits a 'update-dismiss-error' event for a failed dismiss"
 
   getByText("Inaccessible bug");
   await fireEvent.click(getByTitle("Dismiss"));
-  await Vue.nextTick();
+  await nextTick();
   expect(emitted()["update-dismiss-error"]).toBeTruthy();
   expect(emitted()["update-dismiss-error"].length).toBe(1);
   expect(emitted()["update-dismiss-error"][0]).toEqual([

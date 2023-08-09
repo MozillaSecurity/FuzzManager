@@ -1,4 +1,4 @@
-import Vue from "vue";
+import { nextTick } from "vue";
 import { createLocalVue } from "@vue/test-utils";
 import VueRouter from "vue-router";
 import { render } from "@testing-library/vue";
@@ -34,7 +34,7 @@ test("signature list has no buckets", async () => {
       activityRange: 14,
     },
   });
-  await Vue.nextTick();
+  await nextTick();
 
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
@@ -43,7 +43,7 @@ test("signature list has no buckets", async () => {
     query: defaultQueryStr,
   });
 
-  await Vue.nextTick();
+  await nextTick();
   // Assert no signature is displayed in the table
   expect(document.querySelector("tbody tr")).toBeNull();
 });
@@ -59,7 +59,7 @@ test("signature list has two buckets", async () => {
       activityRange: 14,
     },
   });
-  await Vue.nextTick();
+  await nextTick();
 
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
@@ -68,7 +68,7 @@ test("signature list has two buckets", async () => {
     query: defaultQueryStr,
   });
 
-  await Vue.nextTick();
+  await nextTick();
   // Assert two signatures (one assigned to a bug, the other not) are displayed in the table
   expect(document.querySelectorAll("tbody tr").length).toBe(2);
   getByText("A short description for bucket 1");
