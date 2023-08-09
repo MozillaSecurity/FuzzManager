@@ -35,7 +35,7 @@
         "jest": "^27.0.6",
         "mini-css-extract-plugin": "^1.6.0",
         "postcss": "^8.3.5",
-        "vue-jest": "^3.0.7",
+        "vue-jest": "^4.0.1",
         "vue-loader": "^15.9.6",
         "vue-template-compiler": "^2.6.14",
         "webpack": "^5.36.0",
