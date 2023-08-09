@@ -1,0 +1,3 @@
+Host fuzzing-tc-config
+HostName github.com
+IdentityFile ~/.ssh/id_ecdsa.fuzzing_tc_config
