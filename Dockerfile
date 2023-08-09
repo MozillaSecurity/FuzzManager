@@ -39,7 +39,7 @@ COPY . /src/
 
 # Retrieve previous Javascript build
 COPY --from=frontend /src/dist/ /src/server/frontend/dist/
-RUN chown -R worker:worker /src
+RUN mkdir -p /data/fuzzing-tc-config && chown -R worker:worker /src /data/fuzzing-tc-config
 
 # Install FM
 # Note: the extras must be duplicated above in the Python
