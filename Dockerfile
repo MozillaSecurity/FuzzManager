@@ -23,7 +23,7 @@ RUN cd /src && \
 FROM python:3.10-alpine
 
 RUN adduser -D worker && \
-   apk add --no-cache bash git mariadb-client mariadb-connector-c && \
+   apk add --no-cache bash git mariadb-client mariadb-connector-c openssh-client-default && \
    rm -rf /var/log/*
 
 COPY --from=backend /var/cache/wheels /var/cache/wheels
@@ -47,6 +47,7 @@ RUN chown -R worker:worker /src
 USER worker
 ENV PATH "${PATH}:/home/worker/.local/bin"
 RUN pip install --no-cache-dir --no-index --find-links /var/cache/wheels --no-deps -q /src[docker,server,taskmanager]
+RUN mkdir -m 0700 /home/worker/.ssh && cp /src/misc/sshconfig /home/worker/.ssh/config && ssh-keyscan github.com > /home/worker/.ssh/known_hosts
 
 # Use a custom settings file that can be overwritten
 ENV DJANGO_SETTINGS_MODULE "server.settings_docker"
