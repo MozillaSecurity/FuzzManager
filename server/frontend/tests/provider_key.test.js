@@ -1,4 +1,4 @@
-import Vue from "vue";
+import { nextTick } from "vue";
 import { fireEvent, render } from "@testing-library/vue";
 import ProviderKey from "../src/components/ProviderKey.vue";
 import { whoAmI } from "../src/bugzilla_api.js";
@@ -63,7 +63,7 @@ test("providerKey can add a new API key in the localStorage", async () => {
   await fireEvent.update(input, key);
   await fireEvent.click(getByText("Save"));
 
-  await Vue.nextTick();
+  await nextTick();
   expect(whoAmI).toHaveBeenCalledTimes(1);
   expect(whoAmI).toHaveBeenCalledWith({
     hostname: "myprovider.com",
@@ -91,7 +91,7 @@ test("providerKey can update an existing API key in the localStorage", async () 
   await fireEvent.update(input, key);
   await fireEvent.click(getByText("Save"));
 
-  await Vue.nextTick();
+  await nextTick();
   expect(whoAmI).toHaveBeenCalledTimes(1);
   expect(whoAmI).toHaveBeenCalledWith({
     hostname: "myprovider.com",
@@ -120,7 +120,7 @@ test("providerKey displays an error if the entered API key is invalid", async ()
   await fireEvent.update(input, key);
   await fireEvent.click(getByText("Save"));
 
-  await Vue.nextTick();
+  await nextTick();
   expect(whoAmI).toHaveBeenCalledTimes(1);
   expect(whoAmI).toHaveBeenCalledWith({
     hostname: "myprovider.com",
