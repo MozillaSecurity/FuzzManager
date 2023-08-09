@@ -114,7 +114,7 @@ tasks:
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $map:
-          - {image: ci-node-16, slug: node16, name: 'build frontend node 16'}
+          - {image: ci-node-18, slug: node18, name: 'build frontend node 18'}
           each(build):
             taskId: {$eval: as_slugid(build.slug)}
             taskGroupId: ${task_group}
@@ -181,7 +181,7 @@ tasks:
           deadline: {$fromNow: '1 hour'}
           payload:
             maxRunTime: 3600
-            image: node:16-alpine
+            image: node:18-alpine
             command:
               - /bin/sh
               - '-x'
@@ -211,7 +211,7 @@ tasks:
           workerType: ci
           dependencies:
             - {$eval: as_slugid("linting")}
-            - {$eval: as_slugid("node16")}
+            - {$eval: as_slugid("node18")}
             - {$eval: as_slugid("py38")}
             - {$eval: as_slugid("py39")}
             - {$eval: as_slugid("py310")}
@@ -292,7 +292,7 @@ tasks:
               workerType: ci
               dependencies:
                 - {$eval: as_slugid("linting")}
-                - {$eval: as_slugid("node16")}
+                - {$eval: as_slugid("node18")}
                 - {$eval: as_slugid("py38")}
                 - {$eval: as_slugid("py39")}
                 - {$eval: as_slugid("py310")}
