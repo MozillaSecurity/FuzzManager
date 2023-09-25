@@ -54,7 +54,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="pool in ordered_pools" :key="pool.id">
+        <tr v-for="pool in orderedPools" :key="pool.id">
           <td>
             <a :href="pool.view_url">{{ pool.pool_id }}</a>
           </td>
@@ -80,33 +80,29 @@
 
 <script>
 import _throttle from "lodash/throttle";
-import _orderBy from "lodash/orderBy";
 import swal from "sweetalert";
-import { E_SERVER_ERROR } from "../../helpers";
+import { E_SERVER_ERROR, multiSort } from "../../helpers";
 import * as api from "../../api";
 
-const defaultSortKey = "pool_name_isort";
-
 export default {
+  mixins: [multiSort],
   data: function () {
+    const defaultSortKeys = ["pool_name_isort"];
+    const validSortKeys = ["pool_id", "pool_name_isort", "running", "status"];
     return {
+      defaultSortKeys: defaultSortKeys,
       loading: true,
       pools: null,
-      sortKeys: [defaultSortKey],
+      sortKeys: [...defaultSortKeys],
+      validSortKeys: validSortKeys,
     };
   },
   created: function () {
     this.fetch();
   },
   computed: {
-    ordered_pools: function () {
-      return _orderBy(
-        this.pools,
-        this.sortKeys.map((key) =>
-          key.startsWith("-") ? key.substring(1) : key
-        ),
-        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc"))
-      );
+    orderedPools: function () {
+      return this.sortData(this.pools);
     },
   },
   methods: {
@@ -141,40 +137,6 @@ export default {
       500,
       { trailing: true }
     ),
-    addSort: function (sortKey) {
-      /*
-       * add sort by sortKey to existing sort keys
-       * if already sorting, by sortKey,
-       *   reverse the sort order without changing the priority of sort keys
-       * if not sorting by sortKey yet,
-       *   sort first by this sortKey and then by existing sort keys
-       */
-      const index = this.sortKeys.indexOf(sortKey);
-      if (index >= 0) {
-        this.sortKeys[index] = `-${sortKey}`;
-      } else {
-        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
-        if (revIndex >= 0) {
-          this.sortKeys[revIndex] = sortKey;
-        } else {
-          this.sortKeys.unshift(sortKey);
-        }
-      }
-    },
-    sortBy: function (sortKey) {
-      /*
-       * reset sort by sortKey
-       * if the display is already sorted by sortKey (alone or in concert),
-       *   then reverse the sort order, but always remove other sort keys
-       */
-      if (this.sortKeys.includes(sortKey)) {
-        this.sortKeys = [`-${sortKey}`];
-      } else if (this.sortKeys.includes(`-${sortKey}`)) {
-        this.sortKeys = [sortKey];
-      } else {
-        this.sortKeys = [sortKey];
-      }
-    },
   },
 };
 </script>

@@ -1,3 +1,5 @@
+import _isEqual from "lodash/isEqual";
+import _orderBy from "lodash/orderBy";
 import * as api from "./api";
 
 /**
@@ -118,4 +120,76 @@ export const parseHash = (hash) => {
       (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
       {}
     );
+};
+
+export const multiSort = {
+  created: function () {
+    if (location.hash.startsWith("#")) {
+      const hash = parseHash(this.$route.hash);
+      if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
+        const sortKeys = hash.sort.split(",").filter((key) => {
+          const realKey = key.startsWith("-") ? key.substring(1) : key;
+          if (this.validSortKeys.includes(realKey)) {
+            return true;
+          }
+          // eslint-disable-next-line no-console
+          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
+          return false;
+        });
+        if (sortKeys.length > 0) {
+          this.sortKeys = sortKeys;
+        }
+      }
+    }
+  },
+  methods: {
+    addSort: function (sortKey) {
+      /*
+       * add sort by sortKey to existing sort keys
+       * if already sorting, by sortKey,
+       *   reverse the sort order without changing the priority of sort keys
+       * if not sorting by sortKey yet,
+       *   sort first by this sortKey and then by existing sort keys
+       */
+      const index = this.sortKeys.indexOf(sortKey);
+      if (index >= 0) {
+        this.sortKeys.splice(index, 1, `-${sortKey}`);
+      } else {
+        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
+        if (revIndex >= 0) {
+          this.sortKeys.splice(revIndex, 1, sortKey);
+        } else {
+          this.sortKeys.unshift(`-${sortKey}`);
+        }
+      }
+    },
+    sortBy: function (sortKey) {
+      /*
+       * reset sort by sortKey
+       * if the display is already sorted by sortKey (alone or in concert),
+       *   then reverse the sort order, but always remove other sort keys
+       */
+      if (this.sortKeys.includes(sortKey)) {
+        this.sortKeys = [`-${sortKey}`];
+      } else if (this.sortKeys.includes(`-${sortKey}`)) {
+        this.sortKeys = [sortKey];
+      } else {
+        this.sortKeys = [`-${sortKey}`];
+      }
+    },
+    sortData: function (data) {
+      return _orderBy(
+        data,
+        this.sortKeys.map((key) =>
+          key.startsWith("-") ? key.substring(1) : key
+        ),
+        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc"))
+      );
+    },
+    updateHashSort: function (hash) {
+      if (!_isEqual(this.sortKeys, this.defaultSortKeys)) {
+        hash.sort = this.sortKeys.join();
+      }
+    },
+  },
 };

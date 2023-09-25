@@ -223,7 +223,6 @@
 
 <script>
 import _throttle from "lodash/throttle";
-import _isEqual from "lodash/isEqual";
 import swal from "sweetalert";
 import * as api from "../../api";
 import {
@@ -231,30 +230,34 @@ import {
   formatDateRelative,
   E_SERVER_ERROR,
   parseHash,
+  multiSort,
 } from "../../helpers";
 
 const pageSize = 100;
-const validSortKeys = [
-  "task_id",
-  "run_id",
-  "state",
-  "created",
-  "started",
-  "resolved",
-  "expires",
-];
-const defaultSortKeys = ["-created", "-state", "task_id"];
 
 export default {
+  mixins: [multiSort],
   data: function () {
+    const defaultSortKeys = ["-created", "-state", "task_id"];
+    const validSortKeys = [
+      "created",
+      "expires",
+      "resolved",
+      "run_id",
+      "started",
+      "state",
+      "task_id",
+    ];
     return {
       currentEntries: "?",
       currentPage: 1,
+      defaultSortKeys: defaultSortKeys,
       loading: true,
       sortKeys: [...defaultSortKeys],
       tasks: null,
       totalEntries: "?",
       totalPages: 1,
+      validSortKeys: validSortKeys,
     };
   },
   props: {
@@ -272,20 +275,6 @@ export default {
         } catch (e) {
           // eslint-disable-next-line no-console
           console.debug(`parsing '#page=\\d+': ${e}`);
-        }
-      }
-      if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        const sortKeys = hash.sort.split(",").filter((key) => {
-          const realKey = key.startsWith("-") ? key.substring(1) : key;
-          if (validSortKeys.includes(realKey)) {
-            return true;
-          }
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
-          return false;
-        });
-        if (sortKeys.length > 0) {
-          this.sortKeys = sortKeys;
         }
       }
     }
@@ -344,42 +333,6 @@ export default {
       { trailing: true }
     ),
     formatDateRelative: formatDateRelative,
-    addSort: function (sortKey) {
-      /*
-       * add sort by sortKey to existing sort keys
-       * if already sorting, by sortKey,
-       *   reverse the sort order without changing the priority of sort keys
-       * if not sorting by sortKey yet,
-       *   sort first by this sortKey and then by existing sort keys
-       */
-      const index = this.sortKeys.indexOf(sortKey);
-      if (index >= 0) {
-        this.sortKeys[index] = `-${sortKey}`;
-      } else {
-        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
-        if (revIndex >= 0) {
-          this.sortKeys[revIndex] = sortKey;
-        } else {
-          this.sortKeys.unshift(`-${sortKey}`);
-        }
-      }
-      this.fetch();
-    },
-    sortBy: function (sortKey) {
-      /*
-       * reset sort by sortKey
-       * if the display is already sorted by sortKey (alone or in concert),
-       *   then reverse the sort order, but always remove other sort keys
-       */
-      if (this.sortKeys.includes(sortKey)) {
-        this.sortKeys = [`-${sortKey}`];
-      } else if (this.sortKeys.includes(`-${sortKey}`)) {
-        this.sortKeys = [sortKey];
-      } else {
-        this.sortKeys = [`-${sortKey}`];
-      }
-      this.fetch();
-    },
     prevPage: function () {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -397,9 +350,7 @@ export default {
       if (this.currentPage !== 1) {
         hash.page = this.currentPage;
       }
-      if (_isEqual(this.sortKeys, defaultSortKeys)) {
-        hash.sort = this.sortKeys.join();
-      }
+      this.updateHashSort(hash);
       if (Object.entries(hash).length) {
         location.hash =
           "#" +
@@ -409,6 +360,11 @@ export default {
       } else {
         location.hash = "";
       }
+    },
+  },
+  watch: {
+    sortKeys() {
+      this.fetch();
     },
   },
 };

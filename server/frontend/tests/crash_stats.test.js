@@ -84,10 +84,12 @@ test("stats use hash params", async () => {
   listBuckets.mockResolvedValue(buckets);
   const localVue = createLocalVue();
   const $route = { path: "/stats", hash: "#sort=id&alltools=1" };
+  const $router = [];
   await render(Stats, {
     localVue,
     mocks: {
       $route,
+      $router,
     },
     props: {
       restricted: false,
@@ -145,9 +147,9 @@ test("stats are sortable", async () => {
   rows = document.querySelectorAll("tbody tr");
   expect(rows.length).toBe(2);
   // sorted by id now
-  expect(rows[0].querySelector("td").textContent).toBe("1");
-  expect(rows[1].querySelector("td").textContent).toBe("2");
-  expect(router.currentRoute.hash).toBe("#sort=id");
+  expect(rows[0].querySelector("td").textContent).toBe("2");
+  expect(rows[1].querySelector("td").textContent).toBe("1");
+  expect(router.currentRoute.hash).toBe("#sort=-id");
 
   await createWrapper(document.querySelector("thead th")).trigger("click");
   await nextTick();
@@ -155,9 +157,9 @@ test("stats are sortable", async () => {
   rows = document.querySelectorAll("tbody tr");
   expect(rows.length).toBe(2);
   // sorted by -id now
-  expect(rows[0].querySelector("td").textContent).toBe("2");
-  expect(rows[1].querySelector("td").textContent).toBe("1");
-  expect(router.currentRoute.hash).toBe("#sort=-id");
+  expect(rows[0].querySelector("td").textContent).toBe("1");
+  expect(rows[1].querySelector("td").textContent).toBe("2");
+  expect(router.currentRoute.hash).toBe("#sort=id");
 
   await createWrapper(document.querySelector("thead th + th")).trigger(
     "click",
@@ -165,5 +167,5 @@ test("stats are sortable", async () => {
   );
   await nextTick();
 
-  expect(router.currentRoute.hash).toBe("#sort=shortDescription,-id");
+  expect(router.currentRoute.hash).toBe("#sort=-shortDescription,id");
 });

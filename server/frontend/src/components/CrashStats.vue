@@ -152,63 +152,52 @@
 
 <script>
 import _throttle from "lodash/throttle";
-import _orderBy from "lodash/orderBy";
 import swal from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { errorParser, E_SERVER_ERROR, parseHash } from "../helpers";
+import { errorParser, E_SERVER_ERROR, multiSort, parseHash } from "../helpers";
 import * as api from "../api";
 import AssignBtn from "./Signatures/AssignBtn.vue";
 import ActivityGraph from "./ActivityGraph.vue";
 import CrashStatsGraph from "./CrashStatsGraph.vue";
 
-const validSortKeys = [
-  "id",
-  "shortDescription",
-  "counts[0]",
-  "counts[1]",
-  "counts[2]",
-  "bug__externalId",
-];
-const defaultSortKey = "-counts[0]";
-
 export default {
+  mixins: [multiSort],
   components: {
     ClipLoader,
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
     crashstatsgraph: CrashStatsGraph,
   },
-  data: () => ({
-    // [hour, day, week]
-    totals: [],
-    // [Bucket()]
-    signatureData: [],
-    /*
-     * outFilter: hits per hour (out of toolfilter)
-     * inFilter: hits per hour (in toolfilter)
-     */
-    graphData: {},
-    sortKeys: [defaultSortKey],
-    ignoreToolFilter: false,
-    loading: false,
-  }),
+  data: function () {
+    const defaultSortKeys = ["-counts[0]"];
+    const validSortKeys = [
+      "bug__externalId",
+      "counts[0]",
+      "counts[1]",
+      "counts[2]",
+      "id",
+      "shortDescription",
+    ];
+    return {
+      defaultSortKeys: defaultSortKeys,
+      /*
+       * outFilter: hits per hour (out of toolfilter)
+       * inFilter: hits per hour (in toolfilter)
+       */
+      graphData: {},
+      ignoreToolFilter: false,
+      loading: false,
+      // [Bucket()]
+      signatureData: [],
+      sortKeys: [...defaultSortKeys],
+      // [hour, day, week]
+      totals: [],
+      validSortKeys: validSortKeys,
+    };
+  },
   created: function () {
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
-      if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        const sortKeys = hash.sort.split(",").filter((key) => {
-          const realKey = key.startsWith("-") ? key.substring(1) : key;
-          if (validSortKeys.includes(realKey)) {
-            return true;
-          }
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
-          return false;
-        });
-        if (sortKeys.length > 0) {
-          this.sortKeys = sortKeys;
-        }
-      }
       this.ignoreToolFilter = hash.alltools === "1";
     }
     this.fetch();
@@ -229,13 +218,7 @@ export default {
   },
   computed: {
     sortedSignatureData: function () {
-      return _orderBy(
-        this.signatureData,
-        this.sortKeys.map((key) =>
-          key.startsWith("-") ? key.substring(1) : key
-        ),
-        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc"))
-      );
+      return this.sortData(this.signatureData);
     },
   },
   methods: {
@@ -297,47 +280,10 @@ export default {
       500,
       { trailing: true }
     ),
-    addSort: function (sortKey) {
-      /*
-       * add sort by sortKey to existing sort keys
-       * if already sorting, by sortKey,
-       *   reverse the sort order without changing the priority of sort keys
-       * if not sorting by sortKey yet,
-       *   sort first by this sortKey and then by existing sort keys
-       */
-      const index = this.sortKeys.indexOf(sortKey);
-      if (index >= 0) {
-        this.sortKeys[index] = `-${sortKey}`;
-      } else {
-        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
-        if (revIndex >= 0) {
-          this.sortKeys[revIndex] = sortKey;
-        } else {
-          this.sortKeys.unshift(sortKey);
-        }
-      }
-      this.updateHash();
-    },
-    sortBy: function (sortKey) {
-      /*
-       * reset sort by sortKey
-       * if the display is already sorted by sortKey (alone or in concert),
-       *   then reverse the sort order, but always remove other sort keys
-       */
-      if (this.sortKeys.includes(sortKey)) {
-        this.sortKeys = [`-${sortKey}`];
-      } else if (this.sortKeys.includes(`-${sortKey}`)) {
-        this.sortKeys = [sortKey];
-      } else {
-        this.sortKeys = [sortKey];
-      }
-      this.updateHash();
-    },
     updateHash: function () {
       const hash = {};
-      if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
-        hash.sort = this.sortKeys.join();
-      }
+
+      this.updateHashSort(hash);
       if (this.ignoreToolFilter) hash.alltools = "1";
       if (Object.entries(hash).length) {
         const routeHash =
@@ -351,6 +297,11 @@ export default {
         if (this.$route.hash !== "")
           this.$router.push({ path: this.$route.path, hash: "" });
       }
+    },
+  },
+  watch: {
+    sortKeys() {
+      this.updateHash();
     },
   },
 };
