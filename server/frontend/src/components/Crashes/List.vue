@@ -317,27 +317,18 @@ import _isEqual from "lodash/isEqual";
 import swal from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import Vue from "vue";
-import { errorParser, E_SERVER_ERROR, parseHash } from "../../helpers";
+import {
+  errorParser,
+  E_SERVER_ERROR,
+  multiSort,
+  parseHash,
+} from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 import DeleteConfirmation from "./DeleteConfirmation.vue";
 
 const pageSize = 100;
-const validSortKeys = [
-  "bucket",
-  "crashAddress",
-  "created",
-  "id",
-  "os__name",
-  "platform__name",
-  "product__name",
-  "product__version",
-  "shortSignature",
-  "testcase__quality",
-  "testcase__size",
-  "tool__name",
-];
 const validFilters = {
   bucket: "Bucket",
   client__name: "Client name",
@@ -355,9 +346,9 @@ const validFilters = {
   tool__name: "Tool",
   tool__name__contains: "Tool (sub-string match)",
 };
-const defaultSortKey = "-id";
 
 export default {
+  mixins: [multiSort],
   components: {
     Row,
     ClipLoader,
@@ -374,31 +365,50 @@ export default {
       default: null,
     },
   },
-  data: () => ({
-    advancedQuery: false,
-    advancedQueryError: "",
-    advancedQueryStr: "",
-    cachedAdvancedQueryStr: null,
-    cachedIgnoreToolFilter: null,
-    cachedSearchStr: null,
-    cachedShowBucketed: null,
-    canUnshowBucketed: true,
-    crashes: null,
-    currentEntries: "?",
-    currentPage: 1,
-    deleteAsyncTimer: null,
-    deleteAsyncToken: null,
-    filters: {},
-    haveResults: false,
-    ignoreToolFilter: false,
-    loading: true,
-    searchStr: "",
-    showBucketed: false,
-    sortKeys: [defaultSortKey],
-    totalEntries: "?",
-    totalPages: 1,
-    validFilters: validFilters,
-  }),
+  data: function () {
+    const defaultSortKeys = ["-id"];
+    const validSortKeys = [
+      "bucket",
+      "crashAddress",
+      "created",
+      "id",
+      "os__name",
+      "platform__name",
+      "product__name",
+      "product__version",
+      "shortSignature",
+      "testcase__quality",
+      "testcase__size",
+      "tool__name",
+    ];
+    return {
+      advancedQuery: false,
+      advancedQueryError: "",
+      advancedQueryStr: "",
+      cachedAdvancedQueryStr: null,
+      cachedIgnoreToolFilter: null,
+      cachedSearchStr: null,
+      cachedShowBucketed: null,
+      canUnshowBucketed: true,
+      crashes: null,
+      currentEntries: "?",
+      currentPage: 1,
+      defaultSortKeys: defaultSortKeys,
+      deleteAsyncTimer: null,
+      deleteAsyncToken: null,
+      filters: {},
+      haveResults: false,
+      ignoreToolFilter: false,
+      loading: true,
+      searchStr: "",
+      showBucketed: false,
+      sortKeys: [...defaultSortKeys],
+      totalEntries: "?",
+      totalPages: 1,
+      validFilters: validFilters,
+      validSortKeys: validSortKeys,
+    };
+  },
   created: function () {
     this.showBucketed = this.watchId !== null;
     if (this.$route.query.q) this.searchStr = this.$route.query.q;
@@ -410,20 +420,6 @@ export default {
         } catch (e) {
           // eslint-disable-next-line no-console
           console.debug(`parsing '#page=\\d+': ${e}`);
-        }
-      }
-      if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        const sortKeys = hash.sort.split(",").filter((key) => {
-          const realKey = key.startsWith("-") ? key.substring(1) : key;
-          if (validSortKeys.includes(realKey)) {
-            return true;
-          }
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
-          return false;
-        });
-        if (sortKeys.length > 0) {
-          this.sortKeys = sortKeys;
         }
       }
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
@@ -728,50 +724,12 @@ export default {
       this.canUnshowBucketed = true;
       this.fetch();
     },
-    addSort: function (sortKey) {
-      /*
-       * add sort by sortKey to existing sort keys
-       * if already sorting, by sortKey,
-       *   reverse the sort order without changing the priority of sort keys
-       * if not sorting by sortKey yet,
-       *   sort first by this sortKey and then by existing sort keys
-       */
-      const index = this.sortKeys.indexOf(sortKey);
-      if (index >= 0) {
-        this.sortKeys[index] = `-${sortKey}`;
-      } else {
-        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
-        if (revIndex >= 0) {
-          this.sortKeys[revIndex] = sortKey;
-        } else {
-          this.sortKeys.unshift(`-${sortKey}`);
-        }
-      }
-      this.fetch();
-    },
-    sortBy: function (sortKey) {
-      /*
-       * reset sort by sortKey
-       * if the display is already sorted by sortKey (alone or in concert),
-       *   then reverse the sort order, but always remove other sort keys
-       */
-      if (this.sortKeys.includes(sortKey)) {
-        this.sortKeys = [`-${sortKey}`];
-      } else if (this.sortKeys.includes(`-${sortKey}`)) {
-        this.sortKeys = [sortKey];
-      } else {
-        this.sortKeys = [`-${sortKey}`];
-      }
-      this.fetch();
-    },
     updateHash: function () {
       let hash = {};
       if (this.currentPage !== 1) {
         hash.page = this.currentPage;
       }
-      if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
-        hash.sort = this.sortKeys.join();
-      }
+      this.updateHashSort(hash);
       if (this.ignoreToolFilter) hash.alltools = "1";
       if (this.filters["bucket"] !== undefined)
         hash.bucket = this.filters["bucket"];
@@ -801,6 +759,11 @@ export default {
   },
   beforeDestroy() {
     if (this.deleteAsyncTimer !== null) clearTimeout(this.deleteAsyncTimer);
+  },
+  watch: {
+    sortKeys() {
+      this.fetch();
+    },
   },
 };
 </script>

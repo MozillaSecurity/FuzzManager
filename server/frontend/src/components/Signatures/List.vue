@@ -165,24 +165,14 @@
 <script>
 import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
-import _orderBy from "lodash/orderBy";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { errorParser, parseHash } from "../../helpers";
+import { errorParser, multiSort, parseHash } from "../../helpers";
 import * as api from "../../api";
 import Row from "./Row.vue";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 
-const validSortKeys = [
-  "id",
-  "shortDescription",
-  "size",
-  "best_quality",
-  "has_optimization",
-  "bug__externalId",
-];
-const defaultSortKey = "-id";
-
 export default {
+  mixins: [multiSort],
   components: {
     Row,
     ClipLoader,
@@ -202,17 +192,30 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    modifiedCache: {},
-    signatures: [],
-    sortKeys: [defaultSortKey],
-    queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
-    queryError: "",
-    ignoreToolFilter: false,
-    searchStr: "",
-    totalEntries: "?",
-    loading: false,
-  }),
+  data: function () {
+    const validSortKeys = [
+      "best_quality",
+      "bug__externalId",
+      "has_optimization",
+      "id",
+      "shortDescription",
+      "size",
+    ];
+    const defaultSortKeys = ["-id"];
+    return {
+      defaultSortKeys: defaultSortKeys,
+      ignoreToolFilter: false,
+      loading: false,
+      modifiedCache: {},
+      queryError: "",
+      queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
+      searchStr: "",
+      signatures: [],
+      sortKeys: [...defaultSortKeys],
+      totalEntries: "?",
+      validSortKeys: validSortKeys,
+    };
+  },
   created() {
     if (this.$route.query.all)
       this.queryStr = JSON.stringify({ op: "AND" }, null, 2);
@@ -224,20 +227,6 @@ export default {
       );
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
-      if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        const sortKeys = hash.sort.split(",").filter((key) => {
-          const realKey = key.startsWith("-") ? key.substring(1) : key;
-          if (validSortKeys.includes(realKey)) {
-            return true;
-          }
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
-          return false;
-        });
-        if (sortKeys.length > 0) {
-          this.sortKeys = sortKeys;
-        }
-      }
       this.ignoreToolFilter = hash.alltools === "1";
       if (Object.prototype.hasOwnProperty.call(hash, "query")) {
         this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
@@ -258,14 +247,7 @@ export default {
       return !_isEqual(queryStr, this.modifiedCache.queryStr);
     },
     orderedSignatures() {
-      const realKeys = [];
-      const orders = [];
-
-      this.sortKeys.forEach((key) => {
-        realKeys.push(key.startsWith("-") ? key.substring(1) : key);
-        orders.push(key.startsWith("-") ? "desc" : "asc");
-      });
-      return _orderBy(this.signatures, realKeys, orders);
+      return this.sortData(this.signatures);
     },
     queryButtonTitle() {
       if (this.loading) return "Query in progress";
@@ -290,40 +272,6 @@ export default {
         this.queryStr = JSON.stringify(query, null, 2);
       }
       this.fetch();
-    },
-    addSort(sortKey) {
-      /*
-       * add sort by sortKey to existing sort keys
-       * if already sorting, by sortKey,
-       *   reverse the sort order without changing the priority of sort keys
-       * if not sorting by sortKey yet,
-       *   sort first by this sortKey and then by existing sort keys
-       */
-      const index = this.sortKeys.indexOf(sortKey);
-      if (index >= 0) {
-        this.sortKeys[index] = `-${sortKey}`;
-      } else {
-        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
-        if (revIndex >= 0) {
-          this.sortKeys[revIndex] = sortKey;
-        } else {
-          this.sortKeys.unshift(`-${sortKey}`);
-        }
-      }
-    },
-    sortBy(sortKey) {
-      /*
-       * reset sort by sortKey
-       * if the display is already sorted by sortKey (alone or in concert),
-       *   then reverse the sort order, but always remove other sort keys
-       */
-      if (this.sortKeys.includes(sortKey)) {
-        this.sortKeys = [`-${sortKey}`];
-      } else if (this.sortKeys.includes(`-${sortKey}`)) {
-        this.sortKeys = [sortKey];
-      } else {
-        this.sortKeys = [`-${sortKey}`];
-      }
     },
     buildParams() {
       return {
@@ -372,9 +320,7 @@ export default {
     ),
     updateHash() {
       let hash = {};
-      if (this.sortKeys.length !== 1 || this.sortKeys[0] !== defaultSortKey) {
-        hash.sort = this.sortKeys.join();
-      }
+      this.updateHashSort(hash);
       if (this.queryStr) hash.query = encodeURIComponent(this.queryStr);
       if (this.ignoreToolFilter) hash.alltools = "1";
       if (Object.entries(hash).length) {
