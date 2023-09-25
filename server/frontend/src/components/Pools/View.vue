@@ -73,50 +73,79 @@
         <thead>
           <tr>
             <th
-              v-on:click="sortBy('task_id')"
-              :class="{ active: sortKey === 'task_id' }"
+              v-on:click.exact="sortBy('task_id')"
+              v-on:click.ctrl.exact="addSort('task_id')"
+              :class="{
+                active:
+                  sortKeys.includes('task_id') || sortKeys.includes('-task_id'),
+              }"
               width="50px"
             >
               Task
             </th>
             <th
-              v-on:click="sortBy('run_id')"
-              :class="{ active: sortKey === 'run_id' }"
+              v-on:click.exact="sortBy('run_id')"
+              v-on:click.ctrl.exact="addSort('run_id')"
+              :class="{
+                active:
+                  sortKeys.includes('run_id') || sortKeys.includes('-run_id'),
+              }"
               width="15px"
             >
               Run
             </th>
             <th
-              v-on:click="sortBy('state')"
-              :class="{ active: sortKey === 'state' }"
+              v-on:click.exact="sortBy('state')"
+              v-on:click.ctrl.exact="addSort('state')"
+              :class="{
+                active:
+                  sortKeys.includes('state') || sortKeys.includes('-state'),
+              }"
               width="25px"
             >
               State
             </th>
             <th
-              v-on:click="sortBy('created')"
-              :class="{ active: sortKey === 'created' }"
+              v-on:click.exact="sortBy('created')"
+              v-on:click.ctrl.exact="addSort('created')"
+              :class="{
+                active:
+                  sortKeys.includes('created') || sortKeys.includes('-created'),
+              }"
               width="60px"
             >
               Created
             </th>
             <th
-              v-on:click="sortBy('started')"
-              :class="{ active: sortKey === 'started' }"
+              v-on:click.exact="sortBy('started')"
+              v-on:click.ctrl.exact="addSort('started')"
+              :class="{
+                active:
+                  sortKeys.includes('started') || sortKeys.includes('-started'),
+              }"
               width="60px"
             >
               Started
             </th>
             <th
-              v-on:click="sortBy('resolved')"
-              :class="{ active: sortKey === 'resolved' }"
+              v-on:click.exact="sortBy('resolved')"
+              v-on:click.ctrl.exact="addSort('resolved')"
+              :class="{
+                active:
+                  sortKeys.includes('resolved') ||
+                  sortKeys.includes('-resolved'),
+              }"
               width="60px"
             >
               Resolved
             </th>
             <th
-              v-on:click="sortBy('expires')"
-              :class="{ active: sortKey === 'expires' }"
+              v-on:click.exact="sortBy('expires')"
+              v-on:click.ctrl.exact="addSort('expires')"
+              :class="{
+                active:
+                  sortKeys.includes('expires') || sortKeys.includes('-expires'),
+              }"
               width="60px"
             >
               Expires
@@ -194,6 +223,7 @@
 
 <script>
 import _throttle from "lodash/throttle";
+import _isEqual from "lodash/isEqual";
 import swal from "sweetalert";
 import * as api from "../../api";
 import {
@@ -213,8 +243,7 @@ const validSortKeys = [
   "resolved",
   "expires",
 ];
-const defaultReverse = true;
-const defaultSortKey = "created";
+const defaultSortKeys = ["-created", "-state", "task_id"];
 
 export default {
   data: function () {
@@ -222,8 +251,7 @@ export default {
       currentEntries: "?",
       currentPage: 1,
       loading: true,
-      reverse: defaultReverse,
-      sortKey: defaultSortKey,
+      sortKeys: [...defaultSortKeys],
       tasks: null,
       totalEntries: "?",
       totalPages: 1,
@@ -247,20 +275,17 @@ export default {
         }
       }
       if (Object.prototype.hasOwnProperty.call(hash, "sort")) {
-        let hashSortKey = hash.sort;
-        let hashReverse = false;
-        if (hashSortKey.startsWith("-")) {
-          hashSortKey = hashSortKey.substring(1);
-          hashReverse = true;
-        }
-        if (validSortKeys.includes(hashSortKey)) {
-          this.sortKey = hashSortKey;
-          this.reverse = hashReverse;
-        } else {
+        const sortKeys = hash.sort.split(",").filter((key) => {
+          const realKey = key.startsWith("-") ? key.substring(1) : key;
+          if (validSortKeys.includes(realKey)) {
+            return true;
+          }
           // eslint-disable-next-line no-console
-          console.debug(
-            `parsing '#sort=\\s+': unrecognized key '${hashSortKey}'`
-          );
+          console.debug(`parsing '#sort=\\s+': unrecognized key '${realKey}'`);
+          return false;
+        });
+        if (sortKeys.length > 0) {
+          this.sortKeys = sortKeys;
         }
       }
     }
@@ -276,7 +301,7 @@ export default {
         vue: "1",
         limit: pageSize,
         offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: `${this.reverse ? "-" : ""}${this.sortKey}`,
+        ordering: this.sortKeys.join(),
         query: JSON.stringify({
           op: "OR",
           pool: this.pool.id,
@@ -319,15 +344,41 @@ export default {
       { trailing: true }
     ),
     formatDateRelative: formatDateRelative,
-    sortBy: function (sortKey) {
-      const keyChange = this.sortKey !== sortKey;
-      this.reverse = !keyChange ? !this.reverse : false;
-      this.sortKey = sortKey;
-      if (keyChange || this.totalPages > 1) {
-        this.fetch();
+    addSort: function (sortKey) {
+      /*
+       * add sort by sortKey to existing sort keys
+       * if already sorting, by sortKey,
+       *   reverse the sort order without changing the priority of sort keys
+       * if not sorting by sortKey yet,
+       *   sort first by this sortKey and then by existing sort keys
+       */
+      const index = this.sortKeys.indexOf(sortKey);
+      if (index >= 0) {
+        this.sortKeys[index] = `-${sortKey}`;
       } else {
-        this.updateHash();
+        const revIndex = this.sortKeys.indexOf(`-${sortKey}`);
+        if (revIndex >= 0) {
+          this.sortKeys[revIndex] = sortKey;
+        } else {
+          this.sortKeys.unshift(`-${sortKey}`);
+        }
       }
+      this.fetch();
+    },
+    sortBy: function (sortKey) {
+      /*
+       * reset sort by sortKey
+       * if the display is already sorted by sortKey (alone or in concert),
+       *   then reverse the sort order, but always remove other sort keys
+       */
+      if (this.sortKeys.includes(sortKey)) {
+        this.sortKeys = [`-${sortKey}`];
+      } else if (this.sortKeys.includes(`-${sortKey}`)) {
+        this.sortKeys = [sortKey];
+      } else {
+        this.sortKeys = [`-${sortKey}`];
+      }
+      this.fetch();
     },
     prevPage: function () {
       if (this.currentPage > 1) {
@@ -346,8 +397,8 @@ export default {
       if (this.currentPage !== 1) {
         hash.page = this.currentPage;
       }
-      if (this.sortKey !== defaultSortKey || this.reverse !== defaultReverse) {
-        hash.sort = (this.reverse ? "-" : "") + this.sortKey;
+      if (_isEqual(this.sortKeys, defaultSortKeys)) {
+        hash.sort = this.sortKeys.join();
       }
       if (Object.entries(hash).length) {
         location.hash =
