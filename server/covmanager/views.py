@@ -293,9 +293,7 @@ def collections_diff_api(request, path):
                     continue
 
                 x = tooltipdata[-1][k]
-                if type(x) == int:
-                    ctooltipdata["delta_" + k] = ctooltipdata[k] - x
-                elif type(x) == float:
+                if isinstance(x, (int, float)):
                     ctooltipdata["delta_" + k] = round(ctooltipdata[k] - x, 4)
 
         tooltipdata.append(ctooltipdata)
@@ -305,9 +303,7 @@ def collections_diff_api(request, path):
 
     add = {}
     for k in start_coverage:
-        if type(start_coverage[k]) == int:
-            add["delta_" + k] = end_coverage[k] - start_coverage[k]
-        elif type(start_coverage[k]) == float:
+        if isinstance(start_coverage[k], (int, float)):
             add["delta_" + k] = round(end_coverage[k] - start_coverage[k], 4)
     start_coverage.update(add)
 
@@ -319,11 +315,9 @@ def collections_diff_api(request, path):
 
         for k in start_coverage["children"][child]:
             x = start_coverage["children"][child][k]
-
-            if type(x) == int:
-                add["delta_" + k] = end_coverage["children"][child][k] - x
-            elif type(x) == float:
+            if isinstance(x, (int, float)):
                 add["delta_" + k] = round(end_coverage["children"][child][k] - x, 4)
+
         start_coverage["children"][child].update(add)
 
     data = {"path": path, "coverage": start_coverage, "ttdata": tooltipdata}
