@@ -171,7 +171,7 @@ class Collection(models.Model):
                          for performance. If you need the original object, you
                          must create a copy and pass it to this method instead.
         """
-        if "children" in coverage and type(coverage["children"]) != bool:
+        if "children" in coverage and not isinstance(coverage["children"], bool):
             for child in coverage["children"]:
                 Collection.strip(coverage["children"][child])
         else:
