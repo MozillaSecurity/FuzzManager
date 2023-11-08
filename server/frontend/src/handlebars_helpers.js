@@ -44,3 +44,16 @@ export function includes(str, pattern) {
 
   return str.includes(pattern);
 }
+
+/**
+ * Determine if two strings are equal.
+ * @param {string} str - The string to search.
+ * @param {string} pattern - The pattern to match.
+ */
+export function eq(str, pattern) {
+  if (!(isString(str) && isString(pattern))) {
+    return false;
+  }
+
+  return str === pattern;
+}
