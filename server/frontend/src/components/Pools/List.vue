@@ -64,10 +64,10 @@
             <span
               class="label"
               :class="{
-                'label-warning':
-                  pool.status !== 'idle' && pool.status !== 'healthy',
+                'label-warning': pool.status === 'partial',
                 'label-success': pool.status === 'healthy',
                 'label-danger': pool.status === 'idle',
+                'label-default': pool.status === 'disabled',
               }"
               >{{ pool.status }}</span
             >
