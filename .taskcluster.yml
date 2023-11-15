@@ -312,7 +312,7 @@ tasks:
                 env:
                   FETCH_REV: ${fetch_rev}
                   FETCH_REF: ${fetch_rev}
-                  PYPI_SECRET: ${pypi-fuzzmanager}
+                  PYPI_SECRET: pypi-fuzzmanager
                 command:
                   - /bin/bash
                   - '--login'
