@@ -117,6 +117,14 @@ def int64(val):
     return val
 
 
+class TraceParsingError(RuntimeError):
+    __slots__ = ("line_no",)
+
+    def __init__(self, *args, **kwds):
+        self.line_no = kwds.pop("line_no")
+        super().__init__(*args, **kwds)
+
+
 class CrashInfo(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class.
@@ -681,7 +689,7 @@ class ASanCrashInfo(CrashInfo):
 
         expectedIndex = 0
         reportFound = False
-        for traceLine in asanOutput:
+        for line_no, traceLine in enumerate(asanOutput):
             if not reportFound or self.crashAddress is None:
                 match = re.search(asanCrashAddressPattern, traceLine)
                 if match is not None:
@@ -712,9 +720,10 @@ class ASanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError(
+                raise TraceParsingError(
                     f"Fatal error parsing ASan trace (Index mismatch, got index {index}"
-                    f" but expected {expectedIndex})"
+                    f" but expected {expectedIndex})",
+                    line_no=line_no,
                 )
 
             component = None
@@ -885,7 +894,7 @@ class LSanCrashInfo(CrashInfo):
         lsanPatternSeen = False
 
         expectedIndex = 0
-        for traceLine in lsanOutput:
+        for line_no, traceLine in enumerate(lsanOutput):
             if not lsanErrorPattern:
                 if lsanErrorPattern in traceLine:
                     lsanPatternSeen = True
@@ -896,9 +905,10 @@ class LSanCrashInfo(CrashInfo):
                 continue
 
             if expectedIndex != index:
-                raise RuntimeError(
+                raise TraceParsingError(
                     f"Fatal error parsing LSan trace (Index mismatch, got index {index}"
-                    f" but expected {expectedIndex})"
+                    f" but expected {expectedIndex})",
+                    line_no=line_no,
                 )
 
             component = None
@@ -972,7 +982,7 @@ class UBSanCrashInfo(CrashInfo):
         ubsanPatternSeen = False
 
         expectedIndex = 0
-        for traceLine in ubsanOutput:
+        for line_no, traceLine in enumerate(ubsanOutput):
             if not ubsanPatternSeen:
                 if re.search(ubsanErrorPattern, traceLine) is not None:
                     ubsanPatternSeen = True
@@ -983,9 +993,10 @@ class UBSanCrashInfo(CrashInfo):
                 continue
 
             if expectedIndex != index:
-                raise RuntimeError(
-                    "Fatal error parsing UBSan trace (Index mismatch, got index "
-                    f"{index} but expected {expectedIndex})"
+                raise TraceParsingError(
+                    f"Fatal error parsing UBSan trace (Index mismatch, got index "
+                    f"{index} but expected {expectedIndex})",
+                    line_no=line_no,
                 )
 
             component = None
@@ -1073,7 +1084,7 @@ class GDBCrashInfo(CrashInfo):
 
         pastFrames = False
 
-        for traceLine in gdbOutput:
+        for line_no, traceLine in enumerate(gdbOutput):
             # Do a very simple check for a frame number in combination with pending
             # buffer content. If we detect this constellation, then it's highly likely
             # that we have a valid trace line but no pattern that fits it. We need
@@ -1154,7 +1165,10 @@ class GDBCrashInfo(CrashInfo):
                         file=sys.stderr,
                     )
                     print(os.linesep.join(gdbOutput), file=sys.stderr)
-                    raise RuntimeError("Fatal error parsing GDB trace")
+                    raise TraceParsingError(
+                        "Fatal error parsing GDB trace",
+                        line_no=line_no,
+                    )
 
                 # This is a workaround for GDB throwing an error while resolving
                 # function arguments in the trace and aborting. We try to remove the
@@ -1910,10 +1924,12 @@ class TSanCrashInfo(CrashInfo):
                 expectedIndex = 0
 
             if not expectedIndex == index:
-                raise RuntimeError(
-                    f"Fatal error parsing TSan trace (Index mismatch, got index {index}"
-                    f" but expected {expectedIndex})"
+                print(
+                    f"Error parsing TSan trace (Index mismatch, got index {index} but "
+                    f"expected {expectedIndex})",
+                    file=sys.stderr,
                 )
+                break
 
             component = None
             if len(parts) > 2:
