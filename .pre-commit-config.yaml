@@ -8,12 +8,12 @@ repos:
     hooks:
       - id: yesqa
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.13.0
+    rev: v3.15.0
     hooks:
       - id: pyupgrade
         args: ['--py38-plus']
   - repo: https://github.com/ambv/black
-    rev: 23.9.1
+    rev: 23.11.0
     hooks:
       - id: black
   - repo: https://github.com/pycqa/flake8
@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.50.0
+    rev: v8.54.0
     hooks:
       - id: eslint
         language: node

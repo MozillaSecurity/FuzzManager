@@ -65,7 +65,8 @@ tasks:
           - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 4.x'}
           - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 4.x'}
           - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 4.x'}
-          - {image: ci-py-311, toxenv: 'py311', name: 'tests python 3.11 (no django)'}
+          - {image: ci-py-311, toxenv: 'py311', name: 'tests python 3.11 django 4.x'}
+          - {image: ci-py-312, toxenv: 'py312', name: 'tests python 3.12 (no django)'}
           each(build):
             taskId: {$eval: as_slugid(build.toxenv)}
             taskGroupId: ${task_group}
@@ -216,6 +217,7 @@ tasks:
             - {$eval: as_slugid("py39")}
             - {$eval: as_slugid("py310")}
             - {$eval: as_slugid("py311")}
+            - {$eval: as_slugid("py312")}
           created: {$fromNow: ''}
           deadline: {$fromNow: '1 hour'}
           payload:
@@ -297,6 +299,7 @@ tasks:
                 - {$eval: as_slugid("py39")}
                 - {$eval: as_slugid("py310")}
                 - {$eval: as_slugid("py311")}
+                - {$eval: as_slugid("py312")}
               created: {$fromNow: ''}
               deadline: {$fromNow: '1 hour'}
               scopes:

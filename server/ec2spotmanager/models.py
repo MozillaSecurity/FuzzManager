@@ -227,6 +227,8 @@ class PoolConfiguration(models.Model):
         return flat_parent_config
 
     def save(self, *args, **kwargs):
+        modified = set()
+
         # Reserialize data, then call regular save method
         for field in self.dict_config_fields:
             obj = getattr(self, field + "_dict")
@@ -237,7 +239,9 @@ class PoolConfiguration(models.Model):
                 value = ""
             if override:
                 value = "!" + value
-            setattr(self, field, value)
+            if getattr(self, field) != value:
+                setattr(self, field, value)
+                modified.add(field)
 
         for field in self.list_config_fields:
             obj = getattr(self, field + "_list")
@@ -248,7 +252,13 @@ class PoolConfiguration(models.Model):
                 value = ""
             if override:
                 value = "!" + value
-            setattr(self, field, value)
+            if getattr(self, field) != value:
+                setattr(self, field, value)
+                modified.add(field)
+
+        # required in Django 4.2+
+        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
+            kwargs["update_fields"] = modified.union(kwargs["update_fields"])
 
         super().save(*args, **kwargs)
 
