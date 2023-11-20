@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     "chartjs",
     # 'mozilla_django_oidc',
     "crispy_forms",
+    "crispy_bootstrap3",
     "notifications",
 )
 
@@ -112,6 +113,8 @@ TEMPLATES = [
     },
 ]
 
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 CRISPY_TEMPLATE_PACK = "bootstrap3"
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,

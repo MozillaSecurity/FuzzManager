@@ -139,16 +139,26 @@ class Bucket(models.Model):
         return CrashSignature(self.optimizedSignature)
 
     def save(self, *args, **kwargs):
+        modified = set()
+
         # Sanitize signature line endings so we end up with the same hash
         # TODO: We might want to just parse the JSON here, and re-serialize
         # it to a canonical string representation.
-        self.signature = self.signature.replace(r"\r\n", r"\n")
+        new_signature = self.signature.replace(r"\r\n", r"\n")
+        if new_signature != self.signature:
+            modified.add("signature")
+            self.signature = new_signature
 
         # TODO: We could reset this only when we actually modify the signature,
         # but this would require fetching the old signature from the database again.
         keepOptimized = kwargs.pop("keepOptimized", False)
         if not keepOptimized:
             self.optimizedSignature = None
+            modified.add("optimizedSignature")
+
+        # required in Django 4.2+
+        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
+            kwargs["update_fields"] = modified.union(kwargs["update_fields"])
 
         super().save(*args, **kwargs)
 
@@ -446,6 +456,8 @@ class CrashEntry(models.Model):
         return instance
 
     def save(self, *args, **kwargs):
+        modified = set()
+
         if self.pk is None and not getattr(settings, "DB_ISUTF8MB4", False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
@@ -457,30 +469,50 @@ class CrashEntry(models.Model):
 
                 return utf8_4byte_re.sub("\uFFFD", s)
 
-            self.rawStdout = sanitize_utf8(self.rawStdout)
-            self.rawStderr = sanitize_utf8(self.rawStderr)
-            self.rawCrashData = sanitize_utf8(self.rawCrashData)
+            new_rawStdout = sanitize_utf8(self.rawStdout)
+            if self.rawStdout != new_rawStdout:
+                self.rawStdout = new_rawStdout
+                modified.add("rawStdout")
+            new_rawStderr = sanitize_utf8(self.rawStderr)
+            if self.rawStderr != new_rawStderr:
+                self.rawStderr = new_rawStderr
+                modified.add("rawStderr")
+            new_rawCrashData = sanitize_utf8(self.rawCrashData)
+            if self.rawCrashData != new_rawCrashData:
+                self.rawCrashData = new_rawCrashData
+                modified.add("rawCrashData")
 
         if not self.cachedCrashInfo:
             # Serialize the important fields of the CrashInfo class into a JSON blob
             crashInfo = self.getCrashInfo()
             self.cachedCrashInfo = json.dumps(crashInfo.toCacheObject())
+            modified.add("cachedCrashInfo")
 
         # Reserialize data, then call regular save method
         if self.argsList:
-            self.args = json.dumps(self.argsList)
+            new_args = json.dumps(self.argsList)
+            if new_args != self.args:
+                self.args = new_args
+                modified.add("args")
 
         if self.envList:
-            envDict = dict([x.split("=", 1) for x in self.envList])
-            self.env = json.dumps(envDict)
+            envDict = dict(x.split("=", 1) for x in self.envList)
+            new_env = json.dumps(envDict)
+            if new_env != self.env:
+                self.env = new_env
+                modified.add("env")
 
         if self.metadataList:
-            metadataDict = dict([x.split("=", 1) for x in self.metadataList])
-            self.metadata = json.dumps(metadataDict)
+            metadataDict = dict(x.split("=", 1) for x in self.metadataList)
+            new_metadata = json.dumps(metadataDict)
+            if new_metadata != self.metadata:
+                self.metadata = new_metadata
+                modified.add("metadata")
 
         # When we have a crash address, keep the numeric crash address field in
         # sync so we can search easily by crash address including ranges
         if self.crashAddress:
+            orig_crashAddressNumeric = self.crashAddressNumeric
             self.crashAddressNumeric = int(self.crashAddress, 16)
 
             # We need to possibly convert the numeric crash address from unsigned
@@ -488,8 +520,16 @@ class CrashEntry(models.Model):
             if self.crashAddressNumeric > (2**63 - 1):
                 self.crashAddressNumeric -= 2**64
 
+            if orig_crashAddressNumeric != self.crashAddressNumeric:
+                modified.add("crashAddressNumeric")
+
         if len(self.shortSignature) > 255:
-            self.shortSignature = self.shortSignature[0:255]
+            self.shortSignature = self.shortSignature[:255]
+            modified.add("shortSignature")
+
+        # required in Django 4.2+
+        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
+            kwargs["update_fields"] = modified.union(kwargs["update_fields"])
 
         super().save(*args, **kwargs)
 

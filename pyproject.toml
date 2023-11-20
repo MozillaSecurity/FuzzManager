@@ -3,7 +3,7 @@ requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-target-version = ["py37"]
+target-version = ["py38"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -40,13 +40,18 @@ profile = "black"
 [tool.pytest.ini_options]
 log_level = "DEBUG"
 DJANGO_SETTINGS_MODULE = "server.settings_test"
-python_paths = [".", "server"]
+pythonpath = [".", "server"]
 addopts = ["-v", "--cov=.", "--cov-report", "term-missing"]
 filterwarnings = [
     'ignore:"@coroutine" decorator:DeprecationWarning:aiohttp',
     'ignore:You passed a bytestring:DeprecationWarning:flake8.options.config',
     "ignore:Using or importing the ABCs from 'collections':DeprecationWarning:celery.canvas",
     "ignore:Using or importing the ABCs from 'collections':DeprecationWarning:yaml",
+]
+norecursedirs = [
+    ".*",
+    "build",
+    "dist",
 ]
 
 [tool.setuptools_scm]
