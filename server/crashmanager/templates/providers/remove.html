@@ -1,5 +1,7 @@
 {% extends 'layouts/layout_base.html' %}
 
+{% block title %}{{ provider.classname|escape }} - Remove{% endblock title %}
+
 {% block body_content %}
 <div class="panel panel-warning">
     <div class="panel-heading"><i class="bi bi-bug-fill"></i> Remove {{ provider.classname|escape }}</div>

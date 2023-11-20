@@ -1,5 +1,7 @@
 {% extends 'layouts/layout_base.html' %}
 
+{% block title %}{{ bucket_id }} - {{ shortDescription|escape }}{% endblock title %}
+
 {% block body_content %}
 {% csrf_token %}
 <signatureview

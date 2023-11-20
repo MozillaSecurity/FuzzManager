@@ -4,6 +4,8 @@
 {% load datetags %}
 {% load static %}
 
+{% block title %}{{ pool.pk }} - {{ pool.name|escape }}{% endblock title %}
+
 {% block body_content %}
 <div class="panel panel-default">
   <div class="panel-heading"><i class="bi bi-bar-chart-steps"></i> Pool Status</div>

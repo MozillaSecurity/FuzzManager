@@ -192,7 +192,7 @@ def test_edit_signature_view(client, cm):  # pylint: disable=invalid-name
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
     assert_contains(response, "createoredit")
-    assert response.context["bucketId"] == bucket.pk
+    assert response.context["bucket"] == bucket
 
 
 def test_del_signature_empty(client, cm):  # pylint: disable=invalid-name

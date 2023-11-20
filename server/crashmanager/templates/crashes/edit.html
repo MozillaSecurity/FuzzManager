@@ -2,6 +2,8 @@
 
 {% load extratags %}
 
+{% block title %}{{ entry.pk }} - {{ entry.shortSignature|escape }} - Edit{% endblock title %}
+
 {% block body_content %}
 <div class="panel panel-info">
     <div class="panel-heading"><i class="bi bi-card-list"></i> Edit Crash</div>
