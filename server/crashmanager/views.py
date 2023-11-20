@@ -509,6 +509,7 @@ def viewSignature(request, sigid):
             "best_entry": bucket["best_entry"],
             "best_entry_size": json.dumps(best_entry_size),
             "providers": json.dumps(providers),
+            "shortDescription": bucket["shortDescription"],
         },
     )
 
@@ -528,7 +529,7 @@ def editSignature(request, sigid):
     return render(
         request,
         "signatures/edit.html",
-        {"bucketId": bucket.pk, "proposedSig": proposedSignature},
+        {"bucket": bucket, "proposedSig": proposedSignature},
     )
 
 
@@ -765,8 +766,7 @@ def createExternalBug(request, crashid):
 
         template = provider.getInstance().getTemplateForUser(request, entry)
         data = {
-            "provider": provider.pk,
-            "hostname": provider.hostname,
+            "provider": provider,
             "template": template["pk"] if template else -1,
             "entry": entry,
         }
@@ -788,8 +788,7 @@ def createExternalBugComment(request, crashid):
 
         template = provider.getInstance().getTemplateForUser(request, entry)
         data = {
-            "provider": provider.pk,
-            "hostname": provider.hostname,
+            "provider": provider,
             "template": template["pk"] if template else -1,
             "entry": entry,
         }

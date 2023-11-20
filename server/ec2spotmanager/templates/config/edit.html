@@ -6,6 +6,8 @@
 
 {% load extratags %}
 
+{% block title %}{% if edit %}{{ config.pk }} - Edit{% elif clone %}Clone Configuration{% else %}New Configuration{% endif %}{% endblock title %}
+
 {% block body_content %}
   <div class="panel panel-info">
     <div class="panel-heading"><i class="bi bi-sliders"></i>

@@ -4,6 +4,8 @@
   <link rel='stylesheet' href='/static/css/covmanager.css'>
 {% endblock css.custom %}
 
+{% block title %}{% if diff_api %}Collection Diff{% else %}{{ collectionid }} - Browse{% endif %}{% endblock title %}
+
 {% block body_content %}
 <div id="main" class="panel panel-default">
   <div class="panel-heading">

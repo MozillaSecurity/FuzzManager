@@ -1,5 +1,7 @@
 {% extends 'layouts/layout_base.html' %}
 
+{% block title %}{{ pool.pool_id }} - {{ pool.pool_name|escape }}{% endblock title %}
+
 {% block body_content %}
 <poolview
   :pool="{{ pool }}"

@@ -1,8 +1,10 @@
 {% extends 'layouts/layout_base.html' %}
 
+{% block title %}{% if bucket != None %}{{ bucket.pk }} - {{ bucket.shortDescription|escape }} - Edit{% else %}New Signature{% endif %}{% endblock title %}
+
 {% block body_content %}
 <createoredit
-    {% if bucketId != None %} :bucket-id="{{ bucketId }}" {% endif %}
+    {% if bucket != None %} :bucket-id="{{ bucket.pk }}" {% endif %}
     {% if proposedSig != None %} :proposed-signature="{{ proposedSig }}" {% endif %}
     {% if proposedDesc != None %} proposed-description="{{ proposedDesc }}" {% endif %}
     {% if warningMessage != None %} warning-message="{{ warningMessage }}" {% endif %}

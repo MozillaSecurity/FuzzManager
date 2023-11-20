@@ -2,6 +2,8 @@
 
 {% load extratags %}
 
+{% block title %}{{ config.pk }} - {{ config.name|escape }}{% endblock title %}
+
 {% block body_content %}
 <div class="panel panel-default">
 	<div class="panel-heading"><i class="bi bi-sliders"></i> Instance Pool Configurations</div>
@@ -13,10 +15,10 @@
 	</div>
 	<table class="table table-condensed table-hover table-bordered">
 		<tr><td colspan=2><h4>Provider Common Configuration</h4></td></tr>
-		<tr><td>Name</td><td>{{ config.name }}</td></tr>
+		<tr><td>Name</td><td>{{ config.name|escape }}</td></tr>
 		<tr><td>Parent</td><td>
 			{% if config.parent %}
-				<a href="{% url 'ec2spotmanager:configview' config.parent.pk %}">{{ config.parent.name }}</a>
+				<a href="{% url 'ec2spotmanager:configview' config.parent.pk %}">{{ config.parent.name|escape }}</a>
 				{% else %}
 				None
 			{% endif %}

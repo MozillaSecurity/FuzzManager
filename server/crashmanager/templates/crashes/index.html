@@ -1,5 +1,7 @@
 {% extends 'layouts/layout_base.html' %}
 
+{% block title %}Crashes{% endblock title %}
+
 {% block body_content %}
 <crasheslist
     :restricted="{{ restricted|lower }}"
