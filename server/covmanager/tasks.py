@@ -125,6 +125,7 @@ def calculate_report_summary(pk):
         elif not data:
             # This is the root
             data = coverage
+            data["created"] = collection.created
         else:
             summary.cached_result = json.dumps(
                 {"error": "There are multiple root reports configured."}

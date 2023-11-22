@@ -24,8 +24,8 @@
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-  <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Report Summary</div>
   <template v-if="loading">
+    <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Report Summary</div>
     <div class="loader">
     </div>
     <template v-if="loading_incomplete">
@@ -35,7 +35,8 @@
     </template>
   </template>
   <template v-else>
-  <div class="panel-body">
+    <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Report Summary - <span v-text="chart.data.created"></span></div>
+    <div class="panel-body">
     <button @click="refresh()" class="btn btn-default">Refresh this Report Summary</button>
     <button @click="textual()" class="btn btn-default">View Textual Report</button>
   </div>
@@ -81,7 +82,8 @@ let covmanager = new Vue({
   },
   watch: {
     'chart.data': function() {
-      this.draw()
+      this.draw();
+      document.title = '{{ collectionid }} - Summary - ' + chart.data.created;
     },
     'chart.level': function() {
       this.draw()
