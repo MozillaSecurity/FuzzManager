@@ -2304,6 +2304,42 @@ def test_UBSanParserTestCrash4():
     assert crashInfo.registers["sp"] == 0x7F0662600680
 
 
+def test_UBSanParserTestCrash5():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_ubsan_div_by_zero_no_trace.txt")
+        .read_text()
+        .splitlines(),
+    )
+    assert crashInfo.createShortSignature() == (
+        "UndefinedBehaviorSanitizer: src/opus_demo.c:870:40: "
+        "runtime error: division by zero"
+    )
+    assert not crashInfo.backtrace
+    assert crashInfo.crashAddress is None
+
+
+def test_UBSanParserTestCrash6():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+    crashInfo = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        config,
+        (FIXTURE_PATH / "trace_ubsan_generic_crash_no_trace.txt")
+        .read_text()
+        .splitlines(),
+    )
+    assert crashInfo.createShortSignature() == ("[@ ??]")
+    assert not crashInfo.backtrace
+    assert crashInfo.crashAddress == 0x000000004141
+    assert crashInfo.registers["pc"] == 0x7F070B805037
+    assert crashInfo.registers["bp"] == 0x7F06626006B0
+    assert crashInfo.registers["sp"] == 0x7F0662600680
+
+
 def test_RustParserTests1():
     """test RUST_BACKTRACE=1 is parsed correctly"""
     config = ProgramConfiguration("test", "x86-64", "linux")
