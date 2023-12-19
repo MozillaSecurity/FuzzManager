@@ -1016,12 +1016,6 @@ class UBSanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
-        if not self.backtrace and ubsanPatternSeen:
-            # We've seen the crash address but no frames, so this is likely
-            # a crash on the heap with no symbols available. Add one artificial
-            # frame so it doesn't show up as "No crash detected"
-            self.backtrace.append("??")
-
     def createShortSignature(self):
         """
         @rtype: String

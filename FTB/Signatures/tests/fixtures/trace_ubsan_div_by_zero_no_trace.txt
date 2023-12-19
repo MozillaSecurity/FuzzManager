@@ -1,0 +1,1 @@
+src/opus_demo.c:870:40: runtime error: division by zero
