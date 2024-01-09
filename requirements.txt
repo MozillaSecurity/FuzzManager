@@ -39,7 +39,7 @@ azure-nspkg==3.0.2
     # via
     #   azure-common
     #   azure-mgmt-nspkg
-backports-zoneinfo==0.2.1
+backports.zoneinfo==0.2.1;python_version<"3.9"
     # via
     #   celery
     #   django
