@@ -44,7 +44,7 @@ avoid reporting frequent issues repeatedly.
 ## EC2SpotManager
 
 EC2SpotManager is another (optional) part of FuzzManager that allows you to
-manage large pools of spot instances in the Amazon Cloud. It supports hierachical
+manage large pools of spot instances in the Amazon Cloud. It supports hierarchical
 configurations to avoid configuration duplication and ensures that your
 instances are always running in the desired quantity as well as in the cheapest
 zone.
@@ -78,7 +78,7 @@ configuration file is found at `server/server/settings.py`. The default will
 work, but for a production setup, you should at least review the database
 settings.
 
-Afterwards, you should run the following commands
+Afterward, you should run the following commands
 
 ```
 $ cd server
@@ -137,7 +137,7 @@ To properly run FuzzManager in a production setup, using Apache+WSGI is the
 recommended way.
 
 In the `examples/apache2/` directory you'll find an example vhost file that
-shows you how to run FuzzManager in an Apache+WSGI setup. Of course you should
+shows you how to run FuzzManager in an Apache+WSGI setup. You should
 adjust the configuration to use HTTPs if you don't plan to use any sort of
 TLS load balancer in front of it.
 
@@ -181,13 +181,13 @@ On a first run, you must execute the database migrations:
 docker-compose exec backend python manage.py migrate
 ```
 
-And create a super user to be able to login on http://localhost:8000
+And create a superuser to be able to log in on http://localhost:8000
 
 ```console
 docker-compose exec backend python manage.py createsuperuser
 ```
 
-By default the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
+By default, the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
 - `DEBUG = False` to enable production mode
 - `ALLOWED_HOSTS = ["localhost", ]` to allow development usage on `http://localhost:8000`
 
@@ -251,7 +251,7 @@ pathPrefix = /srv/repos/mozilla-central/
 buildFlags = --enable-optimize --enable-posix-nspr-emulation --enable-valgrind --enable-gczeal --target=i686-pc-linux-gnu --disable-tests --enable-debug
 ```
 
-Once this file is present, you can call `ProgramConfiguration.fromBinary` with your binary path and the configuration will be created from the file. You can add program arguments and environment variables through the provided `addProgramArguments` and `addEnvironmentVariables` methods afterwards. Finally, call `CrashInfo.fromRawCrashData` with all of the described data. Here's a simple example:
+Once this file is present, you can call `ProgramConfiguration.fromBinary` with your binary path and the configuration will be created from the file. You can add program arguments and environment variables through the provided `addProgramArguments` and `addEnvironmentVariables` methods afterward. Finally, call `CrashInfo.fromRawCrashData` with all the described data. Here's a simple example:
 
 ```
     # Note: This could fail and return None when the configuration is missing or throw if misconfigured
@@ -271,7 +271,7 @@ The `search` method is the first of a few methods requiring a `crashInfo` variab
 
 ### Submitting Crashes
 
-The `submit` method can be used to send a crash report to the FuzzManager server. Again the `crashInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the crash on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `crashInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the crash to the server.
+The `submit` method can be used to send a crash report to the FuzzManager server. Again the `crashInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (the best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the crash on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `crashInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the crash to the server.
 
 ### Further methods
 
@@ -279,7 +279,7 @@ Further methods of the Collector include `generate` for generating signatures lo
 
 ### Using the automated submit method
 
-If your crashes can be reproduced on the command line by just running a command with your testcase, then you can use the automated submit method (`--autosubmit` in the command line client) and just pass the failing command line to the client. The client will automatically run the target program, gather crash and program configuration and submit it to the server. Of course this mode requires that both the global configuration file as well as the binary configuration file are present.
+If your crashes can be reproduced on the command line by just running a command with your testcase, then you can use the automated submit method (`--autosubmit` in the command line client) and just pass the failing command line to the client. The client will automatically run the target program, gather crash and program configuration and submit it to the server. Of course this mode requires that both the global configuration file and the binary configuration file are present.
 
 ## Web Interface Usage and Workflow
 
