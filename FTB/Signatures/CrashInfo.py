@@ -18,12 +18,35 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from abc import ABCMeta
+from functools import wraps
 
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
+
+
+def unicode_escape_result(func):
+    r"""Decorator to escape control and special block unicode
+    characters in a function returning untrusted str values.
+
+    Characters in those blocks are escaped in JS notation (\u{hex})
+    """
+
+    class unicode_cc_map:
+        def __getitem__(self, char):
+            if unicodedata.category(chr(char)) in {"Cc", "So"}:
+                return f"\\u{{{char:x}}}"
+            raise LookupError()
+
+    @wraps(func)
+    def wrapped(*args, **kwds):
+        result = func(*args, **kwds)
+        return result.translate(unicode_cc_map())
+
+    return wrapped
 
 
 def _is_unfinished(symbol, operators):
@@ -359,6 +382,7 @@ class CrashInfo(metaclass=ABCMeta):
 
         return result
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
@@ -795,6 +819,7 @@ class ASanCrashInfo(CrashInfo):
 
         return frame_no, parts
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
@@ -934,6 +959,7 @@ class LSanCrashInfo(CrashInfo):
             # frame so it doesn't show up as "No crash detected"
             self.backtrace.append("??")
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
@@ -1016,6 +1042,7 @@ class UBSanCrashInfo(CrashInfo):
             self.backtrace.append(CrashInfo.sanitizeStackFrame(component))
             expectedIndex += 1
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
@@ -1965,6 +1992,7 @@ class TSanCrashInfo(CrashInfo):
             self.tsanIndexZero.append(backtrace[0])
             self.backtrace.extend(backtrace)
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
@@ -2082,6 +2110,7 @@ class ValgrindCrashInfo(CrashInfo):
                     # done parsing
                     break
 
+    @unicode_escape_result
     def createShortSignature(self):
         """
         @rtype: String
