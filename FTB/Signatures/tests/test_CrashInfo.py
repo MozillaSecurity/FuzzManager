@@ -28,6 +28,7 @@ from FTB.Signatures.CrashInfo import (
     NoCrashInfo,
     RustCrashInfo,
     int32,
+    unicode_escape_result,
 )
 from FTB.Signatures.CrashSignature import CrashSignature
 
@@ -3008,3 +3009,13 @@ def test_SanitizerHardRssLimitHeapProfile():
     assert crashInfo.backtrace[-1] == "start_thread"
     assert crashInfo.crashInstruction is None
     assert crashInfo.crashAddress is None
+
+
+def test_unicode_escape():
+    """test that unicode special and control characters are escaped"""
+
+    @unicode_escape_result
+    def testfunc():
+        return """ü\ufffdシ\u008dAن"""
+
+    assert testfunc() == r"""ü\u{fffd}シ\u{8d}Aن"""
