@@ -64,31 +64,6 @@
 
         <div class="row">
           <div class="form-group col-md-6">
-            <label for="whiteboard">Whiteboard</label>
-            <input
-              id="id_whiteboard"
-              class="form-control"
-              maxlength="1023"
-              name="whiteboard"
-              type="text"
-              v-model="template.whiteboard"
-            />
-          </div>
-          <div class="form-group col-md-6">
-            <label for="keywords">Keywords</label>
-            <input
-              id="id_keywords"
-              class="form-control"
-              maxlength="1023"
-              name="keywords"
-              type="text"
-              v-model="template.keywords"
-            />
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="form-group col-md-6">
             <label for="op_sys">OS</label>
             <input
               id="id_op_sys"
@@ -289,6 +264,62 @@
               type="text"
               v-model="template.blocks"
             />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="whiteboard">Whiteboard</label>
+            <HelpPopover
+              field="keywords"
+              :variables="['isTestAttached']"
+              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+            />
+            <input
+              id="id_whiteboard"
+              class="form-control"
+              maxlength="1023"
+              name="whiteboard"
+              type="text"
+              v-model="template.whiteboard"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="attrs">Rendered Whiteboard</label>
+            <textarea
+              id="id_rendered_whiteboard"
+              class="form-control"
+              name="rendered_whiteboard"
+              readonly
+              :value="renderedWhiteboard"
+            ></textarea>
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6">
+            <label for="keywords">Keywords</label>
+            <HelpPopover
+              field="keywords"
+              :variables="['isTestAttached']"
+              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+            />
+            <input
+              id="id_keywords"
+              class="form-control"
+              maxlength="1023"
+              name="keywords"
+              type="text"
+              v-model="template.keywords"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label for="attrs">Rendered Keywords</label>
+            <textarea
+              id="id_rendered_keywords"
+              class="form-control"
+              name="rendered_keywords"
+              readonly
+              :value="renderedKeywords"
+            ></textarea>
           </div>
         </div>
         <div class="row">
@@ -685,6 +716,24 @@ export default {
         return "";
       }
     },
+    renderedKeywords() {
+      if (!this.template || !this.entry) return "";
+      try {
+        const compiled = Handlebars.compile(this.template.keywords);
+        return compiled({ isTestAttached: !this.notAttachTest });
+      } catch {
+        return "";
+      }
+    },
+    renderedWhiteboard() {
+      if (!this.template || !this.entry) return "";
+      try {
+        const compiled = Handlebars.compile(this.template.whiteboard);
+        return compiled({ isTestAttached: !this.notAttachTest });
+      } catch {
+        return "";
+      }
+    },
   },
   methods: {
     goBack() {
@@ -770,8 +819,8 @@ export default {
         assigned_to: this.template.assigned_to,
         qa_contact: this.template.qa_contact,
         target_milestone: this.template.target_milestone,
-        whiteboard: this.template.whiteboard,
-        keywords: this.template.keywords,
+        whiteboard: this.renderedWhiteboard,
+        keywords: this.renderedKeywords,
         groups: groups.length ? groups : "",
         blocks: this.template.blocks.split(","),
         dependson: this.template.dependson.split(","),
