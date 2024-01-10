@@ -67,10 +67,9 @@ FuzzManager server instance or use FTB locally.
 The server part of FuzzManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
 
-Dependencies are listed in [requirements.txt](requirements.txt). You can use pip to install
-these dependencies using:
+Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing FuzzManager using:
 
-```pip install -c requirements.txt```
+```pip install -c requirements.txt .```
 
 A [Redis](https://redis.io/) server is also required for EC2SpotManager, and can be installed on a Debian-based Linux
 with: 
