@@ -69,7 +69,7 @@ requires the full repository to be checked out, not just the server directory.
 
 Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing FuzzManager using:
 
-```pip install -c requirements.txt .```
+```pip install -c requirements.txt '.[server]'```
 
 A [Redis](https://redis.io/) server is also required for EC2SpotManager, and can be installed on a Debian-based Linux
 with: 
@@ -86,6 +86,10 @@ Afterward, you should run the following commands
 ```
 $ cd server
 $ python manage.py migrate
+$ cd frontend
+$ npm install
+$ npm run build
+$ cd ..
 ```
 
 Create the fuzzmanager user.
