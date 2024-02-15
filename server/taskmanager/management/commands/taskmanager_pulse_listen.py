@@ -29,6 +29,9 @@ class TaskClusterConsumer(GenericConsumer):
         super().__init__(
             PulseConfiguration(**kwargs),
             exchanges,
+            applabel=Path(__file__).stem,
+            durable=True,
+            expires=21600,
             topic=topics,
             **kwargs,
         )
@@ -84,7 +87,7 @@ class Command(BaseCommand):
                 callback=self.callback,
             ).listen()
         except Exception:
-            LOG.exception()
+            LOG.exception("pulse listener raised")
             raise
         finally:
             LOG.warning("pulse listener stopped")
