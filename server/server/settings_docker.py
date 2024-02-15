@@ -3,6 +3,8 @@ from .settings import *  # noqa
 # Run in production mode
 DEBUG = False
 
+# This secret only exists to facilitate container testing.
+# This is not used in production.
 SECRET_KEY = "YskonP1FOlIthZKysJcXQ3Bn6sAjUXaei8JVjesWbE"
 
 # Allow localhost
