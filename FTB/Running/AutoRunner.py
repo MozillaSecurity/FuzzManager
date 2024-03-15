@@ -14,11 +14,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
 from abc import ABCMeta
-from distutils import spawn
 
 from FTB.Signatures.CrashInfo import CrashInfo
 
@@ -228,9 +228,7 @@ class ASanRunner(AutoRunner):
                     os.path.dirname(binary), "llvm-symbolizer"
                 )
                 if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
-                    self.env["ASAN_SYMBOLIZER_PATH"] = spawn.find_executable(
-                        "llvm-symbolizer"
-                    )
+                    self.env["ASAN_SYMBOLIZER_PATH"] = shutil.which("llvm-symbolizer")
                     if not self.env["ASAN_SYMBOLIZER_PATH"]:
                         raise RuntimeError("Unable to locate llvm-symbolizer")
 
