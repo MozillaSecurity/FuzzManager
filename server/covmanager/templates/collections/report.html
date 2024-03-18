@@ -125,10 +125,16 @@ let covmanager = new Vue({
             report.publish_text = "Publish"
           }
 
+          // We optionally prefix the with the tag of the report
+          tag = ""
+          if (report.tag) {
+            tag = report.tag + " "
+          }
+
           // Compute description and css class
           if (report.is_quarterly) {
             report.css_class['report-quarterly'] = true
-            report.description = "Quarterly Report - " + formatQuarterly(report.data_created)
+            report.description = "Quarterly " + tag + "Report - " + formatQuarterly(report.data_created)
 
             if (selected)
               report.css_class['report-quarterly-selected'] = true
@@ -136,7 +142,7 @@ let covmanager = new Vue({
             report.promote_text = "Demote to Weekly"
           } else if (report.is_monthly) {
             report.css_class['report-monthly'] = true
-            report.description = "Monthly Report - " + formatMonthly(report.data_created)
+            report.description = "Monthly " + tag + "Report - " + formatMonthly(report.data_created)
 
             report.promote_text = "Promote to Quarterly"
 
@@ -144,7 +150,7 @@ let covmanager = new Vue({
               report.css_class['report-monthly-selected'] = true
           } else {
             report.css_class['report-weekly'] = true
-            report.description = "Weekly Report"
+            report.description = "Weekly " + tag + "Report"
 
             report.promote_text = "Promote to Monthly"
 
