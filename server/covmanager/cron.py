@@ -20,7 +20,7 @@ logger = logging.getLogger("covmanager")
 # a summarized report for your testing efforts.
 
 
-def create_weekly_report_mc(revision):
+def create_weekly_report_mc(revision, ipc_only=False):
     from crashmanager.models import Client
 
     from .models import Collection, Report, Repository
@@ -39,10 +39,18 @@ def create_weekly_report_mc(revision):
         .exclude(description__contains="IGNORE_MERGE")
     )
 
+    if ipc_only:
+        collections = collections.filter(description__contains="IPC")
+
     last_monday = collections.first().created + relativedelta(weekday=MO(-1))
 
+    ipc_description = ""
+    if ipc_only:
+        ipc_description = "IPC "
+
     mergedCollection = Collection()
-    mergedCollection.description = "Weekly Report (Week of {}, {} reports)".format(
+    mergedCollection.description = "Weekly {}Report (Week of {}, {} reports)".format(
+        ipc_description,
         last_monday.strftime("%-m/%-d"),
         collections.count(),
     )
@@ -56,6 +64,8 @@ def create_weekly_report_mc(revision):
     report = Report()
     report.coverage = mergedCollection
     report.data_created = last_monday
+    if ipc_only:
+        report.tag = "IPC"
     report.save()
 
     # New set of tools is the combination of all tools involved
@@ -69,8 +79,7 @@ def create_weekly_report_mc(revision):
     aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
 
-@app.task(ignore_result=True)
-def create_current_weekly_report_mc():
+def fetch_coverage_revision():
     COVERAGE_REVISION_URL = getattr(settings, "COVERAGE_REVISION_URL", None)
 
     if not COVERAGE_REVISION_URL:
@@ -86,5 +95,14 @@ def create_current_weekly_report_mc():
         )
         return
 
-    revision = response.text.rstrip()
+    return response.text.rstrip()
+
+@app.task(ignore_result=True)
+def create_current_weekly_report_mc():
+    revision = fetch_coverage_revision()
     create_weekly_report_mc(revision)
+
+@app.task(ignore_result=True)
+def create_current_weekly_ipc_report_mc():
+    revision = fetch_coverage_revision()
+    create_weekly_report_mc(revision, ipc_only=True)

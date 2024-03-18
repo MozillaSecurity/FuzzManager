@@ -234,3 +234,4 @@ class Report(models.Model):
 
     is_monthly = models.BooleanField(blank=False, default=False)
     is_quarterly = models.BooleanField(blank=False, default=False)
+    tag = models.CharField(max_length=64, blank=True)
