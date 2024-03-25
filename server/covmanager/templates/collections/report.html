@@ -14,8 +14,8 @@
     <div class="panel-heading"><i class="bi bi-lightning-charge-fill"></i> Actions</div>
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
-      <button @click="summary_diff()" v-if="unrestricted" class="btn btn-default">View Summarized Diff</button>
-      <button @click="toggle_unpublished()" v-if="unrestricted" class="btn btn-default">!{ unpublished_btn_text }!</button>
+      <button @click="summary_diff()" class="btn btn-default">View Summarized Diff</button>
+      <button @click="toggle_unpublished()" class="btn btn-default">!{ unpublished_btn_text }!</button>
       <!--<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>-->
     </div>
     </div>
@@ -25,7 +25,10 @@
     This includes weekly, monthly and quarterly reports.</br></br>
 
     You can view each report individually, inspect its summary or select multiple reports
-    and view their difference.
+    and view their difference.</br></br>
+
+    Note that unreviewed reports might be broken or contain faulty data. You can filter
+    for reviewed reports or ask the fuzzing team for assistance.
     </div>
 
   </div>
@@ -77,7 +80,7 @@ let covmanager = new Vue({
     reverse: true,
     block_fetch: true,
     unrestricted: unrestricted,
-    show_unpublished: false,
+    show_unpublished: true,
 
     selected_reports: [],
   },
@@ -86,7 +89,7 @@ let covmanager = new Vue({
     this.fetch()
 
     pmanager.update_state()
-    this.show_unpublished = pmanager.get_value('unpublished', false)
+    this.show_unpublished = !pmanager.get_value('reviewed', false)
   },
   watch: {
     show_unpublished: function () {
@@ -101,9 +104,9 @@ let covmanager = new Vue({
   computed: {
     unpublished_btn_text: function() {
       if (this.show_unpublished) {
-        return "Hide Unpublished Reports"
+        return "Hide Unreviewed Reports"
       } else {
-        return "Show Unpublished Reports"
+        return "Show Unreviewed Reports"
       }
     },
     ordered_reports: function () {
@@ -241,9 +244,9 @@ let covmanager = new Vue({
     },
     toggle_unpublished: function() {
       if (this.show_unpublished) {
-        pmanager.update_value("unpublished", "")
+        pmanager.update_value("reviewed", "")
       } else {
-        pmanager.update_value("unpublished", "1")
+        pmanager.update_value("reviewed", "1")
       }
       pmanager.update_hash()
     },
@@ -346,7 +349,7 @@ let covmanager = new Vue({
 window.onhashchange = function () {
   pmanager.update_state()
 
-  const show_unpublished = pmanager.get_value('unpublished', false)
+  const show_unpublished = !pmanager.get_value('reviewed', false)
   if (covmanager.show_unpublished != show_unpublished) {
     covmanager.show_unpublished = show_unpublished
   }
