@@ -97,10 +97,12 @@ def fetch_coverage_revision():
 
     return response.text.rstrip()
 
+
 @app.task(ignore_result=True)
 def create_current_weekly_report_mc():
     revision = fetch_coverage_revision()
     create_weekly_report_mc(revision)
+
 
 @app.task(ignore_result=True)
 def create_current_weekly_ipc_report_mc():
