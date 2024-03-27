@@ -15,17 +15,17 @@
     <div class="panel-body">
       <button @click="navigate('diff')" class="btn btn-default">View Differences</button>
       <button @click="summary_diff()" class="btn btn-default">View Summarized Diff</button>
-      <button @click="toggle_unpublished()" class="btn btn-default">!{ unpublished_btn_text }!</button>
+      <button @click="toggle_reviewed_only()" class="btn btn-default">!{ reviewed_only_btn_text }!</button>
       <!--<button @click="navigate('patch')" class="btn btn-default">Patch Analysis</button>-->
     </div>
     </div>
 
     <div style="font-size: 16px;">
     The list below contains all coverage reports that are automatically produced.
-    This includes weekly, monthly and quarterly reports.</br></br>
+    This includes weekly, monthly and quarterly reports.<br/><br/>
 
     You can view each report individually, inspect its summary or select multiple reports
-    and view their difference.</br></br>
+    and view their difference.<br/><br/>
 
     Note that unreviewed reports might be broken or contain faulty data. You can filter
     for reviewed reports or ask the fuzzing team for assistance.
@@ -80,7 +80,7 @@ let covmanager = new Vue({
     reverse: true,
     block_fetch: true,
     unrestricted: unrestricted,
-    show_unpublished: true,
+    show_reviewed_only: false,
 
     selected_reports: [],
   },
@@ -89,10 +89,10 @@ let covmanager = new Vue({
     this.fetch()
 
     pmanager.update_state()
-    this.show_unpublished = !pmanager.get_value('reviewed', false)
+    this.show_reviewed_only = pmanager.get_value('reviewed', false)
   },
   watch: {
-    show_unpublished: function () {
+    show_reviewed_only: function () {
       return this.fetch()
     }
   },
@@ -102,8 +102,8 @@ let covmanager = new Vue({
     },
   },
   computed: {
-    unpublished_btn_text: function() {
-      if (this.show_unpublished) {
+    reviewed_only_btn_text: function() {
+      if (this.show_reviewed_only) {
         return "Hide Unreviewed Reports"
       } else {
         return "Show Unreviewed Reports"
@@ -170,12 +170,8 @@ let covmanager = new Vue({
   methods: {
     apiurl: function() {
       let url = URLS.reports_api
-      let query = pmanager.get_query()
-
-      if (query) {
-        url += "?" + query
-        pmanager.update_hash()
-      }
+      if (!pmanager.get_value("reviewed", false))
+        url += '?unpublished=1'
 
       return url;
     },
@@ -242,8 +238,8 @@ let covmanager = new Vue({
         self.selected_reports.splice(idx, 1)
       }
     },
-    toggle_unpublished: function() {
-      if (this.show_unpublished) {
+    toggle_reviewed_only: function() {
+      if (this.show_reviewed_only) {
         pmanager.update_value("reviewed", "")
       } else {
         pmanager.update_value("reviewed", "1")
@@ -349,9 +345,9 @@ let covmanager = new Vue({
 window.onhashchange = function () {
   pmanager.update_state()
 
-  const show_unpublished = !pmanager.get_value('reviewed', false)
-  if (covmanager.show_unpublished != show_unpublished) {
-    covmanager.show_unpublished = show_unpublished
+  const show_reviewed_only = pmanager.get_value('reviewed', false)
+  if (covmanager.show_reviewed_only != show_reviewed_only) {
+    covmanager.show_reviewed_only = show_reviewed_only
   }
 }
 </script>
