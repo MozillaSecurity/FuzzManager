@@ -182,6 +182,7 @@ class ReportSerializer(serializers.ModelSerializer):
             "coverage",
             "is_monthly",
             "is_quarterly",
+            "tag",
         )
         read_only_fields = ("id", "data_created", "coverage")
 
