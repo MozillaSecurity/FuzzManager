@@ -70,11 +70,12 @@ def aggregate_coverage_data(pk, pks):
     dbobj.file.save(f"{h.hexdigest()}.coverage", ContentFile(newCoverage))
     dbobj.save()
 
-    mergedCollection.description += " (NC {}, LM {}, CM {})".format(
-        stats["null_coverable_count"],
-        stats["length_mismatch_count"],
-        stats["coverable_mismatch_count"],
-    )
+    if total_stats:
+        mergedCollection.description += " (NC {}, LM {}, CM {})".format(
+            total_stats["null_coverable_count"],
+            total_stats["length_mismatch_count"],
+            total_stats["coverable_mismatch_count"],
+        )
 
     # Save the collection
     mergedCollection.coverage = dbobj
