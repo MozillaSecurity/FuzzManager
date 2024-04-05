@@ -24,7 +24,7 @@ services:
     image: mozillasecurity/fuzzmanager:compose
     pull_policy: never
 
-    command: celery -A celeryconf -l info beat
+    command: celery -A celeryconf beat -l info
 
     depends_on:
       - backend
@@ -38,7 +38,7 @@ services:
     image: mozillasecurity/fuzzmanager:compose
     pull_policy: never
 
-    command: celery -A celeryconf -l info -c 4 -n cron@%h -Q cron worker
+    command: celery -A celeryconf worker -l info -c 4 -n cron@%h -Q cron
 
     depends_on:
       - backend
@@ -54,7 +54,7 @@ services:
     image: mozillasecurity/fuzzmanager:compose
     pull_policy: never
 
-    command: celery -A celeryconf -l info -n worker@%h -Q celery worker
+    command: celery -A celeryconf worker -l info -n worker@%h -Q celery
 
     depends_on:
       - backend
