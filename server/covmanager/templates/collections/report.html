@@ -45,7 +45,7 @@
         <td>!{ report.description }!</td>
         <td>!{ report.data_created | formatDate }!</td>
         <td>
-          <button @click.stop="summary(report.coverage)" class="btn btn-default">View Report Summary</button>
+          <button @click.stop="summary(report.coverage, report.tag)" class="btn btn-default">View Report Summary</button>
           <button @click.stop="browse(report.coverage)" class="btn btn-default">Browse</button>
           <button @click.stop="publish(report)" v-if="unrestricted" class="btn btn-default">!{ report.publish_text }!</button>
           <button @click.stop="promote(report)" v-if="unrestricted" class="btn btn-default">!{ report.promote_text }!</button>
@@ -224,8 +224,11 @@ let covmanager = new Vue({
     browse: function(id) {
       window.open(`../collections/${id}/browse/`, '_blank').focus()
     },
-    summary: function(id) {
-      window.open(`../collections/${id}/summary/`, '_blank').focus()
+    summary: function(id, tag) {
+      if (tag) {
+        tag = `#root=${tag}`
+      }
+      window.open(`../collections/${id}/summary/${tag}`, '_blank').focus()
     },
     report_click_handler: function(id) {
       var self = this
