@@ -164,6 +164,17 @@ let covmanager = new Vue({
       let data = this.chart.data
       if (!data) return;
 
+      // Allows to set the root to one of the original root's children
+      let alt_root = pmanager.get_value('root', '')
+      if (alt_root && data.name != alt_root) {
+        for (x in data.children) {
+          if (data.children[x].name == alt_root) {
+            data = data.children[x];
+            break;
+          }
+        }
+      }
+
       let svg = d3.select("svg")
       let width = +svg.attr("width")
       let height = +svg.attr("height")
