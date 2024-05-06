@@ -240,7 +240,9 @@ class S3Manager:
             with open(tmp_file, "rb") as tmp_fd:
                 hash_name = hashlib.sha1(tmp_fd.read()).hexdigest()
 
-            os.rename(tmp_file, os.path.join(download_dir, hash_name))
+            _, ext = os.path.splitext(remote_key.name)
+
+            os.rename(tmp_file, os.path.join(download_dir, hash_name + ext))
 
     def clean_queue_dirs(self):
         """
