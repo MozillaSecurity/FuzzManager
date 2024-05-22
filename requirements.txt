@@ -6,7 +6,7 @@
 #
 adal==1.2.7
     # via msrestazure
-aiohttp==3.9.0
+aiohttp==3.9.5
     # via taskcluster
 aiosignal==1.3.1
     # via aiohttp
@@ -16,20 +16,20 @@ apache-libcloud==2.4.0
     # via laniakea
 appdirs==1.4.4
     # via laniakea
-asgiref==3.7.2
+asgiref==3.8.1
     # via django
 async-timeout==4.0.3
     # via
     #   aiohttp
     #   redis
     #   taskcluster
-attrs==23.1.0
+attrs==23.2.0
     # via aiohttp
 azure-common==1.1.14
     # via
     #   azure-mgmt-resource
     #   laniakea
-azure-core==1.29.5
+azure-core==1.30.1
     # via msrest
 azure-mgmt-nspkg==3.0.2
     # via azure-mgmt-resource
@@ -39,24 +39,27 @@ azure-nspkg==3.0.2
     # via
     #   azure-common
     #   azure-mgmt-nspkg
+backports-tarfile==1.1.1
+    # via jaraco-context
 backports-zoneinfo==0.2.1
     # via
     #   celery
     #   django
+    #   djangorestframework
     #   kombu
 billiard==4.2.0
     # via celery
 boto==2.49.0
     # via laniakea
-boto3==1.29.3
+boto3==1.34.110
     # via FuzzManager (setup.py)
-botocore==1.32.3
+botocore==1.34.110
     # via
     #   boto3
     #   s3transfer
-celery==5.3.5
+celery==5.3.6
     # via FuzzManager (setup.py)
-certifi==2023.11.17
+certifi==2024.2.2
     # via
     #   msrest
     #   requests
@@ -70,24 +73,24 @@ click==8.1.7
     #   click-didyoumean
     #   click-plugins
     #   click-repl
-click-didyoumean==0.3.0
+click-didyoumean==0.3.1
     # via celery
 click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
-coverage==7.3.2
+coverage==7.5.1
     # via pytest-cov
-crispy-bootstrap3==2022.1
+crispy-bootstrap3==2024.1
     # via FuzzManager (setup.py)
-cryptography==41.0.5
+cryptography==42.0.7
     # via
     #   adal
     #   josepy
     #   mozilla-django-oidc
     #   pyopenssl
     #   secretstorage
-django==4.2.7
+django==4.2.13
     # via
     #   FuzzManager (setup.py)
     #   crispy-bootstrap3
@@ -105,37 +108,43 @@ django-crispy-forms==2.1
     #   crispy-bootstrap3
 django-enumfields==2.1.1
     # via FuzzManager (setup.py)
-django-model-utils==4.3.1
+django-model-utils==4.5.1
     # via django-notifications-hq
 django-notifications-hq==1.8.3
     # via FuzzManager (setup.py)
-djangorestframework==3.14.0
+djangorestframework==3.15.1
     # via FuzzManager (setup.py)
-exceptiongroup==1.1.3
+exceptiongroup==1.2.1
     # via pytest
 fasteners==0.19
     # via FuzzManager (setup.py)
-frozenlist==1.4.0
+frozenlist==1.4.1
     # via
     #   aiohttp
     #   aiosignal
-gunicorn==20.1.0
+# fuzzing-decision @ git+https://github.com/MozillaSecurity/orion#subdirectory=services/fuzzing-decision
     # via FuzzManager (setup.py)
-hiredis==2.2.3
+gunicorn==22.0.0
+    # via FuzzManager (setup.py)
+hiredis==2.3.2
     # via redis
-idna==3.4
+idna==3.7
     # via
     #   requests
     #   yarl
-importlib-metadata==6.8.0
+importlib-metadata==7.1.0
     # via keyring
-importlib-resources==6.1.1
+importlib-resources==6.4.0
     # via keyring
 iniconfig==2.0.0
     # via pytest
 isodate==0.6.1
     # via msrest
-jaraco-classes==3.3.0
+jaraco-classes==3.4.0
+    # via keyring
+jaraco-context==5.3.0
+    # via keyring
+jaraco-functools==4.0.1
     # via keyring
 jeepney==0.8.0
     # via
@@ -149,21 +158,23 @@ josepy==1.14.0
     # via mozilla-django-oidc
 jsonfield==3.1.0
     # via django-notifications-hq
-keyring==24.3.0
+keyring==25.2.1
     # via msrestazure
-kombu==5.3.4
+kombu==5.3.7
     # via
     #   celery
     #   mozillapulse
 laniakea==1.17.1
     # via FuzzManager (setup.py)
-mercurial==6.5.3
+mercurial==6.7.3
     # via FuzzManager (setup.py)
 mohawk==1.1.0
     # via taskcluster
-more-itertools==10.1.0
-    # via jaraco-classes
-mozilla-django-oidc==3.0.0
+more-itertools==10.2.0
+    # via
+    #   jaraco-classes
+    #   jaraco-functools
+mozilla-django-oidc==4.0.1
     # via FuzzManager (setup.py)
 mozillapulse==1.3
     # via FuzzManager (setup.py)
@@ -171,61 +182,62 @@ msrest==0.7.1
     # via msrestazure
 msrestazure==0.4.34
     # via azure-mgmt-resource
-multidict==6.0.4
+multidict==6.0.5
     # via
     #   aiohttp
     #   yarl
-mysqlclient==2.0.3
+mysqlclient==2.2.4
     # via FuzzManager (setup.py)
 oauthlib==3.2.2
     # via requests-oauthlib
-packaging==23.2
-    # via pytest
+packaging==24.0
+    # via
+    #   gunicorn
+    #   pytest
 packet-python==1.37.1
     # via laniakea
-pluggy==1.3.0
+pluggy==1.5.0
     # via pytest
-prompt-toolkit==3.0.41
+prompt-toolkit==3.0.43
     # via click-repl
-pycparser==2.21
+pycparser==2.22
     # via cffi
 pycryptodome==3.7.3
     # via laniakea
 pyjwt==2.8.0
     # via adal
-pyopenssl==23.3.0
+pyopenssl==24.1.0
     # via josepy
-pytest==7.4.3
+pytest==8.2.1
     # via
     #   FuzzManager (setup.py)
     #   pytest-cov
     #   pytest-django
     #   pytest-mock
-pytest-cov==4.1.0
+pytest-cov==5.0.0
     # via FuzzManager (setup.py)
-pytest-django==4.7.0 ; python_version <= "3.11"
+pytest-django==4.8.0 ; python_version <= "3.11"
     # via FuzzManager (setup.py)
-pytest-mock==3.12.0
+pytest-mock==3.14.0
     # via FuzzManager (setup.py)
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   adal
     #   botocore
     #   celery
     #   fuzzing-decision
     #   taskcluster
-pytz==2023.3.post1
+pytz==2024.1
     # via
     #   django-notifications-hq
-    #   djangorestframework
     #   mozillapulse
 pyyaml==6.0.1
     # via
     #   FuzzManager (setup.py)
     #   fuzzing-decision
-redis==5.0.1
+redis==5.0.4
     # via FuzzManager (setup.py)
-requests==2.31.0
+requests==2.32.2
     # via
     #   FuzzManager (setup.py)
     #   adal
@@ -236,9 +248,9 @@ requests==2.31.0
     #   packet-python
     #   requests-oauthlib
     #   taskcluster
-requests-oauthlib==1.3.1
+requests-oauthlib==2.0.0
     # via msrest
-s3transfer==0.7.0
+s3transfer==0.10.1
     # via boto3
 secretstorage==3.3.3
     # via keyring
@@ -250,11 +262,11 @@ six==1.16.0
     #   python-dateutil
 slugid==2.0.0
     # via taskcluster
-sqlparse==0.4.4
+sqlparse==0.5.0
     # via django
 swapper==1.3.0
     # via django-notifications-hq
-taskcluster==58.0.0
+taskcluster==65.1.0
     # via fuzzing-decision
 taskcluster-urls==13.0.1
     # via taskcluster
@@ -262,12 +274,12 @@ tomli==2.0.1
     # via
     #   coverage
     #   pytest
-typing-extensions==4.8.0
+typing-extensions==4.11.0
     # via
     #   asgiref
     #   azure-core
     #   kombu
-tzdata==2023.3
+tzdata==2024.1
     # via
     #   backports-zoneinfo
     #   celery
@@ -280,16 +292,13 @@ vine==5.1.0
     #   amqp
     #   celery
     #   kombu
-wcwidth==0.2.10
+wcwidth==0.2.13
     # via prompt-toolkit
 whitenoise==6.6.0
     # via FuzzManager (setup.py)
-yarl==1.9.2
+yarl==1.9.4
     # via aiohttp
-zipp==3.17.0
+zipp==3.18.2
     # via
     #   importlib-metadata
     #   importlib-resources
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
