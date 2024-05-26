@@ -202,7 +202,7 @@ prompt-toolkit==3.0.43
     # via click-repl
 pycparser==2.22
     # via cffi
-pycryptodome==3.7.3
+pycryptodome==3.19.1
     # via laniakea
 pyjwt==2.8.0
     # via adal
