@@ -17,318 +17,219 @@ tasks:
 
     fetch_ref:
       $if: 'tasks_for == "github-pull-request"'
-      then: "pull/${event.number}/head"
+      then: ${event.pull_request.head.sha}
       else:
         $if: 'tasks_for == "github-push"'
-        then: ${event.ref}
+        then: ${event.after}
         else: "refs/tags/${event.release.tag_name}:refs/tags/${event.release.tag_name}"
-
-    branch_name:
-      $if: 'tasks_for == "github-pull-request"'
-      then: ${event.pull_request.base.ref}
-      else:
-        $if: 'tasks_for == "github-push"'
-        then:
-          $if: 'event.ref[:11] == "refs/heads/"'
-          then: {$eval: 'event.ref[11:]'}
-          else: ${event.ref}
-        else: ${event.release.tag_name}
-
-    pull_request:
-      $if: 'tasks_for == "github-pull-request"'
-      then: ${event.number}
-      else: 'false'
-
-    tag:
-      $if: 'tasks_for == "github-release"'
-      then: ${event.release.tag_name}
-      else: ''
 
     http_repo:
       $if: 'tasks_for == "github-pull-request"'
       then: ${event.pull_request.base.repo.clone_url}
       else: ${event.repository.clone_url}
 
-    head_repo:
-      $if: 'tasks_for == "github-pull-request"'
-      then: ${event.pull_request.head.repo.clone_url}
-      else: ${event.repository.clone_url}
+    codecov_secret:
+      codecov-fuzzmanager
 
-    codecov_secret_url:
-      http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-fuzzmanager
+    pypi_secret:
+      pypi-fuzzmanager
 
-  in:
-    $if: 'tasks_for in ["github-push", "github-release"] || (tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"])'
-    then:
-      $flatten:
-        - $map:
-          - {image: ci-py-38, toxenv: 'py38', name: 'tests python 3.8 django 4.x'}
-          - {image: ci-py-39, toxenv: 'py39', name: 'tests python 3.9 django 4.x'}
-          - {image: ci-py-310, toxenv: 'py310', name: 'tests python 3.10 django 4.x'}
-          - {image: ci-py-311, toxenv: 'py311', name: 'tests python 3.11 django 4.x'}
-          - {image: ci-py-312, toxenv: 'py312', name: 'tests python 3.12 (no django)'}
-          each(build):
-            taskId: {$eval: as_slugid(build.toxenv)}
-            taskGroupId: ${task_group}
-            provisionerId: proj-fuzzing
-            workerType: ci
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '1 hour'}
-            scopes:
-              - secrets:get:project/fuzzing/codecov-fuzzmanager
-            payload:
-              maxRunTime: 3600
-              image:
-                namespace: project.fuzzing.orion.${build.image}.master
-                path: public/${build.image}.tar.zst
-                type: indexed-image
-              features:
-                taskclusterProxy: true
-              env:
-                CODECOV_SECRET: codecov-fuzzmanager
-                FETCH_REV: ${fetch_rev}
-                FETCH_REF: ${fetch_rev}
-                TOXENV: ${build.toxenv}
-                CI: "true"
-                CI_BUILD_ID: ${task_group}
-                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.toxenv)'}
-                CI_JOB_ID: {$eval: as_slugid(build.toxenv)}
-                VCS_COMMIT_ID: ${fetch_ref}
-                VCS_SLUG: ${event.repository.full_name}
-                VCS_BRANCH_NAME: ${branch_name}
-                VCS_PULL_REQUEST: ${pull_request}
-                VCS_TAG: ${tag}
-              command:
-                - /bin/bash
-                - '--login'
-                - '-x'
-                - '-e'
-                - '-c'
-                - >-
-                  . py-ci.sh;
-                  clone ${http_repo};
-                  tox;
-                  tox_codecov;
-            metadata:
-              name: FuzzManager ${build.name}
-              description: FuzzManager ${build.name}
-              owner: '${user}@users.noreply.github.com'
-              source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
-        - $map:
-          - {image: ci-node-18, slug: node18, name: 'build frontend node 18'}
-          each(build):
-            taskId: {$eval: as_slugid(build.slug)}
-            taskGroupId: ${task_group}
-            provisionerId: proj-fuzzing
-            workerType: ci
-            created: {$fromNow: ''}
-            deadline: {$fromNow: '1 hour'}
-            scopes:
-              - secrets:get:project/fuzzing/codecov-fuzzmanager
-            payload:
-              maxRunTime: 3600
-              image:
-                namespace: project.fuzzing.orion.${build.image}.master
-                path: public/${build.image}.tar.zst
-                type: indexed-image
-              features:
-                taskclusterProxy: true
-              env:
-                CI: "true"
-                CI_BUILD_ID: ${task_group}
-                CI_BUILD_URL: {$eval: 'taskcluster_root_url + "/tasks/" + as_slugid(build.slug)'}
-                CI_JOB_ID: {$eval: as_slugid(build.slug)}
-                VCS_COMMIT_ID: ${fetch_ref}
-                VCS_SLUG: ${event.repository.full_name}
-                VCS_BRANCH_NAME: ${branch_name}
-                VCS_PULL_REQUEST: ${pull_request}
-                VCS_TAG: ${tag}
-              command:
-                - /bin/bash
-                - '--login'
-                - '-x'
-                - '-e'
-                - '-c'
-                - >-
-                  retry () { for _ in {1..9}; do if "$@"; then return; else sleep 30; fi; done; "$@"; };
-                  git init repo;
-                  cd repo;
-                  git remote add origin ${http_repo};
-                  retry git fetch -q --depth=1 origin "${fetch_rev}";
-                  git -c advice.detachedHead=false checkout ${fetch_rev};
-                  cd server/frontend;
-                  retry npm install;
-                  npm run test;
-                  npm run production;
-                  set +x;
-                  export CODECOV_TOKEN="$(curl --retry 5 -sSL ${codecov_secret_url} | jshon -e secret -e token -u)";
-                  set -x;
-                  npm run codecov;
-              artifacts:
-                public/dist:
-                  expires: {$fromNow: '6 months'}
-                  path: /home/worker/repo/server/frontend/dist/
-                  type: directory
-            metadata:
-              name: FuzzManager ${build.name}
-              description: FuzzManager ${build.name}
-              owner: '${user}@users.noreply.github.com'
-              source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
-        - taskId: {$eval: as_slugid("linting")}
-          taskGroupId: ${task_group}
-          provisionerId: proj-fuzzing
-          workerType: ci
-          created: {$fromNow: ''}
-          deadline: {$fromNow: '1 hour'}
-          payload:
-            maxRunTime: 3600
-            image: node:18-alpine
-            command:
-              - /bin/sh
-              - '-x'
-              - '-e'
-              - '-c'
-              - >-
-                retry () { i=0; while [ $i -lt 9 ]; do if "$@"; then return; else sleep 30; fi; i="$${i+1}"; done; "$@"; };
-                retry apk add --quiet python3 py3-pip git bash;
-                find /usr/lib/python3.* -type f -name EXTERNALLY-MANAGED -delete;
-                retry pip3 install -q pre-commit;
-                git init repo;
-                cd repo;
-                git remote add origin ${http_repo};
-                retry git fetch -q --depth=1 origin "${fetch_rev}";
-                git -c advice.detachedHead=false checkout ${fetch_rev};
+    project_name:
+      FuzzManager
+
+    matrix:
+      language: python
+      secrets:
+        - type: env
+          secret: project/fuzzing/codecov-fuzzmanager
+          name: CODECOV_TOKEN
+          key: token
+      script:
+        - bash
+        - '-xec'
+        - tox; tox -e codecov
+      jobs:
+        include:
+          - name: tests python 3.8 django 4.x
+            version: "3.8"
+            env:
+              TOXENV: py38
+          - name: tests python 3.9 django 4.x
+            version: "3.9"
+            env:
+              TOXENV: py39
+          - name: tests python 3.10 django 4.x
+            version: "3.10"
+            env:
+              TOXENV: py310
+          - name: tests python 3.11 django 4.x
+            version: "3.11"
+            env:
+              TOXENV: py311
+          - name: tests python 3.12 (no django)
+            version: "3.12"
+            env:
+              TOXENV: py312
+          - name: linting
+            version: "3.8"
+            script:
+              - bash
+              - '-xec'
+              - >
+                retry-curl () { curl --connect-timeout 25 --fail --location --retry 5 --show-error --silent "$@"; };
+                mkdir -p ~/.local/bin ~/.local/lib;
+                PATH=~/.local/bin:$PATH;
+                retry-curl https://nodejs.org/dist/v18.20.3/node-v18.20.3-linux-x64.tar.xz | tar -C ~/.local/lib -I xz -x;
+                cd ~/.local/bin;
+                for i in ~/.local/lib/node-v18.20.3-linux-x64/bin/*; do ln -s "$i" .; done;
+                cd -;
                 cd server/frontend;
-                npm ci;
+                npm i;
                 cd ../..;
                 pre-commit run -a;
-          metadata:
-            name: FuzzManager source code linting
-            description: FuzzManager source code linting
-            owner: '${user}@users.noreply.github.com'
-            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
-        - taskId: {$eval: as_slugid("docker")}
-          taskGroupId: ${task_group}
-          provisionerId: proj-fuzzing
-          workerType: ci
-          dependencies:
-            - {$eval: as_slugid("linting")}
-            - {$eval: as_slugid("node18")}
-            - {$eval: as_slugid("py38")}
-            - {$eval: as_slugid("py39")}
-            - {$eval: as_slugid("py310")}
-            - {$eval: as_slugid("py311")}
-            - {$eval: as_slugid("py312")}
-          created: {$fromNow: ''}
-          deadline: {$fromNow: '1 hour'}
-          payload:
-            image:
-              namespace: project.fuzzing.orion.orion-builder.master
-              path: public/orion-builder.tar.zst
-              type: indexed-image
-            maxRunTime: 3600
-            capabilities:
-              privileged: true
+          - name: build frontend node 18
+            language: node
+            version: "18"
+            script:
+              - bash
+              - '-xec'
+              - >
+                retry () { for _ in {1..9}; do if "$@"; then return; else sleep 30; fi; done; "$@"; };
+                cd server/frontend;
+                retry npm install;
+                npm run test;
+                npm run production;
+                npm run codecov;
+          - name: PyPI upload
+            version: "3.8"
             env:
-              LOAD_DEPS: "0"
-              GIT_REPOSITORY: ${head_repo}
-              GIT_REVISION: ${fetch_rev}
-              BUILD_TOOL: podman
-              DOCKERFILE: Dockerfile
-              IMAGE_NAME: mozillasecurity/fuzzmanager
-              ARCHIVE_PATH: /image.tar
-            command:
-              - sh
-              - -c
-              - uname -a && exec build
-            artifacts:
-              public/fuzzmanager.tar.zst:
-                expires: {$fromNow: '6 months'}
-                path: /image.tar.zst
-                type: file
-          scopes:
-            - docker-worker:capability:privileged
-          metadata:
-            name: FuzzManager Docker build
-            description: FuzzManager Docker build
-            owner: '${user}@users.noreply.github.com'
-            source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
-        - $if: 'tasks_for in ["github-push"] && fetch_ref == "refs/heads/master"'
-          then:
-            - taskId: {$eval: as_slugid("docker_push")}
-              taskGroupId: ${task_group}
-              provisionerId: proj-fuzzing
-              workerType: ci
-              dependencies:
-                - {$eval: as_slugid("docker")}
-              created: {$fromNow: ''}
-              deadline: {$fromNow: '1 hour'}
-              payload:
-                image:
-                  namespace: project.fuzzing.orion.orion-builder.master
-                  path: public/orion-builder.tar.zst
-                  type: indexed-image
-                maxRunTime: 3600
-                features:
-                  taskclusterProxy: true
-                env:
-                  TASK_ID: {$eval: as_slugid("docker")}
-                  TASKCLUSTER_SECRET: "project/fuzzing/docker-hub"
-                  GIT_REPOSITORY: ${head_repo}
-                  GIT_REVISION: ${fetch_rev}
-                command:
-                  - sh
-                  - -c
-                  - uname -a && exec push
-              scopes:
-                - secrets:get:project/fuzzing/docker-hub
-              metadata:
-                name: FuzzManager Docker push
-                description: FuzzManager Docker push
-                owner: '${user}@users.noreply.github.com'
-                source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
-        - $if: 'tasks_for in ["github-release"]'
-          then:
-            - taskId: {$eval: as_slugid("pypi_push")}
-              taskGroupId: ${task_group}
-              provisionerId: proj-fuzzing
-              workerType: ci
-              dependencies:
-                - {$eval: as_slugid("linting")}
-                - {$eval: as_slugid("node18")}
-                - {$eval: as_slugid("py38")}
-                - {$eval: as_slugid("py39")}
-                - {$eval: as_slugid("py310")}
-                - {$eval: as_slugid("py311")}
-                - {$eval: as_slugid("py312")}
-              created: {$fromNow: ''}
-              deadline: {$fromNow: '1 hour'}
-              scopes:
-                - secrets:get:project/fuzzing/pypi-fuzzmanager
-              payload:
-                maxRunTime: 3600
-                image:
-                  namespace: project.fuzzing.orion.ci-py-38.master
-                  path: public/ci-py-38.tar.zst
-                  type: indexed-image
-                features:
-                  taskclusterProxy: true
-                env:
-                  FETCH_REV: ${fetch_rev}
-                  FETCH_REF: ${fetch_rev}
-                  PYPI_SECRET: pypi-fuzzmanager
-                command:
-                  - /bin/bash
-                  - '--login'
-                  - '-x'
-                  - '-e'
-                  - '-c'
-                  - >-
-                    . py-ci.sh;
-                    clone ${http_repo};
-                    tox_pypi;
-              metadata:
-                name: FuzzManager PyPI upload
-                description: FuzzManager PyPI upload
-                owner: '${user}@users.noreply.github.com'
-                source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+              TOXENV: pypi
+            script:
+              - tox
+            when:
+              release: true
+              all_passed: true
+            secrets:
+              - type: env
+                secret: project/fuzzing/pypi-fuzzmanager
+                name: TWINE_USERNAME
+                key: username
+              - type: env
+                secret: project/fuzzing/pypi-fuzzmanager
+                name: TWINE_PASSWORD
+                key: password
+
+  in:
+    $if: >
+      (tasks_for == "github-push")
+      || (tasks_for == "github-pull-request" && event["action"] in ["opened", "reopened", "synchronize"])
+      || (tasks_for == "github-release" && event["action"] in ["published"])
+    then:
+      - taskId: ${task_group}
+        taskGroupId: ${task_group}
+        created: {$fromNow: ''}
+        deadline: {$fromNow: '1 hour'}
+        provisionerId: proj-fuzzing
+        workerType: ci
+        payload:
+          features:
+            taskclusterProxy: true
+          maxRunTime: 3600
+          image:
+            type: indexed-image
+            path: public/orion-decision.tar.zst
+            namespace: project.fuzzing.orion.orion-decision.master
+          env:
+            PROJECT_NAME: ${project_name}
+            CI_MATRIX: {$json: {$eval: matrix}}
+            GITHUB_EVENT: {$json: {$eval: event}}
+            GITHUB_ACTION: ${tasks_for}
+            TASKCLUSTER_NOW: ${now}
+          command:
+            - ci-decision
+            - -v
+        scopes:
+          - queue:create-task:highest:proj-fuzzing/ci
+          - queue:create-task:highest:proj-fuzzing/ci-*
+          - queue:scheduler-id:taskcluster-github
+          - secrets:get:project/fuzzing/${codecov_secret}
+          - secrets:get:project/fuzzing/${pypi_secret}
+        metadata:
+          name: ${project_name} CI decision
+          description: Schedule CI tasks for ${project_name}
+          owner: '${user}@users.noreply.github.com'
+          source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+      - taskId: {$eval: as_slugid("docker")}
+        taskGroupId: ${task_group}
+        provisionerId: proj-fuzzing
+        workerType: ci
+        dependencies: []
+        created: {$fromNow: ''}
+        deadline: {$fromNow: '1 hour'}
+        payload:
+          image:
+            namespace: project.fuzzing.orion.orion-builder.master
+            path: public/orion-builder.tar.zst
+            type: indexed-image
+          maxRunTime: 3600
+          capabilities:
+            privileged: true
+          env:
+            LOAD_DEPS: "0"
+            GIT_REPOSITORY: ${http_repo}
+            GIT_REVISION: ${fetch_rev}
+            BUILD_TOOL: podman
+            DOCKERFILE: Dockerfile
+            IMAGE_NAME: mozillasecurity/fuzzmanager
+            ARCHIVE_PATH: /image.tar
+          command:
+            - sh
+            - -c
+            - uname -a && exec build
+          artifacts:
+            public/fuzzmanager.tar.zst:
+              expires: {$fromNow: '6 months'}
+              path: /image.tar.zst
+              type: file
+        scopes:
+          - docker-worker:capability:privileged
+        metadata:
+          name: FuzzManager Docker build
+          description: FuzzManager Docker build
+          owner: '${user}@users.noreply.github.com'
+          source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+      - $if: 'tasks_for in ["github-push"] && fetch_ref == "refs/heads/master"'
+        then:
+          - taskId: {$eval: as_slugid("docker_push")}
+            taskGroupId: ${task_group}
+            provisionerId: proj-fuzzing
+            workerType: ci
+            dependencies:
+              - {$eval: as_slugid("docker")}
+            created: {$fromNow: ''}
+            deadline: {$fromNow: '1 hour'}
+            payload:
+              image:
+                namespace: project.fuzzing.orion.orion-builder.master
+                path: public/orion-builder.tar.zst
+                type: indexed-image
+              maxRunTime: 3600
+              features:
+                taskclusterProxy: true
+              env:
+                TASK_ID: {$eval: as_slugid("docker")}
+                TASKCLUSTER_SECRET: "project/fuzzing/docker-hub"
+                GIT_REPOSITORY: ${http_repo}
+                GIT_REVISION: ${fetch_rev}
+              command:
+                - sh
+                - -c
+                - uname -a && exec push
+            scopes:
+              - secrets:get:project/fuzzing/docker-hub
+            metadata:
+              name: FuzzManager Docker push
+              description: FuzzManager Docker push
+              owner: '${user}@users.noreply.github.com'
+              source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
+    else: []
