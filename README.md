@@ -179,19 +179,19 @@ A docker image is available by building the `Dockerfile`.
 You can easily run a local server (and Mysql database server) by using [docker-composer](https://docs.docker.com/compose/):
 
 ```console
-docker-compose up
+docker compose up
 ```
 
 On a first run, you must execute the database migrations:
 
 ```console
-docker-compose exec backend python manage.py migrate
+docker compose exec backend python manage.py migrate
 ```
 
 And create a superuser to be able to log in on http://localhost:8000
 
 ```console
-docker-compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py createsuperuser
 ```
 
 By default, the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
