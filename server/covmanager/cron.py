@@ -41,6 +41,8 @@ def create_weekly_report_mc(revision, ipc_only=False):
 
     if ipc_only:
         collections = collections.filter(description__contains="IPC")
+    else:
+        collections = collections.exclude(description__contains="IPC")
 
     last_monday = collections.first().created + relativedelta(weekday=MO(-1))
 
