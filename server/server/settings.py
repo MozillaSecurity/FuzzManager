@@ -414,3 +414,9 @@ EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+# Notifications
+DJANGO_NOTIFICATIONS_CONFIG = {"USE_JSONFIELD": True}
+
+# Report coverage reports with a drop of greater than 10%
+COVERAGE_REPORT_DELTA = 10

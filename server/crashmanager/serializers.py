@@ -10,6 +10,7 @@ from notifications.models import Notification
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
+from covmanager.models import Collection
 from crashmanager.models import (
     OS,
     Bucket,
@@ -370,12 +371,14 @@ class NotificationSerializer(serializers.ModelSerializer):
     actor_url = serializers.SerializerMethodField()
     target_url = serializers.SerializerMethodField()
     external_bug_url = serializers.SerializerMethodField()
+    data = serializers.JSONField()
 
     class Meta:
         model = Notification
         fields = (
             "id",
             "timestamp",
+            "data",
             "description",
             "verb",
             "actor_url",
@@ -387,6 +390,11 @@ class NotificationSerializer(serializers.ModelSerializer):
         if isinstance(notification.actor, Bucket):
             return reverse(
                 "crashmanager:sigview", kwargs={"sigid": notification.actor.id}
+            )
+        if isinstance(notification.actor, Collection):
+            return reverse(
+                "covmanager:collections_browse",
+                kwargs={"collectionid": notification.actor.id},
             )
         if isinstance(notification.actor, Task):
             task = notification.actor
