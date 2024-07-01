@@ -293,7 +293,7 @@ export default {
 
     let data = await api.listBugProviders();
     this.providers = data.results.filter(
-      (p) => p.classname === "BugzillaProvider"
+      (p) => p.classname === "BugzillaProvider",
     );
     this.provider = this.providers.find((p) => p.id === this.providerId);
     this.selectedProvider = this.provider.id;
@@ -509,12 +509,12 @@ export default {
   watch: {
     selectedProvider() {
       this.provider = this.providers.find(
-        (p) => p.id === this.selectedProvider
+        (p) => p.id === this.selectedProvider,
       );
     },
     selectedTemplate() {
       this.template = this.templates.find(
-        (t) => t.id === this.selectedTemplate
+        (t) => t.id === this.selectedTemplate,
       );
     },
   },

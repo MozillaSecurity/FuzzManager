@@ -74,7 +74,7 @@ export const assignExternalBug = (bucketId, bugId, providerId) => {
         id: bucketId,
         params: { reassign: false },
         ...payload,
-      })
+      }),
     );
   } catch (err) {
     return Promise.reject(err);
@@ -118,7 +118,7 @@ export const parseHash = (hash) => {
     .map((v) => v.split("="))
     .reduce(
       (pre, [key, value]) => ({ ...pre, [key]: decodeURIComponent(value) }),
-      {}
+      {},
     );
 };
 
@@ -181,9 +181,9 @@ export const multiSort = {
       return _orderBy(
         data,
         this.sortKeys.map((key) =>
-          key.startsWith("-") ? key.substring(1) : key
+          key.startsWith("-") ? key.substring(1) : key,
         ),
-        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc"))
+        this.sortKeys.map((key) => (key.startsWith("-") ? "desc" : "asc")),
       );
     },
     updateHashSort: function (hash) {

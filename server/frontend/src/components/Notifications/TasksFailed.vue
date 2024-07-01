@@ -43,7 +43,7 @@ export default {
           "update-dismiss-error",
           `An error occurred while marking notification ${
             this.notification.id
-          } as read: ${errorParser(err)}`
+          } as read: ${errorParser(err)}`,
         );
       }
     },

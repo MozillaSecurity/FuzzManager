@@ -163,7 +163,7 @@ test("stats are sortable", async () => {
 
   await createWrapper(document.querySelector("thead th + th")).trigger(
     "click",
-    { ctrlKey: true }
+    { ctrlKey: true },
   );
   await nextTick();
 

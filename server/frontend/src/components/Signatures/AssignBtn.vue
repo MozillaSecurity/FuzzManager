@@ -37,7 +37,7 @@ export default {
           assignExternalBug(
             this.bucket,
             linkForm.externalBugId,
-            linkForm.selectedProvider
+            linkForm.selectedProvider,
           )
             .then((data) => {
               window.location.href = data.url;

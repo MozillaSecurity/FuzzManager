@@ -198,7 +198,7 @@
                 formatDateRelative(
                   task.started !== null ? task.started : task.created,
                   task.resolved,
-                  "later"
+                  "later",
                 )
               }}
             </td>
@@ -307,7 +307,7 @@ export default {
           this.totalEntries = data.count;
           this.totalPages = Math.max(
             Math.ceil(this.totalEntries / pageSize),
-            1
+            1,
           );
           if (this.currentPage > this.totalPages) {
             this.currentPage = this.totalPages;
@@ -330,7 +330,7 @@ export default {
         this.loading = false;
       },
       500,
-      { trailing: true }
+      { trailing: true },
     ),
     formatDateRelative: formatDateRelative,
     prevPage: function () {

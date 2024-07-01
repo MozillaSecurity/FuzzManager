@@ -38,7 +38,7 @@ export const retrieveCrashTestCaseBinary = async (id) =>
         url: `/crashmanager/rest/crashes/${id}/download/`,
         responseType: "arraybuffer",
       })
-    ).data
+    ).data,
   );
 
 export const deleteCrashes = async (params) =>

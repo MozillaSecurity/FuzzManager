@@ -32,8 +32,8 @@ test("inbox displays an error if notification fetching failed", async () => {
   });
   findByText((content) =>
     content.startsWith(
-      "An error occurred while fetching unread notifications: "
-    )
+      "An error occurred while fetching unread notifications: ",
+    ),
   );
 });
 
@@ -100,8 +100,8 @@ test("inbox displays an error if dismissing all notifications failed", async () 
   // An error is displayed
   findByText((content) =>
     content.startsWith(
-      "An error occurred while marking all notifications as read: "
-    )
+      "An error occurred while marking all notifications as read: ",
+    ),
   );
 });
 
@@ -140,8 +140,8 @@ test("inbox displays an error if dismissing one notification failed", async () =
   // An error is displayed
   findByText((content) =>
     content.startsWith(
-      "An error occurred while marking notification 2 as read: "
-    )
+      "An error occurred while marking notification 2 as read: ",
+    ),
   );
 });
 
@@ -154,7 +154,7 @@ test("bucketHit renders a 'View bucket' button with a redirection", async () => 
   const buttonLink = getByText("View bucket");
   expect(buttonLink).toHaveProperty(
     "href",
-    window.location.origin + bucketHitNotification.actor_url
+    window.location.origin + bucketHitNotification.actor_url,
   );
 });
 
@@ -167,7 +167,7 @@ test("bucketHit renders a 'View new crash entry' button with a redirection", asy
   const buttonLink = getByText("View new crash entry");
   expect(buttonLink).toHaveProperty(
     "href",
-    window.location.origin + bucketHitNotification.target_url
+    window.location.origin + bucketHitNotification.target_url,
   );
 });
 
@@ -212,7 +212,7 @@ test("inaccessibleBug renders a 'View external bug' button with a redirection", 
   const buttonLink = getByText("View external bug");
   expect(buttonLink).toHaveProperty(
     "href",
-    inaccessibleBugNotification.external_bug_url
+    inaccessibleBugNotification.external_bug_url,
   );
   expect(buttonLink).toHaveProperty("target", "_blank");
 });

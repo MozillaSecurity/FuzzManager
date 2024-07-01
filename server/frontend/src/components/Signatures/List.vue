@@ -223,7 +223,7 @@ export default {
       this.queryStr = JSON.stringify(
         { op: "AND", id__in: this.$route.query.ids.split(",") },
         null,
-        2
+        2,
       );
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
@@ -264,7 +264,7 @@ export default {
         this.queryStr = JSON.stringify(
           Object.assign({ bug__isnull: true }, JSON.parse(this.queryStr)),
           null,
-          2
+          2,
         );
       } else {
         const query = JSON.parse(this.queryStr);
@@ -316,7 +316,7 @@ export default {
         this.loading = false;
       },
       500,
-      { trailing: true }
+      { trailing: true },
     ),
     updateHash() {
       let hash = {};

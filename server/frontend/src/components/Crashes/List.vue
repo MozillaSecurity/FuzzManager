@@ -430,7 +430,7 @@ export default {
         this.advancedQueryStr = JSON.stringify(
           JSON.parse(hash.query || ""),
           null,
-          2
+          2,
         );
       } else {
         this.showBucketed = hash.bucketed === "1";
@@ -592,7 +592,7 @@ export default {
         this.loading = true;
         try {
           this.deleteAsyncToken = await api.deleteCrashes(
-            this.buildDeleteParams()
+            this.buildDeleteParams(),
           );
         } catch (err) {
           if (
@@ -655,7 +655,7 @@ export default {
           this.haveResults = data.count > 0 ? true : false;
           this.totalPages = Math.max(
             Math.ceil(this.totalEntries / pageSize),
-            1
+            1,
           );
           if (this.currentPage > this.totalPages) {
             this.currentPage = this.totalPages;
@@ -688,7 +688,7 @@ export default {
         this.loading = false;
       },
       500,
-      { trailing: true }
+      { trailing: true },
     ),
     nextPage: function () {
       if (this.currentPage < this.totalPages) {

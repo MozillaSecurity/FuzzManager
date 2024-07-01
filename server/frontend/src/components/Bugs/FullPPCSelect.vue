@@ -52,7 +52,7 @@ export default {
   async mounted() {
     let data = await api.listBugProviders();
     this.providers = data.results.filter(
-      (p) => p.classname === "BugzillaProvider"
+      (p) => p.classname === "BugzillaProvider",
     );
     if (this.providerId) {
       this.provider = this.providers.find((p) => p.id === this.providerId);
@@ -63,7 +63,7 @@ export default {
   watch: {
     selectedProvider() {
       this.provider = this.providers.find(
-        (p) => p.id === this.selectedProvider
+        (p) => p.id === this.selectedProvider,
       );
       this.providerHostname = this.provider.hostname;
     },
