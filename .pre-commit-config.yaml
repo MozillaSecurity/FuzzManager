@@ -20,23 +20,6 @@ repos:
     rev: 6.1.0
     hooks:
       - id: flake8
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.54.0
-    hooks:
-      - id: eslint
-        language: node
-        args: ['--fix', '--max-warnings', '0']
-        files: ^server/frontend/.*\.(js|vue)$
-        types: [file]
-        additional_dependencies:
-        - eslint@7.25.0
-        - eslint-plugin-vue@7.9.0
-        - eslint-config-prettier@8.3.0
-        - eslint-plugin-prettier@3.4.0
-        - eslint-plugin-import@2.22.1
-        - eslint-import-resolver-webpack@0.13.0
-        - babel-eslint@10.1.0
-        - prettier@2.2.1
   - repo: https://github.com/jschwartzentruber/taskcluster_yml_validator
     rev: v0.0.11b
     hooks:
@@ -44,3 +27,11 @@ repos:
   - repo: meta
     hooks:
       - id: check-useless-excludes
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: bash -c 'cd server/frontend && npm run lint'
+        language: system
+        files: ^server/frontend/.*\.(js|mjs|cjs|vue)$
+        stages: [ commit ]

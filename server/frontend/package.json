@@ -8,7 +8,8 @@
         "test": "jest --verbose --coverage",
         "build": "webpack --config webpack.dev.js",
         "start": "webpack --config webpack.dev.js --watch",
-        "production": "webpack --config webpack.prod.js"
+        "production": "webpack --config webpack.prod.js",
+        "lint": "eslint ./"
     },
     "dependencies": {
         "axios": "^0.28.1",
@@ -25,6 +26,9 @@
     "devDependencies": {
         "@babel/core": "^7.15.0",
         "@babel/preset-env": "^7.15.0",
+        "@eslint/compat": "^1.1.0",
+        "@eslint/eslintrc": "^3.1.0",
+        "@eslint/js": "^9.6.0",
         "@testing-library/dom": "^8.1.0",
         "@testing-library/vue": "^5.8.2",
         "@vue/test-utils": "^1.2.2",
@@ -32,9 +36,15 @@
         "babel-jest": "^27.0.6",
         "codecov": "^3.8.3",
         "css-loader": "^5.2.4",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-prettier": "^5.1.3",
+        "eslint-plugin-vue": "^9.26.0",
+        "globals": "^15.7.0",
         "jest": "^27.0.6",
         "mini-css-extract-plugin": "^1.6.0",
         "postcss": "^8.3.5",
+        "prettier": "^3.3.2",
         "vue-jest": "^3.0.7",
         "vue-loader": "^15.9.6",
         "vue-template-compiler": "^2.7.15",
