@@ -79,7 +79,7 @@ export default {
       next_hour_ms - this.range * day_ms,
       hour_ms,
       next_hour_ms,
-      clip
+      clip,
     );
 
     // append the svg object to the body of the page
@@ -112,7 +112,7 @@ export default {
         d3
           .line()
           .x((d) => x(d.date))
-          .y((d) => y(d.count))
+          .y((d) => y(d.count)),
       );
   },
 };

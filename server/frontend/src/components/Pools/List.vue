@@ -135,7 +135,7 @@ export default {
         this.loading = false;
       },
       500,
-      { trailing: true }
+      { trailing: true },
     ),
   },
 };

@@ -158,7 +158,7 @@ export default {
     },
     removeNotification(notification) {
       this.notifications = this.notifications.filter(
-        (n) => n.id !== notification
+        (n) => n.id !== notification,
       );
       this.currentEntries--;
       this.totalEntries--;

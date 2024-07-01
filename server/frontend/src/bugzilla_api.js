@@ -21,7 +21,7 @@ export const fetchPossibleDuplicates = async ({ hostname, params, headers }) =>
       {
         params: { ...params, include_fields: "id,summary,component,status" },
         headers,
-      }
+      },
     )
   ).data;
 
@@ -42,7 +42,7 @@ export const createComment = async ({ hostname, id, headers, ...data }) =>
     await bugzillaAxios.post(
       `https://${hostname}/rest/bug/${id}/comment`,
       data,
-      { headers }
+      { headers },
     )
   ).data;
 
@@ -54,6 +54,6 @@ export const createAttachment = async ({ hostname, id, headers, ...data }) =>
     await bugzillaAxios.post(
       `https://${hostname}/rest/bug/${id}/attachment`,
       data,
-      { headers }
+      { headers },
     )
   ).data;

@@ -181,8 +181,7 @@ export default {
     unlink() {
       swal({
         title: "Unlink bug",
-        text:
-          "Are you sure that you want to unlink this signature from its assigned external bug?",
+        text: "Are you sure that you want to unlink this signature from its assigned external bug?",
         buttons: true,
       }).then((value) => {
         if (value) {

@@ -253,7 +253,7 @@ export default {
             Object.keys(stats.frequentBuckets).forEach((x) =>
               signatureData.forEach((b) => {
                 if (b.id == x) b.counts = stats.frequentBuckets[x];
-              })
+              }),
             );
             this.signatureData = signatureData;
           } else {
@@ -278,7 +278,7 @@ export default {
         this.loading = false;
       },
       500,
-      { trailing: true }
+      { trailing: true },
     ),
     updateHash: function () {
       const hash = {};

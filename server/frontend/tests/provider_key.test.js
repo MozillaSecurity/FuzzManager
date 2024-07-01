@@ -129,7 +129,7 @@ test("providerKey displays an error if the entered API key is invalid", async ()
   expect(input.value).toBe(key);
   expect(localStorage.getItem("provider-1-api-key")).toBeNull();
   getByText(
-    /Your API key wasn't saved because an error occurred while contacting/
+    /Your API key wasn't saved because an error occurred while contacting/,
   );
 });
 

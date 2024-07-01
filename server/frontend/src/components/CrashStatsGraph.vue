@@ -71,9 +71,9 @@ export default {
               data,
               ([d]) => d,
               (d) => d.time,
-              (d) => d.name
+              (d) => d.name,
             )
-            .values()
+            .values(),
         )
         .map((s) => (s.forEach((d) => (d.data = d.data.get(s.key))), s));
 
@@ -99,7 +99,7 @@ export default {
               .axisBottom(xAxisData)
               .ticks(days + 1)
               .tickFormat((x) => `${x - days}d`)
-              .tickSize(2)
+              .tickSize(2),
           )
           .call((g) => {
             g.select(".domain").attr("stroke-width", 0.5);
@@ -143,7 +143,7 @@ export default {
             .attr("width", xData.bandwidth())
             .attr("height", (d) => y(d[0]) - y(d[1]))
             .append("title")
-            .text((d) => `${d.data.name}: ${d.data.value}`)
+            .text((d) => `${d.data.name}: ${d.data.value}`),
         );
       svg.append("g").call(yAxis);
       svg.append("g").call(xAxis);

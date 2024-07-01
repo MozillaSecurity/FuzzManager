@@ -152,13 +152,13 @@ export default {
 
       if (this.products && this.products.length && this.templateProduct) {
         const product = this.products.find(
-          (p) => p.name === this.templateProduct
+          (p) => p.name === this.templateProduct,
         );
         if (product) {
           this.selectedProduct = product.name;
           if (this.templateComponent) {
             const component = product.components.find(
-              (c) => c === this.templateComponent
+              (c) => c === this.templateComponent,
             );
             if (component) this.selectedComponent = component;
           }
@@ -179,7 +179,7 @@ export default {
        */
       try {
         const data = await bugzillaApi.fetchLatestConfiguration(
-          this.providerHostname
+          this.providerHostname,
         );
         const products = Object.entries(data.product)
           .filter(([, product]) => product.is_active)
