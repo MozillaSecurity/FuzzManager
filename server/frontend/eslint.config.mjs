@@ -29,7 +29,7 @@ export default [
           },
         },
       ],
-      "vue/max-attributes-per-line": [1, { singleline: 3 }],
+      "vue/max-attributes-per-line": 0,
       "vue/multi-word-component-names": 0,
       "vue/singleline-html-element-content-newline": 0,
       "vue/v-on-style": [2, "longform"],

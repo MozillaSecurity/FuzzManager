@@ -11,8 +11,12 @@
       <span aria-hidden="true" title="Dismiss">&times;</span>
     </button>
     <div class="btn-group pull-right" role="group">
-      <a class="btn btn-default" :href="notification.data.diff_url">View diff</a>
-      <a class="btn btn-default" :href="notification.actor_url">View collection</a>
+      <a class="btn btn-default" :href="notification.data.diff_url"
+        >View diff</a
+      >
+      <a class="btn btn-default" :href="notification.actor_url"
+        >View collection</a
+      >
     </div>
   </div>
 </template>
@@ -41,7 +45,7 @@ export default {
           "update-dismiss-error",
           `An error occurred while marking notification ${
             this.notification.id
-          } as read: ${errorParser(err)}`
+          } as read: ${errorParser(err)}`,
         );
       }
     },
