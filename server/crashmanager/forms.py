@@ -188,6 +188,7 @@ class UserSettingsForm(ModelForm):
         "email",
         HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
         "inaccessible_bug",
+        "coverage_drop",
         "bucket_hit",
         "tasks_failed",
         Submit("submit", "Save settings", css_class="btn btn-danger"),
@@ -210,8 +211,9 @@ class UserSettingsForm(ModelForm):
             "defaultToolsFilter",
             "defaultProviderId",
             "defaultTemplateId",
-            "inaccessible_bug",
             "bucket_hit",
+            "coverage_drop",
+            "inaccessible_bug",
             "tasks_failed",
         ]
 

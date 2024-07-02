@@ -755,8 +755,9 @@ class User(models.Model):
     bucketsWatching = models.ManyToManyField(Bucket, through="BucketWatch")
 
     # Notifications
-    inaccessible_bug = models.BooleanField(blank=False, default=False)
     bucket_hit = models.BooleanField(blank=False, default=False)
+    coverage_drop = models.BooleanField(blank=False, default=False)
+    inaccessible_bug = models.BooleanField(blank=False, default=False)
     tasks_failed = models.BooleanField(blank=False, default=False)
 
     @staticmethod
