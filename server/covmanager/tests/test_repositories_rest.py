@@ -75,9 +75,9 @@ def test_rest_repositories_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_repositories_get(api_client, cm):
+def test_rest_repositories_get(api_client, covmgr_helper):
     """get should be allowed"""
-    cm.create_repository("git", name="testrepo")
+    covmgr_helper.create_repository("git", name="testrepo")
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     resp = api_client.get("/covmanager/rest/repositories/")
@@ -148,9 +148,9 @@ def test_rest_repository_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_repository_get(api_client, cm):
+def test_rest_repository_get(api_client, covmgr_helper):
     """get should be allowed"""
-    repo = cm.create_repository("git", name="testrepo")
+    repo = covmgr_helper.create_repository("git", name="testrepo")
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     resp = api_client.get("/covmanager/rest/repositories/%d/" % repo.pk)

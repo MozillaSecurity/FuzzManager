@@ -78,7 +78,7 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
 
 
 @pytest.fixture
-def cm(request, settings, tmpdir):
+def covmgr_helper(request, settings, tmpdir):
     class _result:
         have_git = HAVE_GIT
         have_hg = HAVE_HG

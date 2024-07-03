@@ -63,11 +63,15 @@ def test_collections_diff_no_login(client):
     assert response.url == "/login/?next=" + path
 
 
-def test_collections_diff_simple_get(client, cm):
+def test_collections_diff_simple_get(client, covmgr_helper):
     """No errors are thrown in template"""
-    repo = cm.create_repository("git")
-    col1 = cm.create_collection(repository=repo, coverage=json.dumps({"children": []}))
-    col2 = cm.create_collection(repository=repo, coverage=json.dumps({"children": []}))
+    repo = covmgr_helper.create_repository("git")
+    col1 = covmgr_helper.create_collection(
+        repository=repo, coverage=json.dumps({"children": []})
+    )
+    col2 = covmgr_helper.create_collection(
+        repository=repo, coverage=json.dumps({"children": []})
+    )
     client.login(username="test", password="test")
     response = client.get(
         reverse("covmanager:collections_diff_api", kwargs={"path": ""}),
@@ -88,11 +92,11 @@ def test_collections_patch_no_login(client):
     assert response.url == "/login/?next=" + path
 
 
-def test_collections_patch_simple_get(client, cm):
+def test_collections_patch_simple_get(client, covmgr_helper):
     """No errors are thrown in template"""
     client.login(username="test", password="test")
-    repo = cm.create_repository("hg")
-    col = cm.create_collection(
+    repo = covmgr_helper.create_repository("hg")
+    col = covmgr_helper.create_collection(
         repository=repo,
         coverage=json.dumps(
             {
@@ -107,12 +111,14 @@ def test_collections_patch_simple_get(client, cm):
     )
     with open(os.path.join(repo.location, "test.c"), "w") as fp:
         fp.write("hello")
-    cm.hg(repo, "add", "test.c")
-    cm.hg(repo, "commit", "-m", "init")
+    covmgr_helper.hg(repo, "add", "test.c")
+    covmgr_helper.hg(repo, "commit", "-m", "init")
     with open(os.path.join(repo.location, "test.c"), "w") as fp:
         fp.write("world")
-    cm.hg(repo, "commit", "-m", "update")
-    rev = re.match(r"changeset:   1:([0-9a-f]+)", cm.hg(repo, "log")).group(1)
+    covmgr_helper.hg(repo, "commit", "-m", "update")
+    rev = re.match(r"changeset:   1:([0-9a-f]+)", covmgr_helper.hg(repo, "log")).group(
+        1
+    )
     response = client.get(
         reverse(
             "covmanager:collections_patch_api",
@@ -151,11 +157,11 @@ def test_collections_browse_api_no_login(client):
     assert response.url == "/login/?next=" + path
 
 
-def test_collections_browse_api_simple_get(client, cm):
+def test_collections_browse_api_simple_get(client, covmgr_helper):
     """No errors are thrown in template"""
     client.login(username="test", password="test")
-    repo = cm.create_repository("git")
-    col = cm.create_collection(repository=repo)
+    repo = covmgr_helper.create_repository("git")
+    col = covmgr_helper.create_collection(repository=repo)
     response = client.get(
         reverse(
             "covmanager:collections_browse_api",
