@@ -128,38 +128,35 @@ def test_rest_notifications_list_unread(api_client, user, cm):
 
     notify.send(
         bug,
-        recipient=user,
-        actor=bug,
-        verb="inaccessible_bug",
-        target=bug,
-        level="info",
         description="Notification 1",
+        level="info",
+        recipient=user,
+        target=bug,
+        verb="inaccessible_bug",
     )
     notify.send(
         bucket,
-        recipient=user,
-        actor=bucket,
-        verb="bucket_hit",
-        target=entry,
-        level="info",
         description="Notification 2",
+        level="info",
+        recipient=user,
+        target=entry,
+        verb="bucket_hit",
     )
     notify.send(
         bucket,
-        recipient=user,
-        actor=bucket,
-        verb="bucket_hit",
-        target=entry,
-        level="info",
         description="Notification 3",
+        level="info",
+        recipient=user,
+        target=entry,
+        verb="bucket_hit",
     )
     notify.send(
         task,
-        recipient=user,
-        verb="tasks_failed",
-        target=task.pool,
-        level="warning",
         description="Notification 4",
+        level="warning",
+        recipient=user,
+        target=task.pool,
+        verb="tasks_failed",
     )
     n3 = Notification.objects.get(description="Notification 3")
     n3.unread = False
@@ -183,6 +180,7 @@ def test_rest_notifications_list_unread(api_client, user, cm):
             "actor_url": (
                 f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"
             ),
+            "data": None,
             "description": "Notification 4",
             "external_bug_url": None,
             "target_url": reverse("taskmanager:pool-view-ui", kwargs={"pk": pool.id}),
@@ -191,6 +189,7 @@ def test_rest_notifications_list_unread(api_client, user, cm):
         {
             "id": 2,
             "actor_url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.id}),
+            "data": None,
             "description": "Notification 2",
             "external_bug_url": None,
             "target_url": reverse(
@@ -201,6 +200,7 @@ def test_rest_notifications_list_unread(api_client, user, cm):
         {
             "id": 1,
             "actor_url": None,
+            "data": None,
             "description": "Notification 1",
             "external_bug_url": f"https://{bug.externalType.hostname}/{bug.externalId}",
             "target_url": None,
