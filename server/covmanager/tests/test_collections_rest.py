@@ -57,11 +57,11 @@ def test_rest_collections_patch(api_client):
 
 
 @pytest.mark.parametrize("username", ["test", "test-only-report"])
-def test_rest_collections_post(api_client, cm, username):
+def test_rest_collections_post(api_client, covmgr_helper, username):
     """post should be allowed"""
     user = User.objects.get(username=username)
     api_client.force_authenticate(user=user)
-    repo = cm.create_repository("git", name="testrepo")
+    repo = covmgr_helper.create_repository("git", name="testrepo")
     cov = {
         "linesTotal": 0,
         "name": None,
@@ -115,10 +115,10 @@ def test_rest_collections_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_collections_get(api_client, cm):
+def test_rest_collections_get(api_client, covmgr_helper):
     """get should be allowed"""
-    repo = cm.create_repository("git", name="testrepo")
-    coll = cm.create_collection(
+    repo = covmgr_helper.create_repository("git", name="testrepo")
+    coll = covmgr_helper.create_collection(
         repo, branch="master", description="testdesc", revision="abc"
     )
     user = User.objects.get(username="test")
@@ -216,10 +216,10 @@ def test_rest_collection_delete(api_client):
     assert resp.status_code == requests.codes["method_not_allowed"]
 
 
-def test_rest_collection_get(api_client, cm):
+def test_rest_collection_get(api_client, covmgr_helper):
     """get should not be allowed"""
-    repo = cm.create_repository("git", name="testrepo")
-    coll = cm.create_collection(
+    repo = covmgr_helper.create_repository("git", name="testrepo")
+    coll = covmgr_helper.create_collection(
         repo, branch="master", description="testdesc", revision="abc"
     )
     user = User.objects.get(username="test")
