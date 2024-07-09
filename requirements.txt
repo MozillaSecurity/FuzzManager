@@ -298,7 +298,7 @@ whitenoise==6.6.0
     # via FuzzManager (setup.py)
 yarl==1.9.4
     # via aiohttp
-zipp==3.18.2
+zipp==3.19.1
     # via
     #   importlib-metadata
     #   importlib-resources
