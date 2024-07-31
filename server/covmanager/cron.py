@@ -1,14 +1,10 @@
-import json
 import logging
 
 import requests
 from celeryconf import app
 from dateutil.relativedelta import MO, relativedelta
 from django.conf import settings
-from django.contrib.auth.models import User as DjangoUser
 from django.db.models import Q
-from django.urls import reverse
-from notifications.signals import notify
 
 logger = logging.getLogger("covmanager")
 
@@ -82,10 +78,7 @@ def create_weekly_report_mc(revision, ipc_only=False):
 
     ids = list(collections.values_list("id", flat=True))
 
-    aggregate_coverage_data.apply(args=(mergedCollection.pk, ids))
-
-    # Generate notifications for coverage drops
-    identify_coverage_drops(revision, ipc_only)
+    aggregate_coverage_data.delay(mergedCollection.pk, ids)
 
 
 def fetch_coverage_revision():
@@ -105,100 +98,6 @@ def fetch_coverage_revision():
         return
 
     return response.text.rstrip()
-
-
-def compare_coverage_summaries(old_summary, new_summary):
-    """Compare coverage summaries recursively and identify coverage drops.
-
-    @param old_summary: Older coverage summary.
-    @param new_summary: Newer coverage summary.
-    @return: List of report configuration names with dropped coverage.
-    """
-    rcs = []
-    if "children" in old_summary and "children" in new_summary:
-        new_children_map = {child["name"]: child for child in new_summary["children"]}
-        for c1 in old_summary["children"]:
-            match = new_children_map.get(c1["name"])
-            if match:
-                rcs.extend(compare_coverage_summaries(c1, match))
-
-    if (
-        old_summary.get("coveragePercent", 0) - new_summary.get("coveragePercent", 0)
-        > settings.COVERAGE_REPORT_DELTA
-    ):
-        rcs.append(old_summary["name"])
-
-    return rcs
-
-
-def identify_coverage_drops(revision, ipc_only=False):
-    """Identify coverage drops by comparing the two most recent coverage summaries
-
-    @param revision: Revision of the most recent weekly report.
-    @param ipc_only: Boolean indicating we should compare IPC reports.
-    """
-    from crashmanager.models import User
-
-    from .models import Collection, ReportSummary
-    from .tasks import calculate_report_summary
-
-    collections = Collection.objects.filter(
-        description__startswith="Weekly Report"
-    ).order_by("-created")
-    if ipc_only:
-        collections = tuple(collections.filter(description__contains="IPC")[:2])
-    else:
-        collections = tuple(collections.exclude(description__contains="IPC")[:2])
-
-    if len(collections) != 2:
-        logger.warning(
-            "Not enough reports found. Expected at least 2, found %d.",
-            len(collections),
-        )
-        return
-
-    current, previous = collections
-    if not current.revision == revision:
-        logger.error(
-            "Mismatch in report revisions. Current revision: %s, expected revision: %s",
-            current.revision,
-            revision,
-        )
-        return
-
-    for collection in collections:
-        if not hasattr(collection, "reportsummary"):
-            summary = ReportSummary(collection=collection, cached_result=None)
-            summary.save()
-            calculate_report_summary.apply(args=(summary.pk,))
-
-    # Refresh current and previous to ensure the report_summary is available
-    current = Collection.objects.get(pk=current.pk)
-    previous = Collection.objects.get(pk=previous.pk)
-
-    # Get list of users with the coverage_drop notification enabled
-    cm_uids = User.objects.filter(coverage_drop=True).values_list("user_id", flat=True)
-    django_users = DjangoUser.objects.filter(id__in=cm_uids).distinct()
-    recipients = django_users.filter(user_permissions__codename="view_covmanager")
-
-    # Compare both report summaries
-    old_summary = json.loads(previous.reportsummary.cached_result)
-    new_summary = json.loads(current.reportsummary.cached_result)
-    coverage_drops = compare_coverage_summaries(old_summary, new_summary)
-
-    if len(coverage_drops) > 0:
-        url = f"{reverse('covmanager:collections_diff')}#ids={previous.id},{current.id}"
-        notify.send(
-            current,
-            recipient=recipients,
-            verb="coverage_drop",
-            level="warning",
-            description=(
-                f"Drop detected in coverage collection {current.id} "
-                f"in the following report configurations: {', '.join(coverage_drops)}."
-            ),
-            diff_url=url,
-        )
 
 
 @app.task(ignore_result=True)
