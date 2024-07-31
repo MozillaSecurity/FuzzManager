@@ -11,6 +11,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import sys
 from pathlib import Path
 
+pytest_plugins = ["covmanager.tests.conftest"]
+
 
 def pytest_ignore_collect(path, config):
     # 3.12 not supported yet

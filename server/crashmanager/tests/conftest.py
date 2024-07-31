@@ -34,8 +34,6 @@ from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.crashmanager.tests")
 
-pytest_plugins = ["covmanager.tests.conftest"]
-
 
 def _create_user(
     username,
