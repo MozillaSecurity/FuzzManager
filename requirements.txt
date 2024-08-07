@@ -90,7 +90,7 @@ cryptography==42.0.7
     #   mozilla-django-oidc
     #   pyopenssl
     #   secretstorage
-django==4.2.13
+django==4.2.15
     # via
     #   FuzzManager (setup.py)
     #   crispy-bootstrap3
