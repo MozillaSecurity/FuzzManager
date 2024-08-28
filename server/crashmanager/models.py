@@ -25,24 +25,40 @@ if getattr(settings, "USE_CELERY", None):
 
 
 class Tool(models.Model):
-    name = models.CharField(max_length=63)
+    name = models.CharField(max_length=63, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class Platform(models.Model):
-    name = models.CharField(max_length=63)
+    name = models.CharField(max_length=63, unique=True)
 
 
 class Product(models.Model):
     name = models.CharField(max_length=63)
     version = models.CharField(max_length=127, blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "version"],
+                name="unique_product_version",
+            ),
+        ]
+
 
 class OS(models.Model):
     name = models.CharField(max_length=63)
     version = models.CharField(max_length=127, blank=True, null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "version"],
+                name="unique_os_version",
+            ),
+        ]
 
 
 class TestCase(models.Model):
@@ -78,7 +94,7 @@ class TestCase(models.Model):
 
 
 class Client(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
 
 
 class BugProvider(models.Model):
