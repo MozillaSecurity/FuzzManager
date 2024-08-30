@@ -116,7 +116,7 @@ export default {
         this.loading = true;
         try {
           const data = await api.listPools(this.buildParams());
-          this.pools = data.results.map((pool) => {
+          this.pools = data.map((pool) => {
             pool.pool_name_isort = pool.pool_name.toLowerCase();
             return pool;
           });

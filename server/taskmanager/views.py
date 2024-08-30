@@ -65,7 +65,7 @@ class PoolViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (CheckAppPermission,)
     queryset = Pool.objects.all()
     serializer_class = PoolSerializer
-    paginate_by_param = "limit"
+    pagination_class = None
     filter_backends = [
         JsonQueryFilterBackend,
         SimpleQueryFilterBackend,

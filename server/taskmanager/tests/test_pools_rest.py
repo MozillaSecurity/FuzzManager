@@ -86,12 +86,9 @@ def test_rest_pool_read(api_client, item):
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))
     if not item:
-        assert set(resp.keys()) == {"count", "previous", "results", "next"}
-        assert resp["count"] == 1
-        assert resp["previous"] is None
-        assert resp["next"] is None
-        assert len(resp["results"]) == 1
-        resp = resp["results"][0]
+        assert isinstance(resp, list)
+        assert len(resp) == 1
+        resp = resp[0]
     assert set(resp.keys()) == {
         "pool_id",
         "pool_name",
