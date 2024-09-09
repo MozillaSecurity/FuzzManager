@@ -18,7 +18,6 @@ urlpatterns = [
     re_path(r"^login/$", login, name="login"),
     re_path(r"^logout/$", LogoutView.as_view(), name="logout"),
     re_path(r"^crashmanager/", include("crashmanager.urls")),
-    re_path(r"^taskmanager/", include("taskmanager.urls")),
     re_path(
         "inbox/notifications/",
         include(

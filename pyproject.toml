@@ -27,9 +27,7 @@ known_first_party = [
     "Collector",
     "FTB",
     "Reporter",
-    "TaskStatusReporter",
     "crashmanager",
-    "taskmanager",
 ]
 profile = "black"
 

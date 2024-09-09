@@ -115,7 +115,7 @@ test("inbox intercepts simple dismiss event from child component", async () => {
 
   (await findAllByTitle("Dismiss")).forEach((b) => fireEvent.click(b));
 
-  expect(dismissNotification).toHaveBeenCalledTimes(3);
+  expect(dismissNotification).toHaveBeenCalledTimes(2);
   await findByText("No unread notification.");
   expect(queryByText("Inaccessible bug")).toBeNull();
   expect(queryByText("Bucket hit")).toBeNull();
@@ -133,7 +133,7 @@ test("inbox displays an error if dismissing one notification failed", async () =
 
   (await findAllByTitle("Dismiss")).forEach((b) => fireEvent.click(b));
 
-  expect(dismissNotification).toHaveBeenCalledTimes(3);
+  expect(dismissNotification).toHaveBeenCalledTimes(2);
   // Notifications are still here
   findByText("Inaccessible bug");
   findByText("Bucket hit");

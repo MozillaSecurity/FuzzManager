@@ -12,8 +12,6 @@ import CrashStatsGraph from "./components/CrashStatsGraph.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
 import Inbox from "./components/Notifications/Inbox.vue";
-import PoolView from "./components/Pools/View.vue";
-import PoolsList from "./components/Pools/List.vue";
 import ProviderKey from "./components/ProviderKey.vue";
 import SignatureView from "./components/Signatures/View.vue";
 import SignaturesList from "./components/Signatures/List.vue";
@@ -35,8 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
       crashstatsgraph: CrashStatsGraph,
       createoredit: CreateOrEdit,
       inbox: Inbox,
-      poolslist: PoolsList,
-      poolview: PoolView,
       ppcselect: FullPPCSelect,
       providerkey: ProviderKey,
       signatureslist: SignaturesList,

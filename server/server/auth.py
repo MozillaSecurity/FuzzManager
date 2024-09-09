@@ -51,13 +51,4 @@ class CheckAppPermission(permissions.BasePermission):
                         and request.user.has_perm(f"{app}.{app}_report_crashes")
                     ):
                         return True
-                elif app == "taskmanager":
-                    if (
-                        view_name == "TaskViewSet"
-                        and request.method == "POST"
-                        and view.action == "update_status"
-                        and not view.detail
-                        and request.user.has_perm(f"crashmanager.{app}_report_status")
-                    ):
-                        return True
         return False

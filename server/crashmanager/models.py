@@ -738,15 +738,9 @@ class User(models.Model):
                 "view_crashmanager",
                 "Can see CrashManager app (required for crashmanager_* perms)",
             ),
-            (
-                "view_taskmanager",
-                "Can see TaskManager app (required for taskmanager_* perms)",
-            ),
             ("crashmanager_report_crashes", "Can report CrashManager crashes"),
             ("crashmanager_download_signatures", "Can download signatures.zip"),
             ("crashmanager_all", "Full access to CrashManager"),
-            ("taskmanager_report_status", "Can report TaskManager status"),
-            ("taskmanager_all", "Full access to TaskManager"),
         )
 
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)

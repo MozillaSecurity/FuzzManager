@@ -18,12 +18,6 @@ def fm_user():
     user.user_permissions.add(
         Permission.objects.get(content_type=content_type, codename="crashmanager_all")
     )
-    user.user_permissions.add(
-        Permission.objects.get(content_type=content_type, codename="view_taskmanager")
-    )
-    user.user_permissions.add(
-        Permission.objects.get(content_type=content_type, codename="taskmanager_all")
-    )
     user.password_raw = "test"
 
     (token, created) = Token.objects.get_or_create(user=user)

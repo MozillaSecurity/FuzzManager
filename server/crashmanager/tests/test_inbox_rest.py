@@ -14,9 +14,7 @@ import logging
 
 import pytest
 import requests
-from django.conf import settings
 from django.urls import reverse
-from django.utils import timezone
 from notifications.models import Notification
 from notifications.signals import notify
 
@@ -31,7 +29,6 @@ from crashmanager.models import (
     Product,
     Tool,
 )
-from taskmanager.models import Pool, Task
 
 LOG = logging.getLogger("fm.crashmanager.tests.inbox.rest")
 
@@ -106,10 +103,6 @@ def test_rest_notifications_list_unread(api_client, user, cm):
     provider = BugProvider.objects.create(
         classname="BugzillaProvider", hostname="provider.com", urlTemplate="%s"
     )
-    pool = Pool.objects.create()
-    task = Task.objects.create(
-        pool=pool, task_id="test-task-id", run_id=0, expires=timezone.now()
-    )
     bug = Bug.objects.create(externalId="123456", externalType=provider)
     bucket = Bucket.objects.create(
         bug=bug,
@@ -150,14 +143,6 @@ def test_rest_notifications_list_unread(api_client, user, cm):
         target=entry,
         verb="bucket_hit",
     )
-    notify.send(
-        task,
-        description="Notification 4",
-        level="warning",
-        recipient=user,
-        target=task.pool,
-        verb="tasks_failed",
-    )
     n3 = Notification.objects.get(description="Notification 3")
     n3.unread = False
     n3.save()
@@ -167,25 +152,14 @@ def test_rest_notifications_list_unread(api_client, user, cm):
     assert resp.status_code == requests.codes["ok"]
     resp = resp.json()
     assert set(resp) == {"count", "next", "previous", "results"}
-    assert resp["count"] == 3
+    assert resp["count"] == 2
     assert resp["next"] is None
     assert resp["previous"] is None
-    assert len(resp["results"]) == 3
+    assert len(resp["results"]) == 2
     # Popping out timestamps
     for r in resp["results"]:
         del r["timestamp"]
     assert resp["results"] == [
-        {
-            "id": 4,
-            "actor_url": (
-                f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"
-            ),
-            "data": None,
-            "description": "Notification 4",
-            "external_bug_url": None,
-            "target_url": reverse("taskmanager:pool-view-ui", kwargs={"pk": pool.id}),
-            "verb": "tasks_failed",
-        },
         {
             "id": 2,
             "actor_url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.id}),

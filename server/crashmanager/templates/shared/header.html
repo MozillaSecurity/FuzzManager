@@ -18,9 +18,6 @@
                         {% if perms.crashmanager.view_crashmanager %}
                         <li><a href="/crashmanager"><i class="bi bi-exclamation-triangle-fill"> </i> CrashManager</a></li>
                         {% endif %}
-                        {% if perms.crashmanager.view_taskmanager %}
-                        <li><a href="/taskmanager"><i class="bi bi-bar-chart-steps"></i> TaskManager</a></li>
-                        {% endif %}
                     </ul>
                 </li>
             </ul>
@@ -32,8 +29,6 @@
                 <li><a href="{% url 'crashmanager:signatures' %}"><i class="bi bi-tag-fill"></i> Signatures</a></li>
                 <li><a href="{% url 'crashmanager:stats' %}"><i class="bi bi-bar-chart-fill"></i> Statistics</a></li>
                 <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="bi bi-bug-fill"></i> Providers</a></li>
-            {% elif app_name == 'taskmanager' %}
-                <li><a href="{% url 'taskmanager:pool-list-ui' %}"><i class="bi bi-card-list"></i> Pools</a></li>
 	        {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">

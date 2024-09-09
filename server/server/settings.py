@@ -49,7 +49,6 @@ INSTALLED_APPS = (
     # 'livesync',
     "django.contrib.staticfiles",
     "crashmanager",
-    "taskmanager",
     "rest_framework",
     "rest_framework.authtoken",
     # 'mozilla_django_oidc',
@@ -148,7 +147,6 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r"/login/.*",
     r"/logout/.*",
     r"/oidc/.*",
-    r"/taskmanager/rest/.*",
     r"/crashmanager/rest/.*",
 )
 
@@ -230,13 +228,6 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
-        "taskmanager_logfile": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(LOG_DIR, "taskmanager.log"),
-            "maxBytes": 16777216,
-            "formatter": "simple",
-        },
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
@@ -246,11 +237,6 @@ LOGGING = {
     "loggers": {
         "flake8": {
             "level": "WARNING",
-        },
-        "taskmanager": {
-            "handlers": ["taskmanager_logfile"],
-            "propagate": True,
-            "level": "INFO",
         },
     },
 }
@@ -262,24 +248,6 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# TaskManager configuration
-#
-# TaskManager is used to allow tracking fuzzing tasks run in a Taskcluster instance.
-# Most people will find EC2 easier to use for small clusters.
-#
-# TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
-# TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
-# TC_ROOT_URL = ""  # root URL to the taskcluster instance
-# TC_PROJECT = ""  # taskcluster project for fuzzing resources
-# extra pools to include in TaskManager that don't fit the "platform-pool[0-9]+" pattern
-# TC_EXTRA_POOLS = []
-
-# Credentials for Mozilla Pulse instance used for by Taskcluster instance
-# (for TaskManager)
-# TC_PULSE_VHOST = ""
-# TC_PULSE_USERNAME = ""
-# TC_PULSE_PASSWORD = ""
 
 # Crashmanager configuration
 #
@@ -314,7 +282,6 @@ CELERY_RESULT_BACKEND = "redis:///1"
 CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
     "crashmanager.cron.*": {"queue": "cron"},
-    "taskmanager.cron.*": {"queue": "cron"},
 }
 CELERY_BEAT_SCHEDULE = {
     # 'Poll Bugzilla every 15 minutes': {
@@ -332,14 +299,6 @@ CELERY_BEAT_SCHEDULE = {
     "Create signatures.zip hourly": {
         "task": "crashmanager.cron.export_signatures",
         "schedule": 60 * 60,
-    },
-    # 'Poll TaskManager tasks with missed pulses': {
-    #     'task': 'taskmanager.cron.update_tasks',
-    #     'schedule': 15 * 60,
-    # },
-    "Cleanup expired TaskManager tasks": {
-        "task": "taskmanager.cron.delete_expired",
-        "schedule": 5 * 60,
     },
 }
 
