@@ -52,7 +52,6 @@ def test_user_settings_edit(client, cm):
     assert user.user.email == "test@mozilla.com"
     assert not user.inaccessible_bug
     assert not user.bucket_hit
-    assert not user.tasks_failed
     client.login(username="test", password="test")
     response = client.post(
         reverse("crashmanager:usersettings"),
@@ -63,7 +62,6 @@ def test_user_settings_edit(client, cm):
             "email": "mynewemail@mozilla.com",
             "inaccessible_bug": True,
             "bucket_hit": True,
-            "tasks_failed": True,
         },
     )
     LOG.debug(response)
@@ -78,4 +76,3 @@ def test_user_settings_edit(client, cm):
     assert user.user.email == "mynewemail@mozilla.com"
     assert user.inaccessible_bug
     assert user.bucket_hit
-    assert user.tasks_failed

@@ -189,7 +189,6 @@ class UserSettingsForm(ModelForm):
         HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
         "inaccessible_bug",
         "bucket_hit",
-        "tasks_failed",
         Submit("submit", "Save settings", css_class="btn btn-danger"),
     )
     defaultToolsFilter = ModelMultipleChoiceField(
@@ -212,7 +211,6 @@ class UserSettingsForm(ModelForm):
             "defaultTemplateId",
             "bucket_hit",
             "inaccessible_bug",
-            "tasks_failed",
         ]
 
     def __init__(self, *args, **kwargs):
