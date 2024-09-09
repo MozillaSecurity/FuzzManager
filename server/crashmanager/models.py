@@ -739,18 +739,12 @@ class User(models.Model):
                 "Can see CrashManager app (required for crashmanager_* perms)",
             ),
             (
-                "view_covmanager",
-                "Can see CovManager app (required for covmanager_* perms",
-            ),
-            (
                 "view_taskmanager",
                 "Can see TaskManager app (required for taskmanager_* perms)",
             ),
             ("crashmanager_report_crashes", "Can report CrashManager crashes"),
             ("crashmanager_download_signatures", "Can download signatures.zip"),
             ("crashmanager_all", "Full access to CrashManager"),
-            ("covmanager_submit_collection", "Can submit coverage data"),
-            ("covmanager_all", "Full access to CovManager"),
             ("taskmanager_report_status", "Can report TaskManager status"),
             ("taskmanager_all", "Full access to TaskManager"),
         )

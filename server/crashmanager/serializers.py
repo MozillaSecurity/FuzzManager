@@ -10,7 +10,6 @@ from notifications.models import Notification
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from covmanager.models import Collection
 from crashmanager.models import (
     OS,
     Bucket,
@@ -390,11 +389,6 @@ class NotificationSerializer(serializers.ModelSerializer):
         if isinstance(notification.actor, Bucket):
             return reverse(
                 "crashmanager:sigview", kwargs={"sigid": notification.actor.id}
-            )
-        if isinstance(notification.actor, Collection):
-            return reverse(
-                "covmanager:collections_browse",
-                kwargs={"collectionid": notification.actor.id},
             )
         if isinstance(notification.actor, Task):
             task = notification.actor

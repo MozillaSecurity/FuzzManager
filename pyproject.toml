@@ -25,11 +25,9 @@ omit = [
 [tool.isort]
 known_first_party = [
     "Collector",
-    "CovReporter",
     "FTB",
     "Reporter",
     "TaskStatusReporter",
-    "covmanager",
     "crashmanager",
     "taskmanager",
 ]

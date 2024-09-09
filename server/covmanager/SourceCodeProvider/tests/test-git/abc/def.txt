@@ -1,5 +1,0 @@
-Hi there!
-
-I'm a multi-line file,
-
-nice to meet you.

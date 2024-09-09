@@ -39,6 +39,6 @@ def test_ls_perm(capsys):
     User.objects.create_user("test", "test@example.com", "test")
     call_command("ls_permission", "test")
     assert {line.split(" ", 1)[0] for line in capsys.readouterr().out.splitlines()} == {
-        "view_covmanager",
-        "covmanager_all",
+        "view_crashmanager",
+        "crashmanager_all",
     }

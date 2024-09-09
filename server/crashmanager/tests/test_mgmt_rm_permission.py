@@ -44,8 +44,8 @@ def test_rm_perms_from_empty():
 
 def test_one_perm():
     user = User.objects.create_user("test", "test@example.com", "test")
-    call_command("rm_permission", "test", "view_covmanager")
-    assert set(user.get_all_permissions()) == {"crashmanager.covmanager_all"}
+    call_command("rm_permission", "test", "view_crashmanager")
+    assert set(user.get_all_permissions()) == {"crashmanager.crashmanager_all"}
 
 
 def test_two_perms():
@@ -53,7 +53,7 @@ def test_two_perms():
     call_command(
         "rm_permission",
         "test",
-        "covmanager_all",
-        "view_covmanager",
+        "crashmanager_all",
+        "view_crashmanager",
     )
     assert set(user.get_all_permissions()) == set()

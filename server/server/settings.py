@@ -50,10 +50,8 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "crashmanager",
     "taskmanager",
-    "covmanager",
     "rest_framework",
     "rest_framework.authtoken",
-    "chartjs",
     # 'mozilla_django_oidc',
     "crispy_forms",
     "crispy_bootstrap3",
@@ -150,15 +148,14 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r"/login/.*",
     r"/logout/.*",
     r"/oidc/.*",
-    r"/covmanager/rest/.*",
     r"/taskmanager/rest/.*",
     r"/crashmanager/rest/.*",
 )
 
 # permissions given to new users by default
 DEFAULT_PERMISSIONS = [
-    "crashmanager.models.User:view_covmanager",
-    "crashmanager.models.User:covmanager_all",
+    "crashmanager.models.User:view_crashmanager",
+    "crashmanager.models.User:crashmanager_all",
 ]
 
 # Database
@@ -316,7 +313,6 @@ CELERY_BROKER_URL = "redis:///2"
 CELERY_RESULT_BACKEND = "redis:///1"
 CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
-    "covmanager.cron.*": {"queue": "cron"},
     "crashmanager.cron.*": {"queue": "cron"},
     "taskmanager.cron.*": {"queue": "cron"},
 }
@@ -355,6 +351,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Notifications
 DJANGO_NOTIFICATIONS_CONFIG = {"USE_JSONFIELD": True}
-
-# Report coverage reports with a drop of greater than 10%
-COVERAGE_REPORT_DELTA = 10

@@ -49,9 +49,7 @@ def test_two_perms():
         "add_permission",
         "test",
         "view_crashmanager",
-        "view_covmanager",
     )
     assert set(user.get_all_permissions()) == {
         "crashmanager.view_crashmanager",
-        "crashmanager.view_covmanager",
     }

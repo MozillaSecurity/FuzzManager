@@ -101,8 +101,7 @@ def test_rest_notifications_methods_not_found(api_client, user, method, url):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-@pytest.mark.usefixtures("covmgr_helper")
-def test_rest_notifications_list_unread(api_client, user, cm, covmgr_helper):
+def test_rest_notifications_list_unread(api_client, user, cm):
     """test that list returns the right notifications"""
     provider = BugProvider.objects.create(
         classname="BugzillaProvider", hostname="provider.com", urlTemplate="%s"
@@ -126,8 +125,6 @@ def test_rest_notifications_list_unread(api_client, user, cm, covmgr_helper):
         "tool": Tool.objects.create(),
     }
     entry = CrashEntry.objects.create(bucket=bucket, rawStderr="match", **defaults)
-    repo = covmgr_helper.create_repository("git")
-    collection = covmgr_helper.create_collection(repository=repo)
 
     notify.send(
         bug,
@@ -161,14 +158,6 @@ def test_rest_notifications_list_unread(api_client, user, cm, covmgr_helper):
         target=task.pool,
         verb="tasks_failed",
     )
-    notify.send(
-        collection,
-        description="Notification 5",
-        level="warning",
-        recipient=user,
-        target=collection,
-        verb="coverage_drop",
-    )
     n3 = Notification.objects.get(description="Notification 3")
     n3.unread = False
     n3.save()
@@ -178,23 +167,14 @@ def test_rest_notifications_list_unread(api_client, user, cm, covmgr_helper):
     assert resp.status_code == requests.codes["ok"]
     resp = resp.json()
     assert set(resp) == {"count", "next", "previous", "results"}
-    assert resp["count"] == 4
+    assert resp["count"] == 3
     assert resp["next"] is None
     assert resp["previous"] is None
-    assert len(resp["results"]) == 4
+    assert len(resp["results"]) == 3
     # Popping out timestamps
     for r in resp["results"]:
         del r["timestamp"]
     assert resp["results"] == [
-        {
-            "actor_url": "/covmanager/collections/1/browse/",
-            "data": None,
-            "description": "Notification 5",
-            "external_bug_url": None,
-            "id": 5,
-            "target_url": None,
-            "verb": "coverage_drop",
-        },
         {
             "id": 4,
             "actor_url": (

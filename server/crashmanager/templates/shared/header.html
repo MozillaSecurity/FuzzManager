@@ -21,9 +21,6 @@
                         {% if perms.crashmanager.view_taskmanager %}
                         <li><a href="/taskmanager"><i class="bi bi-bar-chart-steps"></i> TaskManager</a></li>
                         {% endif %}
-                        {% if perms.crashmanager.view_covmanager %}
-                        <li><a href="/covmanager"><i class="bi bi-file-bar-graph"></i> CovManager</a></li>
-                        {% endif %}
                     </ul>
                 </li>
             </ul>
@@ -37,11 +34,6 @@
                 <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="bi bi-bug-fill"></i> Providers</a></li>
             {% elif app_name == 'taskmanager' %}
                 <li><a href="{% url 'taskmanager:pool-list-ui' %}"><i class="bi bi-card-list"></i> Pools</a></li>
-            {% elif app_name == 'covmanager' %}
-                <li><a href="{% url 'covmanager:reports' %}"><i class="bi bi-file-bar-graph"></i> Reports</a></li>
-                <li><a href="{% url 'covmanager:collections' %}"><i class="bi bi-clipboard-data"></i> Collections</a></li>
-                <li><a href="{% url 'covmanager:repositories' %}"><i class="bi bi-archive-fill"></i> Repositories</a></li>
-                <li><a href="{% url 'covmanager:reportconfigurations' %}"><i class="bi bi-funnel-fill"></i> Report Configurations</a></li>
 	        {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">

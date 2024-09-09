@@ -15,12 +15,6 @@ from crashmanager.models import User
 
 
 def index(request):
-    user = User.get_or_create_restricted(request.user)[0]
-    # return crashmanager or covmanager, as allowed, in that order.
-    # if no permission to view any apps, then use crashmanager and let that fail
-    if not user.user.has_perm("crashmanager.view_crashmanager"):
-        if user.user.has_perm("crashmanager.view_covmanager"):
-            return redirect("covmanager:index")
     return redirect("crashmanager:index")
 
 
