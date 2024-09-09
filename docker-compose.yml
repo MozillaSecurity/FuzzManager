@@ -3,10 +3,10 @@ version: "3.7"
 services:
 
   backend:
-    container_name: fuzzmanager
+    container_name: webcompatmanager
     build: .
     pull_policy: never
-    image: mozillasecurity/fuzzmanager:compose
+    image: mozillasecurity/webcompatmanager:compose
 
     depends_on:
       - database
@@ -21,7 +21,7 @@ services:
 
   celery-beat:
     container_name: fm-celery-beat
-    image: mozillasecurity/fuzzmanager:compose
+    image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 
     command: celery -A celeryconf beat -l info
@@ -35,7 +35,7 @@ services:
 
   celery-cron-worker:
     container_name: fm-celery-cron-worker
-    image: mozillasecurity/fuzzmanager:compose
+    image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 
     command: celery -A celeryconf worker -l info -c 4 -n cron@%h -Q cron
@@ -51,7 +51,7 @@ services:
 
   celery-worker:
     container_name: fm-celery-worker
-    image: mozillasecurity/fuzzmanager:compose
+    image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 
     command: celery -A celeryconf worker -l info -n worker@%h -Q celery
@@ -66,21 +66,21 @@ services:
       - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
 
   database:
-    container_name: fuzzmanager-db
+    container_name: webcompatmanager-db
     image: mysql:8.3.0
     command: --default-authentication-plugin=mysql_native_password
 
     environment:
-      MYSQL_USER: fuzzmanager
+      MYSQL_USER: webcompatmanager
       MYSQL_PASSWORD: mozilla1234
-      MYSQL_DATABASE: fuzzmanager
+      MYSQL_DATABASE: webcompatmanager
       MYSQL_ROOT_PASSWORD: mozilla6789
 
     volumes:
       - mysql:/var/lib/mysql
 
   redis:
-    container_name: fuzzmanager-redis
+    container_name: webcompatmanager-redis
     image: redis:7-alpine
 
 volumes:
