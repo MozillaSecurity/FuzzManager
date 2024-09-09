@@ -31,11 +31,11 @@ pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 def _crashentry_create(**kwds):
     defaults = {
-        "client": Client.objects.create(),
-        "os": OS.objects.create(),
-        "platform": Platform.objects.create(),
-        "product": Product.objects.create(),
-        "tool": Tool.objects.create(),
+        "client": Client.objects.get_or_create()[0],
+        "os": OS.objects.get_or_create()[0],
+        "platform": Platform.objects.get_or_create()[0],
+        "product": Product.objects.get_or_create()[0],
+        "tool": Tool.objects.get_or_create()[0],
     }
     defaults.update(kwds)
     return CrashEntry.objects.create(**defaults)
