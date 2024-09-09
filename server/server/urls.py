@@ -20,7 +20,6 @@ urlpatterns = [
     re_path(r"^covmanager/", include("covmanager.urls")),
     re_path(r"^crashmanager/", include("crashmanager.urls")),
     re_path(r"^taskmanager/", include("taskmanager.urls")),
-    re_path(r"^ec2spotmanager/", include("ec2spotmanager.urls")),
     re_path(
         "inbox/notifications/",
         include(

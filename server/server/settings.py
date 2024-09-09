@@ -48,7 +48,6 @@ INSTALLED_APPS = (
     "django.contrib.messages",
     # 'livesync',
     "django.contrib.staticfiles",
-    "ec2spotmanager",
     "crashmanager",
     "taskmanager",
     "covmanager",
@@ -151,7 +150,6 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r"/login/.*",
     r"/logout/.*",
     r"/oidc/.*",
-    r"/ec2spotmanager/rest/.*",
     r"/covmanager/rest/.*",
     r"/taskmanager/rest/.*",
     r"/crashmanager/rest/.*",
@@ -235,13 +233,6 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
-        "ec2spotmanager_logfile": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(LOG_DIR, "ec2spotmanager.log"),
-            "maxBytes": 16777216,
-            "formatter": "simple",
-        },
         "taskmanager_logfile": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
@@ -259,26 +250,6 @@ LOGGING = {
         "flake8": {
             "level": "WARNING",
         },
-        "boto": {
-            "handlers": ["ec2spotmanager_logfile"],
-            "propagate": True,
-            "level": "WARNING",
-        },
-        "laniakea": {
-            "handlers": ["ec2spotmanager_logfile"],
-            "propagate": True,
-            "level": "INFO",
-        },
-        "libcloud": {
-            "handlers": ["ec2spotmanager_logfile"],
-            "propagate": True,
-            "level": "INFO",
-        },
-        "ec2spotmanager": {
-            "handlers": ["ec2spotmanager_logfile"],
-            "propagate": True,
-            "level": "INFO",
-        },
         "taskmanager": {
             "handlers": ["taskmanager_logfile"],
             "propagate": True,
@@ -294,26 +265,6 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# EC2Spotmanager configuration
-# If access keys are None, boto will look for global credentials
-# (~/.aws/credentials or IAM role)
-#
-AWS_ACCESS_KEY_ID = None
-AWS_SECRET_ACCESS_KEY = None
-
-# Google Compute credentials
-# This is using service account credentials
-# TODO: It should also be possible to use "installed application" or GCE role to
-# authenticate, see libcloud docs
-#
-GCE_CLIENT_EMAIL = None  # these 3 fields are extracted from the JSON auth file
-GCE_PROJECT_ID = None
-GCE_PRIVATE_KEY = None  # PK as a string blob
-GCE_API_KEY = (
-    None  # this is a separate key created at "APIs & Services" / "Credentials"
-)
-GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 
 # TaskManager configuration
 #
@@ -367,7 +318,6 @@ CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
     "covmanager.cron.*": {"queue": "cron"},
     "crashmanager.cron.*": {"queue": "cron"},
-    "ec2spotmanager.cron.*": {"queue": "cron"},
     "taskmanager.cron.*": {"queue": "cron"},
 }
 CELERY_BEAT_SCHEDULE = {
@@ -387,18 +337,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "crashmanager.cron.export_signatures",
         "schedule": 60 * 60,
     },
-    # 'Update EC2SpotManager statistics': {
-    #     'task': 'ec2spotmanager.cron.update_stats',
-    #     'schedule': 60,
-    # },
-    # 'Check EC2SpotManager pools': {
-    #     'task': 'ec2spotmanager.cron.check_instance_pools',
-    #     'schedule': 60,
-    # },
-    # 'Cache EC2 spot market pricing in Redis': {
-    #     'task': 'ec2spotmanager.cron.update_prices',
-    #     'schedule': 15 * 60,
-    # },
     # 'Poll TaskManager tasks with missed pulses': {
     #     'task': 'taskmanager.cron.update_tasks',
     #     'schedule': 15 * 60,

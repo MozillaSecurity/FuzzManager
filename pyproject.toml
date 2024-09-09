@@ -26,13 +26,11 @@ omit = [
 known_first_party = [
     "Collector",
     "CovReporter",
-    "EC2StatusReporter",
     "FTB",
     "Reporter",
     "TaskStatusReporter",
     "covmanager",
     "crashmanager",
-    "ec2spotmanager",
     "taskmanager",
 ]
 profile = "black"

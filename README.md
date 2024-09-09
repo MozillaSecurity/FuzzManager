@@ -41,14 +41,6 @@ with a CrashManager server.  Collector provides an easy client interface that al
 your clients to submit crashes as well as download and match existing signatures to
 avoid reporting frequent issues repeatedly.
 
-## EC2SpotManager
-
-EC2SpotManager is another (optional) part of FuzzManager that allows you to
-manage large pools of spot instances in the Amazon Cloud. It supports hierarchical
-configurations to avoid configuration duplication and ensures that your
-instances are always running in the desired quantity as well as in the cheapest
-zone.
-
 # Questions
 
 Please send any questions regarding the project to choller-at-mozilla-dot-com.
@@ -71,7 +63,7 @@ Dependency constraints are listed in [requirements.txt](requirements.txt). You c
 
 ```pip install -c requirements.txt '.[server]'```
 
-A [Redis](https://redis.io/) server is also required for EC2SpotManager, and can be installed on a Debian-based Linux
+A [Redis](https://redis.io/) server is also required, and can be installed on a Debian-based Linux
 with: 
 
 ```sudo apt-get install redis-server```

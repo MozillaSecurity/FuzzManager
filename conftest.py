@@ -26,7 +26,6 @@ def pytest_ignore_collect(path, config):
         if rel_path.parts[0] in {
             "server",
             "Collector",
-            "EC2Reporter",
             "TaskStatusReporter",
         }:
             return True

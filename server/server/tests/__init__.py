@@ -13,14 +13,6 @@ def fm_user():
     user = User.objects.create_user("fuzzmanager", "test@example.com", "test")
     content_type = ContentType.objects.get_for_model(CMUser)
     user.user_permissions.add(
-        Permission.objects.get(
-            content_type=content_type, codename="view_ec2spotmanager"
-        )
-    )
-    user.user_permissions.add(
-        Permission.objects.get(content_type=content_type, codename="ec2spotmanager_all")
-    )
-    user.user_permissions.add(
         Permission.objects.get(content_type=content_type, codename="view_crashmanager")
     )
     user.user_permissions.add(

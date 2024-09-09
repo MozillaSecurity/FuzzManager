@@ -60,13 +60,6 @@ class CheckAppPermission(permissions.BasePermission):
                         and request.user.has_perm(f"crashmanager.{app}_report_status")
                     ):
                         return True
-                elif app == "ec2spotmanager":
-                    if (
-                        view_name == "MachineStatusViewSet"
-                        and request.method == "POST"
-                        and request.user.has_perm(f"crashmanager.{app}_report_status")
-                    ):
-                        return True
                 elif app == "covmanager":
                     if (
                         view_name == "CollectionViewSet"

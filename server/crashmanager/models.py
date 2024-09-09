@@ -743,10 +743,6 @@ class User(models.Model):
                 "Can see CovManager app (required for covmanager_* perms",
             ),
             (
-                "view_ec2spotmanager",
-                "Can see EC2SpotManager app (required for ec2spotmanager_* perms)",
-            ),
-            (
                 "view_taskmanager",
                 "Can see TaskManager app (required for taskmanager_* perms)",
             ),
@@ -757,8 +753,6 @@ class User(models.Model):
             ("covmanager_all", "Full access to CovManager"),
             ("taskmanager_report_status", "Can report TaskManager status"),
             ("taskmanager_all", "Full access to TaskManager"),
-            ("ec2spotmanager_report_status", "Can report EC2SpotManager status"),
-            ("ec2spotmanager_all", "Full access to EC2SpotManager"),
         )
 
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
