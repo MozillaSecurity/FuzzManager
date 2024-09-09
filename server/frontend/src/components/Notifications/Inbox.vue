@@ -63,14 +63,6 @@
             />
             <hr />
           </template>
-          <template v-else-if="notification.verb === 'coverage_drop'">
-            <CoverageDrop
-              :notification="notification"
-              v-on:remove-notification="removeNotification($event)"
-              v-on:update-dismiss-error="dismissError = $event"
-            />
-            <hr />
-          </template>
           <template v-else-if="notification.verb === 'inaccessible_bug'">
             <InaccessibleBug
               :notification="notification"
@@ -89,7 +81,6 @@
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
 import BucketHit from "./BucketHit.vue";
-import CoverageDrop from "./CoverageDrop.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
 
 const pageSize = 25;
@@ -97,7 +88,6 @@ const pageSize = 25;
 export default {
   components: {
     BucketHit,
-    CoverageDrop,
     InaccessibleBug,
   },
   data: () => ({
