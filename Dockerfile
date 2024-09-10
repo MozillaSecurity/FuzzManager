@@ -47,7 +47,6 @@ RUN mkdir -p /data/fuzzing-tc-config && chown -R worker:worker /src /data/fuzzin
 USER worker
 ENV PATH "${PATH}:/home/worker/.local/bin"
 RUN pip install --no-cache-dir --no-index --find-links /var/cache/wheels --no-deps -q /src[docker,server]
-RUN mkdir -m 0700 /home/worker/.ssh && cp /src/misc/sshconfig /home/worker/.ssh/config && ssh-keyscan github.com > /home/worker/.ssh/known_hosts
 
 # Use a custom settings file that can be overwritten
 ENV DJANGO_SETTINGS_MODULE "server.settings_docker"
