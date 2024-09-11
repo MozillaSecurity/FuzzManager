@@ -1,7 +1,7 @@
 """
-Collector -- Crash processing client
+Collector -- Report processing client
 
-Provide process and class level interfaces to process crash information with
+Provide process and class level interfaces to process report information with
 a remote server.
 
 @author:     Christian Holler (:decoder)

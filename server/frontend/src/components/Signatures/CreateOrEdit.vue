@@ -14,12 +14,12 @@
 
       <p v-if="inList.length">
         New issues that will be assigned to this bucket (
-        <a href="#crashes_in">list</a>):
+        <a href="#reports_in">list</a>):
         <span class="badge">{{ inListCount }}</span>
       </p>
       <p v-if="outList.length">
         Issues that will be removed from this bucket (
-        <a href="#crashes_out">list</a>):
+        <a href="#reports_out">list</a>):
         <span class="badge">{{ outListCount }}</span>
       </p>
 
@@ -67,7 +67,7 @@
         <div class="field">
           <input type="checkbox" id="id_reassign" v-model="reassign" />
           <label for="id_reassign">
-            Reassign matching crashes (unassigned crashes and crashes assigned
+            Reassign matching reports (unassigned reports and reports assigned
             to this bucket will be reassigned)
           </label>
         </div>
@@ -111,7 +111,7 @@
 
       <div class="field">
         <template v-if="inList.length">
-          <label id="crashes_in">
+          <label id="reports_in">
             New issues that will be assigned to this bucket
             {{ inListCount > inList.length ? " (truncated)" : "" }}:
           </label>
@@ -119,7 +119,7 @@
         </template>
 
         <template v-if="outList.length">
-          <label id="crashes_out">
+          <label id="reports_out">
             Issues that will be removed from this bucket
             {{ outListCount > outList.length ? " (truncated)" : "" }}:
           </label>
@@ -133,7 +133,7 @@
 <script>
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
-import List from "./CrashEntries/List.vue";
+import List from "./ReportEntries/List.vue";
 
 export default {
   components: {

@@ -2,7 +2,7 @@
 
 FuzzManager has two types of client configuration files, one for the machine
 and one for the binary that is being tested. It is highly recommended to use
-both as it makes the crash submit process a lot easier. However, if for some
+both as it makes the report submit process a lot easier. However, if for some
 reason you don't want to use configuration files, you can provide all the
 information as well using the Python APIs.
 
@@ -55,7 +55,7 @@ In addition, it can have a `Metadata` section described below.
 
 The `Metadata` section in the binary configuration file may contain
 *arbitrary* key/value pairs. The data contained in there is submitted
-with each crash that you send to the server.
+with each report that you send to the server.
 
 While you can make free use of this section, some values in there are
 interpreted by the server and/or used by other automation:

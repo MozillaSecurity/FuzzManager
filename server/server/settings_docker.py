@@ -12,7 +12,7 @@ ALLOWED_HOSTS = ["localhost"]
 
 BASE_DIR = "/data"
 COV_STORAGE = "/data/coverage"
-TEST_STORAGE = "/data/crashes"
+TEST_STORAGE = "/data/reports"
 USERDATA_STORAGE = "/data/userdata"
 
 REDIS_URL = (

@@ -1,0 +1,46 @@
+from django.core.mail import send_mail
+from django.core.management import BaseCommand
+from django.template.loader import render_to_string
+from notifications.models import Notification
+
+from reportmanager.models import User
+
+
+class Command(BaseCommand):
+    help = "Send notifications by email."
+
+    def handle(self, *args, **options):
+        # Select all notifications that haven't been sent by email for now
+        notifications = Notification.objects.filter(emailed=False)
+        for notification in notifications:
+            try:
+                user = User.objects.get(user=notification.recipient)
+            except User.DoesNotExist:
+                continue
+
+            if not user.user.email:
+                print(f"No user email for {user.user.username}")
+                continue
+            if not getattr(user, notification.verb):
+                print(f"{user.user.username} not watching {notification.verb} anymore")
+                continue
+
+            sent = send_mail(
+                subject=f"New '{notification.verb}' notification",
+                message=render_to_string(
+                    "notification_mail.html",
+                    context={
+                        "user": user,
+                        "notification": notification,
+                    },
+                ),
+                from_email=None,
+                recipient_list=[user.user.email],
+                fail_silently=True,
+            )
+            if sent == 0:
+                print(f"Failed to send notification email to {user.user.email}")
+                continue
+
+            notification.emailed = True
+            notification.save()

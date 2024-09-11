@@ -29,7 +29,7 @@ test("signature list has no buckets", async () => {
     localVue,
     router,
     props: {
-      watchUrl: "/crashmanager/signatures/watch/",
+      watchUrl: "/reportmanager/signatures/watch/",
       providers: [],
       activityRange: 14,
     },
@@ -54,7 +54,7 @@ test("signature list has two buckets", async () => {
     localVue,
     router,
     props: {
-      watchUrl: "/crashmanager/signatures/watch/",
+      watchUrl: "/reportmanager/signatures/watch/",
       providers: [],
       activityRange: 14,
     },

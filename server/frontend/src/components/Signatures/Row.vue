@@ -9,7 +9,7 @@
       <span class="two-line-limit">{{ signature.shortDescription }}</span>
     </td>
     <td>
-      <activitygraph :data="signature.crash_history" :range="activityRange" />
+      <activitygraph :data="signature.report_history" :range="activityRange" />
     </td>
     <td>{{ signature.size }}</td>
     <td>{{ signature.best_quality }}</td>

@@ -51,30 +51,30 @@
                   v-if="bucket.best_entry"
                   :href="createBugUrl"
                   class="btn btn-danger"
-                  >File a bug with best crash entry</a
+                  >File a bug with best report entry</a
                 >
               </div>
             </td>
           </tr>
           <tr>
-            <td>Crashes covered by this signature</td>
+            <td>Reports covered by this signature</td>
             <td>
               {{ bucket.size }}
               <activitygraph
-                :data="bucket.crash_history"
+                :data="bucket.report_history"
                 :range="activityRange"
               />
               <form :action="sigWatchUrl" ref="sigWatchForm" method="post">
                 <input type="hidden" name="bucket" :value="bucket.id" />
                 <input
                   type="hidden"
-                  name="crash"
+                  name="report"
                   :value="bucket.latest_entry"
                 />
                 <input
                   type="submit"
                   name="submit"
-                  value="Watch for New Crashes"
+                  value="Watch for New Reports"
                   title="Add/Update"
                   class="btn btn-default"
                 />
@@ -82,7 +82,7 @@
             </td>
           </tr>
           <tr v-if="bucket.best_entry">
-            <td>Best Crash Entry</td>
+            <td>Best Report Entry</td>
             <td>
               <a :href="bestViewUrl">{{ bucket.best_entry }}</a> (Size:
               {{ bestEntrySize }})
@@ -95,7 +95,7 @@
       <pre><code>{{ bucket.signature }}</code></pre>
 
       <div class="btn-group">
-        <a :href="crashesUrl" class="btn btn-default">Associated Crashes</a>
+        <a :href="reportsUrl" class="btn btn-default">Associated Reports</a>
         <a :href="optUrl" class="btn btn-default">Optimize</a>
         <a
           v-if="bucket.has_optimization"
@@ -144,7 +144,7 @@ export default {
       type: Object,
       required: true,
     },
-    crashesUrl: {
+    reportsUrl: {
       type: String,
       required: true,
     },

@@ -1,0 +1,10 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}Reports{% endblock title %}
+
+{% block body_content %}
+<reportslist
+    :restricted="{{ restricted|lower }}"
+    {% if watchId != None %} :watch-id="{{ watchId }}" {% endif %}
+/>
+{% endblock body_content %}

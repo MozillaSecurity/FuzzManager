@@ -27,7 +27,7 @@ known_first_party = [
     "Collector",
     "FTB",
     "Reporter",
-    "crashmanager",
+    "reportmanager",
 ]
 profile = "black"
 

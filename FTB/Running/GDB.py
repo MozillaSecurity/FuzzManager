@@ -1,5 +1,5 @@
 """
-GDB - Contains functions directly used by GDB for crash processing
+GDB - Contains functions directly used by GDB for report processing
 
 @author:     Christian Holler (:decoder)
 

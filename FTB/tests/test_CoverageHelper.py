@@ -226,7 +226,7 @@ def test_CoverageHelperApplyDirectivesExcludeAll():
 def test_CoverageHelperApplyDirectivesMakeEmpty():
     node = json.loads(covdata)
 
-    # Check that making the set entirely empty doesn't crash things (tsmith mode)
+    # Check that making the set entirely empty doesn't report things (tsmith mode)
     directives = ["-:**"]
 
     CoverageHelper.apply_include_exclude_directives(node, directives)

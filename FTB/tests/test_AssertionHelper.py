@@ -67,28 +67,28 @@ def test_AssertionHelperTestASanStackOverflow():
     assert assertMsg == expectedAssertMsg
 
 
-def test_AssertionHelperTestMozCrash():
-    err = (FIXTURE_PATH / "assert_jsshell_moz_crash.txt").read_text().splitlines()
+def test_AssertionHelperTestMozReport():
+    err = (FIXTURE_PATH / "assert_jsshell_moz_report.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r"Hit MOZ_CRASH\(named lambda static scopes should have been skipped\) at "
+        r"Hit MOZ_REPORT\(named lambda static scopes should have been skipped\) at "
         r"([a-zA-Z]:)?/.+/ScopeObject\.cpp(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashMultiLine():
-    err = (FIXTURE_PATH / "assert_moz_crash_multiline.txt").read_text().splitlines()
+def test_AssertionHelperTestMozReportMultiLine():
+    err = (FIXTURE_PATH / "assert_moz_report_multiline.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
     )
     assert sanitizedMsg[0] == (
-        r"Hit MOZ_CRASH\(assertion failed:"
+        r"Hit MOZ_REPORT\(assertion failed:"
         r" combined_local_clip_rect\.size\.width >= 0\.0 &&"
     )
     assert sanitizedMsg[-1] == (
@@ -98,28 +98,28 @@ def test_AssertionHelperTestMozCrashMultiLine():
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMozCrashWithPath():
-    err = (FIXTURE_PATH / "assert_moz_crash_with_path.txt").read_text().splitlines()
+def test_AssertionHelperTestMozReportWithPath():
+    err = (FIXTURE_PATH / "assert_moz_report_with_path.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r"Hit MOZ_CRASH\(([a-zA-Z]:)?/.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
+        r"Hit MOZ_REPORT\(([a-zA-Z]:)?/.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
         r"st->start < st->end\) at nil(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg
     _check_regex_matches(err, sanitizedMsg)
 
 
-def test_AssertionHelperTestMultiMozCrash():
-    err = (FIXTURE_PATH / "assert_moz_crash_multi.txt").read_text().splitlines()
+def test_AssertionHelperTestMultiMozReport():
+    err = (FIXTURE_PATH / "assert_moz_report_multi.txt").read_text().splitlines()
 
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r"Hit MOZ_CRASH\(good message\) at "
+        r"Hit MOZ_REPORT\(good message\) at "
         r"([a-zA-Z]:)?/.+/spatial_node\.rs(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg

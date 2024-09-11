@@ -158,13 +158,13 @@ test("bucketHit renders a 'View bucket' button with a redirection", async () => 
   );
 });
 
-test("bucketHit renders a 'View new crash entry' button with a redirection", async () => {
+test("bucketHit renders a 'View new report entry' button with a redirection", async () => {
   const { getByText } = await render(BucketHit, {
     props: { notification: bucketHitNotification },
   });
 
   getByText("Bucket hit");
-  const buttonLink = getByText("View new crash entry");
+  const buttonLink = getByText("View new report entry");
   expect(buttonLink).toHaveProperty(
     "href",
     window.location.origin + bucketHitNotification.target_url,

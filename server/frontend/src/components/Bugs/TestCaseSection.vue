@@ -81,7 +81,7 @@ export default {
       ? this.template.testcase_filename
       : this.entry.testcase.split(/[\\/]/).pop();
     if (!this.entry.testcase_isbinary)
-      this.content = await api.retrieveCrashTestCase(this.entry.id);
+      this.content = await api.retrieveReportTestCase(this.entry.id);
   },
   watch: {
     notAttachTest: function () {

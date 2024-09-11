@@ -1,6 +1,6 @@
 OS|Linux|0.0.0 Linux 3.2.0-23-generic #36-Ubuntu SMP Tue Apr 10 20:39:51 UTC 2012 x86_64
 CPU|amd64|family 6 model 30 stepping 5|8
-Crash|SIGSEGV|0x3e800006acb|0
+Report|SIGSEGV|0x3e800006acb|0
 Module|firefox-bin||firefox-bin|0D19D899740636ED3DFD7E676772A1D80|0x00400000|0x00428fff|1
 Module|libXss.so.1.0.0||libXss.so.1.0.0|1C6D41787DF49947006B88449F69AA540|0x7fafe19fc000|0x7fafe1bfffff|0
 Module|libcroco-0.6.so.3.0.1||libcroco-0.6.so.3.0.1|22664AB68E5BEB3A7EFE5FB23DA9CE8C0|0x7fafe4c8e000|0x7fafe4ec7fff|0

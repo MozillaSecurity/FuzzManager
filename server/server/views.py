@@ -11,11 +11,11 @@ from django.shortcuts import redirect
 from django.urls import resolve, reverse
 from rest_framework import filters
 
-from crashmanager.models import User
+from reportmanager.models import User
 
 
 def index(request):
-    return redirect("crashmanager:index")
+    return redirect("reportmanager:index")
 
 
 def login(request):

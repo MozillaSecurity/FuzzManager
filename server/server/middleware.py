@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 
-from crashmanager.models import User
+from reportmanager.models import User
 
 from .auth import CheckAppPermission
 
@@ -89,7 +89,7 @@ class CheckAppPermissionsMiddleware:
 
         User.get_or_create_restricted(
             request.user
-        )  # create a CrashManager user if needed to apply defaults
+        )  # create a ReportManager user if needed to apply defaults
 
         if not CheckAppPermission().has_permission(request, view_func):
             return HttpResponseForbidden()

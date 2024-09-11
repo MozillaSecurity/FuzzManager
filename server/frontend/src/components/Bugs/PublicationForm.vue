@@ -38,7 +38,7 @@
       </div>
       <hr />
 
-      <h3>Create a bug for crash {{ entryId }}</h3>
+      <h3>Create a bug for report {{ entryId }}</h3>
       <div class="alert alert-info" role="alert" v-if="!template">
         Please pick a bug template to file a new bug.
       </div>
@@ -363,8 +363,8 @@
                 'platform',
                 'client',
                 'testcase',
-                'crashdata',
-                'crashdataattached',
+                'reportdata',
+                'reportdataattached',
                 'metadata*',
               ]"
               documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-description-field"
@@ -420,11 +420,11 @@
         </div>
         <hr />
 
-        <CrashDataSection
+        <ReportDataSection
           :initial-not-attach-data="notAttachData"
           v-on:update-not-attach-data="notAttachData = $event"
-          :initial-data="crashData"
-          v-on:update-data="crashData = $event"
+          :initial-data="reportData"
+          v-on:update-data="reportData = $event"
           :path-prefix="entryMetadata.pathprefix"
         />
 
@@ -463,7 +463,7 @@
         </div>
 
         <div
-          v-if="publishCrashDataError"
+          v-if="publishReportDataError"
           class="alert alert-danger"
           role="alert"
         >
@@ -472,12 +472,12 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="publishCrashDataError = null"
+            v-on:click="publishReportDataError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
-          An error occurred while attaching crash data to the created external
-          bug: {{ publishCrashDataError }}
+          An error occurred while attaching report data to the created external
+          bug: {{ publishReportDataError }}
         </div>
 
         <div
@@ -509,7 +509,7 @@
             <span aria-hidden="true">&times;</span>
           </button>
           An error occurred while assigning the created external bug to the
-          current crash bucket: {{ assignError }}
+          current report bucket: {{ assignError }}
         </div>
 
         <div v-if="!bugzillaToken" class="alert alert-warning" role="alert">
@@ -551,7 +551,7 @@ import * as bugzillaApi from "../../bugzilla_api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 import UserDropdown from "./UserDropdown.vue";
-import CrashDataSection from "./CrashDataSection.vue";
+import ReportDataSection from "./ReportDataSection.vue";
 import TestCaseSection from "./TestCaseSection.vue";
 import HelpPopover from "./HelpPopover.vue";
 
@@ -565,7 +565,7 @@ export default {
     SummaryInput,
     ProductComponentSelect,
     UserDropdown,
-    CrashDataSection,
+    ReportDataSection,
     TestCaseSection,
     HelpPopover,
   },
@@ -603,18 +603,18 @@ export default {
     submitting: false,
     createError: null,
     publishTestCaseError: null,
-    publishCrashDataError: null,
+    publishReportDataError: null,
     assignError: null,
     createdBugId: null,
     notAttachTest: false,
     testCaseContent: "",
     notAttachData: false,
-    crashData: "",
+    reportData: "",
   }),
   async mounted() {
-    this.entry = await api.retrieveCrash(this.entryId);
-    this.crashData = this.entry.rawCrashData
-      ? this.entry.rawCrashData
+    this.entry = await api.retrieveReport(this.entryId);
+    this.reportData = this.entry.rawReportData
+      ? this.entry.rawReportData
       : this.entry.rawStderr;
 
     let data = await api.listBugProviders();
@@ -650,11 +650,11 @@ export default {
         this.entry.shortSignature &&
         this.entry.shortSignature.startsWith("[@")
       )
-        return "Crash " + this.entry.shortSignature;
+        return "Report " + this.entry.shortSignature;
       return this.entry.shortSignature;
     },
-    crashDataRendered() {
-      return this.crashData
+    reportDataRendered() {
+      return this.reportData
         .split("\n")
         .map((l) => "    " + l)
         .join("\n");
@@ -678,7 +678,7 @@ export default {
           this.entry.shortSignature &&
           this.entry.shortSignature.startsWith("[@")
         )
-          rendered += "\ncf_crash_signature=" + this.entry.shortSignature;
+          rendered += "\ncf_report_signature=" + this.entry.shortSignature;
         return rendered;
       } catch {
         return "";
@@ -700,10 +700,10 @@ export default {
           platform: this.entry.platform,
           client: this.entry.client,
           testcase: this.testCaseRendered,
-          crashdata: this.crashDataRendered,
-          crashdataattached: this.notAttachData
-            ? "(Crash data not available)"
-            : "For detailed crash information, see attachment.",
+          reportdata: this.reportDataRendered,
+          reportdataattached: this.notAttachData
+            ? "(Report data not available)"
+            : "For detailed report information, see attachment.",
           ...this.metadataExtension(this.template.description),
         });
 
@@ -788,7 +788,7 @@ export default {
       this.createdBugId = null;
       this.createError = null;
       this.publishTestCaseError = null;
-      this.publishCrashDataError = null;
+      this.publishReportDataError = null;
       this.assignError = null;
 
       // Convert this.renderedAttrs to an object
@@ -851,14 +851,14 @@ export default {
     },
     async publishAttachments() {
       let payload = {};
-      // Publish Crash data
+      // Publish Report data
       if (!this.notAttachData) {
         try {
           payload = {
             ids: [this.createdBugId],
-            data: Base64.encode(this.crashData),
-            file_name: "crash_data.txt",
-            summary: "Detailed Crash Information",
+            data: Base64.encode(this.reportData),
+            file_name: "report_data.txt",
+            summary: "Detailed Report Information",
             content_type: "text/plain",
           };
 
@@ -869,7 +869,7 @@ export default {
             headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
           });
         } catch (err) {
-          this.publishCrashDataError = errorParser(err);
+          this.publishReportDataError = errorParser(err);
         }
       }
 
@@ -879,7 +879,7 @@ export default {
           let content = this.testCaseContent;
           // If the testcase is binary we need to download it first
           if (this.entry.testcase_isbinary) {
-            content = await api.retrieveCrashTestCaseBinary(this.entry.id);
+            content = await api.retrieveReportTestCaseBinary(this.entry.id);
           }
 
           payload = {

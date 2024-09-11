@@ -9,15 +9,15 @@ other toolchains and frameworks, we want to be modular in such a way that you
 can use those parts of FuzzManager that seem interesting to you without forcing
 a process upon you that does not fit your requirements.
 
-## CrashManager
+## ReportManager
 
-CrashManager is the part of FuzzManager responsible for managing crash results
+ReportManager is the part of FuzzManager responsible for managing report results
 submitted to the server. The main features are:
 
-* Store crash information gathered from various sources. See FTB.
+* Store report information gathered from various sources. See FTB.
 
-* Bucket crashes using flexible, human-readable signatures that can match a
-large number of symptoms of a crash, are proposed by the server but can be
+* Bucket reports using flexible, human-readable signatures that can match a
+large number of symptoms of a report, are proposed by the server but can be
 altered and tuned by the user. The server also includes semi-automatic
 optimization of signatures that helps you group duplicates into one bucket.
 
@@ -28,17 +28,17 @@ to be extendable.
 ### FTB
 
 FTB (Fuzzing Tool Box) is the underlying library that contains classes for parsing
-crash output from various tools (CrashInfo), bucketing crashes (CrashSignature), and
+report output from various tools (ReportInfo), bucketing reports (ReportSignature), and
 parsing assertions (AssertionHelper). This can be used locally without having a
-running FuzzManager server instance to support crash logging and bucketing. FTB already
+running FuzzManager server instance to support report logging and bucketing. FTB already
 supports a variety of tools like GDB, ASan and Minidumps but can be extended to support
-any form of crash information you would like.
+any form of report information you would like.
 
 ### Collector
 
 Collector is a command-line utility or a Python class that can be used to communicate
-with a CrashManager server.  Collector provides an easy client interface that allows
-your clients to submit crashes as well as download and match existing signatures to
+with a ReportManager server.  Collector provides an easy client interface that allows
+your clients to submit reports as well as download and match existing signatures to
 avoid reporting frequent issues repeatedly.
 
 # Questions
@@ -156,10 +156,10 @@ FuzzManager jobs:
 ```
 # Fetch the status of all bugs from our external bug tracker(s)
 */15 * * * * cd /path/to/FuzzManager/server && cronic python manage.py bug_update_status
-# Cleanup old crash entries and signatures according to configuration
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py cleanup_old_crashes
-# Attempt to fit recently added crash entries into existing buckets
-*/5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_crashes
+# Cleanup old report entries and signatures according to configuration
+*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py cleanup_old_reports
+# Attempt to fit recently added report entries into existing buckets
+*/5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_reports
 # Export all signatures to a zip file for downloading by clients
 */30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
@@ -203,11 +203,11 @@ In order to talk to FuzzManager, your fuzzer should use the client interface pro
 
 We'll first describe how to use the class interface directly from Python. If you want to use the command line interface instead, I still suggest that you read on because the command line interface is very similar to the class interface in terms of functionality and configuration.
 
-For simple cases where you can just (re)run a command with a testcase that produces a crash, we also provide an easy report class that runs your command and figures out all the crash information on its own. You will find the description of this mode at the end of this section as it still requires configuration files to be setup properly, but tl;dr, it can be as easy as:
+For simple cases where you can just (re)run a command with a testcase that produces a report, we also provide an easy report class that runs your command and figures out all the report information on its own. You will find the description of this mode at the end of this section as it still requires configuration files to be setup properly, but tl;dr, it can be as easy as:
 
 `$ python Collector.py --autosubmit mybadprogram --someopt yourtest`
 
-And you're done submitting everything, crash information as well as program information.
+And you're done submitting everything, report information as well as program information.
 
 ### Constructing the Collector instance
 
@@ -225,13 +225,13 @@ serverauthtoken = 4a253efa90f514bd89ae9a86d1dc264aa3133945
 With this file present and readable, instantiating the Collector doesn't require any further arguments.
 
 
-#### Creating the CrashInfo
+#### Creating the ReportInfo
 
-Several methods of the collector work with the `CrashInfo` class. This class stores all the necessary data about a crash. In order to get a CrashInfo instance, you need:
+Several methods of the collector work with the `ReportInfo` class. This class stores all the necessary data about a report. In order to get a ReportInfo instance, you need:
 
 * A variable containing the stdout output of your program
 * A variable containing the stderr output of your program
-* A variable containing crash information as outputted by GDB or AddressSanitizer
+* A variable containing report information as outputted by GDB or AddressSanitizer
 * A ProgramConfiguration instance
 
 The first three sets of data are typically already available in a fuzzer. Note that for GDB traces, the trace should contain first the stack trace, then a dump of all registers and then a dissassembly of the program counter (see also the FTB/Running/AutoRunner.py file which demonstrates how to output all information properly for FuzzManager).
@@ -250,14 +250,14 @@ pathPrefix = /srv/repos/mozilla-central/
 buildFlags = --enable-optimize --enable-posix-nspr-emulation --enable-valgrind --enable-gczeal --target=i686-pc-linux-gnu --disable-tests --enable-debug
 ```
 
-Once this file is present, you can call `ProgramConfiguration.fromBinary` with your binary path and the configuration will be created from the file. You can add program arguments and environment variables through the provided `addProgramArguments` and `addEnvironmentVariables` methods afterward. Finally, call `CrashInfo.fromRawCrashData` with all the described data. Here's a simple example:
+Once this file is present, you can call `ProgramConfiguration.fromBinary` with your binary path and the configuration will be created from the file. You can add program arguments and environment variables through the provided `addProgramArguments` and `addEnvironmentVariables` methods afterward. Finally, call `ReportInfo.fromRawReportData` with all the described data. Here's a simple example:
 
 ```
     # Note: This could fail and return None when the configuration is missing or throw if misconfigured
     configuration = ProgramConfiguration.fromBinary(opts.binary)
     configuration.addEnvironmentVariables(env)
     configuration.addProgramArguments(args)
-    crashInfo = CrashInfo.fromRawCrashData(stdout, stderr, configuration, auxCrashData=crashdata)
+    reportInfo = ReportInfo.fromRawReportData(stdout, stderr, configuration, auxReportData=reportdata)
 ```
 
 ### Refreshing Signatures
@@ -266,11 +266,11 @@ Calling the `refresh` method of our Collector instance will download a zipfile f
 
 ### Searching Signatures
 
-The `search` method is the first of a few methods requiring a `crashInfo` variable. Create it as described above and the Collector will search inside the signature directory for any matching signatures. Upon match, it will return a tuple containing the filename of the signature matching as well as a metadata object corresponding to that signature.
+The `search` method is the first of a few methods requiring a `reportInfo` variable. Create it as described above and the Collector will search inside the signature directory for any matching signatures. Upon match, it will return a tuple containing the filename of the signature matching as well as a metadata object corresponding to that signature.
 
-### Submitting Crashes
+### Submitting Reports
 
-The `submit` method can be used to send a crash report to the FuzzManager server. Again the `crashInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (the best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the crash on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `crashInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the crash to the server.
+The `submit` method can be used to send a report report to the FuzzManager server. Again the `reportInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (the best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the report on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `reportInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the report to the server.
 
 ### Further methods
 
@@ -278,7 +278,7 @@ Further methods of the Collector include `generate` for generating signatures lo
 
 ### Using the automated submit method
 
-If your crashes can be reproduced on the command line by just running a command with your testcase, then you can use the automated submit method (`--autosubmit` in the command line client) and just pass the failing command line to the client. The client will automatically run the target program, gather crash and program configuration and submit it to the server. Of course this mode requires that both the global configuration file and the binary configuration file are present.
+If your reports can be reproduced on the command line by just running a command with your testcase, then you can use the automated submit method (`--autosubmit` in the command line client) and just pass the failing command line to the client. The client will automatically run the target program, gather report and program configuration and submit it to the server. Of course this mode requires that both the global configuration file and the binary configuration file are present.
 
 ## Web Interface Usage and Workflow
 

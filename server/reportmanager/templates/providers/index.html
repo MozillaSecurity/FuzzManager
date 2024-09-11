@@ -1,0 +1,39 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% load extratags %}
+
+{% block title %}Bug Providers{% endblock title %}
+
+{% block body_content %}
+<div class="panel panel-default">
+    <div class="panel-heading"><i class="bi bi-bug-fill"></i> Providers</div>
+    <div class="panel-body">
+        <a title="Create a Bug Provider" href="{% url 'reportmanager:bugprovidercreate' %}" class="btn btn-success">Add Provider</a>
+        <br/><br/>
+    {% if providers %}
+    <table class="table table-condensed table-hover table-bordered table-db">
+        <thead>
+        <tr>
+            <th style="width: 50px;">Name</th>
+            <th style="width: 50px;">Host Name</th>
+            <th style="width: 150px;">URL Template</th>
+            <th style="width: 50px;"># of bugs associated</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for entry in providers %}
+        <tr class="{% cycle 'odd' 'even' %}">
+            <td><a title="View Bug Provider" href="{% url 'reportmanager:bugproviderview' entry.pk %}">{{ entry.classname|escape }}</a></td>
+            <td>{{ entry.hostname|escape }}</td>
+            <td>{{ entry.urlTemplate|escape }}</td>
+            <td>{{ entry.size|escape }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No bug providers found.</p>
+    {% endif %}
+    </div>
+</div>
+{% endblock body_content %}

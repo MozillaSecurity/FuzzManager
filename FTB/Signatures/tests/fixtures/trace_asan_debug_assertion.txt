@@ -1,5 +1,5 @@
 ### XPCOM_MEM_LEAK_LOG defined -- logging leaks to wtmp1/q1-final-leaks.txt
-Crash Annotation GraphicsCriticalError: |[0][GFX1]: Texture deallocated too late during shutdown (t=22.4895) [GFX1]: Texture deallocated too late during shutdown
+Report Annotation GraphicsCriticalError: |[0][GFX1]: Texture deallocated too late during shutdown (t=22.4895) [GFX1]: Texture deallocated too late during shutdown
 Assertion failure: false (An assert from the graphics logger), at /builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521
 #01: nsCycleCollector::CollectWhite() (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3347)
 #02: nsCycleCollector::Collect(ccType, js::SliceBudget&, nsICycleCollectorListener*, bool) (/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/xpcom/base/nsCycleCollector.cpp:3692)

@@ -13,7 +13,7 @@
     <div class="btn-group pull-right" role="group">
       <a class="btn btn-default" :href="notification.actor_url">View bucket</a>
       <a class="btn btn-info" :href="notification.target_url">
-        View new crash entry
+        View new report entry
       </a>
     </div>
   </div>

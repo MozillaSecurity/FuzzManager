@@ -7,57 +7,60 @@ const mainAxios = axios.create({
 });
 
 export const pollAsyncOp = async (id) =>
-  (await mainAxios.get(`/crashmanager/rest/op/${id}/`)).status === 200;
+  (await mainAxios.get(`/reportmanager/rest/op/${id}/`)).status === 200;
 
 export const retrieveBucket = async (id) =>
-  (await mainAxios.get(`/crashmanager/rest/buckets/${id}/`)).data;
+  (await mainAxios.get(`/reportmanager/rest/buckets/${id}/`)).data;
 
 export const listBuckets = async (params) =>
-  (await mainAxios.get("/crashmanager/rest/buckets/", { params })).data;
+  (await mainAxios.get("/reportmanager/rest/buckets/", { params })).data;
 
-export const crashStats = async (params) =>
-  (await mainAxios.get("/crashmanager/rest/crashes/stats/", { params })).data;
+export const reportStats = async (params) =>
+  (await mainAxios.get("/reportmanager/rest/reports/stats/", { params })).data;
 
 export const createBucket = async ({ params, ...data }) =>
-  (await mainAxios.post("/crashmanager/rest/buckets/", data, { params })).data;
+  (await mainAxios.post("/reportmanager/rest/buckets/", data, { params })).data;
 
 export const updateBucket = async ({ id, params, ...data }) =>
-  (await mainAxios.patch(`/crashmanager/rest/buckets/${id}/`, data, { params }))
-    .data;
+  (
+    await mainAxios.patch(`/reportmanager/rest/buckets/${id}/`, data, {
+      params,
+    })
+  ).data;
 
-export const retrieveCrash = async (id) =>
-  (await mainAxios.get(`/crashmanager/rest/crashes/${id}/`)).data;
+export const retrieveReport = async (id) =>
+  (await mainAxios.get(`/reportmanager/rest/reports/${id}/`)).data;
 
-export const retrieveCrashTestCase = async (id) =>
-  (await mainAxios.get(`/crashmanager/rest/crashes/${id}/download/`)).data;
+export const retrieveReportTestCase = async (id) =>
+  (await mainAxios.get(`/reportmanager/rest/reports/${id}/download/`)).data;
 
-export const retrieveCrashTestCaseBinary = async (id) =>
+export const retrieveReportTestCaseBinary = async (id) =>
   new Uint8Array(
     (
       await mainAxios.request({
-        url: `/crashmanager/rest/crashes/${id}/download/`,
+        url: `/reportmanager/rest/reports/${id}/download/`,
         responseType: "arraybuffer",
       })
     ).data,
   );
 
-export const deleteCrashes = async (params) =>
-  (await mainAxios.delete("/crashmanager/rest/crashes/", { params })).data;
+export const deleteReports = async (params) =>
+  (await mainAxios.delete("/reportmanager/rest/reports/", { params })).data;
 
-export const listCrashes = async (params) =>
-  (await mainAxios.get("/crashmanager/rest/crashes/", { params })).data;
+export const listReports = async (params) =>
+  (await mainAxios.get("/reportmanager/rest/reports/", { params })).data;
 
 export const listBugProviders = async () =>
-  (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;
+  (await mainAxios.get("/reportmanager/rest/bugproviders/")).data;
 
 export const listTemplates = async () =>
-  (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;
+  (await mainAxios.get("/reportmanager/rest/bugzilla/templates/")).data;
 
 export const listUnreadNotifications = async (params) =>
-  (await mainAxios.get("/crashmanager/rest/inbox/", { params })).data;
+  (await mainAxios.get("/reportmanager/rest/inbox/", { params })).data;
 
 export const dismissNotification = async (id) =>
-  (await mainAxios.patch(`/crashmanager/rest/inbox/${id}/mark_as_read/`)).data;
+  (await mainAxios.patch(`/reportmanager/rest/inbox/${id}/mark_as_read/`)).data;
 
 export const dismissAllNotifications = async () =>
-  (await mainAxios.patch("/crashmanager/rest/inbox/mark_all_as_read/")).data;
+  (await mainAxios.patch("/reportmanager/rest/inbox/mark_all_as_read/")).data;

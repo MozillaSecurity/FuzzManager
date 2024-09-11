@@ -51,7 +51,7 @@ def test_PersistentApplicationTestModeNone(tmp_path):
             assert len(spa.testLog) == 1
 
             ret = spa.start("aaaa")
-            assert ret == ApplicationStatus.CRASHED
+            assert ret == ApplicationStatus.REPORTED
         finally:
             spa.stop()
 
@@ -97,7 +97,7 @@ def test_PersistentApplicationTestOtherModes(tmp_path):
             ret = spa.runTest("aaa\naaaa")
             print(spa.stdout)
             print(spa.stderr)
-            assert ret == ApplicationStatus.CRASHED
+            assert ret == ApplicationStatus.REPORTED
 
             assert len(spa.testLog) == 3
 

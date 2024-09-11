@@ -1,0 +1,36 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}Watched Signatures{% endblock title %}
+
+{% block body_content %}
+<div class="panel panel-default">
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signatures</div>
+    <div class="panel-body">
+        <p>
+            Displaying {{ siglist|length }} watched signature entries from the database.
+        </p>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-bordered table-db">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Short Description</th>
+                <th>New Reports</th>
+                <th>Watch</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for entry in siglist %}
+            <tr class="{% cycle 'odd' 'even' %}">
+                <td><a title="View signature" href="{% url 'reportmanager:sigview' entry.pk %}">{{ entry.pk }}</a></td>
+                <td class="wrap-anywhere"><span class="two-line-limit">{{ entry.shortDescription|escape }}</span></td>
+                <td><a title="View new reports" href="{% url 'reportmanager:sigwatchreports' entry.pk %}">{{ entry.newReports }}</a></td>
+                <td><a title="Remove watch" href="{% url 'reportmanager:sigwatchdel' entry.pk %}" data-toggle="tooltip" data-placement="top" class="bi bi-trash-fill" style="color:dimgray"></a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock body_content %}

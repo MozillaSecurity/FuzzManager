@@ -20,13 +20,13 @@ import subprocess
 import sys
 from abc import ABCMeta
 
-from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.Signatures.ReportInfo import ReportInfo
 
 
 class AutoRunner(metaclass=ABCMeta):
     """
     Abstract base class that provides a method to instantiate the right sub class
-    for running the given program and obtaining crash information.
+    for running the given program and obtaining report information.
     """
 
     def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
@@ -55,17 +55,17 @@ class AutoRunner(metaclass=ABCMeta):
         assert isinstance(self.env, dict)
         assert isinstance(self.args, list)
 
-        # The command that we will run for obtaining crash information
+        # The command that we will run for obtaining report information
         self.cmdArgs = []
 
         # These will hold our results from running
         self.stdout = None
         self.stderr = None
-        self.auxCrashData = None
+        self.auxReportData = None
 
-    def getCrashInfo(self, configuration):
-        return CrashInfo.fromRawCrashData(
-            self.stdout, self.stderr, configuration, self.auxCrashData
+    def getReportInfo(self, configuration):
+        return ReportInfo.fromRawReportData(
+            self.stdout, self.stderr, configuration, self.auxReportData
         )
 
     @staticmethod
@@ -98,8 +98,8 @@ class GDBRunner(AutoRunner):
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         # This can be used to force GDBRunner to first generate a core and then
-        # also use it immediately for generating crash information. This is
-        # required in the rare case that a crash doesn't reproduce then the
+        # also use it immediately for generating report information. This is
+        # required in the rare case that a report doesn't reproduce then the
         # program runs directly under GDB.
         self.force_core = bool(os.environ.get("FTB_FORCE_GDBCORE", False))
 
@@ -201,8 +201,8 @@ class GDBRunner(AutoRunner):
         if traceStop < 0:
             traceStop = len(self.stdout)
 
-        # Move the trace from stdout to auxCrashData
-        self.auxCrashData = self.stdout[traceStart:traceStop]
+        # Move the trace from stdout to auxReportData
+        self.auxReportData = self.stdout[traceStart:traceStop]
         self.stdout = self.stdout[:traceStart] + self.stdout[traceStop:]
 
         # If we used the core dump method, use stdout/err from the first run
@@ -252,7 +252,7 @@ class ASanRunner(AutoRunner):
             if "ASAN_OPTIONS" in os.environ:
                 self.env["ASAN_OPTIONS"] = os.environ["ASAN_OPTIONS"]
             else:
-                # Default to allowing the allocator to return null to reproduce crashes
+                # Default to allowing the allocator to return null to reproduce reports
                 # mostly caused by OOM conditions rather than aborting with the ASan OOM
                 # failure. If ASAN_OPTIONS is already set, then the caller should ensure
                 # that this option is present.
@@ -278,11 +278,11 @@ class ASanRunner(AutoRunner):
         inASanTrace = False
         inUBSanTrace = False
         inTSanTrace = False
-        self.auxCrashData = []
+        self.auxReportData = []
         self.stderr = []
         for line in stderr.splitlines():
             if inASanTrace or inUBSanTrace or inTSanTrace:
-                self.auxCrashData.append(line)
+                self.auxReportData.append(line)
                 if (inASanTrace or inUBSanTrace) and line.find("==ABORTING") >= 0:
                     inASanTrace = False
                     inUBSanTrace = False
@@ -302,32 +302,32 @@ class ASanRunner(AutoRunner):
                 elif inTSanTrace and "SUMMARY: ThreadSanitizer: data race" in line:
                     inTSanTrace = False
             elif line.find("==ERROR: AddressSanitizer") >= 0:
-                self.auxCrashData.append(line)
+                self.auxReportData.append(line)
                 inASanTrace = True
             elif line.find("==ERROR: UndefinedBehaviorSanitizer:") >= 0:
                 # This is only seen when UBSan-only builds (e.g. libFuzzer without ASan)
-                # handle a regular crash/abort and emit a backtrace for it.
-                self.auxCrashData.append(line)
+                # handle a regular report/abort and emit a backtrace for it.
+                self.auxReportData.append(line)
                 inUBSanTrace = True
             elif "runtime error" in line and re.search(
                 ":\\d+:\\d+: runtime error: ", line
             ):
-                self.auxCrashData.append(line)
+                self.auxReportData.append(line)
                 inUBSanTrace = True
             elif line.startswith("WARNING: ThreadSanitizer: data race"):
-                self.auxCrashData.append(line)
+                self.auxReportData.append(line)
                 inTSanTrace = True
             else:
                 self.stderr.append(line)
 
-        if not self.auxCrashData:
-            processCrashed = False
+        if not self.auxReportData:
+            processReported = False
 
             # It can happen that we don't get an AddressSanitizer trace because ASan's
             # signal handler did not catch the signal for some reason. This can happen
             # easily with SIGILL but also for some programs with SIGSEGV.
             if process.returncode < 0:
-                crashSignals = [
+                reportSignals = [
                     # POSIX.1-1990 signals
                     signal.SIGILL,
                     signal.SIGABRT,
@@ -339,15 +339,15 @@ class ASanRunner(AutoRunner):
                     signal.SIGTRAP,
                 ]
 
-                for crashSignal in crashSignals:
-                    if process.returncode == -crashSignal:
-                        processCrashed = True
+                for reportSignal in reportSignals:
+                    if process.returncode == -reportSignal:
+                        processReported = True
 
-            if not processCrashed:
+            if not processReported:
                 return False
 
-        # Move the trace from stdout to auxCrashData
-        self.auxCrashData = os.linesep.join(self.auxCrashData)
+        # Move the trace from stdout to auxReportData
+        self.auxReportData = os.linesep.join(self.auxReportData)
         self.stderr = os.linesep.join(self.stderr)
 
         return True

@@ -21,5 +21,5 @@ ASAN:DEADLYSIGNAL
 ==8986==Hint: address points to the zero page.
 ==8927==The signal is caused by a WRITE memory access.
 ==8927==Hint: address points to the zero page.
-Crash Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299)
+Report Annotation GraphicsCriticalError: |[C0][GFX1-]: Receive IPC close with reason=AbnormalShutdown (t=72.7299)
 ###!!! [Child][MessageChannel::SendAndWait] Error: Channel error: cannot send/recv

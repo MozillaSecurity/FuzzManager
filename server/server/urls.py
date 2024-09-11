@@ -17,7 +17,7 @@ urlpatterns = [
     # re_path(r'^admin/', include(admin.site.urls)),
     re_path(r"^login/$", login, name="login"),
     re_path(r"^logout/$", LogoutView.as_view(), name="logout"),
-    re_path(r"^crashmanager/", include("crashmanager.urls")),
+    re_path(r"^reportmanager/", include("reportmanager.urls")),
     re_path(
         "inbox/notifications/",
         include(

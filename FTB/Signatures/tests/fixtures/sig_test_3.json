@@ -11,7 +11,7 @@
   },
   {
     "address": "> 0xFF",
-    "type": "crashAddress"
+    "type": "reportAddress"
   },
     {
     "type": "instruction",

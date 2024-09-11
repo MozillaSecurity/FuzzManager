@@ -62,66 +62,66 @@ Will render as this **output**:
 - `summary`
     - Renders the text displayed in **Summary** `<input/>`
     - Value is editable through the **Summary** form field
-- `shortsig` Renders the **CrashEntry** `shortSignature` attribute
-- `product` Renders the **CrashEntry** `product` attribute
-- `version` Renders the **CrashEntry** `product_version` attribute if set, else display the following hint: `"(Version not available)"`
-- `args` Renders the **CrashEntry** `args` attribute as JSON 
-- `os` Render the **CrashEntry** `os` attribute
-- `platform` Renders the **CrashEntry** `platform` attribute
-- `client` Renders the **CrashEntry** `client` attribute
+- `shortsig` Renders the **ReportEntry** `shortSignature` attribute
+- `product` Renders the **ReportEntry** `product` attribute
+- `version` Renders the **ReportEntry** `product_version` attribute if set, else display the following hint: `"(Version not available)"`
+- `args` Renders the **ReportEntry** `args` attribute as JSON 
+- `os` Render the **ReportEntry** `os` attribute
+- `platform` Renders the **ReportEntry** `platform` attribute
+- `client` Renders the **ReportEntry** `client` attribute
 - `testcase`
-    - If the **CrashEntry** `testcase` attribute is empty, it displays the following hint: `"(Test not available)"`
+    - If the **ReportEntry** `testcase` attribute is empty, it displays the following hint: `"(Test not available)"`
     - Else if the `testcase` content length is greater than 2048 characters or contains binary content, it displays the following hint: `"See attachment."`
     - Else, it simply renders the `testcase` content
     - Value is editable through the **Content** field located in the **Testcase form section**
-- `crashdata`
-    - If the **CrashEntry** `rawCrashData` attribute is set, it renders its content
-    - Else, it renders the **CrashEntry** `rawStderr` attribute content
-    - Value is editable through the **Content** field located in the **Crash data form section**
-- `crashdataattached`
-    - If the crash data is to be attached to the bug, it displays the following hint: `"For detailed crash information, see attachment."`
-    - Else, it displays: `"(Crash data not available)"`
-    - Value is editable through the **Do not attach crash data** checkbox located in the **Crash data form section**
+- `reportdata`
+    - If the **ReportEntry** `rawReportData` attribute is set, it renders its content
+    - Else, it renders the **ReportEntry** `rawStderr` attribute content
+    - Value is editable through the **Content** field located in the **Report data form section**
+- `reportdataattached`
+    - If the report data is to be attached to the bug, it displays the following hint: `"For detailed report information, see attachment."`
+    - Else, it displays: `"(Report data not available)"`
+    - Value is editable through the **Do not attach report data** checkbox located in the **Report data form section**
 - `metadata*`
     - The `*` is to be replaced with a metadata name
-    - If the metadata is available in **CrashEntry** `metadata` attribute as an object key, it renders the value of `CrashEntry.metadata[name]`
+    - If the metadata is available in **ReportEntry** `metadata` attribute as an object key, it renders the value of `ReportEntry.metadata[name]`
     - Else, it renders the following hint: `"(metadata{name} not available)"`
-    - **e.g:** With `CrashEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`
+    - **e.g:** With `ReportEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`
 
 ### In ***Custom fields*** field
 - `metadata*`
     - The `*` is to be replaced with a metadata name
-    - If the metadata is available in **CrashEntry** `metadata` attribute as an object key, it renders the value of `CrashEntry.metadata[name]`
+    - If the metadata is available in **ReportEntry** `metadata` attribute as an object key, it renders the value of `ReportEntry.metadata[name]`
     - Else, it renders the following hint: `"(metadata{name} not available)"`
-    - **e.g:** With `CrashEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`
+    - **e.g:** With `ReportEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`
 
 ## Comment - Available variables
 > *Note: All fields are immutable unless otherwise specified.*
 
 ### In ***Comment*** field
-- `summary` Renders the **BugzillaTemplate** `summary` attribute if set, else renders the **CrashEntry** `shortSignature` attribute
-- `shortsig` Renders the **CrashEntry** `shortSignature` attribute
-- `product` Renders the **CrashEntry** `product` attribute
-- `version` Renders the **CrashEntry** `product_version` attribute if set, else display the following hint: `"(Version not available)"`
-- `args` Renders the **CrashEntry** `args` attribute as JSON
-- `os` Render the **CrashEntry** `os` attribute
-- `platform` Renders the **CrashEntry** `platform` attribute
-- `client` Renders the **CrashEntry** `client` attribute
+- `summary` Renders the **BugzillaTemplate** `summary` attribute if set, else renders the **ReportEntry** `shortSignature` attribute
+- `shortsig` Renders the **ReportEntry** `shortSignature` attribute
+- `product` Renders the **ReportEntry** `product` attribute
+- `version` Renders the **ReportEntry** `product_version` attribute if set, else display the following hint: `"(Version not available)"`
+- `args` Renders the **ReportEntry** `args` attribute as JSON
+- `os` Render the **ReportEntry** `os` attribute
+- `platform` Renders the **ReportEntry** `platform` attribute
+- `client` Renders the **ReportEntry** `client` attribute
 - `testcase`
-    - If the **CrashEntry** `testcase` attribute is empty, it displays the following hint: `"(Test not available)"`
+    - If the **ReportEntry** `testcase` attribute is empty, it displays the following hint: `"(Test not available)"`
     - Else if the `testcase` content length is greater than 2048 characters or contains binary content, it displays the following hint: `"See attachment."`
     - Else, it simply renders the `testcase` content
     - Value is editable through the **Content** field located in the **Testcase form section**
-- `crashdata`
-    - Renders the **CrashEntry** `rawCrashData` attribute if set
-    - Else, it renders the **CrashEntry** `rawStderr` attribute content
-    - Value is editable through the **Content** field located in the **Crash data form section**
-- `crashdataattached`
-    - If the crash data is to be attached to the bug, it displays the following hint: `"For detailed crash information, see attachment."`
-    - Else, it displays: `"(Crash data not available)"`
-    - Value is editable through the **Do not attach crash data** checkbox located in the **Crash data form section**
+- `reportdata`
+    - Renders the **ReportEntry** `rawReportData` attribute if set
+    - Else, it renders the **ReportEntry** `rawStderr` attribute content
+    - Value is editable through the **Content** field located in the **Report data form section**
+- `reportdataattached`
+    - If the report data is to be attached to the bug, it displays the following hint: `"For detailed report information, see attachment."`
+    - Else, it displays: `"(Report data not available)"`
+    - Value is editable through the **Do not attach report data** checkbox located in the **Report data form section**
 - `metadata*`
     - The `*` is to be replaced with a metadata name
-    - If the metadata is available in **CrashEntry** `metadata` attribute as an object key, it renders the value of `CrashEntry.metadata[name]`
+    - If the metadata is available in **ReportEntry** `metadata` attribute as an object key, it renders the value of `ReportEntry.metadata[name]`
     - Else, it renders the following hint: `"(metadata{name} not available)"`
-    - **e.g:** With `CrashEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`
+    - **e.g:** With `ReportEntry.metadata = {"path": "test/path"}`, `{{metadatapath}}` renders to `"test/path"` and `{{metadataunknown}}` renders to `"(metadataunknown not available)"`

@@ -6,7 +6,7 @@ import * as d3 from "d3";
 const hour_ms = 60 * 60 * 1000;
 const day_ms = 24 * hour_ms;
 
-function crash_history_to_range(fm_data, start, step, stop, clip) {
+function report_history_to_range(fm_data, start, step, stop, clip) {
   /*
    * FuzzManager returns an array of `{ begin: "isodate", count: n }`
    * objects, where begin is the start of a one hour monitoring
@@ -74,7 +74,7 @@ export default {
       return now + hour_ms - (now % hour_ms);
     })();
     const clip = 10;
-    const data = crash_history_to_range(
+    const data = report_history_to_range(
       this.data,
       next_hour_ms - this.range * day_ms,
       hour_ms,

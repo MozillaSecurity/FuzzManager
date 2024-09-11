@@ -35,20 +35,20 @@ class CheckAppPermission(permissions.BasePermission):
         if request.user and request.user.is_authenticated:
             app = view.__module__.split(".", 1)[0]
 
-            if request.user.has_perm(f"crashmanager.view_{app}"):
-                if request.user.has_perm(f"crashmanager.{app}_all"):
+            if request.user.has_perm(f"reportmanager.view_{app}"):
+                if request.user.has_perm(f"reportmanager.{app}_all"):
                     return True
                 view_name = type(view).__name__
-                if app == "crashmanager":
+                if app == "reportmanager":
                     if view_name == "SignaturesDownloadView" and request.user.has_perm(
                         f"{app}.{app}_download_signatures"
                     ):
                         return True
                     if (
-                        view_name == "CrashEntryViewSet"
+                        view_name == "ReportEntryViewSet"
                         and request.method == "POST"
                         and not view.detail
-                        and request.user.has_perm(f"{app}.{app}_report_crashes")
+                        and request.user.has_perm(f"{app}.{app}_report_reports")
                     ):
                         return True
         return False

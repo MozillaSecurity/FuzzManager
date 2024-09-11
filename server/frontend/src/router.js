@@ -1,24 +1,24 @@
 import VueRouter from "vue-router";
 
-import CrashesList from "./components/Crashes/List.vue";
+import ReportsList from "./components/Reports/List.vue";
 import SignaturesList from "./components/Signatures/List.vue";
 
 const routes = [
   {
-    // Be careful to keep this route up-to-date with the one in server/crashmanager/urls.py
-    path: "/crashmanager/crashes/",
-    name: "crashes-list",
-    component: CrashesList,
+    // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
+    path: "/reportmanager/reports/",
+    name: "reports-list",
+    component: ReportsList,
   },
   {
-    // Be careful to keep this route up-to-date with the one in server/crashmanager/urls.py
-    path: "/crashmanager/crashes/watch/:sigid/",
-    name: "crashes-watch",
-    component: CrashesList,
+    // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
+    path: "/reportmanager/reports/watch/:sigid/",
+    name: "reports-watch",
+    component: ReportsList,
   },
   {
-    // Be careful to keep this route up-to-date with the one in server/crashmanager/urls.py
-    path: "/crashmanager/signatures/",
+    // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
+    path: "/reportmanager/signatures/",
     name: "signatures-list",
     component: SignaturesList,
   },

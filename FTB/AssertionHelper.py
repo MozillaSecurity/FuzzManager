@@ -17,8 +17,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import re
 
 RE_ASSERTION = re.compile(r"^ASSERTION \d+: \(.+\)")
-RE_MOZ_CRASH = re.compile(r"Hit MOZ_CRASH\([^\)]")
-RE_MOZ_CRASH_END = re.compile(r".*\) at .+?:\d+$")
+RE_MOZ_REPORT = re.compile(r"Hit MOZ_REPORT\([^\)]")
+RE_MOZ_REPORT_END = re.compile(r".*\) at .+?:\d+$")
 RE_PID = re.compile(r"^\[\d+\]\s+")
 RE_RUST_ASSERT = re.compile(r"^thread .*? panicked at '.+$")
 RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
@@ -41,8 +41,8 @@ def getAssertion(output):
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
 
-    # Used to only accept the initial MOZ_CRASH() line
-    haveMozCrashLine = False
+    # Used to only accept the initial MOZ_REPORT() line
+    haveMozReportLine = False
 
     # The self-hosted JS asserts are followed by an additional regular
     # JS assertion which we need to ignore in that case
@@ -98,17 +98,17 @@ def getAssertion(output):
             haveFatalAssertion = True
         elif (
             not haveFatalAssertion
-            and not haveMozCrashLine
-            and "MOZ_CRASH" in line
-            and RE_MOZ_CRASH.search(line)
+            and not haveMozReportLine
+            and "MOZ_REPORT" in line
+            and RE_MOZ_REPORT.search(line)
         ):
-            # MOZ_CRASH line, but with a message (we should only look at these)
-            if RE_MOZ_CRASH_END.search(line) is None:
-                endRegex = RE_MOZ_CRASH_END
+            # MOZ_REPORT line, but with a message (we should only look at these)
+            if RE_MOZ_REPORT_END.search(line) is None:
+                endRegex = RE_MOZ_REPORT_END
                 lastLine = [line]
             else:
                 lastLine = line
-            haveMozCrashLine = True
+            haveMozReportLine = True
         elif "Self-hosted JavaScript assertion info" in line:
             lastLine = line
             haveSelfHostedJSAssert = True
@@ -117,7 +117,7 @@ def getAssertion(output):
             # C++ unhandled exception
             lastLine = line
             haveFatalAssertion = True
-        elif line.startswith("[Non-crash bug] "):
+        elif line.startswith("[Non-report bug] "):
             # Magic string "added" to stderr by some fuzzers.
             lastLine = line
         elif "Sanitizer: hard rss limit exhausted" in line:

@@ -29,7 +29,7 @@ from FTB.Running.WaitpidMonitor import WaitpidMonitor
 
 
 class ApplicationStatus:
-    OK, ERROR, TIMEDOUT, CRASHED = range(1, 5)
+    OK, ERROR, TIMEDOUT, REPORTED = range(1, 5)
 
 
 class PersistentMode:
@@ -126,9 +126,9 @@ class PersistentApplication(metaclass=ABCMeta):
     def status(self):
         pass
 
-    def _crashed(self):
+    def _reported(self):
         if self.process.returncode < 0:
-            crashSignals = [
+            reportSignals = [
                 # POSIX.1-1990 signals
                 signal.SIGILL,
                 signal.SIGABRT,
@@ -140,8 +140,8 @@ class PersistentApplication(metaclass=ABCMeta):
                 signal.SIGTRAP,
             ]
 
-            for crashSignal in crashSignals:
-                if self.process.returncode == -crashSignal:
+            for reportSignal in reportSignals:
+                if self.process.returncode == -reportSignal:
                     return True
 
         return False
@@ -203,7 +203,7 @@ class SimplePersistentApplication(PersistentApplication):
             return False
 
         # Save the exit result returned by waitpid() as we need it
-        # in case the process crashed or otherwise exited unexpectedly
+        # in case the process reported or otherwise exited unexpectedly
         self.childExit = monitor.childExit
 
         return True
@@ -304,8 +304,8 @@ class SimplePersistentApplication(PersistentApplication):
             # Process is still alive, consider this a timeout
             if self.process.poll() is None:
                 ret = ApplicationStatus.TIMEDOUT
-            elif self._crashed():
-                ret = ApplicationStatus.CRASHED
+            elif self._reported():
+                ret = ApplicationStatus.REPORTED
             elif self.process.returncode:
                 ret = ApplicationStatus.ERROR
 
@@ -347,12 +347,12 @@ class SimplePersistentApplication(PersistentApplication):
                     self.stop()
                     return ApplicationStatus.TIMEDOUT
                 else:
-                    # The process has exited. We need to check if it crashed, but first
+                    # The process has exited. We need to check if it reported, but first
                     # we call stop to join our collector threads.
                     self.stop()
 
-                    if self._crashed():
-                        return ApplicationStatus.CRASHED
+                    if self._reported():
+                        return ApplicationStatus.REPORTED
                     elif self.process.returncode < 0:
                         # The application was terminated by a signal, but not by one of
                         # the listed signals.  We consider this a fatal error. Either
@@ -408,8 +408,8 @@ class SimplePersistentApplication(PersistentApplication):
                 else:
                     self.process.returncode = -signalNum
 
-                if self._crashed():
-                    return ApplicationStatus.CRASHED
+                if self._reported():
+                    return ApplicationStatus.REPORTED
                 else:
                     return ApplicationStatus.ERROR
 

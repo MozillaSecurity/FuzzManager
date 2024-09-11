@@ -1,7 +1,7 @@
 """
 Matchers
 
-Various matcher classes required by crash signatures
+Various matcher classes required by report signatures
 
 @author:     Christian Holler (:decoder)
 
@@ -135,7 +135,7 @@ class NumberMatch(Match):
                         f"Invalid number specified: {numberMatchComponents[numIdx]}"
                     )
             else:
-                # We're trying to match the fact that we cannot calculate a crash
+                # We're trying to match the fact that we cannot calculate a report
                 # address
                 self.value = None
 

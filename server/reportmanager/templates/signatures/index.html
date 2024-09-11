@@ -1,0 +1,11 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}Signatures{% endblock title %}
+
+{% block body_content %}
+<signatureslist
+  :providers="{{ providers }}"
+  :activity-range="{{ activity_range }}"
+  watch-url="{% url 'reportmanager:sigwatch' %}"
+  />
+{% endblock body_content %}

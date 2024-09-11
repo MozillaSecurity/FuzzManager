@@ -14,7 +14,7 @@
       >
         <span aria-hidden="true">&times;</span>
       </button>
-      An error occurred while assigning this external bug to the current crash
+      An error occurred while assigning this external bug to the current report
       bucket: {{ assignError }}
     </div>
     <p

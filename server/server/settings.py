@@ -48,7 +48,7 @@ INSTALLED_APPS = (
     "django.contrib.messages",
     # 'livesync',
     "django.contrib.staticfiles",
-    "crashmanager",
+    "reportmanager",
     "rest_framework",
     "rest_framework.authtoken",
     # 'mozilla_django_oidc',
@@ -147,13 +147,13 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r"/login/.*",
     r"/logout/.*",
     r"/oidc/.*",
-    r"/crashmanager/rest/.*",
+    r"/reportmanager/rest/.*",
 )
 
 # permissions given to new users by default
 DEFAULT_PERMISSIONS = [
-    "crashmanager.models.User:view_crashmanager",
-    "crashmanager.models.User:crashmanager_all",
+    "reportmanager.models.User:view_reportmanager",
+    "reportmanager.models.User:reportmanager_all",
 ]
 
 # Database
@@ -249,14 +249,14 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 # behave as if we were using HTTPs.
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Crashmanager configuration
+# Reportmanager configuration
 #
 # FuzzManager supports username/password authentication as well as API keys
 # for authenticating to a Bugzilla instance. Omitting the username will cause
 # the password to be used as an API key instead.
 # BUGZILLA_USERNAME = "example@example.com"
 # BUGZILLA_PASSWORD = "secret"
-# CLEANUP_CRASHES_AFTER_DAYS = 14
+# CLEANUP_REPORTS_AFTER_DAYS = 14
 # CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
 ALLOW_EMAIL_EDITION = True
 
@@ -281,24 +281,20 @@ CELERY_BROKER_URL = "redis:///2"
 CELERY_RESULT_BACKEND = "redis:///1"
 CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
-    "crashmanager.cron.*": {"queue": "cron"},
+    "reportmanager.cron.*": {"queue": "cron"},
 }
 CELERY_BEAT_SCHEDULE = {
     # 'Poll Bugzilla every 15 minutes': {
-    #     'task': 'crashmanager.cron.bug_update_status',
+    #     'task': 'reportmanager.cron.bug_update_status',
     #     'schedule': 15 * 60,
     # },
-    "Update CrashEntry stats every minute": {
-        "task": "crashmanager.cron.update_crash_stats",
+    "Update ReportEntry stats every minute": {
+        "task": "reportmanager.cron.update_report_stats",
         "schedule": 60,
     },
-    "Cleanup CrashEntry/Bucket objects every 30 minutes": {
-        "task": "crashmanager.cron.cleanup_old_crashes",
+    "Cleanup ReportEntry/Bucket objects every 30 minutes": {
+        "task": "reportmanager.cron.cleanup_old_reportes",
         "schedule": 30 * 60,
-    },
-    "Create signatures.zip hourly": {
-        "task": "crashmanager.cron.export_signatures",
-        "schedule": 60 * 60,
     },
 }
 

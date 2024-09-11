@@ -38,7 +38,7 @@
       </div>
       <hr />
 
-      <h3>Publish a comment on crash {{ entryId }}</h3>
+      <h3>Publish a comment on report {{ entryId }}</h3>
       <div class="alert alert-info" role="alert" v-if="!template">
         Please pick a comment template to file a new comment.
       </div>
@@ -82,8 +82,8 @@
                 'platform',
                 'client',
                 'testcase',
-                'crashdata',
-                'crashdataattached',
+                'reportdata',
+                'reportdataattached',
                 'metadata*',
               ]"
               documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-comment-field"
@@ -109,12 +109,12 @@
         </div>
         <hr />
 
-        <CrashDataSection
+        <ReportDataSection
           mode="comment"
           :initial-not-attach-data="notAttachData"
           v-on:update-not-attach-data="notAttachData = $event"
-          :initial-data="crashData"
-          v-on:update-data="crashData = $event"
+          :initial-data="reportData"
+          v-on:update-data="reportData = $event"
           :path-prefix="entryMetadata.pathprefix"
         />
 
@@ -158,7 +158,7 @@
         </div>
 
         <div
-          v-if="publishCrashDataError"
+          v-if="publishReportDataError"
           class="alert alert-danger"
           role="alert"
         >
@@ -167,12 +167,12 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="publishCrashDataError = null"
+            v-on:click="publishReportDataError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
-          An error occurred while attaching crash data to the created external
-          comment: {{ publishCrashDataError }}
+          An error occurred while attaching report data to the created external
+          comment: {{ publishReportDataError }}
         </div>
 
         <div
@@ -229,7 +229,7 @@ import { Base64 } from "js-base64";
 import { errorParser } from "../../../helpers";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
-import CrashDataSection from "../CrashDataSection.vue";
+import ReportDataSection from "../ReportDataSection.vue";
 import TestCaseSection from "../TestCaseSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 
@@ -240,7 +240,7 @@ Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
 
 export default {
   components: {
-    CrashDataSection,
+    ReportDataSection,
     TestCaseSection,
     HelpPopover,
   },
@@ -276,18 +276,18 @@ export default {
     submitting: false,
     createError: null,
     publishTestCaseError: null,
-    publishCrashDataError: null,
+    publishReportDataError: null,
     createdCommentId: null,
     createdCommentCount: null,
     notAttachTest: false,
     testCaseContent: "",
     notAttachData: false,
-    crashData: "",
+    reportData: "",
   }),
   async mounted() {
-    this.entry = await api.retrieveCrash(this.entryId);
-    this.crashData = this.entry.rawCrashData
-      ? this.entry.rawCrashData
+    this.entry = await api.retrieveReport(this.entryId);
+    this.reportData = this.entry.rawReportData
+      ? this.entry.rawReportData
       : this.entry.rawStderr;
     if (this.bugId) this.externalBugId = this.bugId;
 
@@ -323,7 +323,7 @@ export default {
         this.entry.shortSignature &&
         this.entry.shortSignature.startsWith("[@")
       )
-        return "Crash " + this.entry.shortSignature;
+        return "Report " + this.entry.shortSignature;
       return this.entry.shortSignature;
     },
     summary() {
@@ -333,8 +333,8 @@ export default {
         s = s.replaceAll(this.entryMetadata.pathprefix, "");
       return s;
     },
-    crashDataRendered() {
-      return this.crashData
+    reportDataRendered() {
+      return this.reportData
         .split("\n")
         .map((l) => "    " + l)
         .join("\n");
@@ -363,10 +363,10 @@ export default {
           platform: this.entry.platform,
           client: this.entry.client,
           testcase: this.testCaseRendered,
-          crashdata: this.crashDataRendered,
-          crashdataattached: this.notAttachData
-            ? "(Crash data not available)"
-            : "For detailed crash information, see attachment.",
+          reportdata: this.reportDataRendered,
+          reportdataattached: this.notAttachData
+            ? "(Report data not available)"
+            : "For detailed report information, see attachment.",
           ...this.metadataExtension(this.template.comment),
         });
 
@@ -405,7 +405,7 @@ export default {
       this.createdCommentCount = null;
       this.createError = null;
       this.publishTestCaseError = null;
-      this.publishCrashDataError = null;
+      this.publishReportDataError = null;
 
       const payload = {
         id: this.externalBugId,
@@ -443,13 +443,13 @@ export default {
     },
     async publishAttachments() {
       let payload = {};
-      // Publish Crash data
+      // Publish Report data
       if (!this.notAttachData) {
         payload = {
           ids: [this.externalBugId],
-          data: Base64.encode(this.crashData),
-          file_name: "crash_data.txt",
-          summary: "Detailed Crash Information",
+          data: Base64.encode(this.reportData),
+          file_name: "report_data.txt",
+          summary: "Detailed Report Information",
           content_type: "text/plain",
         };
 
@@ -461,7 +461,7 @@ export default {
             headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
           });
         } catch (err) {
-          this.publishCrashDataError = errorParser(err);
+          this.publishReportDataError = errorParser(err);
         }
       }
 
@@ -470,7 +470,7 @@ export default {
         let content = this.testCaseContent;
         // If the testcase is binary we need to download it first
         if (this.entry.testcase_isbinary) {
-          content = await api.retrieveCrashTestCaseBinary(this.entry.id);
+          content = await api.retrieveReportTestCaseBinary(this.entry.id);
         }
 
         /*

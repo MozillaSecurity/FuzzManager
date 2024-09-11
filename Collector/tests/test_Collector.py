@@ -23,9 +23,9 @@ import pytest
 import requests
 
 from Collector.Collector import Collector, main
-from crashmanager.models import CrashEntry
 from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.Signatures.ReportInfo import ReportInfo
+from reportmanager.models import ReportEntry
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
@@ -49,7 +49,7 @@ def test_collector_help(capsys):
 @patch("os.path.expanduser")
 @patch("time.sleep", new=Mock())
 def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
-    """Test crash submission"""
+    """Test report submission"""
     mock_expanduser.side_effect = lambda path: str(
         tmp_path
     )  # ensure fuzzmanager config is not used
@@ -73,17 +73,19 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     config = ProgramConfiguration(
         "mozilla-central", "x86-64", "linux", version="ba0bc4f26681"
     )
-    asan_trace_crash = (FIXTURE_PATH / "asan_trace_crash.txt").read_text()
-    crashInfo = CrashInfo.fromRawCrashData([], asan_trace_crash.splitlines(), config)
+    asan_trace_report = (FIXTURE_PATH / "asan_trace_report.txt").read_text()
+    reportInfo = ReportInfo.fromRawReportData(
+        [], asan_trace_report.splitlines(), config
+    )
 
-    # submit a crash to test server using collector
-    result = collector.submit(crashInfo, str(testcase_path))
+    # submit a report to test server using collector
+    result = collector.submit(reportInfo, str(testcase_path))
 
     # see that the issue was created in the server
-    entry = CrashEntry.objects.get(pk=result["id"])
+    entry = ReportEntry.objects.get(pk=result["id"])
     assert entry.rawStdout == ""
-    assert entry.rawStderr == asan_trace_crash.rstrip()
-    assert entry.rawCrashData == ""
+    assert entry.rawStderr == asan_trace_report.rstrip()
+    assert entry.rawReportData == ""
     assert entry.tool.name == "test-tool"
     assert entry.client.name == "test-fuzzer1"
     assert entry.product.name == config.product
@@ -117,9 +119,9 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     stderr_path = tmp_path / "stderr.txt"
     with stderr_path.open("w") as fp:
         fp.write("stderr data")
-    crashdata_path = tmp_path / "crashdata.txt"
-    with crashdata_path.open("w") as fp:
-        fp.write(asan_trace_crash)
+    reportdata_path = tmp_path / "reportdata.txt"
+    with reportdata_path.open("w") as fp:
+        fp.write(asan_trace_report)
     result = main(
         [
             "--submit",
@@ -149,17 +151,17 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
             str(stdout_path),
             "--stderr",
             str(stderr_path),
-            "--crashdata",
-            str(crashdata_path),
+            "--reportdata",
+            str(reportdata_path),
         ]
     )
     assert result == 0
-    entry = CrashEntry.objects.get(
+    entry = ReportEntry.objects.get(
         pk__gt=entry.id
     )  # newer than the last result, will fail if the test db is active
     assert entry.rawStdout == "stdout data"
     assert entry.rawStderr == "stderr data"
-    assert entry.rawCrashData == asan_trace_crash.rstrip()
+    assert entry.rawReportData == asan_trace_report.rstrip()
     assert entry.tool.name == "tool2"
     assert entry.client.name == platform.node()
     assert entry.product.name == "mozilla-inbound"
@@ -182,7 +184,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
     collector._session.post = lambda *_, **__: response_t()
 
     with pytest.raises(RuntimeError, match="Server unexpectedly responded"):
-        collector.submit(crashInfo, str(testcase_path))
+        collector.submit(reportInfo, str(testcase_path))
 
 
 def test_collector_refresh(capsys, tmp_path):
@@ -212,7 +214,7 @@ def test_collector_refresh(capsys, tmp_path):
         # this asserts the expected arguments and returns the open handle to out.zip as
         # 'raw' which is read by refresh()
         def myget(url, stream=None, headers=None):
-            assert url == "gopher://aol.com:70/crashmanager/rest/signatures/download/"
+            assert url == "gopher://aol.com:70/reportmanager/rest/signatures/download/"
             assert stream is True
             assert headers == {"Authorization": "Token token"}
             return response_t()
@@ -289,17 +291,19 @@ def test_collector_generate_search(tmp_path):
     # create a collector
     collector = Collector(sigCacheDir=str(cache_dir))
 
-    # generate a signature from the crash data
+    # generate a signature from the report data
     config = ProgramConfiguration(
         "mozilla-central", "x86-64", "linux", version="ba0bc4f26681"
     )
-    asan_trace_crash = (FIXTURE_PATH / "asan_trace_crash.txt").read_text()
-    crashInfo = CrashInfo.fromRawCrashData([], asan_trace_crash.splitlines(), config)
-    sig = collector.generate(crashInfo, False, False, 8)
+    asan_trace_report = (FIXTURE_PATH / "asan_trace_report.txt").read_text()
+    reportInfo = ReportInfo.fromRawReportData(
+        [], asan_trace_report.splitlines(), config
+    )
+    sig = collector.generate(reportInfo, False, False, 8)
     assert {str(f) for f in cache_dir.iterdir()} == {sig}
 
     # search the sigcache and see that it matches the original
-    sigMatch, meta = collector.search(crashInfo)
+    sigMatch, meta = collector.search(reportInfo)
     assert sigMatch == sig
     assert meta is None
 
@@ -307,18 +311,18 @@ def test_collector_generate_search(tmp_path):
     sigBase, _ = os.path.splitext(sig)
     with open(sigBase + ".metadata", "w") as f:
         f.write("{}")
-    sigMatch, meta = collector.search(crashInfo)
+    sigMatch, meta = collector.search(reportInfo)
     assert sigMatch == sig
     assert meta == {}
 
-    # make sure another crash doesn't match
-    crashInfo = CrashInfo.fromRawCrashData([], [], config)
-    sigMatch, meta = collector.search(crashInfo)
+    # make sure another report doesn't match
+    reportInfo = ReportInfo.fromRawReportData([], [], config)
+    sigMatch, meta = collector.search(reportInfo)
     assert sigMatch is None
     assert meta is None
 
     # returns None if sig generation fails
-    result = collector.generate(crashInfo, True, True, 8)
+    result = collector.generate(reportInfo, True, True, 8)
     assert result is None
 
 
@@ -346,9 +350,9 @@ def test_collector_download(tmp_path, monkeypatch):
         text = "OK"
         content = b"testcase\xFF"
 
-    # myget1 mocks requests.get to return the rest response to the crashentry get
+    # myget1 mocks requests.get to return the rest response to the reportentry get
     def myget1(url, headers=None):
-        assert url == "gopher://aol.com:70/crashmanager/rest/crashes/123/"
+        assert url == "gopher://aol.com:70/reportmanager/rest/reports/123/"
         assert headers == {"Authorization": "Token token"}
 
         monkeypatch.chdir(str(tmp_path))  # download writes to cwd, so make that tmp
@@ -357,7 +361,7 @@ def test_collector_download(tmp_path, monkeypatch):
 
     # myget2 mocks requests.get to return the testcase data specified in myget1
     def myget2(url, headers=None):
-        assert url == "gopher://aol.com:70/crashmanager/rest/crashes/123/download/"
+        assert url == "gopher://aol.com:70/reportmanager/rest/reports/123/download/"
         assert headers == {"Authorization": "Token token"}
         return response2_t()
 

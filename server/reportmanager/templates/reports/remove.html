@@ -1,0 +1,20 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}{{ entry.pk }} - {{ entry.shortSignature|escape }} - Remove{% endblock title %}
+
+{% block body_content %}
+<div class="panel panel-default">
+    <div class="panel-heading"><i class="bi bi-card-list"></i> Remove Report</div>
+    <div class="panel-body">
+        {% if error_message %}<div class="alert alert-danger" role="alert">{{ error_message }}</div>{% endif %}
+        <form action="{% url 'reportmanager:reportdel' entry.pk %}" method="post">
+            {% csrf_token %}
+            <div class="alert alert-danger" role="alert">Are you sure that you want to delete this report entry?</div></strong></p>
+            <div class="field">
+                <strong>Signature:</strong> {{ entry.shortSignature|escape }}
+            </div>
+            <input type="submit" value="Delete" class="btn btn-danger"/>
+        </form>
+    </div>
+</div>
+{% endblock body_content %}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Collector -- Crash processing client
+Collector -- Report processing client
 
-Provide process and class level interfaces to process crash information with
+Provide process and class level interfaces to process report information with
 a remote server.
 
 @author:     Christian Holler (:decoder)
@@ -27,8 +27,8 @@ from zipfile import ZipFile
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
-from FTB.Signatures.CrashInfo import CrashInfo
-from FTB.Signatures.CrashSignature import CrashSignature
+from FTB.Signatures.ReportInfo import ReportInfo
+from FTB.Signatures.ReportSignature import ReportSignature
 from Reporter.Reporter import Reporter, remote_checks, signature_checks
 
 __all__ = []
@@ -45,7 +45,7 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         """
-        url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (
+        url = "%s://%s:%d/reportmanager/rest/signatures/download/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -88,18 +88,19 @@ class Collector(Reporter):
     @remote_checks
     def submit(
         self,
-        crashInfo,
+        reportInfo,
         testCase=None,
         testCaseQuality=0,
         testCaseSize=None,
         metaData=None,
     ):
         """
-        Submit the given crash information and an optional testcase/metadata
+        Submit the given report information and an optional testcase/metadata
         to the server for processing and storage.
 
-        @type crashInfo: CrashInfo
-        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
+        @type reportInfo: ReportInfo
+        @param reportInfo: ReportInfo instance obtained from
+                           L{ReportInfo.fromRawReportData}
 
         @type testCase: string
         @param testCase: A file containing a testcase for reproduction
@@ -116,21 +117,21 @@ class Collector(Reporter):
         @param metaData: A map containing arbitrary (application-specific) data which
                          will be stored on the server in JSON format. This metadata is
                          combined with possible metadata stored in the
-                         L{ProgramConfiguration} inside crashInfo.
+                         L{ProgramConfiguration} inside reportInfo.
         """
-        url = "%s://%s:%d/crashmanager/rest/crashes/" % (
+        url = "%s://%s:%d/reportmanager/rest/reports/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
         )
 
-        # Serialize our crash information, testcase and metadata into a dictionary to
+        # Serialize our report information, testcase and metadata into a dictionary to
         # POST
         data = {}
 
-        data["rawStdout"] = os.linesep.join(crashInfo.rawStdout)
-        data["rawStderr"] = os.linesep.join(crashInfo.rawStderr)
-        data["rawCrashData"] = os.linesep.join(crashInfo.rawCrashData)
+        data["rawStdout"] = os.linesep.join(reportInfo.rawStdout)
+        data["rawStderr"] = os.linesep.join(reportInfo.rawStderr)
+        data["rawReportData"] = os.linesep.join(reportInfo.rawReportData)
 
         if testCase:
             (testCaseData, isBinary) = Collector.read_testcase(testCase)
@@ -147,43 +148,44 @@ class Collector(Reporter):
             data["testcase_size"] = testCaseSize
             data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
 
-        data["platform"] = crashInfo.configuration.platform
-        data["product"] = crashInfo.configuration.product
-        data["os"] = crashInfo.configuration.os
+        data["platform"] = reportInfo.configuration.platform
+        data["product"] = reportInfo.configuration.product
+        data["os"] = reportInfo.configuration.os
 
-        if crashInfo.configuration.version:
-            data["product_version"] = crashInfo.configuration.version
+        if reportInfo.configuration.version:
+            data["product_version"] = reportInfo.configuration.version
 
         data["client"] = self.clientId
         data["tool"] = self.tool
 
-        if crashInfo.configuration.metadata or metaData:
+        if reportInfo.configuration.metadata or metaData:
             aggrMetaData = {}
 
-            if crashInfo.configuration.metadata:
-                aggrMetaData.update(crashInfo.configuration.metadata)
+            if reportInfo.configuration.metadata:
+                aggrMetaData.update(reportInfo.configuration.metadata)
 
             if metaData:
                 aggrMetaData.update(metaData)
 
             data["metadata"] = json.dumps(aggrMetaData)
 
-        if crashInfo.configuration.env:
-            data["env"] = json.dumps(crashInfo.configuration.env)
+        if reportInfo.configuration.env:
+            data["env"] = json.dumps(reportInfo.configuration.env)
 
-        if crashInfo.configuration.args:
-            data["args"] = json.dumps(crashInfo.configuration.args)
+        if reportInfo.configuration.args:
+            data["args"] = json.dumps(reportInfo.configuration.args)
 
         return self.post(url, data).json()
 
     @signature_checks
-    def search(self, crashInfo):
+    def search(self, reportInfo):
         """
         Searches within the local signature cache directory for a signature matching the
-        given crash.
+        given report.
 
-        @type crashInfo: CrashInfo
-        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
+        @type reportInfo: ReportInfo
+        @param reportInfo: ReportInfo instance obtained from
+                           L{ReportInfo.fromRawReportData}
 
         @rtype: tuple
         @return: Tuple containing filename of the signature and metadata matching, or
@@ -200,8 +202,8 @@ class Collector(Reporter):
             if not os.path.isdir(sigFile):
                 with open(sigFile) as f:
                     sigData = f.read()
-                    crashSig = CrashSignature(sigData)
-                    if crashSig.matches(crashInfo):
+                    reportSig = ReportSignature(sigData)
+                    if reportSig.matches(reportInfo):
                         metadataFile = sigFile.replace(".signature", ".metadata")
                         metadata = None
                         if os.path.exists(metadataFile):
@@ -215,32 +217,33 @@ class Collector(Reporter):
     @signature_checks
     def generate(
         self,
-        crashInfo,
-        forceCrashAddress=None,
-        forceCrashInstruction=None,
+        reportInfo,
+        forceReportAddress=None,
+        forceReportInstruction=None,
         numFrames=None,
     ):
         """
         Generates a signature in the local cache directory. It will be deleted when
         L{refresh} is called on the same local cache directory.
 
-        @type crashInfo: CrashInfo
-        @param crashInfo: CrashInfo instance obtained from L{CrashInfo.fromRawCrashData}
+        @type reportInfo: ReportInfo
+        @param reportInfo: ReportInfo instance obtained from
+                           L{ReportInfo.fromRawReportData}
 
-        @type forceCrashAddress: bool
-        @param forceCrashAddress: Force including the crash address into the signature
-        @type forceCrashInstruction: bool
-        @param forceCrashInstruction: Force including the crash instruction into the
+        @type forceReportAddress: bool
+        @param forceReportAddress: Force including the report address into the signature
+        @type forceReportInstruction: bool
+        @param forceReportInstruction: Force including the report instruction into the
                                       signature (GDB only)
         @type numFrames: int
         @param numFrames: How many frames to include in the signature
 
         @rtype: string
-        @return: File containing crash signature in JSON format
+        @return: File containing report signature in JSON format
         """
 
-        sig = crashInfo.createCrashSignature(
-            forceCrashAddress, forceCrashInstruction, numFrames
+        sig = reportInfo.createReportSignature(
+            forceReportAddress, forceReportInstruction, numFrames
         )
 
         if not sig:
@@ -250,29 +253,29 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, reportId):
         """
-        Download the testcase for the specified crashId.
+        Download the testcase for the specified reportId.
 
-        @type crashId: int
-        @param crashId: ID of the requested crash entry on the server side
+        @type reportId: int
+        @param reportId: ID of the requested report entry on the server side
 
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw
                  JSON response
         """
-        url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (
+        url = "%s://%s:%d/reportmanager/rest/reports/%s/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
-            crashId,
+            reportId,
         )
 
-        dlurl = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
+        dlurl = "%s://%s:%d/reportmanager/rest/reports/%s/download/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
-            crashId,
+            reportId,
         )
 
         resp_json = self.get(url).json()
@@ -288,7 +291,7 @@ class Collector(Reporter):
         if "content-disposition" not in response.headers:
             raise RuntimeError(f"Server sent malformed response: {response!r}")
 
-        local_filename = f"{crashId}{os.path.splitext(resp_json['testcase'])[1]}"
+        local_filename = f"{reportId}{os.path.splitext(resp_json['testcase'])[1]}"
         with open(local_filename, "wb") as output:
             output.write(response.content)
 
@@ -306,7 +309,7 @@ class Collector(Reporter):
         @return: generator of filenames where tests were stored.
         """
         params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
-        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
+        next_url = "%s://%s:%d/reportmanager/rest/reports/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
@@ -323,15 +326,15 @@ class Collector(Reporter):
             next_url = resp_json["next"]
             params = None
 
-            for crash in resp_json["results"]:
-                if not crash["testcase"]:
+            for report in resp_json["results"]:
+                if not report["testcase"]:
                     continue
 
-                url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
+                url = "%s://%s:%d/reportmanager/rest/reports/%s/download/" % (
                     self.serverProtocol,
                     self.serverHost,
                     self.serverPort,
-                    crash["id"],
+                    report["id"],
                 )
                 response = self.get(url)
 
@@ -339,8 +342,8 @@ class Collector(Reporter):
                     raise RuntimeError(f"Server sent malformed response: {response!r}")
 
                 local_filename = "%d%s" % (
-                    crash["id"],
-                    os.path.splitext(crash["testcase"])[1],
+                    report["id"],
+                    os.path.splitext(report["testcase"])[1],
                 )
                 with open(local_filename, "wb") as output:
                     output.write(response.content)
@@ -351,8 +354,8 @@ class Collector(Reporter):
         """
         Store a signature, using the sha1 hash hex representation as filename.
 
-        @type signature: CrashSignature
-        @param signature: CrashSignature to store
+        @type signature: ReportSignature
+        @param signature: ReportSignature to store
 
         @rtype: string
         @return: Name of the file that the signature was written to
@@ -403,11 +406,11 @@ def main(args=None):
         version=f"{__file__} v{__version__} ({__updated__})",
     )
 
-    # Crash information
+    # Report information
     parser.add_argument("--stdout", help="File containing STDOUT data", metavar="FILE")
     parser.add_argument("--stderr", help="File containing STDERR data", metavar="FILE")
     parser.add_argument(
-        "--crashdata", help="File containing external crash data", metavar="FILE"
+        "--reportdata", help="File containing external report data", metavar="FILE"
     )
 
     # Actions
@@ -424,7 +427,7 @@ def main(args=None):
     actions.add_argument(
         "--search",
         action="store_true",
-        help="Search cached signatures for the given crash",
+        help="Search cached signatures for the given report",
     )
     actions.add_argument(
         "--generate",
@@ -436,14 +439,14 @@ def main(args=None):
         action="store_true",
         help=(
             "Go into auto-submit mode. In this mode, all remaining arguments are "
-            "interpreted as the crashing command. This tool will automatically obtain "
-            "GDB crash information and submit it."
+            "interpreted as the reporting command. This tool will automatically obtain "
+            "GDB report information and submit it."
         ),
     )
     actions.add_argument(
         "--download",
         type=int,
-        help="Download the testcase for the specified crash entry",
+        help="Download the testcase for the specified report entry",
         metavar="ID",
     )
     actions.add_argument(
@@ -482,20 +485,22 @@ def main(args=None):
         "--clientid", help="Client ID to use when submitting issues", metavar="ID"
     )
     parser.add_argument(
-        "--platform", help="Platform this crash appeared on", metavar="(x86|x86-64|arm)"
+        "--platform",
+        help="Platform this report appeared on",
+        metavar="(x86|x86-64|arm)",
     )
     parser.add_argument(
-        "--product", help="Product this crash appeared on", metavar="PRODUCT"
+        "--product", help="Product this report appeared on", metavar="PRODUCT"
     )
     parser.add_argument(
         "--productversion",
         dest="product_version",
-        help="Product version this crash appeared on",
+        help="Product version this report appeared on",
         metavar="VERSION",
     )
     parser.add_argument(
         "--os",
-        help="OS this crash appeared on",
+        help="OS this report appeared on",
         metavar="(windows|linux|macosx|b2g|android)",
     )
     parser.add_argument(
@@ -545,14 +550,14 @@ def main(args=None):
 
     # Options that affect how signatures are generated
     parser.add_argument(
-        "--forcecrashaddr",
+        "--forcereportaddr",
         action="store_true",
-        help="Force including the crash address into the signature",
+        help="Force including the report address into the signature",
     )
     parser.add_argument(
-        "--forcecrashinst",
+        "--forcereportinst",
         action="store_true",
-        help="Force including the crash instruction into the signature (GDB only)",
+        help="Force including the report instruction into the signature (GDB only)",
     )
     parser.add_argument(
         "--numframes",
@@ -599,8 +604,8 @@ def main(args=None):
 
     stdout = None
     stderr = None
-    crashdata = None
-    crashInfo = None
+    reportdata = None
+    reportInfo = None
     args = None
     env = None
     metadata = {}
@@ -659,9 +664,9 @@ def main(args=None):
             )
 
         if not opts.autosubmit:
-            if opts.stderr is None and opts.crashdata is None:
+            if opts.stderr is None and opts.reportdata is None:
                 parser.error(
-                    "Must specify at least either --stderr or --crashdata file"
+                    "Must specify at least either --stderr or --reportdata file"
                 )
 
             if opts.stdout:
@@ -672,17 +677,17 @@ def main(args=None):
                 with open(opts.stderr) as f:
                     stderr = f.read()
 
-            if opts.crashdata:
-                with open(opts.crashdata) as f:
-                    crashdata = f.read()
+            if opts.reportdata:
+                with open(opts.reportdata) as f:
+                    reportdata = f.read()
 
-            crashInfo = CrashInfo.fromRawCrashData(
-                stdout, stderr, configuration, auxCrashData=crashdata
+            reportInfo = ReportInfo.fromRawReportData(
+                stdout, stderr, configuration, auxReportData=reportdata
             )
             if opts.testcase:
                 (testCaseData, isBinary) = Collector.read_testcase(opts.testcase)
                 if not isBinary:
-                    crashInfo.testcase = testCaseData
+                    reportInfo.testcase = testCaseData
 
     serverauthtoken = None
     if opts.serverauthtokenfile:
@@ -706,12 +711,12 @@ def main(args=None):
     if opts.submit:
         testcase = opts.testcase
         collector.submit(
-            crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
+            reportInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
         )
         return 0
 
     if opts.search:
-        (sig, metadata) = collector.search(crashInfo)
+        (sig, metadata) = collector.search(reportInfo)
         if sig is None:
             print("No match found", file=sys.stderr)
             return 3
@@ -722,11 +727,11 @@ def main(args=None):
 
     if opts.generate:
         sigFile = collector.generate(
-            crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes
+            reportInfo, opts.forcereportaddr, opts.forcereportinst, opts.numframes
         )
         if not sigFile:
             print(
-                "Failed to generate a signature for the given crash information.",
+                "Failed to generate a signature for the given report information.",
                 file=sys.stderr,
             )
             return 1
@@ -736,13 +741,13 @@ def main(args=None):
     if opts.autosubmit:
         runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
         if runner.run():
-            crashInfo = runner.getCrashInfo(configuration)
+            reportInfo = runner.getReportInfo(configuration)
             collector.submit(
-                crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
+                reportInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
             )
         else:
             print(
-                "Error: Failed to reproduce the given crash, cannot submit.",
+                "Error: Failed to reproduce the given report, cannot submit.",
                 file=sys.stderr,
             )
             return 1
@@ -750,7 +755,7 @@ def main(args=None):
     if opts.download:
         (retFile, retJSON) = collector.download(opts.download)
         if not retFile:
-            print("Specified crash entry does not have a testcase", file=sys.stderr)
+            print("Specified report entry does not have a testcase", file=sys.stderr)
             return 1
 
         if "args" in retJSON and retJSON["args"]:

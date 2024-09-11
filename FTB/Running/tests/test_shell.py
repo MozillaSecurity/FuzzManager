@@ -17,7 +17,7 @@ import sys
 import time
 
 
-def crash():
+def report():
     import ctypes
 
     # Causes a NULL deref
@@ -43,7 +43,7 @@ def processInput(mode, inputFd):
         if len(data) == 3:
             sys.exit(1)
         else:
-            crash()
+            report()
     elif mode == "spfp":
         lines = []
 
@@ -58,7 +58,7 @@ def processInput(mode, inputFd):
                 print("SPFP: PASSED")
             elif line == "spfp-endofdata":
                 if received_aa and "aaaa" in lines:
-                    crash()
+                    report()
                 elif "aa" in lines:
                     received_aa = True
                 elif "aaaaa" in lines:
@@ -79,7 +79,7 @@ def processInput(mode, inputFd):
                     print(line, file=sys.stderr)
 
                 if received_aa and "aaaa" in lines:
-                    crash()
+                    report()
                 elif "aa" in lines:
                     received_aa = True
                 elif "aaaaa" in lines:

@@ -1,0 +1,17 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}Delete template{% endblock title %}
+
+{% block body_content %}
+<div class="panel panel-danger">
+    <div class="panel-heading"><i class="bi bi-card-list"></i> Delete template</div>
+    <div class="panel-body">
+        <form method="post">
+            {% csrf_token %}
+            <p>Are you sure you want to delete this <strong>{{ object.mode }}</strong> template{% if object.name %} named <strong>{{ object.name }}</strong>{% endif %}?</p>
+            <input type="submit" class="btn btn-danger" value="Confirm">
+            <a href="{% url 'reportmanager:templates' %}" class="btn btn-default">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock body_content %}
