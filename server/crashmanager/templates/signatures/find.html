@@ -15,8 +15,8 @@
 		{% else %}
 			{% if not buckets %}
 			No similar buckets could be found.</br></br>
-			<a href="{% url 'crashmanager:signew' %}?crashid={{ crashentry.pk }}" class="btn btn-default">Create a new bucket</a>
 			{% endif %}
+			<a href="{% url 'crashmanager:signew' %}?crashid={{ crashentry.pk }}" class="btn btn-default">Create a new bucket</a>
 		{% endif %}
 		</p>
 	</div>
