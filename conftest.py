@@ -16,9 +16,6 @@ def pytest_ignore_collect(path, config):
     # 3.12 not supported yet
     if sys.version_info >= (3, 12):
         rel_path = Path(path).relative_to(config.rootdir)
-        if rel_path.parts[0] in {
-            "server",
-            "Collector",
-        }:
+        if rel_path.parts[0] == "server":
             return True
     return None

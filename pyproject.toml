@@ -3,7 +3,7 @@ requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-target-version = ["py38"]
+target-version = ["py39"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -24,9 +24,7 @@ omit = [
 
 [tool.isort]
 known_first_party = [
-    "Collector",
     "FTB",
-    "Reporter",
     "reportmanager",
 ]
 profile = "black"
