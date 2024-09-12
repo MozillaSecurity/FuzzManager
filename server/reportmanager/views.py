@@ -1,16 +1,14 @@
 import json
-import os
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from uuid import uuid4
-from wsgiref.util import FileWrapper
 
 import redis
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -24,11 +22,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.ReportInfo import ReportInfo
-from server.auth import CheckAppPermission
 
 from .forms import (
     BugzillaTemplateBugForm,
@@ -1501,57 +1497,6 @@ def json_to_query(json_str):
         return qobj
 
     return (obj, get_query_obj(obj))
-
-
-class AbstractDownloadView(APIView):
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
-    permission_classes = (CheckAppPermission,)
-
-    def response(self, file_path, filename, content_type="application/octet-stream"):
-        if not os.path.exists(file_path):
-            return HttpResponse(status=404)
-
-        test_file = open(file_path, "rb")
-        response = HttpResponse(
-            FileWrapper(test_file), content_type="application/octet-stream"
-        )
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-    def get(self):
-        return HttpResponse(status=500)
-
-
-class TestDownloadView(AbstractDownloadView):
-    def get(self, request, reportid):
-        storage_base = getattr(django_settings, "TEST_STORAGE", None)
-        if not storage_base:
-            # This is a misconfiguration
-            return HttpResponse(status=500)
-
-        entry = get_object_or_404(ReportEntry, pk=reportid)
-        check_authorized_for_report_entry(request, entry)
-
-        if not entry.testcase:
-            return HttpResponse(status=404)
-
-        file_path = os.path.join(storage_base, entry.testcase.test.name)
-        return self.response(file_path, entry.testcase.test.name)
-
-
-class SignaturesDownloadView(AbstractDownloadView):
-    def get(self, request, format=None):
-        deny_restricted_users(request)
-
-        storage_base = getattr(django_settings, "SIGNATURE_STORAGE", None)
-        if not storage_base:
-            # This is a misconfiguration
-            return HttpResponse(status=500)
-
-        filename = "signatures.zip"
-        file_path = os.path.join(storage_base, filename)
-
-        return self.response(file_path, filename)
 
 
 class BugzillaTemplateListView(ListView):

@@ -92,35 +92,11 @@ def user_noperm(db, api_client):  # pylint: disable=invalid-name,unused-argument
 
 
 @pytest.fixture
-def user_only_sigs(db, api_client):  # pylint: disable=invalid-name,unused-argument
-    """Create an authenticated user with only permission for signatures.zip"""
-    user = _create_user(
-        "test-only-sigs",
-        permissions=("view_reportmanager", "reportmanager_download_signatures"),
-    )
-    api_client.force_authenticate(user=user)
-    return user
-
-
-@pytest.fixture
-def user_only_report(db, api_client):  # pylint: disable=invalid-name,unused-argument
-    """Create an authenticated user with only permission for reporting reports"""
-    user = _create_user(
-        "test-only-report",
-        permissions=("view_reportmanager", "reportmanager_report_reports"),
-    )
-    api_client.force_authenticate(user=user)
-    return user
-
-
-@pytest.fixture
 def user(request):
     assert request.param in {
         "normal",
         "restricted",
         "noperm",
-        "only_report",
-        "only_sigs",
     }
     return request.getfixturevalue(f"user_{request.param}")
 

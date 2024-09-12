@@ -141,7 +141,6 @@ def _compare_rest_result_to_bucket(
     [
         "/reportmanager/rest/buckets/",
         "/reportmanager/rest/buckets/1/",
-        "/reportmanager/rest/signatures/download/",
     ],
 )
 def test_rest_signatures_no_auth(db, api_client, method, url):
@@ -158,14 +157,11 @@ def test_rest_signatures_no_auth(db, api_client, method, url):
     [
         "/reportmanager/rest/buckets/",
         "/reportmanager/rest/buckets/1/",
-        "/reportmanager/rest/signatures/download/",
     ],
 )
-@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
-def test_rest_signatures_no_perm(user, api_client, method, url):
+@pytest.mark.usefixtures("user_noperm")
+def test_rest_signatures_no_perm(api_client, method, url):
     """must yield forbidden without permission"""
-    if url.endswith("download/") and user.username == "test-only-sigs":
-        pytest.skip()
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]
     )
@@ -177,7 +173,6 @@ def test_rest_signatures_no_perm(user, api_client, method, url):
     [
         "/reportmanager/rest/buckets/1/",
         "/reportmanager/rest/buckets/",
-        "/reportmanager/rest/signatures/download/",
     ],
 )
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -725,22 +720,3 @@ def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     assert createdBug.externalType == provider
     bucket.refresh_from_db()
     assert bucket.bug == createdBug
-
-
-def test_signatures_download_restricted(user_restricted, api_client):
-    """must yield forbidden for restricted user"""
-    assert (
-        api_client.get("/reportmanager/rest/signatures/download/", {}).status_code
-        == requests.codes["forbidden"]
-    )
-
-
-@pytest.mark.parametrize("user", ["normal", "only_sigs"], indirect=True)
-def test_signatures_download_perms(api_client, user, settings, tmp_path):
-    """test signatures.zip download permissions"""
-    settings.SIGNATURE_STORAGE = str(tmp_path)
-    (tmp_path / "signatures.zip").touch()
-    assert (
-        api_client.get("/reportmanager/rest/signatures/download/", {}).status_code
-        == requests.codes["ok"]
-    )

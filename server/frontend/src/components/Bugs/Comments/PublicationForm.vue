@@ -81,7 +81,6 @@
                 'os',
                 'platform',
                 'client',
-                'testcase',
                 'reportdata',
                 'reportdataattached',
                 'metadata*',
@@ -116,17 +115,6 @@
           :initial-data="reportData"
           v-on:update-data="reportData = $event"
           :path-prefix="entryMetadata.pathprefix"
-        />
-
-        <TestCaseSection
-          v-if="entry.testcase"
-          mode="comment"
-          :initial-not-attach-test="notAttachTest"
-          v-on:update-not-attach-test="notAttachTest = $event"
-          :entry="entry"
-          :template="template"
-          v-on:update-filename="entry.testcase = $event"
-          v-on:update-content="testCaseContent = $event"
         />
 
         <div v-if="createError" class="alert alert-danger" role="alert">
@@ -175,24 +163,6 @@
           comment: {{ publishReportDataError }}
         </div>
 
-        <div
-          v-if="publishTestCaseError"
-          class="alert alert-danger"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            v-on:click="publishTestCaseError = null"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-          An error occurred while attaching the testcase to the created external
-          comment: {{ publishTestCaseError }}
-        </div>
-
         <div v-if="!bugzillaToken" class="alert alert-warning" role="alert">
           Please define an API Token for
           <strong>{{ provider.hostname }}</strong> in your settings to submit a
@@ -230,7 +200,6 @@ import { errorParser } from "../../../helpers";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
 import ReportDataSection from "../ReportDataSection.vue";
-import TestCaseSection from "../TestCaseSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 
 // Apply Handlebars helpers
@@ -241,7 +210,6 @@ Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
 export default {
   components: {
     ReportDataSection,
-    TestCaseSection,
     HelpPopover,
   },
   props: {
@@ -275,12 +243,9 @@ export default {
     isPrivate: false,
     submitting: false,
     createError: null,
-    publishTestCaseError: null,
     publishReportDataError: null,
     createdCommentId: null,
     createdCommentCount: null,
-    notAttachTest: false,
-    testCaseContent: "",
     notAttachData: false,
     reportData: "",
   }),
@@ -339,14 +304,6 @@ export default {
         .map((l) => "    " + l)
         .join("\n");
     },
-    testCaseRendered() {
-      if (!this.entry.testcase) return "(Test not available)";
-      else if (this.testCaseContent.length > 2048) return "See attachment.";
-      return this.testCaseContent
-        .split("\n")
-        .map((l) => "    " + l)
-        .join("\n");
-    },
     renderedComment() {
       if (!this.template || !this.entry) return "";
       try {
@@ -362,7 +319,6 @@ export default {
           os: this.entry.os,
           platform: this.entry.platform,
           client: this.entry.client,
-          testcase: this.testCaseRendered,
           reportdata: this.reportDataRendered,
           reportdataattached: this.notAttachData
             ? "(Report data not available)"
@@ -404,7 +360,6 @@ export default {
       this.createdCommentId = null;
       this.createdCommentCount = null;
       this.createError = null;
-      this.publishTestCaseError = null;
       this.publishReportDataError = null;
 
       const payload = {
@@ -462,46 +417,6 @@ export default {
           });
         } catch (err) {
           this.publishReportDataError = errorParser(err);
-        }
-      }
-
-      // Publish TestCase
-      if (this.entry.testcase && !this.notAttachTest) {
-        let content = this.testCaseContent;
-        // If the testcase is binary we need to download it first
-        if (this.entry.testcase_isbinary) {
-          content = await api.retrieveReportTestCaseBinary(this.entry.id);
-        }
-
-        /*
-         * A bug in BMO is causing "count" to be missing.
-         * This workaround ensures we can still attach the missing file.
-         */
-        let comment = "previous comment";
-        if (this.createdCommentCount !== undefined)
-          comment = `comment ${this.createdCommentCount}`;
-
-        payload = {
-          ids: [this.externalBugId],
-          data: this.entry.testcase_isbinary
-            ? Base64.fromUint8Array(content)
-            : Base64.encode(content),
-          file_name: this.entry.testcase,
-          summary: `Testcase for ${comment}`,
-          content_type: this.entry.testcase_isbinary
-            ? "application/octet-stream"
-            : "text/plain",
-        };
-
-        try {
-          await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.externalBugId,
-            ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
-          });
-        } catch (err) {
-          this.publishTestCaseError = errorParser(err);
         }
       }
     },

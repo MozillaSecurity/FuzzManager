@@ -1,8 +1,5 @@
 import itertools
-import os
-import shutil
 from datetime import timedelta
-from tempfile import mkstemp
 
 from celeryconf import app
 from django.conf import settings
@@ -11,10 +8,6 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.db.models.aggregates import Count
 from django.utils import timezone
-
-SIGNATURES_ZIP = os.path.realpath(
-    os.path.join(getattr(settings, "SIGNATURE_STORAGE", None), "signatures.zip")
-)
 
 
 @app.task(ignore_result=True)
@@ -77,18 +70,6 @@ def cleanup_old_reports():
 @app.task(ignore_result=True)
 def triage_new_reports():
     call_command("triage_new_reports")
-
-
-@app.task(ignore_result=True)
-def export_signatures():
-    fd, tmpf = mkstemp(prefix="fm-sigs-", suffix=".zip")
-    os.close(fd)
-    try:
-        call_command("export_signatures", tmpf)
-        os.chmod(tmpf, 0o644)
-        shutil.copy(tmpf, SIGNATURES_ZIP)
-    finally:
-        os.unlink(tmpf)
 
 
 @app.task(ignore_result=True)

@@ -362,7 +362,6 @@
                 'os',
                 'platform',
                 'client',
-                'testcase',
                 'reportdata',
                 'reportdataattached',
                 'metadata*',
@@ -428,16 +427,6 @@
           :path-prefix="entryMetadata.pathprefix"
         />
 
-        <TestCaseSection
-          v-if="entry.testcase"
-          :initial-not-attach-test="notAttachTest"
-          v-on:update-not-attach-test="notAttachTest = $event"
-          :entry="entry"
-          :template="template"
-          v-on:update-filename="entry.testcase = $event"
-          v-on:update-content="testCaseContent = $event"
-        />
-
         <div v-if="createError" class="alert alert-danger" role="alert">
           <button
             type="button"
@@ -478,24 +467,6 @@
           </button>
           An error occurred while attaching report data to the created external
           bug: {{ publishReportDataError }}
-        </div>
-
-        <div
-          v-if="publishTestCaseError"
-          class="alert alert-danger"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            v-on:click="publishTestCaseError = null"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-          An error occurred while attaching the testcase to the created external
-          bug: {{ publishTestCaseError }}
         </div>
 
         <div v-if="assignError" class="alert alert-danger" role="alert">
@@ -552,7 +523,6 @@ import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 import UserDropdown from "./UserDropdown.vue";
 import ReportDataSection from "./ReportDataSection.vue";
-import TestCaseSection from "./TestCaseSection.vue";
 import HelpPopover from "./HelpPopover.vue";
 
 // Apply Handlebars helpers
@@ -566,7 +536,6 @@ export default {
     ProductComponentSelect,
     UserDropdown,
     ReportDataSection,
-    TestCaseSection,
     HelpPopover,
   },
   props: {
@@ -602,12 +571,9 @@ export default {
     platform: "",
     submitting: false,
     createError: null,
-    publishTestCaseError: null,
     publishReportDataError: null,
     assignError: null,
     createdBugId: null,
-    notAttachTest: false,
-    testCaseContent: "",
     notAttachData: false,
     reportData: "",
   }),
@@ -659,14 +625,6 @@ export default {
         .map((l) => "    " + l)
         .join("\n");
     },
-    testCaseRendered() {
-      if (!this.entry.testcase) return "(Test not available)";
-      else if (this.testCaseContent.length > 2048) return "See attachment.";
-      return this.testCaseContent
-        .split("\n")
-        .map((l) => "    " + l)
-        .join("\n");
-    },
     renderedAttrs() {
       if (!this.template || !this.entry) return "";
       try {
@@ -699,7 +657,6 @@ export default {
           os: this.entry.os,
           platform: this.entry.platform,
           client: this.entry.client,
-          testcase: this.testCaseRendered,
           reportdata: this.reportDataRendered,
           reportdataattached: this.notAttachData
             ? "(Report data not available)"
@@ -720,7 +677,7 @@ export default {
       if (!this.template || !this.entry) return "";
       try {
         const compiled = Handlebars.compile(this.template.keywords);
-        return compiled({ isTestAttached: !this.notAttachTest });
+        return compiled();
       } catch {
         return "";
       }
@@ -729,7 +686,7 @@ export default {
       if (!this.template || !this.entry) return "";
       try {
         const compiled = Handlebars.compile(this.template.whiteboard);
-        return compiled({ isTestAttached: !this.notAttachTest });
+        return compiled();
       } catch {
         return "";
       }
@@ -787,7 +744,6 @@ export default {
       this.submitting = true;
       this.createdBugId = null;
       this.createError = null;
-      this.publishTestCaseError = null;
       this.publishReportDataError = null;
       this.assignError = null;
 
@@ -872,39 +828,8 @@ export default {
           this.publishReportDataError = errorParser(err);
         }
       }
-
-      // Publish TestCase
-      if (this.entry.testcase && !this.notAttachTest) {
-        try {
-          let content = this.testCaseContent;
-          // If the testcase is binary we need to download it first
-          if (this.entry.testcase_isbinary) {
-            content = await api.retrieveReportTestCaseBinary(this.entry.id);
-          }
-
-          payload = {
-            ids: [this.createdBugId],
-            data: this.entry.testcase_isbinary
-              ? Base64.fromUint8Array(content)
-              : Base64.encode(content),
-            file_name: this.entry.testcase,
-            summary: "Testcase",
-            content_type: this.entry.testcase_isbinary
-              ? "application/octet-stream"
-              : "text/plain",
-          };
-
-          await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.createdBugId,
-            ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
-          });
-        } catch (err) {
-          this.publishTestCaseError = errorParser(err);
-        }
-      }
     },
+
     async assignExternalBug() {
       const payload = {
         bug: this.createdBugId,

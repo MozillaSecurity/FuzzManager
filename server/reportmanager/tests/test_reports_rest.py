@@ -96,15 +96,9 @@ def test_rest_reports_no_auth(db, api_client, method, url):
 @pytest.mark.parametrize(
     "url", ["/reportmanager/rest/reports/", "/reportmanager/rest/reports/1/"]
 )
-@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
-def test_rest_reports_no_perm(user, api_client, method, url):
+@pytest.mark.usefixtures("user_noperm")
+def test_rest_reports_no_perm(api_client, method, url):
     """must yield forbidden without permission"""
-    if (
-        url.endswith("reports/")
-        and method == "post"
-        and user.username == "test-only-report"
-    ):
-        pytest.skip()
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]
     )
@@ -423,7 +417,7 @@ def test_rest_reports_list_query(api_client, cm, user, expected, toolfilter):
         _compare_rest_result_to_report(resp["results"][0], reports[expected])
 
 
-@pytest.mark.parametrize("user", ["normal", "restricted", "only_report"], indirect=True)
+@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize(
     "data",
     [

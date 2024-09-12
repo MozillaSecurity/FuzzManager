@@ -293,14 +293,6 @@ class Migration(migrations.Migration):
                         "Can see ReportManager app (required for reportmanager_* "
                         "perms)",
                     ),
-                    (
-                        "reportmanager_report_reports",
-                        "Can report ReportManager reports",
-                    ),
-                    (
-                        "reportmanager_download_signatures",
-                        "Can download signatures.zip",
-                    ),
                     ("reportmanager_all", "Full access to ReportManager"),
                 ),
             },

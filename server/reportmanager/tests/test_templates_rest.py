@@ -30,8 +30,8 @@ def test_rest_templates_no_auth(db, api_client, method, url):
         "/reportmanager/rest/bugzilla/templates/1/",
     ],
 )
-@pytest.mark.parametrize("user", ["noperm", "only_sigs", "only_report"], indirect=True)
-def test_rest_templates_no_perm(user, api_client, method, url):
+@pytest.mark.usefixtures("user_noperm")
+def test_rest_templates_no_perm(api_client, method, url):
     """must yield forbidden without permission"""
     assert (
         getattr(api_client, method)(url, {}).status_code == requests.codes["forbidden"]

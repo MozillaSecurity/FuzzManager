@@ -49,9 +49,6 @@
             <tr><td>Version</td><td>{{ entry.product.version }}</td></tr>
             <tr><td>Platform</td><td>{{ entry.platform.name }}</td></tr>
             <tr><td>OS</td><td>{{ entry.os.name }}</td></tr>
-            {% if entry.testcase %}
-            <tr><td>Testcase Quality</td><td>{{ entry.testcase.quality }}</td></tr>
-            {% endif %}
             <tr><td>Reported by Tool</td><td>{{ entry.tool.name }}</td></tr>
         </table>
 
@@ -94,19 +91,6 @@
             <pre><code class="language-bash" v-pre>{{ entry.rawReportData }}</code></pre>
         </div>
         <br />
-        {% endif %}
-
-        {% if entry.testcase %}
-        <div class="field">
-            <strong>Testcase</strong>
-            {% if entry.testcase.isBinary %}
-            <br/>
-            {% else %}
-            <pre><code v-pre>{{ entry.testcase.content.decode }}</code></pre>
-            {% endif %}
-            <a href="{% url 'reportmanager:download_test' entry.pk %}" class="btn btn-success">Download</a>
-        </div>
-        <br/>
         {% endif %}
 
         {% if entry.argsList %}

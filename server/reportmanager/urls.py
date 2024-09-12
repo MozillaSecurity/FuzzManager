@@ -25,23 +25,8 @@ urlpatterns = [
         views.ReportStatsViewSet.as_view({"get": "retrieve"}),
         name="report_stats_rest",
     ),
-    re_path(
-        r"^rest/signatures/download/$",
-        views.SignaturesDownloadView.as_view(),
-        name="download_signatures_rest",
-    ),
-    re_path(
-        r"^rest/reports/(?P<reportid>\d+)/download/$",
-        views.TestDownloadView.as_view(),
-        name="download_test_rest",
-    ),
     re_path(r"^$", views.index, name="index"),
     re_path(r"^signatures/$", views.signatures, name="signatures"),
-    re_path(
-        r"^signatures/download/$",
-        views.SignaturesDownloadView.as_view(),
-        name="download_signatures",
-    ),
     re_path(r"^signatures/new/$", views.newSignature, name="signew"),
     re_path(r"^signatures/(?P<sigid>\d+)/edit/$", views.editSignature, name="sigedit"),
     re_path(
@@ -97,11 +82,6 @@ urlpatterns = [
         r"^reports/(?P<reportid>\d+)/findsignatures/$",
         views.findSignatures,
         name="findsigs",
-    ),
-    re_path(
-        r"^reports/(?P<reportid>\d+)/download/$",
-        views.TestDownloadView.as_view(),
-        name="download_test",
     ),
     re_path(r"^bugprovider/$", views.viewBugProviders, name="bugproviders"),
     re_path(

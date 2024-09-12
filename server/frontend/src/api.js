@@ -31,19 +31,6 @@ export const updateBucket = async ({ id, params, ...data }) =>
 export const retrieveReport = async (id) =>
   (await mainAxios.get(`/reportmanager/rest/reports/${id}/`)).data;
 
-export const retrieveReportTestCase = async (id) =>
-  (await mainAxios.get(`/reportmanager/rest/reports/${id}/download/`)).data;
-
-export const retrieveReportTestCaseBinary = async (id) =>
-  new Uint8Array(
-    (
-      await mainAxios.request({
-        url: `/reportmanager/rest/reports/${id}/download/`,
-        responseType: "arraybuffer",
-      })
-    ).data,
-  );
-
 export const deleteReports = async (params) =>
   (await mainAxios.delete("/reportmanager/rest/reports/", { params })).data;
 
