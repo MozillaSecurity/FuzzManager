@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://webcompat.allizom.org/signature.schema.json",
+  "title": "Signature",
+  "description": "A signature for matching against results",
+  "type": "object",
+  "properties": {
+    "symptoms": {
+      "description": "List of symptoms",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "Type of symptom to match",
+            "enum": [
+              "app_channel",
+              "app_name",
+              "app_version",
+              "breakage_category",
+              "comments",
+              "details",
+              "os",
+              "reported_at",
+              "url",
+              "uuid"
+            ],
+          },
+          "part": {
+            "description": "Part of url to match",
+            "enum": [
+              "scheme",
+              "netloc",
+              "path",
+              "params",
+              "query",
+              "fragment",
+              "username",
+              "password",
+              "hostname",
+              "port"
+            ]
+          },
+          "before": {
+            "description": "Match reported_at before date-time",
+            "type": "string", "format": "date-time" },
+          "after": {
+            "description": "Match reported_at after date-time",
+            "type": "string", "format": "date-time" },
+          "time": {
+            "description": "Match reported_at exactly date-time",
+            "type": "string", "format": "date-time" },
+          "path": {
+            "description": "JSONPath within details",
+            "type": "string" },
+          "value": {
+            "description": "String or /pattern/ to match",
+            "anyOf": [
+              { "type": "string", "pattern": "^(/.*/|[^/].*[^/])$" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "required": ["type"],
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                "properties": { "type": { "const": "app_channel" } },
+                "properties": { "type": { "const": "app_name" } },
+                "properties": { "type": { "const": "app_version" } },
+                "properties": { "type": { "const": "breakage_category" } },
+                "properties": { "type": { "const": "comments" } },
+                "properties": { "type": { "const": "details" } },
+                "properties": { "type": { "const": "os" } },
+                "properties": { "type": { "const": "url" } },
+                "properties": { "type": { "const": "uuid" } }
+              ]
+            },
+            "then": { "required": ["value"] }
+          },
+          {
+            "if": { "properties": { "value": {} } },
+            "then": {
+              "anyOf": [
+                "properties": { "type": { "const": "app_channel" } },
+                "properties": { "type": { "const": "app_name" } },
+                "properties": { "type": { "const": "app_version" } },
+                "properties": { "type": { "const": "breakage_category" } },
+                "properties": { "type": { "const": "comments" } },
+                "properties": { "type": { "const": "details" } },
+                "properties": { "type": { "const": "os" } },
+                "properties": { "type": { "const": "url" } },
+                "properties": { "type": { "const": "uuid" } }
+              ]
+            }
+          },
+          {
+            "if": { "properties": { "part": {} } },
+            "then": { "properties": { "type": { "const": "url" } } }
+          },
+          {
+            "if": { "properties": { "path": {} } },
+            "then": { "properties": { "type": { "const": "details" } } }
+          },
+          {
+            "if": {
+              "anyOf": [
+                "properties": { "before": {} },
+                "properties": { "after": {} },
+                "properties": { "time": {} }
+              ]
+            },
+            "then": { "properties": { "type": { "const": "reported_at" } } }
+          },
+          {
+            "if": { "properties": { "type": { "const": "reported_at" } } }
+            "then": {
+              "anyOf": [
+                "properties": { "before": {} },
+                "properties": { "after": {} },
+                "properties": { "time": {} }
+              ]
+            }
+          },
+          {
+            "if": { "properties": { "time": {} } },
+            "then": {
+              "not": {
+                "anyOf": [
+                  "properties": { "before": {} },
+                  "properties": { "after": {} }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": ["symptoms"]
+}

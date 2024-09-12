@@ -26,6 +26,7 @@ omit = [
 known_first_party = [
     "FTB",
     "reportmanager",
+    "webcompat",
 ]
 profile = "black"
 
