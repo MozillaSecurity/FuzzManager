@@ -19,7 +19,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from server.auth import CheckAppPermission
-from server.views import deny_restricted_users
 
 from .CloudProvider.CloudProvider import (
     INSTANCE_STATE,
@@ -43,12 +42,10 @@ def renderError(request, err):
     return render(request, "error.html", {"error_message": err})
 
 
-@deny_restricted_users
 def index(request):
     return redirect("ec2spotmanager:pools")
 
 
-@deny_restricted_users
 def pools(request):
     filters = {}
     isSearch = True
@@ -136,7 +133,6 @@ def pools(request):
     return render(request, "pools/index.html", data)
 
 
-@deny_restricted_users
 def viewPool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
     instances = Instance.objects.filter(pool=poolid)
@@ -193,7 +189,6 @@ def viewPool(request, poolid):
     return render(request, "pools/view.html", data)
 
 
-@deny_restricted_users
 def viewPoolPrices(request, poolid):
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
 
@@ -231,7 +226,6 @@ def viewPoolPrices(request, poolid):
     return render(request, "pools/prices.html", {"prices": result})
 
 
-@deny_restricted_users
 def disablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -255,7 +249,6 @@ def disablePool(request, poolid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def enablePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -301,7 +294,6 @@ def enablePool(request, poolid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def forceCyclePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -323,7 +315,6 @@ def forceCyclePool(request, poolid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def forceCyclePoolsByConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
@@ -360,7 +351,6 @@ def forceCyclePoolsByConfig(request, configid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def createPool(request):
     if request.method == "POST":
         pool = InstancePool()
@@ -375,7 +365,6 @@ def createPool(request):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def viewConfigs(request):
     configs = PoolConfiguration.objects.all()
     roots = configs.filter(parent=None)
@@ -395,7 +384,6 @@ def viewConfigs(request):
     return render(request, "config/index.html", data)
 
 
-@deny_restricted_users
 def viewConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
@@ -586,7 +574,6 @@ def __handleConfigPOST(request, config):
     return redirect("ec2spotmanager:configview", configid=config.pk)
 
 
-@deny_restricted_users
 def createConfig(request):
     if request.method == "POST":
         config = PoolConfiguration()
@@ -617,7 +604,6 @@ def createConfig(request):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def editConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
     config.deserializeFields()
@@ -639,7 +625,6 @@ def editConfig(request, configid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def deletePool(request, poolid):
     pool = get_object_or_404(InstancePool, pk=poolid)
 
@@ -690,7 +675,6 @@ def deletePool(request, poolid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def deletePoolMsg(request, msgid, from_pool="0"):
     entry = get_object_or_404(PoolStatusEntry, pk=msgid)
     if request.method == "POST":
@@ -711,7 +695,6 @@ def deletePoolMsg(request, msgid, from_pool="0"):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def deleteProviderMsg(request, msgid):
     entry = get_object_or_404(ProviderStatusEntry, pk=msgid)
     if request.method == "POST":
@@ -723,7 +706,6 @@ def deleteProviderMsg(request, msgid):
         raise SuspiciousOperation
 
 
-@deny_restricted_users
 def deleteConfig(request, configid):
     config = get_object_or_404(PoolConfiguration, pk=configid)
 
