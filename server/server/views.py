@@ -19,7 +19,9 @@ def index(request):
     if not user.user.has_perm("crashmanager.view_crashmanager"):
         if user.user.has_perm("crashmanager.view_covmanager"):
             return redirect("covmanager:index")
-        elif user.user.has_perm("crashmanager.view_ec2spotmanager"):
+        if user.user.has_perm("crashmanager.view_taskmanager"):
+            return redirect("taskmanager:index")
+        if user.user.has_perm("crashmanager.view_ec2spotmanager"):
             return redirect("ec2spotmanager:index")
     return redirect("crashmanager:index")
 
