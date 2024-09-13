@@ -759,7 +759,7 @@ class ReportViewSet(
         if (
             not request.user
             or not request.user.is_authenticated
-            or not request.user.has_perm("crashmanager.view_crashmanager")
+            or not request.user.has_perm("crashmanager.covmanager_publish")
         ):
             raise PermissionDenied()
 

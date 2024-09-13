@@ -47,8 +47,8 @@
         <td>
           <button @click.stop="summary(report.coverage, report.tag)" class="btn btn-default">View Report Summary</button>
           <button @click.stop="browse(report.coverage)" class="btn btn-default">Browse</button>
-          <button @click.stop="publish(report)" v-if="unrestricted" class="btn btn-default">!{ report.publish_text }!</button>
-          <button @click.stop="promote(report)" v-if="unrestricted" class="btn btn-default">!{ report.promote_text }!</button>
+          <button @click.stop="publish(report)" v-if="can_publish" class="btn btn-default">!{ report.publish_text }!</button>
+          <button @click.stop="promote(report)" v-if="can_publish" class="btn btn-default">!{ report.promote_text }!</button>
         </td>
       </tr>
     </tbody>
@@ -63,12 +63,6 @@ let URLS = {
   patch: '{% url 'covmanager:collections_patch' %}',
 }
 
-let unrestricted = false;
-{% if perms.crashmanager.view_crashmanager %}
-unrestricted = true;
-{% endif %}
-
-
 let pmanager = new HashParamManager()
 
 let covmanager = new Vue({
@@ -79,7 +73,7 @@ let covmanager = new Vue({
     sortKey: "data_created",
     reverse: true,
     block_fetch: true,
-    unrestricted: unrestricted,
+    can_publish: {% if perms.crashmanager.covmanager_publish %} true {% else %} false {% endif %},
     show_reviewed_only: false,
 
     selected_reports: [],

@@ -754,6 +754,7 @@ class User(models.Model):
             ("crashmanager_download_signatures", "Can download signatures.zip"),
             ("crashmanager_all", "Full access to CrashManager"),
             ("covmanager_submit_collection", "Can submit coverage data"),
+            ("covmanager_publish", "Can publish coverage reports"),
             ("covmanager_all", "Full access to CovManager"),
             ("taskmanager_report_status", "Can report TaskManager status"),
             ("taskmanager_all", "Full access to TaskManager"),
