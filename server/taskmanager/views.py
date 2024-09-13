@@ -11,11 +11,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from server.auth import CheckAppPermission
-from server.views import (
-    JsonQueryFilterBackend,
-    SimpleQueryFilterBackend,
-    deny_restricted_users,
-)
+from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Pool, Task
 from .serializers import (
@@ -34,17 +30,14 @@ LOG = logging.getLogger("fm.taskmanager.views")
 UNKNOWN_TASK_STATUS_EXPIRES = datetime.timedelta(hours=1)
 
 
-@deny_restricted_users
 def index(request):
     return redirect("taskmanager:pool-list-ui")
 
 
-@deny_restricted_users
 def list_pools(request):
     return render(request, "pool/index.html", {})
 
 
-@deny_restricted_users
 def view_pool(request, pk):
     pool = get_object_or_404(Pool, pk=pk)
     return render(
