@@ -25,7 +25,7 @@
               "reported_at",
               "url",
               "uuid"
-            ],
+            ]
           },
           "part": {
             "description": "Part of url to match",
@@ -33,7 +33,6 @@
               "scheme",
               "netloc",
               "path",
-              "params",
               "query",
               "fragment",
               "username",
@@ -44,20 +43,28 @@
           },
           "before": {
             "description": "Match reported_at before date-time",
-            "type": "string", "format": "date-time" },
+            "type": "string", "format": "date-time"
+          },
           "after": {
             "description": "Match reported_at after date-time",
-            "type": "string", "format": "date-time" },
+            "type": "string", "format": "date-time"
+          },
           "time": {
             "description": "Match reported_at exactly date-time",
-            "type": "string", "format": "date-time" },
+            "type": "string", "format": "date-time"
+          },
           "path": {
             "description": "JSONPath within details",
-            "type": "string" },
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Regex to match (exactly)",
+            "type": "string"
+          },
           "value": {
-            "description": "String or /pattern/ to match",
+            "description": "String to match (exactly)",
             "anyOf": [
-              { "type": "string", "pattern": "^(/.*/|[^/].*[^/])$" },
+              { "type": "string" },
               { "type": "null" }
             ]
           }
@@ -67,70 +74,80 @@
           {
             "if": {
               "anyOf": [
-                "properties": { "type": { "const": "app_channel" } },
-                "properties": { "type": { "const": "app_name" } },
-                "properties": { "type": { "const": "app_version" } },
-                "properties": { "type": { "const": "breakage_category" } },
-                "properties": { "type": { "const": "comments" } },
-                "properties": { "type": { "const": "details" } },
-                "properties": { "type": { "const": "os" } },
-                "properties": { "type": { "const": "url" } },
-                "properties": { "type": { "const": "uuid" } }
+                { "properties": { "type": { "const": "app_channel" } } },
+                { "properties": { "type": { "const": "app_name" } } },
+                { "properties": { "type": { "const": "app_version" } } },
+                { "properties": { "type": { "const": "breakage_category" } } },
+                { "properties": { "type": { "const": "comments" } } },
+                { "properties": { "type": { "const": "details" } } },
+                { "properties": { "type": { "const": "os" } } },
+                { "properties": { "type": { "const": "url" } } },
+                { "properties": { "type": { "const": "uuid" } } }
               ]
             },
-            "then": { "required": ["value"] }
-          },
-          {
-            "if": { "properties": { "value": {} } },
             "then": {
-              "anyOf": [
-                "properties": { "type": { "const": "app_channel" } },
-                "properties": { "type": { "const": "app_name" } },
-                "properties": { "type": { "const": "app_version" } },
-                "properties": { "type": { "const": "breakage_category" } },
-                "properties": { "type": { "const": "comments" } },
-                "properties": { "type": { "const": "details" } },
-                "properties": { "type": { "const": "os" } },
-                "properties": { "type": { "const": "url" } },
-                "properties": { "type": { "const": "uuid" } }
+              "oneOf": [
+                { "required": ["value"] },
+                { "required": ["pattern"] }
               ]
             }
           },
           {
-            "if": { "properties": { "part": {} } },
+            "if": {
+              "anyOf": [
+                { "required": ["value"] },
+                { "required": ["pattern"] }
+              ]
+            },
+            "then": {
+              "anyOf": [
+                { "properties": { "type": { "const": "app_channel" } } },
+                { "properties": { "type": { "const": "app_name" } } },
+                { "properties": { "type": { "const": "app_version" } } },
+                { "properties": { "type": { "const": "breakage_category" } } },
+                { "properties": { "type": { "const": "comments" } } },
+                { "properties": { "type": { "const": "details" } } },
+                { "properties": { "type": { "const": "os" } } },
+                { "properties": { "type": { "const": "url" } } },
+                { "properties": { "type": { "const": "uuid" } } }
+              ]
+            }
+          },
+          {
+            "if": { "required": ["part"] },
             "then": { "properties": { "type": { "const": "url" } } }
           },
           {
-            "if": { "properties": { "path": {} } },
+            "if": { "required": ["path"] },
             "then": { "properties": { "type": { "const": "details" } } }
           },
           {
             "if": {
               "anyOf": [
-                "properties": { "before": {} },
-                "properties": { "after": {} },
-                "properties": { "time": {} }
+                { "required": ["before"] },
+                { "required": ["after"] },
+                { "required": ["time"] }
               ]
             },
             "then": { "properties": { "type": { "const": "reported_at" } } }
           },
           {
-            "if": { "properties": { "type": { "const": "reported_at" } } }
+            "if": { "properties": { "type": { "const": "reported_at" } } },
             "then": {
               "anyOf": [
-                "properties": { "before": {} },
-                "properties": { "after": {} },
-                "properties": { "time": {} }
+                { "required": ["before"] },
+                { "required": ["after"] },
+                { "required": ["time"] }
               ]
             }
           },
           {
-            "if": { "properties": { "time": {} } },
+            "if": { "required": ["time"] },
             "then": {
               "not": {
                 "anyOf": [
-                  "properties": { "before": {} },
-                  "properties": { "after": {} }
+                  { "required": ["before"] },
+                  { "required": ["after"] }
                 ]
               }
             }

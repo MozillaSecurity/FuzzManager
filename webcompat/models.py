@@ -3,17 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import difflib
 import json
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from logging import getLogger
 from pathlib import Path
 from typing import Any
-from urllib.parse import ParseResult, urlparse
-from uuid import UUID
+from urllib.parse import SplitResult, urlsplit
 
 from dateutil.parser import isoparse
-from jsonschema.protocols import Validator
+from jsonschema import Draft202012Validator as Validator
 
 from .symptoms import Symptom
+
+LOG = getLogger(__file__)
 
 
 def _load_schema() -> Validator:
@@ -28,61 +30,74 @@ SIG_SCHEMA = _load_schema()
 
 @dataclass
 class Report:
-    app_channel: str | None
+    """WebCompat report. It also supports generating a Signature based on the stored
+    information.
+    """
+
     app_name: str
     app_version: str
-    breakage_category: str
     comments: str
     # details is intentionally vague
     # .. this is a JSON blob in the report
     details: dict[str, dict[str, Any]]
     os: str
     reported_at: datetime
-    url: ParseResult
-    uuid: UUID
+    uuid: str
+    url: SplitResult
+    app_channel: str | None = None
+    breakage_category: str | None = None
 
     @classmethod
     def load(cls, data: str) -> "Report":
         result = json.loads(data)
         result["details"] = json.loads(result["details"])
-        result["uuid"] = UUID(result["uuid"])
-        result["reported_at"] = isoparse(result["reported_at"])
-        result["url"] = urlparse(result["url"])
+        result["reported_at"] = isoparse(result["reported_at"]).replace(
+            tzinfo=timezone.utc
+        )
+        result["url"] = urlsplit(result["url"])
         return cls(**result)
 
+    def create_signature(self) -> "Signature":
+        """Create a default signature"""
+        return Signature(
+            f"""
+            {{
+              "symptoms": [
+                {{
+                  "type": "url",
+                  "part": "netloc",
+                  "value": "{self.url.netloc}"
+                }}
+              ]
+            }}
+            """
+        )
 
-@dataclass(init=False)
+
+@dataclass
 class Signature:
     raw_signature: str
-    symptoms: list[Symptom]
+    symptoms: list[Symptom] = field(default_factory=list)
 
-    def __init__(self, raw_signature: str) -> None:
-        # For now, we store the original raw signature and hand it out for
-        # conversion to String. This is fine as long as our Signature object
-        # is immutable. Later, we should implement a method that actually
-        # serializes this object back to JSON as it is.
-        self.raw_signature = raw_signature
-        self.symptoms = []
-
+    def __post_init__(self) -> None:
         try:
-            obj = json.loads(raw_signature)
+            data = json.loads(self.raw_signature)
         except ValueError as exc:
             raise RuntimeError(f"Invalid JSON: {exc}") from exc
 
         # raise any errors found by schema validation
-        for error in SIG_SCHEMA.iter_errors(obj):
+        for error in SIG_SCHEMA.iter_errors(data):
             raise RuntimeError(error.message)
 
         # Get the symptoms objects (mandatory)
-        for raw_symptom_obj in obj["symptoms"]:
+        for raw_symptom_obj in data["symptoms"]:
             self.symptoms.append(Symptom.load(raw_symptom_obj))
 
         self.symptoms.sort(key=Symptom.order)
 
     @classmethod
-    def load(cls, signature_file) -> "Signature":
-        with open(signature_file) as sig_fd:
-            return cls(sig_fd.read())
+    def load(cls, data: str) -> "Signature":
+        return cls(raw_signature=data)
 
     def __str__(self) -> str:
         return json.dumps({"symptoms": self.symptoms}, indent=2, sort_keys=True)
@@ -129,12 +144,12 @@ class Signature:
         return Signature(json.dumps(sig_obj))
 
     def get_symptoms_diff(self, report):
-        symptomsDiff = []
+        symptoms_diff = []
         for symptom in self.symptoms:
             if symptom.matches(report):
-                symptomsDiff.append({"offending": False, "symptom": symptom})
+                symptoms_diff.append({"offending": False, "symptom": symptom})
 
-        return symptomsDiff
+        return symptoms_diff
 
     def get_signature_unified_diff_tuples(self, report):
         diff_tuples = []
