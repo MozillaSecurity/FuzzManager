@@ -1,6 +1,59 @@
 [build-system]
-requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
+requires = ["setuptools>=64", "setuptools_scm>8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "WebCompatManager"
+requires-python = ">=3.9"
+authors = [
+    {name = "Christian Holler", email = "choller@mozilla.com"},
+    {name = "Jesse Schwartzentruber", email = "jschwartzentruber@mozilla.com"},
+]
+description = "A WebCompat management tools collection"
+keywords = ["test", "testing"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Testing",
+]
+license = {text = "MPL 2.0"}
+maintainers = [
+    {name = "Mozilla Fuzzing Team", email = "fuzzing@mozilla.com"},
+]
+dynamic = ["readme", "version"]
+dependencies = [
+    "jsonpath-ng",
+    "jsonschema>=4.18.0",
+    "python-dateutil",
+]
+
+[project.optional-dependencies]
+dev = ["pre-commit", "tox"]
+docker = [
+    "gunicorn~=22.0.0",
+    "mozilla-django-oidc~=4.0.1",
+    "mysqlclient~=2.2.4",
+]
+server = [
+    "celery~=5.3.5",
+    "crispy-bootstrap3",
+    "django~=4.2.7",
+    "django-crispy-forms~=2.1",
+    "django-enumfields~=2.1.1",
+    "django-notifications-hq~=1.8.3",
+    "djangorestframework~=3.15.1",
+    "pyyaml",
+    "redis[hiredis]",
+    "whitenoise~=6.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/MozillaSecurity/WebCompatManager"
+Issues = "https://github.com/MozillaSecurity/WebCompatManager/issues"
+Repository = "https://github.com/MozillaSecurity/WebCompatManager.git"
 
 [tool.black]
 target-version = ["py39"]
@@ -16,7 +69,6 @@ exclude_lines = [
 
 [tool.coverage.run]
 omit = [
-    "*/setup.py",
     "*/dist/*",
     "*/tests/*",
     "*/.tox/*",
@@ -46,5 +98,12 @@ norecursedirs = [
     "build",
     "dist",
 ]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["webcompat"]
 
 [tool.setuptools_scm]
