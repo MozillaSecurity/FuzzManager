@@ -24,7 +24,6 @@ omit = [
 
 [tool.isort]
 known_first_party = [
-    "FTB",
     "reportmanager",
     "webcompat",
 ]

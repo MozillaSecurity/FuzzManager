@@ -1,6 +1,0 @@
-{"symptoms": [
-    {
-    "type": "stackFrames",
-    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "?", "MinorGCCallback", "MinorGCCallback", "MarkInternal<JSObject>" ]
-  }
-]}

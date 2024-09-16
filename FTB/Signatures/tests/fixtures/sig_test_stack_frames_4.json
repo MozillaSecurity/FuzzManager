@@ -1,6 +1,0 @@
-{"symptoms": [
-    {
-    "type": "stackFrames",
-    "functionNames": [ "GetObjectAllocKindForCopy", "moveToTenured", "???", "MarkInternal<JSObject>" ]
-  }
-]}
