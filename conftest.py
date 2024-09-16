@@ -9,13 +9,12 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 import sys
-from pathlib import Path
 
 
-def pytest_ignore_collect(path, config):
+def pytest_ignore_collect(collection_path, config):
     # 3.12 not supported yet
     if sys.version_info >= (3, 12):
-        rel_path = Path(path).relative_to(config.rootdir)
+        rel_path = collection_path.relative_to(config.rootdir)
         if rel_path.parts[0] == "server":
             return True
     return None
