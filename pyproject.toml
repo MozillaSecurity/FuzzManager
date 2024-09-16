@@ -10,6 +10,7 @@ exclude_lines = [
     "@(abc.)?abstract*",
     "except ImportError(.*):",
     "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
     "pragma: no cover",
 ]
 
