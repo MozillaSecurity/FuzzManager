@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import difflib
 import json
 from dataclasses import dataclass, field
@@ -48,7 +50,7 @@ class Report:
     breakage_category: str | None = None
 
     @classmethod
-    def load(cls, data: str) -> "Report":
+    def load(cls, data: str) -> Report:
         result = json.loads(data)
         result["details"] = json.loads(result["details"])
         result["reported_at"] = isoparse(result["reported_at"]).replace(
@@ -57,7 +59,7 @@ class Report:
         result["url"] = urlsplit(result["url"])
         return cls(**result)
 
-    def create_signature(self) -> "Signature":
+    def create_signature(self) -> Signature:
         """Create a default signature"""
         return Signature(
             f"""
@@ -96,7 +98,7 @@ class Signature:
         self.symptoms.sort(key=Symptom.order)
 
     @classmethod
-    def load(cls, data: str) -> "Signature":
+    def load(cls, data: str) -> Signature:
         return cls(raw_signature=data)
 
     def __str__(self) -> str:

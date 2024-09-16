@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import inspect
 import json
 import re
@@ -32,14 +34,14 @@ class Symptom(ABC):
         return json.dumps(self.json_obj, indent=2)
 
     @staticmethod
-    def order(symptom: "Symptom") -> int:
+    def order(symptom: Symptom) -> int:
         """Estimate a complexity for Symptoms.
         Ordering by complexity makes matching faster.
         """
         return symptom.ORDER * (MAX_MATCHER_ORDER + 1) + symptom.matcher.ORDER
 
     @staticmethod
-    def load(obj: dict[str, Any]) -> "Symptom":
+    def load(obj: dict[str, Any]) -> Symptom:
         """Create the appropriate Symptom based on the given object (decoded from JSON)
 
         Arguments:
@@ -72,7 +74,7 @@ class Symptom(ABC):
         raise RuntimeError(f"Unknown symptom type: {stype}")  # pragma: no cover
 
     @abstractmethod
-    def matches(self, report: "Report") -> bool:
+    def matches(self, report: Report) -> bool:
         """
         Check if the symptom matches the given report information
 
@@ -86,7 +88,7 @@ class Symptom(ABC):
 
 class Matcher(ABC):
     @staticmethod
-    def create(obj: dict[str, Any]) -> "Matcher":
+    def create(obj: dict[str, Any]) -> Matcher:
         if "value" in obj:
             if obj["value"] is None:
                 return NullMatcher()
@@ -193,7 +195,7 @@ class URLSymptom(Symptom):
         self.part = obj.get("part")
         self.matcher = Matcher.create(obj)
 
-    def matches(self, report: "Report") -> bool:
+    def matches(self, report: Report) -> bool:
         LOG.debug("url: %r", report.url)
         if self.part is None:
             value = report.url.geturl()
@@ -213,7 +215,7 @@ class ReportedAtSymptom(Symptom):
         super().__init__(obj)
         self.matcher = Matcher.create(obj)
 
-    def matches(self, report: "Report") -> bool:
+    def matches(self, report: Report) -> bool:
         return self.matcher.matches(report.reported_at)
 
 
@@ -228,7 +230,7 @@ class DetailsSymptom(Symptom):
             self.path = None
         self.matcher = Matcher.create(obj)
 
-    def matches(self, report: "Report") -> bool:
+    def matches(self, report: Report) -> bool:
         if self.path is None:
             return self.matcher.matches(json.dumps(report.details))
         # iterate over the jsonpath values
