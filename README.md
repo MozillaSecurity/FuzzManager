@@ -1,17 +1,17 @@
-[![Task Status](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/FuzzManager/master/badge.svg)](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/FuzzManager/master/latest)
-[![codecov](https://codecov.io/gh/MozillaSecurity/FuzzManager/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/FuzzManager)
+[![Task Status](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/WebCompatManager/master/badge.svg)](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/WebCompatManager/master/latest)
+[![codecov](https://codecov.io/gh/MozillaSecurity/WebCompatManager/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/WebCompatManager)
 [![Matrix](https://img.shields.io/badge/dynamic/json?color=green&label=chat&query=%24.chunk[%3F(%40.canonical_alias%3D%3D%22%23fuzzing%3Amozilla.org%22)].num_joined_members&suffix=%20users&url=https%3A%2F%2Fmozilla.modular.im%2F_matrix%2Fclient%2Fr0%2FpublicRooms&style=flat&logo=matrix)](https://riot.im/app/#/room/#fuzzing:mozilla.org)
 
-# What is FuzzManager
+# What is WebCompatManager
 
 With this project, we aim to create a management toolchain for fuzzing. Unlike
 other toolchains and frameworks, we want to be modular in such a way that you
-can use those parts of FuzzManager that seem interesting to you without forcing
+can use those parts of WebCompatManager that seem interesting to you without forcing
 a process upon you that does not fit your requirements.
 
 ## ReportManager
 
-ReportManager is the part of FuzzManager responsible for managing report results
+ReportManager is the part of WebCompatManager responsible for managing report results
 submitted to the server. The main features are:
 
 * Store report information gathered from various sources. See FTB.
@@ -30,7 +30,7 @@ to be extendable.
 FTB (Fuzzing Tool Box) is the underlying library that contains classes for parsing
 report output from various tools (ReportInfo), bucketing reports (ReportSignature), and
 parsing assertions (AssertionHelper). This can be used locally without having a
-running FuzzManager server instance to support report logging and bucketing. FTB already
+running WebCompatManager server instance to support report logging and bucketing. FTB already
 supports a variety of tools like GDB, ASan and Minidumps but can be extended to support
 any form of report information you would like.
 
@@ -50,16 +50,16 @@ Please send any questions regarding the project to choller-at-mozilla-dot-com.
 
 ## Client Setup
 
-The client portion of FuzzManager (FTB and Collector) can be installed with
-`pip install FuzzManager`. This is all you need if you just need to talk to a
-FuzzManager server instance or use FTB locally.
+The client portion of WebCompatManager (FTB and Collector) can be installed with
+`pip install WebCompatManager`. This is all you need if you just need to talk to a
+WebCompatManager server instance or use FTB locally.
 
 ## Server Setup
 
-The server part of FuzzManager is a Django application. Please note that it
+The server part of WebCompatManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
 
-Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing FuzzManager using:
+Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing WebCompatManager using:
 
 ```pip install -c requirements.txt '.[server]'```
 
@@ -84,30 +84,30 @@ $ npm run build
 $ cd ..
 ```
 
-Create the fuzzmanager user.
+Create the webcompatmanager user.
 ```
 $ python manage.py createsuperuser
-Username (leave blank to use 'user'): fuzzmanager
-Email address: fuzzmanager@internal.com
+Username (leave blank to use 'user'): webcompatmanager
+Email address: webcompatmanager@internal.com
 Password:
 Password (again):
 Superuser created successfully.
 ```
-Get fuzzmanager authorization token
+Get webcompatmanager authorization token
 ```
-$ python manage.py get_auth_token fuzzmanager
+$ python manage.py get_auth_token webcompatmanager
 4a253efa90f514bd89ae9a86d1dc264aa3133945
 ```
-Since the fuzzmanager account is used as a service account, we need to set the http basic authentication password to the auth token.
+Since the webcompatmanager account is used as a service account, we need to set the http basic authentication password to the auth token.
 ```
-htpasswd -cb .htpasswd fuzzmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
+htpasswd -cb .htpasswd webcompatmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
 ```
 This .htpasswd file can be stored anywhere on your hard drive.
 Your Apache AuthUserFile line should be updated to reflect your path.
 See examples/apache2/default.vhost for an example
 
 ### Important changes in settings.py
-It is important that you edit FuzzManager/server/settings.py and adjust the following variables according to your needs.
+It is important that you edit WebCompatManager/server/settings.py and adjust the following variables according to your needs.
 
     ALLOWED_HOSTS = ['host']
     CSRF_TRUSTED_ORIGINS = ['scheme://host']
@@ -132,11 +132,11 @@ For a production setup, see the next section about Apache+WSGI.
 
 ### Using Apache+WSGI for a production setup
 
-To properly run FuzzManager in a production setup, using Apache+WSGI is the
+To properly run WebCompatManager in a production setup, using Apache+WSGI is the
 recommended way.
 
 In the `examples/apache2/` directory you'll find an example vhost file that
-shows you how to run FuzzManager in an Apache+WSGI setup. You should
+shows you how to run WebCompatManager in an Apache+WSGI setup. You should
 adjust the configuration to use HTTPs if you don't plan to use any sort of
 TLS load balancer in front of it.
 
@@ -151,17 +151,17 @@ You can use the user that you created during `syncdb` for simple setups.
 ### Server Cronjobs
 
 The following is an example crontab using `cronic` to run several important
-FuzzManager jobs:
+WebCompatManager jobs:
 
 ```
 # Fetch the status of all bugs from our external bug tracker(s)
-*/15 * * * * cd /path/to/FuzzManager/server && cronic python manage.py bug_update_status
+*/15 * * * * cd /path/to/WebCompatManager/server && cronic python manage.py bug_update_status
 # Cleanup old report entries and signatures according to configuration
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py cleanup_old_reports
+*/30 * * * * cd /path/to/WebCompatManager/server && cronic python manage.py cleanup_old_reports
 # Attempt to fit recently added report entries into existing buckets
-*/5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_reports
+*/5  * * * * cd /path/to/WebCompatManager/server && cronic python manage.py triage_new_reports
 # Export all signatures to a zip file for downloading by clients
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
+*/30 * * * * cd /path/to/WebCompatManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
 ```
 
 ### Run server with Docker
@@ -199,7 +199,7 @@ volumes:
 
 ## Client Usage
 
-In order to talk to FuzzManager, your fuzzer should use the client interface provided, called the Collector. It can be used as a standalone command line tool or directly as a Python class in case your fuzzer is written in Python.
+In order to talk to WebCompatManager, your fuzzer should use the client interface provided, called the Collector. It can be used as a standalone command line tool or directly as a Python class in case your fuzzer is written in Python.
 
 We'll first describe how to use the class interface directly from Python. If you want to use the command line interface instead, I still suggest that you read on because the command line interface is very similar to the class interface in terms of functionality and configuration.
 
@@ -211,7 +211,7 @@ And you're done submitting everything, report information as well as program inf
 
 ### Constructing the Collector instance
 
-The Collector constructor takes various arguments that are required for later operations. These arguments include a directory for signatures, server data such as hostname, port, etc. as well as authentication data and a client name. However, the preferred way to pass these options is not through the constructor, but through a configuration file. The constructor will try to read the configuration file located at ~/.fuzzmanagerconf and use any parameters from there if it hasn't been explicitly specified in the constructor call. This makes deployment very easy and saves time. An example configuration could look like this:
+The Collector constructor takes various arguments that are required for later operations. These arguments include a directory for signatures, server data such as hostname, port, etc. as well as authentication data and a client name. However, the preferred way to pass these options is not through the constructor, but through a configuration file. The constructor will try to read the configuration file located at ~/.webcompatmanagerconf and use any parameters from there if it hasn't been explicitly specified in the constructor call. This makes deployment very easy and saves time. An example configuration could look like this:
 
 ```
 [Main]
@@ -234,9 +234,9 @@ Several methods of the collector work with the `ReportInfo` class. This class st
 * A variable containing report information as outputted by GDB or AddressSanitizer
 * A ProgramConfiguration instance
 
-The first three sets of data are typically already available in a fuzzer. Note that for GDB traces, the trace should contain first the stack trace, then a dump of all registers and then a dissassembly of the program counter (see also the FTB/Running/AutoRunner.py file which demonstrates how to output all information properly for FuzzManager).
+The first three sets of data are typically already available in a fuzzer. Note that for GDB traces, the trace should contain first the stack trace, then a dump of all registers and then a dissassembly of the program counter (see also the FTB/Running/AutoRunner.py file which demonstrates how to output all information properly for WebCompatManager).
 
-The last thing required is the `ProgramConfiguration`. This class is largely a container class storing various properties of the program, e.g. product name, the platform, version and runtime options. Instead of instantiating the class and providing all the data manually, it is again recommended to use the configuration file support. Assuming your binary is located at /home/example/foo then creating a configuration file at /home/example/foo.fuzzmanagerconf with the necessary data is recommended. Such a file could look like this:
+The last thing required is the `ProgramConfiguration`. This class is largely a container class storing various properties of the program, e.g. product name, the platform, version and runtime options. Instead of instantiating the class and providing all the data manually, it is again recommended to use the configuration file support. Assuming your binary is located at /home/example/foo then creating a configuration file at /home/example/foo.webcompatmanagerconf with the necessary data is recommended. Such a file could look like this:
 
 ```
 [Main]
@@ -270,7 +270,7 @@ The `search` method is the first of a few methods requiring a `reportInfo` varia
 
 ### Submitting Reports
 
-The `submit` method can be used to send a report report to the FuzzManager server. Again the `reportInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (the best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the report on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `reportInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the report to the server.
+The `submit` method can be used to send a report report to the WebCompatManager server. Again the `reportInfo` parameter works as described above. In addition, you can provide a file containing a test and an optional "quality" indicator of the test (the best quality is 0). The use of this quality indicator largely depends on how your fuzzer/reducer works. The server will prefer better qualities when proposing test cases for filing bugs. Finally, the method accepts an additional metadata parameter which can contain arbitrary information that is stored with the report on the server. Note that this metadata is *combined* with the metadata found in the `ProgramConfiguration` of the `reportInfo`. When using binary configuration files, this means that the metadata supplied in that configuration file is automatically submitted with the report to the server.
 
 ### Further methods
 
