@@ -54,7 +54,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "size",
             "snooze_until",
         )
-        ordering = ["-id"]
+        ordering = ("-id",)
         read_only_fields = ("id",)
 
     def to_internal_value(self, data):
@@ -77,13 +77,15 @@ class BucketVueSerializer(BucketSerializer):
     view_url = serializers.SerializerMethodField()
 
     class Meta(BucketSerializer.Meta):
-        fields = BucketSerializer.Meta.fields + (
+        fields = (
+            *BucketSerializer.Meta.fields,
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
             "view_url",
         )
-        read_only_fields = BucketSerializer.Meta.read_only_fields + (
+        read_only_fields = (
+            *BucketSerializer.Meta.read_only_fields,
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
@@ -188,7 +190,7 @@ class ReportEntrySerializer(serializers.ModelSerializer):
             "bucket",
             "id",
         )
-        ordering = ["-id"]
+        ordering = ("-id",)
         read_only_fields = ("bucket", "id")
 
     def create(self, attrs):
@@ -218,13 +220,15 @@ class ReportEntryVueSerializer(ReportEntrySerializer):
     find_sigs_url = serializers.SerializerMethodField()
 
     class Meta(ReportEntrySerializer.Meta):
-        fields = ReportEntrySerializer.Meta.fields + (
+        fields = (
+            *ReportEntrySerializer.Meta.fields,
             "view_url",
             "sig_view_url",
             "sig_new_url",
             "find_sigs_url",
         )
-        read_only_fields = ReportEntrySerializer.Meta.read_only_fields + (
+        read_only_fields = (
+            *ReportEntrySerializer.Meta.read_only_fields,
             "view_url",
             "sig_view_url",
             "sig_new_url",

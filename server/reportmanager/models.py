@@ -217,15 +217,16 @@ class Bucket(models.Model):
                         c = c.first()
                         first_entry_per_bucket_cache[other_bucket.pk] = c
                         if c:
-                            first_entry_per_bucket_cache[
-                                other_bucket.pk
-                            ] = c.get_report()
+                            first_entry_per_bucket_cache[other_bucket.pk] = (
+                                c.get_report()
+                            )
 
                     first_entry_report = first_entry_per_bucket_cache[other_bucket.pk]
-                    if first_entry_report:
-                        if optimized_signature.matches(first_entry_report):
-                            matches_in_other_buckets = True
-                            break
+                    if first_entry_report and optimized_signature.matches(
+                        first_entry_report
+                    ):
+                        matches_in_other_buckets = True
+                        break
 
                 if matches_in_other_buckets:
                     # Reset, we don't actually have an optimized signature if it's
@@ -337,12 +338,12 @@ class ReportHit(models.Model):
         )
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=["last_update"],
                 name="unique_reporthits",
             ),
-        ]
+        )
 
 
 class ReportEntry(models.Model):
@@ -375,13 +376,13 @@ class ReportEntry(models.Model):
         if self.pk is None and not getattr(settings, "DB_ISUTF8MB4", False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
-            utf8_4byte_re = re.compile("[^\u0000-\uD7FF\uE000-\uFFFF]", re.UNICODE)
+            utf8_4byte_re = re.compile("[^\u0000-\ud7ff\ue000-\uffff]", re.UNICODE)
 
             def sanitize_utf8(s):
                 if not isinstance(s, str):
                     s = str(s, "utf-8")
 
-                return utf8_4byte_re.sub("\uFFFD", s)
+                return utf8_4byte_re.sub("\ufffd", s)
 
             comments = sanitize_utf8(self.comments)
             if self.comments != comments:
@@ -441,9 +442,8 @@ def ReportEntry_delete(sender, instance, **kwargs):
 
 @receiver(post_save, sender=ReportEntry)
 def ReportEntry_save(sender, instance, created, **kwargs):
-    if getattr(settings, "USE_CELERY", None):
-        if created:
-            triage_new_report.delay(instance.pk)
+    if getattr(settings, "USE_CELERY", None) and created:
+        triage_new_report.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
         if instance._original_bucket is not None:

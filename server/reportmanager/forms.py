@@ -1,6 +1,9 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+from collections import ChainMap
+from types import MappingProxyType
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
@@ -84,7 +87,7 @@ class BugzillaTemplateBugForm(ModelForm):
 
     class Meta:
         model = BugzillaTemplate
-        fields = [
+        fields = (
             "name",
             "summary",
             "product",
@@ -107,37 +110,43 @@ class BugzillaTemplateBugForm(ModelForm):
             "security_group",
             "blocks",
             "dependson",
-        ]
+        )
 
-        labels = {
-            "name": "Template name",
-            "summary": "Summary",
-            "whiteboard": "Whiteboard",
-            "keywords": "Keywords",
-            'op_sys"': "OS",
-            "platform": "Platform",
-            "cc": "Cc",
-            "assigned_to": "Assigned to",
-            "priority": "Priority",
-            "severity": "Severity",
-            "alias": "Alias",
-            "qa_contact": "QA",
-            "version": "Version",
-            "target_milestone": "Target milestone",
-            "attrs": "Custom fields",
-            "description": "Bug description",
-            "security": "This is a security bug",
-            "security_group": "Security group",
-            "blocks": "Blocks",
-            "dependson": "Depends On",
-        }
+        labels = MappingProxyType(
+            {
+                "name": "Template name",
+                "summary": "Summary",
+                "whiteboard": "Whiteboard",
+                "keywords": "Keywords",
+                'op_sys"': "OS",
+                "platform": "Platform",
+                "cc": "Cc",
+                "assigned_to": "Assigned to",
+                "priority": "Priority",
+                "severity": "Severity",
+                "alias": "Alias",
+                "qa_contact": "QA",
+                "version": "Version",
+                "target_milestone": "Target milestone",
+                "attrs": "Custom fields",
+                "description": "Bug description",
+                "security": "This is a security bug",
+                "security_group": "Security group",
+                "blocks": "Blocks",
+                "dependson": "Depends On",
+            }
+        )
 
-        widgets = {}
-        for field in fields:
-            if field not in ["description", "attrs", "security"]:
-                widgets[field] = TextInput()
-
-        widgets["attrs"] = Textarea(attrs={"rows": 2})
+        widgets = MappingProxyType(
+            ChainMap(
+                {
+                    field: TextInput()
+                    for field in fields
+                    if field not in {"attrs", "description", "security"}
+                },
+                {"attrs": Textarea(attrs={"rows": 2})},
+            )
+        )
 
 
 class BugzillaTemplateCommentForm(ModelForm):
@@ -156,18 +165,22 @@ class BugzillaTemplateCommentForm(ModelForm):
 
     class Meta:
         model = BugzillaTemplate
-        fields = [
+        fields = (
             "name",
             "comment",
-        ]
-        labels = {
-            "name": "Template name",
-            "comment": "Comment",
-        }
-        widgets = {
-            "name": TextInput(),
-            "comment": Textarea(attrs={"rows": 6}),
-        }
+        )
+        labels = MappingProxyType(
+            {
+                "name": "Template name",
+                "comment": "Comment",
+            }
+        )
+        widgets = MappingProxyType(
+            {
+                "name": TextInput(),
+                "comment": Textarea(attrs={"rows": 6}),
+            }
+        )
 
 
 class UserSettingsForm(ModelForm):
@@ -190,11 +203,11 @@ class UserSettingsForm(ModelForm):
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             "default_provider_id",
             "default_template_id",
             "inaccessible_bug",
-        ]
+        )
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)

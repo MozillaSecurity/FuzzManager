@@ -55,9 +55,6 @@ Homepage = "https://github.com/MozillaSecurity/WebCompatManager"
 Issues = "https://github.com/MozillaSecurity/WebCompatManager/issues"
 Repository = "https://github.com/MozillaSecurity/WebCompatManager.git"
 
-[tool.black]
-target-version = ["py39"]
-
 [tool.coverage.report]
 exclude_lines = [
     "@(abc.)?abstract*",
@@ -74,13 +71,6 @@ omit = [
     "*/.tox/*",
     "*/.eggs/*",
 ]
-
-[tool.isort]
-known_first_party = [
-    "reportmanager",
-    "webcompat",
-]
-profile = "black"
 
 [tool.pytest.ini_options]
 log_level = "DEBUG"
@@ -129,6 +119,9 @@ select = [
     "W",
 ]
 ignore = ["SIM117"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["reportmanager"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}

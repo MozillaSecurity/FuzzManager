@@ -7,27 +7,28 @@ https://docs.djangoproject.com/en/1.6/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+
+# Build paths inside the project like this: BASE_DIR / ...
+from pathlib import Path
 
 from django.conf import global_settings  # noqa
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = Path(__file__).parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
+SECRET_FILE = BASE_DIR / "settings.secret"
 try:
-    SECRET_KEY = open(SECRET_FILE).read().strip()
+    SECRET_KEY = SECRET_FILE.read_text().strip()
 except OSError:
     try:
-        with open(SECRET_FILE, "w") as f:
+        with SECRET_FILE.open("w", encoding="ascii") as f:
             import random
 
             chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
-            SECRET_KEY = "".join([random.choice(chars) for i in range(64)])
+            SECRET_KEY = "".join(random.choice(chars) for i in range(64))
             f.write(SECRET_KEY)
     except OSError:
         raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.')
@@ -162,7 +163,7 @@ DEFAULT_PERMISSIONS = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "NAME": BASE_DIR / "db.sqlite3",
     }
     # For a production setup, we recommend to not use sqlite
     # but instead a real database like MySQL or Postgres.
@@ -190,9 +191,9 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = BASE_DIR / "static"
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "frontend/dist")]
+STATICFILES_DIRS = [BASE_DIR / "frontend/dist"]
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("server.auth.CheckAppPermission",),
@@ -202,13 +203,12 @@ REST_FRAMEWORK = {
 
 # Logging
 
-LOG_DIR = os.path.join(BASE_DIR, "logs")
+LOG_DIR = BASE_DIR / "logs"
 # If the logging directory does not exist, try creating it.
 # If this happens to exist but is a file, we would die anyway
 # once we try to create the log file, so don't bother checking
 # this here.
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
+LOG_DIR.mkdir(exist_ok=True, parents=True)
 
 LOGGING = {
     "version": 1,
@@ -259,14 +259,6 @@ CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 # CLEANUP_REPORTS_AFTER_DAYS = 14
 # CLEANUP_FIXED_BUCKETS_AFTER_DAYS = 3
 ALLOW_EMAIL_EDITION = True
-
-# This is the base directory where the tests/ subdirectory will
-# be created for storing submitted test files.
-TEST_STORAGE = os.path.join(BASE_DIR)
-USERDATA_STORAGE = os.path.join(BASE_DIR)
-
-# This is the directory where signatures.zip will be stored
-SIGNATURE_STORAGE = os.path.join(BASE_DIR)
 
 # Redis configuration
 REDIS_URL = "redis://localhost:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0

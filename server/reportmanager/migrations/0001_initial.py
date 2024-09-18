@@ -13,11 +13,9 @@ import reportmanager.models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-    ]
+    dependencies = (migrations.swappable_dependency(settings.AUTH_USER_MODEL),)
 
-    operations = [
+    operations = (
         migrations.CreateModel(
             name="App",
             fields=[
@@ -376,4 +374,4 @@ class Migration(migrations.Migration):
                 name="priority_range",
             ),
         ),
-    ]
+    )

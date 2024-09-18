@@ -419,9 +419,9 @@ def signature_find(request, report_id):
                         first_entry_per_bucket_cache[other_bucket.pk] = c
                         if c:
                             # Omit testcase for performance reasons for now
-                            first_entry_per_bucket_cache[
-                                other_bucket.pk
-                            ] = c.get_report_info(attach_testcase=False)
+                            first_entry_per_bucket_cache[other_bucket.pk] = (
+                                c.get_report_info(attach_testcase=False)
+                            )
 
                     first_entry_report_info = first_entry_per_bucket_cache[
                         other_bucket.pk
@@ -649,10 +649,10 @@ class ReportEntryViewSet(
         "product", "platform", "os", "client", "tool", "testcase"
     )
     serializer_class = ReportEntrySerializer
-    filter_backends = [
+    filter_backends = (
         JsonQueryFilterBackend,
         OrderingFilter,
-    ]
+    )
 
     def get_serializer(self, *args, **kwds):
         self.vue = self.request.query_params.get("vue", "false").lower() not in (
@@ -726,19 +726,19 @@ class BucketViewSet(
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = Bucket.objects.all().select_related("bug", "bug__external_type")
     serializer_class = BucketSerializer
-    filter_backends = [
+    filter_backends = (
         JsonQueryFilterBackend,
         BucketAnnotateFilterBackend,
         OrderingFilter,
-    ]
-    ordering_fields = [
+    )
+    ordering_fields = (
         "id",
         "short_description",
         "size",
         "quality",
         "optimized_signature",
         "bug__external_id",
-    ]
+    )
     pagination_class = None
 
     def get_serializer(self, *args, **kwds):
@@ -978,9 +978,7 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     serializer_class = NotificationSerializer
-    filter_backends = [
-        JsonQueryFilterBackend,
-    ]
+    filter_backends = (JsonQueryFilterBackend,)
 
     def get_queryset(self):
         return Notification.objects.unread().filter(recipient=self.request.user)
@@ -1195,7 +1193,7 @@ class ReportStatsViewSet(viewsets.GenericViewSet):
 
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = ReportEntry.objects.all()
-    filter_backends = []
+    filter_backends = ()
 
     def retrieve(self, request, *_args, **_kwds):
         entries = self.filter_queryset(self.get_queryset())

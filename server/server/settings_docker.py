@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from .settings import *  # noqa
 
 # Run in production mode
@@ -10,10 +12,7 @@ SECRET_KEY = "YskonP1FOlIthZKysJcXQ3Bn6sAjUXaei8JVjesWbE"
 # Allow localhost
 ALLOWED_HOSTS = ["localhost"]
 
-BASE_DIR = "/data"
-COV_STORAGE = "/data/coverage"
-TEST_STORAGE = "/data/reports"
-USERDATA_STORAGE = "/data/userdata"
+BASE_DIR = Path("/data")
 
 # unix sockets, use unix:///path/to/sock?db=0
 REDIS_URL = "redis://webcompatmanager-redis:6379?db=0"

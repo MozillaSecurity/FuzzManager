@@ -15,8 +15,7 @@ def basename(value):
 def linejoin(value):
     if value:
         return "\n".join(value)
-    else:
-        return ""
+    return ""
 
 
 @register.filter
@@ -28,21 +27,18 @@ def varformat(arg, val):
 def listcsv(value):
     if value:
         return ", ".join(value)
-    else:
-        return ""
+    return ""
 
 
 @register.filter
 def dictcsv(value):
     if value:
-        return ", ".join("%s=%s" % x for x in value.items())
-    else:
-        return ""
+        return ", ".join(f"{k}={v}" for (k, v) in value.items())
+    return ""
 
 
 @register.filter
 def jsonparse(value):
     if value:
         return json.loads(value)
-    else:
-        return ""
+    return ""
