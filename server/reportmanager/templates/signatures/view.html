@@ -1,10 +1,10 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% block title %}{{ bucket_id }} - {{ shortDescription|escape }}{% endblock title %}
+{% block title %}{{ bucket_id }} - {{ short_description|escape }}{% endblock title %}
 
 {% block body_content %}
 {% csrf_token %}
-<signatureview
+<bucketview
   :activity-range="{{ activity_range }}"
   :bucket="{{ bucket }}"
   :best-entry-size="{{ best_entry_size }}"
@@ -17,6 +17,5 @@
   del-url="{% url 'reportmanager:sigdel' bucket_id %}"
   edit-url="{% url 'reportmanager:sigedit' bucket_id %}"
   opt-url="{% url 'reportmanager:sigopt' bucket_id %}"
-  sig-watch-url="{% url 'reportmanager:sigwatchnew' %}"
   />
 {% endblock body_content %}

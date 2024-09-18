@@ -15,17 +15,16 @@ COV_STORAGE = "/data/coverage"
 TEST_STORAGE = "/data/reports"
 USERDATA_STORAGE = "/data/userdata"
 
-REDIS_URL = (
-    "redis://fuzzmanager-redis:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
-)
-CELERY_BROKER_URL = "redis://fuzzmanager-redis/2"
-CELERY_RESULT_BACKEND = "redis://fuzzmanager-redis/1"
+# unix sockets, use unix:///path/to/sock?db=0
+REDIS_URL = "redis://webcompatmanager-redis:6379?db=0"
+CELERY_BROKER_URL = "redis://webcompatmanager-redis/2"
+CELERY_RESULT_BACKEND = "redis://webcompatmanager-redis/1"
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "fuzzmanager",
-        "USER": "fuzzmanager",
+        "NAME": "webcompatmanager",
+        "USER": "webcompatmanager",
         "PASSWORD": "mozilla1234",
         "HOST": "database",
     }

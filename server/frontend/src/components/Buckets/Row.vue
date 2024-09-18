@@ -1,36 +1,36 @@
 <template>
   <tr>
     <td>
-      <a title="View signature" :href="signature.view_url">
-        {{ signature.id }}
+      <a title="View bucket" :href="bucket.view_url">
+        {{ bucket.id }}
       </a>
     </td>
     <td class="wrap-anywhere">
-      <span class="two-line-limit">{{ signature.shortDescription }}</span>
+      <span class="two-line-limit">{{ bucket.short_description }}</span>
     </td>
     <td>
-      <activitygraph :data="signature.report_history" :range="activityRange" />
+      <activitygraph :data="bucket.report_history" :range="activityRange" />
     </td>
-    <td>{{ signature.size }}</td>
-    <td>{{ signature.best_quality }}</td>
+    <td>{{ bucket.size }}</td>
+    <td>{{ bucket.best_quality }}</td>
     <td>
       <a
-        v-if="signature.bug && signature.bug_urltemplate"
-        :class="{ fixedbug: signature.bug_closed }"
-        :href="signature.bug_urltemplate"
+        v-if="bucket.bug && bucket.bug_urltemplate"
+        :class="{ fixedbug: bucket.bug_closed }"
+        :href="bucket.bug_urltemplate"
         target="_blank"
       >
-        {{ signature.bug }}
+        {{ bucket.bug }}
       </a>
-      <p v-else-if="signature.bug">
-        {{ signature.bug }} on {{ signature.bug_hostname }}
+      <p v-else-if="bucket.bug">
+        {{ bucket.bug }} on {{ bucket.bug_hostname }}
       </p>
-      <assignbutton v-else :bucket="signature.id" :providers="providers" />
+      <assignbutton v-else :bucket="bucket.id" :providers="providers" />
     </td>
     <td>
       <a
-        v-if="signature.has_optimization"
-        :href="signature.opt_pre_url"
+        v-if="bucket.has_optimization"
+        :href="bucket.opt_pre_url"
         class="btn btn-default"
       >
         Yes
@@ -57,7 +57,7 @@ export default {
       type: Array,
       required: true,
     },
-    signature: {
+    bucket: {
       type: Object,
       required: true,
     },

@@ -5,12 +5,12 @@
 
 {% block body_content %}
 <div class="panel panel-info">
-    <div class="panel-heading"><i class="bi bi-card-list"></i> {{ title }}</div>
-    <div class="panel-body">
-        <form method="post">
-            {% csrf_token %}
-            {% crispy form %}
-        </form>
-    </div>
+  <div class="panel-heading"><i class="bi bi-card-list"></i> {{ title }}</div>
+  <div class="panel-body">
+    <form method="post">
+  {% csrf_token %}
+  {% crispy form %}
+    </form>
+  </div>
 </div>
 {% endblock body_content %}

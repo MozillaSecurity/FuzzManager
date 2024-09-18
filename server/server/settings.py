@@ -114,7 +114,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap3"
 CRISPY_TEMPLATE_PACK = "bootstrap3"
 
 # This is code for Mozilla's 2FA using OID. If you have your own OID provider,
-# you can probably use similar code to get 2FA for your FuzzManager instance.
+# you can probably use similar code to get 2FA for your WebCompatManager instance.
 
 USE_OIDC = False
 
@@ -152,8 +152,8 @@ LOGIN_REQUIRED_URLS_EXCEPTIONS = (
 
 # permissions given to new users by default
 DEFAULT_PERMISSIONS = [
-    "reportmanager.models.User:view_reportmanager",
-    "reportmanager.models.User:reportmanager_all",
+    "reportmanager.models.User:reportmanager_visible",
+    "reportmanager.models.User:reportmanager_read",
 ]
 
 # Database
@@ -244,14 +244,14 @@ LOGGING = {
 # Setup CSRF trusted origins explicitly as it's needed from Django 4
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8000", "http://127.0.0.1:8000"]
 
-# If you are running FuzzManager behind a TLS loadbalancer,
+# If you are running WebCompatManager behind a TLS loadbalancer,
 # uncomment the next line to let Django know that it should
 # behave as if we were using HTTPs.
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Reportmanager configuration
 #
-# FuzzManager supports username/password authentication as well as API keys
+# WebCompatManager supports username/password authentication as well as API keys
 # for authenticating to a Bugzilla instance. Omitting the username will cause
 # the password to be used as an API key instead.
 # BUGZILLA_USERNAME = "example@example.com"
@@ -299,7 +299,7 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Email
-EMAIL_SUBJECT_PREFIX = "[FuzzManager] "
+EMAIL_SUBJECT_PREFIX = "[WebCompatManager] "
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

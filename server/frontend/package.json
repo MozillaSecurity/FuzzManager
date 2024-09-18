@@ -1,7 +1,7 @@
 {
-    "name": "fuzzmanager",
+    "name": "webcompatmanager",
     "version": "0.1.0",
-    "description": "FuzzManager frontend project",
+    "description": "WebCompatManager frontend project",
     "main": "index.js",
     "scripts": {
         "codecov": "codecov -X gcov -p ../..",

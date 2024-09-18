@@ -87,9 +87,8 @@ class CheckAppPermissionsMiddleware:
         if self.exceptions.match(request.path):
             return None
 
-        User.get_or_create_restricted(
-            request.user
-        )  # create a ReportManager user if needed to apply defaults
+        # create a ReportManager user if needed to apply defaults
+        User.objects.get_or_create(user=request.user)
 
         if not CheckAppPermission().has_permission(request, view_func):
             return HttpResponseForbidden()

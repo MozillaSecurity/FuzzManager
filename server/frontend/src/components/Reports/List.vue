@@ -22,7 +22,7 @@
             { name: 'bucket', type: 'Integer (ID)' },
             { name: 'bucket__signature', type: 'String' },
             { name: 'bucket__shortDescription', type: 'String' },
-            { name: 'bucket__bug__externalId', type: 'String' },
+            { name: 'bucket__bug__external_id', type: 'String' },
             { name: 'rawStdout', type: 'String' },
             { name: 'rawStderr', type: 'String' },
             { name: 'rawReportData', type: 'String' },
@@ -67,15 +67,6 @@
           v-model="showBucketed"
         /><br />
       </span>
-      <template v-if="!restricted">
-        <label for="id_no_toolfilter">Ignore Tool Filter</label>:
-        <input
-          id="id_no_toolfilter"
-          type="checkbox"
-          name="alltools"
-          v-model="ignoreToolFilter"
-        /><br />
-      </template>
       <span v-if="advancedQuery">
         <a
           title="Discard query and start over in simple mode"
@@ -127,9 +118,6 @@
         </span>
         <span v-else-if="!showBucketed">
           {{ totalEntries }} unbucketed entries.
-        </span>
-        <span v-else-if="watchId !== null && reports">
-          {{ totalEntries }} new entries in bucket {{ reports[0].bucket }}.
         </span>
         <span v-else>{{ totalEntries }} entries.</span>
       </p>
@@ -354,17 +342,6 @@ export default {
     ClipLoader,
     HelpJSONQueryPopover,
   },
-  props: {
-    restricted: {
-      type: Boolean,
-      required: true,
-    },
-    watchId: {
-      type: Number,
-      required: false,
-      default: null,
-    },
-  },
   data: function () {
     const defaultSortKeys = ["-id"];
     const validSortKeys = [
@@ -386,7 +363,6 @@ export default {
       advancedQueryError: "",
       advancedQueryStr: "",
       cachedAdvancedQueryStr: null,
-      cachedIgnoreToolFilter: null,
       cachedSearchStr: null,
       cachedShowBucketed: null,
       canUnshowBucketed: true,
@@ -398,7 +374,6 @@ export default {
       deleteAsyncToken: null,
       filters: {},
       haveResults: false,
-      ignoreToolFilter: false,
       loading: true,
       searchStr: "",
       showBucketed: false,
@@ -410,7 +385,7 @@ export default {
     };
   },
   created: function () {
-    this.showBucketed = this.watchId !== null;
+    this.showBucketed = false;
     if (this.$route.query.q) this.searchStr = this.$route.query.q;
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
@@ -424,7 +399,6 @@ export default {
       }
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
-      this.ignoreToolFilter = hash.alltools === "1";
       if (hash.advanced === "1") {
         this.advancedQuery = true;
         this.advancedQueryStr = JSON.stringify(
@@ -449,11 +423,6 @@ export default {
   },
   computed: {
     modified() {
-      if (this.ignoreToolFilter !== this.cachedIgnoreToolFilter) {
-        // eslint-disable-next-line no-console
-        console.debug("modified because toolfilter differs");
-        return true;
-      }
       if (this.advancedQuery) {
         const queryStr = (() => {
           try {
@@ -507,11 +476,9 @@ export default {
     },
     buildCommonParams() {
       return {
-        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.advancedQuery
           ? this.advancedQueryStr
           : JSON.stringify(this.buildSimpleQuery()),
-        watch: this.watchId === null ? false : this.watchId,
       };
     },
     buildDeleteParams() {
@@ -526,7 +493,6 @@ export default {
     buildQueryParams() {
       const result = this.buildCommonParams();
       result.vue = "1";
-      result.include_raw = "0";
       result.limit = pageSize;
       result.offset = `${(this.currentPage - 1) * pageSize}`;
       result.ordering = this.sortKeys.join();
@@ -539,7 +505,6 @@ export default {
         // ignore query errors
         this.cachedAdvancedQueryStr = JSON.parse(this.advancedQueryStr);
       } catch (e) {} // eslint-disable-line no-empty
-      this.cachedIgnoreToolFilter = this.ignoreToolFilter;
       this.cachedSearchStr = this.searchStr.trim();
       this.cachedShowBucketed = this.showBucketed;
     },
@@ -568,8 +533,7 @@ export default {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
-      this.showBucketed =
-        this.watchId !== null || this.filters["bucket"] !== undefined;
+      this.showBucketed = this.filters["bucket"] !== undefined;
       this.canUnshowBucketed = true;
       this.updateHash();
     },
@@ -719,8 +683,7 @@ export default {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
-      this.showBucketed =
-        this.watchId !== null || this.filters["bucket"] !== undefined;
+      this.showBucketed = this.filters["bucket"] !== undefined;
       this.canUnshowBucketed = true;
       this.fetch();
     },
@@ -730,7 +693,6 @@ export default {
         hash.page = this.currentPage;
       }
       this.updateHashSort(hash);
-      if (this.ignoreToolFilter) hash.alltools = "1";
       if (this.filters["bucket"] !== undefined)
         hash.bucket = this.filters["bucket"];
       if (this.advancedQuery) {

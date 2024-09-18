@@ -2,7 +2,7 @@
   <div class="panel panel-info">
     <div class="panel-heading">
       <i class="bi bi-tag-fill"></i>
-      {{ bucketId ? "Edit Signature" : "New Signature" }}
+      {{ bucketId ? "Edit Bucket" : "New Bucket" }}
     </div>
     <div class="panel-body">
       <div class="alert alert-info" role="alert" v-if="loading === 'preview'">
@@ -40,29 +40,6 @@
           spellcheck="false"
           v-model="bucket.signature"
         ></textarea>
-
-        <div class="field">
-          <input type="checkbox" id="id_frequent" v-model="bucket.frequent" />
-          <label for="id_frequent">Mark this bucket as a frequent bucket</label>
-        </div>
-
-        <div class="field">
-          <input type="checkbox" id="id_permanent" v-model="bucket.permanent" />
-          <label for="id_permanent">
-            Mark this bucket as a permanent bucket
-          </label>
-        </div>
-
-        <div class="field">
-          <input
-            type="checkbox"
-            id="id_do_not_reduce"
-            v-model="bucket.doNotReduce"
-          />
-          <label for="id_do_not_reduce">
-            Mark this bucket &ldquo;do not reduce&rdquo;
-          </label>
-        </div>
 
         <div class="field">
           <input type="checkbox" id="id_reassign" v-model="reassign" />
@@ -159,9 +136,6 @@ export default {
   },
   data: () => ({
     bucket: {
-      doNotReduce: false,
-      frequent: false,
-      permanent: false,
       shortDescription: "",
       signature: "",
     },
@@ -185,10 +159,7 @@ export default {
     async create(save) {
       this.loading = save ? "create" : "preview";
       const payload = {
-        doNotReduce: this.bucket.doNotReduce,
-        frequent: this.bucket.frequent,
-        permanent: this.bucket.permanent,
-        shortDescription: this.bucket.shortDescription,
+        short_description: this.bucket.shortDescription,
         signature: this.bucket.signature,
       };
 
@@ -214,10 +185,7 @@ export default {
     async update(save) {
       this.loading = save ? "save" : "preview";
       const payload = {
-        doNotReduce: this.bucket.doNotReduce,
-        frequent: this.bucket.frequent,
-        permanent: this.bucket.permanent,
-        shortDescription: this.bucket.shortDescription,
+        short_description: this.bucket.shortDescription,
         signature: this.bucket.signature,
       };
 

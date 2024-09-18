@@ -1,7 +1,6 @@
 import { nextTick } from "vue";
 import { fireEvent, render } from "@testing-library/vue";
 import Inbox from "../src/components/Notifications/Inbox.vue";
-import BucketHit from "../src/components/Notifications/BucketHit.vue";
 import InaccessibleBug from "../src/components/Notifications/InaccessibleBug.vue";
 import {
   dismissAllNotifications,
@@ -10,7 +9,6 @@ import {
 } from "../src/api.js";
 import {
   emptyNotifications,
-  bucketHitNotification,
   inaccessibleBugNotification,
   unreadNotifications,
 } from "./fixtures.js";
@@ -60,8 +58,6 @@ test("inbox has two unread notifications", async () => {
   });
   findByText("Inaccessible bug");
   findByText(unreadNotifications.results[0].description);
-  findByText("Bucket hit");
-  findByText(unreadNotifications.results[1].description);
 });
 
 test("inbox displays a functional button to dismiss all notifications", async () => {
@@ -70,14 +66,12 @@ test("inbox displays a functional button to dismiss all notifications", async ()
   const { findByText, queryByText } = await render(Inbox);
 
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
 
   fireEvent.click(await findByText("Dismiss all notifications"));
 
   expect(dismissAllNotifications).toHaveBeenCalledTimes(1);
   await findByText("No unread notification.");
   expect(queryByText("Inaccessible bug")).toBeNull();
-  expect(queryByText("Bucket hit")).toBeNull();
   expect(queryByText("Dismiss all notifications")).toBeNull();
 });
 
@@ -89,14 +83,12 @@ test("inbox displays an error if dismissing all notifications failed", async () 
   const { findByText } = await render(Inbox);
 
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
 
   fireEvent.click(await findByText("Dismiss all notifications"));
 
   expect(dismissAllNotifications).toHaveBeenCalledTimes(1);
   // Notifications are still here
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
   // An error is displayed
   findByText((content) =>
     content.startsWith(
@@ -111,14 +103,12 @@ test("inbox intercepts simple dismiss event from child component", async () => {
   const { findByText, queryByText, findAllByTitle } = await render(Inbox);
 
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
 
   (await findAllByTitle("Dismiss")).forEach((b) => fireEvent.click(b));
 
   expect(dismissNotification).toHaveBeenCalledTimes(2);
   await findByText("No unread notification.");
   expect(queryByText("Inaccessible bug")).toBeNull();
-  expect(queryByText("Bucket hit")).toBeNull();
 });
 
 test("inbox displays an error if dismissing one notification failed", async () => {
@@ -129,78 +119,18 @@ test("inbox displays an error if dismissing one notification failed", async () =
   const { findByText, findAllByTitle } = await render(Inbox);
 
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
 
   (await findAllByTitle("Dismiss")).forEach((b) => fireEvent.click(b));
 
   expect(dismissNotification).toHaveBeenCalledTimes(2);
   // Notifications are still here
   findByText("Inaccessible bug");
-  findByText("Bucket hit");
   // An error is displayed
   findByText((content) =>
     content.startsWith(
       "An error occurred while marking notification 2 as read: ",
     ),
   );
-});
-
-test("bucketHit renders a 'View bucket' button with a redirection", async () => {
-  const { getByText } = await render(BucketHit, {
-    props: { notification: bucketHitNotification },
-  });
-
-  getByText("Bucket hit");
-  const buttonLink = getByText("View bucket");
-  expect(buttonLink).toHaveProperty(
-    "href",
-    window.location.origin + bucketHitNotification.actor_url,
-  );
-});
-
-test("bucketHit renders a 'View new report entry' button with a redirection", async () => {
-  const { getByText } = await render(BucketHit, {
-    props: { notification: bucketHitNotification },
-  });
-
-  getByText("Bucket hit");
-  const buttonLink = getByText("View new report entry");
-  expect(buttonLink).toHaveProperty(
-    "href",
-    window.location.origin + bucketHitNotification.target_url,
-  );
-});
-
-test("bucketHit emits a 'remove-notification' event for a successful dismiss", async () => {
-  const { emitted, getByText, getByTitle } = await render(BucketHit, {
-    props: { notification: bucketHitNotification },
-  });
-
-  getByText("Bucket hit");
-  await fireEvent.click(getByTitle("Dismiss"));
-  expect(emitted()["remove-notification"]).toBeTruthy();
-  expect(emitted()["remove-notification"].length).toBe(1);
-  expect(emitted()["remove-notification"][0]).toEqual([
-    bucketHitNotification.id,
-  ]);
-});
-
-test("bucketHit emits a 'update-dismiss-error' event for a failed dismiss", async () => {
-  dismissNotification.mockImplementation(() => {
-    throw new Error();
-  });
-  const { emitted, getByText, getByTitle } = await render(BucketHit, {
-    props: { notification: bucketHitNotification },
-  });
-
-  getByText("Bucket hit");
-  await fireEvent.click(getByTitle("Dismiss"));
-  await nextTick();
-  expect(emitted()["update-dismiss-error"]).toBeTruthy();
-  expect(emitted()["update-dismiss-error"].length).toBe(1);
-  expect(emitted()["update-dismiss-error"][0]).toEqual([
-    `An error occurred while marking notification ${bucketHitNotification.id} as read: Error`,
-  ]);
 });
 
 test("inaccessibleBug renders a 'View external bug' button with a redirection", async () => {

@@ -6,7 +6,7 @@ import * as d3 from "d3";
 export default {
   props: {
     data: {
-      type: Object,
+      type: Array,
       required: true,
     },
   },
@@ -27,36 +27,25 @@ export default {
         .append("svg")
         .attr("viewBox", [0, 0, width, height]);
 
-      const colors = new Map([
-        ["Out of Tool Filter", "#F1CF63"],
-        ["In Tool Filter", "#7AAAD0"],
-      ]);
+      const colors = new Map([["Reports", "#7AAAD0"]]);
 
-      const inFilterDataByDay = [];
-      const outFilterDataByDay = [];
-      const days = Math.floor(this.data.outFilter.length / 24);
-      for (let i = 0; i < this.data.outFilter.length; ++i) {
+      const graphDataByDay = [];
+      const days = Math.floor(this.data.length / 24);
+      for (let i = 0; i < this.data.length; ++i) {
         const day = Math.floor(i / 24);
-        if (day >= inFilterDataByDay.length) {
-          inFilterDataByDay.push(0);
-          outFilterDataByDay.push(0);
+        if (day >= graphDataByDay.length) {
+          graphDataByDay.push(0);
         }
-        inFilterDataByDay[day] += this.data.inFilter[i];
-        outFilterDataByDay[day] += this.data.outFilter[i];
+        graphDataByDay[day] += this.data[i];
       }
 
       const data = [];
-      for (let i = 0; i < outFilterDataByDay.length; ++i) {
-        const p = i - outFilterDataByDay.length + 1;
+      for (let i = 0; i < graphDataByDay.length; ++i) {
+        const p = i - graphDataByDay.length + 1;
         data.push({
-          name: "Out of Tool Filter",
+          name: colors.keys().next().value,
           time: p - 0.5,
-          value: outFilterDataByDay[i],
-        });
-        data.push({
-          name: "In Tool Filter",
-          time: p - 0.5,
-          value: inFilterDataByDay[i],
+          value: graphDataByDay[i],
         });
       }
 

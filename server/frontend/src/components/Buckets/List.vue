@@ -1,6 +1,6 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signatures</div>
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Buckets</div>
     <div class="panel-body">
       <div>
         <div class="btn-group" role="group">
@@ -11,7 +11,6 @@
           >
             {{ showAll ? "View Unassigned" : "View All" }}
           </button>
-          <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
       </div>
       <br />
@@ -22,15 +21,11 @@
             { name: 'id', type: 'Integer (ID)' },
             { name: 'bug', type: 'Integer (ID)' },
             { name: 'bug__closed', type: 'Date' },
-            { name: 'bug__externalId', type: 'String' },
-            { name: 'bug__externalType', type: 'Integer (ID)' },
-            { name: 'bug__externalType__classname', type: 'String' },
-            { name: 'bug__externalType__hostname', type: 'String' },
-            { name: 'doNotReduce', type: 'Boolean' },
-            { name: 'frequent', type: 'Boolean' },
-            { name: 'optimizedSignature', type: 'String' },
-            { name: 'permanent', type: 'Boolean' },
-            { name: 'shortDescription', type: 'String' },
+            { name: 'bug__external_id', type: 'String' },
+            { name: 'bug__external_type', type: 'Integer (ID)' },
+            { name: 'bug__external_type__classname', type: 'String' },
+            { name: 'bug__external_type__hostname', type: 'String' },
+            { name: 'short_description', type: 'String' },
             { name: 'signature', type: 'String' },
           ]"
         />
@@ -48,14 +43,6 @@
         </div>
       </div>
       <div>
-        <label for="id_no_toolfilter">Ignore Tool Filter</label>:
-        <input
-          id="id_no_toolfilter"
-          type="checkbox"
-          name="alltools"
-          v-model="ignoreToolFilter"
-        />
-        <br />
         <button
           v-on:click="fetch"
           :disabled="!modified || loading"
@@ -66,11 +53,10 @@
       </div>
       <br />
       <p v-if="showAll">
-        Displaying {{ totalEntries }} of all signature entries in the database.
+        Displaying {{ totalEntries }} of all buckets in the database.
       </p>
       <p v-else>
-        Displaying {{ totalEntries }} unreported signature entries from the
-        database.
+        Displaying {{ totalEntries }} unreported buckets from the database.
       </p>
     </div>
     <div class="table-responsive">
@@ -87,12 +73,12 @@
               ID
             </th>
             <th
-              v-on:click.exact="sortBy('shortDescription')"
-              v-on:click.ctrl.exact="addSort('shortDescription')"
+              v-on:click.exact="sortBy('short_description')"
+              v-on:click.ctrl.exact="addSort('short_description')"
               :class="{
                 active:
-                  sortKeys.includes('shortDescription') ||
-                  sortKeys.includes('-shortDescription'),
+                  sortKeys.includes('short_description') ||
+                  sortKeys.includes('-short_description'),
               }"
             >
               Description
@@ -119,12 +105,12 @@
               Best Quality
             </th>
             <th
-              v-on:click.exact="sortBy('bug__externalId')"
-              v-on:click.ctrl.exact="addSort('bug__externalId')"
+              v-on:click.exact="sortBy('bug__external_id')"
+              v-on:click.ctrl.exact="addSort('bug__external_id')"
               :class="{
                 active:
-                  sortKeys.includes('bug__externalId') ||
-                  sortKeys.includes('-bug__externalId'),
+                  sortKeys.includes('bug__external_id') ||
+                  sortKeys.includes('-bug__external_id'),
               }"
             >
               External Bug
@@ -149,11 +135,11 @@
             </td>
           </tr>
           <Row
-            v-for="signature in orderedSignatures"
+            v-for="bucket in orderedBuckets"
             :activity-range="activityRange"
-            :key="signature.id"
+            :key="bucket.id"
             :providers="providers"
-            :signature="signature"
+            :bucket="bucket"
             v-else
           />
         </tbody>
@@ -183,10 +169,6 @@ export default {
       type: Number,
       required: true,
     },
-    watchUrl: {
-      type: String,
-      required: true,
-    },
     providers: {
       type: Array,
       required: true,
@@ -195,22 +177,21 @@ export default {
   data: function () {
     const validSortKeys = [
       "best_quality",
-      "bug__externalId",
+      "bug__external_id",
       "has_optimization",
       "id",
-      "shortDescription",
+      "short_description",
       "size",
     ];
     const defaultSortKeys = ["-id"];
     return {
       defaultSortKeys: defaultSortKeys,
-      ignoreToolFilter: false,
       loading: false,
       modifiedCache: {},
       queryError: "",
       queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
       searchStr: "",
-      signatures: [],
+      buckets: [],
       sortKeys: [...defaultSortKeys],
       totalEntries: "?",
       validSortKeys: validSortKeys,
@@ -227,7 +208,6 @@ export default {
       );
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
-      this.ignoreToolFilter = hash.alltools === "1";
       if (Object.prototype.hasOwnProperty.call(hash, "query")) {
         this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
       }
@@ -237,8 +217,6 @@ export default {
   },
   computed: {
     modified() {
-      if (this.ignoreToolFilter !== this.modifiedCache.ignoreToolFilter)
-        return true;
       const queryStr = (() => {
         try {
           return JSON.parse(this.queryStr);
@@ -246,8 +224,8 @@ export default {
       })();
       return !_isEqual(queryStr, this.modifiedCache.queryStr);
     },
-    orderedSignatures() {
-      return this.sortData(this.signatures);
+    orderedBuckets() {
+      return this.sortData(this.buckets);
     },
     queryButtonTitle() {
       if (this.loading) return "Query in progress";
@@ -276,7 +254,6 @@ export default {
     buildParams() {
       return {
         vue: "1",
-        ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
         query: this.queryStr,
       };
     },
@@ -291,12 +268,12 @@ export default {
       async function () {
         this.loading = true;
         this.updateModifiedCache();
-        this.signatures = null;
+        this.buckets = null;
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());
-          this.signatures = data;
-          this.totalEntries = this.signatures.length;
+          this.buckets = data;
+          this.totalEntries = this.buckets.length;
         } catch (err) {
           if (
             err.response &&
@@ -322,7 +299,6 @@ export default {
       let hash = {};
       this.updateHashSort(hash);
       if (this.queryStr) hash.query = encodeURIComponent(this.queryStr);
-      if (this.ignoreToolFilter) hash.alltools = "1";
       if (Object.entries(hash).length) {
         const routeHash =
           "#" +

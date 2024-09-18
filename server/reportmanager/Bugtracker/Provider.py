@@ -25,13 +25,13 @@ class Provider(metaclass=ABCMeta):
         self.hostname = hostname
 
     @abstractmethod
-    def getTemplateList(self):
+    def get_template_list(self):
         return
 
     @abstractmethod
-    def getBugData(self, bugId, username=None, password=None):
+    def get_bug_data(self, bug_id, username=None, password=None):
         return
 
     @abstractmethod
-    def getBugStatus(self, bugIds, username=None, password=None):
+    def get_bug_status(self, bug_ids, username=None, password=None):
         return

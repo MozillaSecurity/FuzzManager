@@ -17,11 +17,11 @@ import requests
 class BugzillaREST:
     def __init__(self, hostname, username=None, password=None, api_key=None):
         self.hostname = hostname
-        self.baseUrl = f"https://{self.hostname}/rest"
+        self.base_url = f"https://{self.hostname}/rest"
         self.username = username
         self.password = password
         self.api_key = api_key
-        self.authToken = None
+        self.auth_token = None
         self.request_headers = {}
 
         # If we have no username, no API key but a password, use the password
@@ -35,9 +35,9 @@ class BugzillaREST:
             # it in the URI for additional security.
             self.request_headers["X-BUGZILLA-API-KEY"] = self.api_key
 
-    def login(self, loginRequired=True, forceLogin=False):
+    def login(self, login_required=True, force_login=False):
         if (self.username is None or self.password is None) and self.api_key is None:
-            if loginRequired:
+            if login_required:
                 raise RuntimeError("Need username/password or API key to login.")
             else:
                 return False
@@ -46,36 +46,36 @@ class BugzillaREST:
         if self.api_key is not None:
             return False
 
-        if forceLogin:
-            self.authToken = None
+        if force_login:
+            self.auth_token = None
 
         # We might still have a valid authentication token that we can use.
-        if self.authToken is not None:
+        if self.auth_token is not None:
             return True
 
-        loginUrl = (
-            f"{self.baseUrl}/login?login={self.username}&password={self.password}"
+        login_url = (
+            f"{self.base_url}/login?login={self.username}&password={self.password}"
         )
-        response = requests.get(loginUrl)
+        response = requests.get(login_url)
         json = response.json()
 
         if "token" not in json:
             raise RuntimeError(f"Login failed: {response.text}")
 
-        self.authToken = json["token"]
+        self.auth_token = json["token"]
         return True
 
-    def getBug(self, bugId):
-        bugs = self.getBugs([bugId])
+    def get_bug(self, bug_id):
+        bugs = self.get_bugs([bug_id])
 
         if not bugs:
             return None
 
-        return bugs[int(bugId)]
+        return bugs[int(bug_id)]
 
-    def getBugStatus(self, bugIds):
-        return self.getBugs(
-            bugIds,
+    def get_bug_status(self, bug_ids):
+        return self.get_bugs(
+            bug_ids,
             include_fields=[
                 "id",
                 "is_open",
@@ -85,27 +85,27 @@ class BugzillaREST:
             ],
         )
 
-    def getBugs(self, bugIds, include_fields=None, exclude_fields=None):
-        if not isinstance(bugIds, list):
-            bugIds = [bugIds]
+    def get_bugs(self, bug_ids, include_fields=None, exclude_fields=None):
+        if not isinstance(bug_ids, list):
+            bug_ids = [bug_ids]
 
-        bugUrl = f"{self.baseUrl}/bug?id={','.join(bugIds)}"
+        bug_url = f"{self.base_url}/bug?id={','.join(bug_ids)}"
 
-        extraParams = []
+        extra_params = []
 
         # Ensure we are logged in if we have any login data.
         # However, we might not need any credentials for reading bugs.
-        if self.login(loginRequired=False):
-            extraParams.append(f"&token={self.authToken}")
+        if self.login(login_required=False):
+            extra_params.append(f"&token={self.auth_token}")
 
         if include_fields:
-            extraParams.append(f"&include_fields={','.join(include_fields)}")
+            extra_params.append(f"&include_fields={','.join(include_fields)}")
 
         if exclude_fields:
-            extraParams.append(f"&exclude_fields={','.join(exclude_fields)}")
+            extra_params.append(f"&exclude_fields={','.join(exclude_fields)}")
 
         response = requests.get(
-            bugUrl + "".join(extraParams), headers=self.request_headers
+            bug_url + "".join(extra_params), headers=self.request_headers
         )
         json = response.json()
 

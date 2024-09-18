@@ -33,7 +33,7 @@ a.fixedbug:active {
 /* input elements */
 
 #id_signature,
-#id_shortDescription,
+#id_short_description,
 #id_summary,
 #id_description {
   width: 100%;
@@ -46,7 +46,6 @@ a.fixedbug:active {
 }
 
 #id_reportdata_attach,
-#id_testcase_content,
 #id_comment,
 #id_rendered_comment {
   height: 400px;

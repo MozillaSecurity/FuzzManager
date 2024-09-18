@@ -20,63 +20,66 @@ class Command(BaseCommand):
 
         providers = BugProvider.objects.all()
         for provider in providers:
-            providerInstance = provider.getInstance()
-            providerBugs = Bug.objects.filter(externalType=provider)
-            bugIds = list(providerBugs.values_list("externalId", flat=True))
+            provider_instance = provider.get_instance()
+            provider_bugs = Bug.objects.filter(external_type=provider)
+            bug_ids = list(provider_bugs.values_list("external_id", flat=True))
 
-            if not bugIds:
+            if not bug_ids:
                 continue
 
             username = getattr(settings, "BUGZILLA_USERNAME", None)
             password = getattr(settings, "BUGZILLA_PASSWORD", None)
 
-            bugStatus = providerInstance.getBugStatus(bugIds, username, password)
+            bug_status = provider_instance.get_bug_status(bug_ids, username, password)
 
-            if not bugStatus:
+            if not bug_status:
                 raise RuntimeError("Error getting bug status from bug provider.")
 
             # Map to memorize which bugs we have duped to others
-            bugDupMap = {}
+            bug_dup_map = {}
 
-            for bugId in bugStatus:
+            for bug_id in bug_status:
                 # It is possible that two buckets are linked to one bug which has been
                 # marked as a duplicate of another. Once the first bug has been
                 # processed, we don't need to process any more bugs with the same bug id
-                if bugId in bugDupMap:
+                if bug_id in bug_dup_map:
                     continue
 
                 # Due to how duplicating bugs works, we can end up having multiple bug
                 # objects with the same external bug id. Make sure we consider all of
                 # them.
-                bugs = providerBugs.filter(externalId=bugId)
+                bugs = provider_bugs.filter(external_id=bug_id)
                 for bug in bugs:
-                    if bugStatus[bugId] is None and bug.closed is not None:
+                    if bug_status[bug_id] is None and bug.closed is not None:
                         bug.closed = None
                         bug.save()
-                    elif isinstance(bugStatus[bugId], str):
+                    elif isinstance(bug_status[bug_id], str):
                         # The bug has been marked as a duplicate, so we change the
-                        # externalId to match the duped bug. If that bug is also closed,
-                        # then it will be picked up the next time this command runs.
+                        # external_id to match the duped bug. If that bug is also
+                        # closed, then it will be picked up the next time this command
+                        # runs.
                         LOG.info(
                             "setting bug %s dupe to %s",
-                            bug.externalId,
-                            bugStatus[bugId],
+                            bug.external_id,
+                            bug_status[bug_id],
                         )
-                        bugDupMap[bug.externalId] = bugStatus[bugId]
-                        bug.externalId = bugStatus[bugId]
+                        bug_dup_map[bug.external_id] = bug_status[bug_id]
+                        bug.external_id = bug_status[bug_id]
                         bug.closed = None
                         bug.save()
                     elif bug.closed is None:
                         LOG.info(
-                            "setting bug %s closed=%s", bug.externalId, bugStatus[bugId]
+                            "setting bug %s closed=%s",
+                            bug.external_id,
+                            bug_status[bug_id],
                         )
-                        bug.closed = bugStatus[bugId]
+                        bug.closed = bug_status[bug_id]
                         bug.save()
 
             bug_content_type = ContentType.objects.get(model="bug")
-            for bugId in bugIds:
-                if int(bugId) not in bugStatus:
-                    bugs = providerBugs.filter(externalId=bugId)
+            for bug_id in bug_ids:
+                if int(bug_id) not in bug_status:
+                    bugs = provider_bugs.filter(external_id=bug_id)
                     for bug in bugs:
                         # Listing all notifications sent to alert that this specific bug
                         # is inaccessible
@@ -106,7 +109,7 @@ class Command(BaseCommand):
                             target=bug,
                             level="info",
                             description=(
-                                f"The external bug {bug.externalId} on "
+                                f"The external bug {bug.external_id} on "
                                 f"{provider.hostname} has become inaccessible, but is "
                                 f"in use by {bucket_desc}"
                             ),

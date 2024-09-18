@@ -6,7 +6,7 @@
 	<meta name="description" content="{% block meta.description %}{% endblock meta.description %}" />
 	<meta name="keywords" content="{% block meta.keywords %}{% endblock meta.keywords %}" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FuzzManager</title>
+    <title>WebCompatManager</title>
     <link rel="shortcut icon" type="image/png" href="{% static 'img/logo.png' %}"/>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha512-Dop/vW3iOtayerlYAqCgkVr2aTr2ErwwTYOvRFUpzl2VhCMJyjQF0Q9TjUXIo6JhuM/3i0vVEt2e/7QQmnHQqw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href='//fonts.googleapis.com/css?family=Rancho&amp;effect=shadow-multiple|3d' rel='stylesheet' type='text/css'>
@@ -59,7 +59,7 @@
     {% if form.errors %}
     <div class="alert alert-danger" role="alert"><center>Your username and password didn't match. Please try again.</center></div>
     {% endif %}
-    <center><div class="font-effect-3d login_text">FUZZMANAGER</div></center><br/>
+    <center><div class="font-effect-3d login_text">WEBCOMPATMANAGER</div></center><br/>
     <form class="form-signin" method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <input type="username" name="username" id="username" class="form-control" placeholder="Username" required autofocus>

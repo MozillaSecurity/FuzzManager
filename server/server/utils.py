@@ -1,10 +1,17 @@
-import logging
-import time
-import uuid
+import sys
+from contextlib import suppress
+from logging import getLogger
+from time import sleep, time
+from uuid import uuid4
 
-import redis
+from redis.exceptions import WatchError
 
-LOG = logging.getLogger("fuzzmanager.utils")
+if sys.version_info[:2] < (3, 12):
+    from collections.abc import Iterable, Iterator
+    from itertools import islice
+    from typing import TypeVar
+
+LOG = getLogger("webcompatmanager.utils")
 
 
 class RedisLock:
@@ -22,18 +29,18 @@ class RedisLock:
         self.conn = conn
         self.name = name
         if unique_id is None:
-            self.unique_id = str(uuid.uuid4())
+            self.unique_id = str(uuid4())
         else:
             self.unique_id = unique_id
 
     def acquire(self, acquire_timeout=10, lock_expiry=None):
-        end = time.time() + acquire_timeout
-        while time.time() < end:
+        end = time() + acquire_timeout
+        while time() < end:
             if self.conn.set(self.name, self.unique_id, ex=lock_expiry, nx=True):
                 LOG.debug("Acquired lock: %s(%s)", self.name, self.unique_id)
                 return self.unique_id
 
-            time.sleep(0.05)
+            sleep(0.05)
 
         LOG.debug("Failed to acquire lock: %s(%s)", self.name, self.unique_id)
         return None
@@ -41,7 +48,7 @@ class RedisLock:
     def release(self):
         with self.conn.pipeline() as pipe:
             while True:
-                try:
+                with suppress(WatchError):
                     pipe.watch(self.name)
                     existing = pipe.get(self.name)
                     if not isinstance(existing, str):
@@ -57,10 +64,21 @@ class RedisLock:
                     pipe.unwatch()
                     break
 
-                except redis.exceptions.WatchError:
-                    pass
-
         LOG.debug(
             "Failed to release lock: %s(%s) != %s", self.name, self.unique_id, existing
         )
         return False
+
+
+if sys.version_info[:2] < (3, 12):
+    # generic type for `batched` below
+    _T = TypeVar("_T")
+
+    # added to itertools in 3.12
+    def batched(iterable: Iterable[_T], n: int) -> Iterator[tuple[_T, ...]]:
+        # batched('ABCDEFG', 3) → ABC DEF G
+        if n < 1:
+            raise ValueError("n must be at least one")
+        iterator = iter(iterable)
+        while batch := tuple(islice(iterator, n)):
+            yield batch

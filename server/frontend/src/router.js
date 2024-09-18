@@ -1,7 +1,7 @@
 import VueRouter from "vue-router";
 
 import ReportsList from "./components/Reports/List.vue";
-import SignaturesList from "./components/Signatures/List.vue";
+import BucketsList from "./components/Buckets/List.vue";
 
 const routes = [
   {
@@ -12,15 +12,9 @@ const routes = [
   },
   {
     // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
-    path: "/reportmanager/reports/watch/:sigid/",
-    name: "reports-watch",
-    component: ReportsList,
-  },
-  {
-    // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
-    path: "/reportmanager/signatures/",
-    name: "signatures-list",
-    component: SignaturesList,
+    path: "/reportmanager/buckets/",
+    name: "buckets-list",
+    component: BucketsList,
   },
 ];
 

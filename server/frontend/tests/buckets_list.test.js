@@ -2,7 +2,7 @@ import { nextTick } from "vue";
 import { createLocalVue } from "@vue/test-utils";
 import VueRouter from "vue-router";
 import { render } from "@testing-library/vue";
-import List from "../src/components/Signatures/List.vue";
+import List from "../src/components/Buckets/List.vue";
 import { listBuckets } from "../src/api.js";
 import { emptyBuckets, buckets } from "./fixtures.js";
 import "lodash/throttle";
@@ -23,13 +23,12 @@ const defaultQueryStr = `{
   "bug__isnull": true
 }`;
 
-test("signature list has no buckets", async () => {
+test("bucket list has no buckets", async () => {
   listBuckets.mockResolvedValue(emptyBuckets);
   await render(List, {
     localVue,
     router,
     props: {
-      watchUrl: "/reportmanager/signatures/watch/",
       providers: [],
       activityRange: 14,
     },
@@ -44,17 +43,16 @@ test("signature list has no buckets", async () => {
   });
 
   await nextTick();
-  // Assert no signature is displayed in the table
+  // Assert no bucket is displayed in the table
   expect(document.querySelector("tbody tr")).toBeNull();
 });
 
-test("signature list has two buckets", async () => {
+test("bucket list has two buckets", async () => {
   listBuckets.mockResolvedValue(buckets);
   const { getByText } = await render(List, {
     localVue,
     router,
     props: {
-      watchUrl: "/reportmanager/signatures/watch/",
       providers: [],
       activityRange: 14,
     },
@@ -69,7 +67,7 @@ test("signature list has two buckets", async () => {
   });
 
   await nextTick();
-  // Assert two signatures (one assigned to a bug, the other not) are displayed in the table
+  // Assert two buckets (one assigned to a bug, the other not) are displayed in the table
   expect(document.querySelectorAll("tbody tr").length).toBe(2);
   getByText("A short description for bucket 1");
   const buttonLink = getByText("1630739");

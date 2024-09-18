@@ -24,7 +24,6 @@ test("empty stats doesn't break", async () => {
     localVue,
     router,
     props: {
-      restricted: false,
       providers: [],
       activityRange: 14,
     },
@@ -53,7 +52,6 @@ test("stats are shown", async () => {
     localVue,
     router,
     props: {
-      restricted: false,
       providers: [],
       activityRange: 14,
     },
@@ -92,7 +90,6 @@ test("stats use hash params", async () => {
       $router,
     },
     props: {
-      restricted: false,
       providers: [],
       activityRange: 14,
     },
@@ -121,7 +118,6 @@ test("stats are sortable", async () => {
     localVue,
     router,
     props: {
-      restricted: false,
       providers: [],
       activityRange: 14,
     },

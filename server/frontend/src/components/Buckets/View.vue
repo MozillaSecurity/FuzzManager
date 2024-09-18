@@ -6,7 +6,7 @@
         <tbody>
           <tr>
             <td>Description</td>
-            <td>{{ bucket.shortDescription }}</td>
+            <td>{{ bucket.short_description }}</td>
           </tr>
           <tr v-if="bucket.frequent">
             <td>Frequent bucket</td>
@@ -64,21 +64,6 @@
                 :data="bucket.report_history"
                 :range="activityRange"
               />
-              <form :action="sigWatchUrl" ref="sigWatchForm" method="post">
-                <input type="hidden" name="bucket" :value="bucket.id" />
-                <input
-                  type="hidden"
-                  name="report"
-                  :value="bucket.latest_entry"
-                />
-                <input
-                  type="submit"
-                  name="submit"
-                  value="Watch for New Reports"
-                  title="Add/Update"
-                  class="btn btn-default"
-                />
-              </form>
             </td>
           </tr>
           <tr v-if="bucket.best_entry">
@@ -122,10 +107,8 @@ export default {
     assignbutton: AssignBtn,
   },
   data: () => ({
-    frequent: false,
     permanent: false,
-    doNotReduce: false,
-    shortDescription: "",
+    short_description: "",
   }),
   props: {
     activityRange: {
@@ -168,14 +151,6 @@ export default {
       type: Array,
       required: true,
     },
-    sigWatchUrl: {
-      type: String,
-      required: true,
-    },
-  },
-  mounted() {
-    const el = document.getElementsByName("csrfmiddlewaretoken")[0];
-    this.$refs.sigWatchForm.appendChild(el);
   },
   methods: {
     unlink() {

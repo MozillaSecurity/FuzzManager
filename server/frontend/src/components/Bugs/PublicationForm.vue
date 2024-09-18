@@ -272,7 +272,7 @@
             <HelpPopover
               field="keywords"
               :variables="['isTestAttached']"
-              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+              documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <input
               id="id_whiteboard"
@@ -300,7 +300,7 @@
             <HelpPopover
               field="keywords"
               :variables="['isTestAttached']"
-              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+              documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <input
               id="id_keywords"
@@ -328,7 +328,7 @@
             <HelpPopover
               field="custom-fields"
               :variables="['metadata*']"
-              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
+              documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <textarea
               id="id_attrs"
@@ -366,7 +366,7 @@
                 'reportdataattached',
                 'metadata*',
               ]"
-              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-description-field"
+              documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-description-field"
             />
             <textarea
               id="id_description"

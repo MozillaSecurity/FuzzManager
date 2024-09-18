@@ -22,14 +22,14 @@ class Command(BaseCommand):
 
         # Select all buckets that have been closed for x days
         now = timezone.now()
-        expiryDate = now - timedelta(
+        expiry_date = now - timedelta(
             days=cleanup_fixed_buckets_after_days,
             hours=now.hour,
             minutes=now.minute,
             seconds=now.second,
             microseconds=now.microsecond,
         )
-        bugs = Bug.objects.filter(closed__lt=expiryDate)
+        bugs = Bug.objects.filter(closed__lt=expiry_date)
         for bug in bugs:
             # Deleting the bug causes buckets referring to this bug as well as entries
             # referring these buckets to be deleted as well due to cascading delete.
@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 LOG.info(
                     "Removing %d ReportEntry objects from buckets assigned to bug %s",
                     report_count,
-                    bug.externalId,
+                    bug.external_id,
                 )
             while report_count > 500:
                 # Deleting things in buckets is complicated:
@@ -85,7 +85,7 @@ class Command(BaseCommand):
         #
         # Again, for the same reason as mentioned above, we have to delete entries in
         # batches.
-        expiryDate = now - timedelta(
+        expiry_date = now - timedelta(
             days=cleanup_reports_after_days,
             hours=now.hour,
             minutes=now.minute,
@@ -93,19 +93,19 @@ class Command(BaseCommand):
             microseconds=now.microsecond,
         )
         old_reports = ReportEntry.objects.filter(
-            created__lt=expiryDate, bucket__bug=None
+            created__lt=expiry_date, bucket__bug=None
         ).count()
         if old_reports:
             LOG.info("Removing %d old, unbucketed reports", old_reports)
         while old_reports:
             pks = list(
                 ReportEntry.objects.filter(
-                    created__lt=expiryDate, bucket__bug=None
+                    created__lt=expiry_date, bucket__bug=None
                 ).values_list("pk", flat=True)[:500]
             )
             ReportEntry.objects.filter(pk__in=pks).delete()
             old_reports = ReportEntry.objects.filter(
-                created__lt=expiryDate, bucket__bug=None
+                created__lt=expiry_date, bucket__bug=None
             ).count()
 
         # Cleanup all bugs that don't belong to any bucket anymore

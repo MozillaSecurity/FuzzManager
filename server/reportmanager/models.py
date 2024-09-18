@@ -1,176 +1,89 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
-import logging
 import re
+import sys
 from datetime import timedelta
-from itertools import zip_longest
+from logging import getLogger
+from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
-from django.core.files.storage import FileSystemStorage
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from enumfields import Enum, EnumField
-from notifications.signals import notify
 
-from FTB.ProgramConfiguration import ProgramConfiguration
-from FTB.Signatures.ReportInfo import ReportInfo
-from FTB.Signatures.ReportSignature import ReportSignature
+from webcompat.models import Report, Signature
 
 if getattr(settings, "USE_CELERY", None):
     from .tasks import triage_new_report
 
+if sys.version_info[:2] < (3, 12):
+    from server.utils import batched
+else:
+    from itertools import batched
 
-class Tool(models.Model):
-    name = models.CharField(max_length=63, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Platform(models.Model):
-    name = models.CharField(max_length=63, unique=True)
+LOG = getLogger("reportmanager")
 
 
-class Product(models.Model):
+class App(models.Model):
+    channel = models.CharField(max_length=63, null=True)
     name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
+    version = models.CharField(max_length=127)
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
-                fields=["name", "version"],
-                name="unique_product_version",
+                fields=("channel", "name", "version"), name="unique_app"
             ),
-        ]
-
-
-class OS(models.Model):
-    name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["name", "version"],
-                name="unique_os_version",
-            ),
-        ]
-
-
-class TestCase(models.Model):
-    test = models.FileField(
-        storage=FileSystemStorage(location=getattr(settings, "TEST_STORAGE", None)),
-        upload_to="tests",
-    )
-    size = models.IntegerField(default=0)
-    quality = models.IntegerField(default=0)
-    isBinary = models.BooleanField(default=False)
-
-    def __init__(self, *args, **kwargs):
-        # This variable can hold the testcase data temporarily
-        self.content = None
-
-        # For performance reasons we do not load the test here
-        # automatically. You must call the loadTest method if you
-        # want to access the test content
-
-        super().__init__(*args, **kwargs)
-
-    def loadTest(self):
-        self.test.open(mode="rb")
-        self.content = self.test.read()
-        self.test.close()
-
-    def storeTestAndSave(self):
-        self.size = len(self.content)
-        self.test.open(mode="w")
-        self.test.write(self.content)
-        self.test.close()
-        self.save()
-
-
-class Client(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-
-
-class BugProvider(models.Model):
-    classname = models.CharField(max_length=255, blank=False)
-    hostname = models.CharField(max_length=255, blank=False)
-
-    # This is used to annotate bugs with the URL linking to them
-    urlTemplate = models.CharField(max_length=1023, blank=False)
-
-    def getInstance(self):
-        # Dynamically instantiate the provider as requested
-        providerModule = __import__(
-            f"reportmanager.Bugtracker.{self.classname}", fromlist=[self.classname]
         )
-        providerClass = getattr(providerModule, self.classname)
-        return providerClass(self.pk, self.hostname)
-
-    def __str__(self):
-        return self.hostname
 
 
-class Bug(models.Model):
-    externalId = models.CharField(max_length=255, blank=True)
-    externalType = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
-    closed = models.DateTimeField(blank=True, null=True)
-
-    @property
-    def tools_filter_users(self):
-        ids = User.objects.filter(
-            defaultToolsFilter__reportentry__bucket__in=self.bucket_set.all(),
-            inaccessible_bug=True,
-        ).values_list("user_id", flat=True)
-        return DjangoUser.objects.filter(id__in=ids).distinct()
+class BreakageCategory(models.Model):
+    value = models.CharField(max_length=63, unique=True)
 
 
 class Bucket(models.Model):
-    bug = models.ForeignKey(
-        Bug, blank=True, null=True, on_delete=models.deletion.CASCADE
+    bug = models.ForeignKey("Bug", null=True, on_delete=models.deletion.CASCADE)
+    color = models.ForeignKey(
+        "BucketColor", null=True, on_delete=models.deletion.CASCADE
     )
+    # higher priority = earlier match
+    priority = models.IntegerField(
+        default=0, validators=(MinValueValidator(-2), MaxValueValidator(2))
+    )
+    # Empty signature is used to signify an untriaged Report. These Reports are
+    # processed by celery asynchronously to either match an existing bucket (deleting
+    # this one) or the signature will be populated with a default that matches
+    # the Report.
     signature = models.TextField()
-    optimizedSignature = models.TextField(blank=True, null=True)
-    shortDescription = models.CharField(max_length=1023, blank=True)
-    frequent = models.BooleanField(blank=False, default=False)
-    permanent = models.BooleanField(blank=False, default=False)
-    doNotReduce = models.BooleanField(blank=False, default=False)
+    snooze_until = models.DateTimeField(null=True)
 
-    @property
-    def watchers(self):
-        ids = User.objects.filter(
-            bucketwatch__bucket=self, bucket_hit=True
-        ).values_list("user_id", flat=True)
-        return DjangoUser.objects.filter(id__in=ids).distinct()
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=models.Q(priority__gte=-2) & models.Q(priority__lte=2),
+                name="priority_range",
+            ),
+        )
 
-    def getSignature(self):
-        return ReportSignature(self.signature)
-
-    def getOptimizedSignature(self):
-        return ReportSignature(self.optimizedSignature)
+    def get_signature(self):
+        return Signature(self.signature)
 
     def save(self, *args, **kwargs):
         modified = set()
 
         # Sanitize signature line endings so we end up with the same hash
-        # TODO: We might want to just parse the JSON here, and re-serialize
-        # it to a canonical string representation.
-        new_signature = self.signature.replace(r"\r\n", r"\n")
+        new_signature = json.dumps(json.loads(self.signature), indent=2, sort_keys=True)
         if new_signature != self.signature:
             modified.add("signature")
             self.signature = new_signature
-
-        # TODO: We could reset this only when we actually modify the signature,
-        # but this would require fetching the old signature from the database again.
-        keepOptimized = kwargs.pop("keepOptimized", False)
-        if not keepOptimized:
-            self.optimizedSignature = None
-            modified.add("optimizedSignature")
 
         # required in Django 4.2+
         if "update_fields" in kwargs and kwargs["update_fields"] is not None:
@@ -178,126 +91,96 @@ class Bucket(models.Model):
 
         super().save(*args, **kwargs)
 
-    def reassign(self, submitSave):
-        """
-        Assign all unassigned issues that match our signature to this bucket.
+    def reassign(self, submit_save):
+        """Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
 
-        We only actually save if "submitSave" is set.
+        We only actually save if "submit_save" is set.
         For previewing, we just count how many issues would be assigned and removed.
         """
         from .serializers import ReportEntryVueSerializer
 
-        inList, outList = [], []
-        inListCount, outListCount = 0, 0
+        in_list, out_list = [], []
+        in_list_count, out_list_count = 0, 0
 
-        signature = self.getSignature()
-        needTest = signature.matchRequiresTest()
+        signature = self.get_signature()
         entries = ReportEntry.objects.filter(
             models.Q(bucket=None) | models.Q(bucket=self)
+        ).select_related(
+            # these are used by get_report
+            "app",
+            "breakage_category",
+            "os",
         )
-        entries = entries.select_related(
-            "product", "platform", "os"
-        )  # these are used by getReportInfo
-        if needTest:
-            entries = entries.select_related("testcase")
 
-        requiredOutputs = signature.getRequiredOutputSources()
-        entries = ReportEntry.deferRawFields(entries, requiredOutputs)
-
-        if not submitSave:
-            entries = entries.select_related("tool").order_by(
-                "-id"
-            )  # used by the preview list
+        if not submit_save:
+            entries = entries.order_by("-id")  # used by the preview list
 
         entry_ids = entries.values_list("id", flat=True)
-
-        # from the python documentation (itertools)
-        def grouper(iterable, n, fillvalue=None):
-            """Collect data into fixed-length chunks or blocks"""
-            # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-            args = [iter(iterable)] * n
-            return zip_longest(*args, fillvalue=fillvalue)
 
         # If we are saving, we only care about the id of each entry
         # Otherwise, we save the entire object. Limit to the first 100 entries to avoid
         # OOM.
-        for entry_ids_chunk in grouper(entry_ids, 100):
-            entries_chunk = entries.filter(id__in=entry_ids_chunk)
-
-            for entry in entries_chunk:
-                match = signature.matches(
-                    entry.getReportInfo(
-                        attachTestcase=needTest, requiredOutputSources=requiredOutputs
-                    )
-                )
+        MATCH_BATCH_SIZE = 100
+        for entry_ids_batch in batched(entry_ids, MATCH_BATCH_SIZE):
+            for entry in entries.filter(id__in=entry_ids_batch):
+                match = signature.matches(entry.get_report())
                 if match and entry.bucket_id is None:
-                    if submitSave:
-                        inList.append(entry.pk)
-                    elif len(inList) < 100:
-                        inList.append(ReportEntryVueSerializer(entry).data)
-                    inListCount += 1
+                    if submit_save:
+                        in_list.append(entry.pk)
+                    elif len(in_list) < MATCH_BATCH_SIZE:
+                        in_list.append(ReportEntryVueSerializer(entry).data)
+                    in_list_count += 1
                 elif not match and entry.bucket_id is not None:
-                    if submitSave:
-                        outList.append(entry.pk)
-                    elif len(outList) < 100:
-                        outList.append(ReportEntryVueSerializer(entry).data)
-                    outListCount += 1
+                    if submit_save:
+                        out_list.append(entry.pk)
+                    elif len(out_list) < MATCH_BATCH_SIZE:
+                        out_list.append(ReportEntryVueSerializer(entry).data)
+                    out_list_count += 1
 
-        if submitSave:
-            while inList:
-                updList, inList = inList[:500], inList[500:]
-                for report in ReportEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+        if submit_save:
+            UPDATE_BATCH_SIZE = 500
+            for entry_ids_batch in batched(in_list, UPDATE_BATCH_SIZE):
+                for report in ReportEntry.objects.filter(pk__in=entry_ids_batch).values(
+                    "bucket_id",
+                    "created",
                 ):
                     if report["bucket_id"] != self.id:
                         if report["bucket_id"] is not None:
                             BucketHit.decrement_count(
                                 report["bucket_id"],
-                                report["tool_id"],
                                 report["created"],
                             )
-                        BucketHit.increment_count(
-                            self.id, report["tool_id"], report["created"]
-                        )
-                ReportEntry.objects.filter(pk__in=updList).update(bucket=self)
-            while outList:
-                updList, outList = outList[:500], outList[500:]
-                for report in ReportEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+                        BucketHit.increment_count(self.id, report["created"])
+                ReportEntry.objects.filter(pk__in=entry_ids_batch).update(bucket=self)
+            for entry_ids_batch in batched(out_list, UPDATE_BATCH_SIZE):
+                for report in ReportEntry.objects.filter(pk__in=entry_ids_batch).values(
+                    "bucket_id", "created"
                 ):
                     if report["bucket_id"] is not None:
                         BucketHit.decrement_count(
-                            report["bucket_id"], report["tool_id"], report["created"]
+                            report["bucket_id"], report["created"]
                         )
-                ReportEntry.objects.filter(pk__in=updList).update(
-                    bucket=None, triagedOnce=False
-                )
+                ReportEntry.objects.filter(pk__in=entry_ids_batch).update(bucket=None)
 
-        return inList, outList, inListCount, outListCount
+        return in_list, out_list, in_list_count, out_list_count
 
-    def optimizeSignature(self, unbucketed_entries):
+    def optimize_signature(self, unbucketed_entries):
         buckets = Bucket.objects.all()
 
-        signature = self.getSignature()
-        if signature.matchRequiresTest():
-            unbucketed_entries.select_related("testcase")
+        signature = self.get_signature()
 
-        requiredOutputs = signature.getRequiredOutputSources()
-        entries = ReportEntry.deferRawFields(unbucketed_entries, requiredOutputs)
+        entries = unbucketed_entries
 
-        optimizedSignature = None
-        matchingEntries = []
+        optimized_signature = None
+        matching_entries = []
 
         # Avoid hitting the database multiple times when looking for the first
         # entry of a bucket. Keeping these in memory is less expensive.
-        firstEntryPerBucketCache = {}
+        first_entry_per_bucket_cache = {}
 
         for entry in entries:
-            entry.reportinfo = entry.getReportInfo(
-                attachTestcase=signature.matchRequiresTest(),
-                requiredOutputSources=requiredOutputs,
-            )
+            entry.reportinfo = entry.get_report()
 
             # For optimization, disregard any issues that directly match since those
             # could be incoming new issues and we don't want these to block the
@@ -305,69 +188,103 @@ class Bucket(models.Model):
             if signature.matches(entry.reportinfo):
                 continue
 
-            optimizedSignature = signature.fit(entry.reportinfo)
-            if optimizedSignature:
+            optimized_signature = signature.fit(entry.reportinfo)
+            if optimized_signature:
                 # We now try to determine how this signature will behave in other
                 # buckets. If the signature matches lots of other buckets as well, it is
                 # likely too broad and we should not consider it (or later rate it worse
                 # than others).
-                matchesInOtherBuckets = False
-                nonMatchesInOtherBuckets = 0  # noqa
-                otherMatchingBucketIds = []  # noqa
-                for otherBucket in buckets:
-                    if otherBucket.pk == self.pk:
+                matches_in_other_buckets = False
+                non_matches_in_other_buckets = 0  # noqa
+                other_matching_bucket_ids = []  # noqa
+                for other_bucket in buckets:
+                    if other_bucket.pk == self.pk:
                         continue
 
                     if (
                         self.bug
-                        and otherBucket.bug
-                        and self.bug.pk == otherBucket.bug.pk
+                        and other_bucket.bug
+                        and self.bug.pk == other_bucket.bug.pk
                     ):
                         # Allow matches in other buckets if they are both linked to the
                         # same bug
                         continue
 
-                    if otherBucket.pk not in firstEntryPerBucketCache:
+                    if other_bucket.pk not in first_entry_per_bucket_cache:
                         c = ReportEntry.objects.filter(
-                            bucket=otherBucket
-                        ).select_related("product", "platform", "os")
-                        c = ReportEntry.deferRawFields(c, requiredOutputs)
+                            bucket=other_bucket
+                        ).select_related("app", "breakage_category", "os")
                         c = c.first()
-                        firstEntryPerBucketCache[otherBucket.pk] = c
+                        first_entry_per_bucket_cache[other_bucket.pk] = c
                         if c:
-                            # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = c.getReportInfo(
-                                attachTestcase=False,
-                                requiredOutputSources=requiredOutputs,
-                            )
+                            first_entry_per_bucket_cache[
+                                other_bucket.pk
+                            ] = c.get_report()
 
-                    firstEntryReportInfo = firstEntryPerBucketCache[otherBucket.pk]
-                    if firstEntryReportInfo:
-                        # Omit testcase for performance reasons for now
-                        if optimizedSignature.matches(firstEntryReportInfo):
-                            matchesInOtherBuckets = True
+                    first_entry_report = first_entry_per_bucket_cache[other_bucket.pk]
+                    if first_entry_report:
+                        if optimized_signature.matches(first_entry_report):
+                            matches_in_other_buckets = True
                             break
 
-                if matchesInOtherBuckets:
+                if matches_in_other_buckets:
                     # Reset, we don't actually have an optimized signature if it's
                     # matching some other bucket as well.
-                    optimizedSignature = None
+                    optimized_signature = None
                 else:
-                    for otherEntry in entries:
-                        otherEntry.reportinfo = otherEntry.getReportInfo(
-                            attachTestcase=False, requiredOutputSources=requiredOutputs
-                        )
-                        if optimizedSignature.matches(otherEntry.reportinfo):
-                            matchingEntries.append(otherEntry)
+                    for other_entry in entries:
+                        other_entry.reportinfo = other_entry.get_report()
+                        if optimized_signature.matches(other_entry.reportinfo):
+                            matching_entries.append(other_entry)
 
                     # Fallback for when the optimization algorithm failed for some
                     # reason
-                    if not matchingEntries:
-                        optimizedSignature = None
+                    if not matching_entries:
+                        optimized_signature = None
 
                     break
 
-        return (optimizedSignature, matchingEntries)
+        return (optimized_signature, matching_entries)
+
+
+class BucketColor(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    value = models.IntegerField(
+        unique=True, validators=(MinValueValidator(0), MaxValueValidator(0xFFFFFF))
+    )
+
+    class Meta:
+        constraints = (
+            models.CheckConstraint(
+                check=models.Q(value__gte=0) & models.Q(value__lte=0xFFFFFF),
+                name="value_range",
+            ),
+        )
+
+
+class BugProvider(models.Model):
+    classname = models.CharField(max_length=255, blank=False)
+    hostname = models.CharField(max_length=255, blank=False)
+
+    # This is used to annotate bugs with the URL linking to them
+    url_template = models.CharField(max_length=1023, blank=False)
+
+    def get_instance(self):
+        # Dynamically instantiate the provider as requested
+        provider_module = __import__(
+            f"reportmanager.Bugtracker.{self.classname}", fromlist=[self.classname]
+        )
+        provider_cls = getattr(provider_module, self.classname)
+        return provider_cls(self.pk, self.hostname)
+
+    def __str__(self):
+        return self.hostname
+
+
+class Bug(models.Model):
+    external_id = models.CharField(max_length=255, blank=True)
+    external_type = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
+    closed = models.DateTimeField(blank=True, null=True)
 
 
 def buckethit_default_range_begin():
@@ -376,35 +293,34 @@ def buckethit_default_range_begin():
 
 class BucketHit(models.Model):
     bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
-    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
     begin = models.DateTimeField(default=buckethit_default_range_begin)
     count = models.IntegerField(default=0)
 
     @classmethod
-    def decrement_count(cls, bucket_id, tool_id, begin):
+    def decrement_count(cls, bucket_id, begin):
         begin = begin.replace(microsecond=0, second=0, minute=0)
         counter = cls.objects.filter(
             bucket_id=bucket_id,
             begin=begin,
-            tool_id=tool_id,
         ).first()
         if counter is not None and counter.count > 0:
             counter.count -= 1
             counter.save()
 
     @classmethod
-    def increment_count(cls, bucket_id, tool_id, begin):
+    def increment_count(cls, bucket_id, begin):
         begin = begin.replace(microsecond=0, second=0, minute=0)
-        counter, _ = cls.objects.get_or_create(
-            bucket_id=bucket_id, begin=begin, tool_id=tool_id
-        )
+        counter, _ = cls.objects.get_or_create(bucket_id=bucket_id, begin=begin)
         counter.count += 1
         counter.save()
 
 
+class OS(models.Model):
+    name = models.CharField(max_length=63, unique=True)
+
+
 class ReportHit(models.Model):
-    lastUpdate = models.DateTimeField(default=timezone.now)
-    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
+    last_update = models.DateTimeField(default=timezone.now)
     count = models.BigIntegerField(default=0)
 
     @staticmethod
@@ -423,47 +339,27 @@ class ReportHit(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["lastUpdate", "tool"],
-                name="unique_reporthits_per_tool",
+                fields=["last_update"],
+                name="unique_reporthits",
             ),
         ]
 
 
 class ReportEntry(models.Model):
-    created = models.DateTimeField(default=timezone.now)
-    tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
-    platform = models.ForeignKey(Platform, on_delete=models.deletion.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.deletion.CASCADE)
+    app = models.ForeignKey(App, on_delete=models.deletion.CASCADE)
+    breakage_category = models.ForeignKey(
+        BreakageCategory, null=True, on_delete=models.deletion.CASCADE
+    )
+    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
+    comments = models.CharField(max_length=4095)
+    details = models.JSONField()
     os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
-    testcase = models.ForeignKey(
-        TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE
-    )
-    client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
-    bucket = models.ForeignKey(
-        Bucket, blank=True, null=True, on_delete=models.deletion.CASCADE
-    )
-    rawStdout = models.TextField(blank=True)
-    rawStderr = models.TextField(blank=True)
-    rawReportData = models.TextField(blank=True)
-    metadata = models.TextField(blank=True)
-    env = models.TextField(blank=True)
-    args = models.TextField(blank=True)
-    reportAddress = models.CharField(max_length=255, blank=True)
-    reportAddressNumeric = models.BigIntegerField(blank=True, null=True)
-    shortSignature = models.CharField(max_length=255, blank=True)
-    cachedReportInfo = models.TextField(blank=True, null=True)
-    triagedOnce = models.BooleanField(blank=False, default=False)
+    reported_at = models.DateTimeField()
+    url = models.URLField()
+    uuid = models.UUIDField()
 
     def __init__(self, *args, **kwargs):
-        # These variables can hold temporarily deserialized data
-        self.argsList = None
-        self.envList = None
-        self.metadataList = None
-
-        # For performance reasons we do not deserialize these fields
-        # automatically here. You need to explicitly call the
-        # deserializeFields method if you need this data.
-
+        self._cached_report = None
         self._original_bucket = None
         super().__init__(*args, **kwargs)
 
@@ -487,63 +383,10 @@ class ReportEntry(models.Model):
 
                 return utf8_4byte_re.sub("\uFFFD", s)
 
-            new_rawStdout = sanitize_utf8(self.rawStdout)
-            if self.rawStdout != new_rawStdout:
-                self.rawStdout = new_rawStdout
-                modified.add("rawStdout")
-            new_rawStderr = sanitize_utf8(self.rawStderr)
-            if self.rawStderr != new_rawStderr:
-                self.rawStderr = new_rawStderr
-                modified.add("rawStderr")
-            new_rawReportData = sanitize_utf8(self.rawReportData)
-            if self.rawReportData != new_rawReportData:
-                self.rawReportData = new_rawReportData
-                modified.add("rawReportData")
-
-        if not self.cachedReportInfo:
-            # Serialize the important fields of the ReportInfo class into a JSON blob
-            reportInfo = self.getReportInfo()
-            self.cachedReportInfo = json.dumps(reportInfo.toCacheObject())
-            modified.add("cachedReportInfo")
-
-        # Reserialize data, then call regular save method
-        if self.argsList:
-            new_args = json.dumps(self.argsList)
-            if new_args != self.args:
-                self.args = new_args
-                modified.add("args")
-
-        if self.envList:
-            envDict = dict(x.split("=", 1) for x in self.envList)
-            new_env = json.dumps(envDict)
-            if new_env != self.env:
-                self.env = new_env
-                modified.add("env")
-
-        if self.metadataList:
-            metadataDict = dict(x.split("=", 1) for x in self.metadataList)
-            new_metadata = json.dumps(metadataDict)
-            if new_metadata != self.metadata:
-                self.metadata = new_metadata
-                modified.add("metadata")
-
-        # When we have a report address, keep the numeric report address field in
-        # sync so we can search easily by report address including ranges
-        if self.reportAddress:
-            orig_reportAddressNumeric = self.reportAddressNumeric
-            self.reportAddressNumeric = int(self.reportAddress, 16)
-
-            # We need to possibly convert the numeric report address from unsigned
-            # to signed in order to store it in the database.
-            if self.reportAddressNumeric > (2**63 - 1):
-                self.reportAddressNumeric -= 2**64
-
-            if orig_reportAddressNumeric != self.reportAddressNumeric:
-                modified.add("reportAddressNumeric")
-
-        if len(self.shortSignature) > 255:
-            self.shortSignature = self.shortSignature[:255]
-            modified.add("shortSignature")
+            comments = sanitize_utf8(self.comments)
+            if self.comments != comments:
+                self.comments = comments
+                modified.add("comments")
 
         # required in Django 4.2+
         if "update_fields" in kwargs and kwargs["update_fields"] is not None:
@@ -551,150 +394,65 @@ class ReportEntry(models.Model):
 
         super().save(*args, **kwargs)
 
-    def deserializeFields(self):
-        if self.args:
-            self.argsList = json.loads(self.args)
+    def get_report(self):
+        if self._cached_report is None:
+            self._cached_report = Report(
+                app_channel=self.app.channel,
+                app_name=self.app.name,
+                app_version=self.app.version,
+                comments=self.comments,
+                details=self.details,
+                os=self.os.name,
+                reported_at=self.reported_at,
+                uuid=self.uuid,
+                url=urlsplit(self.url),
+                breakage_category=self.breakage_category.name
+                if self.breakage_category is not None
+                else None,
+            )
+        return self._cached_report
 
-        if self.env:
-            envDict = json.loads(self.env)
-            self.envList = [f"{s}={envDict[s]}" for s in envDict.keys()]
-
-        if self.metadata:
-            metadataDict = json.loads(self.metadata)
-            self.metadataList = [f"{s}={metadataDict[s]}" for s in metadataDict.keys()]
-
-    def getReportInfo(
-        self,
-        attachTestcase=False,
-        requiredOutputSources=("stdout", "stderr", "reportdata"),
-    ):
-        # TODO: This should be cached at some level
-        # TODO: Need to include environment and program arguments here
-        configuration = ProgramConfiguration(
-            self.product.name, self.platform.name, self.os.name, self.product.version
-        )
-
-        cachedReportInfo = None
-        if self.cachedReportInfo:
-            cachedReportInfo = json.loads(self.cachedReportInfo)
-
-        # We can skip loading raw output fields from the database iff
-        #   1) we know we don't need them for matching *and*
-        #   2) we already have the report data cached
-        (rawStdout, rawStderr, rawReportData) = (None, None, None)
-        if cachedReportInfo is None or "stdout" in requiredOutputSources:
-            rawStdout = self.rawStdout
-        if cachedReportInfo is None or "stderr" in requiredOutputSources:
-            rawStderr = self.rawStderr
-        if cachedReportInfo is None or "reportdata" in requiredOutputSources:
-            rawReportData = self.rawReportData
-
-        reportInfo = ReportInfo.fromRawReportData(
-            rawStdout,
-            rawStderr,
-            configuration,
-            rawReportData,
-            cacheObject=cachedReportInfo,
-        )
-
-        if attachTestcase and self.testcase is not None and not self.testcase.isBinary:
-            self.testcase.loadTest()
-            reportInfo.testcase = self.testcase.content
-
-        return reportInfo
-
-    def reparseReportInfo(self):
+    def reparse_report(self):
         # Purges cached report information and then forces a reparsing
         # of the raw report information. Based on the new report information,
         # the depending fields are also repopulated.
         #
         # This method should only be called if either the raw report information
         # has changed or the implementation parsing it was updated.
-        self.cachedReportInfo = None
-        reportInfo = self.getReportInfo()
-        if reportInfo.reportAddress is not None:
-            self.reportAddress = f"0x{reportInfo.reportAddress:x}"
-        self.shortSignature = reportInfo.createShortSignature()
+        self._cached_report = None
+        report = self.get_report()
 
         # If the entry has a bucket, check if it still fits into
         # this bucket, otherwise remove it.
         if self.bucket is not None:
-            sig = self.bucket.getSignature()
-            reportInfo = self.getReportInfo(attachTestcase=sig.matchRequiresTest())
-            if not sig.matches(reportInfo):
+            sig = self.bucket.get_signature()
+            report = self.get_report()
+            if not sig.matches(report):
                 self.bucket = None
-
-        # If this entry now isn't in a bucket, mark it to be auto-triaged
-        # again by the server.
-        if self.bucket is None:
-            self.triagedOnce = False
 
         return self.save()
 
-    @staticmethod
-    def deferRawFields(queryset, requiredOutputSources=()):
-        # This method calls defer() on the given query set for every raw field
-        # that is not required as specified in requiredOutputSources.
-        if "stdout" not in requiredOutputSources:
-            queryset = queryset.defer("rawStdout")
-        if "stderr" not in requiredOutputSources:
-            queryset = queryset.defer("rawStderr")
-        if "reportdata" not in requiredOutputSources:
-            queryset = queryset.defer("rawReportData")
-        return queryset
 
-
-# These post_delete handlers ensure that the corresponding testcase
-# is also deleted when the ReportEntry is gone. It also explicitly
-# deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=ReportEntry)
 def ReportEntry_delete(sender, instance, **kwargs):
-    if instance.testcase:
-        instance.testcase.delete(False)
     if instance.bucket_id is not None:
-        BucketHit.decrement_count(
-            instance.bucket_id, instance.tool_id, instance.created
-        )
-
-
-@receiver(post_delete, sender=TestCase)
-def TestCase_delete(sender, instance, **kwargs):
-    if instance.test:
-        instance.test.delete(False)
+        BucketHit.decrement_count(instance.bucket_id, instance.created)
 
 
 @receiver(post_save, sender=ReportEntry)
 def ReportEntry_save(sender, instance, created, **kwargs):
     if getattr(settings, "USE_CELERY", None):
-        if created and not instance.triagedOnce:
+        if created:
             triage_new_report.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
         if instance._original_bucket is not None:
-            # remove BucketHit for old bucket/tool
-            BucketHit.decrement_count(
-                instance._original_bucket, instance.tool_id, instance.created
-            )
+            # remove BucketHit for old bucket
+            BucketHit.decrement_count(instance._original_bucket, instance.created)
 
         if instance.bucket is not None:
             # add BucketHit for new bucket
-            BucketHit.increment_count(
-                instance.bucket_id, instance.tool_id, instance.created
-            )
-
-        if instance.bucket is not None:
-            notify.send(
-                instance.bucket,
-                recipient=instance.bucket.watchers,
-                actor=instance.bucket,
-                verb="bucket_hit",
-                target=instance,
-                level="info",
-                description=(
-                    f"The bucket {instance.bucket_id} received a new report entry "
-                    f"{instance.pk}"
-                ),
-            )
+            BucketHit.increment_count(instance.bucket_id, instance.created)
 
 
 class BugzillaTemplateMode(Enum):
@@ -725,7 +483,6 @@ class BugzillaTemplate(models.Model):
     security = models.BooleanField(blank=False, default=False)
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
-    testcase_filename = models.TextField(blank=True)
     blocks = models.TextField(blank=True)
     dependson = models.TextField(blank=True)
 
@@ -737,38 +494,27 @@ class User(models.Model):
     class Meta:
         permissions = (
             (
-                "view_reportmanager",
+                "reportmanager_visible",
                 "Can see ReportManager app (required for reportmanager_* perms)",
             ),
-            ("reportmanager_all", "Full access to ReportManager"),
+            ("reportmanager_write", "Write access to ReportManager"),
+            ("reportmanager_read", "Read access to ReportManager"),
         )
 
     user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
     # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
     # because the bug provider has to decide how to interpret this ID.
-    defaultTemplateId = models.IntegerField(default=0)
-    defaultProviderId = models.IntegerField(default=1)
-    defaultToolsFilter = models.ManyToManyField(Tool)
-    restricted = models.BooleanField(blank=False, default=False)
-    bucketsWatching = models.ManyToManyField(Bucket, through="BucketWatch")
+    default_template_id = models.IntegerField(default=0)
+    default_provider_id = models.IntegerField(default=1)
 
     # Notifications
     bucket_hit = models.BooleanField(blank=False, default=False)
     inaccessible_bug = models.BooleanField(blank=False, default=False)
 
-    @staticmethod
-    def get_or_create_restricted(request_user):
-        (user, created) = User.objects.get_or_create(user=request_user)
-        if created and getattr(settings, "USERS_RESTRICTED_BY_DEFAULT", False):
-            user.restricted = True
-            user.save()
-        return (user, created)
-
 
 @receiver(post_save, sender=DjangoUser)
 def add_default_perms(sender, instance, created, **kwargs):
     if created:
-        log = logging.getLogger("reportmanager")
         for perm in getattr(settings, "DEFAULT_PERMISSIONS", []):
             model, perm = perm.split(":", 1)
             module, model = model.rsplit(".", 1)
@@ -778,13 +524,4 @@ def add_default_perms(sender, instance, created, **kwargs):
             content_type = ContentType.objects.get_for_model(getattr(module, model))
             perm = Permission.objects.get(content_type=content_type, codename=perm)
             instance.user_permissions.add(perm)
-            log.info("user %s added permission %s:%s", instance.username, model, perm)
-
-
-class BucketWatch(models.Model):
-    user = models.ForeignKey(User, on_delete=models.deletion.CASCADE)
-    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
-    # This is the primary key of last report marked viewed by the user
-    # Store as an integer to prevent problems if the particular report
-    # is deleted later. We only care about its place in the ordering.
-    lastReport = models.IntegerField(default=0)
+            LOG.info("user %s added permission %s:%s", instance.username, model, perm)

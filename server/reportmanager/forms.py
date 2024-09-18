@@ -1,20 +1,20 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
 from django.forms import (
     CharField,
-    CheckboxSelectMultiple,
     ChoiceField,
     EmailField,
     ModelChoiceField,
     ModelForm,
-    ModelMultipleChoiceField,
     Textarea,
     TextInput,
 )
-from rest_framework.exceptions import ValidationError
 
-from .models import BugProvider, BugzillaTemplate, Tool, User
+from .models import BugProvider, BugzillaTemplate, User
 
 
 class Row(Div):
@@ -66,7 +66,6 @@ class BugzillaTemplateBugForm(ModelForm):
         "description",
         "security",
         Row(Field("security_group", wrapper_class="col-md-6")),
-        Row(Field("testcase_filename", wrapper_class="col-md-6")),
         Submit("submit", "Save", css_class="btn btn-danger"),
         HTML(
             """<a href="{% url 'reportmanager:templates' %}" class="btn btn-default">"""
@@ -106,7 +105,6 @@ class BugzillaTemplateBugForm(ModelForm):
             "description",
             "security",
             "security_group",
-            "testcase_filename",
             "blocks",
             "dependson",
         ]
@@ -130,7 +128,6 @@ class BugzillaTemplateBugForm(ModelForm):
             "description": "Bug description",
             "security": "This is a security bug",
             "security_group": "Security group",
-            "testcase_filename": "Filename that will be used for the testcase",
             "blocks": "Blocks",
             "dependson": "Depends On",
         }
@@ -149,7 +146,6 @@ class BugzillaTemplateCommentForm(ModelForm):
         HTML("""<div v-pre>"""),
         "name",
         "comment",
-        Row(Field("testcase_filename", wrapper_class="col-md-6")),
         Submit("submit", "Save", css_class="btn btn-danger"),
         HTML(
             """<a href="{% url 'reportmanager:templates' %}" class="btn btn-default">"""
@@ -163,53 +159,40 @@ class BugzillaTemplateCommentForm(ModelForm):
         fields = [
             "name",
             "comment",
-            "testcase_filename",
         ]
         labels = {
             "name": "Template name",
             "comment": "Comment",
-            "testcase_filename": "Filename that will be used for the testcase",
         }
         widgets = {
             "name": TextInput(),
             "comment": Textarea(attrs={"rows": 6}),
-            "testcase_filename": TextInput(),
         }
 
 
 class UserSettingsForm(ModelForm):
     helper = FormHelper()
     helper.layout = Layout(
-        "defaultToolsFilter",
         Row(
-            Field("defaultProviderId", wrapper_class="col-md-6"),
-            Field("defaultTemplateId", wrapper_class="col-md-6"),
+            Field("default_provider_id", wrapper_class="col-md-6"),
+            Field("default_template_id", wrapper_class="col-md-6"),
         ),
         "email",
         HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
         "inaccessible_bug",
-        "bucket_hit",
         Submit("submit", "Save settings", css_class="btn btn-danger"),
     )
-    defaultToolsFilter = ModelMultipleChoiceField(
-        queryset=Tool.objects.all(),
-        label="Select the tools you would like to include in your default views:",
-        widget=CheckboxSelectMultiple(),
-        required=False,
-    )
-    defaultProviderId = ModelChoiceField(
+    default_provider_id = ModelChoiceField(
         queryset=BugProvider.objects.all(), label="Default Provider:", empty_label=None
     )
-    defaultTemplateId = ChoiceField(label="Default Template:")
+    default_template_id = ChoiceField(label="Default Template:")
     email = EmailField(label="Email:")
 
     class Meta:
         model = User
         fields = [
-            "defaultToolsFilter",
-            "defaultProviderId",
-            "defaultTemplateId",
-            "bucket_hit",
+            "default_provider_id",
+            "default_template_id",
             "inaccessible_bug",
         ]
 
@@ -217,12 +200,12 @@ class UserSettingsForm(ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
 
-        self.fields["defaultTemplateId"].choices = list(
+        self.fields["default_template_id"].choices = list(
             dict.fromkeys(
                 [
                     (t.pk, f"{p.classname}: {t}")
                     for p in BugProvider.objects.all()
-                    for t in p.getInstance().getTemplateList()
+                    for t in p.get_instance().get_template_list()
                 ]
             )
         )
@@ -235,20 +218,8 @@ class UserSettingsForm(ModelForm):
             self.fields["email"].required = False
             self.fields["email"].widget.attrs["readonly"] = True
 
-    def clean_defaultToolsFilter(self):
-        data = self.cleaned_data["defaultToolsFilter"]
-        if (
-            self.user
-            and list(self.user.defaultToolsFilter.all()) != list(data)
-            and self.user.restricted
-        ):
-            raise ValidationError(
-                "You don't have permission to change your tools filter."
-            )
-        return data
-
-    def clean_defaultProviderId(self):
-        data = self.cleaned_data["defaultProviderId"].id
+    def clean_default_provider_id(self):
+        data = self.cleaned_data["default_provider_id"].id
         return data
 
     def save(self, *args, **kwargs):

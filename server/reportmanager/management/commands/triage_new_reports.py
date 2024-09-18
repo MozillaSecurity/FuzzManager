@@ -11,15 +11,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         entries = ReportEntry.objects.filter(
-            triagedOnce=False, bucket=None
+            triaged_once=False, bucket=None
         ).values_list("id", flat=True)
 
         for entry in entries:
             call_command("triage_new_report", entry)
 
         # This query ensures that all issues that have been bucketed manually before
-        # the server had a chance to triage them will have their triageOnce flag set,
+        # the server had a chance to triage them will have their triage_once flag set,
         # so the hourglass in the UI isn't displayed anymore.
-        ReportEntry.deferRawFields(ReportEntry.objects.exclude(bucket=None)).update(
-            triagedOnce=True
+        ReportEntry.defer_raw_fields(ReportEntry.objects.exclude(bucket=None)).update(
+            triaged_once=True
         )

@@ -25,7 +25,7 @@
         <tr class="{% cycle 'odd' 'even' %}">
             <td><a title="View Bug Provider" href="{% url 'reportmanager:bugproviderview' entry.pk %}">{{ entry.classname|escape }}</a></td>
             <td>{{ entry.hostname|escape }}</td>
-            <td>{{ entry.urlTemplate|escape }}</td>
+            <td>{{ entry.url_template|escape }}</td>
             <td>{{ entry.size|escape }}</td>
         </tr>
         {% endfor %}

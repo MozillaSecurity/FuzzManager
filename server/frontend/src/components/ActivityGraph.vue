@@ -8,7 +8,7 @@ const day_ms = 24 * hour_ms;
 
 function report_history_to_range(fm_data, start, step, stop, clip) {
   /*
-   * FuzzManager returns an array of `{ begin: "isodate", count: n }`
+   * WebCompatManager returns an array of `{ begin: "isodate", count: n }`
    * objects, where begin is the start of a one hour monitoring
    * period. Periods where no count was recorded will not be included.
    *

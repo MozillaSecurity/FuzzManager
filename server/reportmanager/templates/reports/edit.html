@@ -15,12 +15,12 @@
                     {% if entry.bucket %}
                         Assigned to bucket <a href="{% url 'reportmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
                         {% if entry.bucket.bug %}
-			    Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bucket.bug.externalType.urlTemplate|varformat:entry.bucket.bug.externalId }}" target="_blank">bug {{ entry.bucket.bug.externalId }}</a>.
+			    Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bucket.bug.external_type.url_template|varformat:entry.bucket.bug.external_id }}" target="_blank">bug {{ entry.bucket.bug.external_id }}</a>.
                         {% else %}
                             Unreported, <a href="{% url 'reportmanager:createbug' entry.pk %}">file a bug</a>.
                         {% endif %}
                     {% else %}
-                        Not assigned to any bucket. <a href="{% url 'reportmanager:signew' %}?reportid={{ entry.pk }}">Create new</a>
+                        Not assigned to any bucket. <a href="{% url 'reportmanager:signew' %}?report_id={{ entry.pk }}">Create new</a>
                     {% endif %}
                 </span>
         </div>

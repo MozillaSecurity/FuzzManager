@@ -85,7 +85,7 @@
                 'reportdataattached',
                 'metadata*',
               ]"
-              documentation-link="https://github.com/MozillaSecurity/FuzzManager/blob/master/doc/BugzillaVariables.md#in-comment-field"
+              documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-comment-field"
             />
             <textarea
               id="id_comment"

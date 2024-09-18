@@ -5,25 +5,25 @@
 
 {% block body_content %}
 <div>
-	<div class="panel panel-default">
-		<div class="panel-heading"><i class="bi bi-gear-fill"></i> User Settings</div>
-		<div class="panel-body">
-			<form method="post">
-				{% csrf_token %}
-				{% crispy form %}
-			</form>
-		</div>
-	</div>
-	{% if bugzilla_providers %}
-	<div class="panel panel-default">
-		<div class="panel-heading"><i class="bi bi-gear-fill"></i> Bugzilla Providers Settings</div>
-		<div class="panel-body">
-			Provide API Keys to authenticate calls to your Bugzilla Providers on this browser.
-			{% for p in bugzilla_providers %}
-				<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
-			{% endfor %}
-		</div>
-	</div>
-	{% endif %}
+  <div class="panel panel-default">
+    <div class="panel-heading"><i class="bi bi-gear-fill"></i> User Settings</div>
+    <div class="panel-body">
+      <form method="post">
+        {% csrf_token %}
+        {% crispy form %}
+      </form>
+    </div>
+  </div>
+  {% if bugzilla_providers %}
+  <div class="panel panel-default">
+    <div class="panel-heading"><i class="bi bi-gear-fill"></i> Bugzilla Providers Settings</div>
+    <div class="panel-body">
+      Provide API Keys to authenticate calls to your Bugzilla Providers on this browser.
+    {% for p in bugzilla_providers %}
+        <providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
+    {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock body_content %}

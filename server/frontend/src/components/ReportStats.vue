@@ -10,16 +10,6 @@
         ... last day: {{ totals[1] }}<br />
         ... last week: {{ totals[2] }}
       </div>
-      <template v-if="!restricted">
-        <label for="id_no_toolfilter">Ignore Tool Filter</label>:
-        <input
-          id="id_no_toolfilter"
-          type="checkbox"
-          name="alltools"
-          v-model="ignoreToolFilter"
-          v-on:change="fetch"
-        /><br />
-      </template>
     </div>
     <div class="panel-body">
       <reportstatsgraph :data="graphData" />
@@ -38,12 +28,12 @@
               Bucket
             </th>
             <th
-              v-on:click.exact="sortBy('shortDescription')"
-              v-on:click.ctrl.exact="addSort('shortDescription')"
+              v-on:click.exact="sortBy('short_description')"
+              v-on:click.ctrl.exact="addSort('short_description')"
               :class="{
                 active:
-                  sortKeys.includes('shortDescription') ||
-                  sortKeys.includes('-shortDescription'),
+                  sortKeys.includes('short_description') ||
+                  sortKeys.includes('short_description'),
               }"
             >
               Short Description
@@ -83,12 +73,12 @@
               Reports (last week)
             </th>
             <th
-              v-on:click.exact="sortBy('bug__externalId')"
-              v-on:click.ctrl.exact="addSort('bug__externalId')"
+              v-on:click.exact="sortBy('bug__external_id')"
+              v-on:click.ctrl.exact="addSort('bug__external_id')"
               :class="{
                 active:
-                  sortKeys.includes('bug__externalId') ||
-                  sortKeys.includes('-bug__externalId'),
+                  sortKeys.includes('bug__external_id') ||
+                  sortKeys.includes('-bug__external_id'),
               }"
             >
               External Bug
@@ -101,47 +91,35 @@
               <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
             </td>
           </tr>
-          <tr
-            v-else
-            v-for="signature of sortedSignatureData"
-            :key="signature.id"
-          >
+          <tr v-else v-for="bucket of sortedBucketData" :key="bucket.id">
             <td>
-              <a title="View signature" :href="signature.view_url">{{
-                signature.id
-              }}</a>
+              <a title="View bucket" :href="bucket.view_url">{{ bucket.id }}</a>
             </td>
             <td class="wrap-anywhere">
-              <span class="two-line-limit">{{
-                signature.shortDescription
-              }}</span>
+              <span class="two-line-limit">{{ bucket.short_description }}</span>
             </td>
             <td>
               <activitygraph
-                :data="signature.report_history"
+                :data="bucket.report_history"
                 :range="activityRange"
               />
             </td>
-            <td>{{ signature.counts[0] }}</td>
-            <td>{{ signature.counts[1] }}</td>
-            <td>{{ signature.counts[2] }}</td>
+            <td>{{ bucket.counts[0] }}</td>
+            <td>{{ bucket.counts[1] }}</td>
+            <td>{{ bucket.counts[2] }}</td>
             <td>
               <a
-                v-if="signature.bug && signature.bug_urltemplate"
-                :class="{ fixedbug: signature.bug_closed }"
-                :href="signature.bug_urltemplate"
+                v-if="bucket.bug && bucket.bug_urltemplate"
+                :class="{ fixedbug: bucket.bug_closed }"
+                :href="bucket.bug_urltemplate"
                 target="_blank"
               >
-                {{ signature.bug }}
+                {{ bucket.bug }}
               </a>
-              <p v-else-if="signature.bug">
-                {{ signature.bug }} on {{ signature.bug_hostname }}
+              <p v-else-if="bucket.bug">
+                {{ bucket.bug }} on {{ bucket.bug_hostname }}
               </p>
-              <assignbutton
-                v-else
-                :bucket="signature.id"
-                :providers="providers"
-              />
+              <assignbutton v-else :bucket="bucket.id" :providers="providers" />
             </td>
           </tr>
         </tbody>
@@ -154,9 +132,9 @@
 import _throttle from "lodash/throttle";
 import swal from "sweetalert";
 import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { errorParser, E_SERVER_ERROR, multiSort, parseHash } from "../helpers";
+import { errorParser, E_SERVER_ERROR, multiSort } from "../helpers";
 import * as api from "../api";
-import AssignBtn from "./Signatures/AssignBtn.vue";
+import AssignBtn from "./Buckets/AssignBtn.vue";
 import ActivityGraph from "./ActivityGraph.vue";
 import ReportStatsGraph from "./ReportStatsGraph.vue";
 
@@ -171,24 +149,19 @@ export default {
   data: function () {
     const defaultSortKeys = ["-counts[0]"];
     const validSortKeys = [
-      "bug__externalId",
+      "bug__external_id",
       "counts[0]",
       "counts[1]",
       "counts[2]",
       "id",
-      "shortDescription",
+      "short_description",
     ];
     return {
       defaultSortKeys: defaultSortKeys,
-      /*
-       * outFilter: hits per hour (out of toolfilter)
-       * inFilter: hits per hour (in toolfilter)
-       */
-      graphData: {},
-      ignoreToolFilter: false,
+      graphData: [],
       loading: false,
       // [Bucket()]
-      signatureData: [],
+      bucketData: [],
       sortKeys: [...defaultSortKeys],
       // [hour, day, week]
       totals: [],
@@ -196,10 +169,6 @@ export default {
     };
   },
   created: function () {
-    if (this.$route.hash.startsWith("#")) {
-      const hash = parseHash(this.$route.hash);
-      this.ignoreToolFilter = hash.alltools === "1";
-    }
     this.fetch();
   },
   props: {
@@ -211,14 +180,10 @@ export default {
       type: Array,
       required: true,
     },
-    restricted: {
-      type: Boolean,
-      required: true,
-    },
   },
   computed: {
-    sortedSignatureData: function () {
-      return this.sortData(this.signatureData);
+    sortedBucketData: function () {
+      return this.sortData(this.bucketData);
     },
   },
   methods: {
@@ -229,35 +194,29 @@ export default {
         this.updateHash();
         try {
           // fetch stats
-          const stats = await api.reportStats({
-            ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-          });
+          const stats = await api.reportStats();
 
           // process result
           this.totals = stats.totals;
-          this.graphData = {
-            inFilter: stats.inFilterGraphData,
-            outFilter: stats.outFilterGraphData,
-          };
+          this.graphData = stats.graphData;
 
           // then get buckets for those stats
           if (Object.keys(stats.frequentBuckets).length) {
-            const signatureData = await api.listBuckets({
+            const bucketData = await api.listBuckets({
               vue: "1",
-              ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
               query: JSON.stringify({
                 op: "AND",
                 id__in: Object.keys(stats.frequentBuckets),
               }),
             });
             Object.keys(stats.frequentBuckets).forEach((x) =>
-              signatureData.forEach((b) => {
+              bucketData.forEach((b) => {
                 if (b.id == x) b.counts = stats.frequentBuckets[x];
               }),
             );
-            this.signatureData = signatureData;
+            this.bucketData = bucketData;
           } else {
-            this.signatureData = [];
+            this.bucketData = [];
           }
         } catch (err) {
           if (
@@ -284,7 +243,6 @@ export default {
       const hash = {};
 
       this.updateHashSort(hash);
-      if (this.ignoreToolFilter) hash.alltools = "1";
       if (Object.entries(hash).length) {
         const routeHash =
           "#" +

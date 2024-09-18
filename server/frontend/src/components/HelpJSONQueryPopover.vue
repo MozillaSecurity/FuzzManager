@@ -76,7 +76,7 @@
           <a
             class="pull-right"
             target="_blank"
-            href="https://docs.djangoproject.com/en/3.2/ref/models/querysets/#field-lookups"
+            href="https://docs.djangoproject.com/en/4.2/ref/models/querysets/#field-lookups"
           >
             More suffixes
           </a>

@@ -1,17 +1,13 @@
 import collections
-import functools
 import json
 
 from django.conf import settings
 from django.contrib.auth.views import LoginView
-from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.urls import resolve, reverse
 from rest_framework import filters
-
-from reportmanager.models import User
 
 
 def index(request):
@@ -25,20 +21,7 @@ def login(request):
     return LoginView.as_view()(request)
 
 
-def deny_restricted_users(wrapped):
-    @functools.wraps(wrapped)
-    def decorator(request, *args, **kwargs):
-        user = User.get_or_create_restricted(request.user)[0]
-        if user.restricted:
-            raise PermissionDenied(
-                {"message": "You don't have permission to access this view."}
-            )
-        return wrapped(request, *args, **kwargs)
-
-    return decorator
-
-
-def renderError(request, err):
+def render_error(request, err):
     return render(request, "error.html", {"error_message": err})  # noqa
 
 

@@ -24,21 +24,21 @@ class BugzillaProvider(Provider):
     def __init__(self, pk, hostname):
         super().__init__(pk, hostname)
 
-    def getTemplateForUser(self, request, reportEntry):
+    def get_template_for_user(self, request, report_entry):
         if "template" in request.GET:
             obj = get_object_or_404(BugzillaTemplate, pk=request.GET["template"])
             template = model_to_dict(obj)
             template["pk"] = obj.pk
         else:
-            user = User.get_or_create_restricted(request.user)[0]
+            user = User.objects.get_or_create(user=request.user)[0]
 
-            obj = BugzillaTemplate.objects.filter(name__contains=reportEntry.tool.name)
+            obj = BugzillaTemplate.objects.filter(name__contains=report_entry.tool.name)
             if not obj:
-                defaultTemplateId = user.defaultTemplateId
-                if not defaultTemplateId:
-                    defaultTemplateId = 1
+                default_template_id = user.default_template_id
+                if not default_template_id:
+                    default_template_id = 1
 
-                obj = BugzillaTemplate.objects.filter(pk=defaultTemplateId)
+                obj = BugzillaTemplate.objects.filter(pk=default_template_id)
 
             if not obj:
                 template = {}
@@ -48,24 +48,24 @@ class BugzillaProvider(Provider):
 
         return template
 
-    def getTemplateList(self):
+    def get_template_list(self):
         return BugzillaTemplate.objects.all()
 
-    def getBugData(self, bugId, username=None, password=None, api_key=None):
+    def get_bug_data(self, bug_id, username=None, password=None, api_key=None):
         bz = BugzillaREST(self.hostname, username, password, api_key)
-        return bz.getBug(bugId)
+        return bz.get_bug(bug_id)
 
-    def getBugStatus(self, bugIds, username=None, password=None, api_key=None):
+    def get_bug_status(self, bug_ids, username=None, password=None, api_key=None):
         ret = {}
         bz = BugzillaREST(self.hostname, username, password, api_key)
-        bugs = bz.getBugStatus(bugIds)
+        bugs = bz.get_bug_status(bug_ids)
 
-        for bugId in bugs:
-            if bugs[bugId]["is_open"]:
-                ret[bugId] = None
-            elif bugs[bugId]["dupe_of"]:
-                ret[bugId] = str(bugs[bugId]["dupe_of"])
+        for bug_id in bugs:
+            if bugs[bug_id]["is_open"]:
+                ret[bug_id] = None
+            elif bugs[bug_id]["dupe_of"]:
+                ret[bug_id] = str(bugs[bug_id]["dupe_of"])
             else:
-                ret[bugId] = dateparse.parse_datetime(bugs[bugId]["cf_last_resolved"])
+                ret[bug_id] = dateparse.parse_datetime(bugs[bug_id]["cf_last_resolved"])
 
         return ret
