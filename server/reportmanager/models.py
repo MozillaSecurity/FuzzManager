@@ -375,7 +375,7 @@ class ReportEntry(models.Model):
     breakage_category = models.ForeignKey(
         BreakageCategory, null=True, on_delete=models.deletion.CASCADE
     )
-    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
+    bucket = models.ForeignKey(Bucket, null=True, on_delete=models.deletion.CASCADE)
     comments = models.CharField(max_length=4095)
     details = models.JSONField()
     os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)

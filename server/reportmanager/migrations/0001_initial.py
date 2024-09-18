@@ -311,7 +311,9 @@ class Migration(migrations.Migration):
             model_name="reportentry",
             name="bucket",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="reportmanager.bucket"
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="reportmanager.bucket",
             ),
         ),
         migrations.AddField(
