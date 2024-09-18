@@ -13,7 +13,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
@@ -346,6 +346,30 @@ class ReportHit(models.Model):
         )
 
 
+class ReportEntryManager(models.Manager):
+    @transaction.atomic
+    def create_from_report(self, report):
+        app, app_created = App.objects.get_or_create(
+            channel=report.app_channel,
+            name=report.app_name,
+            version=report.app_version,
+        )
+        breakage, breakage_created = BreakageCategory.objects.get_or_create(
+            value=report.breakage_category,
+        )
+        os, os_created = OS.objects.get_or_create(name=report.os)
+        return self.create(
+            app=app,
+            breakage_category=breakage,
+            url=report.url.geturl(),
+            uuid=report.uuid,
+            reported_at=report.reported_at,
+            os=os,
+            details=report.details,
+            comments=report.comments,
+        )
+
+
 class ReportEntry(models.Model):
     app = models.ForeignKey(App, on_delete=models.deletion.CASCADE)
     breakage_category = models.ForeignKey(
@@ -358,6 +382,8 @@ class ReportEntry(models.Model):
     reported_at = models.DateTimeField()
     url = models.URLField()
     uuid = models.UUIDField()
+
+    objects = ReportEntryManager()
 
     def __init__(self, *args, **kwargs):
         self._cached_report = None
