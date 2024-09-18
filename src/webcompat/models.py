@@ -67,8 +67,8 @@ class Report:
               "symptoms": [
                 {{
                   "type": "url",
-                  "part": "netloc",
-                  "value": "{self.url.netloc}"
+                  "part": "hostname",
+                  "value": "{self.url.hostname}"
                 }}
               ]
             }}
