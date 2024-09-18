@@ -99,6 +99,37 @@ norecursedirs = [
     "dist",
 ]
 
+[tool.ruff]
+fix = true
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    # flake8-comprehensions
+    "C4",
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # Flynt
+    "FLY",
+    # isort
+    "I",
+    # Perflint
+    "PERF",
+    # Ruff-specific rules
+    "RUF",
+    # flake8-simplify
+    "SIM",
+    # flake8-type-checking
+    "TCH",
+    # pyupgrade
+    "UP",
+    # pycodestyle
+    "W",
+]
+ignore = ["SIM117"]
+
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
