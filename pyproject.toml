@@ -104,6 +104,6 @@ readme = {file = ["README.md"], content-type = "text/markdown"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["webcompat"]
+include = ["webcompat", "webcompat.schemas"]
 
 [tool.setuptools_scm]
