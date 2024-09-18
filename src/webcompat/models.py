@@ -9,13 +9,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from logging import getLogger
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import SplitResult, urlsplit
 
 from dateutil.parser import isoparse
 from jsonschema import Draft202012Validator as Validator
 
 from .symptoms import Symptom
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 LOG = getLogger(__file__)
 
@@ -77,6 +80,12 @@ class Report:
 
 
 @dataclass
+class _DiffResult:
+    offending: bool
+    symptom: Symptom
+
+
+@dataclass
 class Signature:
     raw_signature: str
     symptoms: list[Symptom] = field(default_factory=list)
@@ -116,7 +125,7 @@ class Signature:
         """
         return all(symptom.matches(report) for symptom in self.symptoms)
 
-    def get_distance(self, report):
+    def get_distance(self, report: Report) -> int:
         distance = 0
 
         for symptom in self.symptoms:
@@ -125,35 +134,30 @@ class Signature:
 
         return distance
 
-    def fit(self, report):
+    def fit(self, report: Report) -> Signature | None:
         sig_obj = {}
-        sig_symptoms = []
-
-        sig_obj["symptoms"] = sig_symptoms
 
         symptoms_diff = self.get_symptoms_diff(report)
 
-        for symptom_diff in symptoms_diff:
-            if symptom_diff["offending"]:
-                if "proposed" in symptom_diff:
-                    sig_symptoms.append(symptom_diff["proposed"].jsonobj)
-            else:
-                sig_symptoms.append(symptom_diff["symptom"].jsonobj)
+        sig_symptoms: list[dict[str, Any]] = [
+            symptom_diff.symptom.json_obj
+            for symptom_diff in symptoms_diff
+            if not symptom_diff.offending
+        ]
 
         if not sig_symptoms:
             return None
 
+        sig_obj["symptoms"] = sig_symptoms
         return Signature(json.dumps(sig_obj))
 
-    def get_symptoms_diff(self, report):
-        symptoms_diff = []
+    def get_symptoms_diff(self, report: Report) -> Iterable[_DiffResult]:
         for symptom in self.symptoms:
-            if symptom.matches(report):
-                symptoms_diff.append({"offending": False, "symptom": symptom})
+            yield _DiffResult(offending=symptom.matches(report), symptom=symptom)
 
-        return symptoms_diff
-
-    def get_signature_unified_diff_tuples(self, report):
+    def get_signature_unified_diff_tuples(
+        self, report: Report
+    ) -> Iterable[tuple[str, str]]:
         diff_tuples = []
 
         # the format here must match what is returned by `fit()`

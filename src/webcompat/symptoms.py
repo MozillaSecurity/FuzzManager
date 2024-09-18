@@ -14,7 +14,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
 from dateutil.parser import isoparse
-from jsonpath_ng import parse as jsonpath
+from jsonpath_ng import parse as jsonpath  # type: ignore[import-untyped]
 
 if TYPE_CHECKING:
     from .models import Report
@@ -27,7 +27,10 @@ class Symptom(ABC):
     sub-class.
     """
 
+    ORDER: int
+
     def __init__(self, json_obj: dict[str, Any]) -> None:
+        self.matcher: Matcher
         self.json_obj = json_obj
 
     def __str__(self):
@@ -87,6 +90,8 @@ class Symptom(ABC):
 
 
 class Matcher(ABC):
+    ORDER: int
+
     @staticmethod
     def create(obj: dict[str, Any]) -> Matcher:
         if "value" in obj:
@@ -134,7 +139,7 @@ class TimeMatcher(Matcher):
     def __init__(self, value: datetime) -> None:
         self.value = value
 
-    def matches(self, value: datetime) -> bool:
+    def matches(self, value: datetime) -> bool:  # type: ignore[override]
         return self.value == value
 
 
@@ -148,7 +153,7 @@ class TimeRangeMatcher(TimeMatcher):
         self.before = before
         self.after = after
 
-    def matches(self, value: datetime) -> bool:
+    def matches(self, value: datetime) -> bool:  # type: ignore[override]
         if self.after is not None and value <= self.after:
             return False
         if self.before is not None and value >= self.before:
@@ -216,7 +221,7 @@ class ReportedAtSymptom(Symptom):
         self.matcher = Matcher.create(obj)
 
     def matches(self, report: Report) -> bool:
-        return self.matcher.matches(report.reported_at)
+        return self.matcher.matches(report.reported_at)  # type: ignore[arg-type]
 
 
 class DetailsSymptom(Symptom):
