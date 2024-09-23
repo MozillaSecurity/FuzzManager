@@ -6,7 +6,7 @@ from django.core.management import BaseCommand, CommandError
 from notifications.models import Notification
 from notifications.signals import notify
 
-from reportmanager.models import Bug, BugProvider
+from reportmanager.models import Bug, BugProvider, User
 
 LOG = logging.getLogger("fm.reportmanager.bug_update_status")
 
@@ -90,8 +90,8 @@ class Command(BaseCommand):
                             target_content_type=bug_content_type,
                             target_object_id=bug.id,
                         ).values_list("id", flat=True)
-                        # Exluding users who have already receive this notification
-                        recipient = bug.tools_filter_users.exclude(
+                        # Exclude users who have already receive this notification
+                        recipient = User.objects.exclude(
                             notifications__id__in=sent_notifications_ids
                         )
                         if bug.bucket_set.count() == 1:

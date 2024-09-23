@@ -33,19 +33,17 @@ class BugzillaProvider(Provider):
         else:
             user = User.objects.get_or_create(user=request.user)[0]
 
-            obj = BugzillaTemplate.objects.filter(name__contains=report_entry.tool.name)
-            if not obj:
-                default_template_id = user.default_template_id
-                if not default_template_id:
-                    default_template_id = 1
+            default_template_id = user.default_template_id
+            if not default_template_id:
+                default_template_id = 1
 
-                obj = BugzillaTemplate.objects.filter(pk=default_template_id)
+            obj = BugzillaTemplate.objects.filter(pk=default_template_id).first()
 
             if not obj:
                 template = {}
             else:
-                template = model_to_dict(obj[0])
-                template["pk"] = obj[0].pk
+                template = model_to_dict(obj)
+                template["pk"] = obj.pk
 
         return template
 
