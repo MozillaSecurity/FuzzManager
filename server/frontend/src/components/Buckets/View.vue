@@ -25,15 +25,15 @@
               <span v-else>
                 Reported as bug {{ bucket.bug }} on {{ bucket.bug_hostname }}
               </span>
+              <br v-if="canEdit" /><br v-if="canEdit" />
               <div v-if="canEdit" class="btn-group">
-                <br /><br />
                 <a v-on:click="unlink" class="btn btn-danger">Unlink</a>
               </div>
             </td>
             <td v-else>
               No bug associated.
+              <br v-if="canEdit" /><br v-if="canEdit" />
               <div v-if="canEdit" class="btn-group">
-                <br /><br />
                 <assignbutton :bucket="bucket.id" :providers="providers" />
                 <a :href="createBugUrl" class="btn btn-danger">File a bug</a>
               </div>
