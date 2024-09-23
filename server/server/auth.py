@@ -35,7 +35,6 @@ class CheckAppPermission(permissions.BasePermission):
         if request.user and request.user.is_authenticated:
             app = view.__module__.split(".", 1)[0]
             view_name = request.resolver_match.url_name
-            print(f"app={app} view_name={view_name}")
 
             if request.user.has_perm(f"reportmanager.{app}_visible"):
                 if request.user.has_perm(f"reportmanager.{app}_read"):
