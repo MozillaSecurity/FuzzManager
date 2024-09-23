@@ -64,8 +64,9 @@
           "value": {
             "description": "String to match (exactly)",
             "anyOf": [
-              { "type": "string" },
-              { "type": "null" }
+              { "type": "boolean" },
+              { "type": "null" },
+              { "type": "string" }
             ]
           }
         },

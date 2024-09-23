@@ -240,5 +240,5 @@ class DetailsSymptom(Symptom):
         return any(
             self.matcher.matches(value.value)
             for value in self.path.find(report.details)
-            if value.value is None or isinstance(value.value, str)
+            if value.value is None or isinstance(value.value, (bool, float, int, str))
         )
