@@ -1,24 +1,12 @@
 <template>
   <div class="panel panel-default">
-    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Signature</div>
+    <div class="panel-heading"><i class="bi bi-tag-fill"></i> Bucket</div>
     <div class="panel-body">
       <table class="table">
         <tbody>
           <tr>
             <td>Description</td>
-            <td>{{ bucket.short_description }}</td>
-          </tr>
-          <tr v-if="bucket.frequent">
-            <td>Frequent bucket</td>
-            <td></td>
-          </tr>
-          <tr v-if="bucket.permanent">
-            <td>Permanent bucket</td>
-            <td></td>
-          </tr>
-          <tr v-if="bucket.doNotReduce">
-            <td>Do not reduce</td>
-            <td></td>
+            <td>{{ bucket.description }}</td>
           </tr>
           <tr>
             <td>External Bug Status</td>
@@ -37,40 +25,43 @@
               <span v-else>
                 Reported as bug {{ bucket.bug }} on {{ bucket.bug_hostname }}
               </span>
-              <br /><br />
-              <div class="btn-group">
+              <div v-if="canEdit" class="btn-group">
+                <br /><br />
                 <a v-on:click="unlink" class="btn btn-danger">Unlink</a>
               </div>
             </td>
             <td v-else>
-              Unreported.
-              <br /><br />
-              <div class="btn-group">
+              No bug associated.
+              <div v-if="canEdit" class="btn-group">
+                <br /><br />
                 <assignbutton :bucket="bucket.id" :providers="providers" />
-                <a
-                  v-if="bucket.best_entry"
-                  :href="createBugUrl"
-                  class="btn btn-danger"
-                  >File a bug with best report entry</a
-                >
+                <a :href="createBugUrl" class="btn btn-danger">File a bug</a>
               </div>
             </td>
           </tr>
           <tr>
-            <td>Reports covered by this signature</td>
+            <td>Reports in this bucket</td>
             <td>
               {{ bucket.size }}
               <activitygraph
                 :data="bucket.report_history"
                 :range="activityRange"
               />
-            </td>
-          </tr>
-          <tr v-if="bucket.best_entry">
-            <td>Best Report Entry</td>
-            <td>
-              <a :href="bestViewUrl">{{ bucket.best_entry }}</a> (Size:
-              {{ bestEntrySize }})
+              <form :action="watchUrl" ref="bucketWatchForm" method="post">
+                <input type="hidden" name="bucket" :value="bucket.id" />
+                <input
+                  type="hidden"
+                  name="report"
+                  :value="bucket.latest_entry"
+                />
+                <input
+                  type="submit"
+                  name="submit"
+                  value="Watch for New Reports"
+                  title="Add/Update"
+                  class="btn btn-default"
+                />
+              </form>
             </td>
           </tr>
         </tbody>
@@ -81,15 +72,9 @@
 
       <div class="btn-group">
         <a :href="reportsUrl" class="btn btn-default">Associated Reports</a>
-        <a :href="optUrl" class="btn btn-default">Optimize</a>
-        <a
-          v-if="bucket.has_optimization"
-          :href="bucket.opt_pre_url"
-          class="btn btn-default"
-          >Optimize (Precomputed)</a
-        >
-        <a :href="editUrl" class="btn btn-default">Edit</a>
-        <a :href="delUrl" class="btn btn-danger">Delete</a>
+        <!--a v-if="canEdit" :href="optUrl" class="btn btn-default">Optimize</a-->
+        <a v-if="canEdit" :href="editUrl" class="btn btn-default">Edit</a>
+        <a v-if="canEdit" :href="delUrl" class="btn btn-danger">Delete</a>
       </div>
     </div>
   </div>
@@ -107,21 +92,12 @@ export default {
     assignbutton: AssignBtn,
   },
   data: () => ({
-    permanent: false,
-    short_description: "",
+    description: "",
   }),
   props: {
     activityRange: {
       type: Number,
       required: true,
-    },
-    bestEntrySize: {
-      type: Number,
-      required: true,
-    },
-    bestViewUrl: {
-      type: String,
-      default: null,
     },
     bucket: {
       type: Object,
@@ -129,6 +105,10 @@ export default {
     },
     reportsUrl: {
       type: String,
+      required: true,
+    },
+    canEdit: {
+      type: Boolean,
       required: true,
     },
     createBugUrl: {
@@ -151,6 +131,14 @@ export default {
       type: Array,
       required: true,
     },
+    watchUrl: {
+      type: String,
+      required: true,
+    },
+  },
+  mounted() {
+    const el = document.getElementsByName("csrfmiddlewaretoken")[0];
+    this.$refs.bucketWatchForm.appendChild(el);
   },
   methods: {
     unlink() {

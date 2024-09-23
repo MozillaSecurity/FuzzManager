@@ -1,17 +1,11 @@
-from collections import OrderedDict
-
-from django.conf import settings
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from django.core.management import BaseCommand
+from django.db import transaction
+from django.db.models import Q
 
 from reportmanager.models import Bucket, ReportEntry
-
-# This is a per-worker global cache mapping short descriptions of
-# reports to a list of bucket candidates to try first.
-#
-# although this cache looks pointless within this command,
-# the command is called in a loop from triage_new_reports.py
-# and may be called multiple times in one process by celery
-TRIAGE_CACHE = OrderedDict()
 
 
 class Command(BaseCommand):
@@ -24,51 +18,25 @@ class Command(BaseCommand):
             help="Report ID",
         )
 
+    @transaction.atomic
     def handle(self, *args, **options):
-        entry = ReportEntry.objects.get(pk=options["id"])
-        report_info = entry.get_report_info(attach_testcase=True)
+        entry = ReportEntry.objects.select_for_update().get(pk=options["id"])
+        report_info = entry.get_report()
 
-        cache_hit = False
+        buckets = Bucket.objects.filter(
+            Q(domain=report_info.url.hostname) | Q(domain__isnull=True)
+        ).order_by("-priority")
 
-        triage_cache_hint = TRIAGE_CACHE.get(entry.short_signature, [])
+        for bucket in buckets:
+            signature = bucket.get_signature()
 
-        if triage_cache_hint:
-            buckets = Bucket.objects.filter(pk__in=triage_cache_hint).order_by("-id")
-            for bucket in buckets:
-                signature = bucket.get_signature()
-                if signature.matches(report_info):
-                    entry.bucket = bucket
-                    print("Cache hit")
-                    cache_hit = True
-                    break
+            if signature.matches(report_info):
+                entry.bucket = bucket
+                break
+        else:
+            entry.bucket = Bucket.objects.create(
+                description=f"domain is {report_info.url.hostname}",
+                signature=report_info.create_signature().raw_signature,
+            )
 
-        if not cache_hit:
-            buckets = Bucket.objects.exclude(pk__in=triage_cache_hint).order_by("-id")
-
-            for bucket in buckets:
-                signature = bucket.get_signature()
-                if signature.matches(report_info):
-                    entry.bucket = bucket
-
-                    cache_list = [bucket.pk]
-                    if triage_cache_hint:
-                        cache_list = TRIAGE_CACHE[entry.short_signature]
-
-                        # We delete the current entry and add it again to ensure
-                        # that our dictionary remains ordered by the time of last
-                        # use. We can then just pop the first element if the cache
-                        # grows too large, evicting the least used item.
-                        del TRIAGE_CACHE[entry.short_signature]
-                        cache_list.append(bucket.pk)
-
-                    TRIAGE_CACHE[entry.short_signature] = cache_list
-
-                    if len(TRIAGE_CACHE) > getattr(
-                        settings, "CELERY_TRIAGE_MEMCACHE_ENTRIES", 100
-                    ):
-                        TRIAGE_CACHE.popitem(last=False)
-
-                    break
-
-        entry.triaged_once = True
         entry.save()

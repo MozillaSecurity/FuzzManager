@@ -55,7 +55,15 @@
           </div>
         </div>
         <div v-for="(notification, index) in notifications" :key="index">
-          <template v-if="notification.verb === 'inaccessible_bug'">
+          <template v-if="notification.verb === 'bucket_hit'">
+            <BucketHit
+              :notification="notification"
+              v-on:remove-notification="removeNotification($event)"
+              v-on:update-dismiss-error="dismissError = $event"
+            />
+            <hr />
+          </template>
+          <template v-else-if="notification.verb === 'inaccessible_bug'">
             <InaccessibleBug
               :notification="notification"
               v-on:remove-notification="removeNotification($event)"
@@ -72,12 +80,14 @@
 <script>
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
+import BucketHit from "./BucketHit.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
 
 const pageSize = 25;
 
 export default {
   components: {
+    BucketHit,
     InaccessibleBug,
   },
   data: () => ({

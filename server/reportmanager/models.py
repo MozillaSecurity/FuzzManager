@@ -18,8 +18,10 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
 from enumfields import Enum, EnumField
+from notifications.signals import notify
 
 from webcompat.models import Report, Signature
+from webcompat.symptoms import URLSymptom, ValueMatcher
 
 if getattr(settings, "USE_CELERY", None):
     from .tasks import triage_new_report
@@ -54,16 +56,16 @@ class Bucket(models.Model):
     color = models.ForeignKey(
         "BucketColor", null=True, on_delete=models.deletion.CASCADE
     )
+    description = models.TextField()
+    # store the domain outside the signature only if the signature includes
+    # a non-regex domain symptom and no other symptoms (for quick exclusion)
+    domain = models.CharField(max_length=255, null=True)
     # higher priority = earlier match
     priority = models.IntegerField(
         default=0, validators=(MinValueValidator(-2), MaxValueValidator(2))
     )
-    # Empty signature is used to signify an untriaged Report. These Reports are
-    # processed by celery asynchronously to either match an existing bucket (deleting
-    # this one) or the signature will be populated with a default that matches
-    # the Report.
+    # Raw signature JSON (see webcompat.models.Signature)
     signature = models.TextField()
-    snooze_until = models.DateTimeField(null=True)
 
     class Meta:
         constraints = (
@@ -72,6 +74,13 @@ class Bucket(models.Model):
                 name="priority_range",
             ),
         )
+
+    @property
+    def watchers(self):
+        ids = User.objects.filter(
+            bucketwatch__bucket=self, bucket_hit=True
+        ).values_list("user_id", flat=True)
+        return DjangoUser.objects.filter(id__in=ids).distinct()
 
     def get_signature(self):
         return Signature(self.signature)
@@ -85,6 +94,21 @@ class Bucket(models.Model):
             modified.add("signature")
             self.signature = new_signature
 
+            # if signature changes, update domain field
+            sig_obj = self.get_signature()
+            original_domain = self.domain
+            if (
+                len(sig_obj.symptoms) == 1
+                and isinstance(symptom := sig_obj.symptoms[0], URLSymptom)
+                and symptom.part == "hostname"
+                and isinstance(symptom.matcher, ValueMatcher)
+            ):
+                self.domain = symptom.matcher.value
+            else:
+                self.domain = None
+            if original_domain != self.domain:
+                modified.add("domain")
+
         # required in Django 4.2+
         if "update_fields" in kwargs and kwargs["update_fields"] is not None:
             kwargs["update_fields"] = modified.union(kwargs["update_fields"])
@@ -92,8 +116,9 @@ class Bucket(models.Model):
         super().save(*args, **kwargs)
 
     def reassign(self, submit_save):
-        """Assign all unassigned issues that match our signature to this bucket.
-        Furthermore, remove all non-matching issues from our bucket.
+        """Assign all issues that match our signature to this bucket from
+        lower-priority buckets. Furthermore, remove all non-matching issues
+        from our bucket (which will be re-triaged into default buckets).
 
         We only actually save if "submit_save" is set.
         For previewing, we just count how many issues would be assigned and removed.
@@ -105,7 +130,7 @@ class Bucket(models.Model):
 
         signature = self.get_signature()
         entries = ReportEntry.objects.filter(
-            models.Q(bucket=None) | models.Q(bucket=self)
+            models.Q(bucket__priority__lt=self.priority) | models.Q(bucket=self)
         ).select_related(
             # these are used by get_report
             "app",
@@ -125,13 +150,13 @@ class Bucket(models.Model):
         for entry_ids_batch in batched(entry_ids, MATCH_BATCH_SIZE):
             for entry in entries.filter(id__in=entry_ids_batch):
                 match = signature.matches(entry.get_report())
-                if match and entry.bucket_id is None:
+                if match and entry.bucket != self:
                     if submit_save:
                         in_list.append(entry.pk)
                     elif len(in_list) < MATCH_BATCH_SIZE:
                         in_list.append(ReportEntryVueSerializer(entry).data)
                     in_list_count += 1
-                elif not match and entry.bucket_id is not None:
+                elif not match and entry.bucket == self:
                     if submit_save:
                         out_list.append(entry.pk)
                     elif len(out_list) < MATCH_BATCH_SIZE:
@@ -143,23 +168,23 @@ class Bucket(models.Model):
             for entry_ids_batch in batched(in_list, UPDATE_BATCH_SIZE):
                 for report in ReportEntry.objects.filter(pk__in=entry_ids_batch).values(
                     "bucket_id",
-                    "created",
+                    "reported_at",
                 ):
                     if report["bucket_id"] != self.id:
                         if report["bucket_id"] is not None:
                             BucketHit.decrement_count(
                                 report["bucket_id"],
-                                report["created"],
+                                report["reported_at"],
                             )
-                        BucketHit.increment_count(self.id, report["created"])
+                        BucketHit.increment_count(self.id, report["reported_at"])
                 ReportEntry.objects.filter(pk__in=entry_ids_batch).update(bucket=self)
             for entry_ids_batch in batched(out_list, UPDATE_BATCH_SIZE):
                 for report in ReportEntry.objects.filter(pk__in=entry_ids_batch).values(
-                    "bucket_id", "created"
+                    "bucket_id", "reported_at"
                 ):
                     if report["bucket_id"] is not None:
                         BucketHit.decrement_count(
-                            report["bucket_id"], report["created"]
+                            report["bucket_id"], report["reported_at"]
                         )
                 ReportEntry.objects.filter(pk__in=entry_ids_batch).update(bucket=None)
 
@@ -298,22 +323,47 @@ class BucketHit(models.Model):
     count = models.IntegerField(default=0)
 
     @classmethod
+    @transaction.atomic
     def decrement_count(cls, bucket_id, begin):
         begin = begin.replace(microsecond=0, second=0, minute=0)
-        counter = cls.objects.filter(
-            bucket_id=bucket_id,
-            begin=begin,
-        ).first()
+        counter = (
+            cls.objects.select_for_update()
+            .filter(
+                bucket_id=bucket_id,
+                begin=begin,
+            )
+            .first()
+        )
         if counter is not None and counter.count > 0:
             counter.count -= 1
             counter.save()
 
     @classmethod
+    @transaction.atomic
     def increment_count(cls, bucket_id, begin):
         begin = begin.replace(microsecond=0, second=0, minute=0)
-        counter, _ = cls.objects.get_or_create(bucket_id=bucket_id, begin=begin)
+        counter, _ = cls.objects.select_for_update().get_or_create(
+            bucket_id=bucket_id, begin=begin
+        )
         counter.count += 1
         counter.save()
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=["bucket", "begin"],
+                name="unique_buckethits",
+            ),
+        )
+
+
+class BucketWatch(models.Model):
+    user = models.ForeignKey("User", on_delete=models.deletion.CASCADE)
+    bucket = models.ForeignKey(Bucket, on_delete=models.deletion.CASCADE)
+    # This is the primary key of last crash marked viewed by the user
+    # Store as an integer to prevent problems if the particular crash
+    # is deleted later. We only care about its place in the ordering.
+    last_report = models.IntegerField(default=0)
 
 
 class OS(models.Model):
@@ -326,6 +376,9 @@ class ReportHit(models.Model):
 
     @staticmethod
     def get_period(time):
+        """Return the current time if we are on the hour, or the next
+        time the hour will change.
+        """
         if not time.minute and not time.second and not time.microsecond:
             # we're on the hour. this is the time
             return time
@@ -349,15 +402,18 @@ class ReportHit(models.Model):
 class ReportEntryManager(models.Manager):
     @transaction.atomic
     def create_from_report(self, report):
-        app, app_created = App.objects.get_or_create(
+        app = App.objects.get_or_create(
             channel=report.app_channel,
             name=report.app_name,
             version=report.app_version,
-        )
-        breakage, breakage_created = BreakageCategory.objects.get_or_create(
-            value=report.breakage_category,
-        )
-        os, os_created = OS.objects.get_or_create(name=report.os)
+        )[0]
+        if report.breakage_category is not None:
+            breakage = BreakageCategory.objects.get_or_create(
+                value=report.breakage_category,
+            )[0]
+        else:
+            breakage = None
+        os = OS.objects.get_or_create(name=report.os)[0]
         return self.create(
             app=app,
             breakage_category=breakage,
@@ -376,12 +432,12 @@ class ReportEntry(models.Model):
         BreakageCategory, null=True, on_delete=models.deletion.CASCADE
     )
     bucket = models.ForeignKey(Bucket, null=True, on_delete=models.deletion.CASCADE)
-    comments = models.CharField(max_length=4095)
+    comments = models.TextField()
     details = models.JSONField()
     os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
     reported_at = models.DateTimeField()
-    url = models.URLField()
-    uuid = models.UUIDField()
+    url = models.URLField(max_length=8192)
+    uuid = models.UUIDField(unique=True)
 
     objects = ReportEntryManager()
 
@@ -433,7 +489,7 @@ class ReportEntry(models.Model):
                 reported_at=self.reported_at,
                 uuid=self.uuid,
                 url=urlsplit(self.url),
-                breakage_category=self.breakage_category.name
+                breakage_category=self.breakage_category.value
                 if self.breakage_category is not None
                 else None,
             )
@@ -463,22 +519,40 @@ class ReportEntry(models.Model):
 @receiver(post_delete, sender=ReportEntry)
 def ReportEntry_delete(sender, instance, **kwargs):
     if instance.bucket_id is not None:
-        BucketHit.decrement_count(instance.bucket_id, instance.created)
+        BucketHit.decrement_count(instance.bucket_id, instance.reported_at)
 
 
 @receiver(post_save, sender=ReportEntry)
 def ReportEntry_save(sender, instance, created, **kwargs):
-    if getattr(settings, "USE_CELERY", None) and created:
-        triage_new_report.delay(instance.pk)
+    triage = created
 
     if instance.bucket_id != instance._original_bucket:
         if instance._original_bucket is not None:
             # remove BucketHit for old bucket
-            BucketHit.decrement_count(instance._original_bucket, instance.created)
+            BucketHit.decrement_count(instance._original_bucket, instance.reported_at)
 
         if instance.bucket is not None:
             # add BucketHit for new bucket
-            BucketHit.increment_count(instance.bucket_id, instance.created)
+            BucketHit.increment_count(instance.bucket_id, instance.reported_at)
+        else:
+            triage = True
+
+        if instance.bucket is not None:
+            notify.send(
+                instance.bucket,
+                recipient=instance.bucket.watchers,
+                actor=instance.bucket,
+                verb="bucket_hit",
+                target=instance,
+                level="info",
+                description=(
+                    f"The bucket {instance.bucket_id} received a new report entry "
+                    f"{instance.pk}"
+                ),
+            )
+
+    if getattr(settings, "USE_CELERY", None) and triage:
+        triage_new_report.apply_async((instance.pk,), countdown=0.1)
 
 
 class BugzillaTemplateMode(Enum):
@@ -532,6 +606,7 @@ class User(models.Model):
     # because the bug provider has to decide how to interpret this ID.
     default_template_id = models.IntegerField(default=0)
     default_provider_id = models.IntegerField(default=1)
+    buckets_watching = models.ManyToManyField(Bucket, through="BucketWatch")
 
     # Notifications
     bucket_hit = models.BooleanField(blank=False, default=False)

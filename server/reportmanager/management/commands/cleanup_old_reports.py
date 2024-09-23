@@ -73,7 +73,7 @@ class Command(BaseCommand):
 
         # Select all buckets that are empty and delete them
         for bucket in Bucket.objects.annotate(size=Count("reportentry")).filter(
-            size=0, bug=None, permanent=False
+            size=0, bug=None
         ):
             LOG.info("Removing empty bucket %d", bucket.id)
             bucket.delete()
@@ -93,19 +93,19 @@ class Command(BaseCommand):
             microseconds=now.microsecond,
         )
         old_reports = ReportEntry.objects.filter(
-            created__lt=expiry_date, bucket__bug=None
+            reported_at__lt=expiry_date, bucket__bug=None
         ).count()
         if old_reports:
             LOG.info("Removing %d old, unbucketed reports", old_reports)
         while old_reports:
             pks = list(
                 ReportEntry.objects.filter(
-                    created__lt=expiry_date, bucket__bug=None
+                    reported_at__lt=expiry_date, bucket__bug=None
                 ).values_list("pk", flat=True)[:500]
             )
             ReportEntry.objects.filter(pk__in=pks).delete()
             old_reports = ReportEntry.objects.filter(
-                created__lt=expiry_date, bucket__bug=None
+                reported_at__lt=expiry_date, bucket__bug=None
             ).count()
 
         # Cleanup all bugs that don't belong to any bucket anymore

@@ -21,23 +21,28 @@ def update_report_stats():
     cur_period = ReportHit.get_period(now)
 
     try:
-        last_run = ReportHit.objects.all().order_by("-last_update")[0].last_update
+        last_run = max(
+            ReportHit.objects.all().order_by("-last_update")[0].last_update,
+            cur_period - max_history,
+        )
     except IndexError:
         # no run, go back as far in history as needed
         last_run = cur_period - max_history
 
     for hours in count():
-        period = ReportHit.get_period(cur_period) - timedelta(hours=hours)
-        reporthits_range = ReportHit.objects.select_for_update().filter(
-            Q(last_update__gt=period - timedelta(hours=1))
-            & Q(last_update__gte=last_run)
-            & Q(last_update__lte=period)
-        )
-        hits = ReportEntry.objects.filter(
-            created__gt=max(period - timedelta(hours=1), last_run), created__lte=period
-        ).count()
-
+        period = cur_period - timedelta(hours=hours)
+        if period <= last_run:
+            break
         with transaction.atomic():
+            reporthits_range = ReportHit.objects.select_for_update().filter(
+                Q(last_update__gt=period - timedelta(hours=1))
+                & Q(last_update__lte=period)
+            )
+            hits = ReportEntry.objects.filter(
+                reported_at__gt=max(period - timedelta(hours=1), last_run),
+                reported_at__lte=period,
+            ).count()
+
             obj, created = reporthits_range.get_or_create(
                 defaults={
                     "last_update": min(period, now),
@@ -48,8 +53,6 @@ def update_report_stats():
                 obj.last_update = min(period, now)
                 obj.count = F("count") + hits
                 obj.save()
-        if period <= last_run:
-            break
     # trim old stats
     old_cutoff = cur_period - max_history
     ReportHit.objects.filter(last_update__lt=old_cutoff).delete()

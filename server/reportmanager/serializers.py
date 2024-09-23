@@ -47,12 +47,13 @@ class BucketSerializer(serializers.ModelSerializer):
             "bug",
             "bug_provider",
             "color",
+            "description",
+            "domain",
             "id",
             "latest_entry",
             "priority",
             "signature",
             "size",
-            "snooze_until",
         )
         ordering = ("-id",)
         read_only_fields = ("id",)
@@ -111,7 +112,7 @@ class BucketVueSerializer(BucketSerializer):
         return None
 
     def get_view_url(self, sig):
-        return reverse("reportmanager:sigview", kwargs={"sig_id": sig.id})
+        return reverse("reportmanager:bucketview", kwargs={"sig_id": sig.id})
 
 
 class BugProviderSerializer(serializers.ModelSerializer):
@@ -177,18 +178,18 @@ class ReportEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportEntry
         fields = (
-            "app_name",
             "app_channel",
+            "app_name",
             "app_version",
             "breakage_category",
+            "bucket",
             "comments",
             "details",
+            "id",
+            "os",
+            "reported_at",
             "url",
             "uuid",
-            "reported_at",
-            "os",
-            "bucket",
-            "id",
         )
         ordering = ("-id",)
         read_only_fields = ("bucket", "id")
@@ -240,14 +241,16 @@ class ReportEntryVueSerializer(ReportEntrySerializer):
 
     def get_sig_view_url(self, entry):
         if entry.bucket:
-            return reverse("reportmanager:sigview", kwargs={"sig_id": entry.bucket.id})
+            return reverse(
+                "reportmanager:bucketview", kwargs={"sig_id": entry.bucket.id}
+            )
         return None
 
     def get_sig_new_url(self, entry):
-        return f"{reverse('reportmanager:signew')}?report_id={entry.id}"
+        return f"{reverse('reportmanager:bucketnew')}?report_id={entry.id}"
 
     def get_find_sigs_url(self, entry):
-        return reverse("reportmanager:findsigs", kwargs={"report_id": entry.id})
+        return reverse("reportmanager:findbuckets", kwargs={"report_id": entry.id})
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -272,7 +275,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     def get_actor_url(self, notification):
         if isinstance(notification.actor, Bucket):
             return reverse(
-                "reportmanager:sigview", kwargs={"sig_id": notification.actor.id}
+                "reportmanager:bucketview", kwargs={"sig_id": notification.actor.id}
             )
         return None
 

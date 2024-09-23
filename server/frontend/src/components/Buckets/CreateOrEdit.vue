@@ -24,15 +24,27 @@
       </p>
 
       <form v-on:submit.prevent="">
-        <label for="id_shortDescription">Description</label><br />
+        <label for="id_description">Description</label><br />
         <input
-          id="id_shortDescription"
+          id="id_description"
           class="form-control"
           maxlength="1023"
           type="text"
-          v-model="bucket.shortDescription"
+          v-model="bucket.description"
         />
         <br />
+
+        <label for="id_priority">Priority</label><br />
+        <input
+          id="id_priority"
+          class="form-control"
+          type="number"
+          min="-2"
+          max="2"
+          v-model="bucket.priority"
+        />
+        <br />
+
         <label for="id_signature">Signature</label><br />
         <textarea
           id="id_signature"
@@ -44,8 +56,8 @@
         <div class="field">
           <input type="checkbox" id="id_reassign" v-model="reassign" />
           <label for="id_reassign">
-            Reassign matching reports (unassigned reports and reports assigned
-            to this bucket will be reassigned)
+            Reassign matching reports (reports in this bucket and lower-priority
+            buckets will be reassigned)
           </label>
         </div>
         <div class="btn-group" v-if="bucketId">
@@ -136,7 +148,7 @@ export default {
   },
   data: () => ({
     bucket: {
-      shortDescription: "",
+      description: "",
       signature: "",
     },
     reassign: true,
@@ -152,14 +164,14 @@ export default {
     if (this.proposedSignature)
       this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2);
     if (this.proposedDescription)
-      this.bucket.shortDescription = this.proposedDescription;
+      this.bucket.description = this.proposedDescription;
     if (this.warningMessage) this.warning = this.warningMessage;
   },
   methods: {
     async create(save) {
       this.loading = save ? "create" : "preview";
       const payload = {
-        short_description: this.bucket.shortDescription,
+        description: this.bucket.description,
         signature: this.bucket.signature,
       };
 
@@ -185,7 +197,7 @@ export default {
     async update(save) {
       this.loading = save ? "save" : "preview";
       const payload = {
-        short_description: this.bucket.shortDescription,
+        description: this.bucket.description,
         signature: this.bucket.signature,
       };
 
@@ -198,11 +210,11 @@ export default {
         if (save) {
           window.location.href = data.url;
         }
-        this.warning = data.warningMessage;
-        this.inList = data.inList;
-        this.outList = data.outList;
-        this.inListCount = data.inListCount;
-        this.outListCount = data.outListCount;
+        this.warning = data.warning_message;
+        this.inList = data.in_list;
+        this.outList = data.out_list;
+        this.inListCount = data.in_list_count;
+        this.outListCount = data.out_list_count;
       } catch (err) {
         this.warning = errorParser(err);
       } finally {

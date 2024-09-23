@@ -271,7 +271,6 @@ CELERY_RESULT_SERIALIZER = "json"
 # For CELERY_BROKER_URL unix sockets, use redis+socket:///path/to/socket?virtual_host=0
 CELERY_BROKER_URL = "redis:///2"
 CELERY_RESULT_BACKEND = "redis:///1"
-CELERY_TRIAGE_MEMCACHE_ENTRIES = 100
 CELERY_TASK_ROUTES = {
     "reportmanager.cron.*": {"queue": "cron"},
 }
@@ -285,7 +284,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60,
     },
     "Cleanup ReportEntry/Bucket objects every 30 minutes": {
-        "task": "reportmanager.cron.cleanup_old_reportes",
+        "task": "reportmanager.cron.cleanup_old_reports",
         "schedule": 30 * 60,
     },
 }

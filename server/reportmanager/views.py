@@ -4,13 +4,15 @@
 import json
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from logging import getLogger
 from uuid import uuid4
 
 import redis
+from dateutil.relativedelta import relativedelta
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
-from django.db.models import Q
-from django.db.models.aggregates import Count, Min
+from django.db.models import F, Q
+from django.db.models.aggregates import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -36,6 +38,7 @@ from .forms import (
 from .models import (
     Bucket,
     BucketHit,
+    BucketWatch,
     Bug,
     BugProvider,
     BugzillaTemplate,
@@ -56,12 +59,93 @@ from .serializers import (
 )
 from .tasks import bulk_delete_reports
 
+LOG = getLogger("reportmanager.views")
+
 
 class JSONDateEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):
             return o.isoformat().replace("+00:00", "Z")
         return super().default(o)
+
+
+def bucket_watch_create(request):
+    if request.method == "POST":
+        user = User.objects.get_or_create(request.user)[0]
+        bucket = get_object_or_404(Bucket, pk=int(request.POST["bucket"]))
+        for watch in BucketWatch.objects.filter(user=user, bucket=bucket):
+            watch.last_report = int(request.POST["report"])
+            watch.save()
+            break
+        else:
+            BucketWatch.objects.create(
+                user=user, bucket=bucket, last_report=int(request.POST["report"])
+            )
+        return redirect("reportmanager:bucketwatch")
+    raise SuspiciousOperation()
+
+
+def bucket_watch_delete(request, sigid):
+    user = User.objects.get_or_create(request.user)[0]
+
+    if request.method == "POST":
+        entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
+        entry.delete()
+        return redirect("reportmanager:bucketwatch")
+    if request.method == "GET":
+        entry = get_object_or_404(Bucket, user=user, pk=sigid)
+        return render(request, "buckets/watch_remove.html", {"entry": entry})
+    raise SuspiciousOperation()
+
+
+def bucket_watch_list(request):
+    # for this user, list watches
+    # buckets   sig       new reports   remove
+    # ========================================
+    # 1         crash       10          tr
+    # 2         assert      0           tr
+    # 3         blah        0           tr
+    user = User.objects.get_or_create(request.user)[0]
+
+    filters = {
+        "user": user,
+        "reportentry__gt": F("bucketwatch__last_report"),
+    }
+    # the join of Bucket+ReportEntry is a big one, and each filter() call on a related
+    # field adds a join therefore this needs to be a single filter() call, otherwise we
+    # get duplicate reportentries in the result.
+    buckets = Bucket.objects.filter(**filters)
+    buckets = buckets.annotate(new_reports=Count("reportentry"))
+    # what's left is only watched buckets with new reports. we need to include other
+    # watched buckets too .. which means evaluating the buckets query now
+    new_buckets = list(buckets)
+    # get all buckets watched by this user
+    # this is the result, but we will replace any buckets also found in newBuckets
+    buckets_all = Bucket.objects.filter(user=user).order_by("-id")
+    buckets_all = buckets_all.annotate(last_report=F("bucketwatch__last_report"))
+    buckets = list(buckets_all)
+    for idx, bucket in enumerate(buckets):
+        for new_idx, new_bucket in enumerate(new_buckets):
+            if new_bucket == bucket:
+                # replace with this one
+                new_bucket.last_report = bucket.last_report
+                buckets[idx] = new_bucket
+                new_buckets.pop(new_idx)
+                break
+        else:
+            bucket.new_reports = 0
+    return render(request, "buckets/watch.html", {"siglist": buckets})
+
+
+def bucket_watch_reports(request, sigid):
+    user = User.objects.get_or_create(request.user)[0]
+    bucket = get_object_or_404(Bucket, pk=sigid)
+    watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
+    return render(
+        request,
+        "reports/index.html",
+        {"watch_id": watch.id},
+    )
 
 
 def bug_provider_create(request):
@@ -206,7 +290,7 @@ def external_bug_create_comment(request, report_id):
 
 
 def index(request):
-    return redirect("reportmanager:signatures")
+    return redirect("reportmanager:buckets")
 
 
 def report_delete(request, report_id):
@@ -223,23 +307,10 @@ def report_delete(request, report_id):
 
 def report_edit(request, report_id):
     entry = get_object_or_404(ReportEntry, pk=report_id)
-    entry.deserialize_fields()
-
-    if entry.testcase:
-        entry.testcase.load_test()
 
     if request.method == "POST":
-        entry.raw_stdout = request.POST["raw_stdout"]
-        entry.raw_stderr = request.POST["raw_stderr"]
-        entry.raw_stderr = request.POST["raw_stderr"]
-        entry.raw_report_data = request.POST["raw_report_data"]
-
-        entry.env_list = request.POST["env"].splitlines()
-        entry.args_list = request.POST["args"].splitlines()
-        entry.metadata_list = request.POST["metadata"].splitlines()
-
         # Regenerate report information and fields depending on it
-        entry.reparse_report_info()
+        entry.reparse_report()
 
         return redirect("reportmanager:reportview", report_id=entry.pk)
     else:
@@ -256,10 +327,6 @@ def report_list(request):
 
 def report_view(request, report_id):
     entry = get_object_or_404(ReportEntry, pk=report_id)
-    entry.deserialize_fields()
-
-    if entry.testcase and not entry.testcase.is_binary:
-        entry.testcase.load_test()
 
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
@@ -330,7 +397,7 @@ def signature_create(request):
             "warning_message": error_msg,
         }
 
-    return render(request, "signatures/edit.html", data)
+    return render(request, "buckets/edit.html", data)
 
 
 def signature_delete(request, sig_id):
@@ -343,12 +410,12 @@ def signature_delete(request, sig_id):
             ReportEntry.objects.filter(bucket=bucket).update(bucket=None)
 
         bucket.delete()
-        return redirect("reportmanager:signatures")
+        return redirect("reportmanager:buckets")
 
     elif request.method == "GET":
         return render(
             request,
-            "signatures/delete.html",
+            "buckets/delete.html",
             {
                 "bucket": bucket,
                 "affected": ReportEntry.objects.filter(bucket=bucket).count(),
@@ -367,11 +434,11 @@ def signature_edit(request, sig_id):
     proposed_signature = None
     if "fit" in request.GET:
         entry = get_object_or_404(ReportEntry, pk=request.GET["fit"])
-        proposed_signature = bucket.get_signature().fit(entry.get_report_info())
+        proposed_signature = bucket.get_signature().fit(entry.get_report())
 
     return render(
         request,
-        "signatures/edit.html",
+        "buckets/edit.html",
         {"bucket": bucket, "proposed_sig": proposed_signature},
     )
 
@@ -379,7 +446,7 @@ def signature_edit(request, sig_id):
 def signature_find(request, report_id):
     entry = get_object_or_404(ReportEntry, pk=report_id)
 
-    entry.reportinfo = entry.get_report_info(attach_testcase=True)
+    entry.reportinfo = entry.get_report()
 
     buckets = Bucket.objects.all()
     similar_buckets = []
@@ -418,16 +485,14 @@ def signature_find(request, report_id):
                         c = ReportEntry.objects.filter(bucket=other_bucket).first()
                         first_entry_per_bucket_cache[other_bucket.pk] = c
                         if c:
-                            # Omit testcase for performance reasons for now
                             first_entry_per_bucket_cache[other_bucket.pk] = (
-                                c.get_report_info(attach_testcase=False)
+                                c.get_report()
                             )
 
                     first_entry_report_info = first_entry_per_bucket_cache[
                         other_bucket.pk
                     ]
                     if first_entry_report_info:
-                        # Omit testcase for performance reasons for now
                         if proposed_report_signature.matches(first_entry_report_info):
                             matches_in_other_buckets += 1
                             other_matching_bucket_ids.append(other_bucket.pk)
@@ -480,14 +545,14 @@ def signature_find(request, report_id):
         entry.save(update_fields=["bucket"])
         return render(
             request,
-            "signatures/find.html",
+            "buckets/find.html",
             {"bucket": matching_bucket, "reportentry": entry},
         )
     else:
         similar_buckets.sort(key=lambda x: (x.foreign_match_count, x.off_count))
         return render(
             request,
-            "signatures/find.html",
+            "buckets/find.html",
             {"buckets": similar_buckets, "reportentry": entry},
         )
 
@@ -496,7 +561,7 @@ def signature_list(request):
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
     return render(
         request,
-        "signatures/index.html",
+        "buckets/index.html",
         {
             "providers": json.dumps(providers),
             "activity_range": getattr(
@@ -525,7 +590,7 @@ def signature_optimize(request, sig_id):
 
     return render(
         request,
-        "signatures/optimize.html",
+        "buckets/optimize.html",
         {
             "bucket": bucket,
             "optimized_signature": optimized_signature,
@@ -541,15 +606,13 @@ def signature_try(request, sig_id, report_id):
     entry = get_object_or_404(ReportEntry, pk=report_id)
 
     signature = bucket.get_signature()
-    entry.reportinfo = entry.get_report_info(
-        attach_testcase=signature.match_requires_test()
-    )
+    entry.reportinfo = entry.get_report()
 
     # symptoms = signature.get_symptoms_diff(entry.reportinfo)
     diff = signature.get_signature_unified_diff_tuples(entry.reportinfo)
 
     return render(
-        request, "signatures/try.html", {"bucket": bucket, "entry": entry, "diff": diff}
+        request, "buckets/try.html", {"bucket": bucket, "entry": entry, "diff": diff}
     )
 
 
@@ -564,7 +627,7 @@ def signature_view(request, sig_id):
 
     return render(
         request,
-        "signatures/view.html",
+        "buckets/view.html",
         {
             "activity_range": getattr(
                 django_settings, "CLEANUP_REPORTS_AFTER_DAYS", 14
@@ -572,7 +635,7 @@ def signature_view(request, sig_id):
             "bucket": json.dumps(bucket, cls=JSONDateEncoder),
             "bucket_id": bucket["id"],
             "providers": json.dumps(providers),
-            "short_description": bucket["short_description"],
+            "description": bucket["description"],
         },
     )
 
@@ -585,9 +648,9 @@ def stats(request):
         "stats.html",
         {
             "activity_range": getattr(
-                django_settings, "CLEANUP_REPORTS_AFTER_DAYS", 14
+                django_settings, "CLEANUP_REPORTS_AFTER_DAYS", 30
             ),
-            "providers": json.dumps(providers),
+            "providers": json.dumps(providers or []),
         },
     )
 
@@ -622,6 +685,17 @@ class BucketAnnotateFilterBackend(BaseFilterBackend):
         return queryset.annotate(size=Count("reportentry"))
 
 
+class WatchFilterReportsBackend(BaseFilterBackend):
+    """Filters the queryset to retrieve watched entries if '?watch=<int>'"""
+
+    def filter_queryset(self, request, queryset, view):
+        watch_id = request.query_params.get("watch", "false").lower()
+        if watch_id == "false":
+            return queryset
+        watch = BucketWatch.objects.get(id=watch_id)
+        return queryset.filter(bucket=watch.bucket, id__gt=watch.last_report)
+
+
 class AsyncOpViewSet(viewsets.GenericViewSet):
     """API endpoint for polling async operations"""
 
@@ -646,12 +720,15 @@ class ReportEntryViewSet(
 
     authentication_classes = (TokenAuthentication, SessionAuthentication)
     queryset = ReportEntry.objects.all().select_related(
-        "product", "platform", "os", "client", "tool", "testcase"
+        "app",
+        "breakage_category",
+        "os",
     )
     serializer_class = ReportEntrySerializer
     filter_backends = (
         JsonQueryFilterBackend,
         OrderingFilter,
+        WatchFilterReportsBackend,
     )
 
     def get_serializer(self, *args, **kwds):
@@ -682,13 +759,16 @@ class ReportEntryViewSet(
         response = super().list(request, *args, **kwargs)
 
         if self.vue:
-            response.data["query_time"] = timezone.now()
+            latest_entry = ReportEntry.objects.all().order_by("id").last()
+            response.data["query_max_id"] = (
+                latest_entry.id if latest_entry is not None else 0
+            )
 
         return response
 
     def partial_update(self, request, pk=None):
         """Update individual report fields."""
-        allowed_fields = {"testcase_quality"}
+        allowed_fields = {}
         try:
             obj = ReportEntry.objects.get(pk=pk)
         except ReportEntry.DoesNotExist as exc:
@@ -701,17 +781,6 @@ class ReportEntryViewSet(
             else:
                 error_str = f"fields {list(disallowed_fields)!r}"
             raise InvalidArgumentException(f"{error_str} cannot be updated")
-        if "testcase_quality" in request.data:
-            if obj.testcase is None:
-                raise InvalidArgumentException("report has no testcase")
-            try:
-                testcase_quality = int(request.data["testcase_quality"])
-            except ValueError as exc:
-                raise InvalidArgumentException("invalid testcase_quality") from exc
-            # NB: if other fields are added, all validation should occur before any DB
-            # writes.
-            obj.testcase.quality = testcase_quality
-            obj.testcase.save()
         return Response(ReportEntrySerializer(obj).data)
 
 
@@ -733,13 +802,11 @@ class BucketViewSet(
     )
     ordering_fields = (
         "id",
-        "short_description",
+        "description",
         "size",
-        "quality",
-        "optimized_signature",
+        "priority",
         "bug__external_id",
     )
-    pagination_class = None
 
     def get_serializer(self, *args, **kwds):
         self.vue = self.request.query_params.get("vue", "false").lower() not in (
@@ -762,7 +829,7 @@ class BucketViewSet(
                     - timedelta(
                         days=getattr(django_settings, "CLEANUP_REPORTS_AFTER_DAYS", 14)
                     ),
-                    bucket_id__in=[bucket["id"] for bucket in response.data],
+                    bucket_id__in=[bucket["id"] for bucket in response.data["results"]],
                 )
                 .order_by("begin")
             )
@@ -773,7 +840,7 @@ class BucketViewSet(
                 bucket_hits[bucket].setdefault(begin, 0)
                 bucket_hits[bucket][begin] += num
 
-            for bucket in response.data:
+            for bucket in response.data["results"]:
                 bucket["report_history"] = [
                     {"begin": begin, "count": num}
                     for begin, num in bucket_hits.get(bucket["id"], {}).items()
@@ -785,21 +852,10 @@ class BucketViewSet(
         instance = self.get_object()
         reports_in_filter = instance.reportentry_set
 
-        # recalculate size and quality
+        # recalculate size
         # even if the result is 0
-        agg = reports_in_filter.aggregate(
-            quality=Min("testcase__quality"), size=Count("id")
-        )
+        agg = reports_in_filter.aggregate(size=Count("id"))
         instance.size = agg["size"]
-        instance.quality = agg["quality"]
-
-        if instance.quality is not None:
-            best_report = (
-                reports_in_filter.filter(testcase__quality=instance.quality)
-                .order_by("testcase__size", "-id")
-                .first()
-            )
-            instance.best_entry = best_report.id
 
         if instance.size:
             latest_report = reports_in_filter.order_by("id").last()
@@ -856,7 +912,7 @@ class BucketViewSet(
         # Save bucket and redirect to viewing it
         if submit_save:
             return {
-                "url": reverse("reportmanager:sigview", kwargs={"sig_id": bucket.pk})
+                "url": reverse("reportmanager:bucketview", kwargs={"sig_id": bucket.pk})
             }
 
         # Render the preview page
@@ -897,14 +953,8 @@ class BucketViewSet(
 
         if "signature" in serializer.validated_data:
             bucket.signature = serializer.validated_data["signature"]
-        if "short_description" in serializer.validated_data:
-            bucket.short_description = serializer.validated_data["short_description"]
-        if "frequent" in serializer.validated_data:
-            bucket.frequent = serializer.validated_data["frequent"]
-        if "permanent" in serializer.validated_data:
-            bucket.permanent = serializer.validated_data["permanent"]
-        if "do_not_reduce" in serializer.validated_data:
-            bucket.do_not_reduce = serializer.validated_data["do_not_reduce"]
+        if "description" in serializer.validated_data:
+            bucket.description = serializer.validated_data["description"]
 
         save = request.query_params.get("save", "true").lower() not in ("false", "0")
         reassign = request.query_params.get("reassign", "true").lower() not in (
@@ -923,9 +973,7 @@ class BucketViewSet(
 
         bucket = Bucket(
             signature=serializer.validated_data.get("signature"),
-            short_description=serializer.validated_data.get("short_description"),
-            frequent=serializer.validated_data.get("frequent"),
-            permanent=serializer.validated_data.get("permanent"),
+            description=serializer.validated_data.get("description"),
         )
 
         save = request.query_params.get("save", "true").lower() not in ("false", "0")
@@ -1161,9 +1209,11 @@ class _FreqCount:
         self.hour = 0
         self.day = 0
         self.week = 0
+        self.month = 0
         self.bucket_hour = {}
         self.bucket_day = {}
         self.bucket_week = {}
+        self.bucket_month = {}
 
     def add_hour(self, bucket):
         self.hour += 1
@@ -1184,6 +1234,13 @@ class _FreqCount:
         if bucket is not None:
             self.bucket_week.setdefault(bucket, 0)
             self.bucket_week[bucket] += 1
+        self.add_month(bucket)
+
+    def add_month(self, bucket):
+        self.month += 1
+        if bucket is not None:
+            self.bucket_month.setdefault(bucket, 0)
+            self.bucket_month[bucket] += 1
 
 
 class ReportStatsViewSet(viewsets.GenericViewSet):
@@ -1196,33 +1253,28 @@ class ReportStatsViewSet(viewsets.GenericViewSet):
     filter_backends = ()
 
     def retrieve(self, request, *_args, **_kwds):
+        LOG.error("in retrieve")
         entries = self.filter_queryset(self.get_queryset())
 
         now = timezone.now()
-        last_hour = now - timedelta(hours=1)
         last_day = now - timedelta(days=1)
         last_week = now - timedelta(days=7)
-        entries = entries.filter(created__gt=last_week)
+        last_month = now - relativedelta(months=1)
+        entries = entries.filter(reported_at__gt=last_month)
 
         totals = _FreqCount()
-        for created, bucket_id in entries.values_list("created", "bucket_id"):
-            if created > last_hour:
-                totals.add_hour(bucket_id)
-            elif created > last_day:
+        for reported_at, bucket_id in entries.values_list("reported_at", "bucket_id"):
+            if reported_at > last_day:
                 totals.add_day(bucket_id)
-            else:
+            elif reported_at > last_week:
                 totals.add_week(bucket_id)
+            else:
+                totals.add_month(bucket_id)
 
         # this gives all the bucket ids
-        #   where the bucket is top10 for any period (hour, day, week)
+        #   where the bucket is top10 for any period (day, week, month)
         top10s = (
             {
-                b_id
-                for b_id, _ in sorted(
-                    totals.bucket_hour.items(), key=lambda t: t[1], reverse=True
-                )[:10]
-            }
-            | {
                 b_id
                 for b_id, _ in sorted(
                     totals.bucket_day.items(), key=lambda t: t[1], reverse=True
@@ -1234,22 +1286,27 @@ class ReportStatsViewSet(viewsets.GenericViewSet):
                     totals.bucket_week.items(), key=lambda t: t[1], reverse=True
                 )[:10]
             }
+            | {
+                b_id
+                for b_id, _ in sorted(
+                    totals.bucket_month.items(), key=lambda t: t[1], reverse=True
+                )[:10]
+            }
         )
 
         frequent_buckets = {}
         for b_id in top10s:
             frequent_buckets[b_id] = [
-                totals.bucket_hour.get(b_id, 0),
                 totals.bucket_day.get(b_id, 0),
-                totals.bucket_week[b_id],  # only one that's guaranteed to exist
+                totals.bucket_week.get(b_id, 0),
+                totals.bucket_month[b_id],  # only one that's guaranteed to exist
             ]
 
         n_periods = getattr(django_settings, "REPORT_STATS_MAX_HISTORY_DAYS", 14) * 24
         cur_period = ReportHit.get_period(now)
         periods = [cur_period - timedelta(hours=n) for n in range(n_periods)]
         periods.reverse()
-        in_filter_hits_per_hour = [0 for _ in periods]
-        out_filter_hits_per_hour = in_filter_hits_per_hour.copy()
+        hits_per_hour = [0 for _ in periods]
         hit_idx = 0
         for hit in ReportHit.objects.filter(
             last_update__gt=periods[0] - timedelta(hours=1),
@@ -1257,19 +1314,17 @@ class ReportStatsViewSet(viewsets.GenericViewSet):
         ).order_by("last_update"):
             hit_period = ReportHit.get_period(hit.last_update)
             hit_idx = periods.index(hit_period, hit_idx)
-            in_filter_hits_per_hour[hit_idx] += hit.count
+            hits_per_hour[hit_idx] += hit.count
 
         return Response(
             {
-                # [int, int, int] (hour, day, week)
-                "totals": [totals.hour, totals.day, totals.week],
-                # { bucket_id: [hour, day, week] }
+                # [int, int, int] (day, week, month)
+                "totals": [totals.day, totals.week, totals.month],
+                # { bucket_id: [day, week, month] }
                 # includes the top 10 for each time-frame, which usually overlap
                 "frequent_buckets": frequent_buckets,
-                # [int, ...] hits per hour for last week
-                "out_filter_graph_data": out_filter_hits_per_hour,
-                # ditto
-                "in_filter_graph_data": in_filter_hits_per_hour,
+                # [int, ...] hits per hour for last max_history_days
+                "graph_data": hits_per_hour,
             },
             status=status.HTTP_200_OK,
         )

@@ -1,6 +1,6 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% block title %}{% if bucket != None %}{{ bucket.pk }} - {{ bucket.shortDescription|escape }} - Edit{% else %}New Signature{% endif %}{% endblock title %}
+{% block title %}{% if bucket != None %}{{ bucket.pk }} - {{ bucket.description|escape }} - Edit{% else %}New Signature{% endif %}{% endblock title %}
 
 {% block body_content %}
 <createoredit

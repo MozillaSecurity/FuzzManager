@@ -89,11 +89,10 @@ urlpatterns = [
         r"^reports/(?P<report_id>\d+)/edit/$", views.report_edit, name="reportedit"
     ),
     re_path(
-        r"^reports/(?P<report_id>\d+)/findsignatures/$",
+        r"^reports/(?P<report_id>\d+)/findbuckets/$",
         views.signature_find,
-        name="findsigs",
+        name="findbuckets",
     ),
-    re_path(r"^rest/", include(router.urls)),
     re_path(
         r"^rest/api-auth/", include("rest_framework.urls", namespace="rest_framework")
     ),
@@ -102,28 +101,41 @@ urlpatterns = [
         views.ReportStatsViewSet.as_view({"get": "retrieve"}),
         name="report_stats_rest",
     ),
+    re_path(
+        r"^reports/watch/(?P<sigid>\d+)/$",
+        views.bucket_watch_reports,
+        name="bucketwatchreports",
+    ),
     re_path(r"^settings/$", views.settings, name="settings"),
-    re_path(r"^signatures/$", views.signature_list, name="signatures"),
-    re_path(r"^signatures/(?P<sig_id>\d+)/$", views.signature_view, name="sigview"),
+    re_path(r"^buckets/$", views.signature_list, name="buckets"),
+    re_path(r"^buckets/(?P<sig_id>\d+)/$", views.signature_view, name="bucketview"),
     re_path(
-        r"^signatures/(?P<sig_id>\d+)/delete/$", views.signature_delete, name="sigdel"
+        r"^buckets/(?P<sig_id>\d+)/delete/$", views.signature_delete, name="bucketdel"
     ),
     re_path(
-        r"^signatures/(?P<sig_id>\d+)/edit/$", views.signature_edit, name="sigedit"
+        r"^buckets/(?P<sig_id>\d+)/edit/$", views.signature_edit, name="bucketedit"
     ),
     re_path(
-        r"^signatures/(?P<sig_id>\d+)/try/(?P<report_id>\d+)/$",
+        r"^buckets/(?P<sig_id>\d+)/try/(?P<report_id>\d+)/$",
         views.signature_try,
-        name="sigtry",
+        name="buckettry",
     ),
     re_path(
-        r"^signatures/(?P<sig_id>\d+)/optimize/$",
+        r"^buckets/(?P<sig_id>\d+)/optimize/$",
         views.signature_optimize,
-        name="sigopt",
+        name="bucketopt",
     ),
-    re_path(r"^signatures/new/$", views.signature_create, name="signew"),
+    re_path(r"^buckets/watch/$", views.bucket_watch_list, name="bucketwatch"),
+    re_path(
+        r"^buckets/watch/(?P<sigid>\d+)/delete/$",
+        views.bucket_watch_delete,
+        name="bucketwatchdel",
+    ),
+    re_path(r"^buckets/watch/new/$", views.bucket_watch_create, name="bucketwatchnew"),
+    re_path(r"^buckets/new/$", views.signature_create, name="bucketnew"),
     re_path(r"^stats/$", views.stats, name="stats"),
     re_path(
         r"^usersettings/$", views.UserSettingsEditView.as_view(), name="usersettings"
     ),
+    re_path(r"^rest/", include(router.urls)),
 ]

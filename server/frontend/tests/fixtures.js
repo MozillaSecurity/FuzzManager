@@ -6,7 +6,7 @@ export const emptyNotifications = {
 };
 
 export const bucketHitNotification = {
-  actor_url: "/reportmanager/signatures/8/",
+  actor_url: "/reportmanager/buckets/8/",
   description: "The bucket 8 received a new report entry 42",
   external_bug_url: null,
   id: 2,
@@ -33,46 +33,44 @@ export const unreadNotifications = {
   results: [bucketHitNotification, inaccessibleBugNotification],
 };
 
-export const emptyBuckets = [];
+export const emptyBuckets = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+};
 
-export const buckets = [
-  {
-    best_quality: 0,
-    bug: "1630739",
-    bug_closed: null,
-    bug_hostname: "bugzilla-dev.allizom.org",
-    bug_urltemplate: "https://bugzilla-dev.allizom.org/1630739",
-    doNotReduce: false,
-    frequent: false,
-    has_optimization: false,
-    id: 1,
-    opt_pre_url: "/reportmanager/signatures/1/preoptimized/",
-    permanent: false,
-    shortDescription: "A short description for bucket 1",
-    signature: "{ symptoms: 'some symptoms' }",
-    size: 3,
-    view_url: "/reportmanager/signatures/1/",
-    report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
-  },
-  {
-    best_quality: 0,
-    bug: null,
-    bug_closed: null,
-    bug_hostname: null,
-    bug_urltemplate: null,
-    doNotReduce: false,
-    frequent: false,
-    has_optimization: false,
-    id: 2,
-    opt_pre_url: "/reportmanager/signatures/2/preoptimized/",
-    permanent: false,
-    shortDescription: "A short description for bucket 2",
-    signature: "{ symptoms: 'some symptoms' }",
-    size: 5,
-    view_url: "/reportmanager/signatures/2/",
-    report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
-  },
-];
+export const buckets = {
+  count: 2,
+  next: null,
+  previous: null,
+  results: [
+    {
+      bug: "1630739",
+      bug_closed: null,
+      bug_hostname: "bugzilla-dev.allizom.org",
+      bug_urltemplate: "https://bugzilla-dev.allizom.org/1630739",
+      id: 1,
+      description: "A short description for bucket 1",
+      signature: "{ symptoms: 'some symptoms' }",
+      size: 3,
+      view_url: "/reportmanager/buckets/1/",
+      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
+    },
+    {
+      bug: null,
+      bug_closed: null,
+      bug_hostname: null,
+      bug_urltemplate: null,
+      id: 2,
+      description: "A short description for bucket 2",
+      signature: "{ symptoms: 'some symptoms' }",
+      size: 5,
+      view_url: "/reportmanager/buckets/2/",
+      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
+    },
+  ],
+};
 
 export const emptyReportStats = {
   totals: [0, 0, 0],

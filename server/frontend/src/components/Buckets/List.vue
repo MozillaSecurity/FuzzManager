@@ -11,6 +11,7 @@
           >
             {{ showAll ? "View Unassigned" : "View All" }}
           </button>
+          <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
       </div>
       <br />
@@ -25,7 +26,7 @@
             { name: 'bug__external_type', type: 'Integer (ID)' },
             { name: 'bug__external_type__classname', type: 'String' },
             { name: 'bug__external_type__hostname', type: 'String' },
-            { name: 'short_description', type: 'String' },
+            { name: 'description', type: 'String' },
             { name: 'signature', type: 'String' },
           ]"
         />
@@ -53,11 +54,35 @@
       </div>
       <br />
       <p v-if="showAll">
-        Displaying {{ totalEntries }} of all buckets in the database.
+        Displaying {{ currentEntries }}/{{ totalEntries }} buckets in the
+        database.
       </p>
       <p v-else>
-        Displaying {{ totalEntries }} unreported buckets from the database.
+        Displaying {{ currentEntries }}/{{ totalEntries }} unlogged buckets in
+        the database.
       </p>
+
+      <div class="pagination">
+        <span class="step-links">
+          <a
+            v-on:click="prevPage"
+            v-show="currentPage > 1"
+            class="bi bi-caret-left-fill"
+          ></a>
+          <span class="current">
+            Page {{ currentPage }} of {{ totalPages }}.
+          </span>
+          <a
+            v-on:click="nextPage"
+            v-show="currentPage < totalPages"
+            data-toggle="tooltip"
+            data-placement="top"
+            title=""
+            class="bi bi-caret-right-fill dimgray"
+            data-original-title="Next"
+          ></a>
+        </span>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-condensed table-hover table-bordered table-db">
@@ -73,12 +98,12 @@
               ID
             </th>
             <th
-              v-on:click.exact="sortBy('short_description')"
-              v-on:click.ctrl.exact="addSort('short_description')"
+              v-on:click.exact="sortBy('description')"
+              v-on:click.ctrl.exact="addSort('description')"
               :class="{
                 active:
-                  sortKeys.includes('short_description') ||
-                  sortKeys.includes('-short_description'),
+                  sortKeys.includes('description') ||
+                  sortKeys.includes('-description'),
               }"
             >
               Description
@@ -94,17 +119,6 @@
               Size
             </th>
             <th
-              v-on:click.exact="sortBy('best_quality')"
-              v-on:click.ctrl.exact="addSort('best_quality')"
-              :class="{
-                active:
-                  sortKeys.includes('best_quality') ||
-                  sortKeys.includes('-best_quality'),
-              }"
-            >
-              Best Quality
-            </th>
-            <th
               v-on:click.exact="sortBy('bug__external_id')"
               v-on:click.ctrl.exact="addSort('bug__external_id')"
               :class="{
@@ -114,17 +128,6 @@
               }"
             >
               External Bug
-            </th>
-            <th
-              v-on:click.exact="sortBy('has_optimization')"
-              v-on:click.ctrl.exact="addSort('has_optimization')"
-              :class="{
-                active:
-                  sortKeys.includes('has_optimization') ||
-                  sortKeys.includes('-has_optimization'),
-              }"
-            >
-              Pending Optimization
             </th>
           </tr>
         </thead>
@@ -137,6 +140,7 @@
           <Row
             v-for="bucket in orderedBuckets"
             :activity-range="activityRange"
+            :can-edit="canEdit"
             :key="bucket.id"
             :providers="providers"
             :bucket="bucket"
@@ -169,31 +173,37 @@ export default {
       type: Number,
       required: true,
     },
+    canEdit: {
+      type: Boolean,
+      required: true,
+    },
+    watchUrl: {
+      type: String,
+      required: true,
+    },
     providers: {
       type: Array,
       required: true,
     },
   },
   data: function () {
-    const validSortKeys = [
-      "best_quality",
-      "bug__external_id",
-      "has_optimization",
-      "id",
-      "short_description",
-      "size",
-    ];
-    const defaultSortKeys = ["-id"];
+    const validSortKeys = ["bug__external_id", "id", "description", "size"];
+    const defaultSortKeys = ["-size"];
+
     return {
+      buckets: [],
+      currentEntries: "?",
+      currentPage: 1,
       defaultSortKeys: defaultSortKeys,
       loading: false,
       modifiedCache: {},
+      pageSize: 100,
       queryError: "",
       queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
       searchStr: "",
-      buckets: [],
       sortKeys: [...defaultSortKeys],
       totalEntries: "?",
+      totalPages: 1,
       validSortKeys: validSortKeys,
     };
   },
@@ -208,11 +218,18 @@ export default {
       );
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
+      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
+        try {
+          this.currentPage = Number.parseInt(hash.page, 10);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.debug(`parsing '#page=\\d+': ${e}`);
+        }
+      }
       if (Object.prototype.hasOwnProperty.call(hash, "query")) {
         this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
       }
     }
-    this.updateHash();
     this.fetch();
   },
   computed: {
@@ -254,6 +271,9 @@ export default {
     buildParams() {
       return {
         vue: "1",
+        limit: this.pageSize,
+        offset: `${(this.currentPage - 1) * this.pageSize}`,
+        ordering: this.sortKeys.join(),
         query: this.queryStr,
       };
     },
@@ -272,8 +292,19 @@ export default {
         this.queryError = "";
         try {
           const data = await api.listBuckets(this.buildParams());
-          this.buckets = data;
-          this.totalEntries = this.buckets.length;
+          this.buckets = data.results;
+          this.currentEntries = this.buckets.length;
+          this.totalEntries = data.count;
+          this.totalPages = Math.max(
+            Math.ceil(this.totalEntries / this.pageSize),
+            1,
+          );
+          if (this.currentPage > this.totalPages) {
+            this.currentPage = this.totalPages;
+            this.fetch();
+            return;
+          }
+          this.updateHash();
         } catch (err) {
           if (
             err.response &&
@@ -283,7 +314,8 @@ export default {
             this.queryError = err.response.data.detail;
             this.loading = false;
           } else {
-            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+            // if the page loaded, but the fetch failed, either the network went away or
+            // we need to refresh auth
             // eslint-disable-next-line no-console
             console.debug(errorParser(err));
             this.$router.go(0);
@@ -295,8 +327,23 @@ export default {
       500,
       { trailing: true },
     ),
+    nextPage: function () {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+        this.fetch();
+      }
+    },
+    prevPage: function () {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.fetch();
+      }
+    },
     updateHash() {
       let hash = {};
+      if (this.currentPage !== 1) {
+        hash.page = this.currentPage;
+      }
       this.updateHashSort(hash);
       if (this.queryStr) hash.query = encodeURIComponent(this.queryStr);
       if (Object.entries(hash).length) {

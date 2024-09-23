@@ -1,0 +1,21 @@
+{% extends 'layouts/layout_base.html' %}
+
+{% block title %}{{ bucket_id }} - {{ description|escape }}{% endblock title %}
+
+{% block body_content %}
+{% csrf_token %}
+<bucketview
+  :activity-range="{{ activity_range }}"
+  :bucket="{{ bucket }}"
+  :can-edit="{% if perms.reportmanager.reportmanager_write %}true{% else %}false{% endif %}"
+  :providers="{{ providers }}"
+  {% if False %}
+  create-bug-url="{% url 'reportmanager:createbug' %}"
+  {% endif %}
+  reports-url="{% url 'reportmanager:reports' %}#bucket={{ bucket_id }}"
+  del-url="{% url 'reportmanager:bucketdel' bucket_id %}"
+  edit-url="{% url 'reportmanager:bucketedit' bucket_id %}"
+  opt-url="{% url 'reportmanager:bucketopt' bucket_id %}"
+  watch-url="{% url 'reportmanager:bucketwatchnew' %}"
+  />
+{% endblock body_content %}

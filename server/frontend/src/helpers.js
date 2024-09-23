@@ -48,18 +48,8 @@ export const formatSizeFriendly = (sz) => {
   return sz + "";
 };
 
-export const formatClientTimestamp = (datetime) => {
-  const date = new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false,
-  }).formatToParts(new Date(datetime));
-  return Object.values(date)
-    .map(({ value }) => (value === ", " ? " " : value))
-    .join("");
+export const date = (datetime) => {
+  return new Date(datetime).toUTCString();
 };
 
 export const assignExternalBug = (bucketId, bugId, providerId) => {
@@ -79,36 +69,6 @@ export const assignExternalBug = (bucketId, bugId, providerId) => {
   } catch (err) {
     return Promise.reject(err);
   }
-};
-
-export const formatDateRelative = (datetime, relative_to, suffix) => {
-  relative_to = relative_to !== undefined ? new Date(relative_to) : new Date();
-  suffix = suffix !== undefined ? suffix : "ago";
-  const delta =
-    Math.abs(relative_to.getTime() - new Date(datetime).getTime()) / 1000;
-  const days = Math.floor(delta / 86400);
-  const hours = Math.floor((delta % 86400) / 3600);
-  const minutes = Math.floor((delta % 3600) / 60);
-  let ret = "";
-  if (days > 1) {
-    ret += `${days} days `;
-  } else if (days > 0) {
-    ret += `${days} day `;
-  }
-  if (hours > 1) {
-    ret += `${hours} hours `;
-  } else if (hours > 0) {
-    ret += `${hours} hour `;
-  }
-  if (minutes > 1) {
-    ret += `${minutes} minutes `;
-  } else if (minutes > 0) {
-    ret += `${minutes} minute `;
-  }
-  if (ret.length === 0) {
-    ret = "less than a minute ";
-  }
-  return ret + suffix;
 };
 
 export const parseHash = (hash) => {

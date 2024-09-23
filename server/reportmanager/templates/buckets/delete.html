@@ -1,17 +1,17 @@
 {% extends 'layouts/layout_base.html' %}
 
-{% block title %}{{ bucket.pk }} - {{ bucket.shortDescription|escape }} - Remove{% endblock title %}
+{% block title %}{{ bucket.pk }} - {{ bucket.description|escape }} - Remove{% endblock title %}
 
 {% block body_content %}
 <div class="panel panel-default">
   <div class="panel-heading"><i class="bi bi-tag-fill"></i> Remove Signature</div>
   <div class="panel-body">
     {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-    <form action="{% url 'reportmanager:sigdel' bucket.pk %}" method="post">
+    <form action="{% url 'reportmanager:bucketdel' bucket.pk %}" method="post">
       {% csrf_token %}
       <div class="alert alert-danger" role="alert">Are you sure that you want to delete this signature?</div>
       <div class="field">
-        <strong>Description:</strong> {{ bucket.shortDescription|escape }}
+        <strong>Description:</strong> {{ bucket.description|escape }}
       </div>
 
       <div class="field">

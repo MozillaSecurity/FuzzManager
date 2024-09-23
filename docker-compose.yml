@@ -20,7 +20,7 @@ services:
       - "8000:80"
 
   celery-beat:
-    container_name: fm-celery-beat
+    container_name: wcm-celery-beat
     image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 
@@ -34,7 +34,7 @@ services:
       - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
 
   celery-cron-worker:
-    container_name: fm-celery-cron-worker
+    container_name: wcm-celery-cron-worker
     image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 
@@ -50,7 +50,7 @@ services:
       - ./server/server/settings_docker.py:/src/server/server/settings_docker.py:ro
 
   celery-worker:
-    container_name: fm-celery-worker
+    container_name: wcm-celery-worker
     image: mozillasecurity/webcompatmanager:compose
     pull_policy: never
 

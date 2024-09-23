@@ -226,8 +226,8 @@ class Migration(migrations.Migration):
                 ("comments", models.CharField(max_length=4095)),
                 ("details", models.JSONField()),
                 ("reported_at", models.DateTimeField()),
-                ("url", models.URLField()),
-                ("uuid", models.UUIDField()),
+                ("url", models.URLField(max_length=4095)),
+                ("uuid", models.UUIDField(unique=True)),
             ],
         ),
         migrations.CreateModel(

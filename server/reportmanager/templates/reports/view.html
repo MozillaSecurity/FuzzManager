@@ -2,7 +2,7 @@
 
 {% load extratags %}
 
-{% block title %}{{ entry.pk }} - {{ entry.shortSignature|escape }}{% endblock title %}
+{% block title %}{{ entry.uuid }}{% endblock title %}
 
 {% block body_content %}
 <div class="panel panel-default">
@@ -11,53 +11,62 @@
     <table class="table">
       <tr><td>Status</td><td>
   {% if entry.bucket %}
-        Assigned to bucket <a href="{% url 'reportmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
+        Assigned to bucket <a href="{% url 'reportmanager:bucketview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
     {% if entry.bucket.bug %}
         Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bucket.bug.external_type.url_template|varformat:entry.bucket.bug.external_id }}" target="_blank"> bug {{ entry.bucket.bug.external_id }}</a>.
     {% else %}
-        Unreported.
+        No bug associated.
     {% endif %}
   {% else %}
         Not assigned to any bucket.
   {% endif %}
 
+  {% if perms.reportmanager.reportmanager_write %}
+        <br/><br/>
+        <div class="btn-group">
   {% if entry.bucket %}
     {% if not entry.bucket.bug %}
-        <br/><br/>
-        <div class="btn-group">
           <a href="{% url 'reportmanager:createbug' entry.pk %}" class="btn btn-danger">File a bug</a>
           <assignbutton :bucket="{{ entry.bucket.pk }}" :providers="{{ providers }}" />
-        </div>
     {% else %}
-        <br/><br/>
-        <div class="btn-group">
           <a href="{% url 'reportmanager:createbugcomment' entry.pk %}" class="btn btn-danger">Post a bug comment</a>
-        </div>
     {% endif %}
   {% else %}
-        <br/><br/>
-        <div class="btn-group">
-          <a href="{% url 'reportmanager:signew' %}?report_id={{ entry.pk }}" class="btn btn-danger">Create</a>
-          <a href="{% url 'reportmanager:findsigs' entry.pk %}" class="btn btn-default">Search</a>
+          <!--a href="{% url 'reportmanager:bucketnew' %}?report_id={{ entry.pk }}" class="btn btn-danger">Create</a-->
+          <!--a href="{% url 'reportmanager:findbuckets' entry.pk %}" class="btn btn-default">Search</a-->
+  {% endif %}
         </div>
   {% endif %}
       </td></tr>
-      <tr><td>Created</td><td>{{ entry.created|date:"r" }}</td></tr>
-      <tr><td>Client</td><td>{{ entry.client.name|escape }}</td></tr>
-      <tr><td>Short Signature</td><td class="wrap-anywhere">{{ entry.shortSignature|escape }}</td></tr>
-      <tr><td>Product</td><td>{{ entry.product.name }}</td></tr>
-      <tr><td>Version</td><td>{{ entry.product.version }}</td></tr>
-      <tr><td>Platform</td><td>{{ entry.platform.name }}</td></tr>
+      <tr><td>Reported</td><td>{{ entry.reported_at|date:"r" }}</td></tr>
+      <tr><td>UUID</td><td>{{ entry.uuid }}</td></tr>
+      <tr><td>URL</td><td class="wrap-anywhere">{{ entry.url }}</td></tr>
+      <tr><td>App</td><td>{{ entry.app.name }}</td></tr>
+      <tr><td>Channel</td><td>{{ entry.app.channel }}</td></tr>
+      <tr><td>Version</td><td>{{ entry.app.version }}</td></tr>
+      <tr><td>Breakage Category</td><td>{{ entry.breakage_category.value }}</td></tr>
       <tr><td>OS</td><td>{{ entry.os.name }}</td></tr>
-      <tr><td>Reported by Tool</td><td>{{ entry.tool.name }}</td></tr>
     </table>
 
+  {% if perms.reportmanager.reportmanager_write %}
     <div class="btn-group">
-      <a href="{% url 'reportmanager:reportedit' entry.pk %}" class="btn btn-default">Edit</a>
+      <!--a href="{% url 'reportmanager:reportedit' entry.pk %}" class="btn btn-default">Edit</a-->
       <a href="{% url 'reportmanager:reportdel' entry.pk %}" class="btn btn-danger">Delete</a>
     </div>
+    <br /><br />
+  {% endif %}
 
-    <br/><br/>
+    <div class="field">
+      <strong>Comments</strong>
+      <pre><code v-pre>{{ entry.comments }}</code></pre>
+    </div>
+    <br/>
+
+    <div class="field">
+      <strong>Details</strong>
+      <pre><code v-pre>{{ entry.details|jsonpp }}</code></pre>
+    </div>
+    <br/>
 
   </div>
 </div>

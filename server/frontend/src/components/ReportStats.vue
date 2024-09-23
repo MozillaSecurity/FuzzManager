@@ -6,9 +6,9 @@
     <div class="panel-body">
       <div>
         Total reports in:<br />
-        ... last hour: {{ totals[0] }}<br />
-        ... last day: {{ totals[1] }}<br />
-        ... last week: {{ totals[2] }}
+        ... last day: {{ totals[0] }}<br />
+        ... last week: {{ totals[1] }}<br />
+        ... last month: {{ totals[2] }}
       </div>
     </div>
     <div class="panel-body">
@@ -28,12 +28,12 @@
               Bucket
             </th>
             <th
-              v-on:click.exact="sortBy('short_description')"
-              v-on:click.ctrl.exact="addSort('short_description')"
+              v-on:click.exact="sortBy('description')"
+              v-on:click.ctrl.exact="addSort('description')"
               :class="{
                 active:
-                  sortKeys.includes('short_description') ||
-                  sortKeys.includes('short_description'),
+                  sortKeys.includes('description') ||
+                  sortKeys.includes('description'),
               }"
             >
               Short Description
@@ -48,7 +48,7 @@
                   sortKeys.includes('-counts[0]'),
               }"
             >
-              Reports (last hour)
+              Reports (last day)
             </th>
             <th
               v-on:click.exact="sortBy('counts[1]')"
@@ -59,7 +59,7 @@
                   sortKeys.includes('-counts[1]'),
               }"
             >
-              Reports (last day)
+              Reports (last week)
             </th>
             <th
               v-on:click.exact="sortBy('counts[2]')"
@@ -70,7 +70,7 @@
                   sortKeys.includes('-counts[2]'),
               }"
             >
-              Reports (last week)
+              Reports (last month)
             </th>
             <th
               v-on:click.exact="sortBy('bug__external_id')"
@@ -96,7 +96,7 @@
               <a title="View bucket" :href="bucket.view_url">{{ bucket.id }}</a>
             </td>
             <td class="wrap-anywhere">
-              <span class="two-line-limit">{{ bucket.short_description }}</span>
+              <span class="two-line-limit">{{ bucket.description }}</span>
             </td>
             <td>
               <activitygraph
@@ -119,7 +119,11 @@
               <p v-else-if="bucket.bug">
                 {{ bucket.bug }} on {{ bucket.bug_hostname }}
               </p>
-              <assignbutton v-else :bucket="bucket.id" :providers="providers" />
+              <assignbutton
+                v-else-if="canEdit"
+                :bucket="bucket.id"
+                :providers="providers"
+              />
             </td>
           </tr>
         </tbody>
@@ -154,7 +158,7 @@ export default {
       "counts[1]",
       "counts[2]",
       "id",
-      "short_description",
+      "description",
     ];
     return {
       defaultSortKeys: defaultSortKeys,
@@ -163,7 +167,7 @@ export default {
       // [Bucket()]
       bucketData: [],
       sortKeys: [...defaultSortKeys],
-      // [hour, day, week]
+      // [day, week, month]
       totals: [],
       validSortKeys: validSortKeys,
     };
@@ -198,23 +202,23 @@ export default {
 
           // process result
           this.totals = stats.totals;
-          this.graphData = stats.graphData;
+          this.graphData = stats.graph_data;
 
           // then get buckets for those stats
-          if (Object.keys(stats.frequentBuckets).length) {
+          if (Object.keys(stats.frequent_buckets).length) {
             const bucketData = await api.listBuckets({
               vue: "1",
               query: JSON.stringify({
                 op: "AND",
-                id__in: Object.keys(stats.frequentBuckets),
+                id__in: Object.keys(stats.frequent_buckets),
               }),
             });
-            Object.keys(stats.frequentBuckets).forEach((x) =>
-              bucketData.forEach((b) => {
-                if (b.id == x) b.counts = stats.frequentBuckets[x];
+            Object.keys(stats.frequent_buckets).forEach((x) =>
+              bucketData.results.forEach((b) => {
+                if (b.id == x) b.counts = stats.frequent_buckets[x];
               }),
             );
-            this.bucketData = bucketData;
+            this.bucketData = bucketData.results;
           } else {
             this.bucketData = [];
           }

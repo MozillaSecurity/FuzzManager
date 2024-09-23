@@ -7,30 +7,13 @@
         <HelpJSONQueryPopover
           :parameters="[
             { name: 'id', type: 'Integer (ID)' },
-            { name: 'created', type: 'Date' },
-            { name: 'tool', type: 'Integer (ID)' },
-            { name: 'tool__name', type: 'String' },
-            { name: 'platform', type: 'Integer (ID)' },
-            { name: 'platform__name', type: 'String' },
-            { name: 'product', type: 'Integer (ID)' },
-            { name: 'product__name', type: 'String' },
+            { name: 'reported_at', type: 'Date' },
             { name: 'os', type: 'Integer (ID)' },
             { name: 'os__name', type: 'String' },
-            { name: 'testcase', type: 'Integer (ID)' },
-            { name: 'testcase__test', type: 'String' },
-            { name: 'testcase__quality', type: 'Integer' },
             { name: 'bucket', type: 'Integer (ID)' },
             { name: 'bucket__signature', type: 'String' },
-            { name: 'bucket__shortDescription', type: 'String' },
+            { name: 'bucket__description', type: 'String' },
             { name: 'bucket__bug__external_id', type: 'String' },
-            { name: 'rawStdout', type: 'String' },
-            { name: 'rawStderr', type: 'String' },
-            { name: 'rawReportData', type: 'String' },
-            { name: 'metadata', type: 'String' },
-            { name: 'env', type: 'String' },
-            { name: 'args', type: 'String' },
-            { name: 'reportAddress', type: 'String' },
-            { name: 'shortSignature', type: 'String' },
           ]"
         />
         <textarea
@@ -57,14 +40,6 @@
           name="search"
           autocomplete="off"
           v-model="searchStr"
-        /><br />
-        <label for="id_bucketed">Include Bucketed</label>:
-        <input
-          id="id_bucketed"
-          type="checkbox"
-          name="bucketed"
-          :disabled="!canUnshowBucketed"
-          v-model="showBucketed"
         /><br />
       </span>
       <span v-if="advancedQuery">
@@ -94,6 +69,7 @@
         Query
       </button>
       <button
+        v-if="canEdit"
         v-on:click="deleteQuery"
         :disabled="modified || loading || !haveResults"
         :title="deleteButtonTitle"
@@ -116,8 +92,8 @@
         >
           {{ totalEntries }} entries matching query.
         </span>
-        <span v-else-if="!showBucketed">
-          {{ totalEntries }} unbucketed entries.
+        <span v-else-if="watchId !== null && currentEntries">
+          {{ totalEntries }} new entries in bucket {{ reports[0].bucket }}.
         </span>
         <span v-else>{{ totalEntries }} entries.</span>
       </p>
@@ -151,23 +127,24 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('id')"
-              v-on:click.ctrl.exact="addSort('id')"
-              :class="{
-                active: sortKeys.includes('id') || sortKeys.includes('-id'),
-              }"
-            >
-              ID
-            </th>
-            <th
-              v-on:click.exact="sortBy('created')"
-              v-on:click.ctrl.exact="addSort('created')"
+              v-on:click.exact="sortBy('reported_at')"
+              v-on:click.ctrl.exact="addSort('reported_at')"
               :class="{
                 active:
-                  sortKeys.includes('created') || sortKeys.includes('-created'),
+                  sortKeys.includes('reported_at') ||
+                  sortKeys.includes('-reported_at'),
               }"
             >
-              Date Added
+              Date Reported
+            </th>
+            <th
+              v-on:click.exact="sortBy('uuid')"
+              v-on:click.ctrl.exact="addSort('uuid')"
+              :class="{
+                active: sortKeys.includes('uuid') || sortKeys.includes('-uuid'),
+              }"
+            >
+              UUID
             </th>
             <th
               v-on:click.exact="sortBy('bucket')"
@@ -180,81 +157,57 @@
               Bucket
             </th>
             <th
-              v-on:click.exact="sortBy('shortSignature')"
-              v-on:click.ctrl.exact="addSort('shortSignature')"
+              v-on:click.exact="sortBy('url')"
+              v-on:click.ctrl.exact="addSort('url')"
               :class="{
-                active:
-                  sortKeys.includes('shortSignature') ||
-                  sortKeys.includes('-shortSignature'),
+                active: sortKeys.includes('url') || sortKeys.includes('-url'),
               }"
             >
-              Short Signature
+              URL
             </th>
             <th
-              v-on:click.exact="sortBy('reportAddress')"
-              v-on:click.ctrl.exact="addSort('reportAddress')"
+              v-on:click.exact="sortBy('app__name')"
+              v-on:click.ctrl.exact="addSort('app__name')"
               :class="{
                 active:
-                  sortKeys.includes('reportAddress') ||
-                  sortKeys.includes('-reportAddress'),
+                  sortKeys.includes('app__name') ||
+                  sortKeys.includes('-app__name'),
               }"
             >
-              Report Address
+              App
             </th>
             <th
-              v-on:click.exact="sortBy('testcase__size')"
-              v-on:click.ctrl.exact="addSort('testcase__size')"
+              v-on:click.exact="sortBy('app__channel')"
+              v-on:click.ctrl.exact="addSort('app__channel')"
               :class="{
                 active:
-                  sortKeys.includes('testcase__size') ||
-                  sortKeys.includes('-testcase__size'),
+                  sortKeys.includes('app__channel') ||
+                  sortKeys.includes('-app__channel'),
               }"
             >
-              Test Size
+              Channel
             </th>
             <th
-              v-on:click.exact="sortBy('testcase__quality')"
-              v-on:click.ctrl.exact="addSort('testcase__quality')"
+              v-on:click.exact="sortBy('app__version')"
+              v-on:click.ctrl.exact="addSort('app__version')"
               :class="{
                 active:
-                  sortKeys.includes('testcase__quality') ||
-                  sortKeys.includes('-testcase__quality'),
-              }"
-            >
-              Test Info
-            </th>
-            <th
-              v-on:click.exact="sortBy('product__name')"
-              v-on:click.ctrl.exact="addSort('product__name')"
-              :class="{
-                active:
-                  sortKeys.includes('product__name') ||
-                  sortKeys.includes('-product__name'),
-              }"
-            >
-              Product
-            </th>
-            <th
-              v-on:click.exact="sortBy('product__version')"
-              v-on:click.ctrl.exact="addSort('product__version')"
-              :class="{
-                active:
-                  sortKeys.includes('product__version') ||
-                  sortKeys.includes('-product__version'),
+                  sortKeys.includes('app__version') ||
+                  sortKeys.includes('-app__version'),
               }"
             >
               Version
             </th>
             <th
-              v-on:click.exact="sortBy('platform__name')"
-              v-on:click.ctrl.exact="addSort('platform__name')"
+              v-on:click.exact="sortBy('breakage_category__value')"
+              v-on:click.ctrl.exact="addSort('breakage_category__value')"
               :class="{
                 active:
-                  sortKeys.includes('platform__name') ||
-                  sortKeys.includes('-platform__name'),
+                  sortKeys.includes('breakage_category__value') ||
+                  sortKeys.includes('-breakage_category__value'),
               }"
             >
-              Platform
+              Breakage Category
             </th>
             <th
               v-on:click.exact="sortBy('os__name')"
@@ -267,22 +220,11 @@
             >
               OS
             </th>
-            <th
-              v-on:click.exact="sortBy('tool__name')"
-              v-on:click.ctrl.exact="addSort('tool__name')"
-              :class="{
-                active:
-                  sortKeys.includes('tool__name') ||
-                  sortKeys.includes('-tool__name'),
-              }"
-            >
-              Tool
-            </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="11">
+            <td colspan="9">
               <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
             </td>
           </tr>
@@ -318,21 +260,16 @@ import DeleteConfirmation from "./DeleteConfirmation.vue";
 
 const pageSize = 100;
 const validFilters = {
+  app__channel: "Channel",
+  app__name: "App",
+  app__version: "Version",
+  breakage_category__value: "Breakage Category",
   bucket: "Bucket",
-  client__name: "Client name",
-  client__name__contains: "Client name (sub-string match)",
+  id: "ID",
   os__name: "OS",
-  platform__name: "Platform",
-  product__name: "Product",
-  product__version: "Version",
-  testcase__quality: "Testcase Quality",
-  testcase__quality__gt: "Testcase Quality (greater than)",
-  testcase__quality__lt: "Testcase Quality (lesser than)",
-  testcase__size__gt: "Testcase Size (greater than)",
-  testcase__size__lt: "Testcase Size (lesser than)",
-  testcase__size: "Testcase Size",
-  tool__name: "Tool",
-  tool__name__contains: "Tool (sub-string match)",
+  reported_at: "Date Reported",
+  url: "URL",
+  uuid: "UUID",
 };
 
 export default {
@@ -342,21 +279,30 @@ export default {
     ClipLoader,
     HelpJSONQueryPopover,
   },
+  props: {
+    canEdit: {
+      type: Boolean,
+      required: true,
+    },
+    watchId: {
+      type: Number,
+      required: false,
+      default: null,
+    },
+  },
   data: function () {
     const defaultSortKeys = ["-id"];
     const validSortKeys = [
+      "app__channel",
+      "app__name",
+      "app__version",
+      "breakage_category__value",
       "bucket",
-      "reportAddress",
-      "created",
       "id",
       "os__name",
-      "platform__name",
-      "product__name",
-      "product__version",
-      "shortSignature",
-      "testcase__quality",
-      "testcase__size",
-      "tool__name",
+      "reported_at",
+      "url",
+      "uuid",
     ];
     return {
       advancedQuery: false,
@@ -364,8 +310,6 @@ export default {
       advancedQueryStr: "",
       cachedAdvancedQueryStr: null,
       cachedSearchStr: null,
-      cachedShowBucketed: null,
-      canUnshowBucketed: true,
       reports: null,
       currentEntries: "?",
       currentPage: 1,
@@ -376,7 +320,6 @@ export default {
       haveResults: false,
       loading: true,
       searchStr: "",
-      showBucketed: false,
       sortKeys: [...defaultSortKeys],
       totalEntries: "?",
       totalPages: 1,
@@ -385,7 +328,6 @@ export default {
     };
   },
   created: function () {
-    this.showBucketed = false;
     if (this.$route.query.q) this.searchStr = this.$route.query.q;
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
@@ -407,14 +349,9 @@ export default {
           2,
         );
       } else {
-        this.showBucketed = hash.bucketed === "1";
         for (const filter of Object.keys(validFilters)) {
           if (Object.prototype.hasOwnProperty.call(hash, filter)) {
             this.filters[filter] = hash[filter];
-            if (filter == "bucket") {
-              this.showBucketed = true;
-              this.canUnshowBucketed = false;
-            }
           }
         }
       }
@@ -438,11 +375,6 @@ export default {
           console.debug("not modified (advanced)");
           return false;
         }
-      }
-      if (this.showBucketed !== this.cachedShowBucketed) {
-        // eslint-disable-next-line no-console
-        console.debug("modified because show_bucketed differs (basic)");
-        return true;
       }
       if (this.searchStr.trim() !== this.cachedSearchStr) {
         // eslint-disable-next-line no-console
@@ -468,10 +400,6 @@ export default {
   methods: {
     addFilter: function (key, value) {
       this.filters[key] = value;
-      if (key == "bucket") {
-        this.showBucketed = true;
-        this.canUnshowBucketed = false;
-      }
       this.fetch();
     },
     buildCommonParams() {
@@ -479,6 +407,7 @@ export default {
         query: this.advancedQuery
           ? this.advancedQueryStr
           : JSON.stringify(this.buildSimpleQuery()),
+        watch: this.watchId === null ? false : this.watchId,
       };
     },
     buildDeleteParams() {
@@ -486,7 +415,7 @@ export default {
       result.query = JSON.stringify({
         op: "AND",
         _: JSON.parse(result.query),
-        created__lte: this.queryTime,
+        id__lte: this.queryMaxID,
       });
       return result;
     },
@@ -506,7 +435,6 @@ export default {
         this.cachedAdvancedQueryStr = JSON.parse(this.advancedQueryStr);
       } catch (e) {} // eslint-disable-line no-empty
       this.cachedSearchStr = this.searchStr.trim();
-      this.cachedShowBucketed = this.showBucketed;
     },
     buildSimpleQuery: function () {
       let query = Object.assign({ op: "AND" }, this.filters);
@@ -520,9 +448,6 @@ export default {
           args__contains: searchStr,
         };
       }
-      if (!this.showBucketed) {
-        query["bucket__isnull"] = true;
-      }
       return query;
     },
     convertFiltersToAdvancedQuery: function () {
@@ -533,17 +458,15 @@ export default {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
-      this.showBucketed = this.filters["bucket"] !== undefined;
-      this.canUnshowBucketed = true;
       this.updateHash();
     },
     deleteQuery: async function () {
-      // - show confirmation modal with affected tool breakdown
+      // - show confirmation modal with affected report count
       const FormCtor = Vue.extend(DeleteConfirmation);
       const deleteConfirmForm = new FormCtor({
         parent: this,
         propsData: {
-          toolReports: this.toolReports,
+          reportCount: this.totalEntries,
         },
       }).$mount();
       const value = await swal({
@@ -612,8 +535,7 @@ export default {
         try {
           const data = await api.listReports(this.buildQueryParams());
           this.reports = data.results;
-          this.queryTime = data.query_time;
-          this.toolReports = data.tools;
+          this.queryMaxID = data.query_max_id;
           this.currentEntries = this.reports.length;
           this.totalEntries = data.count;
           this.haveResults = data.count > 0 ? true : false;
@@ -669,9 +591,6 @@ export default {
     removeFilter: function (key) {
       if (Object.prototype.hasOwnProperty.call(this.filters, key)) {
         delete this.filters[key];
-        if (key == "bucket") {
-          this.canUnshowBucketed = true;
-        }
         this.fetch();
       }
     },
@@ -683,8 +602,6 @@ export default {
       const hash = parseHash(this.$route.hash);
       if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
         this.filters["bucket"] = hash.bucket;
-      this.showBucketed = this.filters["bucket"] !== undefined;
-      this.canUnshowBucketed = true;
       this.fetch();
     },
     updateHash: function () {
@@ -701,7 +618,6 @@ export default {
       } else {
         if (this.searchStr.trim() !== "")
           hash.search = encodeURIComponent(this.searchStr.trim());
-        if (this.showBucketed) hash.bucketed = "1";
         for (const [key, value] of Object.entries(this.filters))
           hash[key] = encodeURIComponent(value);
       }

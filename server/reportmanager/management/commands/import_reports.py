@@ -1,11 +1,13 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+from contextlib import suppress
 from pathlib import Path
 
 from django.core.management import BaseCommand
+from django.db.utils import IntegrityError
 
-from reportmanager.models import ReportEntry
+from reportmanager.models import ReportEntry, ReportHit
 from webcompat.models import Report
 
 
@@ -16,8 +18,14 @@ class Command(BaseCommand):
         for report_path in options["reports"]:
             with report_path.open() as report_file:
                 for report in report_file:
-                    report_obj = Report.load(report)
-                    ReportEntry.objects.create_from_report(report_obj)
+                    try:
+                        report_obj = Report.load(report)
+                    except KeyError:
+                        continue
+                    with suppress(IntegrityError):
+                        ReportEntry.objects.create_from_report(report_obj)
+        # reset stats
+        ReportHit.objects.all().delete()
 
     def add_arguments(self, parser):
         def existing_path(arg):

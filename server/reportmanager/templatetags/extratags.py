@@ -42,3 +42,8 @@ def jsonparse(value):
     if value:
         return json.loads(value)
     return ""
+
+
+@register.filter
+def jsonpp(value):
+    return json.dumps(value, indent=2, sort_keys=True)

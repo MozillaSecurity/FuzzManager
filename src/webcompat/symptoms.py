@@ -154,11 +154,9 @@ class TimeRangeMatcher(TimeMatcher):
         self.after = after
 
     def matches(self, value: datetime) -> bool:  # type: ignore[override]
-        if self.after is not None and value <= self.after:
-            return False
-        if self.before is not None and value >= self.before:
-            return False
-        return True
+        return (self.after is None or value > self.after) and (
+            self.before is None or value < self.before
+        )
 
 
 @dataclass

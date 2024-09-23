@@ -20,17 +20,6 @@
 		  <td>{{ entry.created|date:"r" }}</td>
 	<td v-pre>{{ entry.shortSignature|escape }}</td>
 	<td>{{ entry.reportAddress|escape }}</td>
-	<td>
-		{% if entry.testcase %}
-			Q{{entry.testcase.quality}}
-			{{ entry.testcase.size }}
-			{% if entry.testcase.isBinary %}
-				(binary)
-			{% endif %}
-		{% else %}
-			No test
-		{% endif %}
-	</td>
 	<td>{{ entry.product.name|escape }}</td>
 	<td>{{ entry.product.version|escape }}</td>
 	<td>{{ entry.platform.name|escape }}</td>

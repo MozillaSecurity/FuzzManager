@@ -10,28 +10,29 @@ RUN npm run production
 
 FROM python:3.10-alpine as backend
 
-RUN apk add --no-cache build-base git mariadb-dev
+RUN apk add --no-cache build-base git mariadb-dev && pip install tomli
 
 # Install dependencies before copying src, so pip is only run when needed
 # Also install build dependencies that are otherwise missed in wheel cache
 #   (from pyproject.toml [build-system].requires)
-COPY ./requirements.txt ./setup.cfg /src/
+COPY ./requirements.txt ./pyproject.toml /src/
 RUN cd /src && \
-   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
+   python -c "import tomli; from itertools import chain; pyp=tomli.load(open('pyproject.toml','rb')); deps=pyp['project']['dependencies']; extras=pyp['project']['optional-dependencies']; print('\0'.join(chain(deps, extras['docker'], extras['server'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
    pip wheel -q --wheel-dir /var/cache/wheels wheel setuptools_scm[toml]
 
 FROM python:3.10-alpine
 
 RUN adduser -D worker && \
    apk add --no-cache bash git mariadb-client mariadb-connector-c openssh-client-default && \
+   pip install tomli && \
    rm -rf /var/log/*
 
 COPY --from=backend /var/cache/wheels /var/cache/wheels
 
-COPY ./requirements.txt ./setup.cfg /src/
+COPY ./requirements.txt ./pyproject.toml /src/
 USER worker
 RUN cd /src && \
-   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'])))" | xargs -0 pip install --no-cache-dir --no-index --find-links /var/cache/wheels -q -c requirements.txt
+   python -c "import tomli; from itertools import chain; pyp=tomli.load(open('pyproject.toml','rb')); deps=pyp['project']['dependencies']; extras=pyp['project']['optional-dependencies']; print('\0'.join(chain(deps, extras['docker'], extras['server'])))" | xargs -0 pip install --no-cache-dir --no-index --find-links /var/cache/wheels -q -c requirements.txt
 
 # Embed full source code
 USER root
@@ -59,4 +60,4 @@ RUN python manage.py collectstatic --no-input
 # Run with gunicorn, using container's port 80
 ENV PORT 80
 EXPOSE 80
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "--access-logfile", "-", "--capture-output", "server.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "--error-logfile", "-", "--access-logfile", "-", "--capture-output", "server.wsgi"]

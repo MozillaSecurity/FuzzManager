@@ -67,7 +67,7 @@ test("stats are shown", async () => {
   await nextTick();
   await nextTick();
 
-  // Assert two signatures are displayed in the table
+  // Assert two buckets are displayed in the table
   expect(document.querySelectorAll("tbody tr").length).toBe(2);
   getByText("A short description for bucket 1");
   const buttonLink = getByText("1630739");
@@ -163,5 +163,5 @@ test("stats are sortable", async () => {
   );
   await nextTick();
 
-  expect(router.currentRoute.hash).toBe("#sort=-shortDescription,id");
+  expect(router.currentRoute.hash).toBe("#sort=-description,id");
 });

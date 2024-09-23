@@ -3,16 +3,14 @@
     <table class="table table-condensed table-hover table-bordered table-db">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Date Added</th>
-          <th>Short Signature</th>
-          <th>Report Address</th>
-          <th>Test Status</th>
-          <th>Product</th>
+          <th>Reported</th>
+          <th>UUID</th>
+          <th>URL</th>
+          <th>App</th>
+          <th>Channel</th>
           <th>Version</th>
-          <th>Platform</th>
+          <th>Breakage Category</th>
           <th>OS</th>
-          <th>Tool</th>
         </tr>
       </thead>
       <tbody>
@@ -21,48 +19,46 @@
           :key="entry.id"
           :class="{ odd: index % 2 === 0, even: index % 2 !== 0 }"
         >
+          <td>{{ entry.reported_at | date }}</td>
           <td>
-            <a :href="entry.view_url">{{ entry.id }}</a>
+            <a :href="entry.view_url">{{ entry.uuid }}</a>
           </td>
-          <td>{{ entry.created | formatDate }}</td>
-          <td>{{ entry.shortSignature }}</td>
-          <td>{{ entry.reportAddress }}</td>
-          <td>{{ testCaseText(entry) }}</td>
-          <td>{{ entry.product }}</td>
-          <td>{{ entry.product_version }}</td>
-          <td>{{ entry.platform }}</td>
+          <td>{{ entry.url }}</td>
+          <td>{{ entry.app_name }}</td>
+          <td>{{ entry.app_channel }}</td>
+          <td>{{ entry.app_version }}</td>
+          <td>{{ entry.breakage_category }}</td>
           <td>
             <img
               width="16px"
               height="16px"
               alt="Linux"
-              :src="staticLogo(entry.os)"
-              v-if="entry.os === 'linux'"
+              :src="staticLogo('linux')"
+              v-if="entry.os === 'Linux'"
             />
             <img
               width="16px"
               height="16px"
-              alt="MacOS"
-              :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'macosx'"
+              alt="macOS"
+              :src="staticLogo('macosx')"
+              v-else-if="entry.os === 'Mac'"
             />
             <img
               width="16px"
               height="16px"
               alt="Windows"
-              :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'windows'"
+              :src="staticLogo('windows')"
+              v-else-if="entry.os === 'Windows'"
             />
             <img
               width="16px"
               height="16px"
               alt="Android"
-              :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'android'"
+              :src="staticLogo('android')"
+              v-else-if="entry.os === 'Android'"
             />
             <template v-else>{{ entry.os }}</template>
           </td>
-          <td>{{ entry.tool }}</td>
         </tr>
       </tbody>
     </table>
@@ -70,7 +66,7 @@
 </template>
 
 <script>
-import { formatClientTimestamp } from "../../../helpers";
+import { date } from "../../../helpers";
 
 export default {
   props: {
@@ -80,15 +76,9 @@ export default {
     },
   },
   filters: {
-    formatDate: formatClientTimestamp,
+    date: date,
   },
   methods: {
-    testCaseText(entry) {
-      if (!entry.testcase) return "No test";
-      let text = "Q" + entry.testcase_quality + "\n" + entry.testcase_size;
-      if (entry.testcase_isbinary) text += "\n    (binary)";
-      return text;
-    },
     staticLogo(name) {
       return window.location.origin + "/static/img/os/" + name + ".png";
     },

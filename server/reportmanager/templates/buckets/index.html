@@ -6,5 +6,7 @@
 <bucketlist
   :providers="{{ providers }}"
   :activity-range="{{ activity_range }}"
+  :can-edit="{% if perms.reportmanager.reportmanager_write %}true{% else %}false{% endif %}"
+  watch-url="{% url 'reportmanager:bucketwatch' %}"
   />
 {% endblock body_content %}

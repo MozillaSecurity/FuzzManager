@@ -13,14 +13,14 @@
             <span >Status:</span>
                 <span>
                     {% if entry.bucket %}
-                        Assigned to bucket <a href="{% url 'reportmanager:sigview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
+                        Assigned to bucket <a href="{% url 'reportmanager:bucketview' entry.bucket.pk %}">{{ entry.bucket.pk }}</a>.
                         {% if entry.bucket.bug %}
 			    Reported as <a {% if bucket.bug.closed %}class="fixedbug"{% endif %} href="{{ entry.bucket.bug.external_type.url_template|varformat:entry.bucket.bug.external_id }}" target="_blank">bug {{ entry.bucket.bug.external_id }}</a>.
                         {% else %}
                             Unreported, <a href="{% url 'reportmanager:createbug' entry.pk %}">file a bug</a>.
                         {% endif %}
                     {% else %}
-                        Not assigned to any bucket. <a href="{% url 'reportmanager:signew' %}?report_id={{ entry.pk }}">Create new</a>
+                        Not assigned to any bucket. <a href="{% url 'reportmanager:bucketnew' %}?report_id={{ entry.pk }}">Create new</a>
                     {% endif %}
                 </span>
         </div>
@@ -29,14 +29,14 @@
             {% csrf_token %}
 
             <table class="table">
-                <tr><td>Created</td><td>{{ entry.created|date:"r" }}</td></tr>
-                <tr><td>Client</td><td>{{ entry.client.name|escape }}</td></tr>
-                <tr><td>Short Signature</td><td>{{ entry.shortSignature|escape }}</td></tr>
-                <tr><td>Product</td><td>{{ entry.product.name }}</td></tr>
-                <tr><td>Version</td><td>{{ entry.product.version }}</td></tr>
-                <tr><td>Platform</td><td>{{ entry.platform.name }}</td></tr>
-                <tr><td>OS</td><td>{{ entry.os.name }}</td></tr>
-                <tr><td>Reported by Tool</td><td>{{ entry.tool.name }}</td></tr>
+              <tr><td>Reported</td><td>{{ entry.reported_at|date:"r" }}</td></tr>
+              <tr><td>UUID</td><td>{{ entry.uuid }}</td></tr>
+              <tr><td>URL</td><td class="wrap-anywhere">{{ entry.url }}</td></tr>
+              <tr><td>App</td><td>{{ entry.app.name }}</td></tr>
+              <tr><td>Channel</td><td>{{ entry.app.channel }}</td></tr>
+              <tr><td>Version</td><td>{{ entry.app.version }}</td></tr>
+              <tr><td>Breakage Category</td><td>{{ entry.breakage_category.value }}</td></tr>
+              <tr><td>OS</td><td>{{ entry.os.name }}</td></tr>
             </table>
 
             <div class="field">
@@ -56,38 +56,6 @@
             <div class="field">
                 <label for="id_rawReportData">Additional Report Data</label><br/>
                 <textarea id="id_rawReportData" name="rawReportData" spellcheck='false' style="width:100%">{{ entry.rawReportData }}</textarea>
-            </div>
-
-            <br/>
-
-            <div class="field">
-                <label  for="id_testcase">Testcase</label><br/>
-                {% if entry.testcase.isBinary %}
-                <textarea id="id_testcase" name="testcase">(binary)</textarea>
-                {% else %}
-                <textarea id="id_testcase" name="testcase" spellcheck='false' style="width:100%">{{ entry.testcase.content }}</textarea>
-                {% endif %}
-            </div>
-
-            <br/>
-
-            <div class="field">
-                <label for="id_args">Command-Line Arguments</label><br/>
-                <textarea id="id_args" name="args" spellcheck='false' style="width:100%">{{ entry.argsList|linejoin }}</textarea>
-            </div>
-
-            <br/>
-
-            <div class="field">
-                <label for="id_env">Environment</label><br/>
-                <textarea id="id_env" name="env" spellcheck='false' style="width:100%">{{ entry.envList|linejoin }}</textarea>
-            </div>
-
-            <br/>
-
-            <div class="field">
-                <label for="id_metadata">Metadata</label><br/>
-                <textarea id="id_metadata" name="metadata" spellcheck='false' style="width:100%">{{ entry.metadataList|linejoin }}</textarea>
             </div>
 
             <br/>

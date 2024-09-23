@@ -12,6 +12,12 @@ const routes = [
   },
   {
     // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
+    path: "/reportmanager/reports/watch/:bucketid/",
+    name: "reports-watch",
+    component: ReportsList,
+  },
+  {
+    // Be careful to keep this route up-to-date with the one in server/reportmanager/urls.py
     path: "/reportmanager/buckets/",
     name: "buckets-list",
     component: BucketsList,

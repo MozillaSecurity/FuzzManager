@@ -6,13 +6,12 @@
       </a>
     </td>
     <td class="wrap-anywhere">
-      <span class="two-line-limit">{{ bucket.short_description }}</span>
+      <span class="two-line-limit">{{ bucket.description }}</span>
     </td>
     <td>
       <activitygraph :data="bucket.report_history" :range="activityRange" />
     </td>
     <td>{{ bucket.size }}</td>
-    <td>{{ bucket.best_quality }}</td>
     <td>
       <a
         v-if="bucket.bug && bucket.bug_urltemplate"
@@ -25,16 +24,11 @@
       <p v-else-if="bucket.bug">
         {{ bucket.bug }} on {{ bucket.bug_hostname }}
       </p>
-      <assignbutton v-else :bucket="bucket.id" :providers="providers" />
-    </td>
-    <td>
-      <a
-        v-if="bucket.has_optimization"
-        :href="bucket.opt_pre_url"
-        class="btn btn-default"
-      >
-        Yes
-      </a>
+      <assignbutton
+        v-else-if="canEdit"
+        :bucket="bucket.id"
+        :providers="providers"
+      />
     </td>
   </tr>
 </template>
@@ -51,6 +45,10 @@ export default {
   props: {
     activityRange: {
       type: Number,
+      required: true,
+    },
+    canEdit: {
+      type: Boolean,
       required: true,
     },
     providers: {

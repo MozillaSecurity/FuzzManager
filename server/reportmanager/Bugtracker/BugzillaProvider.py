@@ -11,6 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 from django.forms.models import model_to_dict
 from django.shortcuts import get_object_or_404
 from django.utils import dateparse

@@ -3,5 +3,8 @@
 {% block title %}Reports{% endblock title %}
 
 {% block body_content %}
-<reportslist />
+<reportslist
+  :can-edit="{% if perms.reportmanager.reportmanager_write %}true{% else %}false{% endif %}"
+  {% if watch_id != None %} :watch-id="{{ watch_id }}" {% endif %}
+  />
 {% endblock body_content %}

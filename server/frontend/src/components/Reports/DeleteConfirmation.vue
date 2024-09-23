@@ -1,12 +1,10 @@
 <template>
   <table>
     <tr>
-      <th>Tool</th>
       <th>Reports Affected</th>
     </tr>
-    <tr v-for="tool in tools" :key="tool">
-      <td>{{ tool }}</td>
-      <td>{{ toolReports[tool] }}</td>
+    <tr>
+      <td>{{ reportCount }}</td>
     </tr>
   </table>
 </template>
@@ -14,14 +12,9 @@
 <script>
 export default {
   props: {
-    toolReports: {
-      type: Object,
+    reportCount: {
+      type: Number,
       required: true,
-    },
-  },
-  computed: {
-    tools() {
-      return Object.keys(this.toolReports).sort();
     },
   },
 };

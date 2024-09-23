@@ -192,6 +192,7 @@ class UserSettingsForm(ModelForm):
         ),
         "email",
         HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
+        "bucket_hit",
         "inaccessible_bug",
         Submit("submit", "Save settings", css_class="btn btn-danger"),
     )
@@ -204,6 +205,7 @@ class UserSettingsForm(ModelForm):
     class Meta:
         model = User
         fields = (
+            "bucket_hit",
             "default_provider_id",
             "default_template_id",
             "inaccessible_bug",

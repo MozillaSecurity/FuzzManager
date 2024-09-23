@@ -1,27 +1,26 @@
 <template>
   <div class="row override-row">
     <small class="col-md-1">
-      Received {{ notification.timestamp | date }}
+      Received {{ notification.timestamp | formatDate }}
     </small>
-    <span class="label label-danger">Inaccessible bug</span>
+    <span class="label label-info">Bucket hit</span>
     <span class="description">
       {{ notification.description }}
     </span>
     <button type="button" class="close" v-on:click="dismiss">
       <span aria-hidden="true" title="Dismiss">&times;</span>
     </button>
-    <a
-      class="btn btn-info pull-right"
-      :href="notification.external_bug_url"
-      target="_blank"
-    >
-      View external bug
-    </a>
+    <div class="btn-group pull-right" role="group">
+      <a class="btn btn-default" :href="notification.actor_url">View bucket</a>
+      <a class="btn btn-info" :href="notification.target_url">
+        View new report entry
+      </a>
+    </div>
   </div>
 </template>
 
 <script>
-import { date, errorParser } from "../../helpers";
+import { errorParser, formatClientTimestamp } from "../../helpers";
 import * as api from "../../api";
 
 export default {
@@ -32,7 +31,7 @@ export default {
     },
   },
   filters: {
-    date: date,
+    formatDate: formatClientTimestamp,
   },
   methods: {
     async dismiss() {
