@@ -355,38 +355,11 @@ def signature_create(request):
             report_entry.raw_report_data,
         )
 
-        max_stack_frames = 8
-        force_report_instruction = False
-        force_report_address = True
         error_msg = None
-
-        if "stackframes" in request.GET:
-            max_stack_frames = int(request.GET["stackframes"])
-        elif any(
-            entry.startswith("std::panicking") or entry.startswith("alloc::alloc")
-            for entry in report_info.backtrace
-        ):
-            # rust panic adds 5-6 frames of noise at the top of the stack
-            max_stack_frames += 6
-
-        if "forcereportaddress" in request.GET:
-            force_report_address = bool(int(request.GET["forcereportaddress"]))
-
-        if "forcereportinstruction" in request.GET:
-            force_report_instruction = bool(int(request.GET["forcereportinstruction"]))
 
         # First try to create the signature with the report address included.
         # However, if that fails, try without forcing the report signature.
-        proposed_signature = report_info.create_report_signature(
-            force_report_address=force_report_address,
-            force_report_instruction=force_report_instruction,
-            max_frames=max_stack_frames,
-        )
-        if proposed_signature is None:
-            error_msg = report_info.failure_reason
-            proposed_signature = report_info.create_report_signature(
-                max_frames=max_stack_frames
-            )
+        proposed_signature = report_info.create_report_signature()
 
         proposed_signature = str(proposed_signature)
         proposed_short_desc = report_info.create_short_signature()
@@ -953,6 +926,8 @@ class BucketViewSet(
 
         if "signature" in serializer.validated_data:
             bucket.signature = serializer.validated_data["signature"]
+        if "priority" in serializer.validated_data:
+            bucket.priority = serializer.validated_data["priority"]
         if "description" in serializer.validated_data:
             bucket.description = serializer.validated_data["description"]
 
@@ -973,6 +948,7 @@ class BucketViewSet(
 
         bucket = Bucket(
             signature=serializer.validated_data.get("signature"),
+            priority=serializer.validated_data.get("priority"),
             description=serializer.validated_data.get("description"),
         )
 

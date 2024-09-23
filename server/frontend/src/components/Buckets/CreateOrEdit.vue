@@ -149,6 +149,7 @@ export default {
   data: () => ({
     bucket: {
       description: "",
+      priority: 0,
       signature: "",
     },
     reassign: true,
@@ -172,6 +173,7 @@ export default {
       this.loading = save ? "create" : "preview";
       const payload = {
         description: this.bucket.description,
+        priority: this.bucket.priority,
         signature: this.bucket.signature,
       };
 
@@ -183,11 +185,11 @@ export default {
         if (save) {
           window.location.href = data.url;
         }
-        this.warning = data.warningMessage;
-        this.inList = data.inList;
-        this.outList = data.outList;
-        this.inListCount = data.inListCount;
-        this.outListCount = data.outListCount;
+        this.warning = data.warning_message;
+        this.inList = data.in_list;
+        this.outList = data.out_list;
+        this.inListCount = data.in_list_count;
+        this.outListCount = data.out_list_count;
       } catch (err) {
         this.warning = errorParser(err);
       } finally {
@@ -198,6 +200,7 @@ export default {
       this.loading = save ? "save" : "preview";
       const payload = {
         description: this.bucket.description,
+        priority: this.bucket.priority,
         signature: this.bucket.signature,
       };
 
