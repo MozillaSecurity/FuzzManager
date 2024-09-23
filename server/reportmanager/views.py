@@ -769,8 +769,8 @@ class BucketViewSet(
     queryset = Bucket.objects.all().select_related("bug", "bug__external_type")
     serializer_class = BucketSerializer
     filter_backends = (
-        JsonQueryFilterBackend,
         BucketAnnotateFilterBackend,
+        JsonQueryFilterBackend,
         OrderingFilter,
     )
     ordering_fields = (
