@@ -415,7 +415,7 @@ export default {
       result.query = JSON.stringify({
         op: "AND",
         _: JSON.parse(result.query),
-        id__lte: this.queryMaxID,
+        id__lte: this.latestEntryID,
       });
       return result;
     },
@@ -535,7 +535,7 @@ export default {
         try {
           const data = await api.listReports(this.buildQueryParams());
           this.reports = data.results;
-          this.queryMaxID = data.query_max_id;
+          this.latestEntryID = data.latest_entry_id;
           this.currentEntries = this.reports.length;
           this.totalEntries = data.count;
           this.haveResults = data.count > 0 ? true : false;

@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
-from django.db.models.aggregates import Count
+from django.db.models.aggregates import Count, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -655,7 +655,11 @@ class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size"""
 
     def filter_queryset(self, request, queryset, view):
-        return queryset.annotate(size=Count("reportentry"))
+        return queryset.annotate(
+            size=Count("reportentry"),
+            latest_report=Max("reportentry__reported_at"),
+            latest_entry_id=Max("reportentry__id"),
+        )
 
 
 class WatchFilterReportsBackend(BaseFilterBackend):
@@ -727,17 +731,6 @@ class ReportEntryViewSet(
             status=status.HTTP_202_ACCEPTED,
             data=token,
         )
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-
-        if self.vue:
-            latest_entry = ReportEntry.objects.all().order_by("id").last()
-            response.data["query_max_id"] = (
-                latest_entry.id if latest_entry is not None else 0
-            )
-
-        return response
 
     def partial_update(self, request, pk=None):
         """Update individual report fields."""
@@ -823,16 +816,6 @@ class BucketViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        reports_in_filter = instance.reportentry_set
-
-        # recalculate size
-        # even if the result is 0
-        agg = reports_in_filter.aggregate(size=Count("id"))
-        instance.size = agg["size"]
-
-        if instance.size:
-            latest_report = reports_in_filter.order_by("id").last()
-            instance.latest_entry = latest_report.id
 
         serializer = self.get_serializer(instance)
         response = Response(serializer.data)

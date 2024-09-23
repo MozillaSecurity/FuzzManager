@@ -47,41 +47,55 @@
                 :data="bucket.report_history"
                 :range="activityRange"
               />
+              <div class="btn-group">
+                <a :href="reportsUrl" class="btn btn-default">View Reports</a>
+                <a
+                  title="Add/Update"
+                  class="btn btn-danger"
+                  v-on:click="submitWatchForm"
+                  >Notify on New Reports</a
+                >
+              </div>
               <form :action="watchUrl" ref="bucketWatchForm" method="post">
                 <input type="hidden" name="bucket" :value="bucket.id" />
                 <input
                   type="hidden"
                   name="report"
-                  :value="bucket.latest_entry"
-                />
-                <input
-                  type="submit"
-                  name="submit"
-                  value="Watch for New Reports"
-                  title="Add/Update"
-                  class="btn btn-default"
+                  :value="bucket.latest_entry_id"
                 />
               </form>
             </td>
+          </tr>
+          <tr>
+            <td>Latest Report</td>
+            <td>{{ bucket.latest_report | date }}</td>
+          </tr>
+          <tr>
+            <td>Priority</td>
+            <td>{{ bucket.priority }}</td>
           </tr>
         </tbody>
       </table>
 
       <strong>Signature</strong><br />
-      <pre><code>{{ bucket.signature }}</code></pre>
+      <pre><code>{{ prettySignature }}</code></pre>
 
-      <div class="btn-group">
-        <a :href="reportsUrl" class="btn btn-default">Associated Reports</a>
-        <!--a v-if="canEdit" :href="optUrl" class="btn btn-default">Optimize</a-->
-        <a v-if="canEdit" :href="editUrl" class="btn btn-default">Edit</a>
-        <a v-if="canEdit" :href="delUrl" class="btn btn-danger">Delete</a>
+      <div v-if="canEdit" class="btn-group">
+        <!--a :href="optUrl" class="btn btn-default">Optimize</a-->
+        <a :href="editUrl" class="btn btn-default">Edit</a>
+        <a :href="delUrl" class="btn btn-danger">Delete</a>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { assignExternalBug, errorParser } from "../../helpers";
+import {
+  assignExternalBug,
+  date,
+  errorParser,
+  jsonPretty,
+} from "../../helpers";
 import ActivityGraph from "../ActivityGraph.vue";
 import AssignBtn from "./AssignBtn.vue";
 import swal from "sweetalert";
@@ -91,9 +105,17 @@ export default {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
   },
+  computed: {
+    prettySignature() {
+      return jsonPretty(this.bucket.signature);
+    },
+  },
   data: () => ({
     description: "",
   }),
+  filters: {
+    date: date,
+  },
   props: {
     activityRange: {
       type: Number,
@@ -141,6 +163,9 @@ export default {
     this.$refs.bucketWatchForm.appendChild(el);
   },
   methods: {
+    submitWatchForm() {
+      this.$refs.bucketWatchForm.submit();
+    },
     unlink() {
       swal({
         title: "Unlink bug",

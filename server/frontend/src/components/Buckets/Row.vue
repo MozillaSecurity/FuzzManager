@@ -8,9 +8,11 @@
     <td class="wrap-anywhere">
       <span class="two-line-limit">{{ bucket.description }}</span>
     </td>
+    <td>{{ bucket.priority }}</td>
     <td>
       <activitygraph :data="bucket.report_history" :range="activityRange" />
     </td>
+    <td class="wrap-anywhere">{{ bucket.latest_report | date }}</td>
     <td>{{ bucket.size }}</td>
     <td>
       <a
@@ -34,6 +36,7 @@
 </template>
 
 <script>
+import { date } from "../../helpers";
 import AssignBtn from "./AssignBtn.vue";
 import ActivityGraph from "../ActivityGraph.vue";
 
@@ -41,6 +44,9 @@ export default {
   components: {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
+  },
+  filters: {
+    date: date,
   },
   props: {
     activityRange: {

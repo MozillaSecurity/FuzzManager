@@ -24,24 +24,13 @@
       </p>
 
       <form v-on:submit.prevent="">
-        <label for="id_description">Description</label><br />
+        <label for="id_bucketDescription">Description</label><br />
         <input
-          id="id_description"
+          id="id_bucketDescription"
           class="form-control"
           maxlength="1023"
           type="text"
           v-model="bucket.description"
-        />
-        <br />
-
-        <label for="id_priority">Priority</label><br />
-        <input
-          id="id_priority"
-          class="form-control"
-          type="number"
-          min="-2"
-          max="2"
-          v-model="bucket.priority"
         />
         <br />
 
@@ -50,7 +39,7 @@
           id="id_signature"
           class="form-control"
           spellcheck="false"
-          v-model="bucket.signature"
+          v-model="prettySignature"
         ></textarea>
 
         <div class="field">
@@ -60,6 +49,17 @@
             buckets will be reassigned)
           </label>
         </div>
+        <label for="id_priority">Priority</label>
+        <input
+          id="id_priority"
+          class="form-inline"
+          type="number"
+          min="-2"
+          max="2"
+          v-model="bucket.priority"
+        />
+        <br /><br />
+
         <div class="btn-group" v-if="bucketId">
           <button
             type="submit"
@@ -120,13 +120,18 @@
 </template>
 
 <script>
-import { errorParser } from "../../helpers";
+import { errorParser, jsonPretty } from "../../helpers";
 import * as api from "../../api";
 import List from "./ReportEntries/List.vue";
 
 export default {
   components: {
     List,
+  },
+  computed: {
+    prettySignature() {
+      return jsonPretty(this.bucket.signature);
+    },
   },
   props: {
     bucketId: {
@@ -162,8 +167,7 @@ export default {
   }),
   async mounted() {
     if (this.bucketId) this.bucket = await api.retrieveBucket(this.bucketId);
-    if (this.proposedSignature)
-      this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2);
+    if (this.proposedSignature) this.bucket.signature = this.proposedSignature;
     if (this.proposedDescription)
       this.bucket.description = this.proposedDescription;
     if (this.warningMessage) this.warning = this.warningMessage;

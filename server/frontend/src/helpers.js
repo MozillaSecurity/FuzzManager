@@ -71,6 +71,20 @@ export const assignExternalBug = (bucketId, bugId, providerId) => {
   }
 };
 
+export const jsonPretty = (orig) => {
+  const orig_obj = JSON.parse(orig);
+  return JSON.stringify(
+    Object.keys(orig_obj)
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = orig_obj[key];
+        return obj;
+      }, {}),
+    null,
+    2,
+  );
+};
+
 export const parseHash = (hash) => {
   return hash
     .substring(1)

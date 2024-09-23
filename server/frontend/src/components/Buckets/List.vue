@@ -27,7 +27,9 @@
             { name: 'bug__external_type__classname', type: 'String' },
             { name: 'bug__external_type__hostname', type: 'String' },
             { name: 'description', type: 'String' },
+            { name: 'priority', type: 'Integer' },
             { name: 'signature', type: 'String' },
+            { name: 'size', type: 'Integer' },
           ]"
         />
         <textarea
@@ -108,7 +110,29 @@
             >
               Description
             </th>
+            <th
+              v-on:click.exact="sortBy('priority')"
+              v-on:click.ctrl.exact="addSort('priority')"
+              :class="{
+                active:
+                  sortKeys.includes('priority') ||
+                  sortKeys.includes('-priority'),
+              }"
+            >
+              Priority
+            </th>
             <th>Activity</th>
+            <th
+              v-on:click.exact="sortBy('latest_report')"
+              v-on:click.ctrl.exact="addSort('latest_report')"
+              :class="{
+                active:
+                  sortKeys.includes('latest_report') ||
+                  sortKeys.includes('-latest_report'),
+              }"
+            >
+              Latest Report
+            </th>
             <th
               v-on:click.exact="sortBy('size')"
               v-on:click.ctrl.exact="addSort('size')"
@@ -133,7 +157,7 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="7">
+            <td colspan="9">
               <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
             </td>
           </tr>
@@ -187,8 +211,15 @@ export default {
     },
   },
   data: function () {
-    const validSortKeys = ["bug__external_id", "id", "description", "size"];
-    const defaultSortKeys = ["-size"];
+    const validSortKeys = [
+      "bug__external_id",
+      "id",
+      "description",
+      "latest_report",
+      "priority",
+      "size",
+    ];
+    const defaultSortKeys = ["-size", "-latest_report"];
 
     return {
       buckets: [],
