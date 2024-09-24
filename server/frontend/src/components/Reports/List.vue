@@ -291,7 +291,7 @@ export default {
     },
   },
   data: function () {
-    const defaultSortKeys = ["-id"];
+    const defaultSortKeys = ["-reported_at"];
     const validSortKeys = [
       "app__channel",
       "app__name",
