@@ -35,7 +35,9 @@
               <br v-if="canEdit" /><br v-if="canEdit" />
               <div v-if="canEdit" class="btn-group">
                 <assignbutton :bucket="bucket.id" :providers="providers" />
-                <a :href="createBugUrl" class="btn btn-danger">File a bug</a>
+                <a :href="bucket.new_bug_url" class="btn btn-danger"
+                  >File a bug</a
+                >
               </div>
             </td>
           </tr>
@@ -132,10 +134,6 @@ export default {
     canEdit: {
       type: Boolean,
       required: true,
-    },
-    createBugUrl: {
-      type: String,
-      default: null,
     },
     delUrl: {
       type: String,

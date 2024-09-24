@@ -271,7 +271,7 @@
             <label for="whiteboard">Whiteboard</label>
             <HelpPopover
               field="keywords"
-              :variables="['isTestAttached']"
+              :variables="entryfields"
               documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <input
@@ -299,7 +299,7 @@
             <label for="keywords">Keywords</label>
             <HelpPopover
               field="keywords"
-              :variables="['isTestAttached']"
+              :variables="entryfields"
               documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <input
@@ -327,7 +327,7 @@
             <label for="attrs">Custom fields</label>
             <HelpPopover
               field="custom-fields"
-              :variables="['metadata*']"
+              :variables="entryfields"
               documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-custom-fields-field"
             />
             <textarea
@@ -353,19 +353,7 @@
             <label for="description">Bug description</label>
             <HelpPopover
               field="description"
-              :variables="[
-                'summary',
-                'shortsig',
-                'product',
-                'version',
-                'args',
-                'os',
-                'platform',
-                'client',
-                'reportdata',
-                'reportdataattached',
-                'metadata*',
-              ]"
+              :variables="entryfields"
               documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-description-field"
             />
             <textarea
@@ -419,14 +407,6 @@
         </div>
         <hr />
 
-        <ReportDataSection
-          :initial-not-attach-data="notAttachData"
-          v-on:update-not-attach-data="notAttachData = $event"
-          :initial-data="reportData"
-          v-on:update-data="reportData = $event"
-          :path-prefix="entryMetadata.pathprefix"
-        />
-
         <div v-if="createError" class="alert alert-danger" role="alert">
           <button
             type="button"
@@ -449,24 +429,6 @@
           >
           was successfully submitted and created on
           <strong>{{ provider.hostname }}</strong> provider.
-        </div>
-
-        <div
-          v-if="publishReportDataError"
-          class="alert alert-danger"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            v-on:click="publishReportDataError = null"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-          An error occurred while attaching report data to the created external
-          bug: {{ publishReportDataError }}
         </div>
 
         <div v-if="assignError" class="alert alert-danger" role="alert">
@@ -515,14 +477,12 @@
 <script>
 import Handlebars from "handlebars";
 import * as HandlebarsHelpers from "../../handlebars_helpers";
-import { Base64 } from "js-base64";
 import { errorParser } from "../../helpers";
 import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
 import SummaryInput from "./SummaryInput.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 import UserDropdown from "./UserDropdown.vue";
-import ReportDataSection from "./ReportDataSection.vue";
 import HelpPopover from "./HelpPopover.vue";
 
 // Apply Handlebars helpers
@@ -535,7 +495,6 @@ export default {
     SummaryInput,
     ProductComponentSelect,
     UserDropdown,
-    ReportDataSection,
     HelpPopover,
   },
   props: {
@@ -571,17 +530,30 @@ export default {
     platform: "",
     submitting: false,
     createError: null,
-    publishReportDataError: null,
     assignError: null,
     createdBugId: null,
-    notAttachData: false,
-    reportData: "",
+    entryfields: [
+      "summary",
+      "app_name",
+      "app_channel",
+      "app_version",
+      "breakage_category",
+      "os",
+      "url",
+      "url_scheme",
+      "url_netloc",
+      "url_path",
+      "url_query",
+      "url_fragment",
+      "url_username",
+      "url_password",
+      "url_hostname",
+      "url_port",
+      "uuid",
+    ],
   }),
   async mounted() {
     this.entry = await api.retrieveReport(this.entryId);
-    this.reportData = this.entry.rawReportData
-      ? this.entry.rawReportData
-      : this.entry.rawStderr;
 
     let data = await api.listBugProviders();
     this.providers = data.results.filter(
@@ -605,38 +577,13 @@ export default {
     bugzillaToken() {
       return localStorage.getItem("provider-" + this.provider.id + "-api-key");
     },
-    entryMetadata() {
-      if (this.entry && this.entry.metadata)
-        return JSON.parse(this.entry.metadata);
-      return {};
-    },
-    preSummary() {
-      if (this.template.summary) return this.template.summary;
-      if (
-        this.entry.shortSignature &&
-        this.entry.shortSignature.startsWith("[@")
-      )
-        return "Report " + this.entry.shortSignature;
-      return this.entry.shortSignature;
-    },
-    reportDataRendered() {
-      return this.reportData
-        .split("\n")
-        .map((l) => "    " + l)
-        .join("\n");
-    },
     renderedAttrs() {
       if (!this.template || !this.entry) return "";
       try {
         const compiled = Handlebars.compile(this.template.attrs);
         let rendered = compiled({
-          ...this.metadataExtension(this.template.attrs),
+          ...this.entryExtension(),
         });
-        if (
-          this.entry.shortSignature &&
-          this.entry.shortSignature.startsWith("[@")
-        )
-          rendered += "\ncf_report_signature=" + this.entry.shortSignature;
         return rendered;
       } catch {
         return "";
@@ -648,25 +595,8 @@ export default {
         const compiled = Handlebars.compile(this.template.description);
         let rendered = compiled({
           summary: this.summary,
-          shortsig: this.entry.shortSignature,
-          product: this.entry.product,
-          version: this.entry.product_version
-            ? this.entry.product_version
-            : "(Version not available)",
-          args: this.entry.args ? JSON.parse(this.entry.args).join(" ") : "",
-          os: this.entry.os,
-          platform: this.entry.platform,
-          client: this.entry.client,
-          reportdata: this.reportDataRendered,
-          reportdataattached: this.notAttachData
-            ? "(Report data not available)"
-            : "For detailed report information, see attachment.",
-          ...this.metadataExtension(this.template.description),
+          ...this.entryExtension(),
         });
-
-        // Remove the specified pathPrefix from traces and assertion
-        if (this.entryMetadata.pathprefix)
-          rendered = rendered.replaceAll(this.entryMetadata.pathprefix, "");
 
         return rendered;
       } catch {
@@ -696,55 +626,42 @@ export default {
     goBack() {
       window.history.back();
     },
-    metadataExtension(field) {
-      let extension = {};
-      for (var [key, value] of Object.entries(this.entryMetadata)) {
-        extension["metadata" + key] = value;
-      }
-      if (field) {
-        const regexp = new RegExp(/metadata([a-zA-Z0-9_-]+)/, "g");
-        const matches = field.matchAll(regexp);
-        for (const [match] of matches) {
-          if (extension[match] === undefined)
-            extension[match] = "(" + match + " not available)";
-        }
-      }
-      return extension;
+    entryExtension() {
+      const pts = new URL(this.entry.url);
+      return {
+        app_channel: this.entry.app_channel,
+        app_name: this.entry.app_name,
+        app_version: this.entry.app_version,
+        breakage_category: this.entry.breakage_category,
+        os: this.entry.os,
+        url: this.entry.url,
+        url_fragment: pts.hash,
+        url_hostname: pts.hostname,
+        url_netloc: pts.host,
+        url_password: pts.password,
+        url_path: pts.pathname,
+        url_port: pts.port,
+        url_query: pts.search,
+        url_scheme: pts.protocol,
+        url_username: pts.username,
+        uuid: this.entry.uuid,
+      };
     },
     updateFields() {
       // Summary
-      if (!this.entryMetadata.pathprefix) this.summary = this.preSummary;
-      // Remove the specified pathPrefix from traces and assertion
-      else
-        this.summary = this.preSummary.replaceAll(
-          this.entryMetadata.pathprefix,
-          "",
-        );
-
+      this.summary = this.template.summary;
       // OpSys
       this.opSys = this.template.op_sys;
       if (!this.template.op_sys) {
         // Try to match the supplied os with the Bugzilla equivalent
-        const os = this.entry.os.toLowerCase();
-        if (os === "linux") this.opSys = "Linux";
-        else if (os === "macosx") this.opSys = "macOS";
-        else if (os === "windows") this.opSys = "Windows";
-        else if (os === "android") this.opSys = "Android";
+        if (this.entry.os === "Mac") this.opSys = "macOS";
+        else this.opSys = this.entry.os;
       }
-
-      // Platform
-      if (this.template.platform) this.platform = this.template.platform;
-      // BMO uses x86_64, not x86-64, and ARM instead of arm
-      else
-        this.platform = this.entry.platform
-          .replaceAll("-", "_")
-          .replaceAll("arm", "ARM");
     },
     async createExternalBug() {
       this.submitting = true;
       this.createdBugId = null;
       this.createError = null;
-      this.publishReportDataError = null;
       this.assignError = null;
 
       // Convert this.renderedAttrs to an object
@@ -798,35 +715,10 @@ export default {
         });
         this.createdBugId = data.id;
         await this.assignExternalBug();
-        await this.publishAttachments();
       } catch (err) {
         this.createError = errorParser(err);
       } finally {
         this.submitting = false;
-      }
-    },
-    async publishAttachments() {
-      let payload = {};
-      // Publish Report data
-      if (!this.notAttachData) {
-        try {
-          payload = {
-            ids: [this.createdBugId],
-            data: Base64.encode(this.reportData),
-            file_name: "report_data.txt",
-            summary: "Detailed Report Information",
-            content_type: "text/plain",
-          };
-
-          await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.createdBugId,
-            ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
-          });
-        } catch (err) {
-          this.publishReportDataError = errorParser(err);
-        }
       }
     },
 

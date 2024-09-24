@@ -72,19 +72,7 @@
             <label for="comment">Comment</label>
             <HelpPopover
               field="comment"
-              :variables="[
-                'summary',
-                'shortsig',
-                'product',
-                'version',
-                'args',
-                'os',
-                'platform',
-                'client',
-                'reportdata',
-                'reportdataattached',
-                'metadata*',
-              ]"
+              :variables="entryfields"
               documentation-link="https://github.com/MozillaSecurity/WebCompatManager/blob/master/doc/BugzillaVariables.md#in-comment-field"
             />
             <textarea
@@ -107,15 +95,6 @@
           </div>
         </div>
         <hr />
-
-        <ReportDataSection
-          mode="comment"
-          :initial-not-attach-data="notAttachData"
-          v-on:update-not-attach-data="notAttachData = $event"
-          :initial-data="reportData"
-          v-on:update-data="reportData = $event"
-          :path-prefix="entryMetadata.pathprefix"
-        />
 
         <div v-if="createError" class="alert alert-danger" role="alert">
           <button
@@ -143,24 +122,6 @@
           </strong>
           was successfully submitted and created on
           <strong>{{ provider.hostname }}</strong> provider.
-        </div>
-
-        <div
-          v-if="publishReportDataError"
-          class="alert alert-danger"
-          role="alert"
-        >
-          <button
-            type="button"
-            class="close"
-            data-dismiss="alert"
-            aria-label="Close"
-            v-on:click="publishReportDataError = null"
-          >
-            <span aria-hidden="true">&times;</span>
-          </button>
-          An error occurred while attaching report data to the created external
-          comment: {{ publishReportDataError }}
         </div>
 
         <div v-if="!bugzillaToken" class="alert alert-warning" role="alert">
@@ -195,11 +156,9 @@
 <script>
 import Handlebars from "handlebars";
 import * as HandlebarsHelpers from "../../../handlebars_helpers";
-import { Base64 } from "js-base64";
 import { errorParser } from "../../../helpers";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
-import ReportDataSection from "../ReportDataSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 
 // Apply Handlebars helpers
@@ -209,7 +168,6 @@ Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
 
 export default {
   components: {
-    ReportDataSection,
     HelpPopover,
   },
   props: {
@@ -242,18 +200,32 @@ export default {
     externalBugId: "",
     isPrivate: false,
     submitting: false,
+    summary: "",
     createError: null,
-    publishReportDataError: null,
     createdCommentId: null,
     createdCommentCount: null,
-    notAttachData: false,
-    reportData: "",
+    entryfields: [
+      "summary",
+      "app_name",
+      "app_channel",
+      "app_version",
+      "breakage_category",
+      "os",
+      "url",
+      "url_scheme",
+      "url_netloc",
+      "url_path",
+      "url_query",
+      "url_fragment",
+      "url_username",
+      "url_password",
+      "url_hostname",
+      "url_port",
+      "uuid",
+    ],
   }),
   async mounted() {
     this.entry = await api.retrieveReport(this.entryId);
-    this.reportData = this.entry.rawReportData
-      ? this.entry.rawReportData
-      : this.entry.rawStderr;
     if (this.bugId) this.externalBugId = this.bugId;
 
     let data = await api.listBugProviders();
@@ -269,6 +241,7 @@ export default {
     if (this.template) {
       this.selectedTemplate = this.template.id;
     }
+    this.summary = this.template.summary;
   },
   computed: {
     commentLink() {
@@ -282,53 +255,14 @@ export default {
         return JSON.parse(this.entry.metadata);
       return {};
     },
-    preSummary() {
-      if (this.template.summary) return this.template.summary;
-      if (
-        this.entry.shortSignature &&
-        this.entry.shortSignature.startsWith("[@")
-      )
-        return "Report " + this.entry.shortSignature;
-      return this.entry.shortSignature;
-    },
-    summary() {
-      let s = this.preSummary;
-      // Remove the specified pathPrefix from traces and assertion
-      if (this.entryMetadata.pathprefix)
-        s = s.replaceAll(this.entryMetadata.pathprefix, "");
-      return s;
-    },
-    reportDataRendered() {
-      return this.reportData
-        .split("\n")
-        .map((l) => "    " + l)
-        .join("\n");
-    },
     renderedComment() {
       if (!this.template || !this.entry) return "";
       try {
         const compiled = Handlebars.compile(this.template.comment);
         let rendered = compiled({
           summary: this.summary,
-          shortsig: this.entry.shortSignature,
-          product: this.entry.product,
-          version: this.entry.product_version
-            ? this.entry.product_version
-            : "(Version not available)",
-          args: this.entry.args ? JSON.parse(this.entry.args).join(" ") : "",
-          os: this.entry.os,
-          platform: this.entry.platform,
-          client: this.entry.client,
-          reportdata: this.reportDataRendered,
-          reportdataattached: this.notAttachData
-            ? "(Report data not available)"
-            : "For detailed report information, see attachment.",
-          ...this.metadataExtension(this.template.comment),
+          ...this.entryExtension(),
         });
-
-        // Remove the specified pathPrefix from traces and assertion
-        if (this.entryMetadata.pathprefix)
-          rendered = rendered.replaceAll(this.entryMetadata.pathprefix, "");
 
         return rendered;
       } catch {
@@ -340,27 +274,32 @@ export default {
     goBack() {
       window.history.back();
     },
-    metadataExtension(field) {
-      let extension = {};
-      for (var [key, value] of Object.entries(this.entryMetadata)) {
-        extension["metadata" + key] = value;
-      }
-      if (field) {
-        const regexp = new RegExp(/metadata([a-zA-Z0-9_-]+)/, "g");
-        const matches = field.matchAll(regexp);
-        for (const [match] of matches) {
-          if (extension[match] === undefined)
-            extension[match] = "(" + match + " not available)";
-        }
-      }
-      return extension;
+    entryExtension() {
+      const pts = new URL(this.entry.url);
+      return {
+        app_channel: this.entry.app_channel,
+        app_name: this.entry.app_name,
+        app_version: this.entry.app_version,
+        breakage_category: this.entry.breakage_category,
+        os: this.entry.os,
+        url: this.entry.url,
+        url_fragment: pts.hash,
+        url_hostname: pts.hostname,
+        url_netloc: pts.host,
+        url_password: pts.password,
+        url_path: pts.pathname,
+        url_port: pts.port,
+        url_query: pts.search,
+        url_scheme: pts.protocol,
+        url_username: pts.username,
+        uuid: this.entry.uuid,
+      };
     },
     async createExternalComment() {
       this.submitting = true;
       this.createdCommentId = null;
       this.createdCommentCount = null;
       this.createError = null;
-      this.publishReportDataError = null;
 
       const payload = {
         id: this.externalBugId,
@@ -388,36 +327,10 @@ export default {
           data.comments && data.comments[this.createdCommentId]
             ? data.comments[this.createdCommentId].count
             : undefined;
-
-        await this.publishAttachments();
       } catch (err) {
         this.createError = errorParser(err);
       } finally {
         this.submitting = false;
-      }
-    },
-    async publishAttachments() {
-      let payload = {};
-      // Publish Report data
-      if (!this.notAttachData) {
-        payload = {
-          ids: [this.externalBugId],
-          data: Base64.encode(this.reportData),
-          file_name: "report_data.txt",
-          summary: "Detailed Report Information",
-          content_type: "text/plain",
-        };
-
-        try {
-          await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.externalBugId,
-            ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
-          });
-        } catch (err) {
-          this.publishReportDataError = errorParser(err);
-        }
       }
     },
   },

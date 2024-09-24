@@ -75,6 +75,7 @@ class BucketVueSerializer(BucketSerializer):
     bug_closed = serializers.SerializerMethodField()
     bug_hostname = serializers.SerializerMethodField()
     bug_urltemplate = serializers.SerializerMethodField()
+    new_bug_url = serializers.SerializerMethodField()
     view_url = serializers.SerializerMethodField()
 
     class Meta(BucketSerializer.Meta):
@@ -83,6 +84,7 @@ class BucketVueSerializer(BucketSerializer):
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
+            "new_bug_url",
             "view_url",
         )
         read_only_fields = (
@@ -90,6 +92,7 @@ class BucketVueSerializer(BucketSerializer):
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
+            "new_bug_url",
             "view_url",
         )
 
@@ -110,6 +113,11 @@ class BucketVueSerializer(BucketSerializer):
             except Exception:
                 return None
         return None
+
+    def get_new_bug_url(self, sig):
+        return reverse(
+            "reportmanager:createbug", kwargs={"report_id": sig.latest_entry_id}
+        )
 
     def get_view_url(self, sig):
         return reverse("reportmanager:bucketview", kwargs={"sig_id": sig.id})

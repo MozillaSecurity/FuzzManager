@@ -8,7 +8,6 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
 from django.forms import (
-    CharField,
     ChoiceField,
     EmailField,
     ModelChoiceField,
@@ -30,13 +29,14 @@ class BugzillaTemplateBugForm(ModelForm):
         HTML("""<div v-pre>"""),
         Row(Field("name", wrapper_class="col-md-6")),
         "summary",
-        Row(
-            Field("product", wrapper_class="col-md-6"),
-            Field("component", wrapper_class="col-md-6"),
+        HTML("</div>"),
+        HTML(
+            "<ppcselect"
+            ' template-product="{{ form.product.value }}"'
+            ' template-component="{{ form.component.value }}">'
+            "</ppcselect>"
         ),
-        HTML("""</div>"""),
-        HTML("""<ppcselect></ppcselect>"""),
-        HTML("""<div v-pre>"""),
+        HTML("<div v-pre>"),
         Row(
             Field("whiteboard", wrapper_class="col-md-6"),
             Field("keywords", wrapper_class="col-md-6"),
@@ -76,14 +76,6 @@ class BugzillaTemplateBugForm(ModelForm):
         ),
         HTML("""</div>"""),
     )
-    product = CharField(
-        label="Current product (choose below)",
-        widget=TextInput(attrs={"disabled": True}),
-    )
-    component = CharField(
-        label="Current component (choose below)",
-        widget=TextInput(attrs={"disabled": True}),
-    )
 
     class Meta:
         model = BugzillaTemplate
@@ -118,7 +110,7 @@ class BugzillaTemplateBugForm(ModelForm):
                 "summary": "Summary",
                 "whiteboard": "Whiteboard",
                 "keywords": "Keywords",
-                'op_sys"': "OS",
+                "op_sys": "OS",
                 "platform": "Platform",
                 "cc": "Cc",
                 "assigned_to": "Assigned to",

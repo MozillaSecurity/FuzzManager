@@ -26,11 +26,10 @@
       <p v-else-if="bucket.bug">
         {{ bucket.bug }} on {{ bucket.bug_hostname }}
       </p>
-      <assignbutton
-        v-else-if="canEdit"
-        :bucket="bucket.id"
-        :providers="providers"
-      />
+      <div v-else-if="canEdit" class="btn-group">
+        <assignbutton :bucket="bucket.id" :providers="providers" />
+        <a :href="bucket.new_bug_url" class="btn btn-danger">File a bug</a>
+      </div>
     </td>
   </tr>
 </template>

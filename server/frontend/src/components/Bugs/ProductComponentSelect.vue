@@ -12,7 +12,7 @@
               title="Refresh product list"
               v-on:click="refreshProducts"
             >
-              <i class="bi bi-repeat"></i>
+              &orarr;
             </button>
           </span>
           <select

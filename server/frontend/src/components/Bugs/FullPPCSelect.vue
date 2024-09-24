@@ -58,6 +58,10 @@ export default {
       this.provider = this.providers.find((p) => p.id === this.providerId);
       this.selectedProvider = this.provider.id;
       this.providerHostname = this.provider.hostname;
+    } else if (this.providers.length === 1) {
+      this.provider = this.providers[0];
+      this.selectedProvider = this.provider.id;
+      this.providerHostname = this.provider.hostname;
     }
   },
   watch: {

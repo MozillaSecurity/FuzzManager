@@ -26,8 +26,8 @@
         <div class="btn-group">
   {% if entry.bucket %}
     {% if not entry.bucket.bug %}
-          <a href="{% url 'reportmanager:createbug' entry.pk %}" class="btn btn-danger">File a bug</a>
           <assignbutton :bucket="{{ entry.bucket.pk }}" :providers="{{ providers }}" />
+          <a href="{% url 'reportmanager:createbug' entry.pk %}" class="btn btn-danger">File a bug</a>
     {% else %}
           <a href="{% url 'reportmanager:createbugcomment' entry.pk %}" class="btn btn-danger">Post a bug comment</a>
     {% endif %}

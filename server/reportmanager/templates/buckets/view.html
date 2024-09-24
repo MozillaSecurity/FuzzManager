@@ -9,9 +9,6 @@
   :bucket="{{ bucket }}"
   :can-edit="{% if perms.reportmanager.reportmanager_write %}true{% else %}false{% endif %}"
   :providers="{{ providers }}"
-  {% if False %}
-  create-bug-url="{% url 'reportmanager:createbug' %}"
-  {% endif %}
   reports-url="{% url 'reportmanager:reports' %}#bucket={{ bucket_id }}"
   del-url="{% url 'reportmanager:bucketdel' bucket_id %}"
   edit-url="{% url 'reportmanager:bucketedit' bucket_id %}"
