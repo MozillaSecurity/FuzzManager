@@ -20,7 +20,6 @@
           >
             {{ showHidden ? "Hide Triaged" : "Show Triaged" }}
           </button>
-          <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
         <br />
         <a
