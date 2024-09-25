@@ -283,6 +283,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "reportmanager.cron.update_report_stats",
         "schedule": 60,
     },
+    "Check for untriaged Reports every hour": {
+        "task": "reportmanager.cron.triage_new_reports",
+        "schedule": 60 * 60,
+    },
     "Cleanup ReportEntry/Bucket objects every 30 minutes": {
         "task": "reportmanager.cron.cleanup_old_reports",
         "schedule": 30 * 60,
