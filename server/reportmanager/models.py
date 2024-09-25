@@ -91,7 +91,7 @@ class Bucket(models.Model):
         modified = set()
 
         # Sanitize signature line endings so we end up with the same hash
-        new_signature = json.dumps(json.loads(self.signature), indent=2, sort_keys=True)
+        new_signature = json.dumps(json.loads(self.signature), sort_keys=True)
         if new_signature != self.signature:
             modified.add("signature")
             self.signature = new_signature
