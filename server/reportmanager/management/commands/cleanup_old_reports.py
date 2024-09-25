@@ -1,5 +1,6 @@
-import logging
+import sys
 from datetime import timedelta
+from logging import getLogger
 
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError  # noqa
@@ -8,7 +9,12 @@ from django.utils import timezone
 
 from reportmanager.models import Bucket, Bug, ReportEntry
 
-LOG = logging.getLogger("fm.reportmanager.cleanup_old_reports")
+if sys.version_info[:2] < (3, 12):
+    from server.utils import batched
+else:
+    from itertools import batched
+
+LOG = getLogger("reportmanager.cleanup_old_reports")
 
 
 class Command(BaseCommand):
@@ -40,14 +46,15 @@ class Command(BaseCommand):
             # we have a post-delete receiver on ReportEntry that has to be called for
             # every single deleted entry with the full instance. Maybe Django loads
             # a copy of all instances to be deleted into memory for this purpose.
-            report_count = ReportEntry.objects.filter(bucket__bug=bug).count()
+            reports = ReportEntry.objects.filter(bucket__bug=bug)
+            report_count = reports.count()
             if report_count:
                 LOG.info(
                     "Removing %d ReportEntry objects from buckets assigned to bug %s",
                     report_count,
                     bug.external_id,
                 )
-            while report_count > 500:
+            for report_set in batched(reports.values_list("id", flat=True), 500):
                 # Deleting things in buckets is complicated:
                 #
                 # Attempting to combine a subset (LIMIT) with a delete yields
@@ -60,14 +67,7 @@ class Command(BaseCommand):
                 # So the only way we have left is to manually select a given amount of
                 # pks and store them in a list to use pk__in with the list and a DELETE
                 # query.
-
-                pks = list(
-                    ReportEntry.objects.filter(bucket__bug=bug).values_list(
-                        "pk", flat=True
-                    )[:500]
-                )
-                ReportEntry.objects.filter(pk__in=pks).delete()
-                report_count = ReportEntry.objects.filter(bucket__bug=bug).count()
+                ReportEntry.objects.filter(pk__in=list(report_set)).delete()
 
             bug.delete()
 
@@ -78,35 +78,18 @@ class Command(BaseCommand):
             LOG.info("Removing empty bucket %d", bucket.id)
             bucket.delete()
 
-        # Select all entries that are older than x days and either not in any bucket
-        # or the bucket has no bug associated with it. If the bucket has a bug
-        # associated then we would want to keep entries around until the bug is fixed
-        # (they will be deleted when the bucket is deleted).
-        #
+        # Select all entries that are older than x days
         # Again, for the same reason as mentioned above, we have to delete entries in
         # batches.
         expiry_date = now - timedelta(
             days=cleanup_reports_after_days,
-            hours=now.hour,
-            minutes=now.minute,
-            seconds=now.second,
-            microseconds=now.microsecond,
         )
-        old_reports = ReportEntry.objects.filter(
-            reported_at__lt=expiry_date, bucket__bug=None
-        ).count()
-        if old_reports:
-            LOG.info("Removing %d old, unbucketed reports", old_reports)
-        while old_reports:
-            pks = list(
-                ReportEntry.objects.filter(
-                    reported_at__lt=expiry_date, bucket__bug=None
-                ).values_list("pk", flat=True)[:500]
-            )
-            ReportEntry.objects.filter(pk__in=pks).delete()
-            old_reports = ReportEntry.objects.filter(
-                reported_at__lt=expiry_date, bucket__bug=None
-            ).count()
+        old_reports = ReportEntry.objects.filter(reported_at__lt=expiry_date)
+        old_report_count = old_reports.count()
+        if old_report_count:
+            LOG.info("Removing %d old, unbucketed reports", old_report_count)
+        for report_set in batched(old_reports.values_list("pk", flat=True), 500):
+            ReportEntry.objects.filter(pk__in=list(report_set)).delete()
 
         # Cleanup all bugs that don't belong to any bucket anymore
         orphan_bugs = Bug.objects.filter(bucket__isnull=True)
