@@ -59,6 +59,14 @@ def update_report_stats():
 
 
 @app.task(ignore_result=True)
+def unhide_buckets():
+    from .models import Bucket
+
+    now = timezone.now()
+    Bucket.objects.filter(hide_until__lte=now).update(hide_until=None)
+
+
+@app.task(ignore_result=True)
 def bug_update_status():
     call_command("bug_update_status")
 

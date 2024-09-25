@@ -71,6 +71,24 @@ export const assignExternalBug = (bucketId, bugId, providerId) => {
   }
 };
 
+export const hideBucketUntil = (bucketId, dateObj) => {
+  const payload = {
+    hide_until: dateObj ? dateObj.toISOString() : null,
+  };
+
+  try {
+    return Promise.resolve(
+      api.updateBucket({
+        id: bucketId,
+        params: { reassign: false },
+        ...payload,
+      }),
+    );
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
+
 export const jsonPretty = (orig) => {
   const orig_obj = JSON.parse(orig);
   return JSON.stringify(

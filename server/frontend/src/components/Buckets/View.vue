@@ -9,7 +9,7 @@
             <td>{{ bucket.description }}</td>
           </tr>
           <tr>
-            <td>External Bug Status</td>
+            <td>Triage Status</td>
             <td v-if="bucket.bug">
               <span v-if="bucket.bug_urltemplate">
                 Reported as
@@ -32,11 +32,21 @@
             </td>
             <td v-else>
               No bug associated.
+              <span v-if="bucket.hide_until"
+                >Marked triaged until {{ bucket.hide_until | date }}.</span
+              >
               <br v-if="canEdit" /><br v-if="canEdit" />
               <div v-if="canEdit" class="btn-group">
                 <assignbutton :bucket="bucket.id" :providers="providers" />
                 <a :href="bucket.new_bug_url" class="btn btn-danger"
                   >File a bug</a
+                >
+                <hidebucketbutton
+                  v-if="!bucket.hide_until"
+                  :bucket="bucket.id"
+                />
+                <a v-else v-on:click="unhide" class="btn btn-default"
+                  >Unmark triaged</a
                 >
               </div>
             </td>
@@ -96,16 +106,19 @@ import {
   assignExternalBug,
   date,
   errorParser,
+  hideBucketUntil,
   jsonPretty,
 } from "../../helpers";
 import ActivityGraph from "../ActivityGraph.vue";
 import AssignBtn from "./AssignBtn.vue";
+import HideBucketBtn from "./HideBucketBtn.vue";
 import swal from "sweetalert";
 
 export default {
   components: {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
+    hidebucketbutton: HideBucketBtn,
   },
   computed: {
     prettySignature() {
@@ -163,6 +176,15 @@ export default {
   methods: {
     submitWatchForm() {
       this.$refs.bucketWatchForm.submit();
+    },
+    unhide() {
+      hideBucketUntil(this.bucket.id, null)
+        .then((data) => {
+          window.location.href = data.url;
+        })
+        .catch((err) => {
+          swal("Oops", errorParser(err), "error");
+        });
     },
     unlink() {
       swal({

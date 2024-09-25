@@ -7,9 +7,16 @@
           <button
             type="button"
             class="btn btn-default"
-            v-on:click="updateShowAll"
+            v-on:click="updateShowLogged"
           >
-            {{ showAll ? "View Unassigned" : "View All" }}
+            {{ showLogged ? "Hide Logged" : "Show Logged" }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-default"
+            v-on:click="updateShowHidden"
+          >
+            {{ showHidden ? "Hide Triaged" : "Show Triaged" }}
           </button>
           <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
@@ -55,13 +62,18 @@
         </button>
       </div>
       <br />
-      <p v-if="showAll">
-        Displaying {{ currentEntries }}/{{ totalEntries }} buckets in the
-        database.
-      </p>
-      <p v-else>
-        Displaying {{ currentEntries }}/{{ totalEntries }} unlogged buckets in
-        the database.
+      <p>
+        <span v-if="showLogged">
+          Displaying {{ currentEntries }}/{{ totalEntries }} buckets in the
+          database
+        </span>
+        <span v-else>
+          Displaying {{ currentEntries }}/{{ totalEntries }} unlogged buckets in
+          the database
+        </span>
+        (<span v-if="showHidden">including</span>
+        <span v-else>excluding</span>
+        triaged).
       </p>
 
       <div class="pagination">
@@ -230,7 +242,11 @@ export default {
       modifiedCache: {},
       pageSize: 100,
       queryError: "",
-      queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
+      queryStr: JSON.stringify(
+        { op: "AND", bug__isnull: true, hide_until__isnull: true },
+        null,
+        2,
+      ),
       searchStr: "",
       sortKeys: [...defaultSortKeys],
       totalEntries: "?",
@@ -280,13 +296,16 @@ export default {
       if (!this.modified) return "Results match current query";
       return "Submit query";
     },
-    showAll() {
+    showLogged() {
       return !this.queryStr.includes('"bug__isnull": true');
+    },
+    showHidden() {
+      return !this.queryStr.includes('"hide_until__isnull": true');
     },
   },
   methods: {
-    updateShowAll() {
-      if (this.showAll) {
+    updateShowLogged() {
+      if (this.showLogged) {
         this.queryStr = JSON.stringify(
           Object.assign({ bug__isnull: true }, JSON.parse(this.queryStr)),
           null,
@@ -295,6 +314,23 @@ export default {
       } else {
         const query = JSON.parse(this.queryStr);
         delete query["bug__isnull"];
+        this.queryStr = JSON.stringify(query, null, 2);
+      }
+      this.fetch();
+    },
+    updateShowHidden() {
+      if (this.showHidden) {
+        this.queryStr = JSON.stringify(
+          Object.assign(
+            { hide_until__isnull: true },
+            JSON.parse(this.queryStr),
+          ),
+          null,
+          2,
+        );
+      } else {
+        const query = JSON.parse(this.queryStr);
+        delete query["hide_until__isnull"];
         this.queryStr = JSON.stringify(query, null, 2);
       }
       this.fetch();

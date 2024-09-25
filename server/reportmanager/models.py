@@ -60,6 +60,8 @@ class Bucket(models.Model):
     # store the domain outside the signature only if the signature includes
     # a non-regex domain symptom and no other symptoms (for quick exclusion)
     domain = models.CharField(max_length=255, null=True)
+    # bucket can be hidden from view until given date, without being logged
+    hide_until = models.DateTimeField(blank=True, null=True)
     # higher priority = earlier match
     priority = models.IntegerField(
         default=0, validators=(MinValueValidator(-2), MaxValueValidator(2))

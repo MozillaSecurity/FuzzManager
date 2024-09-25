@@ -907,6 +907,8 @@ class BucketViewSet(
 
             bucket.bug = bug
 
+        if "hide_until" in serializer.validated_data:
+            bucket.hide_until = serializer.validated_data["hide_until"]
         if "signature" in serializer.validated_data:
             bucket.signature = serializer.validated_data["signature"]
         if "priority" in serializer.validated_data:

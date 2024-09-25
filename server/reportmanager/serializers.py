@@ -49,6 +49,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "color",
             "description",
             "domain",
+            "hide_until",
             "id",
             "latest_report",
             "priority",
