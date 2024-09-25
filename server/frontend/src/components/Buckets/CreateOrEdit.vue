@@ -39,7 +39,7 @@
           id="id_signature"
           class="form-control"
           spellcheck="false"
-          v-model="prettySignature"
+          v-model="bucket.signature"
         ></textarea>
 
         <div class="field">
@@ -128,11 +128,6 @@ export default {
   components: {
     List,
   },
-  computed: {
-    prettySignature() {
-      return jsonPretty(this.bucket.signature);
-    },
-  },
   props: {
     bucketId: {
       type: Number,
@@ -167,7 +162,10 @@ export default {
   }),
   async mounted() {
     if (this.bucketId) this.bucket = await api.retrieveBucket(this.bucketId);
-    if (this.proposedSignature) this.bucket.signature = this.proposedSignature;
+    if (this.proposedSignature)
+      this.bucket.signature = jsonPretty(this.proposedSignature);
+    else if (this.bucketId)
+      this.bucket.signature = jsonPretty(this.bucket.signature);
     if (this.proposedDescription)
       this.bucket.description = this.proposedDescription;
     if (this.warningMessage) this.warning = this.warningMessage;
