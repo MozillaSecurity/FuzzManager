@@ -45,6 +45,7 @@
       <span v-if="advancedQuery">
         <a
           title="Discard query and start over in simple mode"
+          class="pointer"
           v-on:click="resetQueryToggleAdvanced"
           >Reset to simple search</a
         ><br />
@@ -57,6 +58,7 @@
         </span>
         <a
           title="Show the full query for the current search/filters"
+          class="pointer"
           v-on:click="convertFiltersToAdvancedQuery"
           >Advanced query</a
         ><br />
@@ -656,5 +658,8 @@ export default {
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+}
+.pointer {
+  cursor: pointer;
 }
 </style>
