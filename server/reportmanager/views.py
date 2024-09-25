@@ -71,7 +71,7 @@ class JSONDateEncoder(json.JSONEncoder):
 
 def bucket_watch_create(request):
     if request.method == "POST":
-        user = User.objects.get_or_create(request.user)[0]
+        user = User.objects.get_or_create(user=request.user)[0]
         bucket = get_object_or_404(Bucket, pk=int(request.POST["bucket"]))
         for watch in BucketWatch.objects.filter(user=user, bucket=bucket):
             watch.last_report = int(request.POST["report"])
@@ -86,7 +86,7 @@ def bucket_watch_create(request):
 
 
 def bucket_watch_delete(request, sigid):
-    user = User.objects.get_or_create(request.user)[0]
+    user = User.objects.get_or_create(user=request.user)[0]
 
     if request.method == "POST":
         entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
@@ -105,7 +105,7 @@ def bucket_watch_list(request):
     # 1         crash       10          tr
     # 2         assert      0           tr
     # 3         blah        0           tr
-    user = User.objects.get_or_create(request.user)[0]
+    user = User.objects.get_or_create(user=request.user)[0]
 
     filters = {
         "user": user,
@@ -138,7 +138,7 @@ def bucket_watch_list(request):
 
 
 def bucket_watch_reports(request, sigid):
-    user = User.objects.get_or_create(request.user)[0]
+    user = User.objects.get_or_create(user=request.user)[0]
     bucket = get_object_or_404(Bucket, pk=sigid)
     watch = get_object_or_404(BucketWatch, user=user, bucket=bucket)
     return render(
