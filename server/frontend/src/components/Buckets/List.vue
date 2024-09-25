@@ -2,11 +2,12 @@
   <div class="panel panel-default">
     <div class="panel-heading"><i class="bi bi-tag-fill"></i> Buckets</div>
     <div class="panel-body">
-      <div>
+      <div v-if="!advancedQuery">
         <div class="btn-group" role="group">
           <button
             type="button"
             class="btn btn-default"
+            :disabled="loading"
             v-on:click="updateShowLogged"
           >
             {{ showLogged ? "Hide Logged" : "Show Logged" }}
@@ -14,15 +15,22 @@
           <button
             type="button"
             class="btn btn-default"
+            :disabled="loading"
             v-on:click="updateShowHidden"
           >
             {{ showHidden ? "Hide Triaged" : "Show Triaged" }}
           </button>
           <a :href="watchUrl" class="btn btn-default">View Watched</a>
         </div>
+        <br />
+        <a
+          title="Show advanced query for the current search/filters"
+          class="pointer"
+          v-on:click="showAdvancedQuery"
+          >Advanced query</a
+        ><br />
       </div>
-      <br />
-      <div>
+      <div v-else>
         <label for="id_query">Search Query</label>
         <HelpJSONQueryPopover
           :parameters="[
@@ -47,12 +55,12 @@
           :rows="(queryStr.match(/\n/g) || '').length + 1"
           v-model="queryStr"
         ></textarea>
-        <br />
+        <br v-if="queryError" />
         <div v-if="queryError" class="alert alert-warning" role="alert">
           {{ queryError }}
         </div>
-      </div>
-      <div>
+        <a class="pointer" v-on:click="hideAdvancedQuery">Hide advanced query</a
+        ><br />
         <button
           v-on:click="fetch"
           :disabled="!modified || loading"
@@ -234,6 +242,7 @@ export default {
     const defaultSortKeys = ["-size", "-latest_report"];
 
     return {
+      advancedQuery: false,
       buckets: [],
       currentEntries: "?",
       currentPage: 1,
@@ -304,6 +313,12 @@ export default {
     },
   },
   methods: {
+    hideAdvancedQuery() {
+      this.advancedQuery = false;
+    },
+    showAdvancedQuery() {
+      this.advancedQuery = true;
+    },
     updateShowLogged() {
       if (this.showLogged) {
         this.queryStr = JSON.stringify(
@@ -439,5 +454,8 @@ export default {
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+}
+.pointer {
+  cursor: pointer;
 }
 </style>
