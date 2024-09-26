@@ -140,6 +140,7 @@ class Bucket(models.Model):
     frequent = models.BooleanField(blank=False, default=False)
     permanent = models.BooleanField(blank=False, default=False)
     doNotReduce = models.BooleanField(blank=False, default=False)
+    reassign_in_progress = models.BooleanField(default=False)
 
     @property
     def watchers(self):

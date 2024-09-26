@@ -214,6 +214,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "size",
             "has_optimization",
             "latest_entry",
+            "reassign_in_progress",
         )
         ordering = ["-id"]
         read_only_fields = ("id",)

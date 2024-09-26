@@ -75,7 +75,7 @@
           <button
             type="submit"
             class="btn btn-success"
-            v-on:click="update(true)"
+            v-on:click="create_or_update(true)"
             :disabled="loading"
           >
             {{ loading === "save" ? "Saving..." : "Save" }}
@@ -83,7 +83,7 @@
           <button
             type="submit"
             class="btn btn-default"
-            v-on:click="update(false)"
+            v-on:click="create_or_update(false)"
             :disabled="loading"
           >
             {{ loading === "preview" ? "Loading preview..." : "Preview" }}
@@ -93,7 +93,7 @@
           <button
             type="submit"
             class="btn btn-success"
-            v-on:click="create(true)"
+            v-on:click="create_or_update(true)"
             :disabled="loading"
           >
             {{ loading === "create" ? "Creating..." : "Create" }}
@@ -101,7 +101,7 @@
           <button
             type="submit"
             class="btn btn-default"
-            v-on:click="create(false)"
+            v-on:click="create_or_update(false)"
             :disabled="loading"
           >
             {{ loading === "preview" ? "Loading preview..." : "Preview" }}
@@ -166,6 +166,9 @@ export default {
       signature: "",
     },
     reassign: true,
+    reassignAsyncTimer: null,
+    reassignAsyncToken: null,
+    reassignDoneUrl: null,
     warning: "",
     inList: [],
     inListCount: 0,
@@ -182,8 +185,9 @@ export default {
     if (this.warningMessage) this.warning = this.warningMessage;
   },
   methods: {
-    async create(save) {
-      this.loading = save ? "create" : "preview";
+    async create_or_update(save) {
+      this.warning = "";
+      this.loading = save ? (this.bucketId ? "save" : "create") : "preview";
       const payload = {
         doNotReduce: this.bucket.doNotReduce,
         frequent: this.bucket.frequent,
@@ -193,52 +197,58 @@ export default {
       };
 
       try {
-        const data = await api.createBucket({
-          params: { save: save, reassign: this.reassign },
-          ...payload,
-        });
+        const data = await (async () => {
+          if (this.bucketId)
+            return api.updateBucket({
+              id: this.bucketId,
+              params: { save: save, reassign: this.reassign },
+              ...payload,
+            });
+          return api.createBucket({
+            params: { save: save, reassign: this.reassign },
+            ...payload,
+          });
+        })();
         if (save) {
-          window.location.href = data.url;
+          if (!this.reassign) {
+            window.location.href = data.url;
+          } else {
+            // - start timer loop to poll token
+            const { token, url } = data;
+            this.reassignAsyncToken = token;
+            this.reassignDoneUrl = url;
+            this.reassignAsyncTimer = setTimeout(this.pollReassignDone, 1000);
+          }
+          return;
         }
         this.warning = data.warningMessage;
         this.inList = data.inList;
         this.outList = data.outList;
         this.inListCount = data.inListCount;
         this.outListCount = data.outListCount;
+        this.loading = null;
       } catch (err) {
         this.warning = errorParser(err);
-      } finally {
         this.loading = null;
       }
     },
-    async update(save) {
-      this.loading = save ? "save" : "preview";
-      const payload = {
-        doNotReduce: this.bucket.doNotReduce,
-        frequent: this.bucket.frequent,
-        permanent: this.bucket.permanent,
-        shortDescription: this.bucket.shortDescription,
-        signature: this.bucket.signature,
-      };
-
+    pollReassignDone: async function () {
+      this.reassignAsyncTimer = null;
+      let reassignDone;
       try {
-        const data = await api.updateBucket({
-          id: this.bucketId,
-          params: { save: save, reassign: this.reassign },
-          ...payload,
-        });
-        if (save) {
-          window.location.href = data.url;
-        }
-        this.warning = data.warningMessage;
-        this.inList = data.inList;
-        this.outList = data.outList;
-        this.inListCount = data.inListCount;
-        this.outListCount = data.outListCount;
+        reassignDone = await api.pollAsyncOp(this.reassignAsyncToken);
       } catch (err) {
-        this.warning = errorParser(err);
-      } finally {
-        this.loading = null;
+        // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
+        // eslint-disable-next-line no-console
+        console.debug(errorParser(err));
+        window.location.href = this.reassignDoneUrl;
+        return;
+      }
+      if (reassignDone) {
+        this.reassignAsyncToken = null;
+        window.location.href = this.reassignDoneUrl;
+      } else {
+        this.reassignAsyncTimer = setTimeout(this.pollReassignDone, 1000);
       }
     },
   },

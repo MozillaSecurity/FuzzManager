@@ -60,6 +60,13 @@
             <td>Crashes covered by this signature</td>
             <td>
               {{ bucket.size }}
+              <span
+                v-if="bucket.reassign_in_progress"
+                class="bi bi-hourglass-split"
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Crashes are currently being reassigned in this bucket"
+              ></span>
               <activitygraph
                 :data="bucket.crash_history"
                 :range="activityRange"
