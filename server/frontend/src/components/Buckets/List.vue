@@ -33,9 +33,9 @@
         ><br />
       </div>
       <div v-else>
-        <a :href="createBucketUrl" class="btn btn-success" v-if="canEdit"
-          >Create bucket</a
-        >
+        <div v-if="canEdit" class="btn-group" role="group">
+          <a :href="createBucketUrl" class="btn btn-success">Create bucket</a>
+        </div>
         <p v-if="canEdit"></p>
         <label for="id_query">Search Query</label>
         <HelpJSONQueryPopover
