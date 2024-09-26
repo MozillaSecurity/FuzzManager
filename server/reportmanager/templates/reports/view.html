@@ -32,7 +32,7 @@
           <a href="{% url 'reportmanager:createbugcomment' entry.pk %}" class="btn btn-danger">Post a bug comment</a>
     {% endif %}
   {% else %}
-          <!--a href="{% url 'reportmanager:bucketnew' %}?report_id={{ entry.pk }}" class="btn btn-danger">Create</a-->
+          <!--a href="{% url 'reportmanager:createbucket' %}?report_id={{ entry.pk }}" class="btn btn-danger">Create</a-->
           <!--a href="{% url 'reportmanager:findbuckets' entry.pk %}" class="btn btn-default">Search</a-->
   {% endif %}
         </div>

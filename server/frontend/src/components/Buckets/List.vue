@@ -4,6 +4,9 @@
     <div class="panel-body">
       <div v-if="!advancedQuery">
         <div class="btn-group" role="group">
+          <a :href="createBucketUrl" class="btn btn-success" v-if="canEdit"
+            >Create bucket</a
+          >
           <button
             type="button"
             class="btn btn-default"
@@ -21,7 +24,7 @@
             {{ showHidden ? "Hide Triaged" : "Show Triaged" }}
           </button>
         </div>
-        <br />
+        <p></p>
         <a
           title="Show advanced query for the current search/filters"
           class="pointer"
@@ -30,6 +33,10 @@
         ><br />
       </div>
       <div v-else>
+        <a :href="createBucketUrl" class="btn btn-success" v-if="canEdit"
+          >Create bucket</a
+        >
+        <p v-if="canEdit"></p>
         <label for="id_query">Search Query</label>
         <HelpJSONQueryPopover
           :parameters="[
@@ -218,6 +225,10 @@ export default {
     },
     canEdit: {
       type: Boolean,
+      required: true,
+    },
+    createBucketUrl: {
+      type: String,
       required: true,
     },
     watchUrl: {

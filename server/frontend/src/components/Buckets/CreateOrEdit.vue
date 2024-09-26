@@ -150,7 +150,7 @@ export default {
     bucket: {
       description: "",
       priority: 0,
-      signature: "",
+      signature: jsonPretty('{ "symptoms": [] }'),
     },
     reassign: true,
     reassignAsyncTimer: null,

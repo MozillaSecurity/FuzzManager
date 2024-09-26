@@ -131,8 +131,10 @@ urlpatterns = [
         views.bucket_watch_delete,
         name="bucketwatchdel",
     ),
-    re_path(r"^buckets/watch/new/$", views.bucket_watch_create, name="bucketwatchnew"),
-    re_path(r"^buckets/new/$", views.signature_create, name="bucketnew"),
+    re_path(
+        r"^buckets/watch/create/$", views.bucket_watch_create, name="createbucketwatch"
+    ),
+    re_path(r"^buckets/create/$", views.signature_create, name="createbucket"),
     re_path(r"^stats/$", views.stats, name="stats"),
     re_path(
         r"^usersettings/$", views.UserSettingsEditView.as_view(), name="usersettings"

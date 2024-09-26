@@ -257,7 +257,7 @@ class ReportEntryVueSerializer(ReportEntrySerializer):
         return None
 
     def get_sig_new_url(self, entry):
-        return f"{reverse('reportmanager:bucketnew')}?report_id={entry.id}"
+        return f"{reverse('reportmanager:createbucket')}?report_id={entry.id}"
 
     def get_find_sigs_url(self, entry):
         return reverse("reportmanager:findbuckets", kwargs={"report_id": entry.id})

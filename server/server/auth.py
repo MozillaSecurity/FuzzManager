@@ -41,7 +41,7 @@ class CheckAppPermission(permissions.BasePermission):
                     if request.method in {"GET", "HEAD"}:
                         return True
                     if request.method == "POST" and view_name in {
-                        "bucketwatchnew",
+                        "createbucketwatch",
                         "bucketwatchdel",
                         "usersettings",
                     }:

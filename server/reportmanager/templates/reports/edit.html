@@ -20,7 +20,7 @@
                             Unreported, <a href="{% url 'reportmanager:createbug' entry.pk %}">file a bug</a>.
                         {% endif %}
                     {% else %}
-                        Not assigned to any bucket. <a href="{% url 'reportmanager:bucketnew' %}?report_id={{ entry.pk }}">Create new</a>
+                        Not assigned to any bucket. <a href="{% url 'reportmanager:createbucket' %}?report_id={{ entry.pk }}">Create new</a>
                     {% endif %}
                 </span>
         </div>
