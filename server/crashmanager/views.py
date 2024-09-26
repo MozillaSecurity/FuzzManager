@@ -58,7 +58,7 @@ from .serializers import (
     InvalidArgumentException,
     NotificationSerializer,
 )
-from .tasks import bulk_delete_crashes
+from .tasks import async_reassign, bulk_delete_crashes
 
 
 class JSONDateEncoder(json.JSONEncoder):
@@ -1251,7 +1251,7 @@ class BucketViewSet(
 
         return response
 
-    def __validate(self, request, bucket, submitSave, reassign):
+    def __validate(self, request, bucket, submitSave, reassign, created):
         try:
             bucket.getSignature()
         except RuntimeError as e:
@@ -1269,26 +1269,58 @@ class BucketViewSet(
                 # "Note that you must save an object before it can be
                 #  assigned to a foreign key relationship."
                 bucket.bug = bucket.bug
+            if reassign:
+                bucket.reassign_in_progress = True
             bucket.save()
+
+        # there are 4 cases:
+        # reassign & save: expensive and slow, needs to be async
+        #  - schedule it in celery and return an async token
+        # ressign & preview: do a limited reassignment and return results for preview
+        # no-reassign & preview: same as above, but change results are empty
+        # no-reassign & save: save bucket without reprocessing, s.b. instant
 
         inList, outList = [], []
         inListCount, outListCount = 0, 0
         # If the reassign checkbox is checked
         if reassign:
-            inList, outList, inListCount, outListCount = bucket.reassign(submitSave)
+            if submitSave:
+                # do reassign in an async worker
+                token = f"{uuid4()}"
+                cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
+                cache.sadd("cm_async_operations", token)
+                async_reassign.delay(bucket.pk, token)
+                return Response(
+                    status=status.HTTP_202_ACCEPTED,
+                    data={
+                        "token": token,
+                        "url": reverse(
+                            "crashmanager:sigview", kwargs={"sigid": bucket.pk}
+                        ),
+                    },
+                )
+            inList, outList, inListCount, outListCount = bucket.reassign(False)
 
         # Save bucket and redirect to viewing it
         if submitSave:
-            return {"url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})}
+            return Response(
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+                data={
+                    "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+                },
+            )
 
         # Render the preview page
-        return {
-            "warningMessage": "This is a preview, don't forget to save!",
-            "inList": inList,
-            "outList": outList,
-            "inListCount": inListCount,
-            "outListCount": outListCount,
-        }
+        return Response(
+            status=status.HTTP_200_OK,
+            data={
+                "warningMessage": "This is a preview, don't forget to save!",
+                "inList": inList,
+                "outList": outList,
+                "inListCount": inListCount,
+                "outListCount": outListCount,
+            },
+        )
 
     def update(self, request, *args, **kwargs):
         raise MethodNotAllowed(request.method)
@@ -1338,11 +1370,7 @@ class BucketViewSet(
             "false",
             "0",
         )
-        data = self.__validate(request, bucket, save, reassign)
-        return Response(
-            status=status.HTTP_200_OK,
-            data=data,
-        )
+        return self.__validate(request, bucket, save, reassign, created=False)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1360,12 +1388,7 @@ class BucketViewSet(
             "false",
             "0",
         )
-        data = self.__validate(request, bucket, save, reassign)
-        response_status = status.HTTP_201_CREATED if save else status.HTTP_200_OK
-        return Response(
-            status=response_status,
-            data=data,
-        )
+        return self.__validate(request, bucket, save, reassign, created=save)
 
 
 class BucketVueViewSet(BucketViewSet):

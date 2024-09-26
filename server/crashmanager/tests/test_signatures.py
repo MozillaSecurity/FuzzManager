@@ -17,6 +17,7 @@ import requests
 from django.urls import reverse
 
 from crashmanager.models import Bucket, BucketWatch, CrashEntry
+from crashmanager.tasks import async_reassign
 
 from . import assert_contains
 
@@ -24,6 +25,21 @@ LOG = logging.getLogger("fm.crashmanager.tests.signatures")
 pytestmark = pytest.mark.usefixtures(
     "crashmanager_test"
 )  # pylint: disable=invalid-name
+
+
+def test_async_reassign(cm, mocker):
+    fake_cache = mocker.patch("redis.StrictRedis.from_url")
+    reassign = mocker.patch("crashmanager.models.Bucket.reassign")
+    token = "{fake-uuid-token}"
+
+    bucket = cm.create_bucket(shortDescription="bucket #1", reassign_in_progress=True)
+    async_reassign(bucket.pk, token)
+    assert reassign.call_args_list == [mocker.call(True)]
+    bucket = Bucket.objects.get(pk=bucket.pk)  # re-read
+    assert not bucket.reassign_in_progress
+    assert fake_cache.return_value.srem.call_args_list == [
+        mocker.call("cm_async_operations", token)
+    ]
 
 
 @pytest.mark.parametrize(

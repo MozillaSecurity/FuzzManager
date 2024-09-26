@@ -281,7 +281,12 @@ def cm():
 
         @staticmethod
         def create_bucket(
-            bug=None, signature="", shortDescription="", frequent=False, permanent=False
+            bug=None,
+            signature="",
+            shortDescription="",
+            frequent=False,
+            permanent=False,
+            reassign_in_progress=False,
         ):
             result = Bucket.objects.create(
                 bug=bug,
@@ -289,6 +294,7 @@ def cm():
                 shortDescription=shortDescription,
                 frequent=frequent,
                 permanent=permanent,
+                reassign_in_progress=reassign_in_progress,
             )
             LOG.debug("Created Bucket pk=%d", result.pk)
             return result

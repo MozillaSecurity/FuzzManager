@@ -11,7 +11,16 @@
     <td>
       <activitygraph :data="signature.crash_history" :range="activityRange" />
     </td>
-    <td>{{ signature.size }}</td>
+    <td>
+      {{ signature.size }}
+      <span
+        v-if="signature.reassign_in_progress"
+        class="bi bi-hourglass-split"
+        data-toggle="tooltip"
+        data-placement="top"
+        title="Crashes are currently being reassigned in this bucket"
+      ></span>
+    </td>
     <td>{{ signature.best_quality }}</td>
     <td>
       <a

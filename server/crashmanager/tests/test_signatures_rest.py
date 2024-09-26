@@ -85,13 +85,14 @@ def _compare_rest_result_to_bucket(
         "bug",
         "doNotReduce",
         "frequent",
+        "has_optimization",
         "id",
+        "latest_entry",
         "permanent",
+        "reassign_in_progress",
         "shortDescription",
         "signature",
         "size",
-        "has_optimization",
-        "latest_entry",
     }
     if vue:
         attributes.update(
@@ -106,15 +107,16 @@ def _compare_rest_result_to_bucket(
         )
 
     assert set(result) == attributes
-    assert result["id"] == bucket.pk
-    assert result["best_quality"] == quality
     assert result["best_entry"] == best_entry
-    assert result["doNotReduce"] == bucket.doNotReduce
-    assert result["latest_entry"] == latest
+    assert result["best_quality"] == quality
     assert result["bug"] == bucket.bug_id
+    assert result["doNotReduce"] == bucket.doNotReduce
     assert result["frequent"] == bucket.frequent
     assert result["has_optimization"] == bool(bucket.optimizedSignature)
+    assert result["id"] == bucket.pk
+    assert result["latest_entry"] == latest
     assert result["permanent"] == bucket.permanent
+    assert result["reassign_in_progress"] == bucket.reassign_in_progress
     assert result["shortDescription"] == bucket.shortDescription
     assert result["signature"] == bucket.signature
     assert result["size"] == size
@@ -315,10 +317,15 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-@pytest.mark.parametrize("from_crash", [False, True])
+@pytest.mark.parametrize(
+    "from_crash",
+    [pytest.param(False, id="from_symptoms"), pytest.param(True, id="from_crash")],
+)
 def test_new_signature_create(
-    api_client, cm, user, from_crash
+    api_client, cm, from_crash, mocker, user
 ):  # pylint: disable=invalid-name
+    fake_cache = mocker.patch("redis.StrictRedis.from_url")
+    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     if from_crash:
         if user.username == "test-restricted":
             _create_user("test")
@@ -361,23 +368,38 @@ def test_new_signature_create(
     LOG.debug(resp)
     bucket = Bucket.objects.get(shortDescription=desc)
     crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-    assert crash.bucket == bucket
+    assert crash.bucket is None
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == desc
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == status.HTTP_201_CREATED
-    assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    }
+    assert resp.status_code == requests.codes["accepted"]
+    result = resp.json()
+    assert result.keys() == {"token", "url"}
+    token = result["token"]
+    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+    assert fake_cache.return_value.sadd.call_args_list == [
+        mocker.call("cm_async_operations", token)
+    ]
+    assert len(fake_async_reassign.delay.call_args_list) == 1
+    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
+    assert not call_kwds
+    assert len(call_args) == 2
+    assert call_args[0] == bucket.pk
+    assert call_args[1] == token
+    assert bucket.reassign_in_progress
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-@pytest.mark.parametrize("many", [False, True])
+@pytest.mark.parametrize(
+    "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
+)
 def test_new_signature_create_w_reassign(
-    api_client, cm, user, many
+    api_client, cm, many, mocker, user
 ):  # pylint: disable=invalid-name
+    fake_cache = mocker.patch("redis.StrictRedis.from_url")
+    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     if many:
         crashes = [
             cm.create_crash(shortSignature="crash #1", stderr="blah")
@@ -406,23 +428,36 @@ def test_new_signature_create_w_reassign(
     if many:
         crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
         for crash in crashes:
-            assert crash.bucket == bucket
+            assert crash.bucket is None
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        assert crash.bucket == bucket
+        assert crash.bucket is None
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == status.HTTP_201_CREATED
-    assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    }
+    assert resp.status_code == requests.codes["accepted"]
+    result = resp.json()
+    assert result.keys() == {"token", "url"}
+    token = result["token"]
+    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+    assert fake_cache.return_value.sadd.call_args_list == [
+        mocker.call("cm_async_operations", token)
+    ]
+    assert len(fake_async_reassign.delay.call_args_list) == 1
+    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
+    assert not call_kwds
+    assert len(call_args) == 2
+    assert call_args[0] == bucket.pk
+    assert call_args[1] == token
+    assert bucket.reassign_in_progress
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-@pytest.mark.parametrize("many", [False, True])
+@pytest.mark.parametrize(
+    "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
+)
 def test_new_signature_preview(
     api_client, cm, user, many
 ):  # pylint: disable=invalid-name
@@ -521,10 +556,14 @@ def test_edit_signature_edit(
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
-@pytest.mark.parametrize("many", [False, True])
+@pytest.mark.parametrize(
+    "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
+)
 def test_edit_signature_edit_w_reassign(
-    api_client, cm, user, many
+    api_client, cm, many, mocker, user
 ):  # pylint: disable=invalid-name
+    fake_cache = mocker.patch("redis.StrictRedis.from_url")
+    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     bucket = cm.create_bucket()
     if many:
         crashes = [
@@ -554,23 +593,36 @@ def test_edit_signature_edit_w_reassign(
     if many:
         crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
         for crash in crashes:
-            assert crash.bucket == bucket
+            assert crash.bucket is None
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        assert crash.bucket == bucket
+        assert crash.bucket is None
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == status.HTTP_200_OK
-    assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    }
+    assert resp.status_code == requests.codes["accepted"]
+    result = resp.json()
+    assert result.keys() == {"token", "url"}
+    token = result["token"]
+    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+    assert fake_cache.return_value.sadd.call_args_list == [
+        mocker.call("cm_async_operations", token)
+    ]
+    assert len(fake_async_reassign.delay.call_args_list) == 1
+    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
+    assert not call_kwds
+    assert len(call_args) == 2
+    assert call_args[0] == bucket.pk
+    assert call_args[1] == token
+    assert bucket.reassign_in_progress
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
-@pytest.mark.parametrize("many", [False, True])
+@pytest.mark.parametrize(
+    "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
+)
 def test_edit_signature_edit_preview(
     api_client, cm, user, many
 ):  # pylint: disable=invalid-name
