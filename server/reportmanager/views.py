@@ -30,6 +30,7 @@ from rest_framework.response import Response
 
 from webcompat.models import Report
 
+from .cron import triage_new_reports
 from .forms import (
     BugzillaTemplateBugForm,
     BugzillaTemplateCommentForm,
@@ -381,6 +382,7 @@ def signature_delete(request, sig_id):
             # Make sure we remove this bucket from all report entries referring to it,
             # otherwise these would be deleted as well through cascading.
             ReportEntry.objects.filter(bucket=bucket).update(bucket=None)
+            triage_new_reports.delay()
 
         bucket.delete()
         return redirect("reportmanager:buckets")

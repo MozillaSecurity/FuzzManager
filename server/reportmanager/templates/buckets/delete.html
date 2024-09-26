@@ -15,14 +15,10 @@
       </div>
 
       <div class="field">
-        {% if out_of_filter > 0 or in_filter > 0 %}
+        {% if affected > 0 %}
         <input type="checkbox" id="id_delentries" name="delentries"/>
         <label for="id_delentries">
-        {% if out_of_filter > 0 %}
-          Also delete all report entries with this bucket: {{ in_filter }} in tool filter, {{ out_of_filter }} in other tools ({{ other_tools }}).
-        {% else %}
-          Also delete all report entries with this bucket: {{ in_filter }} in tool filter (none in other tools).
-        {% endif %}
+          Also delete all {{ affected }} report entries with this bucket.
         </label>
         {% else %}
         Bucket contains no report entries.
