@@ -13,7 +13,16 @@
       <activitygraph :data="bucket.report_history" :range="activityRange" />
     </td>
     <td class="wrap-anywhere">{{ bucket.latest_report | date }}</td>
-    <td>{{ bucket.size }}</td>
+    <td>
+      {{ bucket.size }}
+      <span
+        v-if="bucket.reassign_in_progress"
+        class="bi bi-hourglass"
+        data-toggle="tooltip"
+        data-placement="top"
+        title="Reports are currently being reassigned in this bucket"
+      ></span>
+    </td>
     <td>
       <a
         v-if="bucket.bug && bucket.bug_urltemplate"

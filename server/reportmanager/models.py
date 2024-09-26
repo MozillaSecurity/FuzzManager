@@ -68,6 +68,7 @@ class Bucket(models.Model):
     )
     # Raw signature JSON (see webcompat.models.Signature)
     signature = models.TextField()
+    reassign_in_progress = models.BooleanField(default=False)
 
     class Meta:
         constraints = (

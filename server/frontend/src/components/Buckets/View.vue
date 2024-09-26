@@ -55,6 +55,13 @@
             <td>Reports in this bucket</td>
             <td>
               {{ bucket.size }}
+              <span
+                v-if="bucket.reassign_in_progress"
+                class="bi bi-hourglass"
+                data-toggle="tooltip"
+                data-placement="top"
+                title="Reports are currently being reassigned in this bucket"
+              ></span>
               <activitygraph
                 :data="bucket.report_history"
                 :range="activityRange"

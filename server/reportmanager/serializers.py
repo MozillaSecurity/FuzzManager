@@ -55,6 +55,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "priority",
             "signature",
             "size",
+            "reassign_in_progress",
         )
         ordering = ("-id",)
         read_only_fields = ("id",)
