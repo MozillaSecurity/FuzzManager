@@ -118,7 +118,7 @@ class BucketVueSerializer(BucketSerializer):
 
     def get_new_bug_url(self, sig):
         return reverse(
-            "reportmanager:createbug", kwargs={"report_id": sig.latest_entry_id}
+            "reportmanager:createbug", kwargs={"report_id": sig.latest_entry_id or 0}
         )
 
     def get_view_url(self, sig):
