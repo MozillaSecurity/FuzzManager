@@ -175,6 +175,7 @@ export default {
   },
   methods: {
     async create_or_update(save) {
+      this.warning = null;
       this.loading = save ? (this.bucketId ? "save" : "create") : "preview";
       const payload = {
         description: this.bucket.description,
