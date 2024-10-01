@@ -35,6 +35,7 @@ class BucketSerializer(serializers.ModelSerializer):
         queryset=BugProvider.objects.all(),
         allow_null=True,
     )
+    latest_entry_id = serializers.IntegerField(write_only=True, required=False)
     latest_report = serializers.DateTimeField(write_only=True, required=False)
     signature = serializers.CharField(
         style={"base_template": "textarea.html"}, required=False
@@ -51,6 +52,7 @@ class BucketSerializer(serializers.ModelSerializer):
             "domain",
             "hide_until",
             "id",
+            "latest_entry_id",
             "latest_report",
             "priority",
             "signature",
@@ -69,6 +71,7 @@ class BucketSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         serialized = super().to_representation(obj)
         serialized["size"] = obj.size
+        serialized["latest_entry_id"] = getattr(obj, "latest_entry_id", None)
         serialized["latest_report"] = getattr(obj, "latest_report", None)
         return serialized
 
