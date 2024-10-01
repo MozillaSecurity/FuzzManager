@@ -57,7 +57,7 @@
               {{ bucket.size }}
               <span
                 v-if="bucket.reassign_in_progress"
-                class="bi bi-hourglass"
+                class="bi bi-hourglass-split"
                 data-toggle="tooltip"
                 data-placement="top"
                 title="Reports are currently being reassigned in this bucket"

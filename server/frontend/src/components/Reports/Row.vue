@@ -9,7 +9,7 @@
     </td>
     <td v-else>
       <span
-        class="bi bi-hourglass"
+        class="bi bi-hourglass-split"
         data-toggle="tooltip"
         data-placement="top"
         title="This item hasn't been triaged yet by the server."
