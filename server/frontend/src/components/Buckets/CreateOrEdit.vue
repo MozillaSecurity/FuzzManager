@@ -13,13 +13,15 @@
       </div>
 
       <p v-if="inList.length">
-        New issues that will be assigned to this bucket (
-        <a href="#reports_in">list</a>):
+        New issues that will be assigned to this bucket (<a href="#reports_in"
+          >list</a
+        >):
         <span class="badge">{{ inListCount }}</span>
       </p>
       <p v-if="outList.length">
-        Issues that will be removed from this bucket (
-        <a href="#reports_out">list</a>):
+        Issues that will be removed from this bucket (<a href="#reports_out"
+          >list</a
+        >):
         <span class="badge">{{ outListCount }}</span>
       </p>
 
