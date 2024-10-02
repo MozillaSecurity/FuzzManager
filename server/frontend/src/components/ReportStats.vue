@@ -180,6 +180,10 @@ export default {
       type: Number,
       required: true,
     },
+    canEdit: {
+      type: Boolean,
+      required: true,
+    },
     providers: {
       type: Array,
       required: true,
