@@ -5,7 +5,6 @@ from rest_framework import routers
 from . import views
 
 router = routers.DefaultRouter()
-router.register(r"op", views.AsyncOpViewSet, basename="op")
 router.register(r"crashes", views.CrashEntryViewSet, basename="crashes")
 router.register(r"buckets", views.BucketViewSet, basename="buckets")
 router.register(r"bugproviders", views.BugProviderViewSet, basename="bugproviders")

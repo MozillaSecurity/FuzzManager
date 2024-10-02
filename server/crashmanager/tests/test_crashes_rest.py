@@ -262,8 +262,6 @@ def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
 def test_rest_crashes_delete(api_client, user_normal, cm, ignore_toolfilter, mocker):
     """test that delete crashes api works as expected"""
-    fake_cache = mocker.patch("redis.StrictRedis.from_url")
-    fake_delete_task = mocker.patch("crashmanager.views.bulk_delete_crashes")
     testcases = [
         cm.create_testcase("test3.txt", quality=5),
         cm.create_testcase("test4.txt", quality=5),
@@ -292,29 +290,22 @@ def test_rest_crashes_delete(api_client, user_normal, cm, ignore_toolfilter, moc
 
     resp = api_client.delete("/crashmanager/rest/crashes/", QUERY_STRING=query_string)
     LOG.debug(resp)
-    assert resp.status_code == requests.codes["accepted"]
-    token = resp.json()
-    assert fake_cache.return_value.sadd.call_args_list == [
-        mocker.call("cm_async_operations", token)
-    ]
-    assert len(fake_delete_task.delay.call_args_list) == 1
-    call_args, call_kwds = fake_delete_task.delay.call_args_list[0]
-    assert not call_kwds
-    assert len(call_args) == 2
-    assert call_args[1] == token
+    assert resp.status_code == requests.codes["ok"]
+    expected = 2 if ignore_toolfilter else 1
+    assert resp.json() == {
+        "deleted": expected,
+        "nextOffset": None,
+        "total": expected,
+    }
     crashes = CrashEntry.objects.all()
-    crashes.query = call_args[0]
-    LOG.debug(crashes.query)
     if ignore_toolfilter:
-        assert (
-            crashes.count() == 2
-        ), f"deleting: {','.join(str(crash.id) for crash in crashes)}"
+        # all crashes deleted
+        assert crashes.count() == 0
     else:
-        assert (
-            crashes.count() == 1
-        ), f"deleting: {','.join(str(crash.id) for crash in crashes)}"
+        # crashes not in toolfilter remain
+        assert crashes.count() == 1
         entry = crashes.get()
-        assert entry.tool.name == "tool2"
+        assert entry.tool.name == "tool1"
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)

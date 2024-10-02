@@ -2,10 +2,8 @@ import json
 import os
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from uuid import uuid4
 from wsgiref.util import FileWrapper
 
-import redis
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
@@ -58,7 +56,6 @@ from .serializers import (
     InvalidArgumentException,
     NotificationSerializer,
 )
-from .tasks import async_reassign, bulk_delete_crashes
 
 
 class JSONDateEncoder(json.JSONEncoder):
@@ -1000,22 +997,6 @@ class DeferRawFilterBackend(BaseFilterBackend):
         return queryset
 
 
-class AsyncOpViewSet(
-    viewsets.GenericViewSet,
-):
-    """API endpoint for polling async operations"""
-
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
-    lookup_value_regex = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-
-    def retrieve(self, request, pk=None):
-        assert isinstance(pk, str)
-        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-        if cache.sismember("cm_async_operations", pk):
-            return Response(status=status.HTTP_202_ACCEPTED)
-        return Response(status=status.HTTP_200_OK)
-
-
 class CrashEntryViewSet(
     mixins.CreateModelMixin,
     mixins.ListModelMixin,
@@ -1056,13 +1037,37 @@ class CrashEntryViewSet(
         if user.restricted:
             raise MethodNotAllowed(request.method)
         queryset = self.filter_queryset(self.get_queryset())
-        token = f"{uuid4()}"
-        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-        cache.sadd("cm_async_operations", token)
-        bulk_delete_crashes.delay(queryset.query, token)
+
+        # implement limit/offset pagination of deletion to support
+        # batched requests from frontend
+        limit = int(request.query_params.get("limit", "1000"))
+        assert limit > 0
+        offset = int(request.query_params.get("offset", "0"))
+        assert offset >= 0
+
+        nextOffset = None
+        if offset:
+            queryset = queryset[offset:]
+        total = queryset.count()
+        if total > limit:
+            # continue with offset=0 until gone
+            nextOffset = 0
+        queryset = queryset[:limit]
+
+        deleted = 0
+        pks = list(queryset.values_list("id", flat=True))
+        while pks:
+            chunk, pks = pks[:100], pks[100:]
+            deleteStats = CrashEntry.objects.filter(pk__in=chunk).delete()
+            deleted += deleteStats[1]["crashmanager.CrashEntry"]
+
         return Response(
-            status=status.HTTP_202_ACCEPTED,
-            data=token,
+            status=status.HTTP_200_OK,
+            data={
+                "deleted": deleted,
+                "nextOffset": nextOffset,
+                "total": total,
+            },
         )
 
     def list(self, request, *args, **kwargs):
@@ -1251,14 +1256,16 @@ class BucketViewSet(
 
         return response
 
-    def __validate(self, request, bucket, submitSave, reassign, created):
+    def __validate(self, request, bucket, submitSave, reassign, limit, offset, created):
         try:
             bucket.getSignature()
         except RuntimeError as e:
             raise ValidationError(f"Signature is not valid: {e}")
 
         # Only save if we hit "save" (not e.g. "preview")
-        if submitSave:
+        # If offset is set, don't do it again (already done on first iteration)
+        result = status.HTTP_200_OK
+        if submitSave and not offset:
             if bucket.bug is not None:
                 bucket.bug.save()
                 # this is not a no-op!
@@ -1272,54 +1279,45 @@ class BucketViewSet(
             if reassign:
                 bucket.reassign_in_progress = True
             bucket.save()
+            if created:
+                result = status.HTTP_201_CREATED
 
         # there are 4 cases:
-        # reassign & save: expensive and slow, needs to be async
-        #  - schedule it in celery and return an async token
+        # reassign & save: expensive and slow
         # ressign & preview: do a limited reassignment and return results for preview
         # no-reassign & preview: same as above, but change results are empty
         # no-reassign & save: save bucket without reprocessing, s.b. instant
 
         inList, outList = [], []
         inListCount, outListCount = 0, 0
+        nextOffset = None
         # If the reassign checkbox is checked
         if reassign:
-            if submitSave:
-                # do reassign in an async worker
-                token = f"{uuid4()}"
-                cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-                cache.sadd("cm_async_operations", token)
-                async_reassign.delay(bucket.pk, token)
-                return Response(
-                    status=status.HTTP_202_ACCEPTED,
-                    data={
-                        "token": token,
-                        "url": reverse(
-                            "crashmanager:sigview", kwargs={"sigid": bucket.pk}
-                        ),
-                    },
-                )
-            inList, outList, inListCount, outListCount = bucket.reassign(False)
-
-        # Save bucket and redirect to viewing it
-        if submitSave:
-            return Response(
-                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-                data={
-                    "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-                },
+            inList, outList, inListCount, outListCount, nextOffset = bucket.reassign(
+                submitSave, limit=limit, offset=offset
             )
+            if submitSave and not nextOffset:
+                Bucket.objects.filter(pk=bucket.pk).update(reassign_in_progress=False)
+
+        data = {
+            "inList": inList,
+            "outList": outList,
+            "inListCount": inListCount,
+            "outListCount": outListCount,
+            "nextOffset": nextOffset,
+        }
+        if submitSave:
+            if nextOffset is None:
+                data["url"] = reverse(
+                    "crashmanager:sigview", kwargs={"sigid": bucket.pk}
+                )
+        else:
+            data["warningMessage"] = "This is a preview, don't forget to save!"
 
         # Render the preview page
         return Response(
-            status=status.HTTP_200_OK,
-            data={
-                "warningMessage": "This is a preview, don't forget to save!",
-                "inList": inList,
-                "outList": outList,
-                "inListCount": inListCount,
-                "outListCount": outListCount,
-            },
+            status=result,
+            data=data,
         )
 
     def update(self, request, *args, **kwargs):
@@ -1370,7 +1368,14 @@ class BucketViewSet(
             "false",
             "0",
         )
-        return self.__validate(request, bucket, save, reassign, created=False)
+        if reassign:
+            limit = int(request.query_params.get("limit", "1000"))
+            offset = int(request.query_params.get("offset", "0"))
+        else:
+            limit = offset = None
+        return self.__validate(
+            request, bucket, save, reassign, limit, offset, created=False
+        )
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -1388,7 +1393,14 @@ class BucketViewSet(
             "false",
             "0",
         )
-        return self.__validate(request, bucket, save, reassign, created=save)
+        if reassign:
+            limit = int(request.query_params.get("limit", "1000"))
+            offset = int(request.query_params.get("offset", "0"))
+        else:
+            limit = offset = None
+        return self.__validate(
+            request, bucket, save, reassign, limit, offset, created=save
+        )
 
 
 class BucketVueViewSet(BucketViewSet):
