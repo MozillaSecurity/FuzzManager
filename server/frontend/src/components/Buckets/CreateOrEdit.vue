@@ -155,9 +155,6 @@ export default {
       signature: jsonPretty('{ "symptoms": [] }'),
     },
     reassign: true,
-    reassignAsyncTimer: null,
-    reassignAsyncToken: null,
-    reassignDoneUrl: null,
     warning: "",
     inList: [],
     inListCount: 0,
@@ -186,58 +183,45 @@ export default {
       };
 
       try {
-        const data = await (async () => {
-          if (this.bucketId)
-            return api.updateBucket({
-              id: this.bucketId,
-              params: { save: save, reassign: this.reassign },
+        let offset = 0;
+        while (offset !== null) {
+          const data = await (async () => {
+            if (this.bucketId)
+              return api.updateBucket({
+                id: this.bucketId,
+                params: { save: save, reassign: this.reassign, offset: offset },
+                ...payload,
+              });
+            return api.createBucket({
+              params: { save: save, reassign: this.reassign, offset: offset },
               ...payload,
             });
-          return api.createBucket({
-            params: { save: save, reassign: this.reassign },
-            ...payload,
-          });
-        })();
-        if (save) {
-          if (!this.reassign) {
+          })();
+
+          if (data.url) {
             window.location.href = data.url;
-          } else {
-            // - start timer loop to poll token
-            const { token, url } = data;
-            this.reassignAsyncToken = token;
-            this.reassignDoneUrl = url;
-            this.reassignAsyncTimer = setTimeout(this.pollReassignDone, 1000);
+            return;
           }
-          return;
+
+          this.warning = data.warning_message;
+          if (offset === 0) {
+            this.inList = data.in_list;
+            this.outList = data.out_list;
+            this.inListCount = data.in_list_count;
+            this.outListCount = data.out_list_count;
+          } else {
+            this.inList.push(...data.in_list);
+            this.outList.push(...data.out_list);
+            this.inListCount += data.in_list_count;
+            this.outListCount += data.out_list_count;
+          }
+
+          offset = data.next_offset;
         }
-        this.warning = data.warning_message;
-        this.inList = data.in_list;
-        this.outList = data.out_list;
-        this.inListCount = data.in_list_count;
-        this.outListCount = data.out_list_count;
         this.loading = null;
       } catch (err) {
         this.warning = errorParser(err);
         this.loading = null;
-      }
-    },
-    pollReassignDone: async function () {
-      this.reassignAsyncTimer = null;
-      let reassignDone;
-      try {
-        reassignDone = await api.pollAsyncOp(this.reassignAsyncToken);
-      } catch (err) {
-        // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-        // eslint-disable-next-line no-console
-        console.debug(errorParser(err));
-        window.location.href = this.reassignDoneUrl;
-        return;
-      }
-      if (reassignDone) {
-        this.reassignAsyncToken = null;
-        window.location.href = this.reassignDoneUrl;
-      } else {
-        this.reassignAsyncTimer = setTimeout(this.pollReassignDone, 1000);
       }
     },
   },

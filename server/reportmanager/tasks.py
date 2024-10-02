@@ -16,18 +16,6 @@ else:
     from itertools import batched
 
 
-@app.task(ignore_result=True)
-def async_reassign(pk, token):
-    from .models import Bucket
-
-    bucket = Bucket.objects.get(pk=pk)
-    bucket.reassign(True)
-    Bucket.objects.filter(pk=pk).update(reassign_in_progress=False)
-
-    cache = StrictRedis.from_url(settings.REDIS_URL)
-    cache.srem("cm_async_operations", token)
-
-
 @app.task(ignore_result=True, serializer="pickle")
 def bulk_delete_reports(query, token):
     from .models import ReportEntry

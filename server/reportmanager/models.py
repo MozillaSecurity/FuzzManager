@@ -118,7 +118,7 @@ class Bucket(models.Model):
 
         super().save(*args, **kwargs)
 
-    def reassign(self, submit_save):
+    def reassign(self, submit_save, limit=None, offset=None):
         """Assign all issues that match our signature to this bucket from
         lower-priority buckets. Furthermore, remove all non-matching issues
         from our bucket (which will be re-triaged into default buckets).
@@ -144,7 +144,24 @@ class Bucket(models.Model):
         if not submit_save:
             entries = entries.order_by("-id")  # used by the preview list
 
+        # implement limit/offset pagination of reassignment to support
+        # batched requests from frontend
+        if limit is not None:
+            assert limit > 0
+            assert offset is None or offset >= 0
+        else:
+            assert offset is None
+
         entry_ids = entries.values_list("id", flat=True)
+        if offset:
+            entry_ids = entry_ids[offset:]
+
+        next_offset = None
+        if limit:
+            remainder = entry_ids.count()
+            if remainder > limit:
+                next_offset = (offset or 0) + limit
+            entry_ids = entry_ids[:limit]
 
         # If we are saving, we only care about the id of each entry
         # Otherwise, we save the entire object. Limit to the first 100 entries to avoid
@@ -191,7 +208,7 @@ class Bucket(models.Model):
                         )
                 ReportEntry.objects.filter(pk__in=entry_ids_batch).update(bucket=None)
 
-        return in_list, out_list, in_list_count, out_list_count
+        return in_list, out_list, in_list_count, out_list_count, next_offset
 
     def optimize_signature(self, unbucketed_entries):
         buckets = Bucket.objects.all()

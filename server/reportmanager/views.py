@@ -58,7 +58,7 @@ from .serializers import (
     ReportEntrySerializer,
     ReportEntryVueSerializer,
 )
-from .tasks import async_reassign, bulk_delete_reports
+from .tasks import bulk_delete_reports
 
 LOG = getLogger("reportmanager.views")
 
@@ -839,14 +839,15 @@ class BucketViewSet(
 
         return response
 
-    def __validate(self, request, bucket, submit_save, reassign, created):
+    def __validate(self, bucket, submit_save, reassign, limit, offset, created):
         try:
             bucket.get_signature()
         except RuntimeError as e:
             raise ValidationError(f"Signature is not valid: {e}")
 
         # Only save if we hit "save" (not e.g. "preview")
-        if submit_save:
+        # If offset is set, don't do it again (already done on first iteration)
+        if submit_save and not offset:
             if bucket.bug is not None:
                 bucket.bug.save()
                 # this is not a no-op!
@@ -860,56 +861,51 @@ class BucketViewSet(
             if reassign:
                 bucket.reassign_in_progress = True
             bucket.save()
+            result = status.HTTP_201_CREATED
+        else:
+            result = status.HTTP_200_OK
 
         # there are 4 cases:
-        # reassign & save: expensive and slow, needs to be async
-        #  - schedule it in celery and return an async token
+        # reassign & save: expensive and slow
         # ressign & preview: do a limited reassignment and return results for preview
         # no-reassign & preview: same as above, but change results are empty
         # no-reassign & save: save bucket without reprocessing, s.b. instant
 
         in_list, out_list = [], []
         in_list_count, out_list_count = 0, 0
+        next_offset = None
         # If the reassign checkbox is checked
         if reassign:
-            if submit_save:
-                # do reassign in an async worker
-                token = f"{uuid4()}"
-                cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-                cache.sadd("cm_async_operations", token)
-                async_reassign.delay(bucket.pk, token)
-                return Response(
-                    status=status.HTTP_202_ACCEPTED,
-                    data={
-                        "token": token,
-                        "url": reverse(
-                            "reportmanager:bucketview", kwargs={"sig_id": bucket.pk}
-                        ),
-                    },
-                )
-            in_list, out_list, in_list_count, out_list_count = bucket.reassign(False)
+            (
+                in_list,
+                out_list,
+                in_list_count,
+                out_list_count,
+                next_offset,
+            ) = bucket.reassign(submit_save, limit=limit, offset=offset)
+            if submit_save and not next_offset:
+                Bucket.objects.filter(pk=bucket.pk).update(reassign_in_progress=False)
+
+        data = {
+            "in_list": in_list,
+            "out_list": out_list,
+            "in_list_count": in_list_count,
+            "out_list_count": out_list_count,
+            "next_offset": next_offset,
+        }
 
         # Save bucket and redirect to viewing it
         if submit_save:
-            return Response(
-                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-                data={
-                    "url": reverse(
-                        "reportmanager:bucketview", kwargs={"sig_id": bucket.pk}
-                    ),
-                },
-            )
+            if next_offset is None:
+                data["url"] = reverse(
+                    "reportmanager:bucketview", kwargs={"sig_id": bucket.pk}
+                )
+        else:
+            data["warning_message"] = "This is a preview, don't forget to save!"
 
-        # Render the preview page
         return Response(
-            status=status.HTTP_200_OK,
-            data={
-                "warning_message": "This is a preview, don't forget to save!",
-                "in_list": in_list,
-                "out_list": out_list,
-                "in_list_count": in_list_count,
-                "out_list_count": out_list_count,
-            },
+            status=result,
+            data=data,
         )
 
     def update(self, request, *args, **kwargs):
@@ -953,7 +949,12 @@ class BucketViewSet(
             "false",
             "0",
         )
-        return self.__validate(request, bucket, save, reassign, created=False)
+        if reassign:
+            limit = int(request.query_params.get("limit", "1000"))
+            offset = int(request.query_params.get("offset", "0"))
+        else:
+            limit = offset = None
+        return self.__validate(bucket, save, reassign, limit, offset, created=False)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -970,7 +971,12 @@ class BucketViewSet(
             "false",
             "0",
         )
-        return self.__validate(request, bucket, save, reassign, created=save)
+        if reassign:
+            limit = int(request.query_params.get("limit", "1000"))
+            offset = int(request.query_params.get("offset", "0"))
+        else:
+            limit = offset = None
+        return self.__validate(bucket, save, reassign, limit, offset, created=save)
 
 
 class BucketVueViewSet(BucketViewSet):
