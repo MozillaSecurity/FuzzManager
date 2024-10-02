@@ -324,8 +324,6 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
 def test_new_signature_create(
     api_client, cm, from_crash, mocker, user
 ):  # pylint: disable=invalid-name
-    fake_cache = mocker.patch("redis.StrictRedis.from_url")
-    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     if from_crash:
         if user.username == "test-restricted":
             _create_user("test")
@@ -368,27 +366,21 @@ def test_new_signature_create(
     LOG.debug(resp)
     bucket = Bucket.objects.get(shortDescription=desc)
     crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-    assert crash.bucket is None
+    assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == desc
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == requests.codes["accepted"]
-    result = resp.json()
-    assert result.keys() == {"token", "url"}
-    token = result["token"]
-    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    assert fake_cache.return_value.sadd.call_args_list == [
-        mocker.call("cm_async_operations", token)
-    ]
-    assert len(fake_async_reassign.delay.call_args_list) == 1
-    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
-    assert not call_kwds
-    assert len(call_args) == 2
-    assert call_args[0] == bucket.pk
-    assert call_args[1] == token
-    assert bucket.reassign_in_progress
+    assert resp.status_code == requests.codes["created"]
+    assert resp.json() == {
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inListCount": 1,
+        "inList": [],
+        "outListCount": 0,
+        "outList": [],
+        "nextOffset": None,
+    }
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -398,8 +390,6 @@ def test_new_signature_create(
 def test_new_signature_create_w_reassign(
     api_client, cm, many, mocker, user
 ):  # pylint: disable=invalid-name
-    fake_cache = mocker.patch("redis.StrictRedis.from_url")
-    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     if many:
         crashes = [
             cm.create_crash(shortSignature="crash #1", stderr="blah")
@@ -428,30 +418,24 @@ def test_new_signature_create_w_reassign(
     if many:
         crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
         for crash in crashes:
-            assert crash.bucket is None
+            assert crash.bucket == bucket
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        assert crash.bucket is None
+        assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == requests.codes["accepted"]
-    result = resp.json()
-    assert result.keys() == {"token", "url"}
-    token = result["token"]
-    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    assert fake_cache.return_value.sadd.call_args_list == [
-        mocker.call("cm_async_operations", token)
-    ]
-    assert len(fake_async_reassign.delay.call_args_list) == 1
-    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
-    assert not call_kwds
-    assert len(call_args) == 2
-    assert call_args[0] == bucket.pk
-    assert call_args[1] == token
-    assert bucket.reassign_in_progress
+    assert resp.status_code == requests.codes["created"]
+    assert resp.json() == {
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inListCount": 201 if many else 1,
+        "inList": [],
+        "outListCount": 0,
+        "outList": [],
+        "nextOffset": None,
+    }
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
@@ -551,7 +535,12 @@ def test_edit_signature_edit(
     assert bucket.permanent is permanent
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inList": [],
+        "inListCount": 0,
+        "outList": [],
+        "outListCount": 0,
+        "nextOffset": None,
     }
 
 
@@ -562,8 +551,6 @@ def test_edit_signature_edit(
 def test_edit_signature_edit_w_reassign(
     api_client, cm, many, mocker, user
 ):  # pylint: disable=invalid-name
-    fake_cache = mocker.patch("redis.StrictRedis.from_url")
-    fake_async_reassign = mocker.patch("crashmanager.views.async_reassign")
     bucket = cm.create_bucket()
     if many:
         crashes = [
@@ -593,30 +580,24 @@ def test_edit_signature_edit_w_reassign(
     if many:
         crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
         for crash in crashes:
-            assert crash.bucket is None
+            assert crash.bucket == bucket
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
-        assert crash.bucket is None
+        assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
     assert not bucket.doNotReduce
     assert not bucket.frequent
     assert not bucket.permanent
-    assert resp.status_code == requests.codes["accepted"]
-    result = resp.json()
-    assert result.keys() == {"token", "url"}
-    token = result["token"]
-    assert result["url"] == reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
-    assert fake_cache.return_value.sadd.call_args_list == [
-        mocker.call("cm_async_operations", token)
-    ]
-    assert len(fake_async_reassign.delay.call_args_list) == 1
-    call_args, call_kwds = fake_async_reassign.delay.call_args_list[0]
-    assert not call_kwds
-    assert len(call_args) == 2
-    assert call_args[0] == bucket.pk
-    assert call_args[1] == token
-    assert bucket.reassign_in_progress
+    assert resp.status_code == requests.codes["ok"]
+    assert resp.json() == {
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inList": [],
+        "inListCount": 201 if many else 1,
+        "outList": [],
+        "outListCount": 0,
+        "nextOffset": None,
+    }
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
@@ -709,7 +690,12 @@ def test_edit_signature_set_frequent(api_client, cm, user_normal):
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inListCount": 0,
+        "inList": [],
+        "outListCount": 0,
+        "outList": [],
+        "nextOffset": None,
     }
     bucket.refresh_from_db()
     assert bucket.frequent
@@ -734,7 +720,12 @@ def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inListCount": 0,
+        "inList": [],
+        "outListCount": 0,
+        "outList": [],
+        "nextOffset": None,
     }
     bucket.refresh_from_db()
     assert bucket.bug is None
@@ -761,7 +752,12 @@ def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk})
+        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+        "inListCount": 0,
+        "inList": [],
+        "outListCount": 0,
+        "outList": [],
+        "nextOffset": None,
     }
     assert Bug.objects.count() == 1
     createdBug = Bug.objects.get()

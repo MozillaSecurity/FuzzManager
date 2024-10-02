@@ -179,7 +179,7 @@ class Bucket(models.Model):
 
         super().save(*args, **kwargs)
 
-    def reassign(self, submitSave):
+    def reassign(self, submitSave, limit=None, offset=None):
         """
         Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
@@ -211,7 +211,24 @@ class Bucket(models.Model):
                 "-id"
             )  # used by the preview list
 
+        # implement limit/offset pagination of reassignment to support
+        # batched requests from frontend
+        if limit is not None:
+            assert limit > 0
+            assert offset is None or offset >= 0
+        else:
+            assert offset is None
+
         entry_ids = entries.values_list("id", flat=True)
+        if offset:
+            entry_ids = entry_ids[offset:]
+
+        nextOffset = None
+        if limit:
+            remainder = entry_ids.count()
+            if remainder > limit:
+                nextOffset = (offset or 0) + limit
+            entry_ids = entry_ids[:limit]
 
         # from the python documentation (itertools)
         def grouper(iterable, n, fillvalue=None):
@@ -273,7 +290,7 @@ class Bucket(models.Model):
                     bucket=None, triagedOnce=False
                 )
 
-        return inList, outList, inListCount, outListCount
+        return inList, outList, inListCount, outListCount, nextOffset
 
     def optimizeSignature(self, unbucketed_entries):
         buckets = Bucket.objects.all()

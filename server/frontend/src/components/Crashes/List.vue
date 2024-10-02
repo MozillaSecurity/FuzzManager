@@ -112,10 +112,10 @@
     </div>
     <div class="panel-body">
       <p>
-        <span v-if="deleteAsyncToken === null">
+        <span v-if="deletedEntries === null">
           Displaying {{ currentEntries }} /
         </span>
-        <span v-else>Deleting</span>
+        <span v-else>Deleted ({{ deletedEntries }} / {{ deleteTotal }})</span>
         <span
           v-if="
             advancedQuery ||
@@ -394,8 +394,8 @@ export default {
       currentEntries: "?",
       currentPage: 1,
       defaultSortKeys: defaultSortKeys,
-      deleteAsyncTimer: null,
-      deleteAsyncToken: null,
+      deletedEntries: null,
+      deleteTotal: null,
       filters: {},
       haveResults: false,
       ignoreToolFilter: false,
@@ -588,55 +588,43 @@ export default {
         buttons: true,
       });
       if (value) {
-        // - if confirmed, submit delete and get async token
+        // - if confirmed, submit delete and continue until done
         this.loading = true;
-        try {
-          this.deleteAsyncToken = await api.deleteCrashes(
-            this.buildDeleteParams(),
-          );
-        } catch (err) {
-          if (
-            err.response &&
-            err.response.status === 400 &&
-            err.response.data
-          ) {
-            if (this.advancedQuery) {
-              this.advancedQueryError = err.response.data.detail;
+        let offset = 0;
+        this.deleteTotal = "?";
+        this.deletedEntries = 0;
+        while (offset !== null) {
+          try {
+            const data = await api.deleteCrashes(this.buildDeleteParams());
+            offset = data.nextOffset;
+            if (this.deletedEntries === 0) this.deleteTotal = data.total;
+            this.deletedEntries += data.deleted;
+          } catch (err) {
+            if (
+              err.response &&
+              err.response.status === 400 &&
+              err.response.data
+            ) {
+              if (this.advancedQuery) {
+                this.advancedQueryError = err.response.data.detail;
+              } else {
+                // eslint-disable-next-line no-console
+                console.debug(err.response.data);
+                swal("Oops", E_SERVER_ERROR, "error");
+              }
+              this.loading = false;
+              break;
             } else {
+              // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
               // eslint-disable-next-line no-console
-              console.debug(err.response.data);
-              swal("Oops", E_SERVER_ERROR, "error");
+              console.debug(errorParser(err));
+              this.$router.go(0);
+              return;
             }
-            this.loading = false;
-          } else {
-            // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-            // eslint-disable-next-line no-console
-            console.debug(errorParser(err));
-            this.$router.go(0);
-            return;
           }
         }
-        // - start timer loop to poll token
-        this.deleteAsyncTimer = setTimeout(this.pollDeleteDone, 1000);
-      }
-    },
-    pollDeleteDone: async function () {
-      this.deleteAsyncTimer = null;
-      let deleteDone;
-      try {
-        deleteDone = await api.pollAsyncOp(this.deleteAsyncToken);
-      } catch (err) {
-        // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-        // eslint-disable-next-line no-console
-        console.debug(errorParser(err));
-        this.$router.go(0);
-        return;
-      }
-      if (deleteDone) {
-        this.deleteAsyncToken = null;
+        this.deletedEntries = null;
         this.fetch();
-      } else {
-        this.deleteAsyncTimer = setTimeout(this.pollDeleteDone, 1000);
       }
     },
     fetch: _throttle(
@@ -756,9 +744,6 @@ export default {
           this.$router.push({ path: this.$route.path, hash: "" });
       }
     },
-  },
-  beforeDestroy() {
-    if (this.deleteAsyncTimer !== null) clearTimeout(this.deleteAsyncTimer);
   },
   watch: {
     sortKeys() {
