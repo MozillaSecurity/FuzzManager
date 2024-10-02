@@ -153,13 +153,13 @@ class Bucket(models.Model):
         for entry_ids_batch in batched(entry_ids, MATCH_BATCH_SIZE):
             for entry in entries.filter(id__in=entry_ids_batch):
                 match = signature.matches(entry.get_report())
-                if match and entry.bucket is not self:
+                if match and entry.bucket != self:
                     if submit_save:
                         in_list.append(entry.pk)
                     elif len(in_list) < MATCH_BATCH_SIZE:
                         in_list.append(ReportEntryVueSerializer(entry).data)
                     in_list_count += 1
-                elif not match and entry.bucket is self:
+                elif not match and entry.bucket == self:
                     if submit_save:
                         out_list.append(entry.pk)
                     elif len(out_list) < MATCH_BATCH_SIZE:
