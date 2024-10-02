@@ -20,7 +20,8 @@ afterEach(jest.resetAllMocks);
 
 const defaultQueryStr = `{
   "op": "AND",
-  "bug__isnull": true
+  "bug__isnull": true,
+  "hide_until__isnull": true
 }`;
 
 test("bucket list has no buckets", async () => {
@@ -29,7 +30,10 @@ test("bucket list has no buckets", async () => {
     localVue,
     router,
     props: {
+      canEdit: true,
       providers: [],
+      createBucketUrl: "",
+      watchUrl: "",
       activityRange: 14,
     },
   });
@@ -37,9 +41,10 @@ test("bucket list has no buckets", async () => {
 
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
-    vue: 1,
+    vue: "1",
     limit: 100,
-    offset: 0,
+    offset: "0",
+    ordering: "-size,-latest_report",
     query: defaultQueryStr,
   });
 
@@ -54,7 +59,10 @@ test("bucket list has two buckets", async () => {
     localVue,
     router,
     props: {
+      canEdit: true,
       providers: [],
+      createBucketUrl: "",
+      watchUrl: "",
       activityRange: 14,
     },
   });
@@ -62,9 +70,10 @@ test("bucket list has two buckets", async () => {
 
   expect(listBuckets).toHaveBeenCalledTimes(1);
   expect(listBuckets).toHaveBeenCalledWith({
-    vue: 1,
+    vue: "1",
     limit: 100,
-    offset: 0,
+    offset: "0",
+    ordering: "-size,-latest_report",
     query: defaultQueryStr,
   });
 

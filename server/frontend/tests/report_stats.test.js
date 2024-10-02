@@ -25,15 +25,15 @@ test("empty stats doesn't break", async () => {
     router,
     props: {
       providers: [],
+      canEdit: true,
+      createBucketUrl: "",
       activityRange: 14,
     },
   });
   await nextTick();
 
   expect(reportStats).toHaveBeenCalledTimes(1);
-  expect(reportStats).toHaveBeenCalledWith({
-    ignore_toolfilter: "0",
-  });
+  expect(reportStats).toHaveBeenCalledWith();
   expect(listBuckets).toHaveBeenCalledTimes(0);
 
   await nextTick();
@@ -53,15 +53,15 @@ test("stats are shown", async () => {
     router,
     props: {
       providers: [],
+      canEdit: true,
+      createBucketUrl: "",
       activityRange: 14,
     },
   });
   await nextTick();
 
   expect(reportStats).toHaveBeenCalledTimes(1);
-  expect(reportStats).toHaveBeenCalledWith({
-    ignore_toolfilter: "0",
-  });
+  expect(reportStats).toHaveBeenCalledWith();
   expect(listBuckets).toHaveBeenCalledTimes(1);
   await nextTick();
   await nextTick();
@@ -71,7 +71,7 @@ test("stats are shown", async () => {
   expect(document.querySelectorAll("tbody tr").length).toBe(2);
   getByText("A short description for bucket 1");
   const buttonLink = getByText("1630739");
-  expect(buttonLink).toHaveProperty("href", buckets[0].bug_urltemplate);
+  expect(buttonLink).toHaveProperty("href", buckets.results[0].bug_urltemplate);
   expect(buttonLink).toHaveProperty("target", "_blank");
   getByText("A short description for bucket 2");
   getByText("Assign an existing bug");
@@ -91,15 +91,15 @@ test("stats use hash params", async () => {
     },
     props: {
       providers: [],
+      canEdit: true,
+      createBucketUrl: "",
       activityRange: 14,
     },
   });
   await nextTick();
 
   expect(reportStats).toHaveBeenCalledTimes(1);
-  expect(reportStats).toHaveBeenCalledWith({
-    ignore_toolfilter: "1",
-  });
+  expect(reportStats).toHaveBeenCalledWith();
   expect(listBuckets).toHaveBeenCalledTimes(1);
   await nextTick();
   await nextTick();
@@ -119,6 +119,8 @@ test("stats are sortable", async () => {
     router,
     props: {
       providers: [],
+      canEdit: true,
+      createBucketUrl: "",
       activityRange: 14,
     },
   });

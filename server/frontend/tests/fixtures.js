@@ -50,40 +50,40 @@ export const buckets = {
       bug_closed: null,
       bug_hostname: "bugzilla-dev.allizom.org",
       bug_urltemplate: "https://bugzilla-dev.allizom.org/1630739",
-      id: 1,
       description: "A short description for bucket 1",
+      id: 1,
+      reassign_in_progress: false,
+      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
       signature: "{ symptoms: 'some symptoms' }",
       size: 3,
       view_url: "/reportmanager/buckets/1/",
-      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
     },
     {
       bug: null,
       bug_closed: null,
       bug_hostname: null,
       bug_urltemplate: null,
-      id: 2,
       description: "A short description for bucket 2",
+      id: 2,
+      reassign_in_progress: false,
+      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
       signature: "{ symptoms: 'some symptoms' }",
       size: 5,
       view_url: "/reportmanager/buckets/2/",
-      report_history: [{ begin: "2021-06-23T10:42:00Z", count: 1 }],
     },
   ],
 };
 
 export const emptyReportStats = {
   totals: [0, 0, 0],
-  inFilterGraphData: new Array(14).fill(0),
-  outFilterGraphData: new Array(14).fill(0),
-  frequentBuckets: {},
+  graph_data: new Array(14).fill(0),
+  frequent_buckets: {},
 };
 
 export const reportStatsData = {
   totals: [12, 24, 48],
-  inFilterGraphData: new Array(24 * 14).fill(5),
-  outFilterGraphData: new Array(24 * 14).fill(1),
-  frequentBuckets: {
+  graph_data: new Array(24 * 14).fill(5),
+  frequent_buckets: {
     1: [1, 2, 3],
     2: [3, 0, 0],
   },
