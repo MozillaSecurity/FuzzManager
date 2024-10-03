@@ -14,7 +14,6 @@ router.register(
     r"bugzilla/templates", views.BugzillaTemplateViewSet, basename="templates"
 )
 router.register(r"inbox", views.NotificationViewSet, basename="inbox")
-router.register(r"op", views.AsyncOpViewSet, basename="op")
 router.register(r"reports", views.ReportEntryViewSet, basename="reports")
 
 app_name = "reportmanager"

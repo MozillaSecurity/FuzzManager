@@ -6,9 +6,6 @@ const mainAxios = axios.create({
   withCredentials: true,
 });
 
-export const pollAsyncOp = async (id) =>
-  (await mainAxios.get(`/reportmanager/rest/op/${id}/`)).status === 200;
-
 export const retrieveBucket = async (id) =>
   (await mainAxios.get(`/reportmanager/rest/buckets/${id}/`)).data;
 

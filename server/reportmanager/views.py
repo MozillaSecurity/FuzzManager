@@ -7,7 +7,6 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 from logging import getLogger
 
-import redis
 from dateutil.relativedelta import relativedelta
 from django.conf import settings as django_settings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
@@ -677,20 +676,6 @@ class WatchFilterReportsBackend(BaseFilterBackend):
             return queryset
         watch = BucketWatch.objects.get(id=watch_id)
         return queryset.filter(bucket=watch.bucket, id__gt=watch.last_report)
-
-
-class AsyncOpViewSet(viewsets.GenericViewSet):
-    """API endpoint for polling async operations"""
-
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
-    lookup_value_regex = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-
-    def retrieve(self, request, pk=None):
-        assert isinstance(pk, str)
-        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-        if cache.sismember("cm_async_operations", pk):
-            return Response(status=status.HTTP_202_ACCEPTED)
-        return Response(status=status.HTTP_200_OK)
 
 
 class ReportEntryViewSet(
