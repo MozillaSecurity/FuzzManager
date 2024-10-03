@@ -36,7 +36,8 @@
         />
         <br />
 
-        <label for="id_signature">Signature</label><br />
+        <label for="id_signature">Signature</label>
+        <HelpSignaturePopover /><br />
         <textarea
           id="id_signature"
           class="form-control"
@@ -125,9 +126,11 @@
 import { errorParser, jsonPretty } from "../../helpers";
 import * as api from "../../api";
 import List from "./ReportEntries/List.vue";
+import HelpSignaturePopover from "../HelpSignaturePopover.vue";
 
 export default {
   components: {
+    HelpSignaturePopover,
     List,
   },
   props: {
