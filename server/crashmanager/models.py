@@ -451,7 +451,7 @@ class CrashEntry(models.Model):
     platform = models.ForeignKey(Platform, on_delete=models.deletion.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.deletion.CASCADE)
     os = models.ForeignKey(OS, on_delete=models.deletion.CASCADE)
-    testcase = models.ForeignKey(
+    testcase = models.OneToOneField(
         TestCase, blank=True, null=True, on_delete=models.deletion.CASCADE
     )
     client = models.ForeignKey(Client, on_delete=models.deletion.CASCADE)
