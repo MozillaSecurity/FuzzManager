@@ -2,10 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
+import sys
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from logging import getLogger
-from uuid import uuid4
 
 import redis
 from dateutil.relativedelta import relativedelta
@@ -58,7 +58,11 @@ from .serializers import (
     ReportEntrySerializer,
     ReportEntryVueSerializer,
 )
-from .tasks import bulk_delete_reports
+
+if sys.version_info[:2] < (3, 12):
+    from server.utils import batched
+else:
+    from itertools import batched
 
 LOG = getLogger("reportmanager.views")
 
@@ -725,13 +729,35 @@ class ReportEntryViewSet(
         if pk is not None:
             raise MethodNotAllowed(request.method)
         queryset = self.filter_queryset(self.get_queryset())
-        token = f"{uuid4()}"
-        cache = redis.StrictRedis.from_url(django_settings.REDIS_URL)
-        cache.sadd("cm_async_operations", token)
-        bulk_delete_reports.delay(queryset.query, token)
+
+        # implement limit/offset pagination of deletion to support
+        # batched requests from frontend
+        limit = int(request.query_params.get("limit", "1000"))
+        assert limit > 0
+        offset = int(request.query_params.get("offset", "0"))
+        assert offset >= 0
+
+        next_offset = None
+        if offset:
+            queryset = queryset[offset:]
+        total = queryset.count()
+        if total > limit:
+            # continue with offset=0 until gone
+            next_offset = 0
+        queryset = queryset[:limit]
+
+        deleted = 0
+        for chunk in batched(queryset.values_list("id", flat=True), 100):
+            delete_stats = ReportEntry.objects.filter(pk__in=tuple(chunk)).delete()
+            deleted += delete_stats[1]["reportmanager.ReportEntry"]
+
         return Response(
-            status=status.HTTP_202_ACCEPTED,
-            data=token,
+            status=status.HTTP_200_OK,
+            data={
+                "deleted": deleted,
+                "next_offset": next_offset,
+                "total": total,
+            },
         )
 
     def partial_update(self, request, pk=None):
