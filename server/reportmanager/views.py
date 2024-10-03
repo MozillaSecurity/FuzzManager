@@ -847,6 +847,7 @@ class BucketViewSet(
 
         # Only save if we hit "save" (not e.g. "preview")
         # If offset is set, don't do it again (already done on first iteration)
+        result = status.HTTP_200_OK
         if submit_save and not offset:
             if bucket.bug is not None:
                 bucket.bug.save()
@@ -861,9 +862,8 @@ class BucketViewSet(
             if reassign:
                 bucket.reassign_in_progress = True
             bucket.save()
-            result = status.HTTP_201_CREATED
-        else:
-            result = status.HTTP_200_OK
+            if created:
+                result = status.HTTP_201_CREATED
 
         # there are 4 cases:
         # reassign & save: expensive and slow
