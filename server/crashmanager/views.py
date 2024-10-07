@@ -1380,6 +1380,10 @@ class BucketViewSet(
         )
 
     def create(self, request, *args, **kwargs):
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            raise MethodNotAllowed(request.method)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
