@@ -194,12 +194,13 @@ export default {
       };
 
       try {
-        let offset = 0;
+        let offset = 0,
+          bucket_id;
         while (offset !== null) {
           const data = await (async () => {
-            if (this.bucketId)
+            if (this.bucketId || bucket_id)
               return api.updateBucket({
-                id: this.bucketId,
+                id: this.bucketId || bucket_id,
                 params: { save: save, reassign: this.reassign, offset: offset },
                 ...payload,
               });
@@ -208,6 +209,8 @@ export default {
               ...payload,
             });
           })();
+
+          if (data.bucket_id) bucket_id = data.bucket_id;
 
           if (data.url) {
             window.location.href = data.url;

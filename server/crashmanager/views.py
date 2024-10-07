@@ -1307,6 +1307,8 @@ class BucketViewSet(
             "nextOffset": nextOffset,
         }
         if submitSave:
+            if created:
+                data["bucket_id"] = bucket.pk
             if nextOffset is None:
                 data["url"] = reverse(
                     "crashmanager:sigview", kwargs={"sigid": bucket.pk}

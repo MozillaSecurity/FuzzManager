@@ -210,6 +210,11 @@ class Bucket(models.Model):
             entries = entries.select_related("tool").order_by(
                 "-id"
             )  # used by the preview list
+        else:
+            # return unassigned entries last when saving to ensure a consistent sort
+            # otherwise in the "create" case we get inconsistent return order and
+            # not all crashes will be visited
+            entries = entries.order_by(models.F("bucket_id").asc(nulls_last=True))
 
         # implement limit/offset pagination of reassignment to support
         # batched requests from frontend
