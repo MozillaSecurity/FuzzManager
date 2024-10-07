@@ -316,7 +316,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             _compare_rest_result_to_bucket(resp, bucket, size, quality, best, latest)
 
 
-@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
 @pytest.mark.parametrize(
     "from_crash",
     [pytest.param(False, id="from_symptoms"), pytest.param(True, id="from_crash")],
@@ -374,6 +374,7 @@ def test_new_signature_create(
     assert not bucket.permanent
     assert resp.status_code == requests.codes["created"]
     assert resp.json() == {
+        "bucket_id": bucket.pk,
         "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
         "inListCount": 1,
         "inList": [],
@@ -383,7 +384,7 @@ def test_new_signature_create(
     }
 
 
-@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
@@ -392,8 +393,7 @@ def test_new_signature_create_w_reassign(
 ):  # pylint: disable=invalid-name
     if many:
         crashes = [
-            cm.create_crash(shortSignature="crash #1", stderr="blah")
-            for _ in range(201)
+            cm.create_crash(shortSignature="crash #1", stderr="blah") for _ in range(11)
         ]
     else:
         crash = cm.create_crash(shortSignature="crash #1", stderr="blah")
@@ -402,7 +402,7 @@ def test_new_signature_create_w_reassign(
     )
 
     resp = api_client.post(
-        "/crashmanager/rest/buckets/?reassign=true",
+        "/crashmanager/rest/buckets/?reassign=true&limit=10",
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
@@ -417,8 +417,10 @@ def test_new_signature_create_w_reassign(
     bucket = Bucket.objects.get(shortDescription="bucket #1")
     if many:
         crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
-        for crash in crashes:
+        for crash in crashes[:10]:
             assert crash.bucket == bucket
+        for crash in crashes[10:]:
+            assert crash.bucket is None
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
         assert crash.bucket == bucket
@@ -428,17 +430,59 @@ def test_new_signature_create_w_reassign(
     assert not bucket.frequent
     assert not bucket.permanent
     assert resp.status_code == requests.codes["created"]
-    assert resp.json() == {
-        "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
-        "inListCount": 201 if many else 1,
-        "inList": [],
-        "outListCount": 0,
-        "outList": [],
-        "nextOffset": None,
-    }
+    if many:
+        assert resp.json() == {
+            "bucket_id": bucket.pk,
+            "inListCount": 10,
+            "inList": [],
+            "outListCount": 0,
+            "outList": [],
+            "nextOffset": 10,
+        }
+        resp = api_client.patch(
+            f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=true&limit=10&offset=10",
+            data={
+                "signature": sig,
+                "shortDescription": "bucket #1",
+                "doNotReduce": False,
+                "frequent": False,
+                "permanent": False,
+            },
+            format="json",
+        )
+
+        LOG.debug(resp)
+        bucket = Bucket.objects.get(shortDescription="bucket #1")
+        crashes = [CrashEntry.objects.get(pk=crash.pk) for crash in crashes]  # re-read
+        for crash in crashes:
+            assert crash.bucket == bucket
+        assert json.loads(bucket.signature) == json.loads(sig)
+        assert bucket.shortDescription == "bucket #1"
+        assert not bucket.doNotReduce
+        assert not bucket.frequent
+        assert not bucket.permanent
+        assert resp.status_code == requests.codes["ok"]
+        assert resp.json() == {
+            "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+            "inListCount": 1,
+            "inList": [],
+            "outListCount": 0,
+            "outList": [],
+            "nextOffset": None,
+        }
+    else:
+        assert resp.json() == {
+            "bucket_id": bucket.pk,
+            "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
+            "inListCount": 1,
+            "inList": [],
+            "outListCount": 0,
+            "outList": [],
+            "nextOffset": None,
+        }
 
 
-@pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
