@@ -91,7 +91,12 @@
         {% if entry.rawCrashData %}
         <div class="field">
             <strong>Additional Crash Data</strong>
-            <pre><code class="language-bash" v-pre>{{ entry.rawCrashData }}</code></pre>
+	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#crashdata">
+	    <span class="bi bi-eye-fill"></span>
+            </button>
+	    <div id="crashdata" class="accordian-body">
+              <pre><code v-pre>{{ entry.rawCrashData }}</code></pre>
+            </div>
         </div>
         <br />
         {% endif %}
