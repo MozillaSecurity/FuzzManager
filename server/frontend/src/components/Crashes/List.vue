@@ -308,6 +308,29 @@
         </tbody>
       </table>
     </div>
+    <div class="panel-body" v-show="totalPages > 1">
+      <div class="pagination">
+        <span class="step-links">
+          <a
+            v-on:click="prevPage"
+            v-show="currentPage > 1"
+            class="bi bi-caret-left-fill"
+          ></a>
+          <span class="current">
+            Page {{ currentPage }} of {{ totalPages }}.
+          </span>
+          <a
+            v-on:click="nextPage"
+            v-show="currentPage < totalPages"
+            data-toggle="tooltip"
+            data-placement="top"
+            title=""
+            class="bi bi-caret-right-fill dimgray"
+            data-original-title="Next"
+          ></a>
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
