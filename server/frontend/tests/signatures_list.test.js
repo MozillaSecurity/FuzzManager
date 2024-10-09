@@ -40,6 +40,7 @@ test("signature list has no buckets", async () => {
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
     ignore_toolfilter: "0",
+    include_quality: "0",
     query: defaultQueryStr,
   });
 
@@ -61,10 +62,17 @@ test("signature list has two buckets", async () => {
   });
   await nextTick();
 
-  expect(listBuckets).toHaveBeenCalledTimes(1);
+  expect(listBuckets).toHaveBeenCalledTimes(2);
   expect(listBuckets).toHaveBeenCalledWith({
     vue: "1",
     ignore_toolfilter: "0",
+    include_quality: "0",
+    query: defaultQueryStr,
+  });
+  expect(listBuckets).toHaveBeenLastCalledWith({
+    vue: "1",
+    ignore_toolfilter: "0",
+    include_quality: "1",
     query: defaultQueryStr,
   });
 

@@ -77,11 +77,18 @@ LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
 def _compare_rest_result_to_bucket(
-    result, bucket, size, quality, best_entry=None, latest=None, hist=[], vue=False
+    result,
+    bucket,
+    size,
+    quality,
+    best_entry=None,
+    latest=None,
+    hist=[],
+    vue=False,
+    have_quality=True,
 ):
     attributes = {
         "best_entry",
-        "best_quality",
         "bug",
         "doNotReduce",
         "frequent",
@@ -106,9 +113,13 @@ def _compare_rest_result_to_bucket(
             }
         )
 
+    if have_quality:
+        attributes.add("best_quality")
+
     assert set(result) == attributes
     assert result["best_entry"] == best_entry
-    assert result["best_quality"] == quality
+    if have_quality:
+        assert result["best_quality"] == quality
     assert result["bug"] == bucket.bug_id
     assert result["doNotReduce"] == bucket.doNotReduce
     assert result["frequent"] == bucket.frequent
@@ -199,9 +210,18 @@ def test_rest_signatures_methods(api_client, user, method, url):
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
-@pytest.mark.parametrize("ignore_toolfilter", [True, False])
+@pytest.mark.parametrize(
+    "ignore_toolfilter",
+    [pytest.param(True, id="notoolfilter"), pytest.param(False, id="toolfilter")],
+)
+@pytest.mark.parametrize(
+    "include_quality",
+    [pytest.param(True, id="quality"), pytest.param(False, id="noquality")],
+)
 @pytest.mark.parametrize("vue", [True, False])
-def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
+def test_rest_signatures_list(
+    api_client, cm, user, ignore_toolfilter, include_quality, vue
+):
     """test that buckets can be listed"""
     bucket1 = cm.create_bucket(shortDescription="bucket #1")
     bucket2 = cm.create_bucket(shortDescription="bucket #2")
@@ -230,6 +250,7 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     params = {}
     if ignore_toolfilter:
         params["ignore_toolfilter"] = "1"
+    params["include_quality"] = "1" if include_quality else "0"
     if vue:
         params["vue"] = "1"
     resp = api_client.get("/crashmanager/rest/buckets/", params)
@@ -244,16 +265,40 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
         hist = []
         if vue:
             hist = [{"begin": "ts0", "count": 3}]
-        _compare_rest_result_to_bucket(resp[0], bucket1, 3, 1, hist=hist, vue=vue)
+        _compare_rest_result_to_bucket(
+            resp[0],
+            bucket1,
+            3,
+            1,
+            hist=hist,
+            vue=vue,
+            have_quality=include_quality,
+        )
         hist = []
         if vue:
             hist = [{"begin": "ts0", "count": 1}]
-        _compare_rest_result_to_bucket(resp[1], bucket2, 1, 9, hist=hist, vue=vue)
+        _compare_rest_result_to_bucket(
+            resp[1],
+            bucket2,
+            1,
+            9,
+            hist=hist,
+            vue=vue,
+            have_quality=include_quality,
+        )
     else:
         hist = []
         if vue:
             hist = [{"begin": "ts0", "count": 2}]
-        _compare_rest_result_to_bucket(resp[0], bucket1, 2, 2, hist=hist, vue=vue)
+        _compare_rest_result_to_bucket(
+            resp[0],
+            bucket1,
+            2,
+            2,
+            hist=hist,
+            vue=vue,
+            have_quality=include_quality,
+        )
 
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
