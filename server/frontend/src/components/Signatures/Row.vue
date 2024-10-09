@@ -21,7 +21,10 @@
         title="Crashes are currently being reassigned in this bucket"
       ></span>
     </td>
-    <td>{{ signature.best_quality }}</td>
+    <td v-if="loadingQuality">
+      <ClipLoader class="m-strong align-def" :color="'black'" :size="'12px'" />
+    </td>
+    <td v-else>{{ signature.best_quality }}</td>
     <td>
       <a
         v-if="signature.bug && signature.bug_urltemplate"
@@ -49,6 +52,7 @@
 </template>
 
 <script>
+import ClipLoader from "vue-spinner/src/ClipLoader.vue";
 import AssignBtn from "./AssignBtn.vue";
 import ActivityGraph from "../ActivityGraph.vue";
 
@@ -56,10 +60,15 @@ export default {
   components: {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
+    ClipLoader,
   },
   props: {
     activityRange: {
       type: Number,
+      required: true,
+    },
+    loadingQuality: {
+      type: Boolean,
       required: true,
     },
     providers: {
@@ -79,4 +88,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.align-def {
+  text-align: revert;
+}
+</style>
