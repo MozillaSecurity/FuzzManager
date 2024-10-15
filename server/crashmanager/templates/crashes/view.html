@@ -65,10 +65,11 @@
         {% if entry.rawStdout %}
         <div class="field">
             <strong>stdout</strong>
-	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#stdout">
-	    <span class="bi bi-eye-fill"></span>
+            <button class="btn btn-default btn-xs" data-toggle="collapse" data-target="#stdout" aria-expanded="false" aria-controls="stdout">
+              <span class="bi bi-eye-fill"></span>
+              <span class="bi bi-eye-slash-fill"></span>
             </button>
-	    <div id="stdout" class="accordian-body collapse">
+            <div id="stdout" class="collapse">
               <pre><code v-pre>{{ entry.rawStdout }}</code></pre>
             </div>
         </div>
@@ -78,10 +79,11 @@
         {% if entry.rawStderr %}
         <div class="field">
             <strong>stderr</strong>
-	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#stderr">
-	    <span class="bi bi-eye-fill"></span>
+            <button class="btn btn-default btn-xs" data-toggle="collapse" data-target="#stderr" aria-expanded="false" aria-controls="stderr">
+              <span class="bi bi-eye-fill"></span>
+              <span class="bi bi-eye-slash-fill"></span>
             </button>
-	    <div id="stderr" class="accordian-body collapse">
+            <div id="stderr" class="collapse">
               <pre><code v-pre>{{ entry.rawStderr }}</code></pre>
             </div>
         </div>
@@ -91,10 +93,11 @@
         {% if entry.rawCrashData %}
         <div class="field">
             <strong>Additional Crash Data</strong>
-	    <button class="btn btn-default btn-xs accordion-toggle" data-toggle="collapse" data-target="#crashdata">
-	    <span class="bi bi-eye-fill"></span>
+            <button class="btn btn-default btn-xs" data-toggle="collapse" data-target="#crashdata" aria-expanded="true" aria-controls="crashdata">
+              <span class="bi bi-eye-fill"></span>
+              <span class="bi bi-eye-slash-fill"></span>
             </button>
-	    <div id="crashdata" class="accordian-body">
+            <div id="crashdata" class="collapse in">
               <pre><code v-pre>{{ entry.rawCrashData }}</code></pre>
             </div>
         </div>
@@ -150,3 +153,13 @@
     </div>
 </div>
 {% endblock body_content %}
+{% block css.custom %}
+<style>
+button[aria-expanded=true] .bi-eye-fill {
+  display: none;
+}
+button[aria-expanded=false] .bi-eye-slash-fill {
+  display: none;
+}
+</style>
+{% endblock css.custom %}
