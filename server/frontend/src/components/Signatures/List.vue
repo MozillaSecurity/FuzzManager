@@ -152,7 +152,6 @@
             v-for="signature in orderedSignatures"
             :activity-range="activityRange"
             :key="signature.id"
-            :loading-quality="loadingQuality"
             :providers="providers"
             :signature="signature"
             v-else
@@ -207,7 +206,6 @@ export default {
       defaultSortKeys: defaultSortKeys,
       ignoreToolFilter: false,
       loading: false,
-      loadingQuality: false,
       modifiedCache: {},
       queryError: "",
       queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
@@ -275,11 +273,10 @@ export default {
       }
       this.fetch();
     },
-    buildParams(loadQuality) {
+    buildParams() {
       return {
         vue: "1",
         ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-        include_quality: loadQuality ? "1" : "0",
         query: this.queryStr,
       };
     },
@@ -293,13 +290,11 @@ export default {
     fetch: _throttle(
       async function () {
         this.loading = true;
-        this.loadingQuality = true;
         this.updateModifiedCache();
         this.signatures = null;
         this.queryError = "";
-        // Load list first without (expensive) testcase quality
         try {
-          const data = await api.listBuckets(this.buildParams(false));
+          const data = await api.listBuckets(this.buildParams());
           this.signatures = data;
           this.totalEntries = this.signatures.length;
         } catch (err) {
@@ -319,30 +314,6 @@ export default {
           }
         }
         this.loading = false;
-        // If we got any signatures, reload this time with testcase quality
-        if (this.signatures.length) {
-          try {
-            const data = await api.listBuckets(this.buildParams(true));
-            this.signatures = data;
-            this.totalEntries = this.signatures.length;
-          } catch (err) {
-            if (
-              err.response &&
-              err.response.status === 400 &&
-              err.response.data
-            ) {
-              this.queryError = err.response.data.detail;
-              this.loading = false;
-            } else {
-              // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-              // eslint-disable-next-line no-console
-              console.debug(errorParser(err));
-              this.$router.go(0);
-              return;
-            }
-          }
-        }
-        this.loadingQuality = false;
       },
       500,
       { trailing: true },
