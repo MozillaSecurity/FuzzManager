@@ -974,21 +974,9 @@ class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
 
     def filter_queryset(self, request, queryset, view):
-        include_quality = request.query_params.get("include_quality", "1")
-        try:
-            include_quality = int(include_quality)
-            assert include_quality in {0, 1}
-
-        except (AssertionError, ValueError):
-            raise InvalidArgumentException({"include_quality": ["Expecting 0 or 1."]})
-
-        queryset = queryset.annotate(size=Count("crashentry"))
-
-        if include_quality:
-            queryset = queryset.annotate(quality=Min("crashentry__testcase__quality"))
-        view.include_quality = bool(include_quality)
-
-        return queryset
+        return queryset.annotate(
+            size=Count("crashentry"), quality=Min("crashentry__testcase__quality")
+        )
 
 
 class DeferRawFilterBackend(BaseFilterBackend):
@@ -1163,7 +1151,6 @@ class BucketViewSet(
     pagination_class = None
 
     def get_serializer(self, *args, **kwds):
-        kwds["include_quality"] = getattr(self, "include_quality", True)
         self.vue = self.request.query_params.get("vue", "false").lower() not in (
             "false",
             "0",

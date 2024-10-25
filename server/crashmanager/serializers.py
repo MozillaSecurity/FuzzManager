@@ -198,14 +198,6 @@ class BucketSerializer(serializers.ModelSerializer):
     )
     has_optimization = serializers.BooleanField(write_only=True, required=False)
 
-    def __init__(self, *args, **kwargs):
-        self.include_quality = kwargs.pop("include_quality", True)
-
-        super().__init__(*args, **kwargs)
-
-        if not self.include_quality:
-            self.fields.pop("best_quality")
-
     class Meta:
         model = Bucket
         fields = (
@@ -238,8 +230,7 @@ class BucketSerializer(serializers.ModelSerializer):
         serialized["size"] = obj.size
         serialized["best_entry"] = getattr(obj, "best_entry", None)
         serialized["latest_entry"] = getattr(obj, "latest_entry", None)
-        if self.include_quality:
-            serialized["best_quality"] = obj.quality
+        serialized["best_quality"] = obj.quality
         serialized["has_optimization"] = bool(obj.optimizedSignature)
         return serialized
 
