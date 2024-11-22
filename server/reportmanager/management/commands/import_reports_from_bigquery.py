@@ -9,6 +9,7 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db.utils import IntegrityError
+from django.utils import timezone
 from google.cloud import bigquery
 from google.oauth2 import service_account
 
@@ -31,14 +32,16 @@ class Command(BaseCommand):
             )
 
         client = bigquery.Client(**params)
+        result = client.query_and_wait(
+            f"SELECT * FROM `{settings.BIGQUERY_TABLE}` WHERE reported_at >= @since;",
+            job_config=bigquery.QueryJobConfig(
+                query_parameters=[
+                    bigquery.ScalarQueryParameter("since", "DATETIME", options["since"])
+                ]
+            ),
+        )
 
-        query = client.query(f"""
-            SELECT *
-            FROM `{settings.BIGQUERY_TABLE}`
-            WHERE reported_at >= "{options["since"].isoformat()}";
-        """)
-
-        for row in query.result():
+        for row in result:
             if row.comments is None:
                 continue
             report_obj = Report(
@@ -48,8 +51,7 @@ class Command(BaseCommand):
                 breakage_category=row.breakage_category,
                 comments=row.comments,
                 details=json.loads(row.details),
-                reported_at=row.reported_at,
-                # isoparse(row.reported_at).replace(tzinfo=timezone.utc)
+                reported_at=row.reported_at.replace(tzinfo=timezone.utc),
                 url=urlsplit(row.url),
                 os=row.os,
                 uuid=row.uuid,
