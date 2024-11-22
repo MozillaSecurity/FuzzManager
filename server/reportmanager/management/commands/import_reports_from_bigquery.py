@@ -39,6 +39,8 @@ class Command(BaseCommand):
         """)
 
         for row in query.result():
+            if row.comments is None:
+                continue
             report_obj = Report(
                 app_name=row.app_name,
                 app_channel=row.app_channel,
