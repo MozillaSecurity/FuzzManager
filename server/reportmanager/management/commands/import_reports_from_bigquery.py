@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
+from contextlib import suppress
 from logging import getLogger
 from urllib.parse import urlsplit
 
@@ -23,6 +24,7 @@ class Command(BaseCommand):
     help = "Import reports from BigQuery"
 
     def handle(self, *args, **options):
+        created = 0
         params = {
             "project": settings.BIGQUERY_PROJECT,
         }
@@ -56,10 +58,10 @@ class Command(BaseCommand):
                 os=row.os,
                 uuid=row.uuid,
             )
-            try:
+            with suppress(IntegrityError):
                 ReportEntry.objects.create_from_report(report_obj)
-            except IntegrityError as exc:
-                LOG.error("creating report entry: %s", exc)
+                created += 1
+        LOG.info("imported %d report entries", created)
 
     def add_arguments(self, parser):
         parser.add_argument(
