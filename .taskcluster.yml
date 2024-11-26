@@ -217,6 +217,7 @@ tasks:
               TASKCLUSTER_SECRET: "project/fuzzing/docker-hub"
               GIT_REPOSITORY: ${http_repo}
               GIT_REVISION: ${fetch_rev}
+              SERVICE_NAME: fuzzmanager
             command:
               - sh
               - -c
