@@ -693,6 +693,8 @@ class ASanCrashInfo(CrashInfo):
               (?:on\saddress             # Most common format, used for all overflows
                 |on\sunknown\saddress    # Used in case of a SIGSEGV
                 |double-free\son         # Used in case of a double-free
+                |out\sof\smemory:\sallocator\sis\strying\sto\sallocate\s0x[0-9a-f]+\s
+                 bytes
                 |allocator\sis\sout\sof\smemory\strying\sto\sallocate\s0x[0-9a-f]+\s
                  bytes
                 |failed\sto\sallocate\s0x[0-9a-f]+\s

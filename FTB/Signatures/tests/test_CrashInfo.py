@@ -215,6 +215,29 @@ def test_ASanParserTestOOM():
     ) == crashInfo.createShortSignature()
 
 
+def test_ASanParserTestOOM2():
+    config = ProgramConfiguration("test", "x86-64", "linux")
+
+    crashInfo = ASanCrashInfo(
+        [],
+        [
+            "==5712==ERROR: AddressSanitizer: out of memory: allocator is trying to "
+            "allocate 0x16000001090000 bytes",
+            "    #0 0x5cab97fe69fd in operator new(unsigned long) /builds/worker/"
+            "fetches/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:86:3",
+        ],
+        config,
+    )
+    assert len(crashInfo.backtrace) == 1
+    assert crashInfo.backtrace[0] == "operator new"
+    assert crashInfo.crashAddress is None
+
+    assert (
+        "AddressSanitizer: out of memory: allocator is trying to allocate "
+        "0x16000001090000 bytes [@ operator new]"
+    ) == crashInfo.createShortSignature()
+
+
 def test_ASanParserTestDebugAssertion():
     config = ProgramConfiguration("test", "x86-64", "linux")
 
