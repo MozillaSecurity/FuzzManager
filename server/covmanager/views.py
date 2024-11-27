@@ -284,7 +284,7 @@ def collections_diff_api(request, path):
         ctooltipdata["label"] = "No description"
         ctooltipdata["created"] = collection.created.strftime("%b. %-d %Y %-I:%M %p")
         if collection.description:
-            ctooltipdata["label"] = collection.description
+            ctooltipdata["label"] = f'{collection.id} - {collection.description}'
 
         if tooltipdata:
             # Store deltas to previous data points
