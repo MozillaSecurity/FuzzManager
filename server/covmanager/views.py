@@ -58,8 +58,11 @@ def collections_diff(request):
 
 
 def collections_reportsummary(request, collectionid):
+    collection = get_object_or_404(Collection, pk=collectionid)
+    serialized_collection = CollectionSerializer(collection).data
+    
     return render(
-        request, "reportconfigurations/summary.html", {"collectionid": collectionid}
+        request, "reportconfigurations/summary.html", {"collection": serialized_collection}
     )
 
 

@@ -20,11 +20,11 @@
   </style>
 {% endblock css.custom %}
 
-{% block title %}{{ collectionid }} - Summary{% endblock title %}
+{% block title %}{{ collection.id }} - Summary{% endblock title %}
 
 {% block body_content %}
 <div id="main" class="panel panel-default">
-  <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Report Summary</div>
+  <div class="panel-heading"><i class="bi bi-file-bar-graph"></i> Report Summary - <span v-text="chart.data.created"></span></div>
   <template v-if="loading">
     <div class="loader">
     </div>
@@ -55,8 +55,8 @@
 
 <script>
 let URLS = {
-  rs_api : '{% url 'covmanager:collections_reportsummary_api' collectionid %}',
-  html_url : '{% url 'covmanager:collections_reportsummary_html_list' collectionid %}',
+  rs_api : '{% url 'covmanager:collections_reportsummary_api' collection.id %}',
+  html_url : '{% url 'covmanager:collections_reportsummary_html_list' collection.id %}',
 }
 
 let pmanager = new HashParamManager()
@@ -96,6 +96,10 @@ let covmanager = new Vue({
   created: function () {
     this.csrftoken = getCSRFToken()
     this.fetch()
+
+    const formattedDate = formatClientTimestamp("{{collection.created}}")
+    this.chart.data.created = formattedDate
+    document.title += ` - ${formattedDate}`
   },
   methods: {
     fetch: _.throttle (function () {
