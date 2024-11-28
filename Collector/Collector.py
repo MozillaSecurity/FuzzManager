@@ -280,8 +280,12 @@ class Collector(Reporter):
         if not isinstance(resp_json, dict):
             raise RuntimeError(f"Server sent malformed JSON response: {resp_json!r}")
 
-        if not resp_json["testcase"]:
-            return None
+        if "testcase" not in resp_json or resp_json["testcase"] == "":
+            print(
+                f"Testcase not found for crash {resp_json.get('id', '[no ID]')}",
+                file=sys.stderr,
+            )
+            return (None, resp_json)
 
         response = self.get(dlurl)
 
@@ -324,7 +328,11 @@ class Collector(Reporter):
             params = None
 
             for crash in resp_json["results"]:
-                if not crash["testcase"]:
+                if "testcase" not in crash:
+                    print(
+                        f"Testcase not found for crash {crash.get('id', '[no ID]')}",
+                        file=sys.stderr,
+                    )
                     continue
 
                 url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
