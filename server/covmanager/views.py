@@ -60,9 +60,11 @@ def collections_diff(request):
 def collections_reportsummary(request, collectionid):
     collection = get_object_or_404(Collection, pk=collectionid)
     serialized_collection = CollectionSerializer(collection).data
-    
+
     return render(
-        request, "reportconfigurations/summary.html", {"collection": serialized_collection}
+        request,
+        "reportconfigurations/summary.html",
+        {"collection": serialized_collection},
     )
 
 
@@ -287,7 +289,7 @@ def collections_diff_api(request, path):
         ctooltipdata["label"] = "No description"
         ctooltipdata["created"] = collection.created.strftime("%b. %-d %Y %-I:%M %p")
         if collection.description:
-            ctooltipdata["label"] = f'{collection.id} - {collection.description}'
+            ctooltipdata["label"] = f"{collection.id} - {collection.description}"
 
         if tooltipdata:
             # Store deltas to previous data points
