@@ -293,6 +293,9 @@ class Collector(Reporter):
             raise RuntimeError(f"Server sent malformed response: {response!r}")
 
         local_filename = f"{crashId}{os.path.splitext(resp_json['testcase'])[1]}"
+        # Some testcases (e.g. Moz2D) are saved on FM without an extension
+        local_filename += "bin" if local_filename.endswith(".") else ""
+
         with open(local_filename, "wb") as output:
             output.write(response.content)
 
