@@ -37,6 +37,20 @@ __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
 
 
+class KeyValueAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        result = {}
+        for item in values:
+            try:
+                key, value = item.split("=")
+                result[key] = value
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f"Invalid format: '{item}', expected key=value."
+                )
+        setattr(namespace, self.dest, result)
+
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
@@ -307,17 +321,17 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, query_params):
         """
-        Download all testcases for the specified bucketId.
+        Download all testcases for the specified params.
 
-        @type bucketId: int
-        @param bucketId: ID of the requested bucket on the server side
+        @type params: dict
+        @param params: dictionary of params to download testcases for
 
         @rtype: generator
         @return: generator of filenames where tests were stored.
         """
-        params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
+        params = {"query": json.dumps({"op": "AND", **query_params})}
         next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
             self.serverProtocol,
             self.serverHost,
@@ -331,6 +345,9 @@ class Collector(Reporter):
                 raise RuntimeError(
                     f"Server sent malformed JSON response: {resp_json!r}"
                 )
+            if resp_json["count"] == 0:
+                print("Crashes not found for the specified params.", file=sys.stderr)
+                return None
 
             next_url = resp_json["next"]
             params = None
@@ -447,6 +464,11 @@ def main(args=None):
         metavar="ID",
     )
     actions.add_argument(
+        "--download-by-params",
+        action="store_true",
+        help="Download all testcases for the crashes specified by --query-params",
+    )
+    actions.add_argument(
         "--get-clientid",
         action="store_true",
         help="Print the client ID used when submitting issues",
@@ -507,8 +529,19 @@ def main(args=None):
     parser.add_argument(
         "--env",
         nargs="+",
+        # action=KeyValueAction, #TODO: my action instead of manual key=value splitting?
         type=str,
         help="List of environment variables in the form 'KEY=VALUE'",
+    )
+    parser.add_argument(
+        "--query-params",
+        nargs="+",
+        action=KeyValueAction,
+        help="""Specify query params (key=value) to download/resubmit crashes:
+        args, bucket, bucket_id, cachedCrashInfo, client, client_id, crashAddress,
+        crashAddressNumeric, created, env, id, metadata, os, os_id, platform,
+        platform_id, product, product_id, rawCrashData, rawStderr, rawStdout,
+        shortSignature, testcase, testcase_id, tool, tool_id, triagedOnce""",
     )
     parser.add_argument(
         "--metadata",
@@ -776,7 +809,7 @@ def main(args=None):
     if opts.download_all:
         downloaded = False
 
-        for result in collector.download_all(opts.download_all):
+        for result in collector.download_all({"bucket": opts.download_all}):
             downloaded = True
             print("Downloaded: ", result)
 
@@ -785,6 +818,20 @@ def main(args=None):
             return 1
 
         return 0
+
+    if opts.download_by_params:
+        downloaded = False
+
+        if not opts.query_params:
+            print("Specify query params to download testcases", file=sys.stderr)
+            return 1
+
+        for result in collector.download_all(opts.query_params):
+            downloaded = True
+            print("Downloaded: ", result)
+
+        if not downloaded:
+            print("Failed to download testcases for the specified params")
 
     if opts.get_clientid:
         print(collector.clientId)
