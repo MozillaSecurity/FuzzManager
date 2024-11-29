@@ -250,12 +250,14 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, crashId, crashJson=None):
         """
         Download the testcase for the specified crashId.
 
         @type crashId: int
         @param crashId: ID of the requested crash entry on the server side
+        @type crashJson: dict
+        @param crashJson: (optional) FM crash data to skip requesting it here
 
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw
@@ -274,11 +276,14 @@ class Collector(Reporter):
             self.serverPort,
             crashId,
         )
-
-        resp_json = self.get(url).json()
-
-        if not isinstance(resp_json, dict):
-            raise RuntimeError(f"Server sent malformed JSON response: {resp_json!r}")
+        if not crashJson:
+            resp_json = self.get(url).json()
+            if not isinstance(resp_json, dict):
+                raise RuntimeError(
+                    f"Server sent malformed JSON response: {resp_json!r}"
+                )
+        else:
+            resp_json = crashJson
 
         if "testcase" not in resp_json or resp_json["testcase"] == "":
             print(
@@ -329,35 +334,19 @@ class Collector(Reporter):
                 raise RuntimeError(
                     f"Server sent malformed JSON response: {resp_json!r}"
                 )
+            if resp_json["count"] == 0:
+                print("Crashes not found for the specified params.", file=sys.stderr)
+                continue
 
             next_url = resp_json["next"]
             params = None
 
             for crash in resp_json["results"]:
-                if "testcase" not in crash:
-                    print(
-                        f"Testcase not found for crash {crash.get('id', '[no ID]')}",
-                        file=sys.stderr,
-                    )
+                # crash here must already have same data as individual resp by crash ID
+                (local_filename, resp_dl) = self.download(crash["id"], crash)
+
+                if not local_filename:
                     continue
-
-                url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
-                    self.serverProtocol,
-                    self.serverHost,
-                    self.serverPort,
-                    crash["id"],
-                )
-                response = self.get(url)
-
-                if "content-disposition" not in response.headers:
-                    raise RuntimeError(f"Server sent malformed response: {response!r}")
-
-                local_filename = "%d%s" % (
-                    crash["id"],
-                    os.path.splitext(crash["testcase"])[1],
-                )
-                with open(local_filename, "wb") as output:
-                    output.write(response.content)
 
                 yield local_filename
 
@@ -798,7 +787,7 @@ def main(args=None):
 
         for result in collector.download_all(opts.download_all):
             downloaded = True
-            print(result)
+            print("Downloaded: ", result)
 
         if not downloaded:
             print("Specified signature does not have any testcases", file=sys.stderr)
