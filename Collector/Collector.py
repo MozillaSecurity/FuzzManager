@@ -37,6 +37,20 @@ __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
 
 
+class KeyValueAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        result = {}
+        for item in values:
+            try:
+                key, value = item.split("=")
+                result[key] = value
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f"Invalid format: '{item}', expected key=value."
+                )
+        setattr(namespace, self.dest, result)
+
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
@@ -310,45 +324,71 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, query_params):
         """
-        Download all testcases for the specified bucketId.
+        Download all testcases for the specified params.
 
-        @type bucketId: int
-        @param bucketId: ID of the requested bucket on the server side
+        @type params: dict
+        @param params: dictionary of params to download testcases for
 
         @rtype: generator
         @return: generator of filenames where tests were stored.
         """
-        params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
-        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-        )
-
-        while next_url:
-            resp_json = self.get(next_url, params=params).json()
-
-            if not isinstance(resp_json, dict):
-                raise RuntimeError(
-                    f"Server sent malformed JSON response: {resp_json!r}"
-                )
-            if resp_json["count"] == 0:
-                print("Crashes not found for the specified params.", file=sys.stderr)
-                continue
-
-            next_url = resp_json["next"]
-            params = None
+        # iterate over each page
+        for response in self.get_by_query("crashes/", query_params):
+            resp_json = response
 
             for crash in resp_json["results"]:
                 # crash here must already have same data as individual resp by crash ID
                 (local_filename, resp_dl) = self.download(crash["id"], crash)
-
                 if not local_filename:
                     continue
 
                 yield local_filename
+
+    @remote_checks
+    def get_by_query(self, rest_endpoint, query_params={}):
+        """
+        Get request for the specified REST endpoint and query params.
+
+        @type rest_endpoint: str
+        @param rest_endpoint: for crashmanager/rest/{rest_endpoint}.
+
+        @type params: dict
+        @param params: dictionary of params to query with; empty default.
+
+        @rtype: generator
+        @return: generator of JSON responses for the specified query.
+        """
+        url_rest = "%s://%s:%d/crashmanager/rest/" % (
+            self.serverProtocol,
+            self.serverHost,
+            self.serverPort,
+        )
+        next_url = url_rest + rest_endpoint
+        params = {"query": json.dumps({"op": "AND", **query_params})}
+
+        while next_url:
+            resp_json = self.get(next_url, params=params).json()
+            if not (isinstance(resp_json, dict) or isinstance(resp_json[0], dict)):
+                raise RuntimeError(
+                    f"Server sent malformed JSON response: {resp_json!r}"
+                )
+            if len(resp_json) == 0 or (
+                isinstance(resp_json, dict) and resp_json.get("count") == 0
+            ):
+                print(
+                    f"Results not found for {query_params} at {next_url}.",
+                    file=sys.stderr,
+                )
+                continue
+
+            if isinstance(resp_json, list):
+                next_url = resp_json[0].get("next")
+            else:
+                next_url = resp_json.get("next")
+            params = None
+            yield resp_json
 
     def __store_signature_hashed(self, signature):
         """
@@ -456,6 +496,11 @@ def main(args=None):
         metavar="ID",
     )
     actions.add_argument(
+        "--download-by-params",
+        action="store_true",
+        help="Download all testcases for the crashes specified by --query-params",
+    )
+    actions.add_argument(
         "--get-clientid",
         action="store_true",
         help="Print the client ID used when submitting issues",
@@ -516,8 +561,19 @@ def main(args=None):
     parser.add_argument(
         "--env",
         nargs="+",
+        # action=KeyValueAction, #TODO: my action instead of manual key=value splitting?
         type=str,
         help="List of environment variables in the form 'KEY=VALUE'",
+    )
+    parser.add_argument(
+        "--query-params",
+        nargs="+",
+        action=KeyValueAction,
+        help="""Specify query params (key=value) to download/resubmit crashes:
+        args, bucket, bucket_id, cachedCrashInfo, client, client_id, crashAddress,
+        crashAddressNumeric, created, env, id, metadata, os, os_id, platform,
+        platform_id, product, product_id, rawCrashData, rawStderr, rawStdout,
+        shortSignature, testcase, testcase_id, tool, tool_id, triagedOnce""",
     )
     parser.add_argument(
         "--metadata",
@@ -785,7 +841,7 @@ def main(args=None):
     if opts.download_all:
         downloaded = False
 
-        for result in collector.download_all(opts.download_all):
+        for result in collector.download_all({"bucket": opts.download_all}):
             downloaded = True
             print("Downloaded: ", result)
 
@@ -794,6 +850,20 @@ def main(args=None):
             return 1
 
         return 0
+
+    if opts.download_by_params:
+        downloaded = False
+
+        if not opts.query_params:
+            print("Specify query params to download testcases", file=sys.stderr)
+            return 1
+
+        for result in collector.download_all(opts.query_params):
+            downloaded = True
+            print("Downloaded: ", result)
+
+        if not downloaded:
+            print("Failed to download testcases for the specified params")
 
     if opts.get_clientid:
         print(collector.clientId)
