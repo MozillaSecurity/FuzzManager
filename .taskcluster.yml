@@ -205,6 +205,8 @@ tasks:
           created: {$fromNow: ''}
           deadline: {$fromNow: '1 hour'}
           payload:
+            capabilities:
+              privileged: true
             image:
               namespace: project.fuzzing.orion.orion-builder.master
               path: public/orion-builder.tar.zst
@@ -223,6 +225,7 @@ tasks:
               - -c
               - uname -a && exec push
           scopes:
+            - docker-worker:capability:privileged
             - secrets:get:project/fuzzing/docker-hub
           metadata:
             name: FuzzManager Docker push
