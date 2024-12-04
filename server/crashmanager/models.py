@@ -422,6 +422,14 @@ class BucketHit(models.Model):
         counter.count += 1
         counter.save()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bucket", "tool", "begin"],
+                name="unique_buckethits_per_period",
+            ),
+        ]
+
 
 class CrashHit(models.Model):
     lastUpdate = models.DateTimeField(default=timezone.now)
