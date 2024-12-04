@@ -75,17 +75,17 @@ tasks:
                 retry-curl () { curl --connect-timeout 25 --fail --location --retry 5 --show-error --silent "$@"; };
                 mkdir -p ~/.local/bin ~/.local/lib;
                 PATH=~/.local/bin:$PATH;
-                retry-curl https://nodejs.org/dist/v18.20.3/node-v18.20.3-linux-x64.tar.xz | tar -C ~/.local/lib -I xz -x;
+                retry-curl https://nodejs.org/dist/v20.18.1/node-v20.18.1-linux-x64.tar.xz | XZ_DEFAULTS=-T0 tar -C ~/.local/lib -I xz -x;
                 cd ~/.local/bin;
-                for i in ~/.local/lib/node-v18.20.3-linux-x64/bin/*; do ln -s "$i" .; done;
+                for i in ~/.local/lib/node-v20.18.1-linux-x64/bin/*; do ln -s "$i" .; done;
                 cd -;
                 cd server/frontend;
                 npm i;
                 cd ../..;
                 pre-commit run -a;
-          - name: build frontend node 18
+          - name: build frontend node 20
             language: node
-            version: "18"
+            version: "20"
             script:
               - bash
               - '-xec'
