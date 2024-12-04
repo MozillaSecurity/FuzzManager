@@ -379,6 +379,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "crashmanager.cron.update_crash_stats",
         "schedule": 60,
     },
+    "Check for untriaged Crashes every 10 minutes": {
+        "task": "crashmanager.cron.triage_new_crashes",
+        "schedule": 10 * 60,
+    },
     "Cleanup CrashEntry/Bucket objects every 30 minutes": {
         "task": "crashmanager.cron.cleanup_old_crashes",
         "schedule": 30 * 60,
