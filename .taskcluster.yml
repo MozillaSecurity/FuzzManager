@@ -48,7 +48,7 @@ tasks:
             env:
               TOXENV: py312
           - name: linting
-            version: "3.8"
+            version: "3.9"
             script:
               - bash
               - '-xec'
