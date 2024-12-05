@@ -469,6 +469,11 @@ def main(args=None):
         help="Download all testcases for the crashes specified by --query-params",
     )
     actions.add_argument(
+        "--refresh-crashes",
+        action="store_true",
+        help="Refresh (download, resubmit) all testcases specified by --query-params",
+    )
+    actions.add_argument(
         "--get-clientid",
         action="store_true",
         help="Print the client ID used when submitting issues",
@@ -596,7 +601,7 @@ def main(args=None):
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for
     # submitting.
-    if opts.autosubmit:
+    if opts.autosubmit or opts.refresh_crashes:
         if not opts.rargs:
             parser.error("Action --autosubmit requires test arguments to be specified")
 
@@ -632,7 +637,13 @@ def main(args=None):
     env = None
     metadata = {}
 
-    if opts.search or opts.generate or opts.submit or opts.autosubmit:
+    if (
+        opts.search
+        or opts.generate
+        or opts.submit
+        or opts.autosubmit
+        or opts.refresh_crashes
+    ):
         if opts.metadata:
             metadata.update(dict(kv.split("=", 1) for kv in opts.metadata))
 
@@ -685,7 +696,7 @@ def main(args=None):
                 metadata,
             )
 
-        if not opts.autosubmit:
+        if not opts.autosubmit and not opts.refresh_crashes:
             if opts.stderr is None and opts.crashdata is None:
                 parser.error(
                     "Must specify at least either --stderr or --crashdata file"
@@ -832,6 +843,63 @@ def main(args=None):
 
         if not downloaded:
             print("Failed to download testcases for the specified params")
+
+    if opts.refresh_crashes:
+        if not opts.query_params:
+            print("Specify query params to refresh crashes.", file=sys.stderr)
+            return 1
+        # 1. request by params
+        params = {"query": json.dumps({"op": "AND", **opts.query_params})}
+        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
+            collector.serverProtocol,
+            collector.serverHost,
+            collector.serverPort,
+        )
+        # 2. loop over crashes
+        while next_url:
+            resp_json = collector.get(next_url, params=params).json()
+
+            if not isinstance(resp_json, dict):
+                raise RuntimeError(
+                    f"Server sent malformed JSON response: {resp_json!r}"
+                )
+            if resp_json["count"] == 0:
+                print("Crashes not found for the specified params.", file=sys.stderr)
+                return 1
+
+            next_url = resp_json["next"]
+            params = None
+
+            for crash in resp_json["results"]:
+                # 3. download a crash
+                # crash here must already have same data as individual resp by crash ID
+                (local_filename, resp_dl) = collector.download(crash["id"], crash)
+                if not os.path.exists(local_filename):
+                    print(f"Testcase for {crash['id']} not saved.", file=sys.stderr)
+                    continue
+                # 4. reproduce the crash
+                testcase = local_filename
+                os.environ["MOZ_FUZZ_TESTFILE"] = testcase  # needed by AFL++
+                runner = AutoRunner.fromBinaryArgs(opts.binary, opts.rargs[1:])
+                # TODO: diff old vs new crash here rn...
+                ran = runner.run()
+                if ran:
+                    crashInfo = runner.getCrashInfo(configuration)
+                    # 5. submit the crash
+                    submission = collector.submit(
+                        crashInfo,
+                        testcase,
+                        opts.testcasequality,
+                        opts.testcasesize,
+                        metadata,
+                    )
+                    print(f"Resubmitted old crash {crash['id']} as {submission['id']}")
+                else:
+                    print(
+                        f"Error: Failed to reproduce crash {crash['id']}, can't submit",
+                        file=sys.stderr,
+                    )
+        return 0
 
     if opts.get_clientid:
         print(collector.clientId)
