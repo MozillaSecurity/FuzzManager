@@ -42,7 +42,7 @@ class KeyValueAction(argparse.Action):
         result = {}
         for item in values:
             try:
-                key, value = item.split("=")
+                key, value = item.split("=", 1)
                 result[key] = value
             except ValueError:
                 raise argparse.ArgumentTypeError(
@@ -566,8 +566,7 @@ def main(args=None):
     parser.add_argument(
         "--env",
         nargs="+",
-        # action=KeyValueAction, #TODO: my action instead of manual key=value splitting?
-        type=str,
+        action=KeyValueAction,
         help="List of environment variables in the form 'KEY=VALUE'",
     )
     parser.add_argument(
@@ -583,7 +582,7 @@ def main(args=None):
     parser.add_argument(
         "--metadata",
         nargs="+",
-        type=str,
+        action=KeyValueAction,
         help="List of metadata variables in the form 'KEY=VALUE'",
     )
     parser.add_argument(
@@ -666,8 +665,7 @@ def main(args=None):
     crashdata = None
     crashInfo = None
     args = None
-    env = None
-    metadata = {}
+    metadata = opts.metadata if opts.metadata else {}
 
     if (
         opts.search
@@ -676,9 +674,6 @@ def main(args=None):
         or opts.autosubmit
         or opts.refresh_crashes
     ):
-        if opts.metadata:
-            metadata.update(dict(kv.split("=", 1) for kv in opts.metadata))
-
         if opts.autosubmit:
             # Try to automatically get arguments from the command line
             # If the testcase is not the last argument, leave it in the
@@ -693,9 +688,6 @@ def main(args=None):
             if opts.args:
                 args = [arg.replace("\\", "") for arg in opts.args]
 
-        if opts.env:
-            env = dict(kv.split("=", 1) for kv in opts.env)
-
         # Start without any ProgramConfiguration
         configuration = None
 
@@ -703,8 +695,8 @@ def main(args=None):
         if opts.binary:
             configuration = ProgramConfiguration.fromBinary(opts.binary)
             if configuration:
-                if env:
-                    configuration.addEnvironmentVariables(env)
+                if opts.env:
+                    configuration.addEnvironmentVariables(opts.env)
                 if args:
                     configuration.addProgramArguments(args)
                 if metadata:
@@ -723,7 +715,7 @@ def main(args=None):
                 opts.platform,
                 opts.os,
                 opts.product_version,
-                env,
+                opts.env,
                 args,
                 metadata,
             )
@@ -832,10 +824,10 @@ def main(args=None):
             print("")
 
         if "env" in retJSON and retJSON["env"]:
-            env = json.loads(retJSON["env"])
+            opts.env = json.loads(retJSON["env"])
             print(
                 "Environment variables:",
-                " ".join(f"{k} = {v}" for (k, v) in env.items()),
+                " ".join(f"{k} = {v}" for (k, v) in opts.env.items()),
             )
             print("")
 
