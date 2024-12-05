@@ -94,25 +94,13 @@ $ cd ..
 
 Create the fuzzmanager user.
 ```
-$ python manage.py createsuperuser
-Username (leave blank to use 'user'): fuzzmanager
-Email address: fuzzmanager@internal.com
-Password:
-Password (again):
-Superuser created successfully.
+$ python manage.py create_user --username fuzzmanager --email fuzzmanager@internal.com
 ```
 Get fuzzmanager authorization token
 ```
 $ python manage.py get_auth_token fuzzmanager
 4a253efa90f514bd89ae9a86d1dc264aa3133945
 ```
-Since the fuzzmanager account is used as a service account, we need to set the http basic authentication password to the auth token.
-```
-htpasswd -cb .htpasswd fuzzmanager 4a253efa90f514bd89ae9a86d1dc264aa3133945`
-```
-This .htpasswd file can be stored anywhere on your hard drive.
-Your Apache AuthUserFile line should be updated to reflect your path.
-See examples/apache2/default.vhost for an example
 
 ### Important changes in settings.py
 It is important that you edit FuzzManager/server/settings.py and adjust the following variables according to your needs.
@@ -136,17 +124,7 @@ For local testing, you can use the builtin debug webserver:
 
 `python manage.py runserver`
 
-For a production setup, see the next section about Apache+WSGI.
-
-### Using Apache+WSGI for a production setup
-
-To properly run FuzzManager in a production setup, using Apache+WSGI is the
-recommended way.
-
-In the `examples/apache2/` directory you'll find an example vhost file that
-shows you how to run FuzzManager in an Apache+WSGI setup. You should
-adjust the configuration to use HTTPs if you don't plan to use any sort of
-TLS load balancer in front of it.
+For a production setup, see the docker-compose.yml for an example of the processes required.
 
 ### Getting/Creating the authentication token for clients
 
@@ -154,29 +132,11 @@ Use the following command to get an authentication token for a Django user:
 
 `python manage.py get_auth_token username`
 
-You can use the user that you created during `syncdb` for simple setups.
-
-### Server Cronjobs
-
-The following is an example crontab using `cronic` to run several important
-FuzzManager jobs:
-
-```
-# Fetch the status of all bugs from our external bug tracker(s)
-*/15 * * * * cd /path/to/FuzzManager/server && cronic python manage.py bug_update_status
-# Cleanup old crash entries and signatures according to configuration
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py cleanup_old_crashes
-# Attempt to fit recently added crash entries into existing buckets
-*/5  * * * * cd /path/to/FuzzManager/server && cronic python manage.py triage_new_crashes
-# Export all signatures to a zip file for downloading by clients
-*/30 * * * * cd /path/to/FuzzManager/server && cronic python manage.py export_signatures files/signatures.new.zip mv files/signatures.new.zip files/signatures.zip
-```
-
 ### Run server with Docker
 
 A docker image is available by building the `Dockerfile`.
 
-You can easily run a local server (and Mysql database server) by using [docker-composer](https://docs.docker.com/compose/):
+You can easily run a local server (and MySQL database server) by using [docker-composer](https://docs.docker.com/compose/):
 
 ```console
 docker compose up
@@ -191,7 +151,8 @@ docker compose exec backend python manage.py migrate
 And create a superuser to be able to log in on http://localhost:8000
 
 ```console
-docker compose exec backend python manage.py createsuperuser
+docker compose exec backend python manage.py create_user --username user --email user@example.com
+docker compose exec backend python manage.py changepassword user
 ```
 
 By default, the docker image uses Django settings set in Python module `server.settings_docker`, with the following settings:
