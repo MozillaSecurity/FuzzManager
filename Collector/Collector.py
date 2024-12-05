@@ -501,6 +501,11 @@ def main(args=None):
         help="Download all testcases for the crashes specified by --query-params",
     )
     actions.add_argument(
+        "--refresh-crashes",
+        action="store_true",
+        help="Refresh (download, resubmit) all testcases specified by --query-params",
+    )
+    actions.add_argument(
         "--get-clientid",
         action="store_true",
         help="Print the client ID used when submitting issues",
@@ -628,13 +633,13 @@ def main(args=None):
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for
     # submitting.
-    if opts.autosubmit:
-        if not opts.rargs:
-            parser.error("Action --autosubmit requires test arguments to be specified")
-
+    if opts.autosubmit or opts.refresh_crashes:
         # Store the binary candidate only if --binary wasn't also specified
         if not opts.binary:
             opts.binary = opts.rargs[0]
+    if opts.autosubmit:
+        if not opts.rargs:
+            parser.error("Action --autosubmit requires test arguments to be specified")
 
         # We also need to check that (apart from the binary), there is only one file on
         # the command line (the testcase), if it hasn't been explicitly specified.
@@ -664,7 +669,13 @@ def main(args=None):
     env = None
     metadata = {}
 
-    if opts.search or opts.generate or opts.submit or opts.autosubmit:
+    if (
+        opts.search
+        or opts.generate
+        or opts.submit
+        or opts.autosubmit
+        or opts.refresh_crashes
+    ):
         if opts.metadata:
             metadata.update(dict(kv.split("=", 1) for kv in opts.metadata))
 
@@ -717,7 +728,7 @@ def main(args=None):
                 metadata,
             )
 
-        if not opts.autosubmit:
+        if not opts.autosubmit and not opts.refresh_crashes:
             if opts.stderr is None and opts.crashdata is None:
                 parser.error(
                     "Must specify at least either --stderr or --crashdata file"
@@ -864,6 +875,38 @@ def main(args=None):
 
         if not downloaded:
             print("Failed to download testcases for the specified params")
+
+    if opts.refresh_crashes:
+        if not opts.query_params:
+            print("Specify query params to refresh crashes.", file=sys.stderr)
+            return 1
+        for testcase in collector.download_all(opts.query_params):
+            # TODO: support positional testcases (e.g. for libfuzzer)
+            os.environ["MOZ_FUZZ_TESTFILE"] = testcase  # needed by AFL++
+            runner = AutoRunner.fromBinaryArgs(opts.binary, opts.rargs[1:])
+            # TODO: diff old vs new crash?
+            ran = runner.run()
+            if ran:
+                crashInfo = runner.getCrashInfo(configuration)
+                submission = collector.submit(
+                    crashInfo,
+                    testcase,
+                    opts.testcasequality,
+                    opts.testcasesize,
+                    metadata,
+                )
+                print(
+                    "Resubmitted old crash {} as {}.".format(
+                        os.path.splitext(testcase)[0], submission["id"]
+                    )
+                )
+            else:
+                print(
+                    "Error: Failed to reproduce crash %s, can't submit."
+                    % os.path.splitext(testcase)[0],
+                    file=sys.stderr,
+                )
+        return 0
 
     if opts.get_clientid:
         print(collector.clientId)
