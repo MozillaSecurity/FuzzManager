@@ -14,6 +14,9 @@ BASE_DIR = "/data"
 COV_STORAGE = "/data/coverage"
 TEST_STORAGE = "/data/crashes"
 USERDATA_STORAGE = "/data/userdata"
+TC_ROOT_URL = ""
+TC_PROJECT = ""
+TC_EXTRA_POOLS = []
 
 REDIS_URL = (
     "redis://fuzzmanager-redis:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
