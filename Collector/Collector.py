@@ -577,7 +577,8 @@ def main(args=None):
         args, bucket, bucket_id, cachedCrashInfo, client, client_id, crashAddress,
         crashAddressNumeric, created, env, id, metadata, os, os_id, platform,
         platform_id, product, product_id, rawCrashData, rawStderr, rawStdout,
-        shortSignature, testcase, testcase_id, tool, tool_id, triagedOnce""",
+        shortSignature, testcase, testcase_id, tool, tool_id, triagedOnce. Instead, you
+        can also get all crashes in your buckets (tool filter) with bucket=MYBUCKETS""",
     )
     parser.add_argument(
         "--metadata",
@@ -760,6 +761,11 @@ def main(args=None):
         opts.clientid,
         opts.tool,
     )
+    url_rest = "%s://%s:%d/crashmanager/rest/" % (
+        collector.serverProtocol,
+        collector.serverHost,
+        collector.serverPort,
+    )
 
     if opts.refresh:
         collector.refresh()
@@ -854,6 +860,26 @@ def main(args=None):
 
         return 0
 
+    if opts.query_params.get("bucket") == "MYBUCKETS":
+        if len(opts.query_params) > 1:
+            print("Can't use other query params w/ bucket=MYBUCKETS", file=sys.stderr)
+            return 1
+        # ignore all other query params when mybuckets is used
+        nobuckets = True
+        buckets = set()
+        for response in collector.get_by_query("buckets/"):
+            if len(response) > 0:
+                nobuckets = False
+            for bucket in response:
+                buckets.add(bucket["id"])
+        if nobuckets:
+            print("No buckets found", file=sys.stderr)
+            return 1
+        all_params = [{"bucket": bucket} for bucket in buckets]
+        # TODO: some check if no toolfilter is set?
+    elif opts.query_params:
+        all_params = [opts.query_params]
+
     if opts.download_by_params:
         downloaded = False
 
@@ -861,9 +887,10 @@ def main(args=None):
             print("Specify query params to download testcases", file=sys.stderr)
             return 1
 
-        for result in collector.download_all(opts.query_params):
-            downloaded = True
-            print("Downloaded: ", result)
+        for param in all_params:
+            for result in collector.download_all(param):
+                downloaded = True
+                print("Downloaded: ", result)
 
         if not downloaded:
             print("Failed to download testcases for the specified params")
@@ -872,32 +899,34 @@ def main(args=None):
         if not opts.query_params:
             print("Specify query params to refresh crashes.", file=sys.stderr)
             return 1
-        for testcase in collector.download_all(opts.query_params):
-            # TODO: support positional testcases (e.g. for libfuzzer)
-            os.environ["MOZ_FUZZ_TESTFILE"] = testcase  # needed by AFL++
-            runner = AutoRunner.fromBinaryArgs(opts.binary, opts.rargs[1:])
-            # TODO: diff old vs new crash?
-            ran = runner.run()
-            if ran:
-                crashInfo = runner.getCrashInfo(configuration)
-                submission = collector.submit(
-                    crashInfo,
-                    testcase,
-                    opts.testcasequality,
-                    opts.testcasesize,
-                    metadata,
-                )
-                print(
-                    "Resubmitted old crash {} as {}.".format(
-                        os.path.splitext(testcase)[0], submission["id"]
+
+        for param in all_params:
+            for testcase in collector.download_all(param):
+                # TODO: support positional testcases (e.g. for libfuzzer)
+                os.environ["MOZ_FUZZ_TESTFILE"] = testcase  # needed by AFL++
+                runner = AutoRunner.fromBinaryArgs(opts.binary, opts.rargs[1:])
+                # TODO: diff old vs new crash?
+                ran = runner.run()
+                if ran:
+                    crashInfo = runner.getCrashInfo(configuration)
+                    submission = collector.submit(
+                        crashInfo,
+                        testcase,
+                        opts.testcasequality,
+                        opts.testcasesize,
+                        metadata,
                     )
-                )
-            else:
-                print(
-                    "Error: Failed to reproduce crash %s, can't submit."
-                    % os.path.splitext(testcase)[0],
-                    file=sys.stderr,
-                )
+                    print(
+                        "Resubmitted old crash {} as {}.".format(
+                            os.path.splitext(testcase)[0], submission["id"]
+                        )
+                    )
+                else:
+                    print(
+                        "Error: Failed to reproduce crash %s, can't submit."
+                        % os.path.splitext(testcase)[0],
+                        file=sys.stderr,
+                    )
         return 0
 
     if opts.get_clientid:
