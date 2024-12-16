@@ -2,6 +2,7 @@ from base64 import b64encode
 from datetime import timedelta
 from pathlib import Path
 from random import choice, randint
+from shutil import rmtree
 from subprocess import run
 from uuid import uuid4
 
@@ -172,9 +173,34 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("user")
+        parser.add_argument(
+            "--delete-all-existing-data-forever",
+            action="store_true",
+            help="Delete existing data without warning",
+        )
 
     def handle(self, *_args, **options):
         user = User.objects.get(user__username=options["user"])
+
+        if options["delete_all_existing_data_forever"]:
+            Bucket.objects.all().delete()
+            BucketWatch.objects.all().delete()
+            Bug.objects.all().delete()
+            BugProvider.objects.all().delete()
+            BugzillaTemplate.objects.all().delete()
+            Client.objects.all().delete()
+            Collection.objects.all().delete()
+            CollectionFile.objects.all().delete()
+            Notification.objects.all().delete()
+            OS.objects.all().delete()
+            Platform.objects.all().delete()
+            Pool.objects.all().delete()
+            Product.objects.all().delete()
+            Repository.objects.all().delete()
+            Task.objects.all().delete()
+            Tool.objects.all().delete()
+            if Path("/data/repos/cov-example").exists():
+                rmtree("/data/repos/cov-example")
 
         # assert that the DB is empty. we don't want real data mixed with test data
         try:
