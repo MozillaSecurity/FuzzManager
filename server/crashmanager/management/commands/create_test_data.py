@@ -1,4 +1,6 @@
+import json
 from base64 import b64encode
+from copy import deepcopy
 from datetime import timedelta
 from pathlib import Path
 from random import choice, randint
@@ -12,7 +14,13 @@ from django.utils import timezone
 from notifications.models import Notification
 from notifications.signals import notify
 
-from covmanager.models import Collection, CollectionFile, Repository
+from covmanager.models import (
+    Collection,
+    CollectionFile,
+    Report,
+    ReportConfiguration,
+    Repository,
+)
 from crashmanager.models import (
     OS,
     Bucket,
@@ -29,6 +37,7 @@ from crashmanager.models import (
     Tool,
     User,
 )
+from FTB.CoverageHelper import calculate_summary_fields, merge_coverage_data
 from taskmanager.models import Pool, Task
 
 
@@ -168,6 +177,89 @@ def slug():
     return b64encode(raw, altchars=b"-_").decode()[:22]
 
 
+COV_DATA_1 = {
+    "children": {
+        "a": {
+            "children": {
+                "test.c": {
+                    "coverage": [-1, -1, 1, 1, 1, 1, 0, -1, 1],
+                    "name": "test.c",
+                }
+            },
+            "name": "a",
+        },
+        "b": {
+            "children": {
+                "testb.c": {
+                    "coverage": [-1, -1, 1, 1, 1],
+                    "name": "testb.c",
+                }
+            },
+            "name": "b",
+        },
+        "main.c": {
+            "coverage": [-1, -1, -1, -1, -1, -1, -1, 1, 1, 1, -1, 1, -1, 2],
+            "name": "main.c",
+        },
+    },
+}
+calculate_summary_fields(COV_DATA_1)
+COV_DATA_2 = {
+    "children": {
+        "a": {
+            "children": {
+                "test.c": {
+                    "coverage": [-1, -1, 1, 1, 1, 1, 1, -1, 1],
+                    "name": "test.c",
+                }
+            },
+            "name": "a",
+        },
+        "b": {
+            "children": {
+                "testb.c": {
+                    "coverage": [-1, -1, 1, 1, 1],
+                    "name": "testb.c",
+                }
+            },
+            "name": "b",
+        },
+        "main.c": {
+            "coverage": [-1, -1, -1, -1, -1, -1, -1, 2, 1, 1, 1, -1, 1, -1, 2],
+            "name": "main.c",
+        },
+    },
+}
+calculate_summary_fields(COV_DATA_2)
+COV_DATA_3 = {
+    "children": {
+        "a": {
+            "children": {
+                "test.c": {
+                    "coverage": [-1, -1, 1, 1, 1, 1, 1, -1, 1],
+                    "name": "test.c",
+                }
+            },
+            "name": "a",
+        },
+        "b": {
+            "children": {
+                "testb.c": {
+                    "coverage": [-1, -1, 1, 1, 1],
+                    "name": "testb.c",
+                }
+            },
+            "name": "b",
+        },
+        "main.c": {
+            "coverage": [-1, -1, -1, -1, -1, -1, -1, 1, 2, 1, 1, -1, 1, -1, 2],
+            "name": "main.c",
+        },
+    },
+}
+calculate_summary_fields(COV_DATA_3)
+
+
 class Command(BaseCommand):
     help = "Create test data for UI testing (requires empty DB)"
 
@@ -196,6 +288,8 @@ class Command(BaseCommand):
             Platform.objects.all().delete()
             Pool.objects.all().delete()
             Product.objects.all().delete()
+            Report.objects.all().delete()
+            ReportConfiguration.objects.all().delete()
             Repository.objects.all().delete()
             Task.objects.all().delete()
             Tool.objects.all().delete()
@@ -217,6 +311,8 @@ class Command(BaseCommand):
             assert not Platform.objects.exists()
             assert not Pool.objects.exists()
             assert not Product.objects.exists()
+            assert not Report.objects.exists()
+            assert not ReportConfiguration.objects.exists()
             assert not Repository.objects.exists()
             assert not Task.objects.exists()
             assert not Tool.objects.exists()
@@ -257,32 +353,18 @@ class Command(BaseCommand):
         Path("/data/coverage/coverage").mkdir(parents=True, exist_ok=True)
         Path(
             "/data/coverage/coverage/0f87343595e8908a2989ca7716f71502bf288c72.coverage"
-        ).write_text(
-            '{"children":{"a":{"children":{"test.c":{"coverage":[-1,-1,1,1,1,1,0,-1,1],'
-            '"name":"test.c","linesTotal":6,"linesCovered":5,"linesMissed":1,"coverageP'
-            'ercent":83.33}},"name":"a","linesTotal":6,"linesCovered":5,"linesMissed":1'
-            ',"coveragePercent":83.33},"b":{"children":{"testb.c":{"coverage":[-1,-1,1,'
-            '1,1],"name":"testb.c","linesTotal":3,"linesCovered":3,"linesMissed":0,"cov'
-            'eragePercent":100.0}},"name":"b","linesTotal":3,"linesCovered":3,"linesMis'
-            'sed":0,"coveragePercent":100.0},"main.c":{"coverage":[-1,-1,-1,-1,-1,-1,-1'
-            ',2,2,1,-1,1,-1,2],"name":"main.c","linesTotal":5,"linesCovered":5,"linesMi'
-            'ssed":0,"coveragePercent":100.0}},"name":null,"linesTotal":14,"linesCovere'
-            'd":13,"linesMissed":1,"coveragePercent":92.86}'
-        )
+        ).write_text(json.dumps(COV_DATA_1))
         Path(
             "/data/coverage/coverage/58721097e138f17549dc129d7dcc44a0adebe218.coverage"
-        ).write_text(
-            '{"children":{"a":{"children":{"test.c":{"coverage":[-1,-1,1,1,1,1,1,-1,1],'
-            '"name":"test.c","linesTotal":6,"linesCovered":6,"linesMissed":0,"coverageP'
-            'ercent":100.0}},"name":"a","linesTotal":6,"linesCovered":6,"linesMissed":0'
-            ',"coveragePercent":100.0},"b":{"children":{"testb.c":{"coverage":[-1,-1,1,'
-            '1,1],"name":"testb.c","linesTotal":3,"linesCovered":3,"linesMissed":0,"cov'
-            'eragePercent":100.0}},"name":"b","linesTotal":3,"linesCovered":3,"linesMis'
-            'sed":0,"coveragePercent":100.0},"main.c":{"coverage":[-1,-1,-1,-1,-1,-1,-1'
-            ',2,2,1,1,-1,1,-1,2],"name":"main.c","linesTotal":6,"linesCovered":6,"lines'
-            'Missed":0,"coveragePercent":100.0}},"name":null,"linesTotal":15,"linesCove'
-            'red":15,"linesMissed":0,"coveragePercent":100.0}'
-        )
+        ).write_text(json.dumps(COV_DATA_2))
+        Path(
+            "/data/coverage/coverage/68721097e138f17549dc129d7dcc44a0adebe218.coverage"
+        ).write_text(json.dumps(COV_DATA_3))
+        merged_covdata = deepcopy(COV_DATA_3)
+        merge_coverage_data(merged_covdata, COV_DATA_2)
+        Path(
+            "/data/coverage/coverage/78721097e138f17549dc129d7dcc44a0adebe218.coverage"
+        ).write_text(json.dumps(merged_covdata))
         call_command(
             "setup_repository",
             "cov-example",
@@ -291,7 +373,7 @@ class Command(BaseCommand):
         )
 
         repo = Repository.objects.get(name="cov-example")
-        Collection.objects.create(
+        initial_cov = Collection.objects.create(
             branch="main",
             client=client,
             coverage=CollectionFile.objects.create(
@@ -312,6 +394,48 @@ class Command(BaseCommand):
             description="update",
             repository=repo,
             revision="adab95a85e138f792631f19d939dfd1102197acc",
+        )
+        Collection.objects.create(
+            branch="main",
+            client=client,
+            coverage=CollectionFile.objects.create(
+                file="coverage/68721097e138f17549dc129d7dcc44a0adebe218.coverage"
+            ),
+            created="2024-11-21T22:48:41Z",
+            description="update #2",
+            repository=repo,
+            revision="adab95a85e138f792631f19d939dfd1102197acc",
+        )
+        agg = Collection.objects.create(
+            branch="main",
+            client=client,
+            coverage=CollectionFile.objects.create(
+                file="coverage/78721097e138f17549dc129d7dcc44a0adebe218.coverage"
+            ),
+            created="2024-11-21T22:48:41Z",
+            description="Test aggregate",
+            repository=repo,
+            revision="adab95a85e138f792631f19d939dfd1102197acc",
+        )
+        Report.objects.create(
+            coverage=initial_cov,
+        )
+        Report.objects.create(
+            coverage=agg,
+            public=True,
+        )
+        rc1 = ReportConfiguration.objects.create(
+            description="Test configuration",
+            directives="+:*\n-:a/*",
+            public=True,
+            repository=repo,
+        )
+        ReportConfiguration.objects.create(
+            description="A",
+            directives="+:a/*",
+            logical_parent=rc1,
+            public=True,
+            repository=repo,
         )
 
         # create 250 unbucketed crashes
