@@ -43,7 +43,7 @@
         "globals": "^15.7.0",
         "jest": "^27.0.6",
         "mini-css-extract-plugin": "^1.6.0",
-        "postcss": "^8.3.5",
+        "postcss": "^8.4.39",
         "prettier": "^3.3.2",
         "vue-jest": "^3.0.7",
         "vue-loader": "^15.9.6",
