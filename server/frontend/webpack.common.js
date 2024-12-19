@@ -20,6 +20,13 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: "vue-loader",
+        options: {
+          compilerOptions: {
+            compatConfig: {
+              MODE: 3,
+            },
+          },
+        },
       },
       {
         test: /\.css$/,
@@ -31,7 +38,7 @@ module.exports = {
   resolve: {
     alias: {
       handlebars: "handlebars/dist/handlebars.min.js",
-      vue: "vue/dist/vue.js",
+      vue: "vue",
     },
   },
 };
