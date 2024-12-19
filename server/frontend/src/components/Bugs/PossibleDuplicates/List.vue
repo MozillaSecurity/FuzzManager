@@ -10,7 +10,7 @@
         class="close"
         data-dismiss="alert"
         aria-label="Close"
-        v-on:click="assignError = null"
+        @click="assignError = null"
       >
         <span aria-hidden="true">&times;</span>
       </button>
@@ -18,13 +18,13 @@
       bucket: {{ assignError }}
     </div>
     <p
+      v-if="!duplicates.length"
       class="alert alert-info alert-message"
       role="alert"
-      v-if="!duplicates.length"
     >
       No similar bugs were found.
     </p>
-    <div class="pre-scrollable scroll-panel" v-else>
+    <div v-else class="pre-scrollable scroll-panel">
       <table class="table table-condensed table-hover table-bordered no-margin">
         <thead>
           <tr>
@@ -42,7 +42,7 @@
             :bug="duplicate"
             :bucket-id="bucketId"
             :provider-id="providerId"
-            v-on:error="setAssignError"
+            @error="setAssignError"
           />
         </tbody>
       </table>
@@ -51,9 +51,11 @@
 </template>
 
 <script>
+import { defineComponent, ref } from "vue";
 import Row from "./Row.vue";
 
-export default {
+export default defineComponent({
+  name: "PossibleDuplicatesList",
   components: {
     Row,
   },
@@ -75,15 +77,19 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    assignError: null,
-  }),
-  methods: {
-    setAssignError(value) {
-      this.assignError = value;
-    },
+  setup() {
+    const assignError = ref(null);
+
+    const setAssignError = (value) => {
+      assignError.value = value;
+    };
+
+    return {
+      assignError,
+      setAssignError,
+    };
   },
-};
+});
 </script>
 
 <style scoped>

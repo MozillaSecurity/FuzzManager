@@ -1,7 +1,7 @@
 <template>
   <div>
     <div>
-      <div class="form-group" :class="styleClass" v-if="!fetchError">
+      <div v-if="!fetchError" class="form-group" :class="styleClass">
         <label for="product">Product*</label>
         <div class="input-group">
           <span class="input-group-btn">
@@ -10,16 +10,16 @@
               class="btn btn-secondary"
               :disabled="!providerHostname"
               title="Refresh product list"
-              v-on:click="refreshProducts"
+              @click="refreshProducts"
             >
               <i class="bi bi-repeat"></i>
             </button>
           </span>
           <select
             id="product"
+            v-model="selectedProduct"
             name="product"
             class="form-control"
-            v-model="selectedProduct"
             :disabled="!providerHostname"
           >
             <option
@@ -39,23 +39,23 @@
           </select>
         </div>
       </div>
-      <div class="form-group" :class="styleClass" v-else>
+      <div v-else class="form-group" :class="styleClass">
         <label for="product">Product*</label>
         <input
-          type="text"
           id="product"
+          type="text"
           name="product"
           class="form-control"
           :value="templateProduct"
         />
       </div>
-      <div class="form-group" :class="styleClass" v-if="!fetchError">
+      <div v-if="!fetchError" class="form-group" :class="styleClass">
         <label for="component">Component*</label>
         <select
           id="component"
+          v-model="selectedComponent"
           name="component"
           class="form-control"
-          v-model="selectedComponent"
           :disabled="!selectedProduct"
         >
           <option
@@ -67,11 +67,11 @@
           </option>
         </select>
       </div>
-      <div class="form-group" :class="styleClass" v-else>
+      <div v-else class="form-group" :class="styleClass">
         <label for="component">Component*</label>
         <input
-          type="text"
           id="component"
+          type="text"
           name="component"
           class="form-control"
           :value="templateComponent"
@@ -94,9 +94,10 @@
 </template>
 
 <script>
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import * as bugzillaApi from "../../bugzilla_api";
 
-export default {
+export default defineComponent({
   props: {
     providerHostname: {
       type: String,
@@ -118,121 +119,156 @@ export default {
       default: "col-md-6",
     },
   },
-  data: () => ({
-    fetchError: false,
-    products: [],
-    selectedProduct: "",
-    selectedComponent: "",
-  }),
-  async mounted() {
-    this.assignProducts();
-  },
-  computed: {
-    localStorageKey() {
-      if (!this.providerHostname) return null;
-      return "bugzilla-products-" + this.providerHostname;
-    },
-    components() {
-      if (!this.products || !this.selectedProduct) return [];
-      return this.products.find((p) => p.name === this.selectedProduct)
-        .components;
-    },
-  },
-  methods: {
-    async assignProducts() {
-      if (!this.localStorageKey) {
-        this.products = [];
-      } else {
-        let stored = JSON.parse(localStorage.getItem(this.localStorageKey));
-        const lastWeek = new Date().setDate(new Date().getDate() - 7);
-        if (!stored || new Date(stored.stored).getTime() < lastWeek)
-          stored = await this.fetchProducts();
-        this.products = stored.products;
-      }
 
-      if (this.products && this.products.length && this.templateProduct) {
-        const product = this.products.find(
-          (p) => p.name === this.templateProduct,
-        );
-        if (product) {
-          this.selectedProduct = product.name;
-          if (this.templateComponent) {
-            const component = product.components.find(
-              (c) => c === this.templateComponent,
-            );
-            if (component) this.selectedComponent = component;
-          }
-        }
-      }
-    },
-    async refreshProducts() {
-      localStorage.removeItem(this.localStorageKey);
-      this.products = [];
-      this.selectedProduct = "";
-      this.selectedComponent = "";
-      this.assignProducts();
-    },
-    async fetchProducts() {
+  setup(props, { emit }) {
+    const fetchError = ref(false);
+    const products = ref([]);
+    const selectedProduct = ref("");
+    const selectedComponent = ref("");
+
+    const localStorageKey = computed(() => {
+      if (!props.providerHostname) return null;
+      return "bugzilla-products-" + props.providerHostname;
+    });
+
+    const components = computed(() => {
+      if (!products.value || !selectedProduct.value) return [];
+      return (
+        products.value.find((p) => p.name === selectedProduct.value)
+          ?.components || []
+      );
+    });
+
+    const fetchProducts = async () => {
       /*
        * Return fetched products and components retrieved from https://{providerHostname}/latest/configuration
        * Also store them in browser localStorage under "bugzilla-products-{providerHostname}" key
        */
       try {
         const data = await bugzillaApi.fetchLatestConfiguration(
-          this.providerHostname,
+          props.providerHostname,
         );
-        const products = Object.entries(data.product)
+        const productsList = Object.entries(data.product)
           .filter(([, product]) => product.is_active)
-          .map(([name, product]) => {
-            return {
-              id: product.id,
-              name: name,
-              components: Object.entries(product.component)
-                .filter(([, component]) => component.is_active)
-                .map(([name]) => name),
-            };
-          });
+          .map(([name, product]) => ({
+            id: product.id,
+            name: name,
+            components: Object.entries(product.component)
+              .filter(([, component]) => component.is_active)
+              .map(([name]) => name),
+          }));
+
         const toSave = {
           version: data.version,
           stored: new Date(),
-          products: products,
+          products: productsList,
         };
-        localStorage.setItem(this.localStorageKey, JSON.stringify(toSave));
+        localStorage.setItem(localStorageKey.value, JSON.stringify(toSave));
         return toSave;
       } catch {
-        this.fetchError = true;
+        fetchError.value = true;
         return [];
       }
-    },
-  },
-  watch: {
-    providerHostname: function () {
-      this.fetchError = false;
-      this.products = [];
-      this.selectedProduct = "";
-      this.selectedComponent = "";
-      this.assignProducts();
-    },
-    templateProduct: function (newVal, oldVal) {
-      if (newVal !== oldVal) {
-        this.selectedProduct = "";
-        this.assignProducts();
+    };
+
+    const assignProducts = async () => {
+      if (!localStorageKey.value) {
+        products.value = [];
+        return;
       }
-    },
-    templateComponent: function (newVal, oldVal) {
-      if (newVal !== oldVal) {
-        this.selectedComponent = "";
-        this.assignProducts();
+
+      let stored = JSON.parse(localStorage.getItem(localStorageKey.value));
+      const lastWeek = new Date().setDate(new Date().getDate() - 7);
+
+      if (!stored || new Date(stored.stored).getTime() < lastWeek) {
+        stored = await fetchProducts();
       }
-    },
-    selectedProduct: function () {
-      this.$emit("update-product", this.selectedProduct);
-    },
-    selectedComponent: function () {
-      this.$emit("update-component", this.selectedComponent);
-    },
+      products.value = stored.products;
+
+      if (products.value?.length && props.templateProduct) {
+        const product = products.value.find(
+          (p) => p.name === props.templateProduct,
+        );
+        if (product) {
+          selectedProduct.value = product.name;
+          if (props.templateComponent) {
+            const component = product.components.find(
+              (c) => c === props.templateComponent,
+            );
+            if (component) selectedComponent.value = component;
+          }
+        }
+      }
+    };
+
+    const refreshProducts = async () => {
+      localStorage.removeItem(localStorageKey.value);
+      products.value = [];
+      selectedProduct.value = "";
+      selectedComponent.value = "";
+      await assignProducts();
+    };
+
+    // Watchers
+    watch(
+      () => props.providerHostname,
+      () => {
+        fetchError.value = false;
+        products.value = [];
+        selectedProduct.value = "";
+        selectedComponent.value = "";
+        assignProducts();
+      },
+    );
+
+    watch(
+      () => props.templateProduct,
+      (newVal, oldVal) => {
+        if (newVal !== oldVal) {
+          selectedProduct.value = "";
+          assignProducts();
+        }
+      },
+    );
+
+    watch(
+      () => props.templateComponent,
+      (newVal, oldVal) => {
+        if (newVal !== oldVal) {
+          selectedComponent.value = "";
+          assignProducts();
+        }
+      },
+    );
+
+    watch(
+      () => selectedProduct.value,
+      () => {
+        emit("update-product", selectedProduct.value);
+      },
+    );
+
+    watch(
+      () => selectedComponent.value,
+      () => {
+        emit("update-component", selectedComponent.value);
+      },
+    );
+
+    onMounted(() => {
+      assignProducts();
+    });
+
+    return {
+      fetchError,
+      products,
+      selectedProduct,
+      selectedComponent,
+      components,
+      refreshProducts,
+    };
   },
-};
+});
 </script>
 
 <style scoped>

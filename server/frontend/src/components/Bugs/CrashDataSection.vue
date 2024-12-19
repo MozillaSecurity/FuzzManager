@@ -4,10 +4,10 @@
     <div class="row">
       <div class="form-group col-md-6">
         <input
-          type="checkbox"
           id="id_crashdata_skip"
-          name="crashdata_skip"
           v-model="notAttachData"
+          type="checkbox"
+          name="crashdata_skip"
         />
         <span>Do not attach crash data.</span>
       </div>
@@ -21,10 +21,10 @@
           <label for="crashdata_attach">Content:</label>
           <textarea
             id="id_crashdata_attach"
+            v-model="data"
             class="form-control"
             name="crashdata_attach"
             type="text"
-            v-model="data"
           ></textarea>
         </div>
       </div>
@@ -34,7 +34,10 @@
 </template>
 
 <script>
-export default {
+import { defineComponent, ref, watch, onMounted } from "vue";
+
+export default defineComponent({
+  name: "CrashDataSection",
   props: {
     mode: {
       type: String,
@@ -56,26 +59,33 @@ export default {
       default: null,
     },
   },
-  data: () => ({
-    notAttachData: false,
-    data: "",
-  }),
-  async mounted() {
-    this.notAttachData = this.initialNotAttachData;
-    this.data = this.initialData;
-  },
-  watch: {
-    notAttachData: function () {
-      this.$emit("update-not-attach-data", this.notAttachData);
-    },
-    data: function () {
-      if (this.pathPrefix) {
-        this.data = this.data.replaceAll(this.pathPrefix, "");
+  emits: ["update-not-attach-data", "update-data"],
+  setup(props, { emit }) {
+    const notAttachData = ref(false);
+    const data = ref("");
+
+    onMounted(() => {
+      notAttachData.value = props.initialNotAttachData;
+      data.value = props.initialData;
+    });
+
+    watch(notAttachData, (newValue) => {
+      emit("update-not-attach-data", newValue);
+    });
+
+    watch(data, (newValue) => {
+      if (props.pathPrefix) {
+        data.value = newValue.replaceAll(props.pathPrefix, "");
       }
-      this.$emit("update-data", this.data);
-    },
+      emit("update-data", data.value);
+    });
+
+    return {
+      notAttachData,
+      data,
+    };
   },
-};
+});
 </script>
 
 <style scoped></style>

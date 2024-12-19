@@ -2,12 +2,12 @@
   <div>
     <input
       :id="inputId"
+      v-model="value"
       class="form-control dropdown-toggle"
       maxlength="1023"
       :name="inputName"
       type="text"
       data-toggle="dropdown"
-      v-model="value"
     />
     <ul class="dropdown dropdown-menu" aria-labelledby="inputId">
       <template v-if="loading">
@@ -30,7 +30,7 @@
           <li
             v-for="user in suggestedUsers"
             :key="user.id"
-            v-on:click="updateValue(user.email)"
+            @click="updateValue(user.email)"
           >
             <div>
               <img
@@ -54,9 +54,11 @@
 
 <script>
 import _debounce from "lodash/debounce";
+import { defineComponent, onMounted, ref, watch } from "vue";
 import * as bugzillaApi from "../../bugzilla_api";
 
-export default {
+export default defineComponent({
+  name: "UserDropdown",
   props: {
     inputId: {
       type: String,
@@ -84,59 +86,75 @@ export default {
       default: false,
     },
   },
-  data: () => ({
-    value: "",
-    suggestedUsers: null,
-    loading: false,
-  }),
-  mounted() {
-    this.value = this.initialValue;
-    this.debouncedFetch = _debounce(this.fetchSuggestedUsers, 1000);
-  },
-  methods: {
-    updateValue(value) {
-      if (this.multiple) {
-        const users = this.value.split(",");
+
+  setup(props, { emit }) {
+    const value = ref("");
+    const suggestedUsers = ref(null);
+    const loading = ref(false);
+    let debouncedFetch = null;
+
+    const updateValue = (newValue) => {
+      if (props.multiple) {
+        const users = value.value.split(",");
         // Removing search string
         users.pop();
-        if (users.indexOf(value) == -1) {
+        if (users.indexOf(newValue) === -1) {
           // Adding user email
-          users.push(value);
+          users.push(newValue);
         }
-        this.value = users.join(",");
+        value.value = users.join(",");
       } else {
-        this.value = value;
+        value.value = newValue;
       }
-    },
-    async fetchSuggestedUsers() {
-      this.suggestedUsers = null;
-      this.loading = true;
+    };
+
+    const fetchSuggestedUsers = async () => {
+      suggestedUsers.value = null;
+      loading.value = true;
       try {
         const data = await bugzillaApi.fetchSuggestedUsers({
-          hostname: this.provider.hostname,
-          params: { match: this.value.split(",").pop(), limit: 100 },
-          headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+          hostname: props.provider.hostname,
+          params: { match: value.value.split(",").pop(), limit: 100 },
+          headers: { "X-BUGZILLA-API-KEY": props.bugzillaToken },
         });
-        this.suggestedUsers = data.users;
+        suggestedUsers.value = data.users;
       } finally {
-        this.loading = false;
+        loading.value = false;
       }
-    },
+    };
+
+    onMounted(() => {
+      value.value = props.initialValue;
+      debouncedFetch = _debounce(fetchSuggestedUsers, 1000);
+    });
+
+    watch(
+      () => props.initialValue,
+      (newVal) => {
+        value.value = newVal;
+      },
+    );
+
+    watch(
+      () => value.value,
+      (newVal) => {
+        emit("update-value", newVal);
+        if (newVal !== props.initialValue) {
+          suggestedUsers.value = null;
+          loading.value = true;
+          debouncedFetch();
+        }
+      },
+    );
+
+    return {
+      value,
+      suggestedUsers,
+      loading,
+      updateValue,
+    };
   },
-  watch: {
-    initialValue: function () {
-      this.value = this.initialValue;
-    },
-    value: function () {
-      this.$emit("update-value", this.value);
-      if (this.value !== this.initialValue) {
-        this.suggestedUsers = null;
-        this.loading = true;
-        this.debouncedFetch();
-      }
-    },
-  },
-};
+});
 </script>
 
 <style scoped>

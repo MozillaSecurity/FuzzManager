@@ -10,8 +10,8 @@
           <label for="bp_select">Bug provider</label>
           <select
             id="bp_select"
-            class="form-control"
             v-model="selectedProvider"
+            class="form-control"
           >
             <option v-for="p in providers" :key="p.id" :value="p.id">
               {{ p.hostname }}
@@ -22,8 +22,8 @@
           <label for="bt_select">Bug template</label>
           <select
             id="bt_select"
-            class="form-control"
             v-model="selectedTemplate"
+            class="form-control"
           >
             <option v-for="t in templates" :key="t.id" :value="t.id">
               {{ t.name }}
@@ -32,23 +32,23 @@
         </div>
       </div>
 
-      <div class="alert alert-warning" role="alert" v-if="provider">
+      <div v-if="provider" class="alert alert-warning" role="alert">
         You are about to submit this bug to
         <strong>{{ provider.hostname }}</strong>
       </div>
       <hr />
 
       <h3>Create a bug for crash {{ entryId }}</h3>
-      <div class="alert alert-info" role="alert" v-if="!template">
+      <div v-if="!template" class="alert alert-info" role="alert">
         Please pick a bug template to file a new bug.
       </div>
       <form v-else>
         <SummaryInput
           v-if="provider"
           :initial-summary="summary"
-          v-on:update-summary="summary = $event"
           :bucket-id="bucketId"
           :provider="provider"
+          @update-summary="summary = $event"
         />
 
         <div class="row">
@@ -56,9 +56,9 @@
             v-if="provider"
             :provider-hostname="provider.hostname"
             :template-product="template.product"
-            v-on:update-product="product = $event"
             :template-component="template.component"
-            v-on:update-component="component = $event"
+            @update-product="product = $event"
+            @update-component="component = $event"
           />
         </div>
 
@@ -67,22 +67,22 @@
             <label for="op_sys">OS</label>
             <input
               id="id_op_sys"
+              v-model="opSys"
               class="form-control"
               maxlength="1023"
               name="op_sys"
               type="text"
-              v-model="opSys"
             />
           </div>
           <div class="form-group col-md-6">
             <label for="platform">Platform</label>
             <input
               id="id_platform"
+              v-model="platform"
               class="form-control"
               maxlength="1023"
               name="platform"
               type="text"
-              v-model="platform"
             />
           </div>
         </div>
@@ -98,16 +98,16 @@
               :bugzilla-token="bugzillaToken"
               :initial-value="template.cc"
               :multiple="true"
-              v-on:update-value="template.cc = $event"
+              @update-value="template.cc = $event"
             />
             <input
               v-else
               id="id_cc"
+              v-model="template.cc"
               class="form-control"
               maxlength="1023"
               name="cc"
               type="text"
-              v-model="template.cc"
             />
           </div>
           <div class="form-group col-md-6">
@@ -119,16 +119,16 @@
               :provider="provider"
               :bugzilla-token="bugzillaToken"
               :initial-value="template.assigned_to"
-              v-on:update-value="template.assigned_to = $event"
+              @update-value="template.assigned_to = $event"
             />
             <input
               v-else
               id="id_assigned_to"
+              v-model="template.assigned_to"
               class="form-control"
               maxlength="1023"
               name="assigned_to"
               type="text"
-              v-model="template.assigned_to"
             />
           </div>
         </div>
@@ -138,22 +138,22 @@
             <label for="priority">Priority</label>
             <input
               id="id_priority"
+              v-model="template.priority"
               class="form-control"
               maxlength="1023"
               name="priority"
               type="text"
-              v-model="template.priority"
             />
           </div>
           <div class="form-group col-md-6">
             <label for="severity">Severity</label>
             <input
               id="id_severity"
+              v-model="template.severity"
               class="form-control"
               maxlength="1023"
               name="severity"
               type="text"
-              v-model="template.severity"
             />
           </div>
         </div>
@@ -163,11 +163,11 @@
             <label for="alias">Alias</label>
             <input
               id="id_alias"
+              v-model="template.alias"
               class="form-control"
               maxlength="1023"
               name="alias"
               type="text"
-              v-model="template.alias"
             />
           </div>
           <div class="form-group col-md-6">
@@ -179,16 +179,16 @@
               :provider="provider"
               :bugzilla-token="bugzillaToken"
               :initial-value="template.qa_contact"
-              v-on:update-value="template.qa_contact = $event"
+              @update-value="template.qa_contact = $event"
             />
             <input
               v-else
               id="id_qa_contact"
+              v-model="template.qa_contact"
               class="form-control"
               maxlength="1023"
               name="qa_contact"
               type="text"
-              v-model="template.qa_contact"
             />
           </div>
         </div>
@@ -198,22 +198,22 @@
             <label for="status">Status</label>
             <input
               id="id_status"
+              v-model="template.status"
               class="form-control"
               maxlength="1023"
               name="status"
               type="text"
-              v-model="template.status"
             />
           </div>
           <div class="form-group col-md-6">
             <label for="resolution">Resolution</label>
             <input
               id="id_resolution"
+              v-model="template.resolution"
               class="form-control"
               maxlength="1023"
               name="resolution"
               type="text"
-              v-model="template.resolution"
             />
           </div>
         </div>
@@ -223,22 +223,22 @@
             <label for="version">Version</label>
             <input
               id="id_version"
+              v-model="template.version"
               class="form-control"
               maxlength="1023"
               name="version"
               type="text"
-              v-model="template.version"
             />
           </div>
           <div class="form-group col-md-6">
             <label for="target_milestone">Target milestone</label>
             <input
               id="id_target_milestone"
+              v-model="template.target_milestone"
               class="form-control"
               maxlength="1023"
               name="target_milestone"
               type="text"
-              v-model="template.target_milestone"
             />
           </div>
         </div>
@@ -247,22 +247,22 @@
             <label for="dependson">Depends On</label>
             <input
               id="id_dependson"
+              v-model="template.dependson"
               class="form-control"
               maxlength="1023"
               name="dependson"
               type="text"
-              v-model="template.dependson"
             />
           </div>
           <div class="form-group col-md-6">
             <label for="blocks">Blocks</label>
             <input
               id="id_blocks"
+              v-model="template.blocks"
               class="form-control"
               maxlength="1023"
               name="blocks"
               type="text"
-              v-model="template.blocks"
             />
           </div>
         </div>
@@ -276,11 +276,11 @@
             />
             <input
               id="id_whiteboard"
+              v-model="template.whiteboard"
               class="form-control"
               maxlength="1023"
               name="whiteboard"
               type="text"
-              v-model="template.whiteboard"
             />
           </div>
           <div class="form-group col-md-6">
@@ -304,11 +304,11 @@
             />
             <input
               id="id_keywords"
+              v-model="template.keywords"
               class="form-control"
               maxlength="1023"
               name="keywords"
               type="text"
-              v-model="template.keywords"
             />
           </div>
           <div class="form-group col-md-6">
@@ -332,9 +332,9 @@
             />
             <textarea
               id="id_attrs"
+              v-model="template.attrs"
               class="form-control"
               name="attrs"
-              v-model="template.attrs"
             ></textarea>
           </div>
           <div class="form-group col-md-6">
@@ -371,9 +371,9 @@
             />
             <textarea
               id="id_description"
+              v-model="template.description"
               class="form-control"
               name="description"
-              v-model="template.description"
             ></textarea>
           </div>
           <div class="form-group col-md-6">
@@ -394,10 +394,10 @@
         <div class="row">
           <div class="form-group col-md-6">
             <input
-              type="checkbox"
               id="id_security"
-              name="security"
               v-model="template.security"
+              type="checkbox"
+              name="security"
             />
             <span>This is a security bug.</span>
           </div>
@@ -408,12 +408,12 @@
               Security Group (default is core-security)
             </label>
             <input
+              id="id_security_group"
+              v-model="template.security_group"
               type="text"
               class="form-control"
               maxlength="1023"
-              id="id_security_group"
               name="security_group"
-              v-model="template.security_group"
               :disabled="!template.security"
             />
           </div>
@@ -422,20 +422,20 @@
 
         <CrashDataSection
           :initial-not-attach-data="notAttachData"
-          v-on:update-not-attach-data="notAttachData = $event"
           :initial-data="crashData"
-          v-on:update-data="crashData = $event"
           :path-prefix="entryMetadata.pathprefix"
+          @update-not-attach-data="notAttachData = $event"
+          @update-data="crashData = $event"
         />
 
         <TestCaseSection
           v-if="entry.testcase"
           :initial-not-attach-test="notAttachTest"
-          v-on:update-not-attach-test="notAttachTest = $event"
           :entry="entry"
           :template="template"
-          v-on:update-filename="entry.testcase = $event"
-          v-on:update-content="testCaseContent = $event"
+          @update-not-attach-test="notAttachTest = $event"
+          @update-filename="entry.testcase = $event"
+          @update-content="testCaseContent = $event"
         />
 
         <div v-if="createError" class="alert alert-danger" role="alert">
@@ -444,7 +444,7 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="createError = null"
+            @click="createError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -472,7 +472,7 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="publishCrashDataError = null"
+            @click="publishCrashDataError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -490,7 +490,7 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="publishTestCaseError = null"
+            @click="publishTestCaseError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -504,7 +504,7 @@
             class="close"
             data-dismiss="alert"
             aria-label="Close"
-            v-on:click="assignError = null"
+            @click="assignError = null"
           >
             <span aria-hidden="true">&times;</span>
           </button>
@@ -522,16 +522,16 @@
           <button
             type="button"
             class="btn btn-danger"
-            v-on:click="createExternalBug"
             :disabled="!bugzillaToken || submitting"
+            @click="createExternalBug"
           >
             Submit
           </button>
           <button
             type="button"
             class="btn btn-default"
-            v-on:click="goBack"
             :disabled="submitting"
+            @click="goBack"
           >
             Cancel
           </button>
@@ -543,24 +543,26 @@
 
 <script>
 import Handlebars from "handlebars";
-import * as HandlebarsHelpers from "../../handlebars_helpers";
 import { Base64 } from "js-base64";
-import { errorParser } from "../../helpers";
+import { computed, defineComponent, getCurrentInstance, ref, watch } from "vue";
 import * as api from "../../api";
 import * as bugzillaApi from "../../bugzilla_api";
-import SummaryInput from "./SummaryInput.vue";
-import ProductComponentSelect from "./ProductComponentSelect.vue";
-import UserDropdown from "./UserDropdown.vue";
+import * as HandlebarsHelpers from "../../handlebars_helpers";
+import { errorParser } from "../../helpers";
 import CrashDataSection from "./CrashDataSection.vue";
-import TestCaseSection from "./TestCaseSection.vue";
 import HelpPopover from "./HelpPopover.vue";
+import ProductComponentSelect from "./ProductComponentSelect.vue";
+import SummaryInput from "./SummaryInput.vue";
+import TestCaseSection from "./TestCaseSection.vue";
+import UserDropdown from "./UserDropdown.vue";
 
 // Apply Handlebars helpers
 Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
   Handlebars.registerHelper(name, callback);
 });
 
-export default {
+export default defineComponent({
+  name: "PublicationForm",
   components: {
     SummaryInput,
     ProductComponentSelect,
@@ -587,161 +589,148 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    providers: [],
-    selectedProvider: null,
-    provider: null,
-    templates: [],
-    selectedTemplate: null,
-    template: null,
-    entry: null,
-    summary: "",
-    product: "",
-    component: "",
-    opSys: "",
-    platform: "",
-    submitting: false,
-    createError: null,
-    publishTestCaseError: null,
-    publishCrashDataError: null,
-    assignError: null,
-    createdBugId: null,
-    notAttachTest: false,
-    testCaseContent: "",
-    notAttachData: false,
-    crashData: "",
-  }),
-  async mounted() {
-    this.entry = await api.retrieveCrash(this.entryId);
-    this.crashData = this.entry.rawCrashData
-      ? this.entry.rawCrashData
-      : this.entry.rawStderr;
+  setup(props) {
+    const providers = ref([]);
+    const selectedProvider = ref(null);
+    const provider = ref(null);
+    const templates = ref([]);
+    const selectedTemplate = ref(null);
+    const template = ref(null);
+    const entry = ref(null);
+    const summary = ref("");
+    const product = ref("");
+    const component = ref("");
+    const opSys = ref("");
+    const platform = ref("");
+    const submitting = ref(false);
+    const createError = ref(null);
+    const publishTestCaseError = ref(null);
+    const publishCrashDataError = ref(null);
+    const assignError = ref(null);
+    const createdBugId = ref(null);
+    const notAttachTest = ref(false);
+    const testCaseContent = ref("");
+    const notAttachData = ref(false);
+    const crashData = ref("");
 
-    let data = await api.listBugProviders();
-    this.providers = data.results.filter(
-      (p) => p.classname === "BugzillaProvider",
-    );
-    this.provider = this.providers.find((p) => p.id === this.providerId);
-    this.selectedProvider = this.provider.id;
+    const bugLink = computed(() => {
+      return `https://${provider.value.hostname}/${createdBugId.value}`;
+    });
 
-    data = await api.listTemplates();
-    this.templates = data.results.filter((t) => t.mode === "bug");
-    this.template = this.templates.find((t) => t.id === this.templateId);
-    if (this.template) {
-      this.selectedTemplate = this.template.id;
-      this.updateFields();
-    }
-  },
-  computed: {
-    bugLink() {
-      return `https://${this.provider.hostname}/${this.createdBugId}`;
-    },
-    bugzillaToken() {
-      return localStorage.getItem("provider-" + this.provider.id + "-api-key");
-    },
-    entryMetadata() {
-      if (this.entry && this.entry.metadata)
-        return JSON.parse(this.entry.metadata);
+    const bugzillaToken = computed(() => {
+      return localStorage.getItem(
+        "provider-" + provider.value?.id + "-api-key",
+      );
+    });
+
+    const entryMetadata = computed(() => {
+      if (entry.value && entry.value.metadata)
+        return JSON.parse(entry.value.metadata);
       return {};
-    },
-    preSummary() {
-      if (this.template.summary) return this.template.summary;
-      if (
-        this.entry.shortSignature &&
-        this.entry.shortSignature.startsWith("[@")
-      )
-        return "Crash " + this.entry.shortSignature;
-      return this.entry.shortSignature;
-    },
-    crashDataRendered() {
-      return this.crashData
+    });
+
+    const preSummary = computed(() => {
+      if (template.value?.summary) return template.value.summary;
+      if (entry.value?.shortSignature?.startsWith("[@"))
+        return "Crash " + entry.value.shortSignature;
+      return entry.value?.shortSignature;
+    });
+
+    const crashDataRendered = computed(() => {
+      return crashData.value
         .split("\n")
         .map((l) => "    " + l)
         .join("\n");
-    },
-    testCaseRendered() {
-      if (!this.entry.testcase) return "(Test not available)";
-      else if (this.testCaseContent.length > 2048) return "See attachment.";
-      return this.testCaseContent
+    });
+
+    const testCaseRendered = computed(() => {
+      if (!entry.value.testcase) return "(Test not available)";
+      else if (testCaseContent.value.length > 2048) return "See attachment.";
+      return testCaseContent.value
         .split("\n")
         .map((l) => "    " + l)
         .join("\n");
-    },
-    renderedAttrs() {
-      if (!this.template || !this.entry) return "";
+    });
+
+    const renderedAttrs = computed(() => {
+      if (!template.value || !entry.value) return "";
       try {
-        const compiled = Handlebars.compile(this.template.attrs);
+        const compiled = Handlebars.compile(template.value.attrs);
         let rendered = compiled({
-          ...this.metadataExtension(this.template.attrs),
+          ...metadataExtension(template.value.attrs),
         });
         if (
-          this.entry.shortSignature &&
-          this.entry.shortSignature.startsWith("[@")
+          entry.value.shortSignature &&
+          entry.value.shortSignature.startsWith("[@")
         )
-          rendered += "\ncf_crash_signature=" + this.entry.shortSignature;
+          rendered += "\ncf_crash_signature=" + entry.value.shortSignature;
         return rendered;
       } catch {
         return "";
       }
-    },
-    renderedDescription() {
-      if (!this.template || !this.entry) return "";
+    });
+
+    const renderedDescription = computed(() => {
+      if (!template.value || !entry.value) return "";
       try {
-        const compiled = Handlebars.compile(this.template.description);
+        const compiled = Handlebars.compile(template.value.description);
         let rendered = compiled({
-          summary: this.summary,
-          shortsig: this.entry.shortSignature,
-          product: this.entry.product,
-          version: this.entry.product_version
-            ? this.entry.product_version
+          summary: summary.value,
+          shortsig: entry.value.shortSignature,
+          product: entry.value.product,
+          version: entry.value.product_version
+            ? entry.value.product_version
             : "(Version not available)",
-          args: this.entry.args ? JSON.parse(this.entry.args).join(" ") : "",
-          os: this.entry.os,
-          platform: this.entry.platform,
-          client: this.entry.client,
-          testcase: this.testCaseRendered,
-          crashdata: this.crashDataRendered,
-          crashdataattached: this.notAttachData
+          args: entry.value.args ? JSON.parse(entry.value.args).join(" ") : "",
+          os: entry.value.os,
+          platform: entry.value.platform,
+          client: entry.value.client,
+          testcase: testCaseRendered.value,
+          crashdata: crashDataRendered.value,
+          crashdataattached: notAttachData.value
             ? "(Crash data not available)"
             : "For detailed crash information, see attachment.",
-          ...this.metadataExtension(this.template.description),
+          ...metadataExtension(template.value.description),
         });
 
         // Remove the specified pathPrefix from traces and assertion
-        if (this.entryMetadata.pathprefix)
-          rendered = rendered.replaceAll(this.entryMetadata.pathprefix, "");
+        if (entryMetadata.value.pathprefix)
+          rendered = rendered.replaceAll(entryMetadata.value.pathprefix, "");
 
         return rendered;
       } catch {
         return "";
       }
-    },
-    renderedKeywords() {
-      if (!this.template || !this.entry) return "";
+    });
+
+    const renderedKeywords = computed(() => {
+      if (!template.value || !entry.value) return "";
       try {
-        const compiled = Handlebars.compile(this.template.keywords);
-        return compiled({ isTestAttached: !this.notAttachTest });
+        const compiled = Handlebars.compile(template.value.keywords);
+        return compiled({ isTestAttached: !notAttachTest.value });
       } catch {
         return "";
       }
-    },
-    renderedWhiteboard() {
-      if (!this.template || !this.entry) return "";
+    });
+
+    const renderedWhiteboard = computed(() => {
+      if (!template.value || !entry.value) return "";
       try {
-        const compiled = Handlebars.compile(this.template.whiteboard);
-        return compiled({ isTestAttached: !this.notAttachTest });
+        const compiled = Handlebars.compile(template.value.whiteboard);
+        return compiled({ isTestAttached: !notAttachTest.value });
       } catch {
         return "";
       }
-    },
-  },
-  methods: {
-    goBack() {
+    });
+
+    // Methods
+    const goBack = () => {
       window.history.back();
-    },
-    metadataExtension(field) {
+    };
+
+    const metadataExtension = (field) => {
       let extension = {};
-      for (var [key, value] of Object.entries(this.entryMetadata)) {
+      for (const [key, value] of Object.entries(entryMetadata.value)) {
         extension["metadata" + key] = value;
       }
       if (field) {
@@ -753,77 +742,78 @@ export default {
         }
       }
       return extension;
-    },
-    updateFields() {
-      // Summary
-      if (!this.entryMetadata.pathprefix) this.summary = this.preSummary;
+    };
+
+    const updateFields = () => {
       // Remove the specified pathPrefix from traces and assertion
+      if (!entryMetadata.value.pathprefix) summary.value = preSummary.value;
       else
-        this.summary = this.preSummary.replaceAll(
-          this.entryMetadata.pathprefix,
+        summary.value = preSummary.value.replaceAll(
+          entryMetadata.value.pathprefix,
           "",
         );
 
       // OpSys
-      this.opSys = this.template.op_sys;
-      if (!this.template.op_sys) {
+      opSys.value = template.value.op_sys;
+      if (!template.value.op_sys) {
         // Try to match the supplied os with the Bugzilla equivalent
-        const os = this.entry.os.toLowerCase();
-        if (os === "linux") this.opSys = "Linux";
-        else if (os === "macosx") this.opSys = "macOS";
-        else if (os === "windows") this.opSys = "Windows";
-        else if (os === "android") this.opSys = "Android";
+        const os = entry.value.os.toLowerCase();
+        if (os === "linux") opSys.value = "Linux";
+        else if (os === "macosx") opSys.value = "macOS";
+        else if (os === "windows") opSys.value = "Windows";
+        else if (os === "android") opSys.value = "Android";
       }
 
       // Platform
-      if (this.template.platform) this.platform = this.template.platform;
       // BMO uses x86_64, not x86-64, and ARM instead of arm
+      if (template.value.platform) platform.value = template.value.platform;
       else
-        this.platform = this.entry.platform
+        platform.value = entry.value.platform
           .replaceAll("-", "_")
           .replaceAll("arm", "ARM");
-    },
-    async createExternalBug() {
-      this.submitting = true;
-      this.createdBugId = null;
-      this.createError = null;
-      this.publishTestCaseError = null;
-      this.publishCrashDataError = null;
-      this.assignError = null;
+    };
+
+    const createExternalBug = async () => {
+      submitting.value = true;
+      createdBugId.value = null;
+      createError.value = null;
+      publishTestCaseError.value = null;
+      publishCrashDataError.value = null;
+      assignError.value = null;
 
       // Convert this.renderedAttrs to an object
       const attrs = Object.fromEntries(
-        this.renderedAttrs.split("\n").map((l) => l.split("=")),
+        renderedAttrs.value.split("\n").map((l) => l.split("=")),
       );
 
       let groups = [];
-      if (this.template.security)
-        groups = this.template.security_group
-          ? [this.template.security_group]
+      if (template.value.security)
+        groups = template.value.security_group
+          ? [template.value.security_group]
           : ["core-security"];
 
       // Status ?? Resolution ??
       const rawPayload = {
         type: "defect",
-        product: this.product,
-        component: this.component,
-        summary: this.summary,
-        version: this.template.version,
-        description: this.renderedDescription,
-        op_sys: this.opSys,
-        platform: this.platform,
-        priority: this.template.priority,
-        severity: this.template.severity,
-        alias: this.template.alias,
-        cc: this.template.cc.split(","),
-        assigned_to: this.template.assigned_to,
-        qa_contact: this.template.qa_contact,
-        target_milestone: this.template.target_milestone,
-        whiteboard: this.renderedWhiteboard,
-        keywords: this.renderedKeywords,
+        product: product.value,
+        component: component.value,
+        summary: summary.value,
+        version: template.value.version,
+        description: renderedDescription.value,
+        op_sys: opSys.value,
+        platform: platform.value,
+        priority: template.value.priority,
+        severity: template.value.severity,
+        alias: template.value.alias,
+        cc: template.value.cc.split(","),
+        assigned_to: template.value.assigned_to,
+        qa_contact: template.value.qa_contact,
+        target_milestone: template.value.target_milestone,
+        whiteboard: renderedWhiteboard.value,
+        keywords: renderedKeywords.value,
         groups: groups.length ? groups : "",
-        blocks: this.template.blocks.split(","),
-        dependson: this.template.dependson.split(","),
+        blocks: template.value.blocks.split(","),
+        dependson: template.value.dependson.split(","),
         ...attrs,
       };
 
@@ -836,105 +826,163 @@ export default {
 
       try {
         const data = await bugzillaApi.createBug({
-          hostname: this.provider.hostname,
+          hostname: provider.value.hostname,
           ...cleanPayload,
-          headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+          headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
         });
-        this.createdBugId = data.id;
-        await this.assignExternalBug();
-        await this.publishAttachments();
+        createdBugId.value = data.id;
+        await assignExternalBug();
+        await publishAttachments();
       } catch (err) {
-        this.createError = errorParser(err);
+        createError.value = errorParser(err);
       } finally {
-        this.submitting = false;
+        submitting.value = false;
       }
-    },
-    async publishAttachments() {
+    };
+
+    const publishAttachments = async () => {
       let payload = {};
       // Publish Crash data
-      if (!this.notAttachData) {
+      if (!notAttachData.value) {
         try {
           payload = {
-            ids: [this.createdBugId],
-            data: Base64.encode(this.crashData),
+            ids: [createdBugId.value],
+            data: Base64.encode(crashData.value),
             file_name: "crash_data.txt",
             summary: "Detailed Crash Information",
             content_type: "text/plain",
           };
 
           await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.createdBugId,
+            hostname: provider.value.hostname,
+            id: createdBugId.value,
             ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+            headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
           });
         } catch (err) {
-          this.publishCrashDataError = errorParser(err);
+          publishCrashDataError.value = errorParser(err);
         }
       }
 
       // Publish TestCase
-      if (this.entry.testcase && !this.notAttachTest) {
+      if (entry.value.testcase && !notAttachTest.value) {
         try {
-          let content = this.testCaseContent;
+          let content = testCaseContent.value;
           // If the testcase is binary we need to download it first
-          if (this.entry.testcase_isbinary) {
-            content = await api.retrieveCrashTestCaseBinary(this.entry.id);
+          if (entry.value.testcase_isbinary) {
+            content = await api.retrieveCrashTestCaseBinary(entry.value.id);
           }
 
           payload = {
-            ids: [this.createdBugId],
-            data: this.entry.testcase_isbinary
+            ids: [createdBugId.value],
+            data: entry.value.testcase_isbinary
               ? Base64.fromUint8Array(content)
               : Base64.encode(content),
-            file_name: this.entry.testcase,
+            file_name: entry.value.testcase,
             summary: "Testcase",
-            content_type: this.entry.testcase_isbinary
+            content_type: entry.value.testcase_isbinary
               ? "application/octet-stream"
               : "text/plain",
           };
 
           await bugzillaApi.createAttachment({
-            hostname: this.provider.hostname,
-            id: this.createdBugId,
+            hostname: provider.value.hostname,
+            id: createdBugId.value,
             ...payload,
-            headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+            headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
           });
         } catch (err) {
-          this.publishTestCaseError = errorParser(err);
+          publishTestCaseError.value = errorParser(err);
         }
       }
-    },
-    async assignExternalBug() {
+    };
+
+    const instance = getCurrentInstance();
+    const assignExternalBug = async () => {
       const payload = {
-        bug: this.createdBugId,
-        bug_provider: this.provider.id,
+        bug: createdBugId.value,
+        bug_provider: provider.value.id,
       };
       try {
         await api.updateBucket({
-          id: this.bucketId,
+          id: instance.proxy.bucketId,
           params: { reassign: false },
           ...payload,
         });
       } catch (err) {
-        this.assignError = errorParser(err);
+        assignError.value = errorParser(err);
       }
-    },
-  },
-  watch: {
-    selectedProvider() {
-      this.provider = this.providers.find(
-        (p) => p.id === this.selectedProvider,
+    };
+
+    // Watchers
+    watch(selectedProvider, () => {
+      provider.value = providers.value.find(
+        (p) => p.id === selectedProvider.value,
       );
-    },
-    selectedTemplate() {
-      this.template = this.templates.find(
-        (t) => t.id === this.selectedTemplate,
+    });
+
+    watch(selectedTemplate, () => {
+      template.value = templates.value.find(
+        (t) => t.id === selectedTemplate.value,
       );
-      this.updateFields();
-    },
+      updateFields();
+    });
+
+    const mounted = async () => {
+      entry.value = await api.retrieveCrash(props.entryId);
+      crashData.value = entry.value.rawCrashData
+        ? entry.value.rawCrashData
+        : entry.value.rawStderr;
+
+      let data = await api.listBugProviders();
+      providers.value = data.results.filter(
+        (p) => p.classname === "BugzillaProvider",
+      );
+      provider.value = providers.value.find((p) => p.id === props.providerId);
+      selectedProvider.value = provider.value.id;
+
+      data = await api.listTemplates();
+      templates.value = data.results.filter((t) => t.mode === "bug");
+      template.value = templates.value.find((t) => t.id === props.templateId);
+      if (template.value) {
+        selectedTemplate.value = template.value.id;
+        updateFields();
+      }
+    };
+
+    mounted();
+
+    return {
+      providers,
+      selectedProvider,
+      provider,
+      templates,
+      selectedTemplate,
+      template,
+      entry,
+      summary,
+      product,
+      component,
+      opSys,
+      platform,
+      submitting,
+      createError,
+      publishTestCaseError,
+      publishCrashDataError,
+      assignError,
+      createdBugId,
+      notAttachTest,
+      testCaseContent,
+      notAttachData,
+      crashData,
+      bugLink,
+      bugzillaToken,
+      entryMetadata,
+      goBack,
+      createExternalBug,
+    };
   },
-};
+});
 </script>
 
 <style scoped></style>

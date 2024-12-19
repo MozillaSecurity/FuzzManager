@@ -2,7 +2,7 @@
   <div class="row">
     <div class="form-group col-md-4">
       <label for="bp_select">Provider</label>
-      <select id="bp_select" class="form-control" v-model="selectedProvider">
+      <select id="bp_select" v-model="selectedProvider" class="form-control">
         <option v-for="p in providers" :key="p.id" :value="p.id">
           {{ p.hostname }}
         </option>
@@ -19,10 +19,12 @@
 </template>
 
 <script>
+import { defineComponent, onMounted, ref, watch } from "vue";
 import * as api from "../../api";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 
-export default {
+export default defineComponent({
+  name: "FullPPCSelect",
   components: {
     ProductComponentSelect,
   },
@@ -43,32 +45,40 @@ export default {
       default: "",
     },
   },
-  data: () => ({
-    providers: [],
-    selectedProvider: null,
-    providerHostname: "",
-    provider: null,
-  }),
-  async mounted() {
-    let data = await api.listBugProviders();
-    this.providers = data.results.filter(
-      (p) => p.classname === "BugzillaProvider",
-    );
-    if (this.providerId) {
-      this.provider = this.providers.find((p) => p.id === this.providerId);
-      this.selectedProvider = this.provider.id;
-      this.providerHostname = this.provider.hostname;
-    }
-  },
-  watch: {
-    selectedProvider() {
-      this.provider = this.providers.find(
-        (p) => p.id === this.selectedProvider,
+  setup(props) {
+    const providers = ref([]);
+    const selectedProvider = ref(null);
+    const providerHostname = ref("");
+    const provider = ref(null);
+
+    onMounted(async () => {
+      const data = await api.listBugProviders();
+      providers.value = data.results.filter(
+        (p) => p.classname === "BugzillaProvider",
       );
-      this.providerHostname = this.provider.hostname;
-    },
+
+      if (props.providerId) {
+        provider.value = providers.value.find((p) => p.id === props.providerId);
+        selectedProvider.value = provider.value.id;
+        providerHostname.value = provider.value.hostname;
+      }
+    });
+
+    watch(selectedProvider, () => {
+      provider.value = providers.value.find(
+        (p) => p.id === selectedProvider.value,
+      );
+      providerHostname.value = provider.value.hostname;
+    });
+
+    return {
+      providers,
+      selectedProvider,
+      providerHostname,
+      provider,
+    };
   },
-};
+});
 </script>
 
 <style scoped></style>
