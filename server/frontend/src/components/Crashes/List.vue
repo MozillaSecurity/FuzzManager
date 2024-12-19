@@ -35,11 +35,11 @@
         />
         <textarea
           id="id_query"
+          v-model="advancedQueryStr"
           class="form-control"
           name="query"
           spellcheck="false"
           :rows="(advancedQueryStr.match(/\n/g) || '').length + 1"
-          v-model="advancedQueryStr"
         ></textarea
         ><br />
         <pre
@@ -53,33 +53,33 @@
         <label for="id_search">Search Text</label>:
         <input
           id="id_search"
+          v-model="searchStr"
           type="text"
           name="search"
           autocomplete="off"
-          v-model="searchStr"
         /><br />
         <label for="id_bucketed">Include Bucketed</label>:
         <input
           id="id_bucketed"
+          v-model="showBucketed"
           type="checkbox"
           name="bucketed"
           :disabled="!canUnshowBucketed"
-          v-model="showBucketed"
         /><br />
       </span>
       <template v-if="!restricted">
         <label for="id_no_toolfilter">Ignore Tool Filter</label>:
         <input
           id="id_no_toolfilter"
+          v-model="ignoreToolFilter"
           type="checkbox"
           name="alltools"
-          v-model="ignoreToolFilter"
         /><br />
       </template>
       <span v-if="advancedQuery">
         <a
           title="Discard query and start over in simple mode"
-          v-on:click="resetQueryToggleAdvanced"
+          @click="resetQueryToggleAdvanced"
           >Reset to simple search</a
         ><br />
       </span>
@@ -87,25 +87,26 @@
         <span v-for="(value, key) in filters" :key="key">
           {{ validFilters[key] }}:
           <span class="monospace">{{ value }}</span>
-          <i v-on:click="removeFilter(key)" class="bi bi-x"></i><br />
+          <i class="bi bi-x" @click="removeFilter(key)"></i><br />
         </span>
         <a
           title="Show the full query for the current search/filters"
-          v-on:click="convertFiltersToAdvancedQuery"
+          @click="convertFiltersToAdvancedQuery"
           >Advanced query</a
         ><br />
       </span>
+      <!--   -->
       <button
-        v-on:click="fetch"
         :disabled="!modified || loading"
         :title="queryButtonTitle"
+        @click="fetch"
       >
         Query
       </button>
       <button
-        v-on:click="deleteQuery"
         :disabled="modified || loading || !haveResults"
         :title="deleteButtonTitle"
+        @click="deleteQuery"
       >
         Delete
       </button>
@@ -137,21 +138,21 @@
       <div class="pagination">
         <span class="step-links">
           <a
-            v-on:click="prevPage"
             v-show="currentPage > 1"
             class="bi bi-caret-left-fill"
+            @click="prevPage"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
           </span>
           <a
-            v-on:click="nextPage"
             v-show="currentPage < totalPages"
             data-toggle="tooltip"
             data-placement="top"
             title=""
             class="bi bi-caret-right-fill dimgray"
             data-original-title="Next"
+            @click="nextPage"
           ></a>
         </span>
       </div>
@@ -163,130 +164,130 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('id')"
-              v-on:click.ctrl.exact="addSort('id')"
               :class="{
                 active: sortKeys.includes('id') || sortKeys.includes('-id'),
               }"
+              @click.exact="sortBy('id')"
+              @click.ctrl.exact="addSort('id')"
             >
               ID
             </th>
             <th
-              v-on:click.exact="sortBy('created')"
-              v-on:click.ctrl.exact="addSort('created')"
               :class="{
                 active:
                   sortKeys.includes('created') || sortKeys.includes('-created'),
               }"
+              @click.exact="sortBy('created')"
+              @click.ctrl.exact="addSort('created')"
             >
               Date Added
             </th>
             <th
-              v-on:click.exact="sortBy('bucket')"
-              v-on:click.ctrl.exact="addSort('bucket')"
               :class="{
                 active:
                   sortKeys.includes('bucket') || sortKeys.includes('-bucket'),
               }"
+              @click.exact="sortBy('bucket')"
+              @click.ctrl.exact="addSort('bucket')"
             >
               Bucket
             </th>
             <th
-              v-on:click.exact="sortBy('shortSignature')"
-              v-on:click.ctrl.exact="addSort('shortSignature')"
               :class="{
                 active:
                   sortKeys.includes('shortSignature') ||
                   sortKeys.includes('-shortSignature'),
               }"
+              @click.exact="sortBy('shortSignature')"
+              @click.ctrl.exact="addSort('shortSignature')"
             >
               Short Signature
             </th>
             <th
-              v-on:click.exact="sortBy('crashAddress')"
-              v-on:click.ctrl.exact="addSort('crashAddress')"
               :class="{
                 active:
                   sortKeys.includes('crashAddress') ||
                   sortKeys.includes('-crashAddress'),
               }"
+              @click.exact="sortBy('crashAddress')"
+              @click.ctrl.exact="addSort('crashAddress')"
             >
               Crash Address
             </th>
             <th
-              v-on:click.exact="sortBy('testcase__size')"
-              v-on:click.ctrl.exact="addSort('testcase__size')"
               :class="{
                 active:
                   sortKeys.includes('testcase__size') ||
                   sortKeys.includes('-testcase__size'),
               }"
+              @click.exact="sortBy('testcase__size')"
+              @click.ctrl.exact="addSort('testcase__size')"
             >
               Test Size
             </th>
             <th
-              v-on:click.exact="sortBy('testcase__quality')"
-              v-on:click.ctrl.exact="addSort('testcase__quality')"
               :class="{
                 active:
                   sortKeys.includes('testcase__quality') ||
                   sortKeys.includes('-testcase__quality'),
               }"
+              @click.exact="sortBy('testcase__quality')"
+              @click.ctrl.exact="addSort('testcase__quality')"
             >
               Test Info
             </th>
             <th
-              v-on:click.exact="sortBy('product__name')"
-              v-on:click.ctrl.exact="addSort('product__name')"
               :class="{
                 active:
                   sortKeys.includes('product__name') ||
                   sortKeys.includes('-product__name'),
               }"
+              @click.exact="sortBy('product__name')"
+              @click.ctrl.exact="addSort('product__name')"
             >
               Product
             </th>
             <th
-              v-on:click.exact="sortBy('product__version')"
-              v-on:click.ctrl.exact="addSort('product__version')"
               :class="{
                 active:
                   sortKeys.includes('product__version') ||
                   sortKeys.includes('-product__version'),
               }"
+              @click.exact="sortBy('product__version')"
+              @click.ctrl.exact="addSort('product__version')"
             >
               Version
             </th>
             <th
-              v-on:click.exact="sortBy('platform__name')"
-              v-on:click.ctrl.exact="addSort('platform__name')"
               :class="{
                 active:
                   sortKeys.includes('platform__name') ||
                   sortKeys.includes('-platform__name'),
               }"
+              @click.exact="sortBy('platform__name')"
+              @click.ctrl.exact="addSort('platform__name')"
             >
               Platform
             </th>
             <th
-              v-on:click.exact="sortBy('os__name')"
-              v-on:click.ctrl.exact="addSort('os__name')"
               :class="{
                 active:
                   sortKeys.includes('os__name') ||
                   sortKeys.includes('-os__name'),
               }"
+              @click.exact="sortBy('os__name')"
+              @click.ctrl.exact="addSort('os__name')"
             >
               OS
             </th>
             <th
-              v-on:click.exact="sortBy('tool__name')"
-              v-on:click.ctrl.exact="addSort('tool__name')"
               :class="{
                 active:
                   sortKeys.includes('tool__name') ||
                   sortKeys.includes('-tool__name'),
               }"
+              @click.exact="sortBy('tool__name')"
+              @click.ctrl.exact="addSort('tool__name')"
             >
               Tool
             </th>
@@ -295,38 +296,44 @@
         <tbody>
           <tr v-if="loading">
             <td colspan="11">
-              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+              <div class="vl-parent">
+                <loading
+                  v-model:active="loading"
+                  :can-cancel="false"
+                  :is-full-page="true"
+                />
+              </div>
             </td>
           </tr>
           <Row
             v-for="crash in crashes"
+            v-else
             :key="crash.id"
             :crash="crash"
-            v-on:add-filter="addFilter"
-            v-else
+            @add-filter="addFilter"
           />
         </tbody>
       </table>
     </div>
-    <div class="panel-body" v-show="totalPages > 1">
+    <div v-show="totalPages > 1" class="panel-body">
       <div class="pagination">
         <span class="step-links">
           <a
-            v-on:click="prevPage"
             v-show="currentPage > 1"
             class="bi bi-caret-left-fill"
+            @click="prevPage"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
           </span>
           <a
-            v-on:click="nextPage"
             v-show="currentPage < totalPages"
             data-toggle="tooltip"
             data-placement="top"
             title=""
             class="bi bi-caret-right-fill dimgray"
             data-original-title="Next"
+            @click="nextPage"
           ></a>
         </span>
       </div>
@@ -335,21 +342,22 @@
 </template>
 
 <script>
-import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
+import _throttle from "lodash/throttle";
 import swal from "sweetalert";
-import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import Vue from "vue";
+import { createVNode, defineComponent, getCurrentInstance, render } from "vue";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
+import * as api from "../../api";
 import {
-  errorParser,
   E_SERVER_ERROR,
+  errorParser,
   multiSort,
   parseHash,
 } from "../../helpers";
-import * as api from "../../api";
-import Row from "./Row.vue";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
 import DeleteConfirmation from "./DeleteConfirmation.vue";
+import Row from "./Row.vue";
 
 const pageSize = 100;
 const validFilters = {
@@ -370,13 +378,13 @@ const validFilters = {
   tool__name__contains: "Tool (sub-string match)",
 };
 
-export default {
-  mixins: [multiSort],
+export default defineComponent({
   components: {
     Row,
-    ClipLoader,
     HelpJSONQueryPopover,
+    Loading,
   },
+  mixins: [multiSort],
   props: {
     restricted: {
       type: Boolean,
@@ -388,7 +396,7 @@ export default {
       default: null,
     },
   },
-  data: function () {
+  data() {
     const defaultSortKeys = ["-id"];
     const validSortKeys = [
       "bucket",
@@ -422,7 +430,6 @@ export default {
       filters: {},
       haveResults: false,
       ignoreToolFilter: false,
-      loading: true,
       searchStr: "",
       showBucketed: false,
       sortKeys: [...defaultSortKeys],
@@ -430,45 +437,9 @@ export default {
       totalPages: 1,
       validFilters: validFilters,
       validSortKeys: validSortKeys,
+      loading: false,
+      count: 0,
     };
-  },
-  created: function () {
-    this.showBucketed = this.watchId !== null;
-    if (this.$route.query.q) this.searchStr = this.$route.query.q;
-    if (this.$route.hash.startsWith("#")) {
-      const hash = parseHash(this.$route.hash);
-      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
-        try {
-          this.currentPage = Number.parseInt(hash.page, 10);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#page=\\d+': ${e}`);
-        }
-      }
-      if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
-        this.filters["bucket"] = hash.bucket;
-      this.ignoreToolFilter = hash.alltools === "1";
-      if (hash.advanced === "1") {
-        this.advancedQuery = true;
-        this.advancedQueryStr = JSON.stringify(
-          JSON.parse(hash.query || ""),
-          null,
-          2,
-        );
-      } else {
-        this.showBucketed = hash.bucketed === "1";
-        for (const filter of Object.keys(validFilters)) {
-          if (Object.prototype.hasOwnProperty.call(hash, filter)) {
-            this.filters[filter] = hash[filter];
-            if (filter == "bucket") {
-              this.showBucketed = true;
-              this.canUnshowBucketed = false;
-            }
-          }
-        }
-      }
-    }
-    this.fetch();
   },
   computed: {
     modified() {
@@ -518,6 +489,49 @@ export default {
       if (!this.modified) return "Results match current query";
       return "Submit query";
     },
+  },
+  watch: {
+    sortKeys() {
+      this.fetch();
+    },
+  },
+  created: function () {
+    this.showBucketed = this.watchId !== null;
+    if (this.$route.query.q) this.searchStr = this.$route.query.q;
+    if (this.$route.hash.startsWith("#")) {
+      const hash = parseHash(this.$route.hash);
+      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
+        try {
+          this.currentPage = Number.parseInt(hash.page, 10);
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.debug(`parsing '#page=\\d+': ${e}`);
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(hash, "bucket"))
+        this.filters["bucket"] = hash.bucket;
+      this.ignoreToolFilter = hash.alltools === "1";
+      if (hash.advanced === "1") {
+        this.advancedQuery = true;
+        this.advancedQueryStr = JSON.stringify(
+          JSON.parse(hash.query || ""),
+          null,
+          2,
+        );
+      } else {
+        this.showBucketed = hash.bucketed === "1";
+        for (const filter of Object.keys(validFilters)) {
+          if (Object.prototype.hasOwnProperty.call(hash, filter)) {
+            this.filters[filter] = hash[filter];
+            if (filter == "bucket") {
+              this.showBucketed = true;
+              this.canUnshowBucketed = false;
+            }
+          }
+        }
+      }
+    }
+    this.fetch();
   },
   methods: {
     addFilter: function (key, value) {
@@ -597,17 +611,22 @@ export default {
       this.updateHash();
     },
     deleteQuery: async function () {
+      // Create a container div for the form
+      const container = document.createElement("div");
+
       // - show confirmation modal with affected tool breakdown
-      const FormCtor = Vue.extend(DeleteConfirmation);
-      const deleteConfirmForm = new FormCtor({
-        parent: this,
-        propsData: {
-          toolCrashes: this.toolCrashes,
-        },
-      }).$mount();
+      const formCtor = createVNode(DeleteConfirmation, {
+        toolCrashes: this.toolCrashes,
+      });
+
+      formCtor.appContext = getCurrentInstance()?.appContext;
+
+      // Mount the component to get the actual DOM element
+      render(formCtor, container);
+
       const value = await swal({
         title: "Delete these crashes?",
-        content: deleteConfirmForm.$el,
+        content: container,
         buttons: true,
       });
       if (value) {
@@ -656,6 +675,7 @@ export default {
         this.updateModifiedCache();
         this.crashes = null;
         this.advancedQueryError = "";
+
         try {
           const data = await api.listCrashes(this.buildQueryParams());
           this.crashes = data.results;
@@ -696,6 +716,7 @@ export default {
             return;
           }
         }
+
         this.loading = false;
       },
       500,
@@ -768,12 +789,7 @@ export default {
       }
     },
   },
-  watch: {
-    sortKeys() {
-      this.fetch();
-    },
-  },
-};
+});
 </script>
 
 <style scoped>
@@ -786,5 +802,11 @@ export default {
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+}
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 </style>

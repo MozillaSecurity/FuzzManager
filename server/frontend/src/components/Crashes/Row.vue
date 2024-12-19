@@ -3,7 +3,7 @@
     <td>
       <a :href="crash.view_url">{{ crash.id }}</a>
     </td>
-    <td class="wrap-normal">{{ crash.created | formatDate }}</td>
+    <td class="wrap-normal">{{ formatDate(crash.created) }}</td>
     <td v-if="crash.bucket">
       <a :href="crash.sig_view_url">{{ crash.bucket }} </a>
     </td>
@@ -35,20 +35,20 @@
     </td>
     <td>{{ crash.crashAddress }}</td>
     <td v-if="crash.testcase">
-      {{ crash.testcase_size | formatSize }}
+      {{ formatSize(crash.testcase_size) }}
     </td>
     <td v-else>N/A</td>
     <td v-if="crash.testcase">
       <a
         title="Add to search"
         class="add-filter"
-        v-on:click="addFilter('testcase__quality', crash.testcase_quality)"
+        @click="addFilter('testcase__quality', crash.testcase_quality)"
         >Q{{ crash.testcase_quality }}</a
       >
       <i
+        v-if="crash.testcase_isbinary"
         title="test is binary"
         class="bi bi-file-binary"
-        v-if="crash.testcase_isbinary"
       ></i>
     </td>
     <td v-else>N/A</td>
@@ -56,7 +56,7 @@
       <a
         title="Add to search"
         class="add-filter"
-        v-on:click="addFilter('product__name', crash.product)"
+        @click="addFilter('product__name', crash.product)"
         >{{ crash.product }}</a
       >
     </td>
@@ -65,7 +65,7 @@
         <a
           title="Add to search"
           class="add-filter"
-          v-on:click="addFilter('product__version', crash.product_version)"
+          @click="addFilter('product__version', crash.product_version)"
           >{{ crash.product_version }}</a
         >
       </span>
@@ -74,7 +74,7 @@
       <a
         title="Add to search"
         class="add-filter"
-        v-on:click="addFilter('platform__name', crash.platform)"
+        @click="addFilter('platform__name', crash.platform)"
         >{{ crash.platform }}</a
       >
     </td>
@@ -82,7 +82,7 @@
       <a
         title="Add to search"
         class="add-filter"
-        v-on:click="addFilter('os__name', crash.os)"
+        @click="addFilter('os__name', crash.os)"
       >
         <img
           v-if="crash.os === 'linux'"
@@ -119,7 +119,7 @@
       <a
         title="Add to search"
         class="add-filter"
-        v-on:click="addFilter('tool__name', crash.tool)"
+        @click="addFilter('tool__name', crash.tool)"
         >{{ crash.tool }}</a
       >
     </td>
@@ -127,28 +127,35 @@
 </template>
 
 <script>
+import { defineComponent } from "vue";
 import { formatClientTimestamp, formatSizeFriendly } from "../../helpers";
 
-export default {
+export default defineComponent({
+  name: "CrashRow",
   props: {
     crash: {
       type: Object,
       required: true,
     },
   },
-  filters: {
-    formatDate: formatClientTimestamp,
-    formatSize: formatSizeFriendly,
-  },
-  methods: {
-    addFilter(key, value) {
-      this.$emit("add-filter", key, value);
-    },
-    staticLogo(name) {
+  emits: ["add-filter"],
+  setup(props, { emit }) {
+    const addFilter = (key, value) => {
+      emit("add-filter", key, value);
+    };
+
+    const staticLogo = (name) => {
       return window.location.origin + "/static/img/os/" + name + ".png";
-    },
+    };
+
+    return {
+      addFilter,
+      staticLogo,
+      formatDate: formatClientTimestamp,
+      formatSize: formatSizeFriendly,
+    };
   },
-};
+});
 </script>
 
 <style scoped>

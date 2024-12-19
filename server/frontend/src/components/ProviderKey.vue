@@ -4,17 +4,17 @@
     <div class="form-inline mt-light">
       <div class="input-group">
         <input
+          v-model="key"
           type="text"
           class="form-control"
           placeholder="API key..."
-          v-model="key"
         />
         <span class="input-group-btn">
           <button
             type="button"
             class="btn btn-success"
             :disabled="loading"
-            v-on:click="saveKey"
+            @click="saveKey"
           >
             {{ !loading ? "Save" : "Saving..." }}
           </button>
@@ -23,23 +23,23 @@
       <button
         type="button"
         class="btn btn-danger"
-        v-on:click="removeKey"
         title="Remove key"
+        @click="removeKey"
       >
         <span class="bi bi-trash-fill" aria-hidden="true"></span>
       </button>
       <br />
       <div
+        v-if="success"
         class="alert alert-success alert-dismissible mt-strong"
         role="alert"
-        v-if="success"
       >
         <button
           type="button"
           class="close"
           data-dismiss="alert"
           aria-label="Close"
-          v-on:click="success = null"
+          @click="success = null"
         >
           <span aria-hidden="true">&times;</span>
         </button>
@@ -48,16 +48,16 @@
         correctly saved.
       </div>
       <div
+        v-if="error"
         class="alert alert-danger alert-dismissible mt-strong"
         role="alert"
-        v-if="error"
       >
         <button
           type="button"
           class="close"
           data-dismiss="alert"
           aria-label="Close"
-          v-on:click="error = null"
+          @click="error = null"
         >
           <span aria-hidden="true">&times;</span>
         </button>
@@ -71,10 +71,11 @@
 </template>
 
 <script>
-import { errorParser } from "../helpers";
+import { computed, defineComponent, onMounted, ref } from "vue";
 import * as bugzillaApi from "../bugzilla_api";
+import { errorParser } from "../helpers";
 
-export default {
+export default defineComponent({
   props: {
     providerId: {
       type: Number,
@@ -85,57 +86,67 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    key: null,
-    loading: false,
-    error: null,
-    success: null,
-  }),
-  mounted() {
-    const storedKey = localStorage.getItem(this.localStorageKey);
-    if (storedKey) this.key = storedKey;
-  },
-  computed: {
-    localStorageKey() {
-      return "provider-" + this.providerId + "-api-key";
-    },
-    bugzillaUsername() {
-      return this.success.real_name
-        ? this.success.real_name
-        : this.success.nick;
-    },
-  },
-  methods: {
-    async saveKey() {
-      this.loading = true;
-      this.success = null;
-      this.error = null;
+  setup(props) {
+    const key = ref(null);
+    const loading = ref(false);
+    const error = ref(null);
+    const success = ref(null);
+
+    const localStorageKey = computed(
+      () => "provider-" + props.providerId + "-api-key",
+    );
+
+    const bugzillaUsername = computed(
+      () => success.value?.real_name || success.value?.nick,
+    );
+
+    const saveKey = async () => {
+      loading.value = true;
+      success.value = null;
+      error.value = null;
 
       try {
         const data = await bugzillaApi.whoAmI({
-          hostname: this.providerHostname,
-          key: this.key,
+          hostname: props.providerHostname,
+          key: key.value,
         });
-        localStorage.setItem(this.localStorageKey, this.key);
-        this.success = data;
+        localStorage.setItem(localStorageKey.value, key.value);
+        success.value = data;
       } catch (err) {
-        if (err.response && err.response.data && err.response.data.message) {
-          this.error = err.response.data.message;
+        if (err.response?.data?.message) {
+          error.value = err.response.data.message;
         } else {
-          this.error = errorParser(err);
+          error.value = errorParser(err);
         }
       } finally {
-        this.loading = false;
+        loading.value = false;
       }
-    },
-    removeKey() {
-      this.success = null;
-      this.error = null;
-      localStorage.removeItem(this.localStorageKey);
-      this.key = null;
-    },
+    };
+
+    const removeKey = () => {
+      success.value = null;
+      error.value = null;
+      localStorage.removeItem(localStorageKey.value);
+      key.value = null;
+    };
+
+    onMounted(() => {
+      const storedKey = localStorage.getItem(localStorageKey.value);
+
+      if (storedKey) key.value = storedKey;
+    });
+
+    return {
+      key,
+      loading,
+      error,
+      success,
+      bugzillaUsername,
+      saveKey,
+      removeKey,
+    };
   },
-};
+});
 </script>
 
 <style scoped>
