@@ -10,7 +10,7 @@
       <button
         type="button"
         class="btn btn-secondary"
-        v-on:click="assignExternalBug"
+        @click="assignExternalBug"
       >
         Use this bug
       </button>

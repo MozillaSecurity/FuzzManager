@@ -5,18 +5,18 @@
       <div class="input-group">
         <input
           id="id_summary"
+          v-model="summary"
           class="form-control"
           maxlength="1023"
           name="summary"
           type="text"
-          v-model="summary"
         />
         <span class="input-group-btn">
           <button
             class="btn btn-warning"
             type="button"
             :disabled="!summary || loading"
-            v-on:click="fetchDuplicates"
+            @click="fetchDuplicates"
           >
             {{ !loading ? "Fetch similar bugs" : "Fetching bugs..." }}
           </button>
@@ -54,10 +54,12 @@
 </template>
 
 <script>
+import { computed, defineComponent, ref, watch } from "vue";
 import * as bugzillaApi from "../../bugzilla_api";
 import List from "./PossibleDuplicates/List.vue";
 
-export default {
+export default defineComponent({
+  name: "SummaryInput",
   components: {
     List,
   },
@@ -75,57 +77,73 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    summary: "",
-    loading: false,
-    duplicates: null,
-    fetchError: false,
-  }),
-  mounted() {
-    this.summary = this.initialSummary;
-  },
-  computed: {
-    bugzillaToken() {
-      return localStorage.getItem("provider-" + this.provider.id + "-api-key");
-    },
-  },
-  methods: {
-    async fetchDuplicates() {
-      this.fetchError = false;
-      this.duplicates = null;
-      this.loading = true;
+  setup(props, { emit }) {
+    const summary = ref("");
+    const loading = ref(false);
+    const duplicates = ref(null);
+    const fetchError = ref(false);
+
+    // Computed property for bugzilla token
+    const bugzillaToken = computed(() => {
+      return localStorage.getItem("provider-" + props.provider.id + "-api-key");
+    });
+
+    // Methods
+    const fetchDuplicates = async () => {
+      fetchError.value = false;
+      duplicates.value = null;
+      loading.value = true;
+
       try {
         const data = await bugzillaApi.fetchPossibleDuplicates({
-          hostname: this.provider.hostname,
-          params: { summary: this.summary },
-          headers: this.bugzillaToken
-            ? { "X-BUGZILLA-API-KEY": this.bugzillaToken }
+          hostname: props.provider.hostname,
+          params: { summary: summary.value },
+          headers: bugzillaToken.value
+            ? { "X-BUGZILLA-API-KEY": bugzillaToken.value }
             : {},
         });
-        this.duplicates = data.bugs.map((b) => {
-          return { ...b, link: `https://${this.provider.hostname}/${b.id}` };
+        duplicates.value = data.bugs.map((b) => {
+          return { ...b, link: `https://${props.provider.hostname}/${b.id}` };
         });
       } catch {
-        this.fetchError = true;
+        fetchError.value = true;
       } finally {
-        this.loading = false;
+        loading.value = false;
       }
-    },
+    };
+
+    watch(
+      () => props.provider,
+      () => {
+        loading.value = false;
+        duplicates.value = null;
+        fetchError.value = false;
+      },
+    );
+
+    watch(
+      () => props.initialSummary,
+      () => {
+        summary.value = props.initialSummary;
+      },
+    );
+
+    watch(summary, () => {
+      emit("update-summary", summary.value);
+    });
+
+    summary.value = props.initialSummary;
+
+    return {
+      summary,
+      loading,
+      duplicates,
+      fetchError,
+      bugzillaToken,
+      fetchDuplicates,
+    };
   },
-  watch: {
-    provider: function () {
-      this.loading = false;
-      this.duplicates = null;
-      this.fetchError = false;
-    },
-    initialSummary: function () {
-      this.summary = this.initialSummary;
-    },
-    summary: function () {
-      this.$emit("update-summary", this.summary);
-    },
-  },
-};
+});
 </script>
 
 <style scoped>

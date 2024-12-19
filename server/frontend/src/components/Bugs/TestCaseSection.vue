@@ -4,10 +4,10 @@
     <div class="row">
       <div class="form-group col-md-6">
         <input
-          type="checkbox"
           id="id_testcase_skip"
-          name="testcase_skip"
           v-model="notAttachTest"
+          type="checkbox"
+          name="testcase_skip"
         />
         <span>Do not attach a testcase (file {{ mode }} without test).</span>
       </div>
@@ -21,23 +21,23 @@
           <label for="testcase_filename">Filename:</label>
           <input
             id="id_testcase_filename"
+            v-model="filename"
             class="form-control"
             name="testcase_filename"
             type="text"
-            v-model="filename"
           />
         </div>
       </div>
-      <div class="row" v-if="!entry.testcase_isbinary">
+      <div v-if="!entry.testcase_isbinary" class="row">
         <div class="form-group col-md-12">
           <label for="testcase_content">Content:</label>
           <textarea
             id="id_testcase_content"
+            v-model="content"
             class="form-control"
             name="testcase_content"
             type="text"
             :readonly="content === 'Content loading...'"
-            v-model="content"
           ></textarea>
         </div>
       </div>
@@ -47,9 +47,12 @@
 </template>
 
 <script>
+import { defineComponent, onMounted, ref, watch } from "vue";
 import * as api from "../../api";
 
-export default {
+export default defineComponent({
+  name: "TestCaseSection",
+
   props: {
     mode: {
       type: String,
@@ -70,33 +73,50 @@ export default {
       required: true,
     },
   },
-  data: () => ({
-    notAttachTest: false,
-    filename: "",
-    content: "Content loading...",
-  }),
-  async mounted() {
-    this.notAttachTest = this.initialNotAttachTest;
-    this.filename = this.template
-      ? this.template.testcase_filename
-      : this.entry.testcase.split(/[\\/]/).pop();
-    if (!this.entry.testcase_isbinary)
-      this.content = await api.retrieveCrashTestCase(this.entry.id);
+
+  emits: ["update-not-attach-test", "update-filename", "update-content"],
+
+  setup(props, { emit }) {
+    const notAttachTest = ref(false);
+    const filename = ref("");
+    const content = ref("Content loading...");
+
+    onMounted(async () => {
+      notAttachTest.value = props.initialNotAttachTest;
+      filename.value = props.template
+        ? props.template.testcase_filename
+        : props.entry.testcase.split(/[\\/]/).pop();
+
+      if (!props.entry.testcase_isbinary) {
+        content.value = await api.retrieveCrashTestCase(props.entry.id);
+      }
+    });
+
+    // Watch handlers
+    watch(notAttachTest, (newValue) => {
+      emit("update-not-attach-test", newValue);
+    });
+
+    watch(filename, (newValue) => {
+      if (newValue) {
+        emit("update-filename", newValue);
+      } else {
+        // Prevent removing the whole section when the filename input is empty
+        emit("update-filename", " ");
+      }
+    });
+
+    watch(content, (newValue) => {
+      emit("update-content", newValue);
+    });
+
+    return {
+      notAttachTest,
+      filename,
+      content,
+    };
   },
-  watch: {
-    notAttachTest: function () {
-      this.$emit("update-not-attach-test", this.notAttachTest);
-    },
-    filename: function () {
-      if (this.filename) this.$emit("update-filename", this.filename);
-      // Prevent removing the whole section when the filename input is empty
-      else this.$emit("update-filename", " ");
-    },
-    content: function () {
-      this.$emit("update-content", this.content);
-    },
-  },
-};
+});
 </script>
 
 <style scoped></style>

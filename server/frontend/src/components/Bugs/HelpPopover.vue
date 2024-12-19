@@ -1,36 +1,49 @@
 <template>
-  <Popper trigger="hover" :options="{ placement: 'right' }">
-    <div class="popper">
-      <div class="pop-header">Available substitution variables</div>
-      <div class="pop-body">
-        <ul>
-          <li v-for="v in variables" :key="v">
-            <code>{{ v }}</code>
-          </li>
-        </ul>
-        <p>
-          Render them using
-          <code v-pre>{{ myvariable }}</code> (escaped HTML) <br />
-          or <code v-pre>{{{ myvariable }}}</code> (unescaped HTML).
-        </p>
-        <a class="pull-right" target="_blank" :href="documentationLink">
-          See documentation
-        </a>
+  <FloatingMenu
+    :distance="12"
+    :skidding="0"
+    :delay="{ show: 100, hide: 100 }"
+    placement="auto-start"
+    :triggers="['hover']"
+    :auto-hide="false"
+    class="pop-container"
+  >
+    <template #popper>
+      <div class="popper">
+        <div class="pop-header">Available substitution variables</div>
+        <div class="pop-body">
+          <ul>
+            <li v-for="v in variables" :key="v">
+              <code>{{ v }}</code>
+            </li>
+          </ul>
+          <p>
+            Render them using
+            <code v-pre>{{ myvariable }}</code> (escaped HTML) <br />
+            or <code v-pre>{{{ myvariable }}}</code> (unescaped HTML).
+          </p>
+          <a class="pull-right" target="_blank" :href="documentationLink">
+            See documentation
+          </a>
+        </div>
       </div>
-    </div>
-    <!-- eslint-disable-next-line -->
-    <span slot="reference">
-      <i class="bi bi-question-circle-fill"></i>
-    </span>
-  </Popper>
+    </template>
+    <template #reference>
+      <span>
+        <i class="bi bi-question-circle-fill"></i>
+      </span>
+    </template>
+  </FloatingMenu>
 </template>
 
 <script>
-import Popper from "vue-popperjs";
+import { Menu as FloatingMenu } from "floating-vue";
+import { defineComponent } from "vue";
 
-export default {
+export default defineComponent({
+  name: "HelpPopover",
   components: {
-    Popper,
+    FloatingMenu,
   },
   props: {
     field: {
@@ -46,7 +59,11 @@ export default {
       required: true,
     },
   },
-};
+  setup() {
+    // If you need any reactive logic, put it here
+    return {};
+  },
+});
 </script>
 
 <style scoped>
@@ -70,5 +87,9 @@ export default {
 }
 .popper {
   text-align: left;
+}
+.pop-container {
+  display: inline;
+  margin-left: 0.5rem;
 }
 </style>
