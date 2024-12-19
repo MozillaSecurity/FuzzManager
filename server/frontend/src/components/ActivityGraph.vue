@@ -2,6 +2,7 @@
 
 <script>
 import * as d3 from "d3";
+import { defineComponent, getCurrentInstance, onMounted } from "vue";
 
 const hour_ms = 60 * 60 * 1000;
 const day_ms = 24 * hour_ms;
@@ -47,10 +48,9 @@ function crash_history_to_range(fm_data, start, step, stop, clip) {
   return result;
 }
 
-export default {
+export default defineComponent({
   props: {
     range: {
-      // time-span to graph, in days
       type: Number,
       required: true,
     },
@@ -59,61 +59,62 @@ export default {
       required: true,
     },
   },
-  mounted() {
-    // set the dimensions and margins of the graph
-    const margin = { top: 5, right: 5, bottom: 0, left: 5 };
-    const width = 150 - margin.left - margin.right;
-    const height = 40 - margin.top - margin.bottom;
 
-    /*
-     * format data for d3
-     * start is current time (rounded up to next hour) - CLEANUP_DAYS ..
-     */
-    const next_hour_ms = (() => {
-      const now = new Date().valueOf();
-      return now + hour_ms - (now % hour_ms);
-    })();
-    const clip = 10;
-    const data = crash_history_to_range(
-      this.data,
-      next_hour_ms - this.range * day_ms,
-      hour_ms,
-      next_hour_ms,
-      clip,
-    );
+  setup(props) {
+    onMounted(() => {
+      // set the dimensions and margins of the graph
+      const margin = { top: 5, right: 5, bottom: 0, left: 5 };
+      const width = 150 - margin.left - margin.right;
+      const height = 40 - margin.top - margin.bottom;
 
-    // append the svg object to the body of the page
-    const svg = d3
-      .select(this.$el)
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+      const next_hour_ms = (() => {
+        const now = new Date().valueOf();
+        return now + hour_ms - (now % hour_ms);
+      })();
 
-    // Add X axis
-    const x = d3
-      .scaleTime()
-      .domain(d3.extent(data, (d) => d.date))
-      .range([0, width]);
-
-    // Add Y axis
-    const y = d3.scaleLinear().domain([0, 10]).range([height, 0]);
-
-    // Add the area
-    svg
-      .append("path")
-      .datum(data, (d) => d.count)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x((d) => x(d.date))
-          .y((d) => y(d.count)),
+      const clip = 10;
+      const data = crash_history_to_range(
+        props.data,
+        next_hour_ms - props.range * day_ms,
+        hour_ms,
+        next_hour_ms,
+        clip,
       );
+
+      const instance = getCurrentInstance();
+      // append the svg object to the body of the page
+      const svg = d3
+        .select(instance.vnode.el)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Add X axis
+      const x = d3
+        .scaleTime()
+        .domain(d3.extent(data, (d) => d.date))
+        .range([0, width]);
+
+      // Add Y axis
+      const y = d3.scaleLinear().domain([0, 10]).range([height, 0]);
+
+      // Add the area
+      svg
+        .append("path")
+        .datum(data, (d) => d.count)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x((d) => x(d.date))
+            .y((d) => y(d.count)),
+        );
+    });
   },
-};
+});
 </script>

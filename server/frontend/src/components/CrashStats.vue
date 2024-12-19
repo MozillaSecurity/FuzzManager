@@ -14,10 +14,10 @@
         <label for="id_no_toolfilter">Ignore Tool Filter</label>:
         <input
           id="id_no_toolfilter"
+          v-model="ignoreToolFilter"
           type="checkbox"
           name="alltools"
-          v-model="ignoreToolFilter"
-          v-on:change="fetch"
+          @change="fetch"
         /><br />
       </template>
     </div>
@@ -29,67 +29,67 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('id')"
-              v-on:click.ctrl.exact="addSort('id')"
               :class="{
                 active: sortKeys.includes('id') || sortKeys.includes('-id'),
               }"
+              @click.exact="sortBy('id')"
+              @click.ctrl.exact="addSort('id')"
             >
               Bucket
             </th>
             <th
-              v-on:click.exact="sortBy('shortDescription')"
-              v-on:click.ctrl.exact="addSort('shortDescription')"
               :class="{
                 active:
                   sortKeys.includes('shortDescription') ||
                   sortKeys.includes('-shortDescription'),
               }"
+              @click.exact="sortBy('shortDescription')"
+              @click.ctrl.exact="addSort('shortDescription')"
             >
               Short Description
             </th>
             <th>Activity</th>
             <th
-              v-on:click.exact="sortBy('counts[0]')"
-              v-on:click.ctrl.exact="addSort('counts[0]')"
               :class="{
                 active:
                   sortKeys.includes('counts[0]') ||
                   sortKeys.includes('-counts[0]'),
               }"
+              @click.exact="sortBy('counts[0]')"
+              @click.ctrl.exact="addSort('counts[0]')"
             >
               Reports (last hour)
             </th>
             <th
-              v-on:click.exact="sortBy('counts[1]')"
-              v-on:click.ctrl.exact="addSort('counts[1]')"
               :class="{
                 active:
                   sortKeys.includes('counts[1]') ||
                   sortKeys.includes('-counts[1]'),
               }"
+              @click.exact="sortBy('counts[1]')"
+              @click.ctrl.exact="addSort('counts[1]')"
             >
               Reports (last day)
             </th>
             <th
-              v-on:click.exact="sortBy('counts[2]')"
-              v-on:click.ctrl.exact="addSort('counts[2]')"
               :class="{
                 active:
                   sortKeys.includes('counts[2]') ||
                   sortKeys.includes('-counts[2]'),
               }"
+              @click.exact="sortBy('counts[2]')"
+              @click.ctrl.exact="addSort('counts[2]')"
             >
               Reports (last week)
             </th>
             <th
-              v-on:click.exact="sortBy('bug__externalId')"
-              v-on:click.ctrl.exact="addSort('bug__externalId')"
               :class="{
                 active:
                   sortKeys.includes('bug__externalId') ||
                   sortKeys.includes('-bug__externalId'),
               }"
+              @click.exact="sortBy('bug__externalId')"
+              @click.ctrl.exact="addSort('bug__externalId')"
             >
               External Bug
             </th>
@@ -98,12 +98,18 @@
         <tbody>
           <tr v-if="loading">
             <td colspan="7">
-              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+              <div class="vl-parent">
+                <loading
+                  v-model:active="loading"
+                  :can-cancel="false"
+                  :is-full-page="true"
+                />
+              </div>
             </td>
           </tr>
           <tr
-            v-else
             v-for="signature of sortedSignatureData"
+            v-else
             :key="signature.id"
           >
             <td>
@@ -153,55 +159,24 @@
 <script>
 import _throttle from "lodash/throttle";
 import swal from "sweetalert";
-import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { errorParser, E_SERVER_ERROR, multiSort, parseHash } from "../helpers";
+import { computed, defineComponent, getCurrentInstance, ref } from "vue";
+import Loading from "vue-loading-overlay";
+
+import "vue-loading-overlay/dist/css/index.css";
 import * as api from "../api";
-import AssignBtn from "./Signatures/AssignBtn.vue";
+import { E_SERVER_ERROR, errorParser, multiSort, parseHash } from "../helpers";
 import ActivityGraph from "./ActivityGraph.vue";
 import CrashStatsGraph from "./CrashStatsGraph.vue";
+import AssignBtn from "./Signatures/AssignBtn.vue";
 
-export default {
-  mixins: [multiSort],
+export default defineComponent({
   components: {
-    ClipLoader,
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
     crashstatsgraph: CrashStatsGraph,
+    Loading,
   },
-  data: function () {
-    const defaultSortKeys = ["-counts[0]"];
-    const validSortKeys = [
-      "bug__externalId",
-      "counts[0]",
-      "counts[1]",
-      "counts[2]",
-      "id",
-      "shortDescription",
-    ];
-    return {
-      defaultSortKeys: defaultSortKeys,
-      /*
-       * outFilter: hits per hour (out of toolfilter)
-       * inFilter: hits per hour (in toolfilter)
-       */
-      graphData: {},
-      ignoreToolFilter: false,
-      loading: false,
-      // [Bucket()]
-      signatureData: [],
-      sortKeys: [...defaultSortKeys],
-      // [hour, day, week]
-      totals: [],
-      validSortKeys: validSortKeys,
-    };
-  },
-  created: function () {
-    if (this.$route.hash.startsWith("#")) {
-      const hash = parseHash(this.$route.hash);
-      this.ignoreToolFilter = hash.alltools === "1";
-    }
-    this.fetch();
-  },
+  mixins: [multiSort],
   props: {
     activityRange: {
       type: Number,
@@ -216,10 +191,60 @@ export default {
       required: true,
     },
   },
-  computed: {
-    sortedSignatureData: function () {
-      return this.sortData(this.signatureData);
+  setup() {
+    const instance = getCurrentInstance();
+
+    const loading = ref(false);
+
+    const defaultSortKeys = ["-counts[0]"];
+    const validSortKeys = [
+      "bug__externalId",
+      "counts[0]",
+      "counts[1]",
+      "counts[2]",
+      "id",
+      "shortDescription",
+    ];
+
+    const graphData = ref({});
+    const ignoreToolFilter = ref(false);
+    const signatureData = ref([]);
+    const sortKeys = ref([...defaultSortKeys]);
+    const totals = ref([]);
+
+    const sortedSignatureData = computed(() => {
+      return instance.proxy.sortData(signatureData.value);
+    });
+
+    return {
+      loading,
+      defaultSortKeys,
+      /*
+       * outFilter: hits per hour (out of toolfilter)
+       * inFilter: hits per hour (in toolfilter)
+       */
+      graphData,
+      ignoreToolFilter,
+      // [Bucket()]
+      signatureData,
+      sortKeys,
+      // [hour, day, week]
+      totals,
+      sortedSignatureData,
+      validSortKeys,
+    };
+  },
+  watch: {
+    sortKeys() {
+      this.updateHash();
     },
+  },
+  created() {
+    if (this.$route.hash.startsWith("#")) {
+      const hash = parseHash(this.$route.hash);
+      this.ignoreToolFilter = hash.alltools === "1";
+    }
+    this.fetch();
   },
   methods: {
     // get stats
@@ -229,6 +254,7 @@ export default {
         this.updateHash();
         try {
           // fetch stats
+
           const stats = await api.crashStats({
             ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
           });
@@ -266,10 +292,8 @@ export default {
             err.response.data
           ) {
             swal("Oops", E_SERVER_ERROR, "error");
-            this.loading = false;
           } else {
             // if the page loaded, but the fetch failed, either the network went away or we need to refresh auth
-            // eslint-disable-next-line no-console
             console.debug(errorParser(err));
             this.$router.go(0);
             return;
@@ -280,7 +304,7 @@ export default {
       500,
       { trailing: true },
     ),
-    updateHash: function () {
+    updateHash() {
       const hash = {};
 
       this.updateHashSort(hash);
@@ -299,10 +323,14 @@ export default {
       }
     },
   },
-  watch: {
-    sortKeys() {
-      this.updateHash();
-    },
-  },
-};
+});
 </script>
+
+<style scoped>
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+</style>
