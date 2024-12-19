@@ -7,32 +7,32 @@
         ({{ currentEntries }}/{{ totalEntries }})
       </span>
       <span
-        class="step-links ml-5"
         v-if="notifications && notifications.length"
+        class="step-links ml-5"
       >
         <a
-          v-on:click="prevPage"
           v-show="currentPage > 1"
           class="bi bi-caret-left-fill"
+          @click="prevPage"
         ></a>
         <span class="current">
           Page {{ currentPage }} of {{ totalPages }}.
         </span>
         <a
-          v-on:click="nextPage"
           v-show="currentPage < totalPages"
           data-toggle="tooltip"
           data-placement="top"
           title=""
           class="bi bi-caret-right-fill dimgray"
           data-original-title="Next"
+          @click="nextPage"
         ></a>
       </span>
       <a
         v-if="notifications && notifications.length"
         type="button"
         class="text-danger pull-right"
-        v-on:click="dismissAll"
+        @click="dismissAll"
       >
         Dismiss all notifications
       </a>
@@ -58,32 +58,32 @@
           <template v-if="notification.verb === 'bucket_hit'">
             <BucketHit
               :notification="notification"
-              v-on:remove-notification="removeNotification($event)"
-              v-on:update-dismiss-error="dismissError = $event"
+              @remove-notification="removeNotification($event)"
+              @update-dismiss-error="dismissError = $event"
             />
             <hr />
           </template>
           <template v-else-if="notification.verb === 'coverage_drop'">
             <CoverageDrop
               :notification="notification"
-              v-on:remove-notification="removeNotification($event)"
-              v-on:update-dismiss-error="dismissError = $event"
+              @remove-notification="removeNotification($event)"
+              @update-dismiss-error="dismissError = $event"
             />
             <hr />
           </template>
           <template v-else-if="notification.verb === 'inaccessible_bug'">
             <InaccessibleBug
               :notification="notification"
-              v-on:remove-notification="removeNotification($event)"
-              v-on:update-dismiss-error="dismissError = $event"
+              @remove-notification="removeNotification($event)"
+              @update-dismiss-error="dismissError = $event"
             />
             <hr />
           </template>
           <template v-else-if="notification.verb === 'tasks_failed'">
             <TasksFailed
               :notification="notification"
-              v-on:remove-notification="removeNotification($event)"
-              v-on:update-dismiss-error="dismissError = $event"
+              @remove-notification="removeNotification($event)"
+              @update-dismiss-error="dismissError = $event"
             />
             <hr />
           </template>
@@ -94,8 +94,9 @@
 </template>
 
 <script>
-import { errorParser } from "../../helpers";
+import { defineComponent, onMounted, ref } from "vue";
 import * as api from "../../api";
+import { errorParser } from "../../helpers";
 import BucketHit from "./BucketHit.vue";
 import CoverageDrop from "./CoverageDrop.vue";
 import InaccessibleBug from "./InaccessibleBug.vue";
@@ -103,78 +104,100 @@ import TasksFailed from "./TasksFailed.vue";
 
 const pageSize = 25;
 
-export default {
+export default defineComponent({
+  name: "Inbox",
   components: {
     BucketHit,
     CoverageDrop,
     InaccessibleBug,
     TasksFailed,
   },
-  data: () => ({
-    notifications: null,
-    error: null,
-    dismissError: null,
-    dismissAllError: null,
-    currentEntries: "?",
-    currentPage: 1,
-    totalEntries: "?",
-    totalPages: 1,
-  }),
-  async created() {
-    await this.fetchUnread();
-  },
-  methods: {
-    async fetchUnread() {
+  setup() {
+    const notifications = ref(null);
+    const error = ref(null);
+    const dismissError = ref(null);
+    const dismissAllError = ref(null);
+    const currentEntries = ref("?");
+    const currentPage = ref(1);
+    const totalEntries = ref("?");
+    const totalPages = ref(1);
+
+    const fetchUnread = async () => {
       try {
         const data = await api.listUnreadNotifications({
           limit: pageSize,
-          offset: `${(this.currentPage - 1) * pageSize}`,
+          offset: `${(currentPage.value - 1) * pageSize}`,
         });
-        this.notifications = data.results;
-        this.currentEntries = this.notifications.length;
-        this.totalEntries = data.count;
-        this.totalPages = Math.max(Math.ceil(this.totalEntries / pageSize), 1);
-        if (this.currentPage > this.totalPages) {
-          this.currentPage = this.totalPages;
-          await this.fetchUnread();
+        notifications.value = data.results;
+        currentEntries.value = notifications.value.length;
+        totalEntries.value = data.count;
+        totalPages.value = Math.max(
+          Math.ceil(totalEntries.value / pageSize),
+          1,
+        );
+
+        if (currentPage.value > totalPages.value) {
+          currentPage.value = totalPages.value;
+          await fetchUnread();
           return;
         }
       } catch (err) {
-        this.error = errorParser(err);
+        error.value = errorParser(err);
       }
-    },
-    async nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        await this.fetchUnread();
+    };
+
+    const nextPage = async () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+        await fetchUnread();
       }
-    },
-    async prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        await this.fetchUnread();
+    };
+
+    const prevPage = async () => {
+      if (currentPage.value > 1) {
+        currentPage.value--;
+        await fetchUnread();
       }
-    },
-    async dismissAll() {
-      this.dismissAllError = null;
+    };
+
+    const dismissAll = async () => {
+      dismissAllError.value = null;
       try {
         await api.dismissAllNotifications();
-        this.notifications = [];
-        this.currentEntries = this.totalEntries = 0;
-        this.currentPage = this.totalPages = 1;
+        notifications.value = [];
+        currentEntries.value = totalEntries.value = 0;
+        currentPage.value = totalPages.value = 1;
       } catch (err) {
-        this.dismissAllError = errorParser(err);
+        dismissAllError.value = errorParser(err);
       }
-    },
-    removeNotification(notification) {
-      this.notifications = this.notifications.filter(
+    };
+
+    const removeNotification = (notification) => {
+      notifications.value = notifications.value.filter(
         (n) => n.id !== notification,
       );
-      this.currentEntries--;
-      this.totalEntries--;
-    },
+      currentEntries.value--;
+      totalEntries.value--;
+    };
+
+    onMounted(fetchUnread);
+
+    return {
+      notifications,
+      error,
+      dismissError,
+      dismissAllError,
+      currentEntries,
+      currentPage,
+      totalEntries,
+      totalPages,
+      nextPage,
+      prevPage,
+      dismissAll,
+      removeNotification,
+    };
   },
-};
+});
 </script>
 
 <style scoped>
