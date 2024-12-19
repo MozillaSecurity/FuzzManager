@@ -1,5 +1,4 @@
-import VueRouter from "vue-router";
-
+import { createRouter, createWebHistory } from "vue-router";
 import CrashesList from "./components/Crashes/List.vue";
 import SignaturesList from "./components/Signatures/List.vue";
 
@@ -24,8 +23,9 @@ const routes = [
   },
 ];
 
-const router = new VueRouter({
-  mode: "history",
+// Create router instance
+const router = createRouter({
+  history: createWebHistory(),
   routes,
 });
 

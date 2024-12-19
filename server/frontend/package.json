@@ -9,78 +9,49 @@
         "build": "webpack --config webpack.dev.js",
         "start": "webpack --config webpack.dev.js --watch",
         "production": "webpack --config webpack.prod.js",
-        "lint": "eslint ./"
+        "lint": "eslint ./",
+        "format": "prettier --write ./"
     },
     "dependencies": {
-        "axios": "^0.28.1",
-        "d3": "^7.8.2",
-        "handlebars": "^4.7.7",
-        "js-base64": "^3.6.1",
+        "axios": "^1.6.7",
+        "d3": "^7.8.5",
+        "floating-vue": "^2.0.0",
+        "handlebars": "^4.7.8",
+        "js-base64": "^3.7.7",
         "lodash": "^4.17.21",
         "sweetalert": "^2.1.2",
-        "vue": "^2.7.15",
-        "vue-popperjs": "^2.3.0",
-        "vue-router": "^3.5.1",
-        "vue-spinner": "^1.0.4"
+        "vue": "^3.4.21",
+        "vue-loading-overlay": "^6.0.3",
+        "vue-router": "^4.3.0"
     },
     "devDependencies": {
-        "@babel/core": "^7.15.0",
-        "@babel/preset-env": "^7.15.0",
-        "@eslint/compat": "^1.1.0",
-        "@eslint/eslintrc": "^3.1.0",
-        "@eslint/js": "^9.6.0",
-        "@testing-library/dom": "^8.1.0",
-        "@testing-library/vue": "^5.8.2",
-        "@vue/test-utils": "^1.2.2",
-        "babel-core": "^7.0.0-bridge.0",
-        "babel-jest": "^27.0.6",
+        "@babel/core": "^7.24.0",
+        "@babel/plugin-transform-runtime": "^7.24.0",
+        "@babel/preset-env": "^7.24.0",
+        "@testing-library/jest-dom": "^6.4.2",
+        "@testing-library/vue": "^8.0.2",
+        "@vue/compiler-sfc": "^3.1.0",
+        "@vue/eslint-config-prettier": "^9.0.0",
+        "@vue/test-utils": "^2.4.4",
+        "@vue/vue3-jest": "^29.2.6",
+        "babel-jest": "^29.7.0",
+        "babel-loader": "^9.1.3",
         "codecov": "^3.8.3",
-        "css-loader": "^5.2.4",
-        "eslint": "^8.57.0",
+        "css-loader": "^6.10.0",
+        "eslint": "^8.57.1",
         "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-jest": "^28.9.0",
         "eslint-plugin-prettier": "^5.1.3",
-        "eslint-plugin-vue": "^9.26.0",
-        "globals": "^15.7.0",
-        "jest": "^27.0.6",
-        "mini-css-extract-plugin": "^1.6.0",
-        "postcss": "^8.3.5",
-        "prettier": "^3.3.2",
-        "vue-jest": "^3.0.7",
-        "vue-loader": "^15.9.6",
-        "vue-template-compiler": "^2.7.15",
-        "webpack": "^5.89.0",
+        "eslint-plugin-vue": "^9.31.0",
+        "jest": "^29.7.0",
+        "jest-environment-jsdom": "^29.7.0",
+        "jest-transform-stub": "^2.0.0",
+        "jsdom": "^24.0.0",
+        "mini-css-extract-plugin": "^2.8.1",
+        "prettier": "^3.2.5",
+        "vue-loader": "^17.4.2",
+        "webpack": "^5.90.3",
         "webpack-cli": "^5.1.4",
         "webpack-merge": "^5.10.0"
-    },
-    "jest": {
-        "moduleFileExtensions": [
-            "js",
-            "json",
-            "vue"
-        ],
-        "collectCoverageFrom": [
-            "**/*.{js,jsx}",
-            "**/*.vue",
-            "!**/tests/**",
-            "!**/coverage/**",
-            "!**/dist/**",
-            "!**/webpack.*.js"
-        ],
-        "moduleNameMapper": {
-            "d3": "<rootDir>/node_modules/d3/dist/d3.min.js"
-        },
-        "transformIgnorePatterns": [
-            "/node_modules/(?!vue-spinner)"
-        ],
-        "transform": {
-            ".*\\.(vue)$": "vue-jest",
-            ".*\\.(js)$": "babel-jest"
-        },
-        "testEnvironment": "jsdom"
-    },
-    "babel": {
-        "presets": [
-            "@babel/preset-env"
-        ]
     }
 }
