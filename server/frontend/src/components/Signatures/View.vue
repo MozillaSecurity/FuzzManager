@@ -39,7 +39,7 @@
               </span>
               <br /><br />
               <div class="btn-group">
-                <a v-on:click="unlink" class="btn btn-danger">Unlink</a>
+                <a class="btn btn-danger" @click="unlink">Unlink</a>
               </div>
             </td>
             <td v-else>
@@ -71,7 +71,7 @@
                 :data="bucket.crash_history"
                 :range="activityRange"
               />
-              <form :action="sigWatchUrl" ref="sigWatchForm" method="post">
+              <form ref="sigWatchForm" :action="sigWatchUrl" method="post">
                 <input type="hidden" name="bucket" :value="bucket.id" />
                 <input
                   type="hidden"
@@ -118,22 +118,18 @@
 </template>
 
 <script>
+import swal from "sweetalert";
+import { defineComponent } from "vue";
 import { assignExternalBug, errorParser } from "../../helpers";
 import ActivityGraph from "../ActivityGraph.vue";
 import AssignBtn from "./AssignBtn.vue";
-import swal from "sweetalert";
 
-export default {
+export default defineComponent({
+  name: "SignatureView",
   components: {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
   },
-  data: () => ({
-    frequent: false,
-    permanent: false,
-    doNotReduce: false,
-    shortDescription: "",
-  }),
   props: {
     activityRange: {
       type: Number,
@@ -180,6 +176,14 @@ export default {
       required: true,
     },
   },
+  data: function () {
+    return {
+      frequent: false,
+      permanent: false,
+      doNotReduce: false,
+      shortDescription: "",
+    };
+  },
   mounted() {
     const el = document.getElementsByName("csrfmiddlewaretoken")[0];
     this.$refs.sigWatchForm.appendChild(el);
@@ -203,7 +207,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <style scoped>

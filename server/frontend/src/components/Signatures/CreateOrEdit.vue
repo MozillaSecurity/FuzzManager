@@ -5,10 +5,10 @@
       {{ bucketId ? "Edit Signature" : "New Signature" }}
     </div>
     <div class="panel-body">
-      <div class="alert alert-info" role="alert" v-if="loading === 'preview'">
+      <div v-if="loading === 'preview'" class="alert alert-info" role="alert">
         Loading preview...
       </div>
-      <div class="alert alert-warning" role="alert" v-if="warning">
+      <div v-if="warning" class="alert alert-warning" role="alert">
         {{ warning }}
       </div>
 
@@ -23,31 +23,31 @@
         <span class="badge">{{ outListCount }}</span>
       </p>
 
-      <form v-on:submit.prevent="">
+      <form @submit.prevent="">
         <label for="id_shortDescription">Description</label><br />
         <input
           id="id_shortDescription"
+          v-model="bucket.shortDescription"
           class="form-control"
           maxlength="1023"
           type="text"
-          v-model="bucket.shortDescription"
         />
         <br />
         <label for="id_signature">Signature</label><br />
         <textarea
           id="id_signature"
+          v-model="bucket.signature"
           class="form-control"
           spellcheck="false"
-          v-model="bucket.signature"
         ></textarea>
 
         <div class="field">
-          <input type="checkbox" id="id_frequent" v-model="bucket.frequent" />
+          <input id="id_frequent" v-model="bucket.frequent" type="checkbox" />
           <label for="id_frequent">Mark this bucket as a frequent bucket</label>
         </div>
 
         <div class="field">
-          <input type="checkbox" id="id_permanent" v-model="bucket.permanent" />
+          <input id="id_permanent" v-model="bucket.permanent" type="checkbox" />
           <label for="id_permanent">
             Mark this bucket as a permanent bucket
           </label>
@@ -55,9 +55,9 @@
 
         <div class="field">
           <input
-            type="checkbox"
             id="id_do_not_reduce"
             v-model="bucket.doNotReduce"
+            type="checkbox"
           />
           <label for="id_do_not_reduce">
             Mark this bucket &ldquo;do not reduce&rdquo;
@@ -65,44 +65,44 @@
         </div>
 
         <div class="field">
-          <input type="checkbox" id="id_reassign" v-model="reassign" />
+          <input id="id_reassign" v-model="reassign" type="checkbox" />
           <label for="id_reassign">
             Reassign matching crashes (unassigned crashes and crashes assigned
             to this bucket will be reassigned)
           </label>
         </div>
-        <div class="btn-group" v-if="bucketId">
+        <div v-if="bucketId" class="btn-group">
           <button
             type="submit"
             class="btn btn-success"
-            v-on:click="create_or_update(true)"
             :disabled="loading"
+            @click="create_or_update(true)"
           >
             {{ loading === "save" ? "Saving..." : "Save" }}
           </button>
           <button
             type="submit"
             class="btn btn-default"
-            v-on:click="create_or_update(false)"
             :disabled="loading"
+            @click="create_or_update(false)"
           >
             {{ loading === "preview" ? "Loading preview..." : "Preview" }}
           </button>
         </div>
-        <div class="btn-group" v-else>
+        <div v-else class="btn-group">
           <button
             type="submit"
             class="btn btn-success"
-            v-on:click="create_or_update(true)"
             :disabled="loading"
+            @click="create_or_update(true)"
           >
             {{ loading === "create" ? "Creating..." : "Create" }}
           </button>
           <button
             type="submit"
             class="btn btn-default"
-            v-on:click="create_or_update(false)"
             :disabled="loading"
+            @click="create_or_update(false)"
           >
             {{ loading === "preview" ? "Loading preview..." : "Preview" }}
           </button>
@@ -131,11 +131,12 @@
 </template>
 
 <script>
-import { errorParser } from "../../helpers";
+import { defineComponent, onMounted, ref } from "vue";
 import * as api from "../../api";
+import { errorParser } from "../../helpers";
 import List from "./CrashEntries/List.vue";
 
-export default {
+export default defineComponent({
   components: {
     List,
   },
@@ -157,55 +158,68 @@ export default {
       default: null,
     },
   },
-  data: () => ({
-    bucket: {
+  setup(props) {
+    const bucket = ref({
       doNotReduce: false,
       frequent: false,
       permanent: false,
       shortDescription: "",
       signature: "",
-    },
-    reassign: true,
-    warning: "",
-    inList: [],
-    inListCount: 0,
-    outList: [],
-    outListCount: 0,
-    loading: null,
-  }),
-  async mounted() {
-    if (this.bucketId) this.bucket = await api.retrieveBucket(this.bucketId);
-    if (this.proposedSignature)
-      this.bucket.signature = JSON.stringify(this.proposedSignature, null, 2);
-    if (this.proposedDescription)
-      this.bucket.shortDescription = this.proposedDescription;
-    if (this.warningMessage) this.warning = this.warningMessage;
-  },
-  methods: {
-    async create_or_update(save) {
-      this.warning = "";
-      this.loading = save ? (this.bucketId ? "save" : "create") : "preview";
+    });
+    const reassign = ref(true);
+    const warning = ref("");
+    const inList = ref([]);
+    const inListCount = ref(0);
+    const outList = ref([]);
+    const outListCount = ref(0);
+    const loading = ref(null);
+
+    onMounted(async () => {
+      if (props.bucketId) {
+        bucket.value = await api.retrieveBucket(props.bucketId);
+      }
+      if (props.proposedSignature) {
+        bucket.value.signature = JSON.stringify(
+          props.proposedSignature,
+          null,
+          2,
+        );
+      }
+      if (props.proposedDescription) {
+        bucket.value.shortDescription = props.proposedDescription;
+      }
+      if (props.warningMessage) {
+        warning.value = props.warningMessage;
+      }
+    });
+
+    const create_or_update = async (save) => {
+      warning.value = "";
+      loading.value = save ? (props.bucketId ? "save" : "create") : "preview";
+
       const payload = {
-        doNotReduce: this.bucket.doNotReduce,
-        frequent: this.bucket.frequent,
-        permanent: this.bucket.permanent,
-        shortDescription: this.bucket.shortDescription,
-        signature: this.bucket.signature,
+        doNotReduce: bucket.value.doNotReduce,
+        frequent: bucket.value.frequent,
+        permanent: bucket.value.permanent,
+        shortDescription: bucket.value.shortDescription,
+        signature: bucket.value.signature,
       };
 
       try {
-        let offset = 0,
-          bucket_id;
+        let offset = 0;
+        let bucket_id;
+
         while (offset !== null) {
           const data = await (async () => {
-            if (this.bucketId || bucket_id)
+            if (props.bucketId || bucket_id) {
               return api.updateBucket({
-                id: this.bucketId || bucket_id,
-                params: { save: save, reassign: this.reassign, offset: offset },
+                id: props.bucketId || bucket_id,
+                params: { save, reassign: reassign.value, offset },
                 ...payload,
               });
+            }
             return api.createBucket({
-              params: { save: save, reassign: this.reassign, offset: offset },
+              params: { save, reassign: reassign.value, offset },
               ...payload,
             });
           })();
@@ -217,28 +231,40 @@ export default {
             return;
           }
 
-          this.warning = data.warningMessage;
+          warning.value = data.warningMessage;
           if (offset === 0) {
-            this.inList = data.inList;
-            this.outList = data.outList;
-            this.inListCount = data.inListCount;
-            this.outListCount = data.outListCount;
+            inList.value = data.inList;
+            outList.value = data.outList;
+            inListCount.value = data.inListCount;
+            outListCount.value = data.outListCount;
           } else {
-            this.inList.push(...data.inList);
-            this.outList.push(...data.outList);
-            this.inListCount += data.inListCount;
-            this.outListCount += data.outListCount;
+            inList.value.push(...data.inList);
+            outList.value.push(...data.outList);
+            inListCount.value += data.inListCount;
+            outListCount.value += data.outListCount;
           }
           offset = data.nextOffset;
         }
-        this.loading = null;
+        loading.value = null;
       } catch (err) {
-        this.warning = errorParser(err);
-        this.loading = null;
+        warning.value = errorParser(err);
+        loading.value = null;
       }
-    },
+    };
+
+    return {
+      bucket,
+      reassign,
+      warning,
+      inList,
+      inListCount,
+      outList,
+      outListCount,
+      loading,
+      create_or_update,
+    };
   },
-};
+});
 </script>
 
 <style scoped></style>

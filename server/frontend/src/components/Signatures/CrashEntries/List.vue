@@ -24,7 +24,7 @@
           <td>
             <a :href="entry.view_url">{{ entry.id }}</a>
           </td>
-          <td>{{ entry.created | formatDate }}</td>
+          <td>{{ formatDate(entry.created) }}</td>
           <td>{{ entry.shortSignature }}</td>
           <td>{{ entry.crashAddress }}</td>
           <td>{{ testCaseText(entry) }}</td>
@@ -33,32 +33,32 @@
           <td>{{ entry.platform }}</td>
           <td>
             <img
+              v-if="entry.os === 'linux'"
               width="16px"
               height="16px"
               alt="Linux"
               :src="staticLogo(entry.os)"
-              v-if="entry.os === 'linux'"
             />
             <img
+              v-else-if="entry.os === 'macosx'"
               width="16px"
               height="16px"
               alt="MacOS"
               :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'macosx'"
             />
             <img
+              v-else-if="entry.os === 'windows'"
               width="16px"
               height="16px"
               alt="Windows"
               :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'windows'"
             />
             <img
+              v-else-if="entry.os === 'android'"
               width="16px"
               height="16px"
               alt="Android"
               :src="staticLogo(entry.os)"
-              v-else-if="entry.os === 'android'"
             />
             <template v-else>{{ entry.os }}</template>
           </td>
@@ -70,30 +70,38 @@
 </template>
 
 <script>
+import { defineComponent } from "vue";
 import { formatClientTimestamp } from "../../../helpers";
 
-export default {
+export default defineComponent({
+  name: "CrashEntriesList",
   props: {
     entries: {
       type: Array,
       required: true,
     },
   },
-  filters: {
-    formatDate: formatClientTimestamp,
-  },
-  methods: {
-    testCaseText(entry) {
+  setup() {
+    const testCaseText = (entry) => {
       if (!entry.testcase) return "No test";
       let text = "Q" + entry.testcase_quality + "\n" + entry.testcase_size;
       if (entry.testcase_isbinary) text += "\n    (binary)";
       return text;
-    },
-    staticLogo(name) {
+    };
+
+    const staticLogo = (name) => {
       return window.location.origin + "/static/img/os/" + name + ".png";
-    },
+    };
+
+    return {
+      testCaseText,
+      staticLogo,
+    };
   },
-};
+  methods: {
+    formatDate: formatClientTimestamp,
+  },
+});
 </script>
 
 <style scoped></style>
