@@ -43,13 +43,11 @@
           <td :class="['cov', 'cov-occurence', item.lclass]">
             <span class="label label-success" v-if="item.hits">
               <!-- FIXME -->
-              !{ item.hits | formatNumber }!
+              !{ formatNumber(item.hits) }!
             </span>
           </td>
           <td :class="['cov', 'cov-codeline', item.lclass]">
-            <div v-html="highlight_code(item.line)">
-              !{ highlight_code(item.line) }!
-            </div>
+            <div v-html="highlight_code(item.line)"></div>
           </td>
         </tr>
       </tbody>
@@ -91,9 +89,9 @@
             <i :class="['bi', add_path_class(value)]"></i> <span :class="get_span_path_class(value)">!{ value.name
               }!</span>
           </td>
-          <td>!{ value.linesTotal | formatNumber }!</td>
-          <td>!{ value.linesCovered | formatNumber }!</td>
-          <td>!{ value.linesMissed | formatNumber }!</td>
+          <td>!{ formatNumber(value.linesTotal) }!</td>
+          <td>!{ formatNumber(value.linesCovered) }!</td>
+          <td>!{ formatNumber(value.linesMissed) }!</td>
           <td class="text-right" :style="cov_pct_style(value.coveragePercent)">!{ value.coveragePercent }! %</td>
           <td v-if="chartdata" class="text-right" :style="cov_pct_style(value.delta_coveragePercent)">!{ value.delta_coveragePercent
             }! %</td>
@@ -104,9 +102,9 @@
       <tfoot class="table-coverage-foot" v-show="!search">
         <tr>
           <td><strong>Summary</strong></td>
-          <td>!{ coverage.linesTotal | formatNumber }!</td>
-          <td>!{ coverage.linesCovered | formatNumber }!</td>
-          <td>!{ coverage.linesMissed | formatNumber }!</td>
+          <td>!{ formatNumber(coverage.linesTotal) }!</td>
+          <td>!{ formatNumber(coverage.linesCovered) }!</td>
+          <td>!{ formatNumber(coverage.linesMissed) }!</td>
           <td class="text-right" :style="cov_pct_style(coverage.coveragePercent)">!{ coverage.coveragePercent }! %</td>
           <td v-if="chartdata" class="text-right" :style="cov_pct_style(coverage.delta_coveragePercent)">!{ coverage.delta_coveragePercent
             }! %</td>
@@ -137,87 +135,148 @@ const URLS = {
 }
 /* End of Django */
 
-Vue.component('line-chart', {
-  mixins: [VueChartJs.Line],
-  methods: {
-    renderLineChart: function() {
-      this.renderChart({
-        labels: covmanager.chartdata.labels,
-        datasets: covmanager.chartdata.datasets
-      },
-        {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            yAxes: [{
-              position: 'left',
-              id: 'y-axis-0',
-              ticks: { suggestedMin: 0, suggestedMax: 100, beginAtZero: true },
-              gridLines: { display: true }
-            },
-            {
-              position: 'right',
-              id: 'y-axis-1',
-              ticks: { beginAtZero: true },
-              gridLines: { display: false }
-            },
-            ],
-            xAxes: [{
-              gridLines: {
-                display: false
-              }
-            }]
+const LineChart = {
+  name: 'LineChart',
+  props: {
+    chartId: {
+      type: String,
+      default: 'line-chart'
+    }
+  },
+  setup(props) {
+    let chartInstance = null
+
+    const chartData = ref({
+      labels: [],
+      datasets: []
+    })
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          position: 'left',
+          id: 'y-axis-0',
+          ticks: {
+            suggestedMin: 0,
+            suggestedMax: 100,
+            beginAtZero: true
           },
-          tooltips: {
-            callbacks: {
-              beforeLabel: function (item, chart) {
-                return covmanager.chartdata.datasets[item.datasetIndex].created[item.index]
-              },
-              afterLabel: function (item, chart) {
-                if (item.index > 0) {
-                  let dataset = covmanager.chartdata.datasets[item.datasetIndex]
-                  return `\u0394 to last: ${dataset.deltas[item.index - 1]} ${dataset.unit}`
-                }
+          grid: { display: true }
+        },
+        y1: {
+          position: 'right',
+          id: 'y-axis-1',
+          ticks: { beginAtZero: true },
+          grid: { display: false }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            beforeLabel: function (context) {
+              return covmanager.chartdata.datasets[context.datasetIndex].created[context.dataIndex]
+            },
+            afterLabel: function (context) {
+              if (context.dataIndex > 0) {
+                let dataset = covmanager.chartdata.datasets[context.datasetIndex]
+                return `\u0394 to last: ${dataset.deltas[context.dataIndex - 1]} ${dataset.unit}`
               }
             }
           }
-        })
+        }
+      }
     }
-  },
-  mounted() {
-    covmanager.chart = this
-    this.renderLineChart()
+
+    onMounted(() => {
+      if (chartInstance) {
+        chartInstance.destroy()
+        chartInstance = null
+      }
+
+      const canvas = document.getElementById(props.chartId)
+      if (!canvas) return
+
+      chartData.value.labels = covmanager.chartdata.labels
+      chartData.value.datasets = covmanager.chartdata.datasets
+
+      chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: chartData.value,
+        options: chartOptions
+      })
+
+      covmanager.updateChart = () => {
+        if (!chartInstance) return
+
+        chartData.value.labels = covmanager.chartdata.labels
+        chartData.value.datasets = covmanager.chartdata.datasets
+        chartInstance.update('none')
+      }
+    })
+
+    onUnmounted(() => {
+      if (chartInstance) {
+        chartInstance.destroy()
+        chartInstance = null
+      }
+    })
+
+    return () => h('div', {
+      style: {
+        width: '100%',
+        height: '50vh',
+        position: 'relative'
+      }
+    }, [
+      h('canvas', {
+        id: props.chartId
+      })
+    ])
   }
-})
+}
+
+const { h, onMounted, onUnmounted, ref } = Vue
 
 let pmanager = new HashParamManager()
 
-let covmanager = new Vue({
-  el: '#main',
-  data: {
-    path: pmanager.get_value('p', ''),
-    line: null,
-    highlight_lines: { previous: [], current: [] },
-    coverage: [],
-    source: null,
-    chart: null,
-    chartdata: null,
-    search: '',
-    sortKey: '',
-    reverse: false,
-    show_top_nav: false,
-    loading: false,
-    loading_incomplete: false,
-    last_line_clicked: null,
-    line_click_timer: null,
-    rc_dropdown: false,
-    rc_name: 'Report Configuration', // Placeholder value
-    rc_id: null,
-    rc_list: [],
-    storage_support: false,
-    report_list: [],
+const app = Vue.createApp({
+  delimiters: ['!{', '}!'],
+  data() {
+    return {
+      path: pmanager.get_value('p', ''),
+      line: null,
+      highlight_lines: { previous: [], current: [] },
+      coverage: [],
+      source: null,
+      chart: null,
+      chartdata: null,
+      search: '',
+      sortKey: '',
+      reverse: false,
+      show_top_nav: false,
+      loading: false,
+      loading_incomplete: false,
+      last_line_clicked: null,
+      line_click_timer: null,
+      rc_dropdown: false,
+      rc_name: 'Report Configuration',
+      rc_id: null,
+      rc_list: [],
+      storage_support: false,
+      report_list: [],
+    }
   },
-  created: function () {
+  components: {
+    'line-chart': LineChart
+  },
+  created() {
     window.addEventListener('keydown', this.keydown)
     window.addEventListener('keyup', this.keyup)
 
@@ -250,7 +309,7 @@ let covmanager = new Vue({
       this.fetch()
     },
   },
-  updated: function () {
+  updated() {
     let self = this
     this.$nextTick(function () {
       // Once we updated the data, check for a line parameter and update the line
@@ -276,13 +335,6 @@ let covmanager = new Vue({
         }
       }
     })
-  },
-  filters: {
-    formatNumber: function (v) {
-      if (Number.isInteger(v)) {
-        return parseInt(v).toLocaleString()
-      }
-    }
   },
   computed: {
     current_path: function () {
@@ -495,6 +547,7 @@ let covmanager = new Vue({
         this.report_list = json['results']
 
         function compute_report_description(report) {
+          report = report ?? {}
           if (report.is_quarterly) {
             report.description = "Quarterly Report - " + formatQuarterly(report.data_created)
           } else if (report.is_monthly) {
@@ -521,7 +574,10 @@ let covmanager = new Vue({
             }
           }
 
-          this.chart.$data._chart.update()
+          // Use the new update method
+          if (this.updateChart) {
+            this.updateChart()
+          }
         }
       })
     },
@@ -620,7 +676,7 @@ let covmanager = new Vue({
       return classArray
     },
     add_path_class: function (value) {
-      let classArray = this.class ? this.class.split(' ') : []
+      let classArray = 'class' in this ? this.class.split(' ') : []
       if ('children' in value) {
         classArray.push('bi-folder')
       } else {
@@ -834,9 +890,18 @@ let covmanager = new Vue({
           this.search = ''
         }
       }
-    }
+    },
+    formatNumber: function (v) {
+      if (Number.isInteger(v)) {
+        return parseInt(v).toLocaleString()
+      }
+    },
   }
 })
+
+app.component('line-chart', LineChart)
+
+const covmanager = app.mount('#main')
 
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
 window.onhashchange = function () {

@@ -84,24 +84,23 @@ let APIURLS = {
 
 let pmanager = new HashParamManager()
 
-let covmanager = new Vue({
-  el: '#main',
-  data: {
-    repository: null,
-    repository_search: "",
-    repository_suggestions: [],
-    repository_suggestions_enabled: false,
-
-    patch_revision: null,
-
-    collection_ids: [],
-    collections: [],
-    prepatch: false,
-    analysis_results: null,
-
-    loading: false
+const app = Vue.createApp({
+  delimiters: ['!{', '}!'],
+  data() {
+    return {
+      repository: null,
+      repository_search: "",
+      repository_suggestions: [],
+      repository_suggestions_enabled: false,
+      patch_revision: null,
+      collection_ids: [],
+      collections: [],
+      prepatch: false,
+      analysis_results: null,
+      loading: false
+    }
   },
-  created: function() {
+  created() {
     let self = this
     pmanager.forEach(function(k,v) {
       // Try to guess the repository from the search query
@@ -124,15 +123,15 @@ let covmanager = new Vue({
     repository_search: 'update_repository_search',
   },
   computed: {
-    collections_count: function () {
+    collections_count() {
       return this.collection_ids.length
     },
-    analysis_enabled: function() {
+    analysis_enabled() {
       return this.collection_ids.length > 0 && this.patch_revision && this.repository != null
     }
   },
   methods: {
-    run_analysis: function() {
+    run_analysis() {
       if (this.collection_ids) {
         this.fetch_collections()
       }
@@ -150,20 +149,20 @@ let covmanager = new Vue({
         this.repository_suggestions = json["results"]
 
         if (this.repository_suggestions.indexOf(this.repository_search) >= 0) {
-          this.repository = name
+          this.repository = this.repository_search
         } else {
           this.repository = null
         }
       })
     }, 500),
-    set_repository: function(name) {
+    set_repository(name) {
        this.repository_suggestions = []
        this.repository_suggestions_enabled = false
        this.repository_search = name
        this.repository = name
     },
-    take_top_suggestion: function() {
-      if (this.repository_suggestions) {
+    take_top_suggestion() {
+      if (this.repository_suggestions?.length) {
           this.set_repository(this.repository_suggestions[0])
       }
     },
@@ -182,7 +181,7 @@ let covmanager = new Vue({
         swal('Oops', E_SERVER_ERROR, 'error')
       }).then(json => {
         this.collections = json["results"]
-        analysis_results = []
+        let analysis_results = []
 
         let self = this;
         var requests = this.collections.reverse().map(function(collection, i) {
@@ -196,7 +195,10 @@ let covmanager = new Vue({
             }
             swal('Oops', E_SERVER_ERROR, 'error')
           }).then(json => {
-            analysis_result = {
+            if (!json) {
+              return;
+            }
+            let analysis_result = {
               collection: collection,
               status: true,
               details: [],
@@ -208,16 +210,12 @@ let covmanager = new Vue({
 
               for (let i = 0; i < json["results"].length; ++i) {
                 let result = json["results"][i]
-
                 if (result["missed"]) {
                   let link = APIURLS.browse.replace("/0/", "/" + collection.id + "/")
-
                   let highlight_lines = result["missed"]
-
                   link += "#p=" + result["filename"]
                   link += "&s=" + highlight_lines[0]
                   link += "&hl=" + highlight_lines.join(",")
-
                   analysis_result.links[result["filename"]] = link
                 }
               }
@@ -233,15 +231,14 @@ let covmanager = new Vue({
           })
         });
 
-        let instance = this
-        Promise.all(requests).then(function() {
-          instance.analysis_results = analysis_results
-          instance.loading = false
+        Promise.all(requests).then(() => {
+          this.analysis_results = analysis_results
+          this.loading = false
         })
       })
     }, 500),
   }
-})
+}).mount('#main')
 </script>
 
 {% endblock body_content %}

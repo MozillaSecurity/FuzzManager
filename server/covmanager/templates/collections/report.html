@@ -43,7 +43,7 @@
     <tbody>
       <tr v-for="report in ordered_reports" :id="report.id" @click="report_click_handler(report.id)" :class="report.css_class">
         <td>!{ report.description }!</td>
-        <td>!{ report.data_created | formatDate }!</td>
+        <td>!{ formatDate(report.data_created) }!</td>
         <td>
           <button @click.stop="summary(report.coverage, report.tag)" class="btn btn-default">View Report Summary</button>
           <button @click.stop="browse(report.coverage)" class="btn btn-default">Browse</button>
@@ -63,22 +63,24 @@ let URLS = {
   patch: '{% url 'covmanager:collections_patch' %}',
 }
 
-let pmanager = new HashParamManager()
+const pmanager = new HashParamManager()
 
-let covmanager = new Vue({
-  el: '#main',
-  data: {
-    csrftoken: "",
-    reports: null,
-    sortKey: "data_created",
-    reverse: true,
-    block_fetch: true,
-    can_publish: {% if perms.crashmanager.covmanager_publish %} true {% else %} false {% endif %},
-    show_reviewed_only: false,
 
-    selected_reports: [],
+const app = Vue.createApp({
+  delimiters: ['!{', '}!'],
+  data() {
+    return {
+      csrftoken: "",
+      reports: null,
+      sortKey: "data_created",
+      reverse: true,
+      block_fetch: true,
+      can_publish: {% if perms.crashmanager.covmanager_publish %} true {% else %} false {% endif %},
+      show_reviewed_only: false,
+      selected_reports: [],
+    }
   },
-  created: function () {
+  created() {
     this.csrftoken = getCSRFToken()
     this.fetch()
 
@@ -86,24 +88,15 @@ let covmanager = new Vue({
     this.show_reviewed_only = pmanager.get_value('reviewed', false)
   },
   watch: {
-    show_reviewed_only: function () {
+    show_reviewed_only() {
       return this.fetch()
     }
   },
-  filters: {
-    formatDate: function (datetime) {
-      return formatClientTimestamp(datetime)
-    },
-  },
   computed: {
-    reviewed_only_btn_text: function() {
-      if (this.show_reviewed_only) {
-        return "Show Unreviewed Reports"
-      } else {
-        return "Hide Unreviewed Reports"
-      }
+    reviewed_only_btn_text() {
+      return this.show_reviewed_only ? "Show Unreviewed Reports" : "Hide Unreviewed Reports"
     },
-    ordered_reports: function () {
+    ordered_reports() {
       if (this.reports) {
         for (let report of this.reports) {
           report.css_class = {}
@@ -116,14 +109,10 @@ let covmanager = new Vue({
           }
 
           // Compute Publish/Unpublish button text
-          if (report.public) {
-            report.publish_text = "Unpublish"
-          } else {
-            report.publish_text = "Publish"
-          }
+          report.publish_text = report.public ? "Unpublish" : "Publish"
 
           // We optionally prefix the with the tag of the report
-          tag = ""
+          let tag = ""
           if (report.tag) {
             tag = report.tag + " "
           }
@@ -132,37 +121,26 @@ let covmanager = new Vue({
           if (report.is_quarterly) {
             report.css_class['report-quarterly'] = true
             report.description = "Quarterly " + tag + "Report - " + formatQuarterly(report.data_created)
-
-            if (selected)
-              report.css_class['report-quarterly-selected'] = true
-
+            if (selected) report.css_class['report-quarterly-selected'] = true
             report.promote_text = "Demote to Weekly"
           } else if (report.is_monthly) {
             report.css_class['report-monthly'] = true
             report.description = "Monthly " + tag + "Report - " + formatMonthly(report.data_created)
-
             report.promote_text = "Promote to Quarterly"
-
-            if (selected)
-              report.css_class['report-monthly-selected'] = true
+            if (selected) report.css_class['report-monthly-selected'] = true
           } else {
             report.css_class['report-weekly'] = true
             report.description = "Weekly " + tag + "Report"
-
             report.promote_text = "Promote to Monthly"
-
-            if (selected)
-              report.css_class['report-weekly-selected'] = true
+            if (selected) report.css_class['report-weekly-selected'] = true
           }
         }
       }
-
-
       return _.orderBy(this.reports, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
-    },
+    }
   },
   methods: {
-    apiurl: function() {
+    apiurl() {
       let url = URLS.reports_api
       if (!pmanager.get_value("reviewed", false))
         url += '?unpublished=1'
@@ -186,7 +164,7 @@ let covmanager = new Vue({
         this.block_fetch = false
       })
     }, 500),
-    navigate: function (dst) {
+    navigate(dst) {
       let ids = []
 
       if (this.selected_reports.length > 0) {
@@ -211,20 +189,20 @@ let covmanager = new Vue({
         win.focus();
       }
     },
-    sortBy: function (sortKey) {
+    sortBy(sortKey) {
       this.reverse = (this.sortKey === sortKey) ? !this.reverse : false
       this.sortKey = sortKey
     },
-    browse: function(id) {
+    browse(id) {
       window.open(`../collections/${id}/browse/`, '_blank').focus()
     },
-    summary: function(id, tag) {
+    summary(id, tag) {
       if (tag) {
         tag = `#root=${tag}`
       }
       window.open(`../collections/${id}/summary/${tag}`, '_blank').focus()
     },
-    report_click_handler: function(id) {
+    report_click_handler(id) {
       var self = this
       let idx = self.selected_reports.indexOf(id)
       let target = $("#" + id)
@@ -235,7 +213,7 @@ let covmanager = new Vue({
         self.selected_reports.splice(idx, 1)
       }
     },
-    toggle_reviewed_only: function() {
+    toggle_reviewed_only() {
       if (this.show_reviewed_only) {
         pmanager.update_value("reviewed", "")
       } else {
@@ -243,7 +221,7 @@ let covmanager = new Vue({
       }
       pmanager.update_hash()
     },
-    publish: function (report) {
+    publish(report) {
       let url = URLS.reports_api + "update/" + report.id + "/"
       let data = { "public" : !report.public }
       let desc = "publish this report"
@@ -254,7 +232,7 @@ let covmanager = new Vue({
 
       this.update(url, data, desc)
     },
-    promote: function (report) {
+    promote(report) {
       let url = URLS.reports_api + "update/" + report.id + "/"
       let data = {}
       let desc = "promote this report"
@@ -271,7 +249,7 @@ let covmanager = new Vue({
 
       this.update(url, data, desc)
     },
-    update: function (url, data, desc) {
+    update(url, data, desc) {
       let self = this
 
       swal({
@@ -307,13 +285,11 @@ let covmanager = new Vue({
           })
       })
     },
-    summary_diff: function() {
+    summary_diff() {
       if (this.selected_reports.length != 2) {
         swal('Oops', "Summarized diff requires exactly 2 reports to be selected", 'error')
         return
       }
-
-
 
       let collection_ids = []
 
@@ -335,16 +311,18 @@ let covmanager = new Vue({
 
       window.open(`../collections/${collection_ids[1]}/summary/htmlexport/?diff=${collection_ids[0]}`, '_blank').focus()
     },
+    formatDate: function (datetime) {
+      return formatClientTimestamp(datetime)
+    }
   }
-})
+}).mount('#main')
 
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
 window.onhashchange = function () {
   pmanager.update_state()
-
   const show_reviewed_only = pmanager.get_value('reviewed', false)
-  if (covmanager.show_reviewed_only != show_reviewed_only) {
-    covmanager.show_reviewed_only = show_reviewed_only
+  if (app.show_reviewed_only != show_reviewed_only) {
+    app.show_reviewed_only = show_reviewed_only
   }
 }
 </script>
