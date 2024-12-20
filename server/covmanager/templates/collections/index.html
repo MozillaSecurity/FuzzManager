@@ -76,7 +76,7 @@
     <tbody>
       <tr v-for="collection in ordered_collections" :id="collection.id" @click="collection_click_handler(collection.id)">
         <td><a :href="`${collection.id}/browse`">!{ collection.id }!</a></td>
-        <td>!{ collection.created | formatDate }!</td>
+        <td>!{ formatDate(collection.created) }!</td>
         <td><a :href="`../repositories/`">!{ collection.repository }!</a></td>
         <td>!{ collection.revision }!</td>
         <td>!{ collection.branch }!</td>
@@ -99,33 +99,35 @@ let URLS = {
 
 let pmanager = new HashParamManager()
 
-let covmanager = new Vue({
-  el: '#main',
-  data: {
-    collections: null,
-    sortKey: "",
-    reverse: false,
-    block_fetch: true,
-    search_initialized: false,
+const app = Vue.createApp({
+  delimiters: ['!{', '}!'],
+  data() {
+    return {
+      collections: null,
+      sortKey: "",
+      reverse: false,
+      block_fetch: true,
+      search_initialized: false,
 
-    search: {
-      branch: { value : "", contains : true },
-      description: { value : "", contains : true },
-      repository: { value : "", contains: true, postfix: "__name" },
-      revision: { value : "", contains : true },
-      tools: { value : "", contains: true, postfix: "__name" },
-      limit: { value : "10", contains : false },
-    },
+      search: {
+        branch: { value : "", contains : true },
+        description: { value : "", contains : true },
+        repository: { value : "", contains: true, postfix: "__name" },
+        revision: { value : "", contains : true },
+        tools: { value : "", contains: true, postfix: "__name" },
+        limit: { value : "10", contains : false },
+      },
 
-    suggestions: {
-      repository: { value: [], enabled : false},
-      tools: { value: [], enabled : false},
-    },
+      suggestions: {
+        repository: { value: [], enabled : false},
+        tools: { value: [], enabled : false},
+      },
 
-    selected_collections: [],
+      selected_collections: [],
+    }
   },
-  created: function () {
-    let self = this
+  created() {
+    const self = this
     pmanager.forEach(function(k,v) {
       // TODO: This is a shortcut that saves us iterating through this.search
       // for every key that we are trying to map to a field in our search
@@ -151,7 +153,6 @@ let covmanager = new Vue({
     'search.tools.value': function() {
       this.update_suggestions('tools')
     },
-
     collections: function() {
       /* Whenever our search results change, deselect everything */
       this.selected_collections = []
@@ -162,13 +163,8 @@ let covmanager = new Vue({
       }
     }
   },
-  filters: {
-    formatDate: function (datetime) {
-      return formatClientTimestamp(datetime)
-    },
-  },
   computed: {
-    ordered_collections: function () {
+    ordered_collections() {
       return _.orderBy(this.collections, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
     },
   },
@@ -349,7 +345,12 @@ let covmanager = new Vue({
           target.toggleClass("collection-selected", false)
       }
     },
+    formatDate: function (datetime){
+      return formatClientTimestamp(datetime)
+    }
   }
 })
+
+app.mount('#main')
 </script>
 {% endblock body_content %}

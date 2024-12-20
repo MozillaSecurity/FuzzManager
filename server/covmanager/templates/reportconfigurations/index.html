@@ -106,22 +106,24 @@ const URLS = {
 
 let pmanager = new HashParamManager()
 
-let covmanager = new Vue({
-  el: '#main',
-  data: {
-    csrftoken: "",
-    rc_list: null,
-    sortKey: "",
-    reverse: false,
-    search: "",
-    showModal: false,
-    modal: {
-      show: false,
-      title: '',
-      rc: null
-    },
+const app = Vue.createApp({
+  delimiters: ['!{', '}!'],
+  data() {
+    return {
+      csrftoken: "",
+      rc_list: null,
+      sortKey: "",
+      reverse: false,
+      search: "",
+      showModal: false,
+      modal: {
+        show: false,
+        title: '',
+        rc: null
+      }
+    }
   },
-  created: function () {
+  mounted() {
     window.addEventListener('keydown', this.keydown)
     window.addEventListener('keyup', this.keyup)
 
@@ -129,19 +131,14 @@ let covmanager = new Vue({
     this.fetch()
   },
   watch: {
-    search: function () {
+    search() {
       return this.fetch()
     }
   },
-  filters: {
-    formatDate: function (datetime) {
-      return formatClientTimestamp(datetime)
-    },
-  },
   computed: {
-    ordered_rc_list: function () {
+    ordered_rc_list() {
       return _.orderBy(this.rc_list, [this.sortKey], [this.reverse ? 'desc' : 'asc'])
-    },
+    }
   },
   methods: {
     apiurl: function () {
@@ -285,13 +282,16 @@ let covmanager = new Vue({
   }
 })
 
+
 // This updates our path variable in the Vue whenever the hash changes, which again triggers a reload of the data.
+app.mount('#main')
+
 window.onhashchange = function () {
   pmanager.update_state()
 
   const new_search = pmanager.get_value('q', '')
-  if (covmanager.search != new_search) {
-    covmanager.search = new_search
+  if (app.search != new_search) {
+    app.search = new_search
   }
 }
 </script>
