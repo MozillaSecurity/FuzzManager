@@ -49,14 +49,18 @@
 </template>
 
 <script>
-import AssignBtn from "./AssignBtn.vue";
+import { defineComponent } from "vue";
 import ActivityGraph from "../ActivityGraph.vue";
+import AssignBtn from "./AssignBtn.vue";
 
-export default {
+export default defineComponent({
+  name: "SignatureRow",
+
   components: {
     activitygraph: ActivityGraph,
     assignbutton: AssignBtn,
   },
+
   props: {
     activityRange: {
       type: Number,
@@ -71,12 +75,19 @@ export default {
       required: true,
     },
   },
-  methods: {
-    addFilter(key, value) {
-      this.$emit("add-filter", key, value);
-    },
+
+  emits: ["add-filter"],
+
+  setup(props, { emit }) {
+    const addFilter = (key, value) => {
+      emit("add-filter", key, value);
+    };
+
+    return {
+      addFilter,
+    };
   },
-};
+});
 </script>
 
 <style scoped></style>

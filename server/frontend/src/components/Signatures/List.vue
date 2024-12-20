@@ -4,11 +4,7 @@
     <div class="panel-body">
       <div>
         <div class="btn-group" role="group">
-          <button
-            type="button"
-            class="btn btn-default"
-            v-on:click="updateShowAll"
-          >
+          <button type="button" class="btn btn-default" @click="updateShowAll">
             {{ showAll ? "View Unassigned" : "View All" }}
           </button>
           <a :href="watchUrl" class="btn btn-default">View Watched</a>
@@ -36,11 +32,11 @@
         />
         <textarea
           id="id_query"
+          v-model="queryStr"
           class="form-control"
           name="query"
           spellcheck="false"
           :rows="(queryStr.match(/\n/g) || '').length + 1"
-          v-model="queryStr"
         ></textarea>
         <br />
         <div v-if="queryError" class="alert alert-warning" role="alert">
@@ -51,15 +47,15 @@
         <label for="id_no_toolfilter">Ignore Tool Filter</label>:
         <input
           id="id_no_toolfilter"
+          v-model="ignoreToolFilter"
           type="checkbox"
           name="alltools"
-          v-model="ignoreToolFilter"
         />
         <br />
         <button
-          v-on:click="fetch"
           :disabled="!modified || loading"
           :title="queryButtonTitle"
+          @click="fetch"
         >
           Query
         </button>
@@ -78,65 +74,65 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('id')"
-              v-on:click.ctrl.exact="addSort('id')"
               :class="{
                 active: sortKeys.includes('id') || sortKeys.includes('-id'),
               }"
+              @click.exact="sortBy('id')"
+              @click.ctrl.exact="addSort('id')"
             >
               ID
             </th>
             <th
-              v-on:click.exact="sortBy('shortDescription')"
-              v-on:click.ctrl.exact="addSort('shortDescription')"
               :class="{
                 active:
                   sortKeys.includes('shortDescription') ||
                   sortKeys.includes('-shortDescription'),
               }"
+              @click.exact="sortBy('shortDescription')"
+              @click.ctrl.exact="addSort('shortDescription')"
             >
               Description
             </th>
             <th>Activity</th>
             <th
-              v-on:click.exact="sortBy('size')"
-              v-on:click.ctrl.exact="addSort('size')"
               :class="{
                 active: sortKeys.includes('size') || sortKeys.includes('-size'),
               }"
+              @click.exact="sortBy('size')"
+              @click.ctrl.exact="addSort('size')"
             >
               Size
             </th>
             <th
-              v-on:click.exact="sortBy('best_quality')"
-              v-on:click.ctrl.exact="addSort('best_quality')"
               :class="{
                 active:
                   sortKeys.includes('best_quality') ||
                   sortKeys.includes('-best_quality'),
               }"
+              @click.exact="sortBy('best_quality')"
+              @click.ctrl.exact="addSort('best_quality')"
             >
               Best Quality
             </th>
             <th
-              v-on:click.exact="sortBy('bug__externalId')"
-              v-on:click.ctrl.exact="addSort('bug__externalId')"
               :class="{
                 active:
                   sortKeys.includes('bug__externalId') ||
                   sortKeys.includes('-bug__externalId'),
               }"
+              @click.exact="sortBy('bug__externalId')"
+              @click.ctrl.exact="addSort('bug__externalId')"
             >
               External Bug
             </th>
             <th
-              v-on:click.exact="sortBy('has_optimization')"
-              v-on:click.ctrl.exact="addSort('has_optimization')"
               :class="{
                 active:
                   sortKeys.includes('has_optimization') ||
                   sortKeys.includes('-has_optimization'),
               }"
+              @click.exact="sortBy('has_optimization')"
+              @click.ctrl.exact="addSort('has_optimization')"
             >
               Pending Optimization
             </th>
@@ -145,16 +141,22 @@
         <tbody>
           <tr v-if="loading">
             <td colspan="7">
-              <ClipLoader class="m-strong" :color="'black'" :size="'50px'" />
+              <div class="vl-parent">
+                <loading
+                  v-model:active="loading"
+                  :can-cancel="false"
+                  :is-full-page="true"
+                />
+              </div>
             </td>
           </tr>
           <Row
             v-for="signature in orderedSignatures"
-            :activity-range="activityRange"
+            v-else
             :key="signature.id"
+            :activity-range="activityRange"
             :providers="providers"
             :signature="signature"
-            v-else
           />
         </tbody>
       </table>
@@ -163,21 +165,23 @@
 </template>
 
 <script>
-import _throttle from "lodash/throttle";
 import _isEqual from "lodash/isEqual";
-import ClipLoader from "vue-spinner/src/ClipLoader.vue";
-import { errorParser, multiSort, parseHash } from "../../helpers";
+import _throttle from "lodash/throttle";
+import { defineComponent, ref } from "vue";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/css/index.css";
 import * as api from "../../api";
-import Row from "./Row.vue";
+import { errorParser, multiSort, parseHash } from "../../helpers";
 import HelpJSONQueryPopover from "../HelpJSONQueryPopover.vue";
+import Row from "./Row.vue";
 
-export default {
-  mixins: [multiSort],
+export default defineComponent({
   components: {
     Row,
-    ClipLoader,
     HelpJSONQueryPopover,
+    Loading,
   },
+  mixins: [multiSort],
   props: {
     activityRange: {
       type: Number,
@@ -192,7 +196,8 @@ export default {
       required: true,
     },
   },
-  data: function () {
+  setup() {
+    const loading = ref(false);
     const validSortKeys = [
       "best_quality",
       "bug__externalId",
@@ -202,38 +207,33 @@ export default {
       "size",
     ];
     const defaultSortKeys = ["-id"];
-    return {
-      defaultSortKeys: defaultSortKeys,
+    const ignoreToolFilter = ref(false);
+    const queryError = ref("");
+    const queryStr = ref(
+      JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
+    );
+    const searchStr = ref("");
+    const signatures = ref([]);
+    const sortKeys = ref([...defaultSortKeys]);
+    const totalEntries = ref("?");
+    const modifiedCache = ref({
       ignoreToolFilter: false,
-      loading: false,
-      modifiedCache: {},
-      queryError: "",
-      queryStr: JSON.stringify({ op: "AND", bug__isnull: true }, null, 2),
-      searchStr: "",
-      signatures: [],
-      sortKeys: [...defaultSortKeys],
-      totalEntries: "?",
-      validSortKeys: validSortKeys,
+      queryStr: null,
+    });
+
+    return {
+      loading,
+      validSortKeys,
+      defaultSortKeys,
+      ignoreToolFilter,
+      queryError,
+      queryStr,
+      searchStr,
+      signatures,
+      sortKeys,
+      totalEntries,
+      modifiedCache,
     };
-  },
-  created() {
-    if (this.$route.query.all)
-      this.queryStr = JSON.stringify({ op: "AND" }, null, 2);
-    if (this.$route.query.ids)
-      this.queryStr = JSON.stringify(
-        { op: "AND", id__in: this.$route.query.ids.split(",") },
-        null,
-        2,
-      );
-    if (this.$route.hash.startsWith("#")) {
-      const hash = parseHash(this.$route.hash);
-      this.ignoreToolFilter = hash.alltools === "1";
-      if (Object.prototype.hasOwnProperty.call(hash, "query")) {
-        this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
-      }
-    }
-    this.updateHash();
-    this.fetch();
   },
   computed: {
     modified() {
@@ -257,6 +257,30 @@ export default {
     showAll() {
       return !this.queryStr.includes('"bug__isnull": true');
     },
+  },
+  watch: {
+    sortKeys() {
+      this.updateHash();
+    },
+  },
+  created() {
+    if (this.$route.query.all)
+      this.queryStr = JSON.stringify({ op: "AND" }, null, 2);
+    if (this.$route.query.ids)
+      this.queryStr = JSON.stringify(
+        { op: "AND", id__in: this.$route.query.ids.split(",") },
+        null,
+        2,
+      );
+    if (this.$route.hash.startsWith("#")) {
+      const hash = parseHash(this.$route.hash);
+      this.ignoreToolFilter = hash.alltools === "1";
+      if (Object.prototype.hasOwnProperty.call(hash, "query")) {
+        this.queryStr = JSON.stringify(JSON.parse(hash.query || ""), null, 2);
+      }
+    }
+    this.updateHash();
+    this.fetch();
   },
   methods: {
     updateShowAll() {
@@ -337,17 +361,19 @@ export default {
       }
     },
   },
-  watch: {
-    sortKeys() {
-      this.updateHash();
-    },
-  },
-};
+});
 </script>
 
 <style scoped>
 .m-strong {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 </style>
