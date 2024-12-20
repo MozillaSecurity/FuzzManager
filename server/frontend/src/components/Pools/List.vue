@@ -7,47 +7,47 @@
       <thead>
         <tr>
           <th
-            v-on:click.exact="sortBy('pool_id')"
-            v-on:click.ctrl.exact="addSort('pool_id')"
             :class="{
               active:
                 sortKeys.includes('pool_id') || sortKeys.includes('-pool_id'),
             }"
             width="25px"
+            @click.exact="sortBy('pool_id')"
+            @click.ctrl.exact="addSort('pool_id')"
           >
             ID
           </th>
           <th
-            v-on:click.exact="sortBy('pool_name_isort')"
-            v-on:click.ctrl.exact="addSort('pool_name_isort')"
             :class="{
               active:
                 sortKeys.includes('pool_name_isort') ||
                 sortKeys.includes('-pool_name_isort'),
             }"
             width="100px"
+            @click.exact="sortBy('pool_name_isort')"
+            @click.ctrl.exact="addSort('pool_name_isort')"
           >
             Name
           </th>
           <th
-            v-on:click.exact="sortBy('running')"
-            v-on:click.ctrl.exact="addSort('running')"
             :class="{
               active:
                 sortKeys.includes('running') || sortKeys.includes('-running'),
             }"
             width="75px"
+            @click.exact="sortBy('running')"
+            @click.ctrl.exact="addSort('running')"
           >
             # of Tasks (Running/Requested)
           </th>
           <th
-            v-on:click.exact="sortBy('status')"
-            v-on:click.ctrl.exact="addSort('status')"
             :class="{
               active:
                 sortKeys.includes('status') || sortKeys.includes('-status'),
             }"
             width="150px"
+            @click.exact="sortBy('status')"
+            @click.ctrl.exact="addSort('status')"
           >
             Status
           </th>
@@ -81,42 +81,32 @@
 <script>
 import _throttle from "lodash/throttle";
 import swal from "sweetalert";
-import { E_SERVER_ERROR, multiSort } from "../../helpers";
+import { computed, defineComponent, ref } from "vue";
 import * as api from "../../api";
+import { E_SERVER_ERROR, multiSort } from "../../helpers";
 
-export default {
+export default defineComponent({
+  name: "PoolsList",
   mixins: [multiSort],
-  data: function () {
+  setup() {
     const defaultSortKeys = ["pool_name_isort"];
     const validSortKeys = ["pool_id", "pool_name_isort", "running", "status"];
-    return {
-      defaultSortKeys: defaultSortKeys,
-      loading: true,
-      pools: null,
-      sortKeys: [...defaultSortKeys],
-      validSortKeys: validSortKeys,
-    };
-  },
-  created: function () {
-    this.fetch();
-  },
-  computed: {
-    orderedPools: function () {
-      return this.sortData(this.pools);
-    },
-  },
-  methods: {
-    buildParams() {
+    const loading = ref(true);
+    const pools = ref(null);
+    const sortKeys = ref([...defaultSortKeys]);
+
+    const buildParams = () => {
       return {
         vue: "1",
       };
-    },
-    fetch: _throttle(
-      async function () {
-        this.loading = true;
+    };
+
+    const fetch = _throttle(
+      async () => {
+        loading.value = true;
         try {
-          const data = await api.listPools(this.buildParams());
-          this.pools = data.map((pool) => {
+          const data = await api.listPools(buildParams());
+          pools.value = data.map((pool) => {
             pool.pool_name_isort = pool.pool_name.toLowerCase();
             return pool;
           });
@@ -126,17 +116,61 @@ export default {
             err.response.status === 400 &&
             err.response.data
           ) {
-            // eslint-disable-next-line no-console
             console.debug(err.response.data);
             swal("Oops", E_SERVER_ERROR, "error");
-            this.loading = false;
+            loading.value = false;
           }
         }
-        this.loading = false;
+        loading.value = false;
       },
       500,
       { trailing: true },
-    ),
+    );
+
+    const sortBy = (key) => {
+      sortKeys.value = [key.startsWith("-") ? key.slice(1) : `-${key}`];
+    };
+
+    const addSort = (key) => {
+      const i = sortKeys.value.indexOf(key);
+      const ni = sortKeys.value.indexOf(`-${key}`);
+      if (i < 0 && ni < 0) {
+        sortKeys.value.push(key);
+      } else if (i >= 0) {
+        sortKeys.value[i] = `-${key}`;
+      } else if (ni >= 0) {
+        sortKeys.value.splice(ni, 1);
+      }
+    };
+
+    const sortData = (data) => {
+      if (!data) return [];
+      const keys = sortKeys.value;
+      return [...data].sort((a, b) => {
+        for (const key of keys) {
+          const desc = key.startsWith("-");
+          const k = desc ? key.slice(1) : key;
+          if (a[k] > b[k]) return desc ? -1 : 1;
+          if (a[k] < b[k]) return desc ? 1 : -1;
+        }
+        return 0;
+      });
+    };
+
+    const orderedPools = computed(() => sortData(pools.value));
+
+    fetch();
+
+    return {
+      loading,
+      pools,
+      sortKeys,
+      orderedPools,
+      sortBy,
+      addSort,
+      validSortKeys,
+      defaultSortKeys,
+    };
   },
-};
+});
 </script>
