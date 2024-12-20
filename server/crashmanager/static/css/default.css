@@ -9,7 +9,7 @@ html {
 
 body {
   margin-bottom: 60px;
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 13px;
 }
 
@@ -118,4 +118,67 @@ div.field {
 /* input fields for provider page */
 .provider_input {
   width: 100%;
+}
+
+.slider-container {
+  padding: 20px 10px;
+  width: 100%;
+  user-select: none;
+  touch-action: none;
+}
+
+.slider-track {
+  position: relative;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.slider-fill {
+  position: absolute;
+  height: 100%;
+  background-color: #2196f3;
+  border-radius: 3px;
+  transition: width 0.1s ease;
+}
+
+.slider-dot {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  box-shadow: 0px 0px 4px gray;
+  transition: left 0.1s ease;
+}
+
+.slider-dot:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.slider-value {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2196f3;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.slider-step {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #a5a5a5;
+    transform: translateX(-50%);
+    top: 0px;
 }

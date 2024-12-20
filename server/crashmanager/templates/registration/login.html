@@ -57,9 +57,9 @@
 </head>
 <body>
     {% if form.errors %}
-    <div class="alert alert-danger" role="alert"><center>Your username and password didn't match. Please try again.</center></div>
+    <div class="alert alert-danger" role="alert text-center">Your username and password didn't match. Please try again.</div>
     {% endif %}
-    <center><div class="font-effect-3d login_text">FUZZMANAGER</div></center><br/>
+    <div class="font-effect-3d login_text text-center">FUZZMANAGER</div><br/>
     <form class="form-signin" method="post" action="{% url 'login' %}">
         {% csrf_token %}
         <input type="username" name="username" id="username" class="form-control" placeholder="Username" required autofocus>
