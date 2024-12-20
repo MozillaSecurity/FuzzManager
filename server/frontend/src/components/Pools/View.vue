@@ -49,21 +49,21 @@
       <div class="pagination">
         <span class="step-links">
           <a
-            v-on:click="prevPage"
             v-show="currentPage > 1"
             class="bi bi-caret-left-fill"
+            @click="prevPage"
           ></a>
           <span class="current">
             Page {{ currentPage }} of {{ totalPages }}.
           </span>
           <a
-            v-on:click="nextPage"
             v-show="currentPage < totalPages"
             data-toggle="tooltip"
             data-placement="top"
             title=""
             class="bi bi-caret-right-fill dimgray"
             data-original-title="Next"
+            @click="nextPage"
           ></a>
         </span>
       </div>
@@ -73,80 +73,80 @@
         <thead>
           <tr>
             <th
-              v-on:click.exact="sortBy('task_id')"
-              v-on:click.ctrl.exact="addSort('task_id')"
               :class="{
                 active:
                   sortKeys.includes('task_id') || sortKeys.includes('-task_id'),
               }"
               width="50px"
+              @click.exact="sortBy('task_id')"
+              @click.ctrl.exact="addSort('task_id')"
             >
               Task
             </th>
             <th
-              v-on:click.exact="sortBy('run_id')"
-              v-on:click.ctrl.exact="addSort('run_id')"
               :class="{
                 active:
                   sortKeys.includes('run_id') || sortKeys.includes('-run_id'),
               }"
               width="15px"
+              @click.exact="sortBy('run_id')"
+              @click.ctrl.exact="addSort('run_id')"
             >
               Run
             </th>
             <th
-              v-on:click.exact="sortBy('state')"
-              v-on:click.ctrl.exact="addSort('state')"
               :class="{
                 active:
                   sortKeys.includes('state') || sortKeys.includes('-state'),
               }"
               width="25px"
+              @click.exact="sortBy('state')"
+              @click.ctrl.exact="addSort('state')"
             >
               State
             </th>
             <th
-              v-on:click.exact="sortBy('created')"
-              v-on:click.ctrl.exact="addSort('created')"
               :class="{
                 active:
                   sortKeys.includes('created') || sortKeys.includes('-created'),
               }"
               width="60px"
+              @click.exact="sortBy('created')"
+              @click.ctrl.exact="addSort('created')"
             >
               Created
             </th>
             <th
-              v-on:click.exact="sortBy('started')"
-              v-on:click.ctrl.exact="addSort('started')"
               :class="{
                 active:
                   sortKeys.includes('started') || sortKeys.includes('-started'),
               }"
               width="60px"
+              @click.exact="sortBy('started')"
+              @click.ctrl.exact="addSort('started')"
             >
               Started
             </th>
             <th
-              v-on:click.exact="sortBy('resolved')"
-              v-on:click.ctrl.exact="addSort('resolved')"
               :class="{
                 active:
                   sortKeys.includes('resolved') ||
                   sortKeys.includes('-resolved'),
               }"
               width="60px"
+              @click.exact="sortBy('resolved')"
+              @click.ctrl.exact="addSort('resolved')"
             >
               Resolved
             </th>
             <th
-              v-on:click.exact="sortBy('expires')"
-              v-on:click.ctrl.exact="addSort('expires')"
               :class="{
                 active:
                   sortKeys.includes('expires') || sortKeys.includes('-expires'),
               }"
               width="60px"
+              @click.exact="sortBy('expires')"
+              @click.ctrl.exact="addSort('expires')"
             >
               Expires
             </th>
@@ -183,18 +183,18 @@
               >
             </td>
             <td>
-              {{ task.created | formatDate }}<br />{{
-                task.created | formatDateAgo
+              {{ formatDate(task.created) }}<br />{{
+                formatDateAgo(task.created)
               }}
             </td>
             <td v-if="task.started !== null">
-              {{ task.started | formatDate }}<br />{{
+              {{ formatDate(task.started) }}<br />{{
                 formatDateRelative(task.created, task.started, "later")
               }}
             </td>
             <td v-else>N/A</td>
             <td v-if="task.resolved !== null">
-              {{ task.resolved | formatDate }}<br />{{
+              {{ formatDate(task.resolved) }}<br />{{
                 formatDateRelative(
                   task.started !== null ? task.started : task.created,
                   task.resolved,
@@ -204,7 +204,7 @@
             </td>
             <td v-else>N/A</td>
             <td>
-              {{ task.expires | formatDate }}<br />{{
+              {{ formatDate(task.expires) }}<br />{{
                 new Date(task.expires) > new Date()
                   ? formatDateRelative(new Date(), task.expires, "from now")
                   : formatDateRelative(task.expires)
@@ -224,20 +224,42 @@
 <script>
 import _throttle from "lodash/throttle";
 import swal from "sweetalert";
+import {
+  defineComponent,
+  getCurrentInstance,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import * as api from "../../api";
 import {
+  E_SERVER_ERROR,
   formatClientTimestamp,
   formatDateRelative,
-  E_SERVER_ERROR,
-  parseHash,
   multiSort,
+  parseHash,
 } from "../../helpers";
 
 const pageSize = 100;
 
-export default {
+export default defineComponent({
   mixins: [multiSort],
-  data: function () {
+  props: {
+    pool: {
+      type: Object,
+      default: null,
+    },
+  },
+  setup(props) {
+    // State
+    const currentEntries = ref("?");
+    const currentPage = ref(1);
+    const loading = ref(true);
+    const tasks = ref(null);
+    const totalEntries = ref("?");
+    const totalPages = ref(1);
+
+    // Sort keys
     const defaultSortKeys = ["-created", "-state", "task_id"];
     const validSortKeys = [
       "created",
@@ -248,109 +270,79 @@ export default {
       "state",
       "task_id",
     ];
-    return {
-      currentEntries: "?",
-      currentPage: 1,
-      defaultSortKeys: defaultSortKeys,
-      loading: true,
-      sortKeys: [...defaultSortKeys],
-      tasks: null,
-      totalEntries: "?",
-      totalPages: 1,
-      validSortKeys: validSortKeys,
-    };
-  },
-  props: {
-    pool: {
-      type: Object,
-      default: null,
-    },
-  },
-  created: function () {
-    if (location.hash.startsWith("#")) {
-      const hash = parseHash(this.$route.hash);
-      if (Object.prototype.hasOwnProperty.call(hash, "page")) {
-        try {
-          this.currentPage = Number.parseInt(hash.page, 10);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.debug(`parsing '#page=\\d+': ${e}`);
-        }
-      }
-    }
-    this.fetch();
-  },
-  filters: {
-    formatDate: formatClientTimestamp,
-    formatDateAgo: formatDateRelative,
-  },
-  methods: {
-    buildParams() {
+    const sortKeys = ref([...defaultSortKeys]);
+
+    // Methods
+    const buildParams = () => {
       return {
         vue: "1",
         limit: pageSize,
-        offset: `${(this.currentPage - 1) * pageSize}`,
-        ordering: this.sortKeys.join(),
+        offset: `${(currentPage.value - 1) * pageSize}`,
+        ordering: sortKeys.value.join(),
         query: JSON.stringify({
           op: "OR",
-          pool: this.pool.id,
+          pool: props.pool.id,
         }),
       };
-    },
-    fetch: _throttle(
-      async function () {
-        this.loading = true;
+    };
+
+    const fetch = _throttle(
+      async () => {
+        loading.value = true;
         try {
-          const data = await api.listTasks(this.buildParams());
-          this.tasks = data.results;
-          this.currentEntries = this.tasks.length;
-          this.totalEntries = data.count;
-          this.totalPages = Math.max(
-            Math.ceil(this.totalEntries / pageSize),
+          const data = await api.listTasks(buildParams());
+          tasks.value = data.results;
+          currentEntries.value = tasks.value.length;
+          totalEntries.value = data.count;
+          totalPages.value = Math.max(
+            Math.ceil(totalEntries.value / pageSize),
             1,
           );
-          if (this.currentPage > this.totalPages) {
-            this.currentPage = this.totalPages;
-            this.fetch();
+          if (currentPage.value > totalPages.value) {
+            currentPage.value = totalPages.value;
+            fetch();
             return;
           }
-          this.updateHash();
+          updateHash();
         } catch (err) {
           if (
             err.response &&
             err.response.status === 400 &&
             err.response.data
           ) {
-            // eslint-disable-next-line no-console
             console.debug(err.response.data);
             swal("Oops", E_SERVER_ERROR, "error");
-            this.loading = false;
+            loading.value = false;
           }
         }
-        this.loading = false;
+        loading.value = false;
       },
       500,
       { trailing: true },
-    ),
-    formatDateRelative: formatDateRelative,
-    prevPage: function () {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.fetch();
+    );
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--;
+        fetch();
       }
-    },
-    nextPage: function () {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-        this.fetch();
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+        fetch();
       }
-    },
-    updateHash: function () {
+    };
+
+    const instance = getCurrentInstance();
+    const updateHash = () => {
       let hash = {};
-      if (this.currentPage !== 1) {
-        hash.page = this.currentPage;
+      if (currentPage.value !== 1) {
+        hash.page = currentPage.value;
       }
-      this.updateHashSort(hash);
+      // Note: updateHashSort comes from mixin
+      instance.proxy.updateHashSort(hash);
       if (Object.entries(hash).length) {
         location.hash =
           "#" +
@@ -360,14 +352,48 @@ export default {
       } else {
         location.hash = "";
       }
-    },
+    };
+
+    onMounted(() => {
+      if (location.hash.startsWith("#")) {
+        const hash = parseHash(location.hash);
+        if (Object.prototype.hasOwnProperty.call(hash, "page")) {
+          try {
+            currentPage.value = Number.parseInt(hash.page, 10);
+          } catch (e) {
+            console.debug(`parsing '#page=\\d+': ${e}`);
+          }
+        }
+      }
+      fetch();
+    });
+
+    watch(sortKeys, () => {
+      fetch();
+    });
+
+    return {
+      currentEntries,
+      currentPage,
+      loading,
+      sortKeys,
+      tasks,
+      totalEntries,
+      totalPages,
+      defaultSortKeys,
+      validSortKeys,
+      fetch,
+      prevPage,
+      nextPage,
+      updateHash,
+    };
   },
-  watch: {
-    sortKeys() {
-      this.fetch();
-    },
+  methods: {
+    formatDate: formatClientTimestamp,
+    formatDateAgo: formatDateRelative,
+    formatDateRelative,
   },
-};
+});
 </script>
 
 <style scoped>
