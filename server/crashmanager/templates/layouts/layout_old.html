@@ -1,14 +1,13 @@
 {% extends 'layouts/layout_base.html' %}
 {% block vue.frontend %}{% endblock vue.frontend %}
 {% block js.shared %}
-  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.7.15/vue.min.js" integrity="sha512-2hINX01gn7TwWmZNKvrt+ZiHjOW2l7+gCaghPVL6Ge4kTTA7S35Q3zqJmCpKWMLvV5ih4fawBiNW+0WhIbEELg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js" integrity="sha512-tltvjJD1pUnXVAp0L9id/mcR+zc0xsIKmPMJksEclJ6uEyI8D6eZWpR0jSVWUTXOKcmeBMyND+LQH4ECf/5WKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js" integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/d3/7.8.2/d3.min.js" integrity="sha512-oKI0pS1ut+mxQZdqnD3w9fqArLyILRsT3Dx0B+8RVEXzEk3aNK3J3pWlaGJ8MtTs1oiwyXDAH6hG6jy1sY0YqA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     const E_SERVER_ERROR = 'Error while communicating with the server.'
 
-    Vue.options.delimiters = ['!{', '}!']
 
     function formatClientTimestamp(datetime) {
       return new Intl.DateTimeFormat('en-US', {
