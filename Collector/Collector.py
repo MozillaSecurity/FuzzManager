@@ -581,6 +581,11 @@ def main(args=None):
         can also get all crashes in your buckets (tool filter) with bucket=MYBUCKETS""",
     )
     parser.add_argument(
+        "--best-entry-only",
+        action="store_true",
+        help="Refresh only the best entry crashes for buckets found by --query-params",
+    )
+    parser.add_argument(
         "--metadata",
         nargs="+",
         action=KeyValueAction,
@@ -878,7 +883,19 @@ def main(args=None):
         all_params = [{"bucket": bucket} for bucket in buckets]
         # TODO: some check if no toolfilter is set?
     elif opts.query_params:
-        all_params = [opts.query_params]
+        if opts.best_entry_only:
+            buckets = set()
+            for response in collector.get_by_query("crashes/", opts.query_params):
+                for crash in response["results"]:
+                    buckets.add(crash["bucket"])
+        else:
+            all_params = [opts.query_params]
+
+    if opts.best_entry_only:
+        all_params = []
+        for bucket in buckets:
+            resp_bucket = collector.get(url_rest + f"buckets/{bucket}").json()
+            all_params.append({"bucket": bucket, "id": resp_bucket["best_entry"]})
 
     if opts.download_by_params:
         downloaded = False
