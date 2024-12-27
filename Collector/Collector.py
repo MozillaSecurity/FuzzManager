@@ -347,16 +347,18 @@ class Collector(Reporter):
                 yield local_filename
 
     @remote_checks
-    def get_by_query(self, rest_endpoint, query_params={}):
+    def get_by_query(self, rest_endpoint, query_params={}, _ignore_toolfilter=None):
         """
         Get request for the specified REST endpoint and query params.
 
         @type rest_endpoint: str
         @param rest_endpoint: for crashmanager/rest/{rest_endpoint}.
 
-        @type params: dict
-        @param params: dictionary of params to query with; empty default.
+        @type query_params: dict
+        @param query_params: dictionary of params to query with; empty default.
 
+        @type _ignore_toolfilter: int
+        @param _ignore_toolfilter: integer 0 or 1 to ignore your set toolfilter
         @rtype: generator
         @return: generator of JSON responses for the specified query.
         """
@@ -366,7 +368,14 @@ class Collector(Reporter):
             self.serverPort,
         )
         next_url = url_rest + rest_endpoint
-        params = {"query": json.dumps({"op": "AND", **query_params})}
+        global ignore_toolfilter
+        ignore = (
+            _ignore_toolfilter if _ignore_toolfilter is not None else ignore_toolfilter
+        )
+        params = {
+            "query": json.dumps({"op": "AND", **query_params}),
+            "ignore_toolfilter": ignore,
+        }
 
         while next_url:
             resp_json = self.get(next_url, params=params).json()
@@ -586,6 +595,11 @@ def main(args=None):
         help="Refresh only the best entry crashes for buckets found by --query-params",
     )
     parser.add_argument(
+        "--ignore-toolfilter",
+        action="store_true",
+        help="Ignore your (supposedly) set toolfilter for queries.",
+    )
+    parser.add_argument(
         "--metadata",
         nargs="+",
         action=KeyValueAction,
@@ -771,6 +785,8 @@ def main(args=None):
         collector.serverHost,
         collector.serverPort,
     )
+    global ignore_toolfilter
+    ignore_toolfilter = 1 if opts.ignore_toolfilter else 0
 
     if opts.refresh:
         collector.refresh()
@@ -881,7 +897,6 @@ def main(args=None):
             print("No buckets found", file=sys.stderr)
             return 1
         all_params = [{"bucket": bucket} for bucket in buckets]
-        # TODO: some check if no toolfilter is set?
     elif opts.query_params:
         if opts.best_entry_only:
             buckets = set()
@@ -894,7 +909,10 @@ def main(args=None):
     if opts.best_entry_only:
         all_params = []
         for bucket in buckets:
-            resp_bucket = collector.get(url_rest + f"buckets/{bucket}").json()
+            resp_bucket = collector.get(
+                url_rest + f"buckets/{bucket}",
+                params={"ignore_toolfilter": ignore_toolfilter},
+            ).json()
             all_params.append({"bucket": bucket, "id": resp_bucket["best_entry"]})
 
     if opts.download_by_params:
