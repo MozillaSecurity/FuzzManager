@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
 
 from django.conf import settings as django_settings
+from django.conf import settings as djangosettings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
@@ -1666,10 +1667,55 @@ class UserSettingsEditView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["bugzilla_providers"] = BugProvider.objects.filter(
-            classname="BugzillaProvider"
+        user_object = self.get_object()
+
+        # Prepare form errors if any
+        form = self.get_form()
+        form_errors = {field: errors for field, errors in form.errors.items()}
+
+        # Prepare all form-related data
+        context.update(
+            {
+                "defaultToolsFilter": user_object.defaultToolsFilter.all(),
+                "defaultToolsFilterChoices": Tool.objects.all(),
+                "defaultProviderChoices": BugProvider.objects.all(),
+                "defaultTemplateChoices": [
+                    (t.pk, f"{p.classname}: {t}")
+                    for p in BugProvider.objects.all()
+                    for t in p.getInstance().getTemplateList()
+                ],
+                "bugzilla_providers": BugProvider.objects.filter(
+                    classname="BugzillaProvider"
+                ),
+                "user": user_object,
+                "email": self.request.user.email,
+                "allow_email_edit": djangosettings.ALLOW_EMAIL_EDITION,
+                "form_errors": form_errors,
+                "notificationChoices": [
+                    {
+                        "id": "inaccessible_bug",
+                        "label": "Inaccessible Bug",
+                        "initial": user_object.inaccessible_bug,
+                    },
+                    {
+                        "id": "coverage_drop",
+                        "label": "Coverage Drop",
+                        "initial": user_object.coverage_drop,
+                    },
+                    {
+                        "id": "bucket_hit",
+                        "label": "Bucket Hit",
+                        "initial": user_object.bucket_hit,
+                    },
+                    {
+                        "id": "tasks_failed",
+                        "label": "Tasks Failed",
+                        "initial": user_object.tasks_failed,
+                    },
+                ],
+            }
         )
-        context["user"] = self.request.user
+
         return context
 
 
