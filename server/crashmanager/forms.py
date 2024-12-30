@@ -178,31 +178,6 @@ class BugzillaTemplateCommentForm(ModelForm):
 
 
 class UserSettingsForm(ModelForm):
-    helper = FormHelper()
-    helper.layout = Layout(
-        "defaultToolsFilter",
-        Row(
-            Field("defaultProviderId", wrapper_class="col-md-6"),
-            Field("defaultTemplateId", wrapper_class="col-md-6"),
-        ),
-        "email",
-        HTML("""<p><strong>Subscribe to notifications:</strong></p>"""),
-        "inaccessible_bug",
-        "coverage_drop",
-        "bucket_hit",
-        "tasks_failed",
-        Submit("submit", "Save settings", css_class="btn btn-danger"),
-    )
-    defaultToolsFilter = ModelMultipleChoiceField(
-        queryset=Tool.objects.all(),
-        label="Select the tools you would like to include in your default views:",
-        widget=CheckboxSelectMultiple(),
-        required=False,
-    )
-    defaultProviderId = ModelChoiceField(
-        queryset=BugProvider.objects.all(), label="Default Provider:", empty_label=None
-    )
-    defaultTemplateId = ChoiceField(label="Default Template:")
     email = EmailField(label="Email:")
 
     class Meta:
@@ -220,17 +195,6 @@ class UserSettingsForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-
-        self.fields["defaultTemplateId"].choices = list(
-            dict.fromkeys(
-                [
-                    (t.pk, f"{p.classname}: {t}")
-                    for p in BugProvider.objects.all()
-                    for t in p.getInstance().getTemplateList()
-                ]
-            )
-        )
-
         instance = kwargs.get("instance", None)
         if instance:
             self.initial["email"] = instance.user.email
@@ -239,8 +203,10 @@ class UserSettingsForm(ModelForm):
             self.fields["email"].required = False
             self.fields["email"].widget.attrs["readonly"] = True
 
+        self.fields["defaultToolsFilter"].required = False
+
     def clean_defaultToolsFilter(self):
-        data = self.cleaned_data["defaultToolsFilter"]
+        data = self.cleaned_data.get("defaultToolsFilter", None)
         if (
             self.user
             and list(self.user.defaultToolsFilter.all()) != list(data)
@@ -252,7 +218,7 @@ class UserSettingsForm(ModelForm):
         return data
 
     def clean_defaultProviderId(self):
-        data = self.cleaned_data["defaultProviderId"].id
+        data = self.cleaned_data["defaultProviderId"]
         return data
 
     def save(self, *args, **kwargs):
