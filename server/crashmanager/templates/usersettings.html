@@ -1,5 +1,4 @@
 {% extends 'layouts/layout_base.html' %}
-{% load crispy_forms_tags %}
 
 {% block title %}User Settings{% endblock title %}
 
@@ -8,19 +7,53 @@
 	<div class="panel panel-default">
 		<div class="panel-heading"><i class="bi bi-gear-fill"></i> User Settings</div>
 		<div class="panel-body">
-			<form method="post">
+			<form method="post" class="block">
 				{% csrf_token %}
-				{% crispy form %}
+
+				<usersettingsform
+					:default-tools-options="[
+						{% for tool in defaultToolsFilterChoices %}
+						{ code: '{{ tool.id }}', name: '{{ tool.name }}' },
+						{% endfor %}
+					]"
+					:default-tools-selected="[
+						{% for tool in defaultToolsFilter %}
+						{ code: '{{ tool.id }}', name: '{{ tool.name }}' },
+						{% endfor %}
+					]"
+					:default-provider-options="[
+						{% for provider in defaultProviderChoices %}
+						{ id: '{{ provider.id }}', name: '{{ provider.hostname }}' },
+						{% endfor %}
+					]"
+					:default-provider-selected="{{ user.defaultProviderId }}"
+					:default-template-options="[
+						{% for template in defaultTemplateChoices %}
+						{ id: {{ template.0 }}, name: '{{ template.1 }}' },
+						{% endfor %}
+					]"
+					:default-template-selected="{{ user.defaultTemplateId }}"
+					initial-email="{{ email }}"
+					:allow-email-edit="{{ allow_email_edit|yesno:'true,false' }}"
+					:subscribe-notification-options="[
+						{% for notification in notificationChoices %}
+						{ code: '{{ notification.id }}', name: '{{ notification.label }}', selected: {{ notification.initial|yesno:'true,false' }} },
+						{% endfor %}
+					]"
+					:form-errors="{{form_errors}}"
+				/>
+
 			</form>
 		</div>
 	</div>
+
 	{% if bugzilla_providers %}
 	<div class="panel panel-default">
 		<div class="panel-heading"><i class="bi bi-gear-fill"></i> Bugzilla Providers Settings</div>
 		<div class="panel-body">
 			Provide API Keys to authenticate calls to your Bugzilla Providers on this browser.
 			{% for p in bugzilla_providers %}
-				<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
+			<providerkey :provider-id="{{ p.pk }}" provider-hostname="{{ p.hostname }}"></providerkey>
 			{% endfor %}
 		</div>
 	</div>

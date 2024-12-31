@@ -16,6 +16,7 @@ import Inbox from "./components/Notifications/Inbox.vue";
 import PoolsList from "./components/Pools/List.vue";
 import PoolView from "./components/Pools/View.vue";
 import ProviderKey from "./components/ProviderKey.vue";
+import UserSettingsForm from "./components/UserSettingsForm.vue";
 import AssignBtn from "./components/Signatures/AssignBtn.vue";
 import CreateOrEdit from "./components/Signatures/CreateOrEdit.vue";
 import SignaturesList from "./components/Signatures/List.vue";
@@ -37,6 +38,7 @@ const app = createApp({
     poolview: PoolView,
     ppcselect: FullPPCSelect,
     providerkey: ProviderKey,
+    usersettingsform: UserSettingsForm,
     signatureslist: SignaturesList,
     signatureview: SignatureView,
   },
