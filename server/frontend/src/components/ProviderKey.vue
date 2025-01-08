@@ -142,6 +142,7 @@ export default defineComponent({
       error,
       success,
       bugzillaUsername,
+      localStorageKey,
       saveKey,
       removeKey,
     };

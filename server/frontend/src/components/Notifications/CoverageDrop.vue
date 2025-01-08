@@ -38,7 +38,6 @@ export default defineComponent({
     },
   },
   setup(props, { emit }) {
-    console.log(JSON.parse(JSON.stringify(props.notification)));
     const dismiss = async () => {
       try {
         await api.dismissNotification(props.notification.id);

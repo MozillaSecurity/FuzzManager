@@ -106,3 +106,143 @@ export const crashStatsData = {
     2: [3, 0, 0],
   },
 };
+
+export const mockChartData = {
+  labels: ["Day 1", "Day 2", "Day 3"],
+  datasets: [
+    {
+      label: "Coverage",
+      data: [75, 80, 85],
+      borderColor: "rgb(75, 192, 192)",
+      tension: 0.1,
+      created: ["2024-01-01", "2024-01-02", "2024-01-03"],
+      deltas: ["+5", "+5"],
+      unit: "%",
+    },
+  ],
+};
+
+export const collectionData = {
+  count: 2,
+  next: null,
+  previous: null,
+  results: [
+    {
+      repository: "cov-example",
+      revision: "adab95a85e138f792631f19d939dfd1102197acc",
+      branch: "main",
+      client: "test-data-creator",
+      coverage: "coverage/78721097e138f17549dc129d7dcc44a0adebe218.coverage",
+      description: "update",
+      id: 1,
+      created: "2024-11-21T22:48:41Z",
+      tools: "",
+    },
+    {
+      repository: "cov-example",
+      revision: "adab95a85e138f792631f19d939dfd1102197acc",
+      branch: "main",
+      client: "test-data-creator",
+      coverage: "coverage/68721097e138f17549dc129d7dcc44a0adebe218.coverage",
+      description: "initial",
+      id: 2,
+      created: "2024-11-21T22:48:41Z",
+      tools: "",
+    },
+  ],
+};
+
+export const covManagerData = {
+  path: "",
+  coverage: {
+    children: {
+      a: {
+        children: true,
+        name: "a",
+        linesTotal: 6,
+        linesCovered: 5,
+        linesMissed: 1,
+        coveragePercent: 83.33,
+        delta_children: 0,
+        delta_linesTotal: 0,
+        delta_linesCovered: 1,
+        delta_linesMissed: -1,
+        delta_coveragePercent: 16.67,
+      },
+      b: {
+        children: true,
+        name: "b",
+        linesTotal: 3,
+        linesCovered: 3,
+        linesMissed: 0,
+        coveragePercent: 100,
+        delta_children: 0,
+        delta_linesTotal: 0,
+        delta_linesCovered: 0,
+        delta_linesMissed: 0,
+        delta_coveragePercent: 0,
+      },
+      "main.c": {
+        name: "main.c",
+        linesTotal: 5,
+        linesCovered: 5,
+        linesMissed: 0,
+        coveragePercent: 100,
+        delta_linesTotal: 1,
+        delta_linesCovered: 1,
+        delta_linesMissed: 0,
+        delta_coveragePercent: 0,
+      },
+    },
+    name: null,
+    linesTotal: 14,
+    linesCovered: 13,
+    linesMissed: 1,
+    coveragePercent: 92.86,
+    delta_linesTotal: 1,
+    delta_linesCovered: 2,
+    delta_linesMissed: -1,
+    delta_coveragePercent: 7.14,
+  },
+  ttdata: [
+    {
+      name: null,
+      linesTotal: 14,
+      linesCovered: 13,
+      linesMissed: 1,
+      coveragePercent: 92.86,
+      id: 3,
+      label: "3 - initial",
+      created: "Nov. 21 2024 8:48 PM",
+    },
+    {
+      name: null,
+      linesTotal: 15,
+      linesCovered: 15,
+      linesMissed: 0,
+      coveragePercent: 100,
+      id: 4,
+      label: "4 - update",
+      created: "Nov. 21 2024 9:48 PM",
+      delta_linesTotal: 1,
+      delta_linesCovered: 2,
+      delta_linesMissed: -1,
+      delta_coveragePercent: 7.14,
+      delta_id: 1,
+    },
+  ],
+};
+
+export const rvListData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+};
+
+export const metadataData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [],
+};

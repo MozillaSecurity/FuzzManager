@@ -1,0 +1,166 @@
+/*
+ * Coverage Browser
+ */
+
+.path {
+  color: #337ab7;
+  cursor:pointer;
+}
+
+.table-coverage table {
+  border-collapse: collapse;
+}
+
+.table-coverage > tbody > tr > td {
+  line-height: 0.4;
+  vertical-align: middle;
+}
+
+.table-coverage tr {
+  border: none !important;
+}
+
+.table-coverage td {
+  border: solid 1px #c9c9c9;
+  border-bottom: none !important;
+  border-top: none !important;
+}
+
+.table-coverage tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+.table-coverage tr td:first-child {
+  border-left: 0px !important;
+}
+
+.table-coverage tr td:last-child {
+  border-right: 0px !important;
+}
+
+.table-coverage-foot {
+  background: #f9fafb;
+}
+
+/*
+ * Coverage Source Code Viewer
+ */
+
+.cov {
+  font-size: 13px;
+}
+
+.cov-linenumber {
+  padding-left: 5px;
+  text-align: right;
+  color: #8d8d8d;
+}
+
+.cov-occurence {
+  width: 75px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.cov-codeline {
+  font-family: monospace;
+  white-space: pre;
+}
+
+.cov-status-covered {
+  background: #dfd;
+}
+
+.cov-status-non-coverable {
+  background: #fcc;
+}
+
+.cov-line-highlighted {
+  background: #33ff;
+  font-weight: bold;
+  color: white;
+}
+
+/*
+ * Collection browser
+ */
+
+.collection-selected {
+  background: rgba(240, 130, 15, 0.3);
+}
+
+/*
+ * Reports page
+ */
+
+.report-quarterly:not(.no-hover):hover {
+  background: rgba(75, 0, 200, 0.4);
+}
+
+.report-monthly:not(.no-hover):hover {
+  background: rgba(50, 255, 0, 0.4);
+}
+
+.report-weekly:not(.no-hover):hover {
+  background: rgba(240, 130, 15, 0.2);
+}
+
+
+.report-quarterly {
+  background: rgba(75, 0, 200, 0.3);
+}
+
+.report-monthly {
+  background: rgba(50, 255, 0, 0.3);
+}
+
+.report-quarterly-selected {
+  background: rgba(75, 0, 200, 0.5);
+}
+
+.report-monthly-selected {
+  background: rgba(50, 255, 0, 0.5);
+}
+
+.report-weekly-selected {
+  background: rgba(240, 130, 15, 0.3);
+}
+
+/*
+ * Spinner
+ */
+
+.loader,
+.loader:after {
+  border-radius: 50%;
+  width: 10em;
+  height: 10em;
+}
+.loader {
+  margin: 60px auto;
+  font-size: 10px;
+  position: relative;
+  border-top: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+  border-left: 1.1em solid #000;
+  transform: translateZ(0);
+  animation: load8 1.1s infinite linear;
+}
+
+.loader-msg {
+  margin: auto;
+  width: 50%;
+  text-align: center;
+  font-size: 16px;
+  padding: 3px;
+}
+
+@keyframes load8 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

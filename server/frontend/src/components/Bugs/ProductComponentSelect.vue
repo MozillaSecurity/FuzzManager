@@ -265,6 +265,7 @@ export default defineComponent({
       selectedProduct,
       selectedComponent,
       components,
+      localStorageKey,
       refreshProducts,
     };
   },

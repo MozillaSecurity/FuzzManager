@@ -9,6 +9,12 @@ import ActivityGraph from "./components/ActivityGraph.vue";
 import CommentPublicationForm from "./components/Bugs/Comments/PublicationForm.vue";
 import FullPPCSelect from "./components/Bugs/FullPPCSelect.vue";
 import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
+import CovManagerBrowse from "./components/Covmanager/Browse.vue";
+import CollectionsList from "./components/Covmanager/Collections.vue";
+import CollectionsPatch from "./components/Covmanager/Patch.vue";
+import ReportConfiguration from "./components/Covmanager/ReportConfiguration.vue";
+import CovManagerReports from "./components/Covmanager/Reports.vue";
+import CovManagerSummary from "./components/Covmanager/Summary.vue";
 import CrashesList from "./components/Crashes/List.vue";
 import CrashStats from "./components/CrashStats.vue";
 import CrashStatsGraph from "./components/CrashStatsGraph.vue";
@@ -41,6 +47,12 @@ const app = createApp({
     usersettingsform: UserSettingsForm,
     signatureslist: SignaturesList,
     signatureview: SignatureView,
+    collectionslist: CollectionsList,
+    covmanagerreports: CovManagerReports,
+    covmanagerbrowse: CovManagerBrowse,
+    reportconfiguration: ReportConfiguration,
+    collectionspatch: CollectionsPatch,
+    covmanagersummary: CovManagerSummary,
   },
 });
 
