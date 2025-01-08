@@ -4,7 +4,7 @@
 
 .path {
   color: #337ab7;
-  cursor:pointer;
+  cursor: pointer;
 }
 
 .table-coverage table {
@@ -104,7 +104,6 @@
 .report-weekly:not(.no-hover):hover {
   background: rgba(240, 130, 15, 0.2);
 }
-
 
 .report-quarterly {
   background: rgba(75, 0, 200, 0.3);

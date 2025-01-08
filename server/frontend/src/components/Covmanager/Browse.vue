@@ -61,11 +61,7 @@
       <div v-show="search">
         <input ref="search" v-model="search" type="text" class="form-control" />
       </div>
-      <line-chart
-        v-if="chartdata"
-        :chartdata="chartdata"
-        style="height: 50vh"
-      ></line-chart>
+      <line-chart v-if="chartdata" :chartdata="chartdata"></line-chart>
       <table class="table table-condensed table-hover table-db">
         <thead>
           <tr>
@@ -450,6 +446,7 @@ export default defineComponent({
             this.chartdata["labels"] = [];
             this.chartdata["datasets"] = [
               {
+                id: 1,
                 label: "Total Coverage (%)",
                 borderColor: "#f87979",
                 fill: "false",
@@ -462,6 +459,7 @@ export default defineComponent({
                 unit: "%",
               },
               {
+                id: 2,
                 label: "Lines not covered",
                 borderColor: "#6699ff",
                 fill: "false",
@@ -474,6 +472,7 @@ export default defineComponent({
                 unit: "lines",
               },
               {
+                id: 3,
                 label: "Total lines (coverable)",
                 borderColor: "#ff9966",
                 fill: "false",
