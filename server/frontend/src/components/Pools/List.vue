@@ -81,7 +81,7 @@
 <script>
 import _throttle from "lodash/throttle";
 import swal from "sweetalert";
-import { computed, defineComponent, ref } from "vue";
+import { defineComponent, ref } from "vue";
 import * as api from "../../api";
 import { E_SERVER_ERROR, multiSort } from "../../helpers";
 
@@ -127,50 +127,20 @@ export default defineComponent({
       { trailing: true },
     );
 
-    const sortBy = (key) => {
-      sortKeys.value = [key.startsWith("-") ? key.slice(1) : `-${key}`];
-    };
-
-    const addSort = (key) => {
-      const i = sortKeys.value.indexOf(key);
-      const ni = sortKeys.value.indexOf(`-${key}`);
-      if (i < 0 && ni < 0) {
-        sortKeys.value.push(key);
-      } else if (i >= 0) {
-        sortKeys.value[i] = `-${key}`;
-      } else if (ni >= 0) {
-        sortKeys.value.splice(ni, 1);
-      }
-    };
-
-    const sortData = (data) => {
-      if (!data) return [];
-      const keys = sortKeys.value;
-      return [...data].sort((a, b) => {
-        for (const key of keys) {
-          const desc = key.startsWith("-");
-          const k = desc ? key.slice(1) : key;
-          if (a[k] > b[k]) return desc ? -1 : 1;
-          if (a[k] < b[k]) return desc ? 1 : -1;
-        }
-        return 0;
-      });
-    };
-
-    const orderedPools = computed(() => sortData(pools.value));
-
     fetch();
 
     return {
       loading,
       pools,
       sortKeys,
-      orderedPools,
-      sortBy,
-      addSort,
       validSortKeys,
       defaultSortKeys,
     };
+  },
+  computed: {
+    orderedPools() {
+      return this.sortData(this.pools);
+    },
   },
 });
 </script>

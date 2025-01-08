@@ -69,6 +69,8 @@ export default [
       "vue/v-on-handler-style": "off",
       "vue/v-on-event-hyphenation": "off",
       "vue/require-explicit-emits": "off",
+      "vue/require-default-prop": "off",
+      "vue/no-v-html": "off",
     },
   },
   {

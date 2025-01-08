@@ -193,3 +193,30 @@ export const multiSort = {
     },
   },
 };
+
+export function formatQuarterly(d) {
+  const quarters = ["Q1", "Q2", "Q3", "Q4"];
+
+  const date = new Date(d);
+  return `${quarters[Math.floor(date.getMonth() / 3)]} ${date.getFullYear()}`;
+}
+
+export function formatMonthly(d) {
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const date = new Date(d);
+  return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
