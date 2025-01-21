@@ -1,20 +1,10 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
-from django.forms import (
-    CharField,
-    CheckboxSelectMultiple,
-    ChoiceField,
-    EmailField,
-    ModelChoiceField,
-    ModelForm,
-    ModelMultipleChoiceField,
-    Textarea,
-    TextInput,
-)
+from django.forms import CharField, EmailField, ModelForm, Textarea, TextInput
 from rest_framework.exceptions import ValidationError
 
-from .models import BugProvider, BugzillaTemplate, Tool, User
+from .models import BugzillaTemplate, User
 
 
 class Row(Div):
