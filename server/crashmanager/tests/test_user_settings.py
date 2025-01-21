@@ -35,7 +35,7 @@ def test_user_settings_simple_get(client):
     response = client.get(path)
     assert response.status_code == requests.codes["ok"]
     assert list(response.context["bugzilla_providers"]) == []
-    assert response.context["user"] == User.objects.get(user__username="test").user
+    assert response.context["user"] == User.objects.get(user__username="test")
 
 
 def test_user_settings_edit(client, cm):
