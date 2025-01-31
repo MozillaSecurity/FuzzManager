@@ -495,6 +495,16 @@ def viewSignature(request, sigid):
         best_entry_size = None
     providers = BugProviderSerializer(BugProvider.objects.all(), many=True).data
 
+    # Intentionally ignore toolfilter and even bucket. It doesn't matter whether the max
+    # crash id is in this bucket or not for the purpose of adding a BucketWatch.
+
+    # If the DB is completely empty, None is returned. The auto-increment counter might
+    # already be some higher number, but it doesn't matter for the purpose of adding
+    # BucketWatch.
+    latest_entry = (
+        CrashEntry.objects.order_by("id").values_list("id", flat=True).last() or 0
+    )
+
     return render(
         request,
         "signatures/view.html",
@@ -506,6 +516,7 @@ def viewSignature(request, sigid):
             "bucket_id": bucket["id"],
             "best_entry": bucket["best_entry"],
             "best_entry_size": json.dumps(best_entry_size),
+            "latest_entry_global": latest_entry,
             "providers": json.dumps(providers),
             "shortDescription": bucket["shortDescription"],
         },
@@ -1222,16 +1233,12 @@ class BucketViewSet(
             instance.quality = agg["quality"]
 
         if instance.quality is not None:
-            best_crash = (
+            instance.best_entry = (
                 crashes_in_filter.filter(testcase__quality=instance.quality)
                 .order_by("testcase__size", "-id")
+                .values_list("id", flat=True)
                 .first()
             )
-            instance.best_entry = best_crash.id
-
-        if instance.size:
-            latest_crash = crashes_in_filter.order_by("id").last()
-            instance.latest_entry = latest_crash.id
 
         serializer = self.get_serializer(instance)
         response = Response(serializer.data)

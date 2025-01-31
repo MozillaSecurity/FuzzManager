@@ -77,7 +77,7 @@ LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
 def _compare_rest_result_to_bucket(
-    result, bucket, size, quality, best_entry=None, latest=None, hist=[], vue=False
+    result, bucket, size, quality, best_entry=None, hist=[], vue=False
 ):
     attributes = {
         "best_entry",
@@ -87,7 +87,6 @@ def _compare_rest_result_to_bucket(
         "frequent",
         "has_optimization",
         "id",
-        "latest_entry",
         "permanent",
         "reassign_in_progress",
         "shortDescription",
@@ -114,7 +113,6 @@ def _compare_rest_result_to_bucket(
     assert result["frequent"] == bucket.frequent
     assert result["has_optimization"] == bool(bucket.optimizedSignature)
     assert result["id"] == bucket.pk
-    assert result["latest_entry"] == latest
     assert result["permanent"] == bucket.permanent
     assert result["reassign_in_progress"] == bucket.reassign_in_progress
     assert result["shortDescription"] == bucket.shortDescription
@@ -302,18 +300,18 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
             assert status_code == requests.codes["ok"], resp["detail"]
             if user.username == "test":
                 if ignore_toolfilter:
-                    size, quality, best, latest = [
-                        (2, 9, crashes[0].id, crashes[1].id),
-                        (2, 2, crashes[2].id, crashes[3].id),
+                    size, quality, best = [
+                        (2, 9, crashes[0].id),
+                        (2, 2, crashes[2].id),
                     ][i]
                 else:
-                    size, quality, best, latest = [
-                        (1, 9, crashes[0].id, crashes[0].id),
-                        (0, None, None, None),
+                    size, quality, best = [
+                        (1, 9, crashes[0].id),
+                        (0, None, None),
                     ][i]
             else:
-                size, quality, best, latest = (1, 9, crashes[0].id, crashes[0].id)
-            _compare_rest_result_to_bucket(resp, bucket, size, quality, best, latest)
+                size, quality, best = (1, 9, crashes[0].id)
+            _compare_rest_result_to_bucket(resp, bucket, size, quality, best)
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
