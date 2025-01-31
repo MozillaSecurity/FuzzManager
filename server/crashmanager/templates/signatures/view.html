@@ -8,6 +8,7 @@
   :activity-range="{{ activity_range }}"
   :bucket="{{ bucket }}"
   :best-entry-size="{{ best_entry_size }}"
+  :latest-entry="{{ latest_entry_global }}"
   :providers="{{ providers }}"
   {% if best_entry %}
   best-view-url="{% url 'crashmanager:crashview' best_entry %}"
