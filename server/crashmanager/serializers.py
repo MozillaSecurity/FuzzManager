@@ -188,7 +188,6 @@ class BucketSerializer(serializers.ModelSerializer):
     # size and best_quality are annotations, so must be set manually
     size = serializers.IntegerField(write_only=True, required=False)
     best_entry = serializers.IntegerField(write_only=True, required=False)
-    latest_entry = serializers.IntegerField(write_only=True, required=False)
     best_quality = serializers.IntegerField(write_only=True, required=False)
     bug_provider = serializers.PrimaryKeyRelatedField(
         write_only=True,
@@ -213,7 +212,6 @@ class BucketSerializer(serializers.ModelSerializer):
             "signature",
             "size",
             "has_optimization",
-            "latest_entry",
             "reassign_in_progress",
         )
         ordering = ["-id"]
@@ -229,7 +227,6 @@ class BucketSerializer(serializers.ModelSerializer):
         serialized = super().to_representation(obj)
         serialized["size"] = obj.size
         serialized["best_entry"] = getattr(obj, "best_entry", None)
-        serialized["latest_entry"] = getattr(obj, "latest_entry", None)
         serialized["best_quality"] = obj.quality
         serialized["has_optimization"] = bool(obj.optimizedSignature)
         return serialized

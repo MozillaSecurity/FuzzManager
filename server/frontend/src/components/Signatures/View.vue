@@ -73,11 +73,7 @@
               />
               <form ref="sigWatchForm" :action="sigWatchUrl" method="post">
                 <input type="hidden" name="bucket" :value="bucket.id" />
-                <input
-                  type="hidden"
-                  name="crash"
-                  :value="bucket.latest_entry"
-                />
+                <input type="hidden" name="crash" :value="latestEntry" />
                 <input
                   type="submit"
                   name="submit"
@@ -161,6 +157,10 @@ export default defineComponent({
     },
     editUrl: {
       type: String,
+      required: true,
+    },
+    latestEntry: {
+      type: Number,
       required: true,
     },
     optUrl: {
