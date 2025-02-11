@@ -508,13 +508,13 @@ class CrashEntry(models.Model):
         if self.pk is None and not getattr(settings, "DB_ISUTF8MB4", False):
             # Replace 4-byte UTF-8 characters with U+FFFD if our database
             # doesn't support them. By default, MySQL utf-8 does not support these.
-            utf8_4byte_re = re.compile("[^\u0000-\uD7FF\uE000-\uFFFF]", re.UNICODE)
+            utf8_4byte_re = re.compile("[^\u0000-\ud7ff\ue000-\uffff]", re.UNICODE)
 
             def sanitize_utf8(s):
                 if not isinstance(s, str):
                     s = str(s, "utf-8")
 
-                return utf8_4byte_re.sub("\uFFFD", s)
+                return utf8_4byte_re.sub("\ufffd", s)
 
             new_rawStdout = sanitize_utf8(self.rawStdout)
             if self.rawStdout != new_rawStdout:

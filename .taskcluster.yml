@@ -66,6 +66,10 @@ tasks:
             version: "3.12"
             env:
               TOXENV: py312
+          - name: tests python 3.13 (no django)
+            version: "3.13"
+            env:
+              TOXENV: py313
           - name: linting
             version: "3.9"
             script:

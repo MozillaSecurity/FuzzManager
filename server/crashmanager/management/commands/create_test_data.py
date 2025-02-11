@@ -501,9 +501,11 @@ class Command(BaseCommand):
                         resolved=now + timedelta(days=1 - tg) if tg else None,
                         run_id=0,
                         started=now - timedelta(days=tg),
-                        state=choice(("completed", "exception", "failed"))
-                        if tg
-                        else choice(("pending", "running")),
+                        state=(
+                            choice(("completed", "exception", "failed"))
+                            if tg
+                            else choice(("pending", "running"))
+                        ),
                         status_data="hello world",
                         task_id=slug(),
                     )

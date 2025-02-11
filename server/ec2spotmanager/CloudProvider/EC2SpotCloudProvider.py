@@ -218,13 +218,13 @@ class EC2SpotCloudProvider(CloudProvider):
                     failed_requests[req_id][
                         "instance_type"
                     ] = result.launch_specification.instance_type
-                    failed_requests[req_id][
-                        "reason"
-                    ] = "Spot request {} in {} is {} and {}".format(
-                        req_id,
-                        region,
-                        result.status.code,
-                        result.state,
+                    failed_requests[req_id]["reason"] = (
+                        "Spot request {} in {} is {} and {}".format(
+                            req_id,
+                            region,
+                            result.status.code,
+                            result.state,
+                        )
                     )
                 elif result.state in {"open", "active"}:
                     # this should not happen! warn and leave in DB in case it's

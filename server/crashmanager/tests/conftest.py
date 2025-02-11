@@ -8,6 +8,7 @@ This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
+
 import logging
 
 import pytest
@@ -29,7 +30,9 @@ from crashmanager.models import (
     Product,
 )
 from crashmanager.models import TestCase as cmTestCase
-from crashmanager.models import Tool
+from crashmanager.models import (
+    Tool,
+)
 from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.crashmanager.tests")
