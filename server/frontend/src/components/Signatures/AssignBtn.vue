@@ -4,7 +4,7 @@
 
 <script>
 import swal from "sweetalert";
-import { createVNode, defineComponent, getCurrentInstance, render } from "vue";
+import { defineComponent, h, ref, render } from "vue";
 import { assignExternalBug, errorParser } from "../../helpers";
 import AssignBtnForm from "./AssignBtnForm.vue";
 
@@ -26,15 +26,18 @@ export default defineComponent({
   },
   methods: {
     async link() {
+      const externalBugId = ref(null);
+      const selectedProvider = ref(null);
+
       // Create a container div for the form
       const container = document.createElement("div");
 
       // Create the form component with props
-      const formCtor = createVNode(AssignBtnForm, {
+      const formCtor = h(AssignBtnForm, {
         providers: this.providers,
+        onUpdateBug: (bug) => (externalBugId.value = bug),
+        onUpdateProvider: (provider) => (selectedProvider.value = provider),
       });
-
-      formCtor.appContext = getCurrentInstance()?.appContext;
 
       // Mount the component to get the actual DOM element
       render(formCtor, container);
@@ -49,8 +52,8 @@ export default defineComponent({
         try {
           const data = await assignExternalBug(
             this.bucket,
-            formCtor.props.provider,
-            formCtor.props.bug,
+            externalBugId.value,
+            selectedProvider.value,
           );
           window.location.href = data.url;
         } catch (err) {
