@@ -616,9 +616,9 @@ def editConfig(request, configid):
             "config": config,
             "configurations": configurations,
             "edit": True,
-            "ec2_userdata_ff": "dos"
-            if (b"\r\n" in (config.ec2_userdata or b""))
-            else "unix",
+            "ec2_userdata_ff": (
+                "dos" if (b"\r\n" in (config.ec2_userdata or b"")) else "unix"
+            ),
         }
         return render(request, "config/edit.html", data)
     else:

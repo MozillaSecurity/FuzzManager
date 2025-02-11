@@ -11,6 +11,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import json
 import os
 import platform
@@ -266,7 +267,7 @@ def test_collector_refresh(capsys, tmp_path):
     with outzip_path.open("r+b") as fp:
         # corrupt the CRC field for the signature file in the zip
         fp.seek(0x42)
-        fp.write(b"\xFF")
+        fp.write(b"\xff")
     with outzip_path.open("rb") as fp:
 
         class response_t:  # noqa
@@ -344,7 +345,7 @@ def test_collector_download(tmp_path, monkeypatch):
         status_code = requests.codes["ok"]
         headers = {"content-disposition": "foo"}
         text = "OK"
-        content = b"testcase\xFF"
+        content = b"testcase\xff"
 
     # myget1 mocks requests.get to return the rest response to the crashentry get
     def myget1(url, headers=None):
