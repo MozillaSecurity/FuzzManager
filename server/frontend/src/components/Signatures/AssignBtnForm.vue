@@ -2,7 +2,12 @@
   <div class="table">
     <div class="tr">
       <label class="td" for="provider">Bug provider</label>
-      <select v-model="selectedProvider" class="td" name="provider">
+      <select
+        v-model="selectedProvider"
+        class="td"
+        name="provider"
+        @change="$emit('update-provider', selectedProvider)"
+      >
         <option v-for="p in providers" :key="p.id" :value="p.id">
           {{ p.hostname }}
         </option>
@@ -10,7 +15,12 @@
     </div>
     <div class="tr">
       <label class="td" for="bug_id">Bug ID</label>
-      <input v-model="externalBugId" name="bug_id" maxlength="255" />
+      <input
+        v-model="externalBugId"
+        maxlength="255"
+        name="bug_id"
+        @change="$emit('update-bug', externalBugId)"
+      />
     </div>
   </div>
 </template>
@@ -26,13 +36,14 @@ export default defineComponent({
     },
   },
 
-  setup(props) {
+  setup(props, context) {
     const externalBugId = ref(null);
     const selectedProvider = ref(null);
 
     onMounted(() => {
       if (props.providers.length > 0) {
         selectedProvider.value = props.providers[0].id;
+        context.emit("update-provider", selectedProvider.value);
       }
     });
 
