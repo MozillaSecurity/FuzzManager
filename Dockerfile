@@ -6,7 +6,7 @@ USER node
 WORKDIR /src
 
 RUN npm install
-RUN npm run build
+RUN npm run production
 
 FROM python:3.10-alpine as backend
 
