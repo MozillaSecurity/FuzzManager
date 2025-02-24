@@ -460,8 +460,8 @@ class Command(BaseCommand):
         # create bug provider
         provider = BugProvider.objects.create(
             classname="BugzillaProvider",
-            hostname="https://hg.allizom.org",
-            urlTemplate="https://hg.allizom.org/%s",
+            hostname="bugzilla.allizom.org",
+            urlTemplate="https://bugzilla.allizom.org/%s",
         )
 
         # link 10 buckets to bug provider
