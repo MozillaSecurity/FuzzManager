@@ -28,16 +28,15 @@
         </div>
       </div>
     </template>
-    <template #reference>
-      <span>
-        <i class="bi bi-question-circle-fill"></i>
-      </span>
-    </template>
+    <span>
+      <i class="bi bi-question-circle-fill"></i>
+    </span>
   </FloatingMenu>
 </template>
 
 <script>
 import { Menu as FloatingMenu } from "floating-vue";
+import "floating-vue/dist/style.css";
 import { defineComponent } from "vue";
 
 export default defineComponent({
