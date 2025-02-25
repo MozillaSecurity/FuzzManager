@@ -1626,7 +1626,9 @@ class BugzillaTemplateEditView(UpdateView):
         context["title"] = "Edit template"
         context["template_id"] = self.kwargs[self.pk_url_kwarg]
         context["provider"] = provider
-        context["mode"] = "Bug" if self.object.mode == BugzillaTemplateMode.Bug else "Comment"
+        context["mode"] = (
+            "Bug" if self.object.mode == BugzillaTemplateMode.Bug else "Comment"
+        )
         return context
 
     def get_form_class(self):
