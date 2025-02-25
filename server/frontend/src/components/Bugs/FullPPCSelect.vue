@@ -14,6 +14,8 @@
       :template-product="templateProduct"
       :template-component="templateComponent"
       style-class="col-md-4"
+      @update-product="product = $event"
+      @update-component="component = $event"
     />
   </div>
 </template>
@@ -45,11 +47,13 @@ export default defineComponent({
       default: "",
     },
   },
-  setup(props) {
+  setup(props, { emit }) {
     const providers = ref([]);
     const selectedProvider = ref(null);
     const providerHostname = ref("");
     const provider = ref(null);
+    const product = ref("");
+    const component = ref("");
 
     onMounted(async () => {
       const data = await api.listBugProviders();
@@ -71,11 +75,27 @@ export default defineComponent({
       providerHostname.value = provider.value.hostname;
     });
 
+    watch(
+      () => product.value,
+      () => {
+        emit("update-product", product.value);
+      },
+    );
+
+    watch(
+      () => component.value,
+      () => {
+        emit("update-component", component.value);
+      },
+    );
+
     return {
       providers,
       selectedProvider,
       providerHostname,
       provider,
+      product,
+      component,
     };
   },
 });

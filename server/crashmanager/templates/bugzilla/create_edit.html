@@ -7,10 +7,18 @@
 <div class="panel panel-info">
     <div class="panel-heading"><i class="bi bi-card-list"></i> {{ title }}</div>
     <div class="panel-body">
-        <form method="post">
-            {% csrf_token %}
-            {% crispy form %}
-        </form>
+        {% if mode == "Comment" %}
+            <form method="post">
+                {% csrf_token %}
+                {% crispy form %}
+            </form>
+        {% else %}
+            <bugpublicationform
+                :provider-id="{{ provider.pk }}"
+                :template-id="{{ template_id }}"
+                :is-bug-template-creation="true"
+            />
+        {% endif %}
     </div>
 </div>
 {% endblock body_content %}

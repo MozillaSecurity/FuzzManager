@@ -12,67 +12,6 @@ class Row(Div):
 
 
 class BugzillaTemplateBugForm(ModelForm):
-    helper = FormHelper()
-    helper.layout = Layout(
-        HTML("""<div v-pre>"""),
-        Row(Field("name", wrapper_class="col-md-6")),
-        "summary",
-        Row(
-            Field("product", wrapper_class="col-md-6"),
-            Field("component", wrapper_class="col-md-6"),
-        ),
-        HTML("""</div>"""),
-        HTML("""<ppcselect></ppcselect>"""),
-        HTML("""<div v-pre>"""),
-        Row(
-            Field("whiteboard", wrapper_class="col-md-6"),
-            Field("keywords", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("op_sys", wrapper_class="col-md-6"),
-            Field("platform", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("cc", wrapper_class="col-md-6"),
-            Field("assigned_to", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("priority", wrapper_class="col-md-6"),
-            Field("severity", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("alias", wrapper_class="col-md-6"),
-            Field("qa_contact", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("version", wrapper_class="col-md-6"),
-            Field("target_milestone", wrapper_class="col-md-6"),
-        ),
-        Row(
-            Field("blocks", wrapper_class="col-md-6"),
-            Field("dependson", wrapper_class="col-md-6"),
-        ),
-        "attrs",
-        "description",
-        "security",
-        Row(Field("security_group", wrapper_class="col-md-6")),
-        Row(Field("testcase_filename", wrapper_class="col-md-6")),
-        Submit("submit", "Save", css_class="btn btn-danger"),
-        HTML(
-            """<a href="{% url 'crashmanager:templates' %}" class="btn btn-default">"""
-            """Cancel</a>"""
-        ),
-        HTML("""</div>"""),
-    )
-    product = CharField(
-        label="Current product (choose below)",
-        widget=TextInput(attrs={"disabled": True}),
-    )
-    component = CharField(
-        label="Current component (choose below)",
-        widget=TextInput(attrs={"disabled": True}),
-    )
-
     class Meta:
         model = BugzillaTemplate
         fields = [
@@ -124,13 +63,6 @@ class BugzillaTemplateBugForm(ModelForm):
             "blocks": "Blocks",
             "dependson": "Depends On",
         }
-
-        widgets = {}
-        for field in fields:
-            if field not in ["description", "attrs", "security"]:
-                widgets[field] = TextInput()
-
-        widgets["attrs"] = Textarea(attrs={"rows": 2})
 
 
 class BugzillaTemplateCommentForm(ModelForm):

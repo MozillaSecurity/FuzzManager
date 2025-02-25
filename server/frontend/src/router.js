@@ -8,6 +8,7 @@ import CovManagerSummary from "./components/Covmanager/Summary.vue";
 import CrashesList from "./components/Crashes/List.vue";
 import PoolView from "./components/Pools/View.vue";
 import SignaturesList from "./components/Signatures/List.vue";
+import BugPublicationForm from "./components/Bugs/PublicationForm.vue";
 
 const routes = [
   {
@@ -21,6 +22,12 @@ const routes = [
     path: "/crashmanager/crashes/watch/:sigid/",
     name: "crashes-watch",
     component: CrashesList,
+  },
+  {
+    // Be careful to keep this route up-to-date with the one in server/crashmanager/urls.py
+    path: "/crashmanager/crashes/:id/createbug/",
+    name: "crashes-createbug",
+    component: BugPublicationForm,
   },
   {
     // Be careful to keep this route up-to-date with the one in server/crashmanager/urls.py

@@ -47,8 +47,13 @@ export const listCrashes = async (params) =>
 export const listBugProviders = async () =>
   (await mainAxios.get("/crashmanager/rest/bugproviders/")).data;
 
-export const listTemplates = async () =>
-  (await mainAxios.get("/crashmanager/rest/bugzilla/templates/")).data;
+export const listTemplates = async (id) => {
+  const path =
+    id !== -1 && id
+      ? `/crashmanager/rest/bugzilla/templates/${id}/`
+      : "/crashmanager/rest/bugzilla/templates/";
+  return (await mainAxios.get(path)).data;
+};
 
 export const listUnreadNotifications = async (params) =>
   (await mainAxios.get("/crashmanager/rest/inbox/", { params })).data;
@@ -104,3 +109,10 @@ export const reportMetadata = async (params) =>
 export const reportConfiguration = async (params) =>
   (await mainAxios.get("/covmanager/reportconfigurations/api/", { params }))
     .data;
+
+export const createBugzillaBugTemplate = async (data) =>
+  (await mainAxios.post("/crashmanager/bugzilla/templates/create-bug/", data))
+    .data;
+
+export const updateBugzillaBugTemplate = async (id, data) =>
+  (await mainAxios.post(`/crashmanager/bugzilla/templates/${id}/`, data)).data;

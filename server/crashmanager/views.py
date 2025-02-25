@@ -1616,7 +1616,17 @@ class BugzillaTemplateEditView(UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        if "provider" in self.request.GET:
+            provider = get_object_or_404(BugProvider, pk=self.request.GET["provider"])
+        else:
+            user = User.get_or_create_restricted(self.request.user)[0]
+            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
+
         context["title"] = "Edit template"
+        context["template_id"] = self.kwargs[self.pk_url_kwarg]
+        context["provider"] = provider
+        context["mode"] = "Bug" if self.object.mode == BugzillaTemplateMode.Bug else "Comment"
         return context
 
     def get_form_class(self):
@@ -1635,6 +1645,15 @@ class BugzillaTemplateBugCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Create a bug template"
+
+        if "provider" in self.request.GET:
+            provider = get_object_or_404(BugProvider, pk=self.request.GET["provider"])
+        else:
+            user = User.get_or_create_restricted(self.request.user)[0]
+            provider = get_object_or_404(BugProvider, pk=user.defaultProviderId)
+
+        context["provider"] = provider
+        context["mode"] = "Bug"
         return context
 
     def form_valid(self, form):
@@ -1651,6 +1670,7 @@ class BugzillaTemplateCommentCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = "Create a comment template"
+        context["mode"] = "Comment"
         return context
 
     def form_valid(self, form):
