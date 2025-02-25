@@ -84,18 +84,23 @@ def test_bug_providers_simple_get(client, cm, name, kwargs):
     ("name", "kwargs"),
     [
         ("crashmanager:templates", {}),
-        ("crashmanager:templatecreatebug", {}),
+        ("crashmanager:templatecreatebug", {"provider": 0}),
         ("crashmanager:templatecreatecomment", {}),
-        ("crashmanager:templateedit", {"templateId": 0}),
+        ("crashmanager:templateedit", {"templateId": 0, "provider": 0}),
         ("crashmanager:templatedel", {"templateId": 0}),
     ],
 )
 def test_bugzilla_templates_simple_get(client, cm, name, kwargs):
     """No errors are thrown in template"""
+
+    query_params = {}
+    if "provider" in kwargs:
+        kwargs.pop("provider")
+        query_params["provider"] = cm.create_bugprovider().pk
     client.login(username="test", password="test")
     if "templateId" in kwargs:
         kwargs["templateId"] = cm.create_template().pk
-    response = client.get(reverse(name, kwargs=kwargs))
+    response = client.get(reverse(name, kwargs=kwargs), query_params=query_params)
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
 
