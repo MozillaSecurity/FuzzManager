@@ -5,13 +5,14 @@ import re
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from server.auth import CheckAppPermission
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
+from server.utils import IPRestrictedTokenAuthentication
 
 from .models import Pool, Task
 from .serializers import (
@@ -54,7 +55,7 @@ class PoolViewSet(viewsets.ReadOnlyModelViewSet):
     API endpoint that allows viewing Pools
     """
 
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (IPRestrictedTokenAuthentication, SessionAuthentication)
     permission_classes = (CheckAppPermission,)
     queryset = Pool.objects.all()
     serializer_class = PoolSerializer
@@ -82,7 +83,7 @@ class TaskViewSet(
     API endpoint that allows viewing Tasks
     """
 
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (IPRestrictedTokenAuthentication, SessionAuthentication)
     permission_classes = (CheckAppPermission,)
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
@@ -103,7 +104,7 @@ class TaskViewSet(
         return super().get_serializer(*args, **kwds)
 
     @action(
-        detail=False, methods=["post"], authentication_classes=(TokenAuthentication,)
+        detail=False, methods=["post"], authentication_classes=(IPRestrictedTokenAuthentication,)
     )
     def update_status(self, request):
         if set(request.data.keys()) != {"client", "status_data"}:

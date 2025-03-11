@@ -10,10 +10,11 @@ from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import filters, mixins, viewsets
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.authentication import SessionAuthentication
 
 from crashmanager.models import Tool
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
+from server.utils import IPRestrictedTokenAuthentication
 
 from .models import Collection, Report, ReportConfiguration, ReportSummary, Repository
 from .serializers import (
@@ -705,7 +706,7 @@ class CollectionViewSet(
     API endpoint that allows adding/viewing Collections
     """
 
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (IPRestrictedTokenAuthentication, SessionAuthentication)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     paginate_by_param = "limit"
@@ -754,7 +755,7 @@ class ReportViewSet(
     API endpoint that allows viewing Reports
     """
 
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (IPRestrictedTokenAuthentication, SessionAuthentication)
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
     paginate_by_param = "limit"
@@ -778,7 +779,7 @@ class RepositoryViewSet(
     API endpoint that allows viewing Repositories
     """
 
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
     queryset = Repository.objects.all()
     serializer_class = RepositorySerializer
     filter_backends = [JsonQueryFilterBackend]
@@ -819,7 +820,7 @@ class ReportConfigurationViewSet(
     API endpoint that allows adding/updating/viewing Report Configurations
     """
 
-    authentication_classes = (TokenAuthentication, SessionAuthentication)
+    authentication_classes = (IPRestrictedTokenAuthentication, SessionAuthentication)
     queryset = ReportConfiguration.objects.all()
     serializer_class = ReportConfigurationSerializer
     filter_backends = [
