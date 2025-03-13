@@ -22,6 +22,7 @@ from django.contrib.contenttypes.models import ContentType
 from covmanager.models import Collection, CollectionFile, Repository
 from crashmanager.models import Client, Tool
 from crashmanager.models import User as cmUser
+from crashmanager.tests.conftest import user_restricted, user_normal, cm
 
 LOG = logging.getLogger("fm.covmanager.tests")
 

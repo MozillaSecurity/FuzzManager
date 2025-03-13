@@ -140,3 +140,44 @@ def test_unrestricted_user_crash_report_any_tool(user_normal, api_client, cm, to
 
     response = api_client.post("/crashmanager/rest/crashes/", data)
     assert response.status_code == status.HTTP_201_CREATED
+
+
+def test_crash_report_missing_tool_parameter(user_normal, api_client, cm, tools):
+    """Test error handling when tool parameter is missing"""
+    # Add required permissions
+    view_perm = Permission.objects.get(codename="view_crashmanager")
+    report_perm = Permission.objects.get(codename="crashmanager_report_crashes")
+    user_normal.user_permissions.add(view_perm, report_perm)
+
+    # Add testcase creation
+    testcase = cm.create_testcase("test.txt", quality=0)
+
+    crash_data = cm.create_crash(
+        tool=tools[0].name,  # Using a tool for creation but omitting it in the request
+        shortSignature="test_crash",
+        crashdata="test_data",
+        product="test_product",
+        product_version="1.0",
+        platform="linux",
+        testcase=testcase,
+    )
+
+    data = {
+        "rawStdout": crash_data.rawStdout,
+        "rawStderr": crash_data.rawStderr,
+        "rawCrashData": crash_data.rawCrashData,
+        "testcase": "test.txt",
+        # "tool" parameter intentionally omitted
+        "platform": "x86_64",
+        "product": "test_product",
+        "os": "linux",
+        "client": "testclient",
+        "testcase_ext": "txt",
+        "testcase_isbinary": False,
+        "testcase_quality": 0,
+        "product_version": "1.0",
+    }
+
+    response = api_client.post("/crashmanager/rest/crashes/", data)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "Missing required 'tool' parameter" in response.data["message"]
