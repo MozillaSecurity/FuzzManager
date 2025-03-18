@@ -1,13 +1,18 @@
 import logging
 import time
 import uuid
+from ipaddress import (
+    IPv4Address,
+    IPv4Network,
+    IPv6Address,
+    IPv6Network,
+    ip_address,
+    ip_network,
+)
 
 import redis
-
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import PermissionDenied
-
-from ipaddress import ip_address, ip_network, IPv4Address, IPv6Address, IPv4Network, IPv6Network
 
 LOG = logging.getLogger("fuzzmanager.utils")
 
@@ -70,6 +75,7 @@ class RedisLock:
         )
         return False
 
+
 def get_client_ip(request):
     """
     Extracts the client IP address from request headers.
@@ -79,23 +85,24 @@ def get_client_ip(request):
         ip = x_forwarded_for.split(",")[0].strip()
     else:
         ip = request.META.get("REMOTE_ADDR")
-    
+
     return ip
+
 
 class IPRestrictedTokenAuthentication(TokenAuthentication):
     def authenticate(self, request):
         auth_result = super().authenticate(request)
-        
+
         # No need to check IP if authentication failed or no token was provided
         if not auth_result:
             return auth_result
 
         user, token = auth_result
-        
+
         if not self.is_from_allowed_ip(request, token):
             LOG.warning(f"IP address restricted for token: {token.key[:8]}...")
             raise PermissionDenied("IP address restricted. Access denied.")
-            
+
         return auth_result
 
     def is_from_allowed_ip(self, request, token):
@@ -104,16 +111,16 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
         """
         client_ip = get_client_ip(request)
         from .models import TokenIPRestriction
-        
+
         ip_restrictions = TokenIPRestriction.objects.filter(token=token)
-        
+
         # All users have open policy access by default
         if not ip_restrictions.exists():
             TokenIPRestriction.objects.create(token=token, ip_range="0.0.0.0/0")
             TokenIPRestriction.objects.create(token=token, ip_range="::/0")
             return True
 
-        # First, try to parse the client IP as a valid IP address 
+        # First, try to parse the client IP as a valid IP address
         try:
             ip_obj = ip_address(client_ip)
         except ValueError:
@@ -125,15 +132,18 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
             try:
                 # For network ranges, we use ip_network (which handles CIDR notation)
                 network = ip_network(restriction.ip_range, strict=False)
-                
+
                 # Check if the IP is within the allowed range
-                if (isinstance(ip_obj, IPv4Address) and isinstance(network, IPv4Network)) or \
-                   (isinstance(ip_obj, IPv6Address) and isinstance(network, IPv6Network)):
+                if (
+                    isinstance(ip_obj, IPv4Address) and isinstance(network, IPv4Network)
+                ) or (
+                    isinstance(ip_obj, IPv6Address) and isinstance(network, IPv6Network)
+                ):
                     if ip_obj in network:
                         return True
 
             except ValueError:
                 LOG.warning(f"Invalid network definition: {restriction.ip_range}")
                 continue
-                
+
         return False

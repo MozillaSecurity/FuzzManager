@@ -13,8 +13,8 @@ from rest_framework import filters, mixins, viewsets
 from rest_framework.authentication import SessionAuthentication
 
 from crashmanager.models import Tool
-from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 from server.utils import IPRestrictedTokenAuthentication
+from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Collection, Report, ReportConfiguration, ReportSummary, Repository
 from .serializers import (

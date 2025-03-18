@@ -11,8 +11,8 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from server.auth import CheckAppPermission
-from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 from server.utils import IPRestrictedTokenAuthentication
+from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
 from .models import Pool, Task
 from .serializers import (
@@ -104,7 +104,9 @@ class TaskViewSet(
         return super().get_serializer(*args, **kwds)
 
     @action(
-        detail=False, methods=["post"], authentication_classes=(IPRestrictedTokenAuthentication,)
+        detail=False,
+        methods=["post"],
+        authentication_classes=(IPRestrictedTokenAuthentication,),
     )
     def update_status(self, request):
         if set(request.data.keys()) != {"client", "status_data"}:
