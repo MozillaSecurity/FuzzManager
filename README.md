@@ -71,8 +71,7 @@ Dependency constraints are listed in [requirements.txt](requirements.txt). You c
 
 ```pip install -c requirements.txt '.[server]'```
 
-A [Redis](https://redis.io/) server is also required for EC2SpotManager, and can be installed on a Debian-based Linux
-with: 
+A [Redis](https://redis.io/) server is also required for EC2SpotManager and API rate limiting, and can be installed on a Debian-based Linux with:
 
 ```sudo apt-get install redis-server```
 
