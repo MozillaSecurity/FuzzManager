@@ -1,0 +1,34 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitStart"
+          git config --global user.email "bot@gitstart.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream ${{ github.event.repository.parent.html_url || 'https://github.com/gitstart/FuzzManager.git' }}
+          git fetch upstream
+
+      - name: Sync fork with upstream
+        run: |
+          git checkout master
+          git merge upstream/master
+          git push origin master
