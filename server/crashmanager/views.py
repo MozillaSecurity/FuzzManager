@@ -7,8 +7,9 @@ from wsgiref.util import FileWrapper
 from django.conf import settings as django_settings
 from django.conf import settings as djangosettings
 from django.core.exceptions import FieldError, PermissionDenied, SuspiciousOperation
-from django.db.models import F, Q
-from django.db.models.aggregates import Count, Min
+from django.db.models import F, OuterRef, Q, Subquery
+from django.db.models.aggregates import Count, Min, Sum
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -37,6 +38,7 @@ from .forms import (
 from .models import (
     Bucket,
     BucketHit,
+    BucketStatistics,
     BucketWatch,
     Bug,
     BugProvider,
@@ -138,11 +140,22 @@ def filter_signatures_by_toolfilter(
         if "tool" in request.GET:
             tool_name = request.GET["tool"]
             tool = get_object_or_404(Tool, name=tool_name)
-            return signatures.filter(crashentry__tool=tool)
+
+            return signatures.filter(
+                id__in=BucketStatistics.objects.filter(tool=tool, size__gt=0).values(
+                    "bucket"
+                )
+            )
 
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
-        return signatures.filter(crashentry__tool__in=set(defaultToolsFilter))
+        return signatures.filter(
+            id__in=BucketStatistics.objects.filter(
+                tool__in=defaultToolsFilter,
+                size__gt=0,
+            ).values("bucket")
+        )
+
     elif user.restricted:
         return Bucket.objects.none()
 
@@ -986,8 +999,30 @@ class BucketAnnotateFilterBackend(BaseFilterBackend):
     """Annotates bucket queryset with size and best_quality"""
 
     def filter_queryset(self, request, queryset, view):
+        user = User.get_or_create_restricted(request.user)[0]
+        defaultToolsFilter = user.defaultToolsFilter.all()
+
+        # Handle unrestricted users with no filtering
+        if not user.restricted and (
+            getattr(view, "ignore_toolfilter", False) or not defaultToolsFilter
+        ):
+            stats = BucketStatistics.objects.filter(bucket=OuterRef("pk"))
+
+        else:
+            if not defaultToolsFilter and user.restricted:
+                return queryset
+
+            stats = BucketStatistics.objects.filter(
+                bucket=OuterRef("pk"), tool__in=defaultToolsFilter
+            )
+
+        stats = stats.values("bucket").annotate(
+            total_size=Sum("size"), min_quality=Min("quality")
+        )
+
         return queryset.annotate(
-            size=Count("crashentry"), quality=Min("crashentry__testcase__quality")
+            size=Coalesce(Subquery(stats.values("total_size")[:1]), 0),
+            quality=Subquery(stats.values("min_quality")[:1]),
         )
 
 

@@ -10,6 +10,7 @@ from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.db.models import Min
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
@@ -391,6 +392,49 @@ class Bucket(models.Model):
         return (optimizedSignature, matchingEntries)
 
 
+class BucketStatistics(models.Model):
+    bucket = models.ForeignKey(Bucket, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
+    size = models.IntegerField(default=0)
+    quality = models.IntegerField(null=True)
+
+    @classmethod
+    def increment_count(cls, bucket_id, tool_id, quality=None):
+        stats, _ = cls.objects.get_or_create(bucket_id=bucket_id, tool_id=tool_id)
+        stats.size += 1
+        if quality is not None:
+            if stats.quality is None or quality < stats.quality:
+                stats.quality = quality
+        stats.save()
+
+    @classmethod
+    def decrement_count(cls, bucket_id, tool_id, removed_quality=None):
+        stats = cls.objects.filter(bucket_id=bucket_id, tool_id=tool_id).first()
+
+        if stats and stats.size > 0:
+            stats.size -= 1
+
+            # Recalculate quality if:
+            # - We still have entries (size > 0)
+            # - AND the removed quality is less than or equal to the current minimum
+            if stats.size > 0:
+                if removed_quality is not None and removed_quality <= stats.quality:
+                    stats.quality = CrashEntry.objects.filter(
+                        bucket_id=bucket_id, tool_id=tool_id, testcase__isnull=False
+                    ).aggregate(min_quality=Min("testcase__quality"))["min_quality"]
+            else:
+                stats.quality = None
+            stats.save()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bucket", "tool"],
+                name="unique_bucketstats_per_tool",
+            ),
+        ]
+
+
 def buckethit_default_range_begin():
     return timezone.now().replace(microsecond=0, second=0, minute=0)
 
@@ -684,6 +728,11 @@ def CrashEntry_delete(sender, instance, **kwargs):
         BucketHit.decrement_count(
             instance.bucket_id, instance.tool_id, instance.created
         )
+        BucketStatistics.decrement_count(
+            instance.bucket_id,
+            instance.tool_id,
+            instance.testcase.quality if instance.testcase else None,
+        )
 
 
 @receiver(post_delete, sender=TestCase)
@@ -704,11 +753,22 @@ def CrashEntry_save(sender, instance, created, **kwargs):
             BucketHit.decrement_count(
                 instance._original_bucket, instance.tool_id, instance.created
             )
+            # remove BucketStatistics for old bucket
+            BucketStatistics.decrement_count(
+                instance._original_bucket,
+                instance.tool_id,
+                instance.testcase.quality if instance.testcase else None,
+            )
 
         if instance.bucket is not None:
             # add BucketHit for new bucket
             BucketHit.increment_count(
                 instance.bucket_id, instance.tool_id, instance.created
+            )
+            # add BucketStatistics for new bucket
+            quality = instance.testcase.quality if instance.testcase else None
+            BucketStatistics.increment_count(
+                instance.bucket_id, instance.tool_id, quality
             )
 
         if instance.bucket is not None:
