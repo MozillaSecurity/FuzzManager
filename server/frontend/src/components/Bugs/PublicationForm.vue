@@ -521,10 +521,20 @@
             >
             <input
               id="testcase_filename"
-              v-model="template.testcase_filename"
+              v-model="fileName"
               name="testcase_filename"
               type="text"
               class="form-control"
+            />
+          </div>
+          <div class="col-md-2">
+            <label for="file_extension">File extension:</label>
+            <input
+              id="file_extension"
+              type="text"
+              class="form-control"
+              disabled
+              :value="fileExtension"
             />
           </div>
         </div>
@@ -545,8 +555,10 @@
             :initial-not-attach-test="notAttachTest"
             :entry="entry"
             :template="template"
+            :file-extension="fileExtension"
+            :file-name="fileName"
             @update-not-attach-test="notAttachTest = $event"
-            @update-filename="entry.testcase = $event"
+            @update-filename="fileName = $event"
             @update-content="testCaseContent = $event"
           />
 
@@ -693,6 +705,8 @@ import {
   watch,
 } from "vue";
 import * as api from "../../api";
+
+import mime from "mime";
 import * as bugzillaApi from "../../bugzilla_api";
 import * as HandlebarsHelpers from "../../handlebars_helpers";
 import { errorParser } from "../../helpers";
@@ -797,10 +811,47 @@ export default defineComponent({
       fields: {},
       server: null,
     });
+    const fileExtension = ref(null);
+    const fileName = ref(null);
     const formElement = ref(null);
 
     const bugLink = computed(() => {
       return `https://${provider.value.hostname}/${createdBugId.value}`;
+    });
+
+    const filenameWithExtension = computed(() => {
+      return `${fileName.value}.${fileExtension.value}`;
+    });
+
+    watch(() => {
+      if (entry.value) {
+        // extract file name
+        const splittedAttachmentFilename = template.value?.testcase_filename
+          ? template.value.testcase_filename
+          : entry.value.testcase.split("/");
+
+        const attachmentFilenameAndExtension =
+          splittedAttachmentFilename[
+            splittedAttachmentFilename?.length - 1
+          ].split(".");
+
+        fileName.value = attachmentFilenameAndExtension[0];
+        fileExtension.value = attachmentFilenameAndExtension[1];
+      }
+    });
+
+    const fileMimetype = computed(() => {
+      const mimeType = mime.getType(filenameWithExtension.value);
+
+      if (mimeType) {
+        return mimeType;
+      }
+
+      if (entry.value.testcase_isbinary) {
+        return "application/octet-stream";
+      }
+
+      return "text/plain";
     });
 
     const bugzillaToken = computed(() => {
@@ -860,7 +911,7 @@ export default defineComponent({
       if (!template.value || !entry.value) return "";
       try {
         const compiled = Handlebars.compile(template.value.description);
-        let rendered = compiled({
+        const renderedData = {
           summary: summary.value,
           shortsig: entry.value.shortSignature,
           product: entry.value.product,
@@ -877,7 +928,15 @@ export default defineComponent({
             ? "(Crash data not available)"
             : "For detailed crash information, see attachment.",
           ...metadataExtension(template.value.description),
-        });
+        };
+
+        if (!notAttachTest.value) {
+          renderedData["testcase_attachment"] = filenameWithExtension.value;
+        } else {
+          delete renderedData["testcase_attachment"];
+        }
+
+        let rendered = compiled(renderedData);
 
         // Remove the specified pathPrefix from traces and assertion
         if (entryMetadata.value.pathprefix)
@@ -1071,6 +1130,7 @@ export default defineComponent({
 
       const payload = {
         ...template.value,
+        testcase_filename: filenameWithExtension.value,
         product: product.value,
         component: component.value,
         op_sys: opSys.value,
@@ -1135,11 +1195,9 @@ export default defineComponent({
             data: entry.value.testcase_isbinary
               ? Base64.fromUint8Array(content)
               : Base64.encode(content),
-            file_name: entry.value.testcase,
+            file_name: filenameWithExtension.value,
             summary: "Testcase",
-            content_type: entry.value.testcase_isbinary
-              ? "application/octet-stream"
-              : "text/plain",
+            content_type: fileMimetype.value,
           };
 
           await bugzillaApi.createAttachment({
@@ -1285,6 +1343,10 @@ export default defineComponent({
       goBack,
       createExternalBug,
       createOrUpdateBugzillaBugTemplate,
+      filenameWithExtension,
+      fileMimetype,
+      fileExtension,
+      fileName,
     };
   },
 });

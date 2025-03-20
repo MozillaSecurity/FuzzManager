@@ -19,6 +19,7 @@
         "handlebars": "^4.7.8",
         "js-base64": "^3.7.7",
         "lodash": "^4.17.21",
+        "mime": "^4.0.6",
         "prismjs": "^1.29.0",
         "sweetalert": "^2.1.2",
         "vue": "^3.4.21",
