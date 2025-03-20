@@ -7,9 +7,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import pytest
-from django.core.management import call_command
 from django.contrib.auth.models import User
-from crashmanager.models import Tool, User as CrashManagerUser
+from django.core.management import call_command
+
+from crashmanager.models import Tool
+from crashmanager.models import User as CrashManagerUser
 
 pytestmark = pytest.mark.django_db()
 

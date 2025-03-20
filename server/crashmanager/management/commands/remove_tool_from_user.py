@@ -1,6 +1,8 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User as DjangoUser
-from crashmanager.models import Tool, User as CrashManagerUser
+from django.core.management.base import BaseCommand
+
+from crashmanager.models import Tool
+from crashmanager.models import User as CrashManagerUser
 
 
 class Command(BaseCommand):

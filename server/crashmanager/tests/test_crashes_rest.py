@@ -465,8 +465,6 @@ def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
         },
     ],
 )
-
-
 def test_rest_crashes_report_crash(api_client, user, data, user_restricted_with_tools):
     """test that crash reporting works"""
     resp = api_client.post("/crashmanager/rest/crashes/", data=data)

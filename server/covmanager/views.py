@@ -9,10 +9,9 @@ from django.http import Http404
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.response import Response
-from rest_framework import status
 
 from crashmanager.models import Tool, User
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
@@ -738,7 +737,10 @@ class CollectionViewSet(
             if unauthorized_tools:
                 raise PermissionDenied(
                     {
-                        "message": f"You don't have permission to use the following tools: {', '.join(unauthorized_tools)}"
+                        "message": (
+                            f"You don't have permission to use the following tools: "
+                            f"{', '.join(unauthorized_tools)}"
+                        )
                     }
                 )
 

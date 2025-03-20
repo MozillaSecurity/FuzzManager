@@ -7,12 +7,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import json
+
 import pytest
-from django.contrib.auth.models import Permission
 from rest_framework import status
 
-from crashmanager.models import Tool, Client
 from covmanager.models import Repository
+from crashmanager.models import Client, Tool
 
 pytestmark = pytest.mark.django_db()
 
@@ -20,25 +20,17 @@ pytestmark = pytest.mark.django_db()
 @pytest.fixture
 def tools():
     return [
-        Tool.objects.create(name="tool1"),
-        Tool.objects.create(name="tool2"),
-        Tool.objects.create(name="tool3"),
+        Tool.objects.get_or_create(name="tool1")[0],
+        Tool.objects.get_or_create(name="tool2")[0],
+        Tool.objects.get_or_create(name="tool3")[0],
     ]
 
 
 def test_restricted_user_coverage_multiple_tools(
-    user_restricted, api_client, cm, tools
+    covmgr_user_restricted, api_client, covmgr_helper, tools
 ):
-    # Add base view permission
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    user_restricted.user_permissions.add(view_perm)
-
-    # Add collection submission permission
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_restricted.user_permissions.add(submit_perm)
-
-    # Then create toolfilter and test as before
-    cm.create_toolfilter("tool1", user=user_restricted.username)
+    # Add tool1 to the user's default tool filter
+    covmgr_helper.create_toolfilter("tool1", covmgr_user_restricted.username)
 
     coverage_data = {
         "repository": "testrepo",
@@ -60,16 +52,10 @@ def test_restricted_user_coverage_multiple_tools(
 
 
 def test_restricted_user_coverage_single_authorized_tool(
-    user_restricted, api_client, cm, tools
+    covmgr_user_restricted, api_client, covmgr_helper, tools
 ):
-    # Add required permissions
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_restricted.user_permissions.add(view_perm, submit_perm)
-
-    # Create toolfilter for authorized tool
-    cm.create_toolfilter("tool1", user=user_restricted.username)
-
+    # Add tool1 to the user's default tool filter
+    covmgr_helper.create_toolfilter("tool1", covmgr_user_restricted.username)
     # Create required client
     Client.objects.create(name="testclient")
 
@@ -97,13 +83,8 @@ def test_restricted_user_coverage_single_authorized_tool(
 
 
 def test_restricted_user_coverage_single_unauthorized_tool(
-    user_restricted, api_client, cm, tools
+    covmgr_user_restricted, api_client, tools
 ):
-    # Add required permissions
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_restricted.user_permissions.add(view_perm, submit_perm)
-
     coverage_data = {
         "repository": "testrepo",
         "revision": "abc123",
@@ -124,12 +105,7 @@ def test_restricted_user_coverage_single_unauthorized_tool(
     assert "No tools assigned to user" in response.data["message"]
 
 
-def test_unrestricted_user_coverage_single_tool(user_normal, api_client, cm, tools):
-    # Add required permissions
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_normal.user_permissions.add(view_perm, submit_perm)
-
+def test_unrestricted_user_coverage_single_tool(covmgr_user_normal, api_client, tools):
     # Create required client
     Client.objects.create(name="testclient")
     Repository.objects.create(name="testrepo", classname="git")
@@ -154,12 +130,9 @@ def test_unrestricted_user_coverage_single_tool(user_normal, api_client, cm, too
     assert response.status_code == status.HTTP_201_CREATED
 
 
-def test_unrestricted_user_coverage_multiple_tools(user_normal, api_client, cm, tools):
-    # Add required permissions
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_normal.user_permissions.add(view_perm, submit_perm)
-
+def test_unrestricted_user_coverage_multiple_tools(
+    covmgr_user_normal, api_client, tools
+):
     # Create required client
     Client.objects.create(name="testclient")
     Repository.objects.create(name="testrepo", classname="git")
@@ -184,13 +157,8 @@ def test_unrestricted_user_coverage_multiple_tools(user_normal, api_client, cm, 
     assert response.status_code == status.HTTP_201_CREATED
 
 
-def test_coverage_missing_tools_parameter(user_normal, api_client, cm, tools):
+def test_coverage_missing_tools_parameter(covmgr_user_normal, api_client, tools):
     """Test error handling when tools parameter is missing"""
-    # Add required permissions
-    view_perm = Permission.objects.get(codename="view_covmanager")
-    submit_perm = Permission.objects.get(codename="covmanager_submit_collection")
-    user_normal.user_permissions.add(view_perm, submit_perm)
-
     # Create required client
     Client.objects.create(name="testclient")
     Repository.objects.create(name="testrepo", classname="git")
