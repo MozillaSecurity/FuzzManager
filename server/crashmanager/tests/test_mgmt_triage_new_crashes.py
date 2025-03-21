@@ -62,23 +62,26 @@ def test_some():
         "tool": Tool.objects.create(),
     }
     crashes = [
-        CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
+        CrashEntry.objects.create(
+            bucket=buckets[0], rawStderr="match", triagedOnce=True, **defaults
+        ),
         CrashEntry.objects.create(rawStderr="match", **defaults),
         CrashEntry.objects.create(rawStderr="blah", **defaults),
     ]
-    for c in crashes:
-        assert not c.triagedOnce
+    assert crashes[0].triagedOnce
+    assert not crashes[1].triagedOnce
+    assert not crashes[2].triagedOnce
 
     call_command("triage_new_crashes")
 
     crashes = [CrashEntry.objects.get(pk=c.pk) for c in crashes]
 
-    for c in crashes:
-        assert c.triagedOnce
-
     assert crashes[0].bucket.pk == buckets[0].pk
     assert crashes[1].bucket.pk == buckets[1].pk
     assert crashes[2].bucket is None
+
+    for c in crashes:
+        assert c.triagedOnce
 
 
 def test_some_with_notification():
@@ -102,12 +105,15 @@ def test_some_with_notification():
         "tool": Tool.objects.create(),
     }
     crashes = [
-        CrashEntry.objects.create(bucket=buckets[0], rawStderr="match", **defaults),
+        CrashEntry.objects.create(
+            bucket=buckets[0], rawStderr="match", triagedOnce=True, **defaults
+        ),
         CrashEntry.objects.create(rawStderr="match", **defaults),
         CrashEntry.objects.create(rawStderr="blah", **defaults),
     ]
-    for c in crashes:
-        assert not c.triagedOnce
+    assert crashes[0].triagedOnce
+    assert not crashes[1].triagedOnce
+    assert not crashes[2].triagedOnce
     user, _ = cmUser.objects.get_or_create(user=User.objects.get(username="test"))
     user.bucket_hit = True
     user.save()
@@ -117,12 +123,12 @@ def test_some_with_notification():
 
     crashes = [CrashEntry.objects.get(pk=c.pk) for c in crashes]
 
-    for c in crashes:
-        assert c.triagedOnce
-
     assert crashes[0].bucket.pk == buckets[0].pk
     assert crashes[1].bucket.pk == buckets[1].pk
     assert crashes[2].bucket is None
+
+    for c in crashes:
+        assert c.triagedOnce
 
     assert Notification.objects.count() == 1
     notification = Notification.objects.first()
