@@ -61,7 +61,7 @@ class TaskStatusReporter(Reporter):
             "status_data": text,
         }
 
-        self.post(url, data, expected=requests.codes["ok"])
+        self.post(url, data, expected=requests.codes["ok"], max_sleep=0)
 
 
 def main(argv=None):

@@ -74,12 +74,15 @@ def requests_retry(wrapped):
     @functools.wraps(wrapped)
     def wrapper(*args, **kwds):
         success = kwds.pop("expected")
+        # max_sleep is the upper limit for exponential backoff,
+        # which begins at 2s and doubles each retry
+        max_sleep = kwds.pop("max_sleep", 64)
         current_timeout = 2
         while True:
             try:
                 response = wrapped(*args, **kwds)
             except requests.exceptions.ConnectionError as exc:
-                if current_timeout <= 64:
+                if current_timeout <= max_sleep:
                     LOG.warning("in %s, %s, retrying...", wrapped.__name__, exc)
                     time.sleep(current_timeout)
                     current_timeout *= 2
@@ -90,7 +93,7 @@ def requests_retry(wrapped):
                 # Allow for a total sleep time of up to 2 minutes if it's
                 # likely that the response codes indicate a temporary error
                 retry_codes = [500, 502, 503, 504]
-                if response.status_code in retry_codes and current_timeout <= 64:
+                if response.status_code in retry_codes and current_timeout <= max_sleep:
                     LOG.warning(
                         "in %s, server returned %s, retrying...",
                         wrapped.__name__,
