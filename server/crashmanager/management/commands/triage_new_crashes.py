@@ -16,10 +16,3 @@ class Command(BaseCommand):
 
         for entry in entries:
             call_command("triage_new_crash", entry)
-
-        # This query ensures that all issues that have been bucketed manually before
-        # the server had a chance to triage them will have their triageOnce flag set,
-        # so the hourglass in the UI isn't displayed anymore.
-        CrashEntry.deferRawFields(
-            CrashEntry.objects.filter(triagedOnce=False, bucket__isnull=False)
-        ).update(triagedOnce=True)

@@ -282,7 +282,9 @@ class Bucket(models.Model):
                         BucketHit.increment_count(
                             self.id, crash["tool_id"], crash["created"]
                         )
-                CrashEntry.objects.filter(pk__in=updList).update(bucket=self)
+                CrashEntry.objects.filter(pk__in=updList).update(
+                    bucket=self, triagedOnce=True
+                )
             while outList:
                 updList, outList = outList[:500], outList[500:]
                 for crash in CrashEntry.objects.filter(pk__in=updList).values(
@@ -295,6 +297,9 @@ class Bucket(models.Model):
                 CrashEntry.objects.filter(pk__in=updList).update(
                     bucket=None, triagedOnce=False
                 )
+                if getattr(settings, "USE_CELERY", None):
+                    for crash_id in updList:
+                        triage_new_crash.delay(crash_id)
 
         return inList, outList, inListCount, outListCount, nextOffset
 
@@ -744,7 +749,8 @@ def TestCase_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=CrashEntry)
 def CrashEntry_save(sender, instance, created, **kwargs):
     if getattr(settings, "USE_CELERY", None):
-        if created and not instance.triagedOnce:
+        # this could mean the crash is new, or that it was edited and reparsed
+        if not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
