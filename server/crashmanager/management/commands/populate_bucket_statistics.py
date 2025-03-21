@@ -32,7 +32,7 @@ class Command(BaseCommand):
             for tool in tools:
                 with transaction.atomic():
                     crashes = CrashEntry.objects.filter(bucket=bucket, tool=tool)
-                    stats = crashes.aggregate(
+                    stats = CrashEntry.deferRawFields(crashes).aggregate(
                         size=Count("id"), quality=Min("testcase__quality")
                     )
 
