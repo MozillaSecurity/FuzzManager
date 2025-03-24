@@ -22,20 +22,6 @@ pytestmark = pytest.mark.django_db
 RATE_LIMIT_THRESHOLD = 100
 
 
-@pytest.fixture(autouse=True)
-def setup_test_cache(settings):
-    """Configure test-specific cache settings"""
-    settings.CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": settings.REDIS_URL.replace("?db=0", "?db=1"),
-        }
-    }
-    cache.clear()
-    yield
-    cache.clear()
-
-
 @pytest.mark.parametrize(
     ("name"),
     [
