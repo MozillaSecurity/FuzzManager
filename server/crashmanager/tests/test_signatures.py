@@ -17,7 +17,7 @@ import pytest
 import requests
 from django.urls import reverse
 
-from crashmanager.models import Bucket, BucketWatch, CrashEntry
+from crashmanager.models import Bucket, BucketStatistics, BucketWatch, CrashEntry
 
 from . import assert_contains
 
@@ -373,3 +373,22 @@ def test_watch_signature_crashes(client, cm):  # pylint: disable=invalid-name
     assert response.context["watchId"] == watch.id
     assert response.context["restricted"] is False
     assert_contains(response, "crasheslist")
+
+
+def test_bucket_statistics_creation(client, cm):
+    """Test that BucketStatistics are created when crashes are added to buckets"""
+    client.login(username="test", password="test")
+
+    # Create bucket and crashes
+    bucket = cm.create_bucket(shortDescription="bucket #1")
+
+    cm.create_crash(shortSignature="crash #1", tool="tool1", bucket=bucket)
+    cm.create_crash(shortSignature="crash #2", tool="tool1", bucket=bucket)
+    cm.create_crash(shortSignature="crash #3", tool="tool2", bucket=bucket)
+
+    # Verify statistics were created
+    stats1 = BucketStatistics.objects.get(bucket=bucket, tool__name="tool1")
+    assert stats1.size == 2
+
+    stats2 = BucketStatistics.objects.get(bucket=bucket, tool__name="tool2")
+    assert stats2.size == 1
