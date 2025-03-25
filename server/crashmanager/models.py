@@ -272,15 +272,23 @@ class Bucket(models.Model):
             while inList:
                 updList, inList = inList[:500], inList[500:]
                 for crash in CrashEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+                    "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] != self.id:
                         if crash["bucket_id"] is not None:
                             BucketHit.decrement_count(
                                 crash["bucket_id"], crash["tool_id"], crash["created"]
                             )
+                            BucketStatistics.decrement_count(
+                                crash["bucket_id"],
+                                crash["tool_id"],
+                                crash["testcase__quality"],
+                            )
                         BucketHit.increment_count(
                             self.id, crash["tool_id"], crash["created"]
+                        )
+                        BucketStatistics.increment_count(
+                            self.id, crash["tool_id"], crash["testcase__quality"]
                         )
                 CrashEntry.objects.filter(pk__in=updList).update(
                     bucket=self, triagedOnce=True
@@ -288,11 +296,16 @@ class Bucket(models.Model):
             while outList:
                 updList, outList = outList[:500], outList[500:]
                 for crash in CrashEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+                    "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] is not None:
                         BucketHit.decrement_count(
                             crash["bucket_id"], crash["tool_id"], crash["created"]
+                        )
+                        BucketStatistics.decrement_count(
+                            crash["bucket_id"],
+                            crash["tool_id"],
+                            crash["testcase__quality"],
                         )
                 CrashEntry.objects.filter(pk__in=updList).update(
                     bucket=None, triagedOnce=False
@@ -422,7 +435,7 @@ class BucketStatistics(models.Model):
             # Recalculate quality if:
             # - We still have entries (size > 0)
             # - AND the removed quality is less than or equal to the current minimum
-            if stats.size > 0:
+            if stats.size > 0 and stats.quality is not None:
                 if removed_quality is not None and removed_quality <= stats.quality:
                     stats.quality = CrashEntry.objects.filter(
                         bucket_id=bucket_id, tool_id=tool_id, testcase__isnull=False
