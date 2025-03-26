@@ -18,6 +18,21 @@ import sys
 if importlib.util.find_spec("django"):
     pytest_plugins = ["covmanager.tests.conftest"]
 
+    try:
+        import pytest
+        from django.core.cache import cache
+
+        # Cache clearing ensures each test starts with fresh rate limit counters,
+        # preventing false throttling errors and maintaining test isolation
+        @pytest.fixture(autouse=True)
+        def clear_cache():
+            cache.clear()
+            yield
+            cache.clear()
+
+    except ImportError:
+        pass
+
 
 def pytest_ignore_collect(collection_path, config):
     # 3.12 not supported yet
