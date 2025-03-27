@@ -696,6 +696,7 @@
 <script>
 import Handlebars from "handlebars";
 import { Base64 } from "js-base64";
+import _orderBy from "lodash/orderBy";
 import {
   computed,
   defineComponent,
@@ -1290,13 +1291,12 @@ export default defineComponent({
 
       // Prevent updating the template value when on the "Bug Template Creation" page
       if (props.templateId !== null) {
-        data = await api.listTemplates(props.templateId);
+        data = await api.listTemplates();
 
-        if (!data.results) {
-          data.results = [data];
-        }
-
-        templates.value = data.results.filter((t) => t.mode === "bug");
+        templates.value = _orderBy(
+          data.results.filter((t) => t.mode === "bug"),
+          ["name"],
+        );
         template.value = templates.value.find((t) => t.id === props.templateId);
 
         if (template.value) {
