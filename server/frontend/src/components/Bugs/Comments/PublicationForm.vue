@@ -229,6 +229,7 @@
 <script>
 import Handlebars from "handlebars";
 import { Base64 } from "js-base64";
+import _orderBy from "lodash/orderBy";
 import mime from "mime";
 import { defineComponent } from "vue";
 import * as api from "../../../api";
@@ -435,7 +436,10 @@ export default defineComponent({
     this.selectedProvider = this.provider.id;
 
     data = await api.listTemplates();
-    this.templates = data.results.filter((t) => t.mode === "comment");
+    this.templates = _orderBy(
+      data.results.filter((t) => t.mode === "comment"),
+      ["name"],
+    );
     this.template = this.templates.find((t) => t.id === this.templateId);
     if (this.template) {
       this.selectedTemplate = this.template.id;
