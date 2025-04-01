@@ -35,6 +35,7 @@
 					:default-template-selected="{{ user.defaultTemplateId }}"
 					initial-email="{{ email }}"
 					:allow-email-edit="{{ allow_email_edit|yesno:'true,false' }}"
+					:allow-tool-filter-edit="{{ user.restricted|yesno:'false,true' }}"
 					:subscribe-notification-options="[
 						{% for notification in notificationChoices %}
 						{ code: '{{ notification.id }}', name: '{{ notification.label }}', selected: {{ notification.initial|yesno:'true,false' }} },

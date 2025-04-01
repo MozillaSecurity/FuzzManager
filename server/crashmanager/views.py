@@ -1721,11 +1721,6 @@ class UserSettingsEditView(UpdateView):
     form_class = UserSettingsForm
     success_url = reverse_lazy("crashmanager:usersettings")
 
-    def get_form_kwargs(self, **kwargs):
-        kwargs = super().get_form_kwargs(**kwargs)
-        kwargs["user"] = self.get_queryset().get(user=self.request.user)
-        return kwargs
-
     def get_object(self):
         return self.get_queryset().get(user=self.request.user)
 
@@ -1751,7 +1746,6 @@ class UserSettingsEditView(UpdateView):
                 "bugzilla_providers": BugProvider.objects.filter(
                     classname="BugzillaProvider"
                 ),
-                "user": user_object,
                 "email": self.request.user.email,
                 "allow_email_edit": djangosettings.ALLOW_EMAIL_EDITION,
                 "form_errors": form_errors,
