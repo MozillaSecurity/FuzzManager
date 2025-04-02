@@ -79,7 +79,15 @@ class TestCase(models.Model):
         # automatically. You must call the loadTest method if you
         # want to access the test content
 
+        self._original_quality = None
+
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._original_quality = instance.quality
+        return instance
 
     def loadTest(self):
         self.test.open(mode="rb")
@@ -92,6 +100,21 @@ class TestCase(models.Model):
         self.test.write(self.content)
         self.test.close()
         self.save()
+
+
+@receiver(post_delete, sender=TestCase)
+def TestCase_delete(sender, instance, **kwargs):
+    if instance.test:
+        instance.test.delete(False)
+
+
+@receiver(post_save, sender=TestCase)
+def TestCase_save(sender, instance, created, **kwargs):
+    crash = CrashEntry.objects.filter(testcase_id=instance.id).first()
+    if crash and crash.bucket is not None and instance._original_quality is not None:
+        BucketStatistics.update_quality(
+            crash.bucket_id, crash.tool_id, instance._original_quality, instance.quality
+        )
 
 
 class Client(models.Model):
@@ -444,6 +467,21 @@ class BucketStatistics(models.Model):
                 stats.quality = None
             stats.save()
 
+    @classmethod
+    def update_quality(cls, bucket_id, tool_id, old_quality, new_quality):
+        """called when a crash.testcase quality is changed"""
+        stats = cls.objects.filter(bucket_id=bucket_id, tool_id=tool_id).first()
+
+        if stats:
+            if stats.quality is None or new_quality < stats.quality:
+                stats.quality = new_quality
+                stats.save()
+            elif old_quality == stats.quality and new_quality > old_quality:
+                stats.quality = CrashEntry.objects.filter(
+                    bucket_id=bucket_id, tool_id=tool_id, testcase__isnull=False
+                ).aggregate(min_quality=Min("testcase__quality"))["min_quality"]
+                stats.save()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -751,12 +789,6 @@ def CrashEntry_delete(sender, instance, **kwargs):
             instance.tool_id,
             instance.testcase.quality if instance.testcase else None,
         )
-
-
-@receiver(post_delete, sender=TestCase)
-def TestCase_delete(sender, instance, **kwargs):
-    if instance.test:
-        instance.test.delete(False)
 
 
 @receiver(post_save, sender=CrashEntry)

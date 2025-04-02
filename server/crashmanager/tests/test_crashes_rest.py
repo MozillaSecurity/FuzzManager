@@ -20,7 +20,7 @@ import pytest
 import requests
 from django.utils.http import urlencode
 
-from crashmanager.models import CrashEntry
+from crashmanager.models import BucketStatistics, CrashEntry
 from crashmanager.models import TestCase as cmTestCase
 
 # What should be allowed:
@@ -549,9 +549,10 @@ def test_rest_crashes_report_crash_long_sig(api_client, user_normal):
     _compare_created_data_to_crash(data, crash, short_signature=expected)
 
 
-def test_rest_crash_update(api_client, cm, user_normal):
+@pytest.mark.parametrize("orig_quality, new_quality", ((0, 5), (5, 0)))
+def test_rest_crash_update(api_client, cm, orig_quality, new_quality, user_normal):
     """test that only allowed fields of CrashEntry can be updated"""
-    test = cm.create_testcase("test.txt", quality=0)
+    test = cm.create_testcase("test.txt", quality=orig_quality)
     bucket = cm.create_bucket(shortDescription="bucket #1")
     crash = cm.create_crash(
         shortSignature="crash #1",
@@ -591,12 +592,19 @@ def test_rest_crash_update(api_client, cm, user_normal):
         LOG.debug(resp)
         assert resp.status_code == requests.codes["bad_request"]
     resp = api_client.patch(
-        "/crashmanager/rest/crashes/%d/" % crash.pk, {"testcase_quality": "5"}
+        "/crashmanager/rest/crashes/%d/" % crash.pk,
+        {"testcase_quality": str(new_quality)},
     )
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     test = cmTestCase.objects.get(pk=test.pk)  # re-read
-    assert test.quality == 5
+    assert test.quality == new_quality
+
+    # check that BucketStatistics are updated
+    assert (
+        BucketStatistics.objects.get(bucket_id=bucket.id, tool_id=crash.tool_id).quality
+        == new_quality
+    )
 
 
 def test_rest_crash_update_restricted(api_client, cm, user_restricted):
