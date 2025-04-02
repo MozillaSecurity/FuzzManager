@@ -104,15 +104,24 @@ class Command(BaseCommand):
                 token=token, ip_range="::/0"
             ).exists()
 
-            if (open_ipv4 or open_ipv6) and not options["force"]:
-                self.stdout.write(
-                    self.style.WARNING(
-                        "This token currently has open access. "
-                        "This action will remove the open policy."
+            if open_ipv4 or open_ipv6:
+                should_remove = False
+
+                if options["force"]:
+                    # Auto remove open policies with --force
+                    should_remove = True
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            "This token currently has open access. "
+                            "This action will remove the open policy."
+                        )
                     )
-                )
-                confirm = input("Do you want to remove the open policy? [y/N] ")
-                if confirm.lower() == "y":
+                    confirm = input("Do you want to remove the open policy? [y/N] ")
+                    if confirm.lower() == "y":
+                        should_remove = True
+
+                if should_remove:
                     if open_ipv4:
                         TokenIPRestriction.objects.filter(
                             token=token, ip_range="0.0.0.0/0"
