@@ -10,6 +10,7 @@ from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import FileSystemStorage
 from django.db import models
+from django.db.models import Min
 from django.db.models.signals import post_delete, post_save
 from django.dispatch.dispatcher import receiver
 from django.utils import timezone
@@ -271,29 +272,47 @@ class Bucket(models.Model):
             while inList:
                 updList, inList = inList[:500], inList[500:]
                 for crash in CrashEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+                    "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] != self.id:
                         if crash["bucket_id"] is not None:
                             BucketHit.decrement_count(
                                 crash["bucket_id"], crash["tool_id"], crash["created"]
                             )
+                            BucketStatistics.decrement_count(
+                                crash["bucket_id"],
+                                crash["tool_id"],
+                                crash["testcase__quality"],
+                            )
                         BucketHit.increment_count(
                             self.id, crash["tool_id"], crash["created"]
                         )
-                CrashEntry.objects.filter(pk__in=updList).update(bucket=self)
+                        BucketStatistics.increment_count(
+                            self.id, crash["tool_id"], crash["testcase__quality"]
+                        )
+                CrashEntry.objects.filter(pk__in=updList).update(
+                    bucket=self, triagedOnce=True
+                )
             while outList:
                 updList, outList = outList[:500], outList[500:]
                 for crash in CrashEntry.objects.filter(pk__in=updList).values(
-                    "bucket_id", "created", "tool_id"
+                    "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] is not None:
                         BucketHit.decrement_count(
                             crash["bucket_id"], crash["tool_id"], crash["created"]
                         )
+                        BucketStatistics.decrement_count(
+                            crash["bucket_id"],
+                            crash["tool_id"],
+                            crash["testcase__quality"],
+                        )
                 CrashEntry.objects.filter(pk__in=updList).update(
                     bucket=None, triagedOnce=False
                 )
+                if getattr(settings, "USE_CELERY", None):
+                    for crash_id in updList:
+                        triage_new_crash.delay(crash_id)
 
         return inList, outList, inListCount, outListCount, nextOffset
 
@@ -389,6 +408,49 @@ class Bucket(models.Model):
                     break
 
         return (optimizedSignature, matchingEntries)
+
+
+class BucketStatistics(models.Model):
+    bucket = models.ForeignKey(Bucket, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
+    size = models.IntegerField(default=0)
+    quality = models.IntegerField(null=True)
+
+    @classmethod
+    def increment_count(cls, bucket_id, tool_id, quality=None):
+        stats, _ = cls.objects.get_or_create(bucket_id=bucket_id, tool_id=tool_id)
+        stats.size += 1
+        if quality is not None:
+            if stats.quality is None or quality < stats.quality:
+                stats.quality = quality
+        stats.save()
+
+    @classmethod
+    def decrement_count(cls, bucket_id, tool_id, removed_quality=None):
+        stats = cls.objects.filter(bucket_id=bucket_id, tool_id=tool_id).first()
+
+        if stats and stats.size > 0:
+            stats.size -= 1
+
+            # Recalculate quality if:
+            # - We still have entries (size > 0)
+            # - AND the removed quality is less than or equal to the current minimum
+            if stats.size > 0 and stats.quality is not None:
+                if removed_quality is not None and removed_quality <= stats.quality:
+                    stats.quality = CrashEntry.objects.filter(
+                        bucket_id=bucket_id, tool_id=tool_id, testcase__isnull=False
+                    ).aggregate(min_quality=Min("testcase__quality"))["min_quality"]
+            else:
+                stats.quality = None
+            stats.save()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bucket", "tool"],
+                name="unique_bucketstats_per_tool",
+            ),
+        ]
 
 
 def buckethit_default_range_begin():
@@ -684,6 +746,11 @@ def CrashEntry_delete(sender, instance, **kwargs):
         BucketHit.decrement_count(
             instance.bucket_id, instance.tool_id, instance.created
         )
+        BucketStatistics.decrement_count(
+            instance.bucket_id,
+            instance.tool_id,
+            instance.testcase.quality if instance.testcase else None,
+        )
 
 
 @receiver(post_delete, sender=TestCase)
@@ -695,7 +762,8 @@ def TestCase_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=CrashEntry)
 def CrashEntry_save(sender, instance, created, **kwargs):
     if getattr(settings, "USE_CELERY", None):
-        if created and not instance.triagedOnce:
+        # this could mean the crash is new, or that it was edited and reparsed
+        if not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
@@ -704,11 +772,22 @@ def CrashEntry_save(sender, instance, created, **kwargs):
             BucketHit.decrement_count(
                 instance._original_bucket, instance.tool_id, instance.created
             )
+            # remove BucketStatistics for old bucket
+            BucketStatistics.decrement_count(
+                instance._original_bucket,
+                instance.tool_id,
+                instance.testcase.quality if instance.testcase else None,
+            )
 
         if instance.bucket is not None:
             # add BucketHit for new bucket
             BucketHit.increment_count(
                 instance.bucket_id, instance.tool_id, instance.created
+            )
+            # add BucketStatistics for new bucket
+            quality = instance.testcase.quality if instance.testcase else None
+            BucketStatistics.increment_count(
+                instance.bucket_id, instance.tool_id, quality
             )
 
         if instance.bucket is not None:

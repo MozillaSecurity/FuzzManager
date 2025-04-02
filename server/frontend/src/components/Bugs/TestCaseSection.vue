@@ -27,6 +27,17 @@
             type="text"
           />
         </div>
+        <div class="col-md-2">
+          <label for="file_extension">File extension:</label>
+
+          <input
+            id="file_extension"
+            type="text"
+            class="form-control"
+            disabled
+            :value="fileExtension"
+          />
+        </div>
       </div>
       <div v-if="!entry.testcase_isbinary" class="row">
         <div class="form-group col-md-12">
@@ -72,20 +83,31 @@ export default defineComponent({
       type: Object,
       required: true,
     },
+    fileExtension: {
+      type: String,
+      required: true,
+    },
+    fileName: {
+      type: String,
+      required: true,
+    },
   },
 
-  emits: ["update-not-attach-test", "update-filename", "update-content"],
-
+  emits: [
+    "update-not-attach-test",
+    "update-filename",
+    "update-content",
+    "update-attachment-extension",
+  ],
   setup(props, { emit }) {
     const notAttachTest = ref(false);
     const filename = ref("");
+    const filenameExtension = ref("");
     const content = ref("Content loading...");
 
     onMounted(async () => {
       notAttachTest.value = props.initialNotAttachTest;
-      filename.value = props.template
-        ? props.template.testcase_filename
-        : props.entry.testcase.split(/[\\/]/).pop();
+      filename.value = props.fileName;
 
       if (!props.entry.testcase_isbinary) {
         content.value = await api.retrieveCrashTestCase(props.entry.id);
@@ -114,6 +136,7 @@ export default defineComponent({
       notAttachTest,
       filename,
       content,
+      filenameExtension,
     };
   },
 });
