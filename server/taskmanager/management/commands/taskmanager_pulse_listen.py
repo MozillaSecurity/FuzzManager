@@ -55,7 +55,14 @@ class Command(BaseCommand):
                 msg.delivery_info["exchange"],
                 body["status"]["taskId"],
             )
-            update_task.delay(body)
+            if body["task"]["schedulerId"] == "audit":
+                LOG.debug(
+                    "ignoring task %s update for schedulerId %s",
+                    body["status"]["taskId"],
+                    body["task"]["schedulerId"],
+                )
+            else:
+                update_task.delay(body)
             msg.ack()
             return
         if msg.delivery_info["exchange"] == "exchange/taskcluster-github/v1/push":
