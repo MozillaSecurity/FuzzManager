@@ -14,11 +14,12 @@ from django.http.response import Http404  # noqa
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import now, timedelta
 from rest_framework import mixins, serializers, status, viewsets
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from server.auth import CheckAppPermission
+from server.utils import IPRestrictedTokenAuthentication
 
 from .CloudProvider.CloudProvider import (
     INSTANCE_STATE,
@@ -917,7 +918,7 @@ class UptimeChartViewAccumulated(JSONView):
 
 
 class MachineStatusViewSet(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
 
     def get(self, request, *args, **kwargs):
         result = {}
@@ -947,7 +948,7 @@ class PoolConfigurationViewSet(
     API endpoint that allows viewing PoolConfigurations
     """
 
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
     permission_classes = (CheckAppPermission,)
     queryset = PoolConfiguration.objects.all()
     serializer_class = PoolConfigurationSerializer
@@ -964,7 +965,7 @@ class PoolConfigurationViewSet(
 
 
 class PoolCycleView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
@@ -982,7 +983,7 @@ class PoolCycleView(APIView):
 
 
 class PoolEnableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
@@ -1002,7 +1003,7 @@ class PoolEnableView(APIView):
 
 
 class PoolDisableView(APIView):
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (IPRestrictedTokenAuthentication,)
     permission_classes = (CheckAppPermission,)
 
     def post(self, request, poolid, format=None):
