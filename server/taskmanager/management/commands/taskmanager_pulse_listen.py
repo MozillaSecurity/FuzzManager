@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 msg.delivery_info["exchange"],
                 body["status"]["taskId"],
             )
-            if body["task"]["schedulerId"] == "audit":
+            if body["status"]["schedulerId"] == "audit":
                 LOG.debug(
                     "ignoring task %s update for schedulerId %s",
                     body["status"]["taskId"],
