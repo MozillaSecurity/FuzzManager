@@ -9,6 +9,7 @@
       :label="'name'"
       :multiple="true"
       placeholder="Select tools"
+      :disabled="!allowToolFilterEdit"
     />
     <strong v-if="formErrors.defaultToolsFilter" class="error-message">
       {{ formErrors.defaultToolsFilter.join(", ") }}
@@ -146,6 +147,10 @@ export default {
       default: "",
     },
     allowEmailEdit: {
+      type: Boolean,
+      default: true,
+    },
+    allowToolFilterEdit: {
       type: Boolean,
       default: true,
     },

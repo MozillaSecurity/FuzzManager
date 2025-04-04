@@ -17,7 +17,7 @@ import requests
 from django.urls import reverse
 from rest_framework import status
 
-from crashmanager.models import Bucket, Bug, CrashEntry
+from crashmanager.models import Bucket, BucketHit, BucketStatistics, Bug, CrashEntry
 
 from .conftest import _create_user
 
@@ -390,6 +390,8 @@ def test_new_signature_create(
 def test_new_signature_create_w_reassign(
     api_client, cm, many, mocker, user
 ):  # pylint: disable=invalid-name
+    assert BucketHit.objects.count() == 0
+    assert BucketStatistics.objects.count() == 0
     if many:
         crashes = [
             cm.create_crash(shortSignature="crash #1", stderr="blah") for _ in range(11)
@@ -429,6 +431,11 @@ def test_new_signature_create_w_reassign(
     assert not bucket.frequent
     assert not bucket.permanent
     assert resp.status_code == requests.codes["created"]
+    hit = BucketHit.objects.get()
+    assert hit.count == 10 if many else 1
+    stats = BucketStatistics.objects.get()
+    assert stats.size == 10 if many else 1
+    assert stats.quality is None
     if many:
         assert resp.json() == {
             "bucket_id": bucket.pk,
@@ -469,6 +476,10 @@ def test_new_signature_create_w_reassign(
             "outList": [],
             "nextOffset": None,
         }
+        assert BucketHit.objects.get().count == 11
+        stats = BucketStatistics.objects.get()
+        assert stats.size == 11
+        assert stats.quality is None
     else:
         assert resp.json() == {
             "bucket_id": bucket.pk,
@@ -585,6 +596,8 @@ def test_edit_signature_edit(
         "outListCount": 0,
         "nextOffset": None,
     }
+    assert BucketHit.objects.count() == 0
+    assert BucketStatistics.objects.count() == 0
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)
@@ -605,6 +618,9 @@ def test_edit_signature_edit_w_reassign(
     sig = json.dumps(
         {"symptoms": [{"src": "stderr", "type": "output", "value": "/^blah/"}]}
     )
+
+    assert BucketHit.objects.count() == 0
+    assert BucketStatistics.objects.count() == 0
 
     resp = api_client.patch(
         "/crashmanager/rest/buckets/%d/?reassign=true" % bucket.pk,
@@ -641,6 +657,78 @@ def test_edit_signature_edit_w_reassign(
         "outListCount": 0,
         "nextOffset": None,
     }
+    hit = BucketHit.objects.get()
+    assert hit.count == 201 if many else 1
+    stats = BucketStatistics.objects.get()
+    assert stats.size == 201 if many else 1
+    assert stats.quality is None
+
+
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
+def test_edit_signature_reassign_add_stats(api_client, cm, user):
+    """reassign to bucket adds stats for that bucket/tool"""
+    sig = json.dumps(
+        {"symptoms": [{"src": "stderr", "type": "output", "value": "/^foo/"}]}
+    )
+    for idx in range(10):
+        tc = cm.create_testcase(str(idx), quality=idx)
+        cm.create_crash(shortSignature="crash #1", stderr="foo", testcase=tc)
+
+    assert BucketStatistics.objects.count() == 0
+
+    resp = api_client.post(
+        "/crashmanager/rest/buckets/?reassign=true&limit=10",
+        data={
+            "signature": sig,
+            "shortDescription": "bucket #1",
+            "doNotReduce": False,
+            "frequent": False,
+            "permanent": False,
+        },
+        format="json",
+    )
+    assert resp.status_code == requests.codes["created"]
+
+    stats = BucketStatistics.objects.get()
+    assert stats.size == 10
+    assert stats.quality == 0
+
+
+@pytest.mark.parametrize("user", ["normal"], indirect=True)
+def test_edit_signature_reassign_rm_stats(api_client, cm, user):
+    """reassign out of bucket removes stats for that bucket"""
+    bucket = cm.create_bucket(
+        signature=json.dumps(
+            {"symptoms": [{"src": "stderr", "type": "output", "value": "/^blah/"}]}
+        ),
+    )
+    for idx in range(10):
+        tc = cm.create_testcase(str(idx), quality=idx)
+        cm.create_crash(
+            shortSignature="crash #1", stderr="foo", bucket=bucket, testcase=tc
+        )
+
+    stats = BucketStatistics.objects.get()
+    assert stats.size == 10
+    assert stats.quality == 0
+
+    resp = api_client.patch(
+        f"/crashmanager/rest/buckets/{bucket.id}/?reassign=true&limit=10",
+        data={
+            "signature": bucket.signature,
+            "shortDescription": "bucket #1",
+            "doNotReduce": False,
+            "frequent": False,
+            "permanent": False,
+        },
+        format="json",
+    )
+    LOG.debug(resp)
+    assert resp.status_code == requests.codes["ok"]
+
+    stats = BucketStatistics.objects.get()
+    assert stats.size == 0
+    assert stats.quality is None
 
 
 @pytest.mark.parametrize("user", ["normal"], indirect=True)

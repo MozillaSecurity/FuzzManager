@@ -4,7 +4,9 @@
       <i class="bi bi-card-list"></i> Fuzzing Pools
     </div>
     <div class="table-responsive">
-      <table class="table table-condensed table-hover table-bordered table-db">
+      <table
+        class="table table-condensed table-hover table-bordered table-db wrap-none"
+      >
         <thead>
           <tr>
             <th
@@ -12,7 +14,6 @@
                 active:
                   sortKeys.includes('pool_id') || sortKeys.includes('-pool_id'),
               }"
-              width="25px"
               @click.exact="sortBy('pool_id')"
               @click.ctrl.exact="addSort('pool_id')"
             >
@@ -21,10 +22,19 @@
             <th
               :class="{
                 active:
+                  sortKeys.includes('status') || sortKeys.includes('-status'),
+              }"
+              @click.exact="sortBy('status')"
+              @click.ctrl.exact="addSort('status')"
+            >
+              Status
+            </th>
+            <th
+              :class="{
+                active:
                   sortKeys.includes('pool_name_isort') ||
                   sortKeys.includes('-pool_name_isort'),
               }"
-              width="100px"
               @click.exact="sortBy('pool_name_isort')"
               @click.ctrl.exact="addSort('pool_name_isort')"
             >
@@ -35,28 +45,15 @@
                 active:
                   sortKeys.includes('running') || sortKeys.includes('-running'),
               }"
-              width="75px"
               @click.exact="sortBy('running')"
               @click.ctrl.exact="addSort('running')"
             >
-              # of Tasks (Running/Requested)
-            </th>
-            <th
-              :class="{
-                active:
-                  sortKeys.includes('status') || sortKeys.includes('-status'),
-              }"
-              width="150px"
-              @click.exact="sortBy('status')"
-              @click.ctrl.exact="addSort('status')"
-            >
-              Status
+              Tasks
             </th>
             <th
               :class="{
                 active: sortKeys.includes('cpu') || sortKeys.includes('-cpu'),
               }"
-              width="150px"
               @click.exact="sortBy('cpu')"
               @click.ctrl.exact="addSort('cpu')"
             >
@@ -68,7 +65,6 @@
                   sortKeys.includes('platform') ||
                   sortKeys.includes('-platform'),
               }"
-              width="25px"
               @click.exact="sortBy('platform')"
               @click.ctrl.exact="addSort('platform')"
             >
@@ -81,8 +77,6 @@
             <td>
               <a :href="pool.view_url">{{ pool.pool_id }}</a>
             </td>
-            <td>{{ pool.pool_name }}</td>
-            <td>{{ pool.running }}/{{ pool.size }}</td>
             <td>
               <span
                 class="label"
@@ -95,6 +89,8 @@
                 >{{ pool.status }}</span
               >
             </td>
+            <td class="wrap-anywhere">{{ pool.pool_name }}</td>
+            <td>{{ pool.running }}/{{ pool.size }}</td>
             <td>{{ pool.cpu }}</td>
             <td>
               <img
@@ -105,7 +101,9 @@
                 :src="staticLogo('linux')"
               />
               <img
-                v-else-if="pool.platform === 'macosx'"
+                v-else-if="
+                  pool.platform === 'macosx' || pool.platform === 'macos'
+                "
                 width="16px"
                 height="16px"
                 alt="MacOS"

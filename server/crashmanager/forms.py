@@ -2,7 +2,6 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Layout, Submit
 from django.conf import settings
 from django.forms import EmailField, ModelForm, Textarea, TextInput
-from rest_framework.exceptions import ValidationError
 
 from .models import BugzillaTemplate, User
 
@@ -100,11 +99,11 @@ class BugzillaTemplateCommentForm(ModelForm):
 
 
 class UserSettingsForm(ModelForm):
-    email = EmailField(label="Email:")
+    email = EmailField(label="Email:", disabled=not settings.ALLOW_EMAIL_EDITION)
 
     class Meta:
         model = User
-        fields = [
+        fields = (
             "defaultToolsFilter",
             "defaultProviderId",
             "defaultTemplateId",
@@ -112,38 +111,17 @@ class UserSettingsForm(ModelForm):
             "coverage_drop",
             "inaccessible_bug",
             "tasks_failed",
-        ]
+        )
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop("user", None)
+        instance = kwargs["instance"]
+        kwargs.setdefault("initial", {})["email"] = instance.user.email
         super().__init__(*args, **kwargs)
-        instance = kwargs.get("instance", None)
-        if instance:
-            self.initial["email"] = instance.user.email
-
-        if not settings.ALLOW_EMAIL_EDITION:
-            self.fields["email"].required = False
-            self.fields["email"].widget.attrs["readonly"] = True
-
+        self.fields["defaultToolsFilter"].disabled = instance.restricted
         self.fields["defaultToolsFilter"].required = False
 
-    def clean_defaultToolsFilter(self):
-        data = self.cleaned_data.get("defaultToolsFilter", None)
-        if (
-            self.user
-            and list(self.user.defaultToolsFilter.all()) != list(data)
-            and self.user.restricted
-        ):
-            raise ValidationError(
-                "You don't have permission to change your tools filter."
-            )
-        return data
-
-    def clean_defaultProviderId(self):
-        data = self.cleaned_data["defaultProviderId"]
-        return data
-
     def save(self, *args, **kwargs):
-        self.instance.user.email = self.cleaned_data["email"]
-        self.instance.user.save()
+        if settings.ALLOW_EMAIL_EDITION:
+            self.instance.user.email = self.cleaned_data["email"]
+            self.instance.user.save()
         return super().save(*args, **kwargs)
