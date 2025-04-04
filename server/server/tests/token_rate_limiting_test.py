@@ -12,7 +12,6 @@ import logging
 import pytest
 import requests
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
 
@@ -60,7 +59,6 @@ def test_token_rate_limiting(auth_client, name):
 
     # Verify rate limit was hit exactly once
     assert response_status_codes.count(requests.codes["too_many_requests"]) == 1
-    cache.clear()
 
 
 def test_different_tokens(auth_client):
