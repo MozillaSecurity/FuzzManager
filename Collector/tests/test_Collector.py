@@ -391,7 +391,7 @@ def test_collector_download(tmp_path, monkeypatch):
 
     collector._session.get = myget1
     result = collector.download(123)
-    assert result is None
+    assert result == (None, {"testcase": ""})
 
     # invalid REST response
     class response1_t:  # noqa

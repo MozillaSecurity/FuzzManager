@@ -37,6 +37,20 @@ __date__ = "2014-10-01"
 __updated__ = "2014-10-01"
 
 
+class KeyValueAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        result = {}
+        for item in values:
+            try:
+                key, value = item.split("=", 1)
+                result[key] = value
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f"Invalid format: '{item}', expected key=value."
+                )
+        setattr(namespace, self.dest, result)
+
+
 class Collector(Reporter):
     @remote_checks
     @signature_checks
@@ -250,12 +264,14 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, crashId, crashJson=None):
         """
         Download the testcase for the specified crashId.
 
         @type crashId: int
         @param crashId: ID of the requested crash entry on the server side
+        @type crashJson: dict
+        @param crashJson: (optional) FM crash data to skip requesting it here
 
         @rtype: tuple
         @return: Tuple containing name of the file where the test was stored and the raw
@@ -274,14 +290,21 @@ class Collector(Reporter):
             self.serverPort,
             crashId,
         )
+        if not crashJson:
+            resp_json = self.get(url).json()
+            if not isinstance(resp_json, dict):
+                raise RuntimeError(
+                    f"Server sent malformed JSON response: {resp_json!r}"
+                )
+        else:
+            resp_json = crashJson
 
-        resp_json = self.get(url).json()
-
-        if not isinstance(resp_json, dict):
-            raise RuntimeError(f"Server sent malformed JSON response: {resp_json!r}")
-
-        if not resp_json["testcase"]:
-            return None
+        if "testcase" not in resp_json or resp_json["testcase"] == "":
+            print(
+                f"Testcase not found for crash {resp_json.get('id', '[no ID]')}",
+                file=sys.stderr,
+            )
+            return (None, resp_json)
 
         response = self.get(dlurl)
 
@@ -289,63 +312,92 @@ class Collector(Reporter):
             raise RuntimeError(f"Server sent malformed response: {response!r}")
 
         local_filename = f"{crashId}{os.path.splitext(resp_json['testcase'])[1]}"
+        local_filename += (
+            "bin"
+            if resp_json.get("testcase_isbinary") and local_filename.endswith(".")
+            else ""
+        )
+
         with open(local_filename, "wb") as output:
             output.write(response.content)
 
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, query_params):
         """
-        Download all testcases for the specified bucketId.
+        Download all testcases for the specified params.
 
-        @type bucketId: int
-        @param bucketId: ID of the requested bucket on the server side
+        @type params: dict
+        @param params: dictionary of params to download testcases for
 
         @rtype: generator
         @return: generator of filenames where tests were stored.
         """
-        params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
-        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
+        # iterate over each page
+        for response in self.get_by_query("crashes/", query_params):
+            resp_json = response
+
+            for crash in resp_json["results"]:
+                # crash here must already have same data as individual resp by crash ID
+                (local_filename, resp_dl) = self.download(crash["id"], crash)
+                if not local_filename:
+                    continue
+
+                yield local_filename
+
+    @remote_checks
+    def get_by_query(self, rest_endpoint, query_params={}, _ignore_toolfilter=None):
+        """
+        Get request for the specified REST endpoint and query params.
+
+        @type rest_endpoint: str
+        @param rest_endpoint: for crashmanager/rest/{rest_endpoint}.
+
+        @type query_params: dict
+        @param query_params: dictionary of params to query with; empty default.
+
+        @type _ignore_toolfilter: int
+        @param _ignore_toolfilter: integer 0 or 1 to ignore your set toolfilter
+        @rtype: generator
+        @return: generator of JSON responses for the specified query.
+        """
+        url_rest = "%s://%s:%d/crashmanager/rest/" % (
             self.serverProtocol,
             self.serverHost,
             self.serverPort,
         )
+        next_url = url_rest + rest_endpoint
+        global ignore_toolfilter
+        ignore = (
+            _ignore_toolfilter if _ignore_toolfilter is not None else ignore_toolfilter
+        )
+        params = {
+            "query": json.dumps({"op": "AND", **query_params}),
+            "ignore_toolfilter": ignore,
+        }
 
         while next_url:
             resp_json = self.get(next_url, params=params).json()
-
-            if not isinstance(resp_json, dict):
+            if not (isinstance(resp_json, dict) or isinstance(resp_json[0], dict)):
                 raise RuntimeError(
                     f"Server sent malformed JSON response: {resp_json!r}"
                 )
+            if len(resp_json) == 0 or (
+                isinstance(resp_json, dict) and resp_json.get("count") == 0
+            ):
+                print(
+                    f"Results not found for {query_params} at {next_url}.",
+                    file=sys.stderr,
+                )
+                continue
 
-            next_url = resp_json["next"]
+            if isinstance(resp_json, list):
+                next_url = resp_json[0].get("next")
+            else:
+                next_url = resp_json.get("next")
             params = None
-
-            for crash in resp_json["results"]:
-                if not crash["testcase"]:
-                    continue
-
-                url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
-                    self.serverProtocol,
-                    self.serverHost,
-                    self.serverPort,
-                    crash["id"],
-                )
-                response = self.get(url)
-
-                if "content-disposition" not in response.headers:
-                    raise RuntimeError(f"Server sent malformed response: {response!r}")
-
-                local_filename = "%d%s" % (
-                    crash["id"],
-                    os.path.splitext(crash["testcase"])[1],
-                )
-                with open(local_filename, "wb") as output:
-                    output.write(response.content)
-
-                yield local_filename
+            yield resp_json
 
     def __store_signature_hashed(self, signature):
         """
@@ -453,6 +505,16 @@ def main(args=None):
         metavar="ID",
     )
     actions.add_argument(
+        "--download-by-params",
+        action="store_true",
+        help="Download all testcases for the crashes specified by --query-params",
+    )
+    actions.add_argument(
+        "--refresh-crashes",
+        action="store_true",
+        help="Refresh (download, resubmit) all testcases specified by --query-params",
+    )
+    actions.add_argument(
         "--get-clientid",
         action="store_true",
         help="Print the client ID used when submitting issues",
@@ -513,13 +575,34 @@ def main(args=None):
     parser.add_argument(
         "--env",
         nargs="+",
-        type=str,
+        action=KeyValueAction,
         help="List of environment variables in the form 'KEY=VALUE'",
+    )
+    parser.add_argument(
+        "--query-params",
+        nargs="+",
+        action=KeyValueAction,
+        help="""Specify query params (key=value) to download/resubmit crashes:
+        args, bucket, bucket_id, cachedCrashInfo, client, client_id, crashAddress,
+        crashAddressNumeric, created, env, id, metadata, os, os_id, platform,
+        platform_id, product, product_id, rawCrashData, rawStderr, rawStdout,
+        shortSignature, testcase, testcase_id, tool, tool_id, triagedOnce. Instead, you
+        can also get all crashes in your buckets (tool filter) with bucket=MYBUCKETS""",
+    )
+    parser.add_argument(
+        "--best-entry-only",
+        action="store_true",
+        help="Refresh only the best entry crashes for buckets found by --query-params",
+    )
+    parser.add_argument(
+        "--ignore-toolfilter",
+        action="store_true",
+        help="Ignore your (supposedly) set toolfilter for queries.",
     )
     parser.add_argument(
         "--metadata",
         nargs="+",
-        type=str,
+        action=KeyValueAction,
         help="List of metadata variables in the form 'KEY=VALUE'",
     )
     parser.add_argument(
@@ -569,13 +652,13 @@ def main(args=None):
     # In autosubmit mode, we try to open a configuration file for the binary specified
     # on the command line. It should contain the binary-specific settings for
     # submitting.
-    if opts.autosubmit:
-        if not opts.rargs:
-            parser.error("Action --autosubmit requires test arguments to be specified")
-
+    if opts.autosubmit or opts.refresh_crashes:
         # Store the binary candidate only if --binary wasn't also specified
         if not opts.binary:
             opts.binary = opts.rargs[0]
+    if opts.autosubmit:
+        if not opts.rargs:
+            parser.error("Action --autosubmit requires test arguments to be specified")
 
         # We also need to check that (apart from the binary), there is only one file on
         # the command line (the testcase), if it hasn't been explicitly specified.
@@ -602,13 +685,15 @@ def main(args=None):
     crashdata = None
     crashInfo = None
     args = None
-    env = None
-    metadata = {}
+    metadata = opts.metadata if opts.metadata else {}
 
-    if opts.search or opts.generate or opts.submit or opts.autosubmit:
-        if opts.metadata:
-            metadata.update(dict(kv.split("=", 1) for kv in opts.metadata))
-
+    if (
+        opts.search
+        or opts.generate
+        or opts.submit
+        or opts.autosubmit
+        or opts.refresh_crashes
+    ):
         if opts.autosubmit:
             # Try to automatically get arguments from the command line
             # If the testcase is not the last argument, leave it in the
@@ -623,9 +708,6 @@ def main(args=None):
             if opts.args:
                 args = [arg.replace("\\", "") for arg in opts.args]
 
-        if opts.env:
-            env = dict(kv.split("=", 1) for kv in opts.env)
-
         # Start without any ProgramConfiguration
         configuration = None
 
@@ -633,8 +715,8 @@ def main(args=None):
         if opts.binary:
             configuration = ProgramConfiguration.fromBinary(opts.binary)
             if configuration:
-                if env:
-                    configuration.addEnvironmentVariables(env)
+                if opts.env:
+                    configuration.addEnvironmentVariables(opts.env)
                 if args:
                     configuration.addProgramArguments(args)
                 if metadata:
@@ -653,12 +735,12 @@ def main(args=None):
                 opts.platform,
                 opts.os,
                 opts.product_version,
-                env,
+                opts.env,
                 args,
                 metadata,
             )
 
-        if not opts.autosubmit:
+        if not opts.autosubmit and not opts.refresh_crashes:
             if opts.stderr is None and opts.crashdata is None:
                 parser.error(
                     "Must specify at least either --stderr or --crashdata file"
@@ -698,6 +780,13 @@ def main(args=None):
         opts.clientid,
         opts.tool,
     )
+    url_rest = "%s://%s:%d/crashmanager/rest/" % (
+        collector.serverProtocol,
+        collector.serverHost,
+        collector.serverPort,
+    )
+    global ignore_toolfilter
+    ignore_toolfilter = 1 if opts.ignore_toolfilter else 0
 
     if opts.refresh:
         collector.refresh()
@@ -762,10 +851,10 @@ def main(args=None):
             print("")
 
         if "env" in retJSON and retJSON["env"]:
-            env = json.loads(retJSON["env"])
+            opts.env = json.loads(retJSON["env"])
             print(
                 "Environment variables:",
-                " ".join(f"{k} = {v}" for (k, v) in env.items()),
+                " ".join(f"{k} = {v}" for (k, v) in opts.env.items()),
             )
             print("")
 
@@ -782,14 +871,97 @@ def main(args=None):
     if opts.download_all:
         downloaded = False
 
-        for result in collector.download_all(opts.download_all):
+        for result in collector.download_all({"bucket": opts.download_all}):
             downloaded = True
-            print(result)
+            print("Downloaded: ", result)
 
         if not downloaded:
             print("Specified signature does not have any testcases", file=sys.stderr)
             return 1
 
+        return 0
+
+    if opts.query_params.get("bucket") == "MYBUCKETS":
+        if len(opts.query_params) > 1:
+            print("Can't use other query params w/ bucket=MYBUCKETS", file=sys.stderr)
+            return 1
+        # ignore all other query params when mybuckets is used
+        nobuckets = True
+        buckets = set()
+        for response in collector.get_by_query("buckets/"):
+            if len(response) > 0:
+                nobuckets = False
+            for bucket in response:
+                buckets.add(bucket["id"])
+        if nobuckets:
+            print("No buckets found", file=sys.stderr)
+            return 1
+        all_params = [{"bucket": bucket} for bucket in buckets]
+    elif opts.query_params:
+        if opts.best_entry_only:
+            buckets = set()
+            for response in collector.get_by_query("crashes/", opts.query_params):
+                for crash in response["results"]:
+                    buckets.add(crash["bucket"])
+        else:
+            all_params = [opts.query_params]
+
+    if opts.best_entry_only:
+        all_params = []
+        for bucket in buckets:
+            resp_bucket = collector.get(
+                url_rest + f"buckets/{bucket}",
+                params={"ignore_toolfilter": ignore_toolfilter},
+            ).json()
+            all_params.append({"bucket": bucket, "id": resp_bucket["best_entry"]})
+
+    if opts.download_by_params:
+        downloaded = False
+
+        if not opts.query_params:
+            print("Specify query params to download testcases", file=sys.stderr)
+            return 1
+
+        for param in all_params:
+            for result in collector.download_all(param):
+                downloaded = True
+                print("Downloaded: ", result)
+
+        if not downloaded:
+            print("Failed to download testcases for the specified params")
+
+    if opts.refresh_crashes:
+        if not opts.query_params:
+            print("Specify query params to refresh crashes.", file=sys.stderr)
+            return 1
+
+        for param in all_params:
+            for testcase in collector.download_all(param):
+                # TODO: support positional testcases (e.g. for libfuzzer)
+                os.environ["MOZ_FUZZ_TESTFILE"] = testcase  # needed by AFL++
+                runner = AutoRunner.fromBinaryArgs(opts.binary, opts.rargs[1:])
+                # TODO: diff old vs new crash?
+                ran = runner.run()
+                if ran:
+                    crashInfo = runner.getCrashInfo(configuration)
+                    submission = collector.submit(
+                        crashInfo,
+                        testcase,
+                        opts.testcasequality,
+                        opts.testcasesize,
+                        metadata,
+                    )
+                    print(
+                        "Resubmitted old crash {} as {}.".format(
+                            os.path.splitext(testcase)[0], submission["id"]
+                        )
+                    )
+                else:
+                    print(
+                        "Error: Failed to reproduce crash %s, can't submit."
+                        % os.path.splitext(testcase)[0],
+                        file=sys.stderr,
+                    )
         return 0
 
     if opts.get_clientid:
