@@ -9,6 +9,7 @@ License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
+import contextlib
 import importlib
 import sys
 
@@ -17,6 +18,18 @@ import sys
 # will fail.
 if importlib.util.find_spec("django"):
     pytest_plugins = ["covmanager.tests.conftest"]
+
+    with contextlib.suppress(ImportError):
+        import pytest
+        from django.core.cache import cache
+
+        # Cache clearing ensures each test starts with fresh rate limit counters,
+        # preventing false throttling errors and maintaining test isolation
+        @pytest.fixture(autouse=True)
+        def clear_cache():
+            cache.clear()
+            yield
+            cache.clear()
 
 
 def pytest_ignore_collect(collection_path, config):
