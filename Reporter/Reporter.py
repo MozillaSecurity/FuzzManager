@@ -27,23 +27,41 @@ from FTB.ConfigurationFiles import ConfigurationFiles
 LOG = logging.getLogger(__name__)
 
 
+# Inheriting from RuntimeError because of legacy code.
+# All of these exceptions used to be RuntimeError.
+class ReporterException(RuntimeError):
+    """Base class for Reporter exceptions."""
+
+
+class ConfigurationError(ReporterException):
+    """Error type for configuration problems preventing Reporter from functioning."""
+
+
+class ServerError(ReporterException):
+    """Communication errors encountered by Reporter during operation."""
+
+
+class InvalidDataError(ReporterException):
+    """Reporter data validation failures."""
+
+
 def remote_checks(wrapped):
     """Decorator to perform error checks before using remote features"""
 
     @functools.wraps(wrapped)
     def decorator(self, *args, **kwargs):
         if not self.serverHost:
-            raise RuntimeError(
+            raise ConfigurationError(
                 "Must specify serverHost (configuration property: serverhost) to use "
                 "remote features."
             )
         if not self.serverAuthToken:
-            raise RuntimeError(
-                "Must specify serverAuthToken (configuration property: serverauthtoken)"
-                " to use remote features."
+            raise ConfigurationError(
+                "Must specify serverAuthToken (configuration property: "
+                "serverauthtoken) to use remote features."
             )
         if not self.tool:
-            raise RuntimeError(
+            raise ConfigurationError(
                 "Must specify tool (configuration property: tool) to use remote "
                 "features."
             )
@@ -58,7 +76,7 @@ def signature_checks(wrapped):
     @functools.wraps(wrapped)
     def decorator(self, *args, **kwargs):
         if not self.sigCacheDir:
-            raise RuntimeError(
+            raise ConfigurationError(
                 "Must specify sigCacheDir (configuration property: sigdir) to use "
                 "signatures."
             )
@@ -240,7 +258,7 @@ class Reporter(ABC):
 
     @staticmethod
     def serverError(response):
-        return RuntimeError(
-            "Server unexpectedly responded with status code %s: %s"
-            % (response.status_code, response.text)
+        return ServerError(
+            "Server unexpectedly responded with status code "
+            f"{response.status_code}: {response.text}"
         )

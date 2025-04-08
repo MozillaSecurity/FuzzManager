@@ -21,12 +21,12 @@ import os
 import sys
 
 from FTB import CoverageHelper
-from Reporter.Reporter import Reporter, remote_checks
+from Reporter.Reporter import InvalidDataError, Reporter, remote_checks
 
 __all__ = []
 __version__ = 0.1
 __date__ = "2017-07-10"
-__updated__ = "2017-07-10"
+__updated__ = "2025-04-08"
 
 
 class CovReporter(Reporter):
@@ -186,7 +186,7 @@ class CovReporter(Reporter):
                 }
 
         else:
-            raise RuntimeError("Unknown coverage format")
+            raise InvalidDataError("Unknown coverage format")
 
         # Now we need to calculate the coverage summaries (lines total and covered)
         # for each subtree in the tree. We can do this easily by using a recursive
@@ -223,7 +223,7 @@ class CovReporter(Reporter):
             ret["branch"] = coverage["git"]["branch"]
             return ret
         else:
-            raise RuntimeError("Unknown coverage format")
+            raise InvalidDataError("Unknown coverage format")
 
     @staticmethod
     def create_combined_coverage(coverage_files, version=None):

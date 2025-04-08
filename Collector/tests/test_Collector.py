@@ -27,6 +27,7 @@ from Collector.Collector import Collector, main
 from crashmanager.models import CrashEntry
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
+from Reporter.Reporter import InvalidDataError, ServerError
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures"
 
@@ -182,7 +183,7 @@ def test_collector_submit(mock_expanduser, live_server, tmp_path, fm_user):
 
     collector._session.post = lambda *_, **__: response_t()
 
-    with pytest.raises(RuntimeError, match="Server unexpectedly responded"):
+    with pytest.raises(ServerError, match="Server unexpectedly responded"):
         collector.submit(crashInfo, str(testcase_path))
 
 
@@ -248,7 +249,7 @@ def test_collector_refresh(capsys, tmp_path):
 
     collector._session.get = lambda *_, **__: response_t()
 
-    with pytest.raises(RuntimeError, match="Server unexpectedly responded"):
+    with pytest.raises(ServerError, match="Server unexpectedly responded"):
         collector.refresh()
 
     # check that bad zips raise errors
@@ -277,7 +278,7 @@ def test_collector_refresh(capsys, tmp_path):
 
         collector._session.get = lambda *_, **__: response_t()
 
-        with pytest.raises(RuntimeError, match="Bad CRC"):
+        with pytest.raises(InvalidDataError, match="Bad CRC"):
             collector.refresh()
 
 
@@ -378,7 +379,7 @@ def test_collector_download(tmp_path, monkeypatch):
         text = "Not found"
 
     collector._session.get = myget1
-    with pytest.raises(RuntimeError, match="Server unexpectedly responded"):
+    with pytest.raises(ServerError, match="Server unexpectedly responded"):
         collector.download(123)
 
     # download with no testcase
@@ -402,7 +403,7 @@ def test_collector_download(tmp_path, monkeypatch):
             return []
 
     collector._session.get = myget1
-    with pytest.raises(RuntimeError, match="malformed JSON"):
+    with pytest.raises(InvalidDataError, match="malformed JSON"):
         collector.download(123)
 
     # REST query returns http error
@@ -411,5 +412,5 @@ def test_collector_download(tmp_path, monkeypatch):
         text = "Not found"
 
     collector._session.get = myget1
-    with pytest.raises(RuntimeError, match="Server unexpectedly responded"):
+    with pytest.raises(ServerError, match="Server unexpectedly responded"):
         collector.download(123)
