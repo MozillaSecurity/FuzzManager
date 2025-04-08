@@ -21,6 +21,7 @@ import os
 import random
 import sys
 import time
+from pathlib import Path
 
 import requests
 from fasteners import InterProcessLock
@@ -41,6 +42,23 @@ class TaskStatusReporter(Reporter):
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by TaskStatusReporter
         super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def write_report_file(path, text):
+        """
+        Write textual report to a file, ensuring that interprocess locking is used.
+        This ensures that `--keep-reporting` will not conflict with file writes.
+
+        @type path: Path
+        @param path: File path to write report to.
+
+        @type text: string
+        @param text: Report text to write
+        """
+        report_file = Path(path)
+
+        with InterProcessLock(f"{report_file}.lock"):
+            report_file.write_text(text)
 
     @remote_checks
     def report(self, text):
@@ -83,15 +101,13 @@ def main(argv=None):
     actions = action_group.add_mutually_exclusive_group(required=True)
     actions.add_argument(
         "--report",
-        dest="report",
-        type=str,
         help="Submit the given textual report",
         metavar="TEXT",
     )
     actions.add_argument(
         "--report-from-file",
         dest="report_file",
-        type=str,
+        type=Path,
         help="Submit the given file as textual report",
         metavar="FILE",
     )
@@ -99,7 +115,6 @@ def main(argv=None):
     # Options
     parser.add_argument(
         "--keep-reporting",
-        dest="keep_reporting",
         default=0,
         type=int,
         help="Keep reporting from the specified file with specified interval",
@@ -107,7 +122,6 @@ def main(argv=None):
     )
     parser.add_argument(
         "--random-offset",
-        dest="random_offset",
         default=0,
         type=int,
         help="Random offset for the reporting interval (+/-)",
@@ -117,32 +131,28 @@ def main(argv=None):
     # Settings
     parser.add_argument(
         "--serverhost",
-        dest="serverhost",
         help="Server hostname for remote signature management",
         metavar="HOST",
     )
     parser.add_argument(
         "--serverport",
-        dest="serverport",
         type=int,
         help="Server port to use",
         metavar="PORT",
     )
     parser.add_argument(
         "--serverproto",
-        dest="serverproto",
         help="Server protocol to use (default is https)",
         metavar="PROTO",
     )
     parser.add_argument(
         "--serverauthtokenfile",
-        dest="serverauthtokenfile",
+        type=Path,
         help="File containing the server authentication token",
         metavar="FILE",
     )
     parser.add_argument(
         "--clientid",
-        dest="clientid",
         help="Client ID to use when submitting issues",
         metavar="ID",
     )
@@ -150,7 +160,7 @@ def main(argv=None):
     # process options
     opts = parser.parse_args(argv)
 
-    if opts.keep_reporting and not opts.report_file:
+    if opts.keep_reporting and opts.report_file is None:
         print(
             "Error: --keep-reporting is only valid with --report-from-file",
             file=sys.stderr,
@@ -158,9 +168,8 @@ def main(argv=None):
         return 2
 
     serverauthtoken = None
-    if opts.serverauthtokenfile:
-        with open(opts.serverauthtokenfile) as f:
-            serverauthtoken = f.read().rstrip()
+    if opts.serverauthtokenfile is not None:
+        serverauthtoken = opts.serverauthtokenfile.read_text().rstrip()
 
     reporter = TaskStatusReporter(
         opts.serverhost,
@@ -171,26 +180,22 @@ def main(argv=None):
     )
     report = None
 
-    if opts.report_file:
+    if opts.report_file is not None:
         if opts.keep_reporting:
             if opts.random_offset > 0:
                 random.seed(reporter.clientId)
 
-            lock = InterProcessLock(opts.report_file + ".lock")
+            lock = InterProcessLock(f"{opts.report_file}.lock")
             while True:
-                if os.path.exists(opts.report_file):
-                    if not lock.acquire(timeout=opts.keep_reporting):
-                        continue
+                if opts.report_file.is_file():
+                    with lock:
+                        report = opts.report_file.read_text()
+
                     try:
-                        with open(opts.report_file) as f:
-                            report = f.read()
-                        try:
-                            reporter.report(report)
-                        except ServerError as e:
-                            # Ignore errors if the server is temporarily unavailable
-                            print(f"Failed to contact server: {e}", file=sys.stderr)
-                    finally:
-                        lock.release()
+                        reporter.report(report)
+                    except ServerError as e:
+                        # Ignore errors if the server is temporarily unavailable
+                        print(f"Failed to contact server: {e}", file=sys.stderr)
 
                 random_offset = 0
                 if opts.random_offset:
@@ -199,8 +204,7 @@ def main(argv=None):
                     )
                 time.sleep(opts.keep_reporting + random_offset)
         else:
-            with open(opts.report_file) as f:
-                report = f.read()
+            report = opts.report_file.read_text()
     else:
         report = opts.report
 
