@@ -21,6 +21,7 @@ import os
 import random
 import sys
 import time
+from pathlib import Path
 
 import requests
 from fasteners import InterProcessLock
@@ -41,6 +42,23 @@ class EC2Reporter(Reporter):
             "tool", "N/A"
         )  # tool is required by remote_checks, but unused by EC2Reporter
         super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def write_report_file(path, text):
+        """
+        Write textual report to a file, ensuring that interprocess locking is used.
+        This ensures that `--keep-reporting` will not conflict with file writes.
+
+        @type path: Path
+        @param path: File path to write report to.
+
+        @type text: string
+        @param text: Report text to write
+        """
+        report_file = Path(path)
+
+        with InterProcessLock(f"{report_file}.lock"):
+            report_file.write_text(text)
 
     @remote_checks
     def report(self, text):
@@ -261,18 +279,15 @@ def main(argv=None):
             lock = InterProcessLock(opts.report_file + ".lock")
             while True:
                 if os.path.exists(opts.report_file):
-                    if not lock.acquire(timeout=opts.keep_reporting):
-                        continue
-                    try:
+                    with lock:
                         with open(opts.report_file) as f:
                             report = f.read()
-                        try:
-                            reporter.report(report)
-                        except ServerError as e:
-                            # Ignore errors if the server is temporarily unavailable
-                            print(f"Failed to contact server: {e}", file=sys.stderr)
-                    finally:
-                        lock.release()
+
+                    try:
+                        reporter.report(report)
+                    except ServerError as e:
+                        # Ignore errors if the server is temporarily unavailable
+                        print(f"Failed to contact server: {e}", file=sys.stderr)
 
                 random_offset = 0
                 if opts.random_offset:
@@ -281,8 +296,9 @@ def main(argv=None):
                     )
                 time.sleep(opts.keep_reporting + random_offset)
         else:
-            with open(opts.report_file) as f:
-                report = f.read()
+            with InterProcessLock(f"{opts.report_file}.lock"):
+                with open(opts.report_file) as f:
+                    report = f.read()
     else:
         report = opts.report
 
