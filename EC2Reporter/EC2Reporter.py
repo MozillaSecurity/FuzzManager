@@ -26,12 +26,12 @@ import requests
 from fasteners import InterProcessLock
 
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
-from Reporter.Reporter import Reporter, remote_checks
+from Reporter.Reporter import Reporter, ServerError, remote_checks
 
 __all__ = []
 __version__ = 0.1
 __date__ = "2014-10-01"
-__updated__ = "2014-10-01"
+__updated__ = "2025-04-08"
 
 
 class EC2Reporter(Reporter):
@@ -268,7 +268,7 @@ def main(argv=None):
                             report = f.read()
                         try:
                             reporter.report(report)
-                        except RuntimeError as e:
+                        except ServerError as e:
                             # Ignore errors if the server is temporarily unavailable
                             print(f"Failed to contact server: {e}", file=sys.stderr)
                     finally:

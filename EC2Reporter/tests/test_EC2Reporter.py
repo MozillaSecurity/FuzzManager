@@ -7,6 +7,7 @@ from django.utils import timezone
 from EC2Reporter.EC2Reporter import EC2Reporter, main
 from ec2spotmanager.models import Instance, InstancePool
 from ec2spotmanager.tests import create_config, create_instance, create_pool
+from Reporter.Reporter import ServerError
 
 pytestmark = pytest.mark.django_db(transaction=True)
 pytest_plugins = "server.tests"
@@ -61,7 +62,7 @@ def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
         clientId="host2",
     )
 
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(ServerError) as exc:
         reporter.report("data")
     assert "Server unexpectedly responded with status code 404:" in str(exc.value)
 
@@ -94,7 +95,7 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert pool.isEnabled
 
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(ServerError) as exc:
         reporter.enable(pool.pk)
     assert "Server unexpectedly responded with status code 406:" in str(exc.value)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
@@ -104,7 +105,7 @@ def test_ec2reporter_xable(mock_expanduser, live_server, tmp_path, fm_user):
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
     assert not pool.isEnabled
 
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(ServerError) as exc:
         reporter.disable(pool.pk)
     assert "Server unexpectedly responded with status code 406:" in str(exc.value)
     pool = InstancePool.objects.get(pk=pool.pk)  # re-read
@@ -135,7 +136,7 @@ def test_ec2reporter_cycle(mock_expanduser, live_server, tmp_path, fm_user):
         clientId="host1",
     )
 
-    with pytest.raises(RuntimeError) as exc:
+    with pytest.raises(ServerError) as exc:
         reporter.cycle(pool.pk)
     assert "Server unexpectedly responded with status code 406:" in str(exc.value)
 

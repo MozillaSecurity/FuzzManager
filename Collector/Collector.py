@@ -29,12 +29,17 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Running.AutoRunner import AutoRunner
 from FTB.Signatures.CrashInfo import CrashInfo
 from FTB.Signatures.CrashSignature import CrashSignature
-from Reporter.Reporter import Reporter, remote_checks, signature_checks
+from Reporter.Reporter import (
+    InvalidDataError,
+    Reporter,
+    remote_checks,
+    signature_checks,
+)
 
 __all__ = []
 __version__ = 0.1
 __date__ = "2014-10-01"
-__updated__ = "2014-10-01"
+__updated__ = "2025-04-08"
 
 
 class Collector(Reporter):
@@ -70,7 +75,7 @@ class Collector(Reporter):
         """
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
-                raise RuntimeError(f"Bad CRC for downloaded zipfile {zipFileName}")
+                raise InvalidDataError(f"Bad CRC for downloaded zipfile {zipFileName}")
 
             # Now clean the signature directory, only deleting signatures and metadata
             for sigFile in os.listdir(self.sigCacheDir):
@@ -278,7 +283,9 @@ class Collector(Reporter):
         resp_json = self.get(url).json()
 
         if not isinstance(resp_json, dict):
-            raise RuntimeError(f"Server sent malformed JSON response: {resp_json!r}")
+            raise InvalidDataError(
+                f"Server sent malformed JSON response: {resp_json!r}"
+            )
 
         if not resp_json["testcase"]:
             return None
@@ -286,7 +293,7 @@ class Collector(Reporter):
         response = self.get(dlurl)
 
         if "content-disposition" not in response.headers:
-            raise RuntimeError(f"Server sent malformed response: {response!r}")
+            raise InvalidDataError(f"Server sent malformed response: {response!r}")
 
         local_filename = f"{crashId}{os.path.splitext(resp_json['testcase'])[1]}"
         with open(local_filename, "wb") as output:
@@ -316,7 +323,7 @@ class Collector(Reporter):
             resp_json = self.get(next_url, params=params).json()
 
             if not isinstance(resp_json, dict):
-                raise RuntimeError(
+                raise InvalidDataError(
                     f"Server sent malformed JSON response: {resp_json!r}"
                 )
 
@@ -336,7 +343,9 @@ class Collector(Reporter):
                 response = self.get(url)
 
                 if "content-disposition" not in response.headers:
-                    raise RuntimeError(f"Server sent malformed response: {response!r}")
+                    raise InvalidDataError(
+                        f"Server sent malformed response: {response!r}"
+                    )
 
                 local_filename = "%d%s" % (
                     crash["id"],
