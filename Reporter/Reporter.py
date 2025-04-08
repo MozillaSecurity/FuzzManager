@@ -92,7 +92,7 @@ def requests_retry(wrapped):
             if response.status_code != success:
                 # Allow for a total sleep time of up to 2 minutes if it's
                 # likely that the response codes indicate a temporary error
-                retry_codes = [500, 502, 503, 504]
+                retry_codes = [429, 500, 502, 503, 504]
                 if response.status_code in retry_codes and current_timeout <= max_sleep:
                     LOG.warning(
                         "in %s, server returned %s, retrying...",
