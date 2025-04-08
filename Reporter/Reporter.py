@@ -105,7 +105,7 @@ def requests_retry(wrapped):
                     time.sleep(current_timeout)
                     current_timeout *= 2
                     continue
-                raise
+                raise ServerError(f"maximum timeout exceeded: {exc}") from None
 
             if response.status_code != success:
                 # Allow for a total sleep time of up to 2 minutes if it's
@@ -120,7 +120,10 @@ def requests_retry(wrapped):
                     time.sleep(current_timeout)
                     current_timeout *= 2
                     continue
-                raise Reporter.serverError(response)
+                raise ServerError(
+                    "Server unexpectedly responded with status code "
+                    f"{response.status_code}: {response.text}"
+                )
             return response
 
     return wrapper
@@ -255,10 +258,3 @@ class Reporter(ABC):
             {"Authorization": f"Token {self.serverAuthToken}"}
         )
         return requests_retry(self._session.patch)(*args, **kwds)
-
-    @staticmethod
-    def serverError(response):
-        return ServerError(
-            "Server unexpectedly responded with status code "
-            f"{response.status_code}: {response.text}"
-        )
