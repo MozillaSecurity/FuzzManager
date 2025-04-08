@@ -204,7 +204,8 @@ def main(argv=None):
                     )
                 time.sleep(opts.keep_reporting + random_offset)
         else:
-            report = opts.report_file.read_text()
+            with InterProcessLock(f"{opts.report_file}.lock"):
+                report = opts.report_file.read_text()
     else:
         report = opts.report
 
