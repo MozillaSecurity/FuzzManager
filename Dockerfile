@@ -8,7 +8,7 @@ WORKDIR /src
 RUN npm install
 RUN npm run production
 
-FROM python:3.10-alpine as backend
+FROM python:3.11-alpine as backend
 
 RUN apk add --no-cache build-base git mariadb-dev
 
@@ -20,7 +20,7 @@ RUN cd /src && \
    python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'], ex['taskmanager'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
    pip wheel -q --wheel-dir /var/cache/wheels wheel setuptools_scm[toml]
 
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 RUN adduser -D worker && \
    apk add --no-cache bash git mariadb-client mariadb-connector-c openssh-client-default && \
