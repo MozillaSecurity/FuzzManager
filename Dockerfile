@@ -17,6 +17,7 @@ RUN apk add --no-cache build-base git mariadb-dev
 #   (from pyproject.toml [build-system].requires)
 COPY ./requirements.txt ./setup.cfg /src/
 RUN cd /src && \
+   pip install -U setuptools && \
    python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'], ex['taskmanager'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
    pip wheel -q --wheel-dir /var/cache/wheels wheel setuptools_scm[toml]
 
