@@ -10,6 +10,10 @@ SECRET_KEY = "YskonP1FOlIthZKysJcXQ3Bn6sAjUXaei8JVjesWbE"
 # Allow localhost
 ALLOWED_HOSTS = ["localhost"]
 
+INSTALLED_APPS = tuple(
+    app for app in INSTALLED_APPS if app not in {"ec2spotmanager", "chartjs"}  # noqa
+)
+
 BASE_DIR = "/data"
 COV_STORAGE = "/data/coverage"
 TEST_STORAGE = "/data/crashes"
