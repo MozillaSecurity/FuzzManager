@@ -4,6 +4,8 @@
 #
 #    pip-compile --extra=docker --extra=ec2spotmanager --extra=server --extra=taskmanager --extra=test --strip-extras
 #
+# (Python 3.10 & 3.11 versions edited in by hand)
+#
 adal==1.2.7
     # via msrestazure
 aiohappyeyeballs==2.6.1
@@ -109,7 +111,7 @@ django-notifications-hq==1.8.3
     # via FuzzManager (setup.py)
 djangorestframework==3.15.2
     # via FuzzManager (setup.py)
-exceptiongroup==1.2.2
+exceptiongroup==1.2.2 ; python_version <= "3.10"
     # via pytest
 fakeredis==2.28.1 ; python_version <= "3.11"
     # via FuzzManager (setup.py)
@@ -270,11 +272,12 @@ taskcluster==83.5.1
     # via fuzzing-decision
 taskcluster-urls==13.0.1
     # via taskcluster
-tomli==2.2.1
+tomli==2.2.1 ; python_version <= "3.10"
     # via
     #   coverage
     #   pytest
-typing-extensions==4.12.2
+typing-extensions==4.12.2 ; python_version <= "3.9"
+typing-extensions==4.13.1 ; python_version > "3.9"
     # via
     #   asgiref
     #   azure-core
@@ -285,7 +288,8 @@ tzdata==2025.2
     # via
     #   celery
     #   kombu
-urllib3==1.26.20
+urllib3==1.26.20 ; python_version <= "3.9"
+urllib3==2.3.0 ; python_version > "3.9"
     # via
     #   botocore
     #   requests
