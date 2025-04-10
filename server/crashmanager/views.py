@@ -1170,6 +1170,27 @@ class CrashEntryViewSet(
             obj.testcase.save()
         return Response(CrashEntrySerializer(obj).data)
 
+    def create(self, request, *args, **kwargs):
+        """Check user has access to tool before creation"""
+        tool_name = request.data.get("tool")
+        if tool_name is None:
+            return Response(
+                {"message": "Missing required 'tool' parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            allowed_tools = user.defaultToolsFilter.values_list("name", flat=True)
+            if not allowed_tools:
+                raise PermissionDenied({"message": "No tools assigned to user"})
+
+            if tool_name not in allowed_tools:
+                raise PermissionDenied(
+                    {"message": f"You don't have permission to use tool: {tool_name}"}
+                )
+        return super().create(request, *args, **kwargs)
+
 
 class BucketViewSet(
     mixins.CreateModelMixin,
