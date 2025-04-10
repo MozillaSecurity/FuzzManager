@@ -321,3 +321,23 @@ def cm():
             return result
 
     return _cm_result()
+
+
+@pytest.fixture
+def user_restricted_with_tools(db, user_restricted):
+    """Add necessary tools to the restricted user for testing"""
+
+    # Create the tools used in tests
+    tool1 = Tool.objects.get_or_create(name="tool1")[0]
+    toolx = Tool.objects.get_or_create(name="x")[0]
+
+    # Get the CrashManagerUser object associated with the user_restricted fixture
+    # user_restricted is likely a Django User object, not a CrashManagerUser
+    cm_user = cmUser.objects.get(user=user_restricted)
+
+    # Add tools to the user's default tool filter
+    cm_user.defaultToolsFilter.add(tool1, toolx)
+
+    cm_user.save()
+
+    return cm_user

@@ -22,6 +22,7 @@ from django.contrib.contenttypes.models import ContentType
 from covmanager.models import Collection, CollectionFile, Repository
 from crashmanager.models import Client, Tool
 from crashmanager.models import User as cmUser
+from crashmanager.tests.conftest import _create_user
 
 LOG = logging.getLogger("fm.covmanager.tests")
 
@@ -56,6 +57,16 @@ HAVE_GIT = _check_git()
 HAVE_HG = _check_hg()
 
 
+def _covmgr_create_user(
+    username,
+    email="test@mozilla.com",
+    password="test",
+    restricted=False,
+    permissions=("view_covmanager", "covmanager_all", "covmanager_submit_collection"),
+):
+    return _create_user(username, email, password, restricted, permissions)
+
+
 @pytest.fixture
 def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
     """Common setup/teardown tasks for all server unittests"""
@@ -76,6 +87,24 @@ def covmanager_test(db):  # pylint: disable=invalid-name,unused-argument
         content_type=content_type, codename="covmanager_submit_collection"
     )
     user_ro.user_permissions.add(perm)
+
+
+@pytest.fixture
+def covmgr_user_normal(db, api_client):  # pylint: disable=invalid-name,unused-argument
+    """Create a normal, authenticated user for covmanager tests"""
+    user = _covmgr_create_user("test")
+    api_client.force_authenticate(user=user)
+    return user
+
+
+@pytest.fixture
+def covmgr_user_restricted(
+    db, api_client
+):  # pylint: disable=invalid-name,unused-argument
+    """Create a restricted, authenticated user for covmanager tests"""
+    user = _covmgr_create_user("test-restricted", restricted=True)
+    api_client.force_authenticate(user=user)
+    return user
 
 
 @pytest.fixture
@@ -169,6 +198,12 @@ def covmgr_helper(request, settings, tmpdir):
                     LOG.debug("Created Tool pk=%d", tool.pk)
                 result.tools.add(tool)
             return result
+
+        @staticmethod
+        def create_toolfilter(tool_name, user="test"):
+            user = User.objects.get(username=user)
+            cmuser, _ = cmUser.objects.get_or_create(user=user)
+            cmuser.defaultToolsFilter.add(Tool.objects.get(name=tool_name))
 
         @staticmethod
         def git(repo, *args):
