@@ -59,7 +59,7 @@ class Command(BaseCommand):
                 LOG.debug(
                     "ignoring task %s update for schedulerId %s",
                     body["status"]["taskId"],
-                    body["task"]["schedulerId"],
+                    body["status"]["schedulerId"],
                 )
             else:
                 update_task.delay(body)
