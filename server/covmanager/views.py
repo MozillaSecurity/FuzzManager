@@ -9,10 +9,11 @@ from django.http import Http404
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework import filters, mixins, viewsets
+from rest_framework import filters, mixins, status, viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.response import Response
 
-from crashmanager.models import Tool
+from crashmanager.models import Tool, User
 from server.utils import IPRestrictedTokenAuthentication
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
 
@@ -715,6 +716,36 @@ class CollectionViewSet(
         SimpleQueryFilterBackend,
         CollectionFilterBackend,
     ]
+
+    def create(self, request, *args, **kwargs):
+        """Check user has access to tools before creation"""
+        tools_str = request.data.get("tools")
+        if tools_str is None:
+            return Response(
+                {"message": "Missing required 'tools' parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        requested_tools = set(tools_str.split(","))
+
+        user = User.get_or_create_restricted(request.user)[0]
+        if user.restricted:
+            allowed_tools = set(user.defaultToolsFilter.values_list("name", flat=True))
+            if not allowed_tools:
+                raise PermissionDenied({"message": "No tools assigned to user"})
+
+            unauthorized_tools = requested_tools - allowed_tools
+            if unauthorized_tools:
+                raise PermissionDenied(
+                    {
+                        "message": (
+                            f"You don't have permission to use the following tools: "
+                            f"{', '.join(unauthorized_tools)}"
+                        )
+                    }
+                )
+
+        return super().create(request, *args, **kwargs)
 
 
 class ReportFilterBackend(filters.BaseFilterBackend):
