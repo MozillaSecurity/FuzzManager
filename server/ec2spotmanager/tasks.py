@@ -8,7 +8,6 @@ import redis
 from celeryconf import app
 from django.conf import settings
 from django.utils import timezone
-from laniakea.core.userdata import UserData
 
 from . import cron  # noqa ensure cron tasks get registered
 from .CloudProvider.CloudProvider import (
@@ -171,6 +170,8 @@ def _determine_best_location(config, count, cache=None):
 
 def _start_pool_instances(pool, config, count=1):
     """Start an instance with the given configuration"""
+    from laniakea.core.userdata import UserData
+
     from .models import POOL_STATUS_ENTRY_TYPE, Instance, PoolStatusEntry
 
     cache = redis.StrictRedis.from_url(settings.REDIS_URL)
