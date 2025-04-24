@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
@@ -20,7 +21,6 @@ urlpatterns = [
     re_path(r"^covmanager/", include("covmanager.urls")),
     re_path(r"^crashmanager/", include("crashmanager.urls")),
     re_path(r"^taskmanager/", include("taskmanager.urls")),
-    re_path(r"^ec2spotmanager/", include("ec2spotmanager.urls")),
     re_path(
         "inbox/notifications/",
         include(
@@ -50,6 +50,9 @@ urlpatterns = [
 
 if settings.USE_OIDC:
     urlpatterns.append(re_path(r"^oidc/", include("mozilla_django_oidc.urls")))
+
+if apps.is_installed("ec2spotmanager"):
+    urlpatterns.append(re_path(r"^ec2spotmanager/", include("ec2spotmanager.urls")))
 
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

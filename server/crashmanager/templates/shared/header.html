@@ -21,7 +21,7 @@
                         {% if perms.crashmanager.view_taskmanager %}
                         <li><a href="/taskmanager"><i class="bi bi-bar-chart-steps"></i> TaskManager</a></li>
                         {% endif %}
-                        {% if perms.crashmanager.view_ec2spotmanager %}
+                        {% if perms.crashmanager.view_ec2spotmanager and "ec2spotmanager" in installed_apps %}
                         <li><a href="/ec2spotmanager"><i class="bi bi-cloud-fill"></i> EC2SpotManager</a></li>
                         {% endif %}
                         {% if perms.crashmanager.view_covmanager %}
