@@ -33,17 +33,17 @@
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
-            {% if request.current_app == 'crashmanager' %}
+            {% if request.resolver_match.app_name == 'crashmanager' %}
                 <li><a href="{% url 'crashmanager:crashes' %}"><i class="bi bi-card-list"></i> Crashes</a></li>
                 <li><a href="{% url 'crashmanager:signatures' %}"><i class="bi bi-tag-fill"></i> Signatures</a></li>
                 <li><a href="{% url 'crashmanager:stats' %}"><i class="bi bi-bar-chart-fill"></i> Statistics</a></li>
                 <li><a href="{% url 'crashmanager:bugproviders' %}"><i class="bi bi-bug-fill"></i> Providers</a></li>
-            {% elif request.current_app == 'taskmanager' %}
+            {% elif request.resolver_match.app_name == 'taskmanager' %}
                 <li><a href="{% url 'taskmanager:pool-list-ui' %}"><i class="bi bi-card-list"></i> Pools</a></li>
-            {% elif request.current_app == 'ec2spotmanager' %}
+            {% elif request.resolver_match.app_name == 'ec2spotmanager' %}
                 <li><a href="{% url 'ec2spotmanager:pools' %}"><i class="bi bi-card-list"></i> Pools</a></li>
                 <li><a href="{% url 'ec2spotmanager:configs' %}"><i class="bi bi-sliders"></i> Configurations</a></li>
-            {% elif request.current_app == 'covmanager' %}
+            {% elif request.resolver_match.app_name == 'covmanager' %}
                 <li><a href="{% url 'covmanager:reports' %}"><i class="bi bi-file-bar-graph"></i> Reports</a></li>
                 <li><a href="{% url 'covmanager:collections' %}"><i class="bi bi-clipboard-data"></i> Collections</a></li>
                 <li><a href="{% url 'covmanager:repositories' %}"><i class="bi bi-archive-fill"></i> Repositories</a></li>
