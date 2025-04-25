@@ -25,6 +25,7 @@ TC_EXTRA_POOLS = []
 REDIS_URL = (
     "redis://fuzzmanager-redis:6379?db=0"  # unix sockets, use unix:///path/to/sock?db=0
 )
+CACHES["default"]["LOCATION"] = REDIS_URL  # noqa
 CELERY_BROKER_URL = "redis://fuzzmanager-redis/2"
 CELERY_RESULT_BACKEND = "redis://fuzzmanager-redis/1"
 
