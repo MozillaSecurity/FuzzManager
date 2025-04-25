@@ -90,16 +90,6 @@ def installed_apps_context_processor(_request):
     }
 
 
-# We add a custom context processor to make our application name
-# and certain other variables available in all our templates
-def resolver_context_processor(request):
-    return {
-        "app_name": request.resolver_match.app_name,
-        "namespace": request.resolver_match.namespace,
-        "url_name": request.resolver_match.url_name,
-    }
-
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -117,7 +107,6 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "server.settings.installed_apps_context_processor",
-                "server.settings.resolver_context_processor",
             ],
             "debug": True,
         },
