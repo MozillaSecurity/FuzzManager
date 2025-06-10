@@ -238,7 +238,7 @@ redis==5.2.1
     # via
     #   FuzzManager (setup.py)
     #   fakeredis
-requests==2.32.3
+requests==2.32.4
     # via
     #   FuzzManager (setup.py)
     #   adal
