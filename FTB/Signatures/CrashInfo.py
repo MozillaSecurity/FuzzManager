@@ -1510,6 +1510,9 @@ class GDBCrashInfo(CrashInfo):
                     # This is an instruction that the dissassembler can't read, so
                     # likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
+                elif instruction == "brk":
+                    # This is an explicit breakpoint / trap
+                    return RegisterHelper.getInstructionPointer(registerMap)
             elif len(parts) == 2:
                 if instruction.startswith("ldr") or instruction.startswith("str"):
                     # Load/Store instruction
