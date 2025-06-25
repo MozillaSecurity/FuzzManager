@@ -2,22 +2,20 @@ cloud: gcp
 disk_size: 50g
 cycle_time: 1h
 max_run_time: 1h
-cores_per_task: 10
-metal: false
 name: Test Pool
 tasks: 2
 demand: false
+machine_types:
+  - dummy
 command:
   - cmd1
   - arg1
 container: MozillaSecurity/fuzzer:latest
-minimum_memory_per_core: 1g
 imageset: generic-worker-A
 cpu: x64
-gpu: false
 platform: linux
 preprocess: ""
-macros:
+env:
   ENVVAR1: "123456"
   ENVVAR2: 789abc
 run_as_admin: false
