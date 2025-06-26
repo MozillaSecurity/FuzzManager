@@ -14,14 +14,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import os
-import re
 import shutil
-import signal
 import subprocess
 import sys
 from abc import ABCMeta
+from pathlib import Path
+from shutil import rmtree
+from tempfile import mkdtemp
 
-from FTB.Signatures.CrashInfo import CrashInfo
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo, NoCrashInfo
 
 
 class AutoRunner(metaclass=ABCMeta):
@@ -262,93 +264,45 @@ class ASanRunner(AutoRunner):
                 self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1:handle_abort=1"
 
     def run(self):
-        process = subprocess.Popen(
-            self.cmdArgs,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=self.cwd,
-            env=self.env,
+        tmpd = Path(mkdtemp(prefix="fm-autorun-"))
+        try:
+            env = self.env.copy()
+            env["ASAN_OPTIONS"] = f"{env.get('ASAN_OPTIONS', '')}:log_path={tmpd}/crash"
+            env["UBSAN_OPTIONS"] = (
+                f"{env.get('UBSAN_OPTIONS', '')}:log_path={tmpd}/crash"
+            )
+            env["TSAN_OPTIONS"] = f"{env.get('TSAN_OPTIONS', '')}:log_path={tmpd}/crash"
+
+            # create a ProgramConfiguration just to create the temporary CrashInfo
+            pc = ProgramConfiguration.fromBinary(self.binary)
+            process = subprocess.run(
+                self.cmdArgs,
+                stdin=self.stdin,
+                capture_output=True,
+                text=True,
+                cwd=self.cwd,
+                env=env,
+            )
+
+            self.stdout = process.stdout
+            self.stderr = process.stderr
+            first = True
+            self.auxCrashData = []
+            for crash in tmpd.iterdir():
+                self.auxCrashData = crash.read_text()
+                if not first:
+                    print(
+                        "warning: multiple sanitizer logs detected",
+                        file=sys.stderr,
+                    )
+                first = False
+        finally:
+            rmtree(tmpd)
+
+        crash_info = CrashInfo.fromRawCrashData(
+            self.stdout, self.stderr, pc, self.auxCrashData
         )
-
-        (stdout, stderr) = process.communicate(input=self.stdin)
-
-        self.stdout = stdout.decode("utf-8", errors="ignore")
-        stderr = stderr.decode("utf-8", errors="ignore")
-
-        inASanTrace = False
-        inUBSanTrace = False
-        inTSanTrace = False
-        self.auxCrashData = []
-        self.stderr = []
-        for line in stderr.splitlines():
-            if inASanTrace or inUBSanTrace or inTSanTrace:
-                self.auxCrashData.append(line)
-                if (inASanTrace or inUBSanTrace) and line.find("==ABORTING") >= 0:
-                    inASanTrace = False
-                    inUBSanTrace = False
-                elif (
-                    inUBSanTrace
-                    and "==SUMMARY: AddressSanitizer: undefined-behavior" in line
-                ):
-                    # This format is used when combining ASan and UBSan.
-                    inUBSanTrace = False
-                elif (
-                    inUBSanTrace
-                    and "SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior"
-                    in line
-                ):
-                    # This is what UBSan emits on its own with `print_summary=1`.
-                    inUBSanTrace = False
-                elif inTSanTrace and "SUMMARY: ThreadSanitizer: data race" in line:
-                    inTSanTrace = False
-            elif line.find("==ERROR: AddressSanitizer") >= 0:
-                self.auxCrashData.append(line)
-                inASanTrace = True
-            elif line.find("==ERROR: UndefinedBehaviorSanitizer:") >= 0:
-                # This is only seen when UBSan-only builds (e.g. libFuzzer without ASan)
-                # handle a regular crash/abort and emit a backtrace for it.
-                self.auxCrashData.append(line)
-                inUBSanTrace = True
-            elif "runtime error" in line and re.search(
-                ":\\d+:\\d+: runtime error: ", line
-            ):
-                self.auxCrashData.append(line)
-                inUBSanTrace = True
-            elif line.startswith("WARNING: ThreadSanitizer: data race"):
-                self.auxCrashData.append(line)
-                inTSanTrace = True
-            else:
-                self.stderr.append(line)
-
-        if not self.auxCrashData:
-            processCrashed = False
-
-            # It can happen that we don't get an AddressSanitizer trace because ASan's
-            # signal handler did not catch the signal for some reason. This can happen
-            # easily with SIGILL but also for some programs with SIGSEGV.
-            if process.returncode < 0:
-                crashSignals = [
-                    # POSIX.1-1990 signals
-                    signal.SIGILL,
-                    signal.SIGABRT,
-                    signal.SIGFPE,
-                    signal.SIGSEGV,
-                    # SUSv2 / POSIX.1-2001 signals
-                    signal.SIGBUS,
-                    signal.SIGSYS,
-                    signal.SIGTRAP,
-                ]
-
-                for crashSignal in crashSignals:
-                    if process.returncode == -crashSignal:
-                        processCrashed = True
-
-            if not processCrashed:
-                return False
-
-        # Move the trace from stdout to auxCrashData
-        self.auxCrashData = os.linesep.join(self.auxCrashData)
-        self.stderr = os.linesep.join(self.stderr)
+        if isinstance(crash_info, NoCrashInfo):
+            return False
 
         return True
