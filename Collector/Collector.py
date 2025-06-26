@@ -743,7 +743,7 @@ def main(args=None):
         return 0
 
     if opts.autosubmit:
-        runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:])
+        runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:], env=env)
         if runner.run():
             crashInfo = runner.getCrashInfo(configuration)
             collector.submit(
