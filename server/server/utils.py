@@ -17,6 +17,15 @@ from rest_framework.exceptions import PermissionDenied
 LOG = logging.getLogger("fuzzmanager.utils")
 
 
+def parse_bool(request, param, default=True):
+    """Parse a boolean URL parameter.
+    Accept "true", "false", "1", or "0", case insensitive.
+    """
+    param_value = request.query_params.get(param, str(default)).lower()
+    assert param_value in {"true", "false", "1", "0"}
+    return param_value in {"true", "1"}
+
+
 class RedisLock:
     """Simple Redis mutex lock.
 

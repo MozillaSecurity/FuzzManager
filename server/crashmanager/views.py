@@ -29,7 +29,7 @@ from rest_framework.views import APIView
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
 from server.auth import CheckAppPermission
-from server.utils import IPRestrictedTokenAuthentication
+from server.utils import IPRestrictedTokenAuthentication, parse_bool
 
 from .forms import (
     BugzillaTemplateBugForm,
@@ -1068,14 +1068,10 @@ class CrashEntryViewSet(
 
     def get_serializer(self, *args, **kwds):
         kwds["include_raw"] = getattr(self, "include_raw", True)
-        self.vue = self.request.query_params.get("vue", "false").lower() not in (
-            "false",
-            "0",
-        )
+        self.vue = parse_bool(self.request, "vue", False)
         if self.vue:
             return CrashEntryVueSerializer(*args, **kwds)
-        else:
-            return super().get_serializer(*args, **kwds)
+        return super().get_serializer(*args, **kwds)
 
     @action(detail=False, methods=["delete"])
     def delete(self, request, pk=None):
@@ -1220,14 +1216,10 @@ class BucketViewSet(
     pagination_class = None
 
     def get_serializer(self, *args, **kwds):
-        self.vue = self.request.query_params.get("vue", "false").lower() not in (
-            "false",
-            "0",
-        )
+        self.vue = parse_bool(self.request, "vue", False)
         if self.vue:
             return BucketVueSerializer(*args, **kwds)
-        else:
-            return super().get_serializer(*args, **kwds)
+        return super().get_serializer(*args, **kwds)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
@@ -1430,11 +1422,8 @@ class BucketViewSet(
         if "doNotReduce" in serializer.validated_data:
             bucket.doNotReduce = serializer.validated_data["doNotReduce"]
 
-        save = request.query_params.get("save", "true").lower() not in ("false", "0")
-        reassign = request.query_params.get("reassign", "true").lower() not in (
-            "false",
-            "0",
-        )
+        save = parse_bool(request, "save")
+        reassign = parse_bool(request, "reassign")
         if reassign:
             limit = int(request.query_params.get("limit", "1000"))
             offset = int(request.query_params.get("offset", "0"))
@@ -1459,11 +1448,9 @@ class BucketViewSet(
             permanent=serializer.validated_data.get("permanent"),
         )
 
-        save = request.query_params.get("save", "true").lower() not in ("false", "0")
-        reassign = request.query_params.get("reassign", "true").lower() not in (
-            "false",
-            "0",
-        )
+        save = parse_bool(request, "save")
+        reassign = parse_bool(request, "reassign")
+
         if reassign:
             limit = int(request.query_params.get("limit", "1000"))
             offset = int(request.query_params.get("offset", "0"))
