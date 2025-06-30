@@ -2,7 +2,6 @@ import json
 import logging
 import re
 from datetime import timedelta
-from itertools import zip_longest
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -259,12 +258,12 @@ class Bucket(models.Model):
                 next_offset = (offset or 0) + limit
             entry_ids = entry_ids[:limit]
 
-        # from the python documentation (itertools)
-        def grouper(iterable, n, fillvalue=None):
+        def grouper(iterable, n):
             """Collect data into fixed-length chunks or blocks"""
-            # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-            args = [iter(iterable)] * n
-            return zip_longest(*args, fillvalue=fillvalue)
+            # grouper('ABCDEFG', 3) --> ABC DEF G
+            while iterable:
+                result, iterable = iterable[:n], iterable[n:]
+                yield result
 
         # If we are saving, we only care about the id of each entry
         # Otherwise, we save the entire object. Limit to the first 100 entries to avoid
@@ -292,8 +291,7 @@ class Bucket(models.Model):
                     out_list_count += 1
 
         if submit_save:
-            while in_list:
-                upd_list, in_list = in_list[:500], in_list[500:]
+            for upd_list in grouper(in_list, 500):
                 for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
@@ -316,8 +314,7 @@ class Bucket(models.Model):
                 CrashEntry.objects.filter(pk__in=upd_list).update(
                     bucket=self, triagedOnce=True
                 )
-            while out_list:
-                upd_list, out_list = out_list[:500], out_list[500:]
+            for upd_list in grouper(out_list, 500):
                 for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
