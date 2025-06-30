@@ -376,7 +376,7 @@ def test_new_signature_create(
         "bucket_id": bucket.pk,
         "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
         "inListCount": 1,
-        "inList": [],
+        "inList": [crash.pk],
         "outListCount": 0,
         "outList": [],
         "nextOffset": None,
@@ -440,7 +440,7 @@ def test_new_signature_create_w_reassign(
         assert resp.json() == {
             "bucket_id": bucket.pk,
             "inListCount": 10,
-            "inList": [],
+            "inList": [crash.pk for crash in crashes[:10]],
             "outListCount": 0,
             "outList": [],
             "nextOffset": 10,
@@ -471,7 +471,7 @@ def test_new_signature_create_w_reassign(
         assert resp.json() == {
             "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
             "inListCount": 1,
-            "inList": [],
+            "inList": [crashes[10].pk],
             "outListCount": 0,
             "outList": [],
             "nextOffset": None,
@@ -485,7 +485,7 @@ def test_new_signature_create_w_reassign(
             "bucket_id": bucket.pk,
             "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
             "inListCount": 1,
-            "inList": [],
+            "inList": [crash.pk],
             "outListCount": 0,
             "outList": [],
             "nextOffset": None,
@@ -642,6 +642,7 @@ def test_edit_signature_edit_w_reassign(
             assert crash.bucket == bucket
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
+        crashes = [crash]
         assert crash.bucket == bucket
     assert json.loads(bucket.signature) == json.loads(sig)
     assert bucket.shortDescription == "bucket #1"
@@ -651,7 +652,7 @@ def test_edit_signature_edit_w_reassign(
     assert resp.status_code == requests.codes["ok"]
     assert resp.json() == {
         "url": reverse("crashmanager:sigview", kwargs={"sigid": bucket.pk}),
-        "inList": [],
+        "inList": [crash.pk for crash in crashes],
         "inListCount": 201 if many else 1,
         "outList": [],
         "outListCount": 0,
