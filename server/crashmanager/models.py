@@ -1,7 +1,7 @@
 import json
-import logging
 import re
 from datetime import timedelta
+from logging import getLogger
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -22,6 +22,8 @@ from FTB.Signatures.CrashSignature import CrashSignature
 
 if getattr(settings, "USE_CELERY", None):
     from .tasks import triage_new_crash
+
+LOG = getLogger("crashmanager")
 
 
 class Tool(models.Model):
@@ -291,6 +293,9 @@ class Bucket(models.Model):
                     out_list_count += 1
 
         if submit_save:
+            LOG.info(
+                "saving bucket %d: in=%d out=%d", self.pk, in_list_count, out_list_count
+            )
             for upd_list in grouper(in_list, 500):
                 for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
@@ -932,7 +937,6 @@ class User(models.Model):
 @receiver(post_save, sender=DjangoUser)
 def add_default_perms(sender, instance, created, **kwargs):
     if created:
-        log = logging.getLogger("crashmanager")
         for perm in getattr(settings, "DEFAULT_PERMISSIONS", []):
             model, perm = perm.split(":", 1)
             module, model = model.rsplit(".", 1)
@@ -942,7 +946,7 @@ def add_default_perms(sender, instance, created, **kwargs):
             content_type = ContentType.objects.get_for_model(getattr(module, model))
             perm = Permission.objects.get(content_type=content_type, codename=perm)
             instance.user_permissions.add(perm)
-            log.info("user %s added permission %s:%s", instance.username, model, perm)
+            LOG.info("user %s added permission %s:%s", instance.username, model, perm)
 
 
 class BucketWatch(models.Model):
