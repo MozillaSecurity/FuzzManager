@@ -1313,7 +1313,9 @@ class BucketViewSet(
 
         return response
 
-    def __validate(self, request, bucket, submitSave, reassign, limit, offset, created):
+    def __validate(
+        self, request, bucket, submit_save, reassign, limit, offset, created
+    ):
         try:
             bucket.getSignature()
         except RuntimeError as e:
@@ -1322,7 +1324,7 @@ class BucketViewSet(
         # Only save if we hit "save" (not e.g. "preview")
         # If offset is set, don't do it again (already done on first iteration)
         result = status.HTTP_200_OK
-        if submitSave and not offset:
+        if submit_save and not offset:
             if bucket.bug is not None:
                 bucket.bug.save()
                 # this is not a no-op!
@@ -1345,28 +1347,28 @@ class BucketViewSet(
         # no-reassign & preview: same as above, but change results are empty
         # no-reassign & save: save bucket without reprocessing, s.b. instant
 
-        inList, outList = [], []
-        inListCount, outListCount = 0, 0
-        nextOffset = None
+        in_list, out_list = [], []
+        in_list_count, out_list_count = 0, 0
+        next_offset = None
         # If the reassign checkbox is checked
         if reassign:
-            inList, outList, inListCount, outListCount, nextOffset = bucket.reassign(
-                submitSave, limit=limit, offset=offset
+            in_list, out_list, in_list_count, out_list_count, next_offset = (
+                bucket.reassign(submit_save, limit=limit, offset=offset)
             )
-            if submitSave and not nextOffset:
+            if submit_save and not next_offset:
                 Bucket.objects.filter(pk=bucket.pk).update(reassign_in_progress=False)
 
         data = {
-            "inList": inList,
-            "outList": outList,
-            "inListCount": inListCount,
-            "outListCount": outListCount,
-            "nextOffset": nextOffset,
+            "inList": in_list,
+            "outList": out_list,
+            "inListCount": in_list_count,
+            "outListCount": out_list_count,
+            "nextOffset": next_offset,
         }
-        if submitSave:
+        if submit_save:
             if created:
                 data["bucket_id"] = bucket.pk
-            if nextOffset is None:
+            if next_offset is None:
                 data["url"] = reverse(
                     "crashmanager:sigview", kwargs={"sigid": bucket.pk}
                 )
