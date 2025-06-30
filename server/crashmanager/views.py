@@ -1313,9 +1313,8 @@ class BucketViewSet(
 
         return response
 
-    def __validate(
-        self, request, bucket, submit_save, reassign, limit, offset, created
-    ):
+    @staticmethod
+    def _validate(bucket, submit_save, reassign, limit, offset, created):
         try:
             bucket.getSignature()
         except RuntimeError as e:
@@ -1431,9 +1430,7 @@ class BucketViewSet(
             offset = int(request.query_params.get("offset", "0"))
         else:
             limit = offset = None
-        return self.__validate(
-            request, bucket, save, reassign, limit, offset, created=False
-        )
+        return self._validate(bucket, save, reassign, limit, offset, created=False)
 
     def create(self, request, *args, **kwargs):
         user = User.get_or_create_restricted(request.user)[0]
@@ -1458,9 +1455,7 @@ class BucketViewSet(
             offset = int(request.query_params.get("offset", "0"))
         else:
             limit = offset = None
-        return self.__validate(
-            request, bucket, save, reassign, limit, offset, created=save
-        )
+        return self._validate(bucket, save, reassign, limit, offset, created=save)
 
 
 class BucketVueViewSet(BucketViewSet):
