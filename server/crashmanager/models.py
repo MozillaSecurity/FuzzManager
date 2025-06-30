@@ -130,11 +130,11 @@ class BugProvider(models.Model):
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
-        providerModule = __import__(
+        provider_module = __import__(
             f"crashmanager.Bugtracker.{self.classname}", fromlist=[self.classname]
         )
-        providerClass = getattr(providerModule, self.classname)
-        return providerClass(self.pk, self.hostname)
+        provider_class = getattr(provider_module, self.classname)
+        return provider_class(self.pk, self.hostname)
 
     def __str__(self):
         return self.hostname
@@ -192,8 +192,8 @@ class Bucket(models.Model):
 
         # TODO: We could reset this only when we actually modify the signature,
         # but this would require fetching the old signature from the database again.
-        keepOptimized = kwargs.pop("keepOptimized", False)
-        if not keepOptimized:
+        keep_optimized = kwargs.pop("keepOptimized", False)
+        if not keep_optimized:
             self.optimizedSignature = None
             modified.add("optimizedSignature")
 
@@ -203,34 +203,34 @@ class Bucket(models.Model):
 
         super().save(*args, **kwargs)
 
-    def reassign(self, submitSave, limit=None, offset=None):
+    def reassign(self, submit_save, limit=None, offset=None):
         """
         Assign all unassigned issues that match our signature to this bucket.
         Furthermore, remove all non-matching issues from our bucket.
 
-        We only actually save if "submitSave" is set.
+        We only actually save if "submit_save" is set.
         For previewing, we just count how many issues would be assigned and removed.
         """
         from .serializers import CrashEntryVueSerializer
 
-        inList, outList = [], []
-        inListCount, outListCount = 0, 0
+        in_list, out_list = [], []
+        in_list_count, out_list_count = 0, 0
 
         signature = self.getSignature()
-        needTest = signature.matchRequiresTest()
+        need_test = signature.matchRequiresTest()
         entries = CrashEntry.objects.filter(
             models.Q(bucket=None) | models.Q(bucket=self)
         )
         entries = entries.select_related(
             "product", "platform", "os"
         )  # these are used by getCrashInfo
-        if needTest:
+        if need_test:
             entries = entries.select_related("testcase")
 
-        requiredOutputs = signature.getRequiredOutputSources()
-        entries = CrashEntry.deferRawFields(entries, requiredOutputs)
+        required_outputs = signature.getRequiredOutputSources()
+        entries = CrashEntry.deferRawFields(entries, required_outputs)
 
-        if not submitSave:
+        if not submit_save:
             entries = entries.select_related("tool").order_by(
                 "-id"
             )  # used by the preview list
@@ -252,11 +252,11 @@ class Bucket(models.Model):
         if offset:
             entry_ids = entry_ids[offset:]
 
-        nextOffset = None
+        next_offset = None
         if limit:
             remainder = entry_ids.count()
             if remainder > limit:
-                nextOffset = (offset or 0) + limit
+                next_offset = (offset or 0) + limit
             entry_ids = entry_ids[:limit]
 
         # from the python documentation (itertools)
@@ -275,26 +275,26 @@ class Bucket(models.Model):
             for entry in entries_chunk:
                 match = signature.matches(
                     entry.getCrashInfo(
-                        attachTestcase=needTest, requiredOutputSources=requiredOutputs
+                        attachTestcase=need_test, requiredOutputSources=required_outputs
                     )
                 )
                 if match and entry.bucket_id is None:
-                    if submitSave:
-                        inList.append(entry.pk)
-                    elif len(inList) < 100:
-                        inList.append(CrashEntryVueSerializer(entry).data)
-                    inListCount += 1
+                    if submit_save:
+                        in_list.append(entry.pk)
+                    elif len(in_list) < 100:
+                        in_list.append(CrashEntryVueSerializer(entry).data)
+                    in_list_count += 1
                 elif not match and entry.bucket_id is not None:
-                    if submitSave:
-                        outList.append(entry.pk)
-                    elif len(outList) < 100:
-                        outList.append(CrashEntryVueSerializer(entry).data)
-                    outListCount += 1
+                    if submit_save:
+                        out_list.append(entry.pk)
+                    elif len(out_list) < 100:
+                        out_list.append(CrashEntryVueSerializer(entry).data)
+                    out_list_count += 1
 
-        if submitSave:
-            while inList:
-                updList, inList = inList[:500], inList[500:]
-                for crash in CrashEntry.objects.filter(pk__in=updList).values(
+        if submit_save:
+            while in_list:
+                upd_list, in_list = in_list[:500], in_list[500:]
+                for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] != self.id:
@@ -313,12 +313,12 @@ class Bucket(models.Model):
                         BucketStatistics.increment_count(
                             self.id, crash["tool_id"], crash["testcase__quality"]
                         )
-                CrashEntry.objects.filter(pk__in=updList).update(
+                CrashEntry.objects.filter(pk__in=upd_list).update(
                     bucket=self, triagedOnce=True
                 )
-            while outList:
-                updList, outList = outList[:500], outList[500:]
-                for crash in CrashEntry.objects.filter(pk__in=updList).values(
+            while out_list:
+                upd_list, out_list = out_list[:500], out_list[500:]
+                for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
                 ):
                     if crash["bucket_id"] is not None:
@@ -330,14 +330,14 @@ class Bucket(models.Model):
                             crash["tool_id"],
                             crash["testcase__quality"],
                         )
-                CrashEntry.objects.filter(pk__in=updList).update(
+                CrashEntry.objects.filter(pk__in=upd_list).update(
                     bucket=None, triagedOnce=False
                 )
                 if getattr(settings, "USE_CELERY", None):
-                    for crash_id in updList:
+                    for crash_id in upd_list:
                         triage_new_crash.delay(crash_id)
 
-        return inList, outList, inListCount, outListCount, nextOffset
+        return in_list, out_list, in_list_count, out_list_count, next_offset
 
     def optimizeSignature(self, unbucketed_entries):
         buckets = Bucket.objects.all()
@@ -346,20 +346,20 @@ class Bucket(models.Model):
         if signature.matchRequiresTest():
             unbucketed_entries.select_related("testcase")
 
-        requiredOutputs = signature.getRequiredOutputSources()
-        entries = CrashEntry.deferRawFields(unbucketed_entries, requiredOutputs)
+        required_outputs = signature.getRequiredOutputSources()
+        entries = CrashEntry.deferRawFields(unbucketed_entries, required_outputs)
 
-        optimizedSignature = None
-        matchingEntries = []
+        optimized_signature = None
+        matching_entries = []
 
         # Avoid hitting the database multiple times when looking for the first
         # entry of a bucket. Keeping these in memory is less expensive.
-        firstEntryPerBucketCache = {}
+        first_entry_per_bucket_cache = {}
 
         for entry in entries:
             entry.crashinfo = entry.getCrashInfo(
                 attachTestcase=signature.matchRequiresTest(),
-                requiredOutputSources=requiredOutputs,
+                requiredOutputSources=required_outputs,
             )
 
             # For optimization, disregard any issues that directly match since those
@@ -368,69 +368,73 @@ class Bucket(models.Model):
             if signature.matches(entry.crashinfo):
                 continue
 
-            optimizedSignature = signature.fit(entry.crashinfo)
-            if optimizedSignature:
+            optimized_signature = signature.fit(entry.crashinfo)
+            if optimized_signature:
                 # We now try to determine how this signature will behave in other
                 # buckets. If the signature matches lots of other buckets as well, it is
                 # likely too broad and we should not consider it (or later rate it worse
                 # than others).
-                matchesInOtherBuckets = False
-                nonMatchesInOtherBuckets = 0  # noqa
-                otherMatchingBucketIds = []  # noqa
-                for otherBucket in buckets:
-                    if otherBucket.pk == self.pk:
+                matches_in_other_buckets = False
+                non_matches_in_other_buckets = 0  # noqa
+                other_matching_bucket_ids = []  # noqa
+                for other_bucket in buckets:
+                    if other_bucket.pk == self.pk:
                         continue
 
                     if (
                         self.bug
-                        and otherBucket.bug
-                        and self.bug.pk == otherBucket.bug.pk
+                        and other_bucket.bug
+                        and self.bug.pk == other_bucket.bug.pk
                     ):
                         # Allow matches in other buckets if they are both linked to the
                         # same bug
                         continue
 
-                    if otherBucket.pk not in firstEntryPerBucketCache:
+                    if other_bucket.pk not in first_entry_per_bucket_cache:
                         c = CrashEntry.objects.filter(
-                            bucket=otherBucket
+                            bucket=other_bucket
                         ).select_related("product", "platform", "os")
-                        c = CrashEntry.deferRawFields(c, requiredOutputs)
+                        c = CrashEntry.deferRawFields(c, required_outputs)
                         c = c.first()
-                        firstEntryPerBucketCache[otherBucket.pk] = c
+                        first_entry_per_bucket_cache[other_bucket.pk] = c
                         if c:
                             # Omit testcase for performance reasons for now
-                            firstEntryPerBucketCache[otherBucket.pk] = c.getCrashInfo(
-                                attachTestcase=False,
-                                requiredOutputSources=requiredOutputs,
+                            first_entry_per_bucket_cache[other_bucket.pk] = (
+                                c.getCrashInfo(
+                                    attachTestcase=False,
+                                    requiredOutputSources=required_outputs,
+                                )
                             )
 
-                    firstEntryCrashInfo = firstEntryPerBucketCache[otherBucket.pk]
-                    if firstEntryCrashInfo:
+                    first_entry_crash_info = first_entry_per_bucket_cache[
+                        other_bucket.pk
+                    ]
+                    if first_entry_crash_info:
                         # Omit testcase for performance reasons for now
-                        if optimizedSignature.matches(firstEntryCrashInfo):
-                            matchesInOtherBuckets = True
+                        if optimized_signature.matches(first_entry_crash_info):
+                            matches_in_other_buckets = True
                             break
 
-                if matchesInOtherBuckets:
+                if matches_in_other_buckets:
                     # Reset, we don't actually have an optimized signature if it's
                     # matching some other bucket as well.
-                    optimizedSignature = None
+                    optimized_signature = None
                 else:
                     for otherEntry in entries:
                         otherEntry.crashinfo = otherEntry.getCrashInfo(
-                            attachTestcase=False, requiredOutputSources=requiredOutputs
+                            attachTestcase=False, requiredOutputSources=required_outputs
                         )
-                        if optimizedSignature.matches(otherEntry.crashinfo):
-                            matchingEntries.append(otherEntry)
+                        if optimized_signature.matches(otherEntry.crashinfo):
+                            matching_entries.append(otherEntry)
 
                     # Fallback for when the optimization algorithm failed for some
                     # reason
-                    if not matchingEntries:
-                        optimizedSignature = None
+                    if not matching_entries:
+                        optimized_signature = None
 
                     break
 
-        return (optimizedSignature, matchingEntries)
+        return (optimized_signature, matching_entries)
 
 
 class BucketStatistics(models.Model):
