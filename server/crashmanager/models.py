@@ -231,15 +231,14 @@ class Bucket(models.Model):
         required_outputs = signature.getRequiredOutputSources()
         entries = CrashEntry.deferRawFields(entries, required_outputs)
 
+        # ensure a consistent sort otherwise not all crashes will be visited
+        # - sort descending for preview for aesthetics
+        # - sort ascending for save so incoming crashes aren't missed
         if not submit_save:
-            entries = entries.select_related("tool").order_by(
-                "-id"
-            )  # used by the preview list
+            entries = entries.select_related("tool")  # used by the preview list
+            entries = entries.order_by("-id")
         else:
-            # return unassigned entries last when saving to ensure a consistent sort
-            # otherwise in the "create" case we get inconsistent return order and
-            # not all crashes will be visited
-            entries = entries.order_by(models.F("bucket_id").asc(nulls_last=True))
+            entries = entries.order_by("id")
 
         # implement limit/offset pagination of reassignment to support
         # batched requests from frontend
@@ -293,9 +292,6 @@ class Bucket(models.Model):
                     out_list_count += 1
 
         if submit_save:
-            LOG.info(
-                "saving bucket %d: in=%d out=%d", self.pk, in_list_count, out_list_count
-            )
             for upd_list in grouper(in_list, 500):
                 for crash in CrashEntry.objects.filter(pk__in=upd_list).values(
                     "bucket_id", "created", "tool_id", "testcase__quality"
