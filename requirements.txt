@@ -10,7 +10,7 @@ adal==1.2.7
     # via msrestazure
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.12.13
+aiohttp==3.12.14
     # via taskcluster
 aiosignal==1.3.2
     # via aiohttp
