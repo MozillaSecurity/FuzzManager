@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const mainAxios = axios.create({
+  headers: { "X-Requested-With": "XMLHttpRequest" },
   xsrfCookieName: "csrftoken",
   xsrfHeaderName: "X-CSRFToken",
   withCredentials: true,
