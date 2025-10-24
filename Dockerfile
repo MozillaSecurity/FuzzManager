@@ -10,7 +10,7 @@ RUN npm run production
 
 FROM python:3.11-alpine as backend
 
-RUN apk add --no-cache build-base git mariadb-dev
+RUN apk add --no-cache build-base git linux-headers mariadb-dev
 
 # Install dependencies before copying src, so pip is only run when needed
 # Also install build dependencies that are otherwise missed in wheel cache
