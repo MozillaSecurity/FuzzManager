@@ -18,11 +18,20 @@ import os
 import platform
 import time
 from abc import ABC
+from shutil import disk_usage
 
 import requests
 import requests.exceptions
 
 from FTB.ConfigurationFiles import ConfigurationFiles
+
+try:
+    import sentry_sdk
+    from psutil import virtual_memory
+
+    HAVE_SENTRY = True
+except ImportError:
+    HAVE_SENTRY = False
 
 LOG = logging.getLogger(__name__)
 
@@ -127,6 +136,37 @@ def requests_retry(wrapped):
             return response
 
     return wrapper
+
+
+def _add_system_context(event, hint):
+    event.setdefault("contexts", {})
+    event["contexts"]["system_stats"] = {
+        "free_memory_mb": virtual_memory().available // 1024 // 1024,
+        "free_disk_mb": disk_usage("/").free // 1024 // 1024,
+    }
+
+    # add crashing module as a tag
+    exc_info = hint.get("exc_info")
+    if exc_info:
+        _, _, tb = exc_info
+        if tb:
+            mod_name = tb.tb_frame.f_globals.get("__name__")
+            if mod_name:
+                event.setdefault("tags", {})["origin_module"] = mod_name
+
+    return event
+
+
+def sentry_init():
+    if (
+        HAVE_SENTRY
+        and "SENTRY_DSN" in os.environ
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
+        sentry_sdk.init(
+            dsn=os.environ["SENTRY_DSN"],
+            before_send=_add_system_context,
+        )
 
 
 class Reporter(ABC):

@@ -27,7 +27,7 @@ import requests
 from fasteners import InterProcessLock
 
 from FTB.ConfigurationFiles import ConfigurationFiles  # noqa
-from Reporter.Reporter import Reporter, ServerError, remote_checks
+from Reporter.Reporter import Reporter, ServerError, remote_checks, sentry_init
 
 __all__ = []
 __version__ = 0.1
@@ -84,6 +84,7 @@ class TaskStatusReporter(Reporter):
 
 def main(argv=None):
     """Command line options."""
+    sentry_init()
 
     # setup argparser
     parser = argparse.ArgumentParser()

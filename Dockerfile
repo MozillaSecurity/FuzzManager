@@ -18,7 +18,7 @@ RUN apk add --no-cache build-base git mariadb-dev
 COPY ./requirements.txt ./setup.cfg /src/
 RUN cd /src && \
    pip install -U setuptools && \
-   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'], ex['taskmanager'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
+   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['sentry'], ex['server'], ex['taskmanager'])))" | xargs -0 pip wheel -q -c requirements.txt --wheel-dir /var/cache/wheels && \
    pip wheel -q --wheel-dir /var/cache/wheels wheel setuptools_scm[toml]
 
 FROM python:3.11-alpine
@@ -32,7 +32,7 @@ COPY --from=backend /var/cache/wheels /var/cache/wheels
 COPY ./requirements.txt ./setup.cfg /src/
 USER worker
 RUN cd /src && \
-   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['server'], ex['taskmanager'])))" | xargs -0 pip install --no-cache-dir --no-index --find-links /var/cache/wheels -q -c requirements.txt
+   python -c "from setuptools.config import read_configuration as C; from itertools import chain; o=C('setup.cfg')['options']; ex=o['extras_require']; print('\0'.join(chain(o['install_requires'], ex['docker'], ex['sentry'], ex['server'], ex['taskmanager'])))" | xargs -0 pip install --no-cache-dir --no-index --find-links /var/cache/wheels -q -c requirements.txt
 
 # Embed full source code
 USER root
@@ -59,7 +59,7 @@ RUN mkdir -p \
 #       script to pre-install dependencies.
 USER worker
 ENV PATH "${PATH}:/home/worker/.local/bin"
-RUN pip install --no-cache-dir --no-index --find-links /var/cache/wheels --no-deps -q /src[docker,server,taskmanager]
+RUN pip install --no-cache-dir --no-index --find-links /var/cache/wheels --no-deps -q /src[docker,sentry,server,taskmanager]
 RUN mkdir -m 0700 /home/worker/.ssh && cp /src/misc/sshconfig /home/worker/.ssh/config && ssh-keyscan github.com > /home/worker/.ssh/known_hosts
 
 # Use a custom settings file that can be overwritten

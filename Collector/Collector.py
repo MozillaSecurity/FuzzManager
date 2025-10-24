@@ -33,6 +33,7 @@ from Reporter.Reporter import (
     InvalidDataError,
     Reporter,
     remote_checks,
+    sentry_init,
     signature_checks,
 )
 
@@ -402,6 +403,7 @@ class Collector(Reporter):
 
 def main(args=None):
     """Command line options."""
+    sentry_init()
 
     # setup argparser
     parser = argparse.ArgumentParser()

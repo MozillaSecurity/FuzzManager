@@ -21,7 +21,7 @@ import os
 import sys
 
 from FTB import CoverageHelper
-from Reporter.Reporter import InvalidDataError, Reporter, remote_checks
+from Reporter.Reporter import InvalidDataError, Reporter, remote_checks, sentry_init
 
 __all__ = []
 __version__ = 0.1
@@ -272,6 +272,7 @@ class CovReporter(Reporter):
 
 def main(argv=None):
     """Command line options."""
+    sentry_init()
 
     # setup argparser
     parser = argparse.ArgumentParser()
