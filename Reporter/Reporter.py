@@ -18,7 +18,6 @@ import os
 import platform
 import time
 from abc import ABC
-from shutil import disk_usage
 
 import requests
 import requests.exceptions
@@ -26,8 +25,7 @@ import requests.exceptions
 from FTB.ConfigurationFiles import ConfigurationFiles
 
 try:
-    import sentry_sdk
-    from psutil import virtual_memory
+    import sentry_fuzzing_config
 
     HAVE_SENTRY = True
 except ImportError:
@@ -103,7 +101,7 @@ def requests_retry(wrapped):
         success = kwds.pop("expected")
         # max_sleep is the upper limit for exponential backoff,
         # which begins at 2s and doubles each retry
-        max_sleep = kwds.pop("max_sleep", 64)
+        max_sleep = kwds.pop("max_sleep", 256)
         current_timeout = 2
         while True:
             try:
@@ -138,35 +136,9 @@ def requests_retry(wrapped):
     return wrapper
 
 
-def _add_system_context(event, hint):
-    event.setdefault("contexts", {})
-    event["contexts"]["system_stats"] = {
-        "free_memory_mb": virtual_memory().available // 1024 // 1024,
-        "free_disk_mb": disk_usage("/").free // 1024 // 1024,
-    }
-
-    # add crashing module as a tag
-    exc_info = hint.get("exc_info")
-    if exc_info:
-        _, _, tb = exc_info
-        if tb:
-            mod_name = tb.tb_frame.f_globals.get("__name__")
-            if mod_name:
-                event.setdefault("tags", {})["origin_module"] = mod_name
-
-    return event
-
-
 def sentry_init():
-    if (
-        HAVE_SENTRY
-        and "SENTRY_DSN" in os.environ
-        and "PYTEST_CURRENT_TEST" not in os.environ
-    ):
-        sentry_sdk.init(
-            dsn=os.environ["SENTRY_DSN"],
-            before_send=_add_system_context,
-        )
+    if HAVE_SENTRY:
+        sentry_fuzzing_config.init()
 
 
 class Reporter(ABC):
