@@ -101,7 +101,7 @@ def requests_retry(wrapped):
         success = kwds.pop("expected")
         # max_sleep is the upper limit for exponential backoff,
         # which begins at 2s and doubles each retry
-        max_sleep = kwds.pop("max_sleep", 256)
+        max_sleep = kwds.pop("max_sleep", 64)
         current_timeout = 2
         while True:
             try:
