@@ -897,6 +897,10 @@ class User(models.Model):
             ("crashmanager_report_crashes", "Can report CrashManager crashes"),
             ("crashmanager_download_signatures", "Can download signatures.zip"),
             ("crashmanager_all", "Full access to CrashManager"),
+            (
+                "covmanager_view_report_configurations",
+                "Can download report configurations",
+            ),
             ("covmanager_submit_collection", "Can submit coverage data"),
             ("covmanager_publish", "Can publish coverage reports"),
             ("covmanager_all", "Full access to CovManager"),
