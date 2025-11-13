@@ -77,4 +77,12 @@ class CheckAppPermission(permissions.BasePermission):
                         )
                     ):
                         return True
+                    if (
+                        view_name == "ReportConfigurationViewSet"
+                        and request.method == "GET"
+                        and request.user.has_perm(
+                            f"crashmanager.{app}_view_report_configurations"
+                        )
+                    ):
+                        return True
         return False
