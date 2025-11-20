@@ -151,7 +151,9 @@ class Collector(Reporter):
             data["testcase_isbinary"] = isBinary
             data["testcase_quality"] = testCaseQuality
             data["testcase_size"] = testCaseSize
-            data["testcase_ext"] = os.path.splitext(testCase)[1].lstrip(".")
+            testcase_ext = os.path.splitext(testCase)[1].lstrip(".")
+            if testcase_ext:
+                data["testcase_ext"] = testcase_ext
 
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product

@@ -144,11 +144,6 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             testcase_isbinary = testcase.get("isBinary", False)
             testcase = testcase["test"]
 
-            if testcase_ext is None:
-                raise RuntimeError(
-                    "Must provide testcase extension when providing testcase"
-                )
-
             h = hashlib.new("sha1")
             if testcase_isbinary:
                 testcase = base64.b64decode(testcase)
@@ -162,7 +157,12 @@ class CrashEntrySerializer(serializers.ModelSerializer):
             dbobj = TestCase(
                 quality=testcase_quality, isBinary=testcase_isbinary, size=testcase_size
             )
-            dbobj.test.save(f"{h.hexdigest()}.{testcase_ext}", ContentFile(testcase))
+            filename = (
+                f"{h.hexdigest()}.{testcase_ext}"
+                if testcase_ext is not None
+                else h.hexdigest()
+            )
+            dbobj.test.save(filename, ContentFile(testcase))
             dbobj.save()
             attrs["testcase"] = dbobj
         else:
