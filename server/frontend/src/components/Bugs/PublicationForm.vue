@@ -824,20 +824,27 @@ export default defineComponent({
       return `${fileName.value}.${fileExtension.value}`;
     });
 
-    watch(() => {
+    watch([entry, template], () => {
       if (entry.value) {
-        // extract file name
-        const splittedAttachmentFilename = template.value?.testcase_filename
-          ? template.value.testcase_filename
-          : entry.value.testcase.split("/");
+        // Extract the original testcase path and get the extension
+        const originalTestcasePath = entry.value.testcase.split("/");
+        const originalFilename =
+          originalTestcasePath[originalTestcasePath.length - 1];
+        const originalParts = originalFilename.split(".");
+        const originalExtension = originalParts[originalParts.length - 1];
 
-        const attachmentFilenameAndExtension =
-          splittedAttachmentFilename[
-            splittedAttachmentFilename?.length - 1
-          ].split(".");
+        // If template has a testcase_filename, extract just the base name (without extension)
+        if (template.value?.testcase_filename) {
+          const templateParts = template.value.testcase_filename.split(".");
+          // If the template filename has an extension, remove it to get just the base name
+          fileName.value =
+            templateParts.slice(0, -1).join(".") || templateParts[0];
+        } else {
+          // Use the original filename without extension
+          fileName.value = originalParts.slice(0, -1).join(".");
+        }
 
-        fileName.value = attachmentFilenameAndExtension[0];
-        fileExtension.value = attachmentFilenameAndExtension[1];
+        fileExtension.value = originalExtension;
       }
     });
 
