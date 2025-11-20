@@ -192,10 +192,8 @@ def _compare_created_data_to_crash(
     for field in ("rawStdout", "rawStderr", "rawCrashData"):
         assert getattr(crash, field) == data[field].strip()
     if "testcase" in data:
-        assert (
-            os.path.splitext(crash.testcase.test.path)[1].lstrip(".")
-            == data["testcase_ext"]
-        )
+        expected_ext = data.get("testcase_ext", "")
+        assert os.path.splitext(crash.testcase.test.path)[1].lstrip(".") == expected_ext
         with open(crash.testcase.test.path) as fp:
             assert fp.read() == data["testcase"]
         assert crash.testcase.isBinary == data["testcase_isbinary"]
@@ -455,7 +453,6 @@ def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
             "testcase": "blah",
             "testcase_isbinary": False,
             "testcase_quality": 0,
-            "testcase_ext": "",
             "platform": "x",
             "product": "x",
             "product_version": "",
@@ -483,7 +480,6 @@ def test_rest_crashes_report_crash_long(api_client, user_normal):
         "testcase": "blah",
         "testcase_isbinary": False,
         "testcase_quality": 0,
-        "testcase_ext": "",
         "platform": "x86_64",
         "product": "x",
         "product_version": "",
