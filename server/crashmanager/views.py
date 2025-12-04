@@ -1826,6 +1826,7 @@ class CrashStatsViewSet(viewsets.GenericViewSet):
     queryset = CrashEntry.objects.all()
     filter_backends = [
         ToolFilterCrashesBackend,
+        JsonQueryFilterBackend,
     ]
 
     def retrieve(self, request, *_args, **_kwds):
