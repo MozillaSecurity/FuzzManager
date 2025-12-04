@@ -51,7 +51,7 @@ def get_or_create_pool(worker_type):
 
 @app.task(ignore_result=True)
 def update_pool_defns():
-    from fuzzing_decision.common.pool import PoolConfigLoader
+    from fuzzing_decision.common.pool import FuzzingPoolConfig
 
     from .models import Pool, Task
 
@@ -81,17 +81,17 @@ def update_pool_defns():
     )
     check_output(["git", "reset", "--hard", "FETCH_HEAD"], cwd=storage)
     for config_file in storage.glob("pool*.yml"):
-        pool_data = PoolConfigLoader.from_file(config_file)
+        pool_data = list(FuzzingPoolConfig.from_file(config_file))
         defaults = {
-            "pool_name": pool_data.name,
-            "size": pool_data.tasks,
-            "cpu": pool_data.cpu,
-            "cycle_time": timedelta(seconds=pool_data.cycle_time),
-            "max_run_time": timedelta(seconds=pool_data.max_run_time),
+            "pool_name": pool_data[0].name,
+            "size": sum(pool.tasks for pool in pool_data),
+            "cpu": pool_data[0].cpu,
+            "cycle_time": timedelta(seconds=pool_data[0].cycle_time),
+            "max_run_time": timedelta(seconds=pool_data[0].max_run_time),
         }
         (pool, _created) = Pool.objects.update_or_create(
-            pool_id=pool_data.pool_id,
-            platform=pool_data.platform,
+            pool_id=pool_data[0].config_pool_id,
+            platform=pool_data[0].platform,
             defaults=defaults,
         )
         pools_seen.add(pool.id)
