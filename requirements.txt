@@ -164,8 +164,8 @@ keyring==25.6.0
     # via msrestazure
 kombu==5.5.4
     # via
+    #   FuzzManager (setup.py)
     #   celery
-    #   mozillapulse
 laniakea==1.17.1
     # via FuzzManager (setup.py)
 mercurial==7.1.1
@@ -177,8 +177,6 @@ more-itertools==10.8.0
     #   jaraco-classes
     #   jaraco-functools
 mozilla-django-oidc==4.0.1
-    # via FuzzManager (setup.py)
-mozillapulse==1.3
     # via FuzzManager (setup.py)
 msrest==0.7.1
     # via msrestazure
@@ -241,7 +239,6 @@ python-dateutil==2.9.0.post0
 pytz==2025.2
     # via
     #   django-notifications-hq
-    #   mozillapulse
 pyyaml==6.0.3
     # via
     #   FuzzManager (setup.py)
