@@ -208,6 +208,7 @@ export default defineComponent({
 
     const graphData = ref({});
     const ignoreToolFilter = ref(false);
+    const filterOS = ref("");
     const signatureData = ref([]);
     const sortKeys = ref([...defaultSortKeys]);
     const totals = ref([]);
@@ -224,6 +225,7 @@ export default defineComponent({
        * inFilter: hits per hour (in toolfilter)
        */
       graphData,
+      filterOS,
       ignoreToolFilter,
       // [Bucket()]
       signatureData,
@@ -243,6 +245,7 @@ export default defineComponent({
     if (this.$route.hash.startsWith("#")) {
       const hash = parseHash(this.$route.hash);
       this.ignoreToolFilter = hash.alltools === "1";
+      this.filterOS = hash.os;
     }
     this.fetch();
   },
@@ -255,9 +258,15 @@ export default defineComponent({
         try {
           // fetch stats
 
-          const stats = await api.crashStats({
+          const params = {
             ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-          });
+          };
+          if (this.filterOS)
+            params.query = JSON.stringify({
+              op: "AND",
+              os__name: this.filterOS,
+            });
+          const stats = await api.crashStats(params);
 
           // process result
           this.totals = stats.totals;
@@ -268,13 +277,15 @@ export default defineComponent({
 
           // then get buckets for those stats
           if (Object.keys(stats.frequentBuckets).length) {
+            const query = {
+              op: "AND",
+              id__in: Object.keys(stats.frequentBuckets),
+            };
+            if (this.filterOS) query.os__name = this.filterOS;
             const signatureData = await api.listBuckets({
               vue: "1",
               ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
-              query: JSON.stringify({
-                op: "AND",
-                id__in: Object.keys(stats.frequentBuckets),
-              }),
+              query: JSON.stringify(query),
             });
             Object.keys(stats.frequentBuckets).forEach((x) =>
               signatureData.forEach((b) => {
@@ -309,6 +320,7 @@ export default defineComponent({
 
       this.updateHashSort(hash);
       if (this.ignoreToolFilter) hash.alltools = "1";
+      if (this.filterOS) hash.os = this.filterOS;
       if (Object.entries(hash).length) {
         const routeHash =
           "#" +
