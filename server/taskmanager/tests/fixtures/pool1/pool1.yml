@@ -21,3 +21,5 @@ env:
 run_as_admin: false
 nested_virtualization: false
 worker: generic
+parents: []
+scopes: []
