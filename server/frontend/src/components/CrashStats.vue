@@ -281,7 +281,7 @@ export default defineComponent({
               op: "AND",
               id__in: Object.keys(stats.frequentBuckets),
             };
-            if (this.filterOS) query.os__name = this.filterOS;
+            if (this.filterOS) query.crashentry__os__name = this.filterOS;
             const signatureData = await api.listBuckets({
               vue: "1",
               ignore_toolfilter: this.ignoreToolFilter ? "1" : "0",
