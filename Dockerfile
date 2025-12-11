@@ -23,6 +23,9 @@ RUN cd /src && \
 
 FROM python:3.11-alpine
 
+ARG SETUPTOOLS_SCM_PRETEND_VERSION_FOR_FuzzManager
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_FuzzManager=$SETUPTOOLS_SCM_PRETEND_VERSION_FOR_FuzzManager
+
 RUN adduser -D worker && \
    apk add --no-cache bash git mariadb-client mariadb-connector-c openssh-client-default && \
    rm -rf /var/log/*
