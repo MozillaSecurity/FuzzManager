@@ -4,7 +4,6 @@
     "description": "FuzzManager frontend project",
     "main": "index.js",
     "scripts": {
-        "codecov": "codecov -X gcov -p ../..",
         "test": "jest --verbose --coverage",
         "build": "webpack --config webpack.dev.js",
         "start": "webpack --config webpack.dev.js --watch",
