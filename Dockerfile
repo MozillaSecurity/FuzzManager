@@ -1,4 +1,4 @@
-FROM node:20-alpine as frontend
+FROM node:20-alpine AS frontend
 
 COPY server/frontend /src
 RUN chown -R node:node /src
@@ -8,7 +8,7 @@ WORKDIR /src
 RUN npm install
 RUN npm run production
 
-FROM python:3.11-alpine as backend
+FROM python:3.11-alpine AS backend
 
 RUN apk add --no-cache build-base git linux-headers mariadb-dev
 
@@ -61,12 +61,12 @@ RUN mkdir -p \
 # Note: the extras must be duplicated above in the Python
 #       script to pre-install dependencies.
 USER worker
-ENV PATH "${PATH}:/home/worker/.local/bin"
+ENV PATH="${PATH}:/home/worker/.local/bin"
 RUN pip install --no-cache-dir --no-index --find-links /var/cache/wheels --no-deps -q /src[docker,sentry,server,taskmanager]
 RUN mkdir -m 0700 /home/worker/.ssh && cp /src/misc/sshconfig /home/worker/.ssh/config && ssh-keyscan github.com > /home/worker/.ssh/known_hosts
 
 # Use a custom settings file that can be overwritten
-ENV DJANGO_SETTINGS_MODULE "server.settings_docker"
+ENV DJANGO_SETTINGS_MODULE="server.settings_docker"
 
 WORKDIR /src/server
 
@@ -74,6 +74,6 @@ WORKDIR /src/server
 RUN python manage.py collectstatic --no-input
 
 # Run with gunicorn, using container's port 80
-ENV PORT 80
+ENV PORT=80
 EXPOSE 80
 CMD ["gunicorn", "--bind", "0.0.0.0:80", "--access-logfile", "-", "--capture-output", "server.wsgi"]
