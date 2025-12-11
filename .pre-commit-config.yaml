@@ -11,7 +11,7 @@ repos:
     rev: v3.19.1
     hooks:
       - id: pyupgrade
-        args: ['--py38-plus']
+        args: ['--py39-plus']
   - repo: https://github.com/ambv/black
     rev: 25.1.0
     hooks:
@@ -30,4 +30,4 @@ repos:
         entry: bash -c 'cd server/frontend && npm run lint'
         language: system
         files: ^server/frontend/.*\.(js|mjs|cjs|vue)$
-        stages: [ commit ]
+        stages: [ pre-commit ]
