@@ -26,7 +26,8 @@ coverage/
 /misc/ec2prices/*/*.pricecache
 
 # Code coverage
-.coverage*
+/.coverage*
+/coverage.xml
 
 # Linting via pytest
 /.pytest_cache/
