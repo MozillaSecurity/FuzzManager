@@ -33,7 +33,7 @@ azure-common==1.1.14
     # via
     #   azure-mgmt-resource
     #   laniakea
-azure-core==1.36.0
+azure-core==1.38.0
     # via msrest
 azure-mgmt-nspkg==3.0.2
     # via azure-mgmt-resource
