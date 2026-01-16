@@ -55,6 +55,9 @@ jobs:
           - python-version: "3.13"
             platform: ubuntu-latest
             toxenv: py313
+          - python-version: "3.14"
+            platform: ubuntu-latest
+            toxenv: py314
 
     steps:
       - uses: actions/checkout@v6
