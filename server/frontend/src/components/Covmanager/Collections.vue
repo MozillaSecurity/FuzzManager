@@ -230,11 +230,11 @@ export default defineComponent({
       search_initialized: false,
 
       search: {
-        branch: { value: "", contains: true },
-        description: { value: "", contains: true },
-        repository: { value: "", contains: true, postfix: "__name" },
-        revision: { value: "", contains: true },
-        tools: { value: "", contains: true, postfix: "__name" },
+        branch: { value: "", icontains: true },
+        description: { value: "", icontains: true },
+        repository: { value: "", icontains: true, postfix: "__name" },
+        revision: { value: "", icontains: true },
+        tools: { value: "", icontains: true, postfix: "__name" },
         limit: { value: "10", contains: false },
       },
 
@@ -281,6 +281,7 @@ export default defineComponent({
       // TODO: This is a shortcut that saves us iterating through this.search
       // for every key that we are trying to map to a field in our search
       // object, but this won't work once we have more postfixes.
+      k = k.replace(/__icontains$/, "");
       k = k.replace(/__contains$/, "");
       k = k.replace(/__name$/, "");
 
@@ -304,7 +305,9 @@ export default defineComponent({
           k += obj.postfix;
         }
 
-        if ("contains" in obj && obj.contains) {
+        if ("icontains" in obj && obj.icontains) {
+          k += "__icontains";
+        } else if ("contains" in obj && obj.contains) {
           k += "__contains";
         }
 

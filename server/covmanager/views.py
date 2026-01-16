@@ -519,7 +519,7 @@ def tools_search_api(request):
 
     if "name" in request.GET:
         name = request.GET["name"]
-        results = Tool.objects.filter(name__contains=name).values_list(
+        results = Tool.objects.filter(name__icontains=name).values_list(
             "name", flat=True
         )
 
@@ -669,15 +669,15 @@ class CollectionFilterBackend(filters.BaseFilterBackend):
 
         filters = {}
         exactFilterKeys = [
-            "description__contains",
+            "description__icontains",
             "repository__name",
-            "repository__name__contains",
+            "repository__name__icontains",
             "revision",
-            "revision__contains",
+            "revision__icontains",
             "branch",
-            "branch__contains",
+            "branch__icontains",
             "tools__name",
-            "tools__name__contains",
+            "tools__name__icontains",
         ]
 
         for key in exactFilterKeys:
