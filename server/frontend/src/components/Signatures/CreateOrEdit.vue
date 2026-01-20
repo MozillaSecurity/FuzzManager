@@ -41,6 +41,32 @@
           spellcheck="false"
         ></textarea>
 
+        <div v-if="!bucketId && maxStackFrames">
+          <div class="row">
+            <div class="form-group col-md-3">
+              <br />
+              <label for="id_stackframes">Number of stack frames</label>
+              <input
+                id="id_stackframes"
+                v-model.number="stackFrames"
+                type="number"
+                min="1"
+                max="100"
+                class="form-control stackframes-input"
+              /><br />
+              <button
+                type="button"
+                class="btn btn-default"
+                :disabled="stackFrames === maxStackFrames"
+                @click="updateStackFrames"
+              >
+                Update Signature
+              </button>
+            </div>
+          </div>
+          <hr />
+        </div>
+
         <div class="field">
           <input id="id_frequent" v-model="bucket.frequent" type="checkbox" />
           <label for="id_frequent">Mark this bucket as a frequent bucket</label>
@@ -157,6 +183,10 @@ export default defineComponent({
       type: String,
       default: null,
     },
+    maxStackFrames: {
+      type: Number,
+      default: null,
+    },
   },
   setup(props) {
     const bucket = ref({
@@ -173,6 +203,7 @@ export default defineComponent({
     const outList = ref([]);
     const outListCount = ref(0);
     const loading = ref(null);
+    const stackFrames = ref(props.maxStackFrames);
 
     onMounted(async () => {
       if (props.bucketId) {
@@ -252,6 +283,12 @@ export default defineComponent({
       }
     };
 
+    const updateStackFrames = () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("stackframes", stackFrames.value.toString());
+      window.location.href = url.toString();
+    };
+
     return {
       bucket,
       reassign,
@@ -261,7 +298,9 @@ export default defineComponent({
       outList,
       outListCount,
       loading,
+      stackFrames,
       create_or_update,
+      updateStackFrames,
     };
   },
 });

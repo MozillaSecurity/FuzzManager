@@ -439,6 +439,7 @@ def newSignature(request):
             "proposedSig": json.loads(proposedSignature),
             "proposedDesc": proposedShortDesc,
             "warningMessage": errorMsg,
+            "maxStackFrames": maxStackFrames,
         }
 
     return render(request, "signatures/edit.html", data)
