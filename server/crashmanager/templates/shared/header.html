@@ -52,14 +52,6 @@
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 {% if perms.crashmanager.view_crashmanager %}
-                <li>
-                    <form class="navbar-form navbar-right" role="search" id="simple_search" method="get" action="{% url 'crashmanager:crashes' %}">
-                        <div class="form-group has-feedback">
-                            <input type="text" class="form-control" id="search" name="q" placeholder='{{ q|default:"Search" }}'/>
-                            <i class="bi bi-search form-control-feedback"></i>
-                        </div>
-                    </form>
-                </li>
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'crashmanager:inbox' %}">
                     <i class="bi bi-bell-fill"></i>
