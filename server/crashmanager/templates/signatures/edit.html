@@ -8,5 +8,6 @@
     {% if proposedSig != None %} :proposed-signature="{{ proposedSig }}" {% endif %}
     {% if proposedDesc != None %} proposed-description="{{ proposedDesc }}" {% endif %}
     {% if warningMessage != None %} warning-message="{{ warningMessage }}" {% endif %}
+    {% if maxStackFrames != None %} :max-stack-frames="{{ maxStackFrames }}" {% endif %}
 />
 {% endblock body_content %}
