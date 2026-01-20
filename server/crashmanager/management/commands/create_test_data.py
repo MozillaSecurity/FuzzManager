@@ -1,6 +1,7 @@
 import json
 from base64 import b64encode
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from random import choice, randint
@@ -38,6 +39,8 @@ from crashmanager.models import (
     User,
 )
 from FTB.CoverageHelper import calculate_summary_fields, merge_coverage_data
+from FTB.ProgramConfiguration import ProgramConfiguration
+from FTB.Signatures.CrashInfo import CrashInfo
 from taskmanager.models import Pool, Task
 
 
@@ -47,7 +50,7 @@ def create_bucket(shortDescription):
         permanent=choice((True, False)),
         reassign_in_progress=choice((True, False)),
         shortDescription=shortDescription,
-        signature='{"symptoms": []}',
+        signature="",
     )
 
 
@@ -58,12 +61,266 @@ def create_bug(provider, external_id):
     )
 
 
-def create_crash(tools, oss, platforms, client, bucket=None):
+NOUNS = [
+    "air",
+    "area",
+    "art",
+    "back",
+    "body",
+    "book",
+    "business",
+    "car",
+    "case",
+    "change",
+    "child",
+    "city",
+    "community",
+    "company",
+    "country",
+    "day",
+    "door",
+    "education",
+    "end",
+    "eye",
+    "face",
+    "fact",
+    "family",
+    "father",
+    "force",
+    "friend",
+    "game",
+    "girl",
+    "government",
+    "group",
+    "guy",
+    "hand",
+    "head",
+    "health",
+    "history",
+    "home",
+    "hour",
+    "house",
+    "idea",
+    "information",
+    "issue",
+    "job",
+    "kid",
+    "kind",
+    "law",
+    "level",
+    "life",
+    "line",
+    "lot",
+    "man",
+    "member",
+    "minute",
+    "moment",
+    "money",
+    "month",
+    "morning",
+    "mother",
+    "name",
+    "night",
+    "number",
+    "office",
+    "others",
+    "parent",
+    "part",
+    "party",
+    "people",
+    "person",
+    "place",
+    "point",
+    "power",
+    "president",
+    "problem",
+    "program",
+    "question",
+    "reason",
+    "research",
+    "result",
+    "right",
+    "room",
+    "school",
+    "service",
+    "side",
+    "state",
+    "story",
+    "student",
+    "study",
+    "system",
+    "teacher",
+    "team",
+    "thing",
+    "time",
+    "war",
+    "water",
+    "way",
+    "week",
+    "woman",
+    "word",
+    "work",
+    "world",
+    "year",
+]
+VERBS = [
+    "add",
+    "allow",
+    "appear",
+    "ask",
+    "become",
+    "begin",
+    "be",
+    "believe",
+    "bring",
+    "build",
+    "buy",
+    "call",
+    "can",
+    "change",
+    "come",
+    "consider",
+    "continue",
+    "create",
+    "cut",
+    "die",
+    "do",
+    "expect",
+    "fall",
+    "feel",
+    "find",
+    "follow",
+    "get",
+    "give",
+    "go",
+    "grow",
+    "happen",
+    "have",
+    "hear",
+    "help",
+    "hold",
+    "include",
+    "keep",
+    "kill",
+    "know",
+    "lead",
+    "learn",
+    "leave",
+    "let",
+    "like",
+    "live",
+    "look",
+    "lose",
+    "love",
+    "make",
+    "may",
+    "mean",
+    "meet",
+    "might",
+    "move",
+    "must",
+    "need",
+    "offer",
+    "open",
+    "pay",
+    "play",
+    "provide",
+    "put",
+    "reach",
+    "read",
+    "remain",
+    "remember",
+    "run",
+    "say",
+    "see",
+    "seem",
+    "send",
+    "serve",
+    "set",
+    "show",
+    "sit",
+    "speak",
+    "spend",
+    "stand",
+    "start",
+    "stay",
+    "stop",
+    "take",
+    "talk",
+    "tell",
+    "think",
+    "try",
+    "turn",
+    "understand",
+    "use",
+    "wait",
+    "walk",
+    "want",
+    "watch",
+    "will",
+    "win",
+    "work",
+    "write",
+]
+
+
+@dataclass
+class _GeneratedSymptoms:
+    crash_address: int | None
+    stack: tuple[str]
+    assertion: str
+
+    @classmethod
+    def create(cls):
+        crash_address = choice((None, randint(0, 0x100), randint(0x1001, 0xFFFFFFFF)))
+        stack = tuple(f"{choice(VERBS)}_{choice(NOUNS)}" for _ in range(randint(1, 10)))
+        assertion = (
+            f"{choice(NOUNS)} {choice(('should', 'could'))}"
+            f"{choice(('', ' not'))} {choice(VERBS)}"
+        )
+        return cls(crash_address, stack, assertion)
+
+    def to_crash_log(self):
+        lines = [
+            f"Assertion failure: {self.assertion}",
+            "received signal SIGSEGV, Segmentation fault.",
+        ]
+        if self.crash_address is not None:
+            lines.append(f"0x{self.crash_address:x} in {self.stack[0]} ()")
+        for idx, frame in enumerate(self.stack):
+            lines.append(f"#{idx} 0x{randint(0x1001, 0xFFFFFFFF)} in {frame} ()")
+        return "\n".join(lines)
+
+
+def create_crash(tools, oss, platforms, client, symptoms=None, bucket=None):
+    if symptoms is None:
+        symptoms = _GeneratedSymptoms.create()
+
     tool = choice(tools)
     os = choice(oss)
     platform = choice(platforms)
     version = timezone.now().date().isoformat()
     product = Product.objects.get_or_create(name="mozilla-central", version=version)[0]
+
+    cfg = ProgramConfiguration(
+        product=product.name,
+        platform=platform.name,
+        os=os.name,
+        version=version,
+    )
+    crash_log = symptoms.to_crash_log()
+    crash_info = CrashInfo.fromRawCrashData(
+        [],
+        [],
+        cfg,
+        auxCrashData=crash_log,
+    )
+    if bucket is not None:
+        if not bucket.signature:
+            bucket.signature = crash_info.createCrashSignature().rawSignature
+            bucket.save()
+        assert bucket.getSignature().matches(crash_info)
+
     testdata = "hello world\n" * randint(1, 20)
     binary = choice((True, False))
     testcase = TestCase(quality=randint(0, 10), isBinary=binary, size=len(testdata))
@@ -84,10 +341,10 @@ def create_crash(tools, oss, platforms, client, bucket=None):
         os=os,
         platform=platform,
         product=product,
-        rawCrashData="crashdata",
+        rawCrashData=crash_log,
         rawStderr="stderr",
         rawStdout="stdout",
-        shortSignature="Assertion failure: test",
+        shortSignature=crash_info.createShortSignature(),
         testcase=testcase,
         tool=tool,
         triagedOnce=False,
@@ -444,9 +701,10 @@ class Command(BaseCommand):
 
         # create 25 buckets with 10 crashes each
         for idx in range(25):
+            symptoms = _GeneratedSymptoms.create()
             b = create_bucket(shortDescription=f"bucket #{idx + 1}")
             for _ in range(10):
-                create_crash(tools, oss, platforms, client, bucket=b)
+                create_crash(tools, oss, platforms, client, symptoms=symptoms, bucket=b)
 
         # create 2 watches
         for _ in range(2):
