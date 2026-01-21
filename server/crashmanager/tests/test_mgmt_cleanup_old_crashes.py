@@ -30,6 +30,10 @@ from crashmanager.models import (
 pytestmark = pytest.mark.django_db()  # pylint: disable=invalid-name
 
 
+def _days_ago(n):
+    return timezone.now() - timedelta(days=n)
+
+
 def _crashentry_create(**kwds):
     if "client" not in kwds:
         kwds["client"] = Client.objects.get_or_create()[0]
@@ -64,16 +68,10 @@ def test_closed_bugs(settings):
     prov = BugProvider.objects.create()
     bugs = (
         Bug.objects.create(externalType=prov),  # open
-        Bug.objects.create(
-            closed=timezone.now() - timedelta(days=1), externalType=prov
-        ),  # closed 1 day ago
-        Bug.objects.create(
-            closed=timezone.now() - timedelta(days=2), externalType=prov
-        ),  # closed 2 days ago
-        Bug.objects.create(
-            closed=timezone.now() - timedelta(days=3), externalType=prov
-        ),
-    )  # closed 3 days ago
+        Bug.objects.create(closed=_days_ago(1), externalType=prov),
+        Bug.objects.create(closed=_days_ago(2), externalType=prov),
+        Bug.objects.create(closed=_days_ago(3), externalType=prov),
+    )
     buckets = [Bucket.objects.create(bug=b) for b in bugs]
     crashes = [_crashentry_create(bucket=b) for b in buckets]
     call_command("cleanup_old_crashes")
@@ -95,14 +93,57 @@ def test_empty_bucket(settings):
     bug = Bug.objects.create(externalType=prov)
     buckets = (
         Bucket.objects.create(),  # empty, no bug, no permanent
-        Bucket.objects.create(permanent=True),  # empty, permanent
         Bucket.objects.create(bug=bug),
+        Bucket.objects.create(permanent=True),  # empty, permanent
     )  # empty, has bug
     call_command("cleanup_old_crashes")
+    # only the permanent bucket should remain
     assert set(Bucket.objects.values_list("pk", flat=True)) == {
-        o.pk for o in buckets[1:]
+        o.pk for o in buckets[2:]
     }
-    assert Bug.objects.count() == 1
+
+
+@pytest.mark.parametrize("bug", (True, False))
+def test_inactive_bucket_cleanup(bug, settings):
+    """test that buckets with only old crashes is cleaned up"""
+    settings.CRASH_MAX_LIFETIME = 7
+
+    bucket = Bucket.objects.create()
+    if bug:
+        prov = BugProvider.objects.create()
+        bucket.bug = Bug.objects.create(externalType=prov)
+        bucket.save()
+
+    _crashentry_create(bucket=bucket, created=_days_ago(8))
+
+    call_command("cleanup_old_crashes")
+
+    assert CrashEntry.objects.count() == 0
+    assert Bucket.objects.count() == 0
+    assert Bug.objects.count() == 0
+
+
+@pytest.mark.parametrize("bug", (True, False))
+def test_inactive_bucket_cleanup_permanent(bug, settings):
+    """test that permanent buckets with only old crashes is cleaned up"""
+    settings.CRASH_MAX_LIFETIME = 7
+
+    bucket = Bucket.objects.create(permanent=True)
+    if bug:
+        prov = BugProvider.objects.create()
+        bucket.bug = Bug.objects.create(externalType=prov)
+        bucket.save()
+
+    _crashentry_create(bucket=bucket, created=_days_ago(8))
+
+    call_command("cleanup_old_crashes")
+
+    assert CrashEntry.objects.count() == 0
+    assert Bucket.objects.count() == 1
+    if bug:
+        assert Bug.objects.count() == 1
+    else:
+        assert Bug.objects.count() == 0
 
 
 def test_old_crashes(settings):
@@ -114,55 +155,34 @@ def test_old_crashes(settings):
     prov = BugProvider.objects.create()
     buckets = (
         Bucket.objects.create(),  # bucket with no bug
-        Bucket.objects.create(bug=Bug.objects.create(externalType=prov)),
-    )  # bucket with bug
+        Bucket.objects.create(bug=Bug.objects.create(externalType=prov)),  # with bug
+    )
+
     crashes = (
         _crashentry_create(),
-        _crashentry_create(created=timezone.now() - timedelta(days=1)),
-        _crashentry_create(created=timezone.now() - timedelta(days=2)),
+        _crashentry_create(created=_days_ago(1)),
+        _crashentry_create(created=_days_ago(2)),
         _crashentry_create(bucket=buckets[0]),
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=1)
-        ),
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=2)
-        ),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(1)),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(2)),
         _crashentry_create(bucket=buckets[1]),
-        _crashentry_create(
-            bucket=buckets[1], created=timezone.now() - timedelta(days=1)
-        ),
-        _crashentry_create(
-            bucket=buckets[1], created=timezone.now() - timedelta(days=2)
-        ),
+        _crashentry_create(bucket=buckets[1], created=_days_ago(1)),
+        _crashentry_create(bucket=buckets[1], created=_days_ago(2)),
         # bucket with a bug, not deleted
-        _crashentry_create(
-            bucket=buckets[1], created=timezone.now() - timedelta(days=3)
-        ),
-        _crashentry_create(
-            bucket=buckets[1], created=timezone.now() - timedelta(days=4)
-        ),
-        _crashentry_create(
-            bucket=buckets[1], created=timezone.now() - timedelta(days=5)
-        ),
+        _crashentry_create(bucket=buckets[1], created=_days_ago(3)),
+        _crashentry_create(bucket=buckets[1], created=_days_ago(4)),
+        _crashentry_create(bucket=buckets[1], created=_days_ago(5)),
         # edges of below cases that should not be deleted
-        _crashentry_create(created=timezone.now() - timedelta(days=3)),
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=3)
-        ),
+        _crashentry_create(created=_days_ago(3)),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(3)),
         # no bucket, will be deleted
-        _crashentry_create(created=timezone.now() - timedelta(days=4)),
-        _crashentry_create(created=timezone.now() - timedelta(days=5)),
-        _crashentry_create(created=timezone.now() - timedelta(days=6)),
+        _crashentry_create(created=_days_ago(4)),
+        _crashentry_create(created=_days_ago(5)),
+        _crashentry_create(created=_days_ago(6)),
         # bucket with no bug, will be deleted
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=4)
-        ),
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=5)
-        ),
-        _crashentry_create(
-            bucket=buckets[0], created=timezone.now() - timedelta(days=6)
-        ),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(4)),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(5)),
+        _crashentry_create(bucket=buckets[0], created=_days_ago(6)),
     )
     call_command("cleanup_old_crashes")
     assert set(CrashEntry.objects.values_list("pk", flat=True)) == {
