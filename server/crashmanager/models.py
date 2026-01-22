@@ -2,6 +2,7 @@ import json
 import re
 from datetime import timedelta
 from logging import getLogger
+from time import perf_counter
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -214,6 +215,10 @@ class Bucket(models.Model):
         """
         from .serializers import CrashEntryVueSerializer
 
+        if submit_save:
+            LOG.debug("entering reassign(bucket_id=%d)", self.id)
+            reassign_start = perf_counter()
+
         in_list, out_list = [], []
         in_list_count, out_list_count = 0, 0
 
@@ -335,6 +340,12 @@ class Bucket(models.Model):
                     for crash_id in upd_list:
                         triage_new_crash.delay(crash_id)
 
+            LOG.debug(
+                "done reassign(bucket_id=%d), took %.2lfs",
+                self.id,
+                perf_counter() - reassign_start,
+            )
+
         return in_list, out_list, in_list_count, out_list_count, next_offset
 
     def optimizeSignature(self, unbucketed_entries):
@@ -433,6 +444,17 @@ class Bucket(models.Model):
                     break
 
         return (optimized_signature, matching_entries)
+
+
+@receiver(post_delete, sender=Bucket)
+def Bucket_delete(sender, instance, **kwargs):
+    LOG.info("rm bucket:%d", instance.id)
+
+
+@receiver(post_save, sender=Bucket)
+def Bucket_save(sender, instance, created, **kwargs):
+    if created:
+        LOG.info("created bucket:%d", instance.id)
 
 
 class BucketStatistics(models.Model):
@@ -780,6 +802,7 @@ class CrashEntry(models.Model):
 # deletes the file on the filesystem which would otherwise remain.
 @receiver(post_delete, sender=CrashEntry)
 def CrashEntry_delete(sender, instance, **kwargs):
+    LOG.info("rm crash:%d from bucket:%r", instance.id, instance.bucket_id)
     if instance.testcase:
         instance.testcase.delete(False)
     if instance.bucket_id is not None:
@@ -795,12 +818,22 @@ def CrashEntry_delete(sender, instance, **kwargs):
 
 @receiver(post_save, sender=CrashEntry)
 def CrashEntry_save(sender, instance, created, **kwargs):
+    if created:
+        LOG.info("created crash:%d", instance.id)
+
     if getattr(settings, "USE_CELERY", None):
         # this could mean the crash is new, or that it was edited and reparsed
         if not instance.triagedOnce:
             triage_new_crash.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
+        LOG.info(
+            "bucketed crash:%d from bucket:%r to bucket:%r",
+            instance.id,
+            instance._original_bucket,
+            instance.bucket_id,
+        )
+
         if instance._original_bucket is not None:
             # remove BucketHit for old bucket/tool
             BucketHit.decrement_count(
