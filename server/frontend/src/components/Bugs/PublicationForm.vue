@@ -710,7 +710,7 @@ import * as api from "../../api";
 import mime from "mime";
 import * as bugzillaApi from "../../bugzilla_api";
 import * as HandlebarsHelpers from "../../handlebars_helpers";
-import { errorParser } from "../../helpers";
+import { errorParser, parseFilename, buildFilename } from "../../helpers";
 import CrashDataSection from "./CrashDataSection.vue";
 import FullPPCSelect from "./FullPPCSelect.vue";
 import HelpPopover from "./HelpPopover.vue";
@@ -821,45 +821,17 @@ export default defineComponent({
     });
 
     const filenameWithExtension = computed(() => {
-      if (fileExtension.value) {
-        return `${fileName.value}.${fileExtension.value}`;
-      }
-      return fileName.value;
+      return buildFilename(fileName.value, fileExtension.value);
     });
 
     watch([entry, template], () => {
       if (entry.value) {
-        // Extract the original testcase path and get the extension
-        const originalTestcasePath = entry.value.testcase.split("/");
-        const originalFilename =
-          originalTestcasePath[originalTestcasePath.length - 1];
-        const originalParts = originalFilename.split(".");
-
-        // Check if there's actually an extension (more than one part after split)
-        const hasExtension = originalParts.length > 1;
-        const originalExtension = hasExtension
-          ? originalParts[originalParts.length - 1]
-          : null;
-
-        // If template has a testcase_filename, extract just the base name (without extension)
-        if (template.value?.testcase_filename) {
-          const templateParts = template.value.testcase_filename.split(".");
-          // If the template filename has an extension, remove it to get just the base name
-          if (templateParts.length > 1) {
-            fileName.value = templateParts.slice(0, -1).join(".");
-          } else {
-            fileName.value = templateParts[0];
-          }
-        } else {
-          // Use the original filename without extension
-          if (hasExtension) {
-            fileName.value = originalParts.slice(0, -1).join(".");
-          } else {
-            fileName.value = originalParts[0];
-          }
-        }
-
-        fileExtension.value = originalExtension;
+        const { basename, extension } = parseFilename(
+          entry.value.testcase,
+          template.value?.testcase_filename,
+        );
+        fileName.value = basename;
+        fileExtension.value = extension;
       }
     });
 
