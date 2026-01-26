@@ -220,3 +220,45 @@ export function formatMonthly(d) {
   const date = new Date(d);
   return `${months[date.getMonth()]} ${date.getFullYear()}`;
 }
+
+/**
+ * Parse a testcase file path into basename and extension
+ * @param {string} testcasePath - Full path to the testcase file (e.g. "/path/to/test.txt")
+ * @param {string|null} templateFilename - Optional template filename to use instead of original
+ * @returns {{basename: string, extension: string|null}} Object with basename and extension
+ */
+export function parseFilename(testcasePath, templateFilename = null) {
+  const pathParts = testcasePath.split("/");
+  const originalFilename = pathParts[pathParts.length - 1];
+  const originalParts = originalFilename.split(".");
+
+  const hasExtension = originalParts.length > 1;
+  const extension = hasExtension
+    ? originalParts[originalParts.length - 1]
+    : null;
+
+  let basename;
+  if (templateFilename) {
+    const templateParts = templateFilename.split(".");
+    basename =
+      templateParts.length > 1
+        ? templateParts.slice(0, -1).join(".")
+        : templateParts[0];
+  } else {
+    basename = hasExtension
+      ? originalParts.slice(0, -1).join(".")
+      : originalParts[0];
+  }
+
+  return { basename, extension };
+}
+
+/**
+ * Build a filename from basename and extension
+ * @param {string} basename - The base filename without extension
+ * @param {string|null} extension - Optional file extension (without dot)
+ * @returns {string} Complete filename with extension if provided
+ */
+export function buildFilename(basename, extension) {
+  return extension ? `${basename}.${extension}` : basename;
+}
