@@ -222,12 +222,12 @@ export function formatMonthly(d) {
 }
 
 /**
- * Parse a testcase file path into basename and extension
- * @param {string} testcasePath - Full path to the testcase file (e.g. "/path/to/test.txt")
- * @param {string|null} templateFilename - Optional template filename to use instead of original
- * @returns {{basename: string, extension: string|null}} Object with basename and extension
+ * Parse a testcase file path into basename and extension.
+ * @param {string} testcasePath - Testcase file path.
+ * @param {string|null} templateBasename - Optional template basename.
+ * @returns {{basename: string, extension: string|null}} Object with basename and extension.
  */
-export function parseFilename(testcasePath, templateFilename = null) {
+export function parseFilename(testcasePath, templateBasename = null) {
   const pathParts = testcasePath.split("/");
   const originalFilename = pathParts[pathParts.length - 1];
   const originalParts = originalFilename.split(".");
@@ -238,12 +238,8 @@ export function parseFilename(testcasePath, templateFilename = null) {
     : null;
 
   let basename;
-  if (templateFilename) {
-    const templateParts = templateFilename.split(".");
-    basename =
-      templateParts.length > 1
-        ? templateParts.slice(0, -1).join(".")
-        : templateParts[0];
+  if (templateBasename) {
+    basename = templateBasename;
   } else {
     basename = hasExtension
       ? originalParts.slice(0, -1).join(".")
@@ -254,10 +250,10 @@ export function parseFilename(testcasePath, templateFilename = null) {
 }
 
 /**
- * Build a filename from basename and extension
- * @param {string} basename - The base filename without extension
- * @param {string|null} extension - Optional file extension (without dot)
- * @returns {string} Complete filename with extension if provided
+ * Build a filename from basename and extension.
+ * @param {string} basename - The file basename.
+ * @param {string|null} extension - Optional file extension.
+ * @returns {string}
  */
 export function buildFilename(basename, extension) {
   return extension ? `${basename}.${extension}` : basename;

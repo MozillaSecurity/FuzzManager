@@ -516,9 +516,7 @@
 
         <div v-if="isBugTemplateCreation" class="row">
           <div class="form-group col-md-6">
-            <label for="testcase_filename"
-              >Filename that will be used for the testcase</label
-            >
+            <label for="testcase_filename">Testcase basename</label>
             <input
               id="testcase_filename"
               v-model="fileName"
