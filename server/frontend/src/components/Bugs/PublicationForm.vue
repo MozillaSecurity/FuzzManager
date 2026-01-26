@@ -821,7 +821,10 @@ export default defineComponent({
     });
 
     const filenameWithExtension = computed(() => {
-      return `${fileName.value}.${fileExtension.value}`;
+      if (fileExtension.value) {
+        return `${fileName.value}.${fileExtension.value}`;
+      }
+      return fileName.value;
     });
 
     watch([entry, template], () => {
@@ -831,17 +834,29 @@ export default defineComponent({
         const originalFilename =
           originalTestcasePath[originalTestcasePath.length - 1];
         const originalParts = originalFilename.split(".");
-        const originalExtension = originalParts[originalParts.length - 1];
+
+        // Check if there's actually an extension (more than one part after split)
+        const hasExtension = originalParts.length > 1;
+        const originalExtension = hasExtension
+          ? originalParts[originalParts.length - 1]
+          : null;
 
         // If template has a testcase_filename, extract just the base name (without extension)
         if (template.value?.testcase_filename) {
           const templateParts = template.value.testcase_filename.split(".");
           // If the template filename has an extension, remove it to get just the base name
-          fileName.value =
-            templateParts.slice(0, -1).join(".") || templateParts[0];
+          if (templateParts.length > 1) {
+            fileName.value = templateParts.slice(0, -1).join(".");
+          } else {
+            fileName.value = templateParts[0];
+          }
         } else {
           // Use the original filename without extension
-          fileName.value = originalParts.slice(0, -1).join(".");
+          if (hasExtension) {
+            fileName.value = originalParts.slice(0, -1).join(".");
+          } else {
+            fileName.value = originalParts[0];
+          }
         }
 
         fileExtension.value = originalExtension;
