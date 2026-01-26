@@ -5,13 +5,13 @@ describe("parseFilename", () => {
     [
       "testcase with file extension",
       "tests/test.txt",
-      "testcase.zip",
+      "testcase",
       { basename: "testcase", extension: "txt" },
     ],
     [
       "testcase without an extension",
       "tests/original",
-      "template_name.html",
+      "template_name",
       { basename: "template_name", extension: null },
     ],
     [
@@ -38,8 +38,8 @@ describe("parseFilename", () => {
       null,
       { basename: "test.min", extension: "js" },
     ],
-  ])("%s", (_description, testcasePath, templateFilename, expected) => {
-    const result = parseFilename(testcasePath, templateFilename);
+  ])("%s", (_description, testcasePath, templateBasename, expected) => {
+    const result = parseFilename(testcasePath, templateBasename);
     expect(result).toEqual(expected);
   });
 });
