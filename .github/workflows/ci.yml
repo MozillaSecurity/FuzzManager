@@ -132,7 +132,7 @@ jobs:
           tags: mozillasecurity/fuzzmanager:latest
           outputs: type=docker,dest=${{ runner.temp }}/fuzzmanager.tar
           build-args: |
-            SETUPTOOLS_SCM_PRETEND_VERSION_FOR_FuzzManager=${{ steps.scm_version.outputs.scm_version }}
+            SETUPTOOLS_SCM_PRETEND_VERSION=${{ steps.scm_version.outputs.scm_version }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
