@@ -1,10 +1,153 @@
 [build-system]
-requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
+[project]
+name = "FuzzManager"
+dynamic = ["version"]
+description = "A fuzzing management tools collection"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MPL-2.0"}
+authors = [
+    {name = "Christian Holler"},
+]
+maintainers = [
+    {name = "Mozilla Fuzzing Team", email = "fuzzing@mozilla.com"},
+]
+keywords = ["fuzz", "fuzzing", "security", "test", "testing"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Security",
+]
+
+# Core client dependencies (flexible ranges)
+dependencies = [
+    "fasteners>=0.14.1",
+    "requests>=2.20.1",
+]
+
+[project.optional-dependencies]
+# Server dependencies (flexible compatible release ranges)
+server = [
+    "celery~=5.3.5",
+    "crispy-bootstrap3",
+    "django~=4.2.7",
+    "django-crispy-forms~=2.1",
+    "django-enumfields~=2.1.1",
+    "django-notifications-hq~=1.8.3",
+    "djangorestframework~=3.15.1",
+    "redis[hiredis]",
+    "whitenoise~=6.9",
+]
+
+# EC2 spot manager dependencies
+ec2spotmanager = [
+    "boto3",
+    "django-chartjs~=2.3.0",
+    "laniakea",
+    "pyyaml",
+]
+
+# Task manager dependencies
+# Note: fuzzing-decision is a git dependency (see [tool.uv.sources])
+# uv will install it automatically, pip users need manual install
+taskmanager = [
+    "fuzzing-decision",
+    "kombu",
+]
+
+# Docker/production dependencies
+docker = [
+    "gunicorn~=23.0.0",
+    "mercurial",
+    "mozilla-django-oidc~=4.0.1",
+    "mysqlclient~=2.2.4",
+]
+
+# Sentry integration
+# Note: sentry-fuzzing-config is a git dependency (see [tool.uv.sources])
+# uv will install it automatically, pip users need manual install
+sentry = [
+    "sentry-fuzzing-config",
+]
+
+# Test dependencies
+test = [
+    "fakeredis>=2.20.0; python_version <= '3.11'",
+    "pytest",
+    "pytest-cov",
+    "pytest-django; python_version <= '3.11'",
+    "pytest-mock",
+]
+
+# Development dependencies
+dev = [
+    "pre-commit",
+    "tox",
+    "tox-uv",
+]
+
+[project.scripts]
+collector = "Collector:Collector.main"
+cov-reporter = "CovReporter:CovReporter.main"
+ec2-reporter = "EC2Reporter:EC2Reporter.main"
+task-status-reporter = "TaskStatusReporter:TaskStatusReporter.main"
+
+[project.urls]
+Homepage = "https://github.com/MozillaSecurity/FuzzManager"
+Repository = "https://github.com/MozillaSecurity/FuzzManager"
+Issues = "https://github.com/MozillaSecurity/FuzzManager/issues"
+
+# Hatchling build configuration
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build]
+packages = [
+    "Collector",
+    "CovReporter",
+    "EC2Reporter",
+    "FTB",
+    "Reporter",
+    "TaskStatusReporter",
+]
+
+# Hatchling properly handles extras in wheels - no manual stripping needed!
+[tool.hatch.build.targets.wheel]
+packages = [
+    "Collector",
+    "CovReporter",
+    "EC2Reporter",
+    "FTB",
+    "Reporter",
+    "TaskStatusReporter",
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.github",
+    "/.tox",
+    "/dist",
+    "*.pyc",
+    "__pycache__",
+]
+
+# Black configuration
 [tool.black]
 target-version = ["py310"]
 
+# Coverage configuration
 [tool.coverage.report]
 exclude_lines = [
     "@(abc.)?abstract*",
@@ -22,6 +165,7 @@ omit = [
     "*/.eggs/*",
 ]
 
+# Isort configuration
 [tool.isort]
 known_first_party = [
     "Collector",
@@ -37,6 +181,7 @@ known_first_party = [
 ]
 profile = "black"
 
+# Pytest configuration
 [tool.pytest.ini_options]
 log_level = "DEBUG"
 DJANGO_SETTINGS_MODULE = "server.settings_test"
@@ -54,4 +199,12 @@ norecursedirs = [
     "dist",
 ]
 
-[tool.setuptools_scm]
+# UV configuration
+[tool.uv]
+# Git dependencies are kept in sources for development
+# They are not included in published packages (PyPI requirement)
+
+[tool.uv.sources]
+# Keep git dependencies separate - these won't be in published packages
+fuzzing-decision = { git = "https://github.com/MozillaSecurity/orion", subdirectory = "services/fuzzing-decision" }
+sentry-fuzzing-config = { git = "https://github.com/MozillaSecurity/sentry" }

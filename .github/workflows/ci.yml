@@ -69,7 +69,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run tests
-        run: uvx tox -e ${{ matrix.toxenv }}
+        run: uvx --from tox-uv tox -e ${{ matrix.toxenv }}
 
       - uses: codecov/codecov-action@v5
         with:
@@ -123,8 +123,8 @@ jobs:
       - name: Write SCM version
         id: scm_version
         run: |
-          pipx install setuptools_scm
-          echo "scm_version=$(setuptools-scm)" >> "$GITHUB_OUTPUT"
+          pipx install hatch
+          echo "scm_version=$(hatch version)" >> "$GITHUB_OUTPUT"
 
       - name: Build and export
         uses: docker/build-push-action@v6
@@ -187,10 +187,18 @@ jobs:
           python-version: "3.12"
 
       - name: Build Python distributions
-        run: uvx --from build pyproject-build
+        run: uv build
 
-      - name: Repack Python distributions
-        run: bash .github/scripts/repack.sh
+      - name: Strip git URLs from sdist (PyPI requirement)
+        run: |
+          WORK="$(mktemp -d)"
+          TAR="$(ls dist/*.tar.*)"
+          tar -C "$WORK" -xvaf "$TAR"
+          sed -Ei 's/^(Requires-Dist:\s*[A-Za-z0-9][A-Za-z0-9._-]*)\s*@\s*([^ ]+)(.*)$/\1\3/' "$WORK"/*/PKG-INFO
+          FN="$(ls "$WORK")"
+          rm "$TAR"
+          tar -C "$WORK" -cvaf "$TAR" "$FN"
+          rm -rf "$WORK"
 
       - name: Check Python distributions
         run: uvx twine check dist/*

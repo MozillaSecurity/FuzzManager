@@ -67,9 +67,21 @@ FuzzManager server instance or use FTB locally.
 The server part of FuzzManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
 
-Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing FuzzManager using:
+For reproducible server installations, use [uv](https://github.com/astral-sh/uv) with the lockfile:
 
-```pip install -c requirements.txt '.[server]'```
+```bash
+# Install uv if needed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install with locked dependencies
+uv sync --extra server --extra docker
+```
+
+For a basic pip installation without locked versions:
+
+```bash
+pip install '.[server]'
+```
 
 A [Redis](https://redis.io/) server is also required for EC2SpotManager and API rate limiting, and can be installed on a Debian-based Linux with:
 
