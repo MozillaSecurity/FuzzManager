@@ -84,7 +84,7 @@ coverage==7.13.1
     # via pytest-cov
 crispy-bootstrap3==2024.1
     # via FuzzManager (setup.py)
-cryptography==46.0.3
+cryptography==46.0.5
     # via
     #   adal
     #   josepy
