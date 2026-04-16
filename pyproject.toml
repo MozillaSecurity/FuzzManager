@@ -55,6 +55,8 @@ select = [
     "I",
     # Ruff-specific rules
     "RUF",
+    # flake8-simplify
+    "SIM",
     # flake8-type-checking
     "TCH",
     # pyupgrade

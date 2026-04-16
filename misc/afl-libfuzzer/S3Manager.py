@@ -20,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import time
+from contextlib import suppress
 from tempfile import mkstemp
 from zipfile import ZIP_DEFLATED, ZipFile
 
@@ -564,9 +565,7 @@ class S3Manager:
             remote_key = Key(self.bucket)
             remote_key.name = remote_path + os.path.basename(upload_file)
             print(f"Uploading file {upload_file} -> {remote_key.name}")
-            try:
+            # Newer libFuzzer can delete files from the corpus if it finds a shorter
+            # version in the same run.
+            with suppress(OSError):
                 remote_key.set_contents_from_filename(upload_file)
-            except OSError:
-                # Newer libFuzzer can delete files from the corpus if it finds a shorter
-                # version in the same run.
-                pass

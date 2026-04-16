@@ -27,6 +27,7 @@ import threading
 import time
 import traceback
 import zipfile
+from contextlib import suppress
 from pathlib import Path
 
 from fasteners import InterProcessLock
@@ -637,13 +638,11 @@ def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
     env = ffp.get_environ(bin_path)
     cmd = ffp.build_launch_cmd(bin_path, additional_args=[test_path])
 
-    try:
-        # Remove any custom ASan options passed by FFPuppet as they might
-        # interfere with AFL. This should be removed once we can ensure
-        # that options passed by FFPuppet work with AFL.
+    # Remove any custom ASan options passed by FFPuppet as they might
+    # interfere with AFL. This should be removed once we can ensure
+    # that options passed by FFPuppet work with AFL.
+    with suppress(KeyError):
         del env["ASAN_OPTIONS"]
-    except KeyError:
-        pass
 
     return (ffp, cmd, env)
 

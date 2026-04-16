@@ -180,7 +180,7 @@ def collections_download(request, collectionid):
             status=202,
         )
 
-    cov_file = open(collection.coverage.file.path, "rb")
+    cov_file = open(collection.coverage.file.path, "rb")  # noqa: SIM115
     response = HttpResponse(
         FileWrapper(cov_file), content_type="application/octet-stream"
     )
