@@ -214,12 +214,12 @@ def test_rest_signatures_list(api_client, cm, user, ignore_toolfilter, vue):
     tools = ["tool2", "tool2", "tool1", "tool1"]
     for i in range(4):
         cm.create_crash(
-            shortSignature="crash #%d" % (i + 1),
-            client="client #%d" % (i + 1),
-            os="os #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            product_version="%d" % (i + 1),
-            platform="platform #%d" % (i + 1),
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
             tool=tools[i],
             testcase=tests[i],
             bucket=buckets[i],
@@ -271,12 +271,12 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
     tools = ["tool1", "tool2", "tool2", "tool3"]
     crashes = [
         cm.create_crash(
-            shortSignature="crash #%d" % (i + 1),
-            client="client #%d" % (i + 1),
-            os="os #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            product_version="%d" % (i + 1),
-            platform="platform #%d" % (i + 1),
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
             tool=tools[i],
             testcase=tests[i],
             bucket=buckets[i],
@@ -288,7 +288,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
     if ignore_toolfilter:
         params["ignore_toolfilter"] = "1"
     for i, bucket in enumerate([bucket1, bucket2]):
-        resp = api_client.get("/crashmanager/rest/buckets/%d/" % bucket.pk, params)
+        resp = api_client.get(f"/crashmanager/rest/buckets/{bucket.pk}/", params)
         LOG.debug(resp)
         allowed = (
             user.username == "test" or i == 0
@@ -320,9 +320,7 @@ def test_rest_signatures_retrieve(api_client, cm, user, ignore_toolfilter):
     "from_crash",
     [pytest.param(False, id="from_symptoms"), pytest.param(True, id="from_crash")],
 )
-def test_new_signature_create(
-    api_client, cm, from_crash, mocker, user
-):  # pylint: disable=invalid-name
+def test_new_signature_create(api_client, cm, from_crash, mocker, user):  # pylint: disable=invalid-name
     if from_crash:
         if user.username == "test-restricted":
             _create_user("test")
@@ -334,7 +332,7 @@ def test_new_signature_create(
         )
         crash = cm.create_crash(shortSignature="crash #1", stderr=stderr)
         response = api_client.get(
-            reverse("crashmanager:signew") + "?crashid=%d" % crash.pk
+            reverse("crashmanager:signew") + f"?crashid={crash.pk}"
         )
         LOG.debug(response)
         assert response.status_code == requests.codes["ok"]
@@ -387,9 +385,7 @@ def test_new_signature_create(
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
-def test_new_signature_create_w_reassign(
-    api_client, cm, many, mocker, user
-):  # pylint: disable=invalid-name
+def test_new_signature_create_w_reassign(api_client, cm, many, mocker, user):  # pylint: disable=invalid-name
     assert BucketHit.objects.count() == 0
     assert BucketStatistics.objects.count() == 0
     if many:
@@ -496,9 +492,7 @@ def test_new_signature_create_w_reassign(
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
-def test_new_signature_preview(
-    api_client, cm, user, many
-):  # pylint: disable=invalid-name
+def test_new_signature_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
     if many:
         crashes = [
             cm.create_crash(shortSignature="crash #1", stderr="blah")
@@ -567,7 +561,7 @@ def test_edit_signature_edit(
     )
 
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?reassign=false" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=false",
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
@@ -604,9 +598,7 @@ def test_edit_signature_edit(
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
-def test_edit_signature_edit_w_reassign(
-    api_client, cm, many, mocker, user
-):  # pylint: disable=invalid-name
+def test_edit_signature_edit_w_reassign(api_client, cm, many, mocker, user):  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     if many:
         crashes = [
@@ -623,7 +615,7 @@ def test_edit_signature_edit_w_reassign(
     assert BucketStatistics.objects.count() == 0
 
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?reassign=true" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=true",
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
@@ -736,9 +728,7 @@ def test_edit_signature_reassign_rm_stats(api_client, cm, user):
 @pytest.mark.parametrize(
     "many", [pytest.param(False, id="single"), pytest.param(True, id="many")]
 )
-def test_edit_signature_edit_preview(
-    api_client, cm, user, many
-):  # pylint: disable=invalid-name
+def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: disable=invalid-name
     bucket = cm.create_bucket()
     if many:
         crashes1 = [
@@ -757,7 +747,7 @@ def test_edit_signature_edit_preview(
     )
 
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?save=false" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?save=false",
         data={
             "signature": sig,
             "shortDescription": "bucket #1",
@@ -813,7 +803,7 @@ def test_edit_signature_set_frequent(api_client, cm, user_normal):
     bucket = cm.create_bucket(shortDescription="bucket #1", signature=sig, bug=bug)
     assert not bucket.frequent
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?reassign=false" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=false",
         data={
             "frequent": True,
         },
@@ -843,7 +833,7 @@ def test_edit_signature_unassign_external_bug(api_client, cm, user_normal):
     )
     bucket = cm.create_bucket(shortDescription="bucket #1", signature=sig, bug=bug)
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?reassign=false" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=false",
         data={
             "bug": None,
         },
@@ -874,7 +864,7 @@ def test_edit_signature_assign_external_bug(api_client, cm, user_normal):
     bucket = cm.create_bucket(shortDescription="bucket #1", signature=sig)
     assert not Bug.objects.count()
     resp = api_client.patch(
-        "/crashmanager/rest/buckets/%d/?reassign=false" % bucket.pk,
+        f"/crashmanager/rest/buckets/{bucket.pk}/?reassign=false",
         data={
             "bug": 123456,
             "bug_provider": provider.id,

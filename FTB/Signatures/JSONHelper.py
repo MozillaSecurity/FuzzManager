@@ -124,6 +124,7 @@ def __getTypeChecked(obj, key, valTypes, mandatory=False):
         return val
 
     raise RuntimeError(
-        'Expected any of types "%s" for key "%s" but got type %s'
-        % (", ".join([str(i) for i in valTypes]), key, type(val))
+        'Expected any of types "{}" for key "{}" but got type {}'.format(
+            ", ".join([str(i) for i in valTypes]), key, type(val)
+        )
     )

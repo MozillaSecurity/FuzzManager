@@ -12,6 +12,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import argparse
 import collections
 import os
@@ -59,7 +60,7 @@ class LibFuzzerMonitor(threading.Thread):
         self.process = process
         self.fd = process.stderr
         self.trace = []
-        self.stderr = collections.deque([], 128)
+        self.stderr = collections.deque(maxlen=128)
         self.inTrace = False
         self.testcase = None
         self.killOnOOM = killOnOOM
@@ -194,7 +195,7 @@ def command_file_to_list(cmd_file):
     @rtype: Tuple
     @return: Test index in list and the command as a list of strings
     """
-    cmdline = list()
+    cmdline = []
     idx = 0
     test_idx = None
     with open(cmd_file) as cmd_fp:
@@ -288,7 +289,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     fields.extend(wanted_fields_max)
 
     # Warnings to include
-    warnings = list()
+    warnings = []
 
     aggregated_stats = {}
 
@@ -371,7 +372,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
             if crash_file.endswith(".failed"):
                 failed_reports += 1
     if failed_reports:
-        warnings.append("WARNING: Unreported crashes detected (%d)\n" % failed_reports)
+        warnings.append(f"WARNING: Unreported crashes detected ({failed_reports})\n")
 
     # Write out data
     return write_stats_file(outfile, fields, aggregated_stats, warnings)
@@ -657,12 +658,10 @@ def test_binary_asan(bin_path):
 
     (stdout, _) = process.communicate()
 
-    if (
+    return (
         stdout.find(b" __asan_init") >= 0
         or stdout.find(b"__ubsan_default_options") >= 0
-    ):
-        return True
-    return False
+    )
 
 
 def apply_transform(script_path, testcase_path):
@@ -1224,8 +1223,8 @@ def main(argv=None):
         s3m.clean_queue_dirs()
 
         print(
-            "Downloading queues from s3://%s/%s/queues/ to %s"
-            % (opts.s3_bucket, opts.project, queues_dir)
+            f"Downloading queues from s3://{opts.s3_bucket}/{opts.project}/queues/ to "
+            f"{queues_dir}"
         )
         s3m.download_queue_dirs(opts.s3_corpus_refresh)
 
@@ -1288,8 +1287,8 @@ def main(argv=None):
 
         # Download our current corpus into the queues directory as well
         print(
-            "Downloading corpus from s3://%s/%s/corpus/ to %s"
-            % (opts.s3_bucket, opts.project, queues_dir)
+            "Downloading corpus from s3://{opts.s3_bucket}/{opts.project}/corpus/ to "
+            f"{queues_dir}"
         )
         s3m.download_corpus(queues_dir)
 
@@ -1396,13 +1395,12 @@ def main(argv=None):
 
     # ## End generic S3 action handling ##
 
-    if opts.cmd and opts.aflfuzz:
-        if not opts.firefox:
-            print(
-                "Error: Use --cmd either with libfuzzer or with afl in firefox mode",
-                file=sys.stderr,
-            )
-            return 2
+    if opts.cmd and opts.aflfuzz and not opts.firefox:
+        print(
+            "Error: Use --cmd either with libfuzzer or with afl in firefox mode",
+            file=sys.stderr,
+        )
+        return 2
 
     if opts.libfuzzer:
         if not opts.rargs:
@@ -1994,13 +1992,12 @@ def main(argv=None):
                 afl_out_dirs.append(opts.afloutdir)
 
         # Upload and FuzzManager modes require specifying the AFL directory
-        if opts.s3_queue_upload or opts.fuzzmanager:
-            if not opts.afloutdir:
-                print(
-                    "Error: Must specify AFL output directory using --afl-output-dir",
-                    file=sys.stderr,
-                )
-                return 2
+        if (opts.s3_queue_upload or opts.fuzzmanager) and not opts.afloutdir:
+            print(
+                "Error: Must specify AFL output directory using --afl-output-dir",
+                file=sys.stderr,
+            )
+            return 2
 
         if opts.fuzzmanager or opts.s3_queue_upload or opts.aflstats:
             last_queue_upload = 0

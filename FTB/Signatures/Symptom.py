@@ -289,11 +289,7 @@ class TestcaseSymptom(Symptom):
 
         testLines = crashInfo.testcase.splitlines()
 
-        for line in testLines:
-            if self.output.matches(line):
-                return True
-
-        return False
+        return any(self.output.matches(line) for line in testLines)
 
 
 class StackFramesSymptom(Symptom):

@@ -47,9 +47,8 @@ def update_tasks():
             task_obj.state == "running"
             and task_obj.created is not None
             and task_obj.pool is not None
-        ):
-            if task_obj.created + task_obj.pool.max_run_time >= now:
-                continue
+        ) and task_obj.created + task_obj.pool.max_run_time >= now:
+            continue
 
         _update_task_run(task_obj.task_id, task_obj.run_id)
 

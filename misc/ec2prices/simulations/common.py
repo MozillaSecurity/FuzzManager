@@ -97,9 +97,9 @@ def select_better(
                         print_indent(f"Price rejected: {ret['price']} > {best_price}")
             else:
                 if instance_time is None:
-                    (_, best_price, _) = list(
-                        data[region][zone][instance_type].values()
-                    )[0]
+                    (_, best_price, _) = next(
+                        iter(data[region][zone][instance_type].values())
+                    )
                 else:
                     for current_time in data[region][zone][instance_type]:
                         if current_time <= instance_time:

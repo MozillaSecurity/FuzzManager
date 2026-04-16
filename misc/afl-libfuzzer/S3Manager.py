@@ -264,7 +264,7 @@ class S3Manager:
                     remote_keys_for_deletion.append(remote_key.name)
                 continue
 
-            (queue_name, filename) = remote_key.name.rsplit("/", 1)
+            (queue_name, _filename) = remote_key.name.rsplit("/", 1)
             if queue_name in remote_queues_closed_names:
                 remote_keys_for_deletion.append(remote_key.name)
 
@@ -298,7 +298,7 @@ class S3Manager:
             ):
                 continue
 
-            (queue_name, filename) = remote_key.name.rsplit("/", 1)
+            (queue_name, _filename) = remote_key.name.rsplit("/", 1)
 
             if queue_name in remote_queues_closed_names:
                 queue_name += "*"
@@ -333,7 +333,7 @@ class S3Manager:
 
             dt = boto_parse_ts(remote_key.last_modified)
 
-            date_str = "%s-%02d-%02d" % (dt.year, dt.month, dt.day)
+            date_str = f"{dt.year}-{dt.month:02d}-{dt.day:02d}"
 
             if date_str not in status_data:
                 status_data[date_str] = 0
@@ -408,7 +408,7 @@ class S3Manager:
             remote_key = Key(self.bucket)
             remote_key.name = self.remote_path_corpus_bundle
             if remote_key.exists():
-                (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
+                (_zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
                 print("Found corpus bundle, downloading...")
 
                 try:
@@ -461,7 +461,7 @@ class S3Manager:
             return
 
         # Make a zip bundle and upload it
-        (zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
+        (_zip_fd, zip_dest) = mkstemp(prefix="libfuzzer-s3-corpus")
         zip_file = ZipFile(zip_dest, "w", ZIP_DEFLATED)
         for test_file in test_files:
             zip_file.write(os.path.join(corpus_dir, test_file), arcname=test_file)

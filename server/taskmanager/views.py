@@ -9,7 +9,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
-
 from server.auth import CheckAppPermission
 from server.utils import IPRestrictedTokenAuthentication
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
@@ -122,7 +121,7 @@ class TaskViewSet(
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         now = datetime.datetime.now(timezone.utc)
-        task, created = Task.objects.get_or_create(
+        task, _created = Task.objects.get_or_create(
             task_id=match.group(1),
             run_id=int(match.group(2)),
             defaults={

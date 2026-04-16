@@ -1,6 +1,5 @@
 import pytest
 from rest_framework.authtoken.models import Token
-
 from server.models import TokenIPRestriction
 
 from .conftest import _create_user

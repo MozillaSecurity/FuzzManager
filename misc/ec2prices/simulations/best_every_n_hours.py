@@ -14,13 +14,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 from .common import select_better
 
 
 def run(data, sim_config, main_config):
-    region = list(data.keys())[0]
-    zone = list(data[region].keys())[0]
-    instance_type = list(data[region][zone].keys())[0]
+    region = next(iter(data.keys()))
+    zone = next(iter(data[region].keys()))
+    instance_type = next(iter(data[region][zone].keys()))
 
     if "n" not in sim_config:
         print("Error: Must specify parameter 'n' for best_every_n_hours handler.")

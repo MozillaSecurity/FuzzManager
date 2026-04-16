@@ -98,9 +98,7 @@ def covmgr_user_normal(db, api_client):  # pylint: disable=invalid-name,unused-a
 
 
 @pytest.fixture
-def covmgr_user_restricted(
-    db, api_client
-):  # pylint: disable=invalid-name,unused-argument
+def covmgr_user_restricted(db, api_client):  # pylint: disable=invalid-name,unused-argument
     """Create a restricted, authenticated user for covmanager tests"""
     user = _covmgr_create_user("test-restricted", restricted=True)
     api_client.force_authenticate(user=user)
@@ -210,7 +208,7 @@ def covmgr_helper(request, settings, tmpdir):
             path = os.getcwd()
             try:
                 os.chdir(repo.location)
-                return subprocess.check_output(["git"] + list(args)).decode("utf-8")
+                return subprocess.check_output(["git", *list(args)]).decode("utf-8")
             finally:
                 os.chdir(path)
 
@@ -219,7 +217,7 @@ def covmgr_helper(request, settings, tmpdir):
             path = os.getcwd()
             try:
                 os.chdir(repo.location)
-                return subprocess.check_output(["hg"] + list(args)).decode("utf-8")
+                return subprocess.check_output(["hg", *list(args)]).decode("utf-8")
             finally:
                 os.chdir(path)
 

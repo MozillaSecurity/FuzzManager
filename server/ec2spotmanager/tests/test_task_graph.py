@@ -22,9 +22,7 @@ from ec2spotmanager.tasks import terminate_instances
 from . import create_config, create_instance, create_pool
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.task_graph")
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test", "mock_provider"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test", "mock_provider")  # pylint: disable=invalid-name
 
 
 def test_update_pool_graph(mocker):

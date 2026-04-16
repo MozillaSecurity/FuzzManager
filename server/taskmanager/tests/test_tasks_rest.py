@@ -72,7 +72,7 @@ def test_rest_task_methods(api_client, method, item):
     if item:
         pool = create_pool()
         task = create_task(pool=pool)
-        url = "/taskmanager/rest/tasks/%d/" % (task.pk,)
+        url = f"/taskmanager/rest/tasks/{task.pk}/"
     else:
         url = "/taskmanager/rest/tasks/"
 
@@ -186,10 +186,7 @@ def test_rest_task_read(api_client, item):
     api_client.force_authenticate(user=user)
     pool = create_pool()
     task = create_task(pool=pool)
-    if item:
-        url = "/taskmanager/rest/tasks/%d/" % (task.pk,)
-    else:
-        url = "/taskmanager/rest/tasks/"
+    url = f"/taskmanager/rest/tasks/{task.pk}/" if item else "/taskmanager/rest/tasks/"
 
     resp = api_client.get(url)
     LOG.debug(resp)

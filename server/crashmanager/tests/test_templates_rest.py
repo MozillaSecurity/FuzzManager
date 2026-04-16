@@ -111,10 +111,10 @@ def test_rest_templates_list(api_client, user, cm):
     expected = 4
     templates = [
         cm.create_template(
-            name="template #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            component="component #%d" % (i + 1),
-            version="%d" % (i + 1),
+            name=f"template #{i + 1}",
+            product=f"product #{i + 1}",
+            component=f"component #{i + 1}",
+            version=f"{i + 1}",
         )
         for i in range(expected)
     ]
@@ -138,15 +138,15 @@ def test_rest_templates_retrieve(api_client, user, cm):
     expected = 4
     templates = [
         cm.create_template(
-            name="template #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            component="component #%d" % (i + 1),
-            version="%d" % (i + 1),
+            name=f"template #{i + 1}",
+            product=f"product #{i + 1}",
+            component=f"component #{i + 1}",
+            version=f"{i + 1}",
         )
         for i in range(expected)
     ]
     for template in templates:
-        resp = api_client.get("/crashmanager/rest/bugzilla/templates/%d/" % template.pk)
+        resp = api_client.get(f"/crashmanager/rest/bugzilla/templates/{template.pk}/")
         LOG.debug(resp)
         status_code = resp.status_code
         resp = resp.json()

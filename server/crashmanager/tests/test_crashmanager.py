@@ -16,9 +16,7 @@ import requests
 from django.urls import reverse
 
 LOG = logging.getLogger("fm.crashmanager.tests.crashmanager")
-pytestmark = pytest.mark.usefixtures(
-    "crashmanager_test"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
 def test_crashmanager_redirect(client):

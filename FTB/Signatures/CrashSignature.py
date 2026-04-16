@@ -106,20 +106,14 @@ class CrashSignature:
         for symptom in self.symptoms:
             # We want to defer matching Testcase and Output symptoms as they can be slow
             # and pretty much all other symptoms are instant in matching.
-            if isinstance(symptom, TestcaseSymptom) or isinstance(
-                symptom, OutputSymptom
-            ):
+            if isinstance(symptom, (TestcaseSymptom, OutputSymptom)):
                 deferredSymptoms.append(symptom)
                 continue
 
             if not symptom.matches(crashInfo):
                 return False
 
-        for symptom in deferredSymptoms:
-            if not symptom.matches(crashInfo):
-                return False
-
-        return True
+        return all(symptom.matches(crashInfo) for symptom in deferredSymptoms)
 
     def matchRequiresTest(self):
         """
@@ -131,11 +125,7 @@ class CrashSignature:
         @rtype: bool
         @return: True if the signature requires a testcase to match
         """
-        for symptom in self.symptoms:
-            if isinstance(symptom, TestcaseSymptom):
-                return True
-
-        return False
+        return any(isinstance(symptom, TestcaseSymptom) for symptom in self.symptoms)
 
     def getRequiredOutputSources(self):
         """

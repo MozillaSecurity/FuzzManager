@@ -233,10 +233,7 @@ class PoolConfiguration(models.Model):
         for field in self.dict_config_fields:
             obj = getattr(self, field + "_dict")
             override = getattr(self, field + "_override")
-            if obj:
-                value = json.dumps(obj, separators=(",", ":"))
-            else:
-                value = ""
+            value = json.dumps(obj, separators=(",", ":")) if obj else ""
             if override:
                 value = "!" + value
             if getattr(self, field) != value:
@@ -246,10 +243,7 @@ class PoolConfiguration(models.Model):
         for field in self.list_config_fields:
             obj = getattr(self, field + "_list")
             override = getattr(self, field + "_override")
-            if obj:
-                value = json.dumps(obj, separators=(",", ":"))
-            else:
-                value = ""
+            value = json.dumps(obj, separators=(",", ":")) if obj else ""
             if override:
                 value = "!" + value
             if getattr(self, field) != value:

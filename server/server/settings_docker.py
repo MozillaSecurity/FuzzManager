@@ -11,7 +11,9 @@ SECRET_KEY = "YskonP1FOlIthZKysJcXQ3Bn6sAjUXaei8JVjesWbE"
 ALLOWED_HOSTS = ["localhost"]
 
 INSTALLED_APPS = tuple(
-    app for app in INSTALLED_APPS if app not in {"ec2spotmanager", "chartjs"}  # noqa
+    app
+    for app in INSTALLED_APPS  # noqa
+    if app not in {"ec2spotmanager", "chartjs"}
 )
 
 BASE_DIR = "/data"

@@ -22,9 +22,7 @@ from crashmanager.models import Bucket, BucketStatistics, BucketWatch, CrashEntr
 from . import assert_contains
 
 LOG = logging.getLogger("fm.crashmanager.tests.signatures")
-pytestmark = pytest.mark.usefixtures(
-    "crashmanager_test"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
 @pytest.mark.parametrize(
@@ -261,9 +259,7 @@ def test_watch_signature_buckets(client, cm):  # pylint: disable=invalid-name
     assert siglist[0] == bucket
 
 
-def test_watch_signature_buckets_new_crashes(
-    client, cm
-):  # pylint: disable=invalid-name
+def test_watch_signature_buckets_new_crashes(client, cm):  # pylint: disable=invalid-name
     """Watched signatures should show new crashes"""
     client.login(username="test", password="test")
     buckets = (
@@ -333,7 +329,7 @@ def test_watch_signature_update(client, cm):  # pylint: disable=invalid-name
     crash2 = cm.create_crash(shortSignature="crash #2", bucket=bucket)
     response = client.post(
         reverse("crashmanager:sigwatchnew"),
-        {"bucket": "%d" % bucket.pk, "crash": "%d" % crash2.pk},
+        {"bucket": f"{bucket.pk}", "crash": f"{crash2.pk}"},
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]
@@ -350,7 +346,7 @@ def test_watch_signature_new(client, cm):  # pylint: disable=invalid-name
     crash = cm.create_crash(shortSignature="crash #1", bucket=bucket)
     response = client.post(
         reverse("crashmanager:sigwatchnew"),
-        {"bucket": "%d" % bucket.pk, "crash": "%d" % crash.pk},
+        {"bucket": f"{bucket.pk}", "crash": f"{crash.pk}"},
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["found"]

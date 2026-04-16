@@ -225,7 +225,7 @@ def test_rest_collection_get(api_client, covmgr_helper):
     )
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.get("/covmanager/rest/collections/%d/" % coll.pk)
+    resp = api_client.get(f"/covmanager/rest/collections/{coll.pk}/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))

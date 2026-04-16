@@ -21,6 +21,7 @@ import re
 import sys
 import unicodedata
 from abc import ABCMeta
+from contextlib import suppress
 from functools import wraps
 
 from FTB import AssertionHelper
@@ -183,7 +184,7 @@ class CrashInfo(metaclass=ABCMeta):
         buf.append("Crash trace:")
         buf.append("")
         for idx, frame in enumerate(self.backtrace):
-            buf.append("# %02d    %s" % (idx, frame))
+            buf.append(f"# {idx:02d}    {frame}")
         buf.append("")
 
         if self.crashAddress:
@@ -515,7 +516,7 @@ class CrashInfo(metaclass=ABCMeta):
         if minimumSupportedVersion < 12:
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
-                if not functionName == "??":
+                if functionName != "??":
                     symptomObj = {
                         "type": "stackFrame",
                         "frameNumber": idx,
@@ -530,7 +531,7 @@ class CrashInfo(metaclass=ABCMeta):
 
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
-                if not functionName == "??":
+                if functionName != "??":
                     framesArray.append(functionName)
                 else:
                     framesArray.append("?")
@@ -721,10 +722,9 @@ class ASanCrashInfo(CrashInfo):
                 match = re.search(asanCrashAddressPattern, traceLine)
                 if match is not None:
                     reportFound = True
-                    try:
+                    with suppress(TypeError):
+                        # Attempt to collect crash address
                         self.crashAddress = int(match.group(1), 16)
-                    except TypeError:
-                        pass  # No crash address available
 
                     # Crash Address and Registers are in the same line for ASan
                     match = re.search(asanRegisterPattern, traceLine)
@@ -759,11 +759,8 @@ class ASanCrashInfo(CrashInfo):
             if len(parts) > 1 and not parts[1].startswith("0x"):
                 if parts[1] == "<null>":
                     # the last part is either `(lib.so+0xoffset)` or `(0xaddress)`
-                    if "+" in parts[-1]:
-                        # Remove parentheses around component
-                        component = parts[-1][1:-1]
-                    else:
-                        component = "<missing>"
+                    # Remove parentheses around component
+                    component = parts[-1][1:-1] if "+" in parts[-1] else "<missing>"
                 else:
                     component = " ".join(parts[1:-2])
             elif len(parts) > 2:
@@ -801,9 +798,11 @@ class ASanCrashInfo(CrashInfo):
         idx = 1
         while len(parts) > idx + 1:
             if _is_unfinished(parts[idx], "()") or _is_unfinished(parts[idx], "<>"):
-                parts = (
-                    parts[:idx] + [f"{parts[idx]} {parts[idx + 1]}"] + parts[idx + 2 :]
-                )
+                parts = [
+                    *parts[:idx],
+                    f"{parts[idx]} {parts[idx + 1]}",
+                    *parts[idx + 2 :],
+                ]
             else:
                 idx += 1
 
@@ -812,9 +811,11 @@ class ASanCrashInfo(CrashInfo):
             idx = parts.index("const")
             assert idx > 0
             if parts[idx - 1].endswith(")"):
-                parts = (
-                    parts[: idx - 1] + [f"{parts[idx - 1]} const"] + parts[idx + 1 :]
-                )
+                parts = [
+                    *parts[: idx - 1],
+                    f"{parts[idx - 1]} const",
+                    *parts[idx + 1 :],
+                ]
 
         # clang 14 adds BuildId as last segment
         if parts[-1].startswith("(BuildId: "):
@@ -1089,10 +1090,7 @@ class GDBCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the GDB trace, otherwise use stderr
-        if crashData:
-            gdbOutput = crashData
-        else:
-            gdbOutput = stderr
+        gdbOutput = crashData or stderr
 
         gdbFramePatterns = [
             "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
@@ -1379,7 +1377,7 @@ class GDBCrashInfo(CrashInfo):
                             #    (gdb) p $_siginfo._sifields._sigfault.si_addr
                             #      $1 = (void *) 0x7ff846e64d28
                             #      (gdb) x /i $pc
-                            # noqa => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)
+                            #      => 0x876b40 <js::ArgumentsObject::create<CopyFrameArgs>(JSContext*, JS::HandleScript, JS::HandleFunction, unsigned int, CopyFrameArgs&)+528>:   movsq  %ds:(%rsi),%es:(%rdi)  # noqa: E501
                             #      (gdb) info reg $ds
                             #      ds             0x0      0
                             #      (gdb) info reg $es
@@ -1457,8 +1455,8 @@ class GDBCrashInfo(CrashInfo):
                     return result
             else:
                 raise RuntimeError(
-                    "Unexpected length after splitting operands of this instruction: %s"
-                    % crashInstruction
+                    "Unexpected length after splitting operands of this instruction: "
+                    f"{crashInstruction}"
                 )
 
         if RegisterHelper.isARMCompatible(registerMap):
@@ -1587,10 +1585,7 @@ class MinidumpCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the Minidump trace, otherwise use
         # stderr
-        if crashData:
-            minidumpOuput = crashData
-        else:
-            minidumpOuput = stderr
+        minidumpOuput = crashData or stderr
 
         crashThread = None
         for traceLine in minidumpOuput:
@@ -1662,7 +1657,7 @@ class AppleCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # Example:
-                # noqa "0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)"
+                # "0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)"  # noqa: E501
                 components = line.split(None, 3)
                 stackEntry = components[3]
                 if stackEntry.startswith("0"):
@@ -1727,9 +1722,9 @@ class CDBCrashInfo(CrashInfo):
             if inEcxrData:
                 # 32-bit example:
                 #      0:000> .ecxr
-                # noqa eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310
-                # noqa eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc
-                # noqa cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202
+                #      eax=02efff01 ebx=016fddb8 ecx=2b2b2b2b edx=016fe490 esi=02e00310 edi=02e00310  # noqa: E501
+                #      eip=00404c59 esp=016fdc2c ebp=016fddb8 iopl=0         nv up ei pl nz na po nc  # noqa: E501
+                #      cs=0023  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010202  # noqa: E501
                 # 64-bit example:
                 #      0:000> .ecxr
                 #      rax=00007ff74d8fee30 rbx=00000285ef400420 rcx=2b2b2b2b2b2b2b2b
@@ -1739,7 +1734,7 @@ class CDBCrashInfo(CrashInfo):
                 #      r11=00000285ef25a000 r12=00007ff74d9239a0 r13=fffa7fffffffffff
                 #      r14=000000e87fbfd0e0 r15=0000000000000003
                 #      iopl=0         nv up ei pl nz na pe nc
-                # noqa cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200
+                #      cs=0033  ss=002b  ds=002b  es=002b  fs=0053  gs=002b             efl=00010200  # noqa: E501
                 if line.startswith("cs="):
                     inEcxrData = False
                     continue
@@ -1804,9 +1799,9 @@ class CDBCrashInfo(CrashInfo):
 
             if inCrashingThread:
                 # 32-bit example:
-                # noqa  "016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9"
+                #  "016fdc38 004b2387 01e104e8 016fe490 016fe490 js_32_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x9"  # noqa: E501
                 # 64-bit example:
-                # noqa  "000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13"
+                #  "000000e8`7fbfc040 00007ff7`4d53a984 : 000000e8`7fbfc2c0 00000285`ef7bb400 00000285`ef21b000 00007ff7`4d4254b9 : js_64_dm_windows_62f79d676e0e!JSObject::allocKindForTenure+0x13"  # noqa: E501
                 if (
                     "STACK_COMMAND" in line
                     or "SYMBOL_NAME" in line
@@ -1950,7 +1945,7 @@ class TSanCrashInfo(CrashInfo):
                 currentBacktrace = []
                 expectedIndex = 0
 
-            if not expectedIndex == index:
+            if expectedIndex != index:
                 print(
                     f"Error parsing TSan trace (Index mismatch, got index {index} but "
                     f"expected {expectedIndex})",

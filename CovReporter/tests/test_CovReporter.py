@@ -46,15 +46,15 @@ def test_CovReporterPreprocessData():
     assert "topdir2" in result[children], "topdir2 missing in result"
 
     # Check that we have all the subdirs
-    assert (
-        "subdir1" in result[children]["topdir1"][children]
-    ), "subdir1 missing in result"
-    assert (
-        "subdir2" in result[children]["topdir1"][children]
-    ), "subdir2 missing in result"
-    assert (
-        "subdir1" in result[children]["topdir2"][children]
-    ), "subdir1 missing in result"
+    assert "subdir1" in result[children]["topdir1"][children], (
+        "subdir1 missing in result"
+    )
+    assert "subdir2" in result[children]["topdir1"][children], (
+        "subdir2 missing in result"
+    )
+    assert "subdir1" in result[children]["topdir2"][children], (
+        "subdir1 missing in result"
+    )
 
     # Check that we haven't got more subdirs than expected for topdir2
     assert len(result[children]["topdir2"][children]) == 1
@@ -151,7 +151,7 @@ def test_CovReporterMergeData():
         with os.fdopen(cov_file2_fd, "w") as f:
             json.dump(coveralls_add_data, f)
 
-        (result, version, stats) = CovReporter.create_combined_coverage(
+        (result, version, _stats) = CovReporter.create_combined_coverage(
             [cov_file1, cov_file2]
         )
     finally:
@@ -175,18 +175,18 @@ def test_CovReporterMergeData():
     assert "topdir3" in result[children], "topdir2 missing in result"
 
     # Check that we have all the subdirs
-    assert (
-        "subdir1" in result[children]["topdir1"][children]
-    ), "subdir1 missing in result"
-    assert (
-        "subdir2" in result[children]["topdir1"][children]
-    ), "subdir2 missing in result"
-    assert (
-        "subdir1" in result[children]["topdir2"][children]
-    ), "subdir1 missing in result"
-    assert (
-        "subdir3" in result[children]["topdir1"][children]
-    ), "subdir3 missing in result"
+    assert "subdir1" in result[children]["topdir1"][children], (
+        "subdir1 missing in result"
+    )
+    assert "subdir2" in result[children]["topdir1"][children], (
+        "subdir2 missing in result"
+    )
+    assert "subdir1" in result[children]["topdir2"][children], (
+        "subdir1 missing in result"
+    )
+    assert "subdir3" in result[children]["topdir1"][children], (
+        "subdir3 missing in result"
+    )
 
     # Check that we haven't got more subdirs than expected for topdirs
     assert len(result[children]["topdir1"][children]) == 3

@@ -145,7 +145,7 @@ def identify_coverage_drops(revision, ipc_only=False):
         return
 
     current, previous = collections
-    if not current.revision == revision:
+    if current.revision != revision:
         logger.error(
             "Mismatch in report revisions. Current revision: %s, expected revision: %s",
             current.revision,

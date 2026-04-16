@@ -160,7 +160,7 @@ class GDBRunner(AutoRunner):
                 env=self.env,
             )
 
-            core = "core.%s" % process.pid
+            core = f"core.{process.pid}"
 
             (plainStdout, plainStderr) = process.communicate(input=self.stdin)
 
@@ -302,7 +302,4 @@ class ASanRunner(AutoRunner):
         crash_info = CrashInfo.fromRawCrashData(
             self.stdout, self.stderr, pc, self.auxCrashData
         )
-        if isinstance(crash_info, NoCrashInfo):
-            return False
-
-        return True
+        return not isinstance(crash_info, NoCrashInfo)

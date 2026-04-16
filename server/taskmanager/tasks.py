@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
@@ -32,10 +33,8 @@ def get_or_create_pool(worker_type):
             return
         platform, pool_id = worker_type.split("-", 1)
         assert pool_id.startswith("pool")
-        try:
+        with suppress(ValueError):
             params["id"] = int(pool_id[4:])
-        except ValueError:
-            pass
     params["pool_name"] = pool_id
 
     pool, created = Pool.objects.get_or_create(
@@ -104,10 +103,11 @@ def update_pool_defns():
         )
 
     # if a pool is in the DB but not in Github/TC, it should be deleted
-    to_delete = []
-    for pool_id in Pool.objects.values_list("id", flat=True):
-        if pool_id not in pools_seen:
-            to_delete.append(pool_id)
+    to_delete = [
+        pool_id
+        for pool_id in Pool.objects.values_list("id", flat=True)
+        if pool_id not in pools_seen
+    ]
     while to_delete:
         delete_now, to_delete = to_delete[:500], to_delete[500:]
         LOG.warning("deleting pools: %r", delete_now)

@@ -258,9 +258,8 @@ def apply_include_exclude_directives(node, directives):
                     files = {child for child in files if pattern.match(child) is None}
 
         # run directives on dirs
-        universal_directives = (
-            []
-        )  # patterns beginning with **/ should always be applied recursively
+        # patterns beginning with **/ should always be applied recursively
+        universal_directives = []
         dirs = {}
         for what, parts in directives:
             pattern, subtree_pattern = parts[0], parts[1:]
@@ -355,10 +354,7 @@ def get_flattened_names(node, prefix=""):
         if current_name is None:
             new_prefix = ""
         else:
-            if prefix:
-                new_prefix = f"{prefix}/{current_name}"
-            else:
-                new_prefix = current_name
+            new_prefix = f"{prefix}/{current_name}" if prefix else current_name
             result.add(new_prefix)
 
         if "children" in node:

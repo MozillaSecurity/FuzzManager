@@ -16,7 +16,7 @@ def test_populate_bucket_stats(capsys, cm):
         bucket=bucket,
         tool="tool1",
         testcase=cm.create_testcase("test.txt", quality=5),
-    ),
+    )
     cm.create_crash(
         bucket=bucket,
         tool="tool1",

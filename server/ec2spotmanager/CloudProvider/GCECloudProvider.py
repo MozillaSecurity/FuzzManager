@@ -112,9 +112,9 @@ class GCECloudProvider(CloudProvider):
     @wrap_provider_errors
     def terminate_instances(self, instances_ids_by_region):
         for region, instance_ids in instances_ids_by_region.items():
-            assert (
-                region == "global"
-            ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+            assert region == "global", (
+                f"Invalid region name for GCE: {region} (only 'global' supported)"
+            )
             cluster = self._connect()
             self.logger.info("Terminating %s instances in GCE", len(instance_ids))
             nodes = cluster.filter().name(instance_ids).nodes
@@ -151,9 +151,9 @@ class GCECloudProvider(CloudProvider):
     def start_instances(
         self, config, region, zone, _userdata, image, instance_type, count, tags
     ):
-        assert (
-            region == "global"
-        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+        assert region == "global", (
+            f"Invalid region name for GCE: {region} (only 'global' supported)"
+        )
         self.logger.info(
             "Using machine type %s in GCE availability zone %s.", instance_type, zone
         )
@@ -190,9 +190,9 @@ class GCECloudProvider(CloudProvider):
             "capabilities": {"add": "SYS_PTRACE"}
         }
         if config.gce_docker_privileged:
-            container_spec["spec"]["containers"][0]["securityContext"][
-                "privileged"
-            ] = True
+            container_spec["spec"]["containers"][0]["securityContext"]["privileged"] = (
+                True
+            )
         if config.gce_cmd:
             container_spec["spec"]["containers"][0]["command"] = config.gce_cmd
         if config.gce_args:
@@ -221,9 +221,9 @@ class GCECloudProvider(CloudProvider):
     @wrap_provider_errors
     def check_instances_requests(self, region, instances, tags):
         # this isn't a spot provider, and tags were already set at instance creation
-        assert (
-            region == "global"
-        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+        assert region == "global", (
+            f"Invalid region name for GCE: {region} (only 'global' supported)"
+        )
         cluster = self._connect()
 
         requests = {}
@@ -254,9 +254,9 @@ class GCECloudProvider(CloudProvider):
     def check_instances_state(self, pool_id, region):
         # TODO: if we could return a hostname, `check_instances_requests` would be
         # unnecessary for this provider
-        assert (
-            region == "global"
-        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+        assert region == "global", (
+            f"Invalid region name for GCE: {region} (only 'global' supported)"
+        )
 
         instance_states = {}
         cluster = self._connect()
@@ -289,9 +289,9 @@ class GCECloudProvider(CloudProvider):
         return instance_states
 
     def get_image(self, region, config):
-        assert (
-            region == "global"
-        ), f"Invalid region name for GCE: {region} (only 'global' supported)"
+        assert region == "global", (
+            f"Invalid region name for GCE: {region} (only 'global' supported)"
+        )
         return config.gce_image_name
 
     @staticmethod

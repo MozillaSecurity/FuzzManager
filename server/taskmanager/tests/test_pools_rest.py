@@ -42,7 +42,7 @@ def test_rest_pools_no_perm(api_client, username, item):
     api_client.force_authenticate(user=user)
     if item:
         pool = create_pool()
-        url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
+        url = f"/taskmanager/rest/pools/{pool.pk}/"
     else:
         url = "/taskmanager/rest/pools/"
     assert api_client.get(url).status_code == requests.codes["forbidden"]
@@ -62,7 +62,7 @@ def test_rest_pool_methods(api_client, method, item):
     api_client.force_authenticate(user=user)
     if item:
         pool = create_pool()
-        url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
+        url = f"/taskmanager/rest/pools/{pool.pk}/"
     else:
         url = "/taskmanager/rest/pools/"
 
@@ -77,10 +77,7 @@ def test_rest_pool_read(api_client, item):
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     pool = create_pool()
-    if item:
-        url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
-    else:
-        url = "/taskmanager/rest/pools/"
+    url = f"/taskmanager/rest/pools/{pool.pk}/" if item else "/taskmanager/rest/pools/"
 
     resp = api_client.get(url)
     LOG.debug(resp)
@@ -119,7 +116,7 @@ def test_rest_pool_running_status(api_client):
     pool = create_pool()
     create_task(pool=pool, run_id=1)
     task2 = create_task(pool=pool, run_id=2)
-    url = "/taskmanager/rest/pools/%d/" % (pool.pk,)
+    url = f"/taskmanager/rest/pools/{pool.pk}/"
 
     resp = api_client.get(url)
     LOG.debug(resp)

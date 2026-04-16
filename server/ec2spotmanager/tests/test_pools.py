@@ -19,9 +19,7 @@ from django.urls import reverse
 from . import assert_contains, create_config, create_pool, create_poolmsg
 
 LOG = logging.getLogger("fm.ec2spotmanager.tests.pools")  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")  # pylint: disable=invalid-name
 POOLS_ENTRIES_FMT = "Displaying all %d instance pools:"
 
 

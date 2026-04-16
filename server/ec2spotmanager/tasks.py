@@ -109,8 +109,7 @@ def _determine_best_location(config, count, cache=None):
                     # zone+type is blacklisted because a previous spot request timed-out
                     if (
                         cache.get(
-                            "%s:blacklist:%s:%s:%s"
-                            % (cloud_provider.get_name(), region, zone, instance_type)
+                            f"{cloud_provider.get_name()}:blacklist:{region}:{zone}:{instance_type}"
                         )
                         is not None
                     ):
@@ -594,8 +593,8 @@ def update_instances(provider, region):
 
             if instance.instance_id in debug_not_in_region:
                 reasons.append(
-                    "has state code %s on cloud but not in our region"
-                    % debug_not_in_region[instance.instance_id]
+                    f"has state code {debug_not_in_region[instance.instance_id]} on "
+                    "cloud but not in our region"
                 )
 
             if not reasons:

@@ -111,10 +111,10 @@ def test_ASanParserTestFailedAlloc():
     assert crashInfo.crashAddress is None
     assert not crashInfo.registers
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer failed to allocate 0x6003a000 (1610850304) bytes of "
         "LargeMmapAllocator (error code: 12) [@ __asan::AsanCheckFailed]"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestAllocSize():
@@ -131,10 +131,10 @@ def test_ASanParserTestAllocSize():
     assert crashInfo.crashAddress is None
     assert not crashInfo.registers
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer: requested allocation size exceeds maximum"
         " supported size [@ malloc]"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestHeapCrash():
@@ -167,10 +167,10 @@ def test_ASanParserTestUAF():
 
     assert crashInfo.crashAddress == 0x7FD766C42800
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer: heap-use-after-free [@ void mozilla::PodCopy<char16_t>] "
         "with READ of size 6143520"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestInvalidFree():
@@ -186,10 +186,10 @@ def test_ASanParserTestInvalidFree():
 
     assert crashInfo.crashAddress == 0x62A00006C200
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer: attempting free on address which was not malloc()-ed "
         "[@ __interceptor_free]"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestOOM():
@@ -210,10 +210,10 @@ def test_ASanParserTestOOM():
 
     assert crashInfo.crashAddress is None
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer: allocator is out of memory trying to allocate 0x24 bytes "
         "[@ operator new]"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestOOM2():
@@ -233,10 +233,10 @@ def test_ASanParserTestOOM2():
     assert crashInfo.backtrace[0] == "operator new"
     assert crashInfo.crashAddress is None
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "AddressSanitizer: out of memory: allocator is trying to allocate "
         "0x16000001090000 bytes [@ operator new]"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 def test_ASanParserTestDebugAssertion():
@@ -256,10 +256,10 @@ def test_ASanParserTestDebugAssertion():
 
     assert crashInfo.crashAddress == 0x0
 
-    assert (
+    assert crashInfo.createShortSignature() == (
         "Assertion failure: false (An assert from the graphics logger), at "
         "/builds/slave/m-cen-l64-asan-d-0000000000000/build/src/gfx/2d/Logging.h:521"
-    ) == crashInfo.createShortSignature()
+    )
 
 
 @pytest.mark.parametrize(
@@ -328,7 +328,7 @@ def test_ASanParserTestMultiTrace():
     assert len(crashInfo.backtrace) == 4
     assert crashInfo.backtrace[0] == "mozilla::ipc::Shmem::OpenExisting"
     assert crashInfo.backtrace[3] == "CreateThread"
-    assert "[@ mozilla::ipc::Shmem::OpenExisting]" == crashInfo.createShortSignature()
+    assert crashInfo.createShortSignature() == "[@ mozilla::ipc::Shmem::OpenExisting]"
 
 
 def test_ASanParserTestTruncatedTrace():
@@ -361,7 +361,7 @@ def test_ASanParserTestClang14():
         "llvm::report_fatal_error",
         "llvm::report_fatal_error",
     ]
-    assert "[@ raise]" == crashInfo.createShortSignature()
+    assert crashInfo.createShortSignature() == "[@ raise]"
 
 
 def test_GDBParserTestCrash():
@@ -2711,8 +2711,8 @@ def test_TSanParserTestClang14():
         (FIXTURE_PATH / "trace_tsan_clang14.txt").read_text().splitlines(),
     )
     assert (
-        "ThreadSanitizer: data race [@ operator new] vs. [@ pthread_mutex_lock]"
-        == crashInfo.createShortSignature()
+        crashInfo.createShortSignature()
+        == "ThreadSanitizer: data race [@ operator new] vs. [@ pthread_mutex_lock]"
     )
     assert crashInfo.crashAddress is None
     assert crashInfo.crashInstruction is None
@@ -2820,9 +2820,9 @@ def test_ValgrindUUVParser():
     )
     assert len(crashInfo.backtrace) == 5
     assert crashInfo.backtrace[0] == "foo<123>::Init"
-    assert crashInfo.backtrace[
-        1
-    ], "bar::func<bar::Init()::$_0, Promise<type1, type2 == true> >::Run"
+    assert crashInfo.backtrace[1], (
+        "bar::func<bar::Init()::$_0, Promise<type1, type2 == true> >::Run"
+    )
     assert crashInfo.backtrace[2] == "non-virtual thunk to Run"
     assert crashInfo.backtrace[-1] == "posix_memalign"
     assert crashInfo.crashInstruction is None

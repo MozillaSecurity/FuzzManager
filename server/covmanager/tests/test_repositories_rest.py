@@ -153,7 +153,7 @@ def test_rest_repository_get(api_client, covmgr_helper):
     repo = covmgr_helper.create_repository("git", name="testrepo")
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.get("/covmanager/rest/repositories/%d/" % repo.pk)
+    resp = api_client.get(f"/covmanager/rest/repositories/{repo.pk}/")
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))
     assert set(resp.keys()) == {"name"}
