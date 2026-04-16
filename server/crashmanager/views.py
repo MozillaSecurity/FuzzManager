@@ -1594,7 +1594,7 @@ class AbstractDownloadView(APIView):
         if not os.path.exists(file_path):
             return HttpResponse(status=404)
 
-        test_file = open(file_path, "rb")
+        test_file = open(file_path, "rb")  # noqa: SIM115
         response = HttpResponse(
             FileWrapper(test_file), content_type="application/octet-stream"
         )

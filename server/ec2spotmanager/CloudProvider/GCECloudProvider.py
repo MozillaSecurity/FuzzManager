@@ -416,11 +416,10 @@ class GCECloudProvider(CloudProvider):
                         "Preemptible N1 Predefined Instance Core"
                     ):
                         what = "n1-cpu"
-                elif sku["category"]["resourceGroup"] == "RAM":
-                    if sku["description"].startswith(
-                        "Preemptible Memory-optimized Instance Ram"
-                    ):
-                        what = "memopt-ram"
+                elif sku["category"]["resourceGroup"] == "RAM" and sku[
+                    "description"
+                ].startswith("Preemptible Memory-optimized Instance Ram"):
+                    what = "memopt-ram"
                 if what is None:
                     continue
 

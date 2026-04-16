@@ -163,9 +163,10 @@ class StackFrameSymptom(Symptom):
 
         for idx in range(len(crashInfo.backtrace)):
             # Not the most efficient way for very long stacks with a small match area
-            if self.frameNumber.matches(idx):
-                if self.functionName.matches(crashInfo.backtrace[idx]):
-                    return True
+            if self.frameNumber.matches(idx) and self.functionName.matches(
+                crashInfo.backtrace[idx]
+            ):
+                return True
 
         return False
 
@@ -255,11 +256,9 @@ class InstructionSymptom(Symptom):
                 if register not in crashInfo.crashInstruction:
                     return False
 
-        if self.instructionName is not None:
-            if not self.instructionName.matches(crashInfo.crashInstruction):
-                return False
-
-        return True
+        return self.instructionName is None or self.instructionName.matches(
+            crashInfo.crashInstruction
+        )
 
 
 class TestcaseSymptom(Symptom):
@@ -410,15 +409,14 @@ class StackFramesSymptom(Symptom):
                     # it
                     continue
 
-                if not newSignatureGuess[idx].isPCRE:
-                    # If our match is not PCRE, try some heuristics to generalize the
-                    # match
-
-                    if stack[idx] in str(newSignatureGuess[idx]):
-                        # The stack frame is a substring of the what we try to match,
-                        # use the stack frame as new matcher to ensure a match without
-                        # using a wildcard.
-                        newMatch = StringMatch(stack[idx])
+                # If our match is not PCRE, try some heuristics to generalize the
+                # match. The stack frame is a substring of what we try to match,
+                # use the stack frame as new matcher to ensure a match without
+                # using a wildcard.
+                if not newSignatureGuess[idx].isPCRE and stack[idx] in str(
+                    newSignatureGuess[idx]
+                ):
+                    newMatch = StringMatch(stack[idx])
 
             origMatch = newSignatureGuess[idx]
             newSignatureGuess[idx] = newMatch

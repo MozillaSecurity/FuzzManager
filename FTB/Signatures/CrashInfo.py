@@ -1497,11 +1497,15 @@ class GDBCrashInfo(CrashInfo):
             for i in range(0, len(parts)):
                 if i >= len(parts):
                     break
-                if "[" in parts[i] and "]" not in parts[i]:
-                    if i + 1 < len(parts):
-                        if "]" in parts[i + 1] and "[" not in parts[i + 1]:
-                            parts[i] += ", " + parts[i + 1]
-                            del parts[i + 1]
+                if (
+                    "[" in parts[i]
+                    and "]" not in parts[i]
+                    and i + 1 < len(parts)
+                    and "]" in parts[i + 1]
+                    and "[" not in parts[i + 1]
+                ):
+                    parts[i] += ", " + parts[i + 1]
+                    del parts[i + 1]
 
             if len(parts) == 1:
                 if instruction == ".inst" and parts[0].endswith("; undefined"):
@@ -1511,16 +1515,17 @@ class GDBCrashInfo(CrashInfo):
                 elif instruction == "brk":
                     # This is an explicit breakpoint / trap
                     return RegisterHelper.getInstructionPointer(registerMap)
-            elif len(parts) == 2:
-                if instruction.startswith("ldr") or instruction.startswith("str"):
-                    # Load/Store instruction
-                    match = re.match("^\\s*\\[(.*)\\]$", parts[1])
-                    if match is not None:
-                        (result, reason) = calculateARMDerefOpAddress(match.group(1))
-                        if result is None:
-                            failureReason += f" ({reason})"
-                        else:
-                            return result
+            elif len(parts) == 2 and (
+                instruction.startswith("ldr") or instruction.startswith("str")
+            ):
+                # Load/Store instruction
+                match = re.match("^\\s*\\[(.*)\\]$", parts[1])
+                if match is not None:
+                    (result, reason) = calculateARMDerefOpAddress(match.group(1))
+                    if result is None:
+                        failureReason += f" ({reason})"
+                    else:
+                        return result
         else:
             failureReason = "Architecture is not supported."
 

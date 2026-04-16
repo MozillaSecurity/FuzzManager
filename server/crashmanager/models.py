@@ -418,11 +418,12 @@ class Bucket(models.Model):
                     first_entry_crash_info = first_entry_per_bucket_cache[
                         other_bucket.pk
                     ]
-                    if first_entry_crash_info:
-                        # Omit testcase for performance reasons for now
-                        if optimized_signature.matches(first_entry_crash_info):
-                            matches_in_other_buckets = True
-                            break
+                    # Omit testcase for performance reasons for now
+                    if first_entry_crash_info and optimized_signature.matches(
+                        first_entry_crash_info
+                    ):
+                        matches_in_other_buckets = True
+                        break
 
                 if matches_in_other_buckets:
                     # Reset, we don't actually have an optimized signature if it's
@@ -467,9 +468,8 @@ class BucketStatistics(models.Model):
     def increment_count(cls, bucket_id, tool_id, quality=None):
         stats, _ = cls.objects.get_or_create(bucket_id=bucket_id, tool_id=tool_id)
         stats.size += 1
-        if quality is not None:
-            if stats.quality is None or quality < stats.quality:
-                stats.quality = quality
+        if quality is not None and (stats.quality is None or quality < stats.quality):
+            stats.quality = quality
         stats.save()
 
     @classmethod
@@ -821,10 +821,9 @@ def CrashEntry_save(sender, instance, created, **kwargs):
     if created:
         LOG.info("created crash:%d", instance.id)
 
-    if getattr(settings, "USE_CELERY", None):
-        # this could mean the crash is new, or that it was edited and reparsed
-        if not instance.triagedOnce:
-            triage_new_crash.delay(instance.pk)
+    # this could mean the crash is new, or that it was edited and reparsed
+    if getattr(settings, "USE_CELERY", None) and not instance.triagedOnce:
+        triage_new_crash.delay(instance.pk)
 
     if instance.bucket_id != instance._original_bucket:
         LOG.info(
