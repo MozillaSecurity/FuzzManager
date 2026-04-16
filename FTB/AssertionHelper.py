@@ -160,7 +160,7 @@ def getAuxiliaryAbortMessage(output):
                 line = re.sub(r"^[0-9=]+", "", line)
                 lastLine = line.strip()
                 needASanRW = True
-        elif needASanRW and "READ of size" in line or "WRITE of size" in line:
+        elif needASanRW and ("READ of size" in line or "WRITE of size" in line):
             lastLine = [lastLine]
             lastLine.append(line)
             needASanRW = False

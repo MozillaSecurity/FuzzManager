@@ -32,7 +32,7 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
     assert requests.put(url, {}).status_code == requests.codes["unauthorized"]
 
     # Retry with authentication
-    response = requests.get(url, headers=dict(Authorization="Token " + fm_user.token))
+    response = requests.get(url, headers={"Authorization": "Token " + fm_user.token})
 
     # Must be empty now
     assert response.status_code == requests.codes["ok"]
@@ -57,11 +57,11 @@ def test_RESTCrashEntryInterface(live_server, fm_user):
 
     assert (
         requests.post(
-            url, data, headers=dict(Authorization=f"Token {fm_user.token}")
+            url, data, headers={"Authorization": f"Token {fm_user.token}"}
         ).status_code
         == requests.codes["created"]
     )
-    response = requests.get(url, headers=dict(Authorization=f"Token {fm_user.token}"))
+    response = requests.get(url, headers={"Authorization": f"Token {fm_user.token}"})
 
     json = response.json()
     assert len(json) == lengthBeforePost + 1

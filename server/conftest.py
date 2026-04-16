@@ -56,15 +56,15 @@ def migration_hook(request):
     """
 
     migrate_from_mark = request.node.get_closest_marker("migrate_from")
-    assert (
-        migrate_from_mark
-    ), "must mark the migration to stop at with @pytest.mark.migrate_from()"
+    assert migrate_from_mark, (
+        "must mark the migration to stop at with @pytest.mark.migrate_from()"
+    )
     assert len(migrate_from_mark.args) == 1, "migrate_from mark expects 1 arg"
     assert not migrate_from_mark.kwargs, "migrate_from mark takes no keywords"
     migrate_to_mark = request.node.get_closest_marker("migrate_to")
-    assert (
-        migrate_to_mark
-    ), "must mark the migration to hook with @pytest.mark.migrate_to()"
+    assert migrate_to_mark, (
+        "must mark the migration to hook with @pytest.mark.migrate_to()"
+    )
     assert len(migrate_to_mark.args) == 1, "migrate_to mark expects 1 arg"
     assert not migrate_to_mark.kwargs, "migrate_to mark takes no keywords"
 

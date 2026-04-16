@@ -417,19 +417,18 @@ class SimplePersistentApplication(PersistentApplication):
             return ApplicationStatus.OK
 
     def _terminateProcess(self):
-        if self.process:
+        if self.process and self.process.poll() is None:
+            # Try to terminate the process gracefully first
+            self.process.terminate()
+
+            # Emulate a wait() with timeout. Because wait() having
+            # a timeout would be way too easy, wouldn't it? -.-
+            (maxSleepTime, pollInterval) = (3, 0.2)
+            while self.process.poll() is None and maxSleepTime > 0:
+                maxSleepTime -= pollInterval
+                time.sleep(pollInterval)
+
+            # Process is still alive, kill it and wait
             if self.process.poll() is None:
-                # Try to terminate the process gracefully first
-                self.process.terminate()
-
-                # Emulate a wait() with timeout. Because wait() having
-                # a timeout would be way too easy, wouldn't it? -.-
-                (maxSleepTime, pollInterval) = (3, 0.2)
-                while self.process.poll() is None and maxSleepTime > 0:
-                    maxSleepTime -= pollInterval
-                    time.sleep(pollInterval)
-
-                # Process is still alive, kill it and wait
-                if self.process.poll() is None:
-                    self.process.kill()
-                    self.process.wait()
+                self.process.kill()
+                self.process.wait()

@@ -243,7 +243,7 @@ def test_collector_refresh(capsys, tmp_path):
 
     # check that 404 raises
 
-    class response_t:  # noqa
+    class response_t:
         status_code = requests.codes["not found"]
         text = "Not found"
 
@@ -255,7 +255,7 @@ def test_collector_refresh(capsys, tmp_path):
     # check that bad zips raise errors
     with (sigs_path / "other.txt").open("rb") as fp:
 
-        class response_t:  # noqa
+        class response_t:
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp
@@ -271,7 +271,7 @@ def test_collector_refresh(capsys, tmp_path):
         fp.write(b"\xff")
     with outzip_path.open("rb") as fp:
 
-        class response_t:  # noqa
+        class response_t:
             status_code = requests.codes["ok"]
             text = "OK"
             raw = fp

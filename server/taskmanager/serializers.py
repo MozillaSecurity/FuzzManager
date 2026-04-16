@@ -114,7 +114,7 @@ class TaskVueSerializer(TaskSerializer):
     task_url = serializers.SerializerMethodField()
 
     class Meta(TaskSerializer.Meta):
-        read_only_fields = TaskSerializer.Meta.read_only_fields + ("task_url",)
+        read_only_fields = (*TaskSerializer.Meta.read_only_fields, "task_url")
 
     def get_task_url(self, task):
         return f"{settings.TC_ROOT_URL}tasks/{task.task_id}/runs/{task.run_id}"

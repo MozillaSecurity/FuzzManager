@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    jschwartzentruber@mozilla.com
 """
+
 import argparse
 import functools
 import os
@@ -68,11 +69,7 @@ class TaskStatusReporter(Reporter):
         @type text: string
         @param text: Report text to send
         """
-        url = "{}://{}:{}/taskmanager/rest/tasks/update_status/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/taskmanager/rest/tasks/update_status/"
         # Serialize our report information
         data = {
             "client": self.clientId,

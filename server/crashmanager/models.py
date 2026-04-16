@@ -710,11 +710,11 @@ class CrashEntry(models.Model):
 
         if self.env:
             envDict = json.loads(self.env)
-            self.envList = [f"{s}={envDict[s]}" for s in envDict.keys()]
+            self.envList = [f"{s}={envDict[s]}" for s in envDict]
 
         if self.metadata:
             metadataDict = json.loads(self.metadata)
-            self.metadataList = [f"{s}={metadataDict[s]}" for s in metadataDict.keys()]
+            self.metadataList = [f"{s}={metadataDict[s]}" for s in metadataDict]
 
     def getCrashInfo(
         self,

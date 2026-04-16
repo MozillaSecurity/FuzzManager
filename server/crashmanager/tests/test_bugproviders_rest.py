@@ -83,8 +83,8 @@ def test_rest_bugproviders_list(api_client, user, cm):
     expected = 4
     providers = [
         cm.create_bugprovider(
-            hostname="test-provider%d.com" % (i + 1),
-            urlTemplate="test-provider%d.com/template" % (i + 1),
+            hostname=f"test-provider{i + 1}.com",
+            urlTemplate=f"test-provider{i + 1}.com/template",
         )
         for i in range(expected)
     ]

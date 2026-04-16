@@ -65,12 +65,12 @@ def test_rest_pool_cycle_post(api_client):
     pool = create_pool(config, last_cycled=timezone.now())
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/cycle/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/cycle/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["not_acceptable"]
     pool.isEnabled = True
     pool.save()
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/cycle/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/cycle/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     pool = InstancePool.objects.get(pk=pool.pk)
@@ -143,12 +143,12 @@ def test_rest_pool_enable_post(api_client):
     pool = create_pool(config)
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/enable/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/enable/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     pool = InstancePool.objects.get(pk=pool.pk)
     assert pool.isEnabled
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/enable/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/enable/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["not_acceptable"]
     pool = InstancePool.objects.get(pk=pool.pk)
@@ -220,12 +220,12 @@ def test_rest_pool_disable_post(api_client):
     pool = create_pool(config, enabled=True)
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/disable/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/disable/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["ok"]
     pool = InstancePool.objects.get(pk=pool.pk)
     assert not pool.isEnabled
-    resp = api_client.post("/ec2spotmanager/rest/pool/%d/disable/" % pool.pk)
+    resp = api_client.post(f"/ec2spotmanager/rest/pool/{pool.pk}/disable/")
     LOG.debug(resp)
     assert resp.status_code == requests.codes["not_acceptable"]
     pool = InstancePool.objects.get(pk=pool.pk)

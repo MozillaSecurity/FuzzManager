@@ -16,12 +16,8 @@ import pytest
 import requests
 from django.urls import reverse
 
-LOG = logging.getLogger(
-    "fm.ec2spotmanager.tests.ec2spotmanager"
-)  # pylint: disable=invalid-name
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test"
-)  # pylint: disable=invalid-name
+LOG = logging.getLogger("fm.ec2spotmanager.tests.ec2spotmanager")  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test")  # pylint: disable=invalid-name
 
 
 def test_ec2spotmanager_index(client):

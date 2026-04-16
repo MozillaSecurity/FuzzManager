@@ -172,7 +172,7 @@ class CrashEntrySerializer(serializers.ModelSerializer):
         try:
             # Create our CrashEntry instance
             return super().create(attrs)
-        except:  # noqa
+        except:
             if attrs["testcase"] is not None:
                 attrs["testcase"].delete()
             raise
@@ -240,14 +240,16 @@ class BucketVueSerializer(BucketSerializer):
     view_url = serializers.SerializerMethodField()
 
     class Meta(BucketSerializer.Meta):
-        fields = BucketSerializer.Meta.fields + (
+        fields = (
+            *BucketSerializer.Meta.fields,
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
             "opt_pre_url",
             "view_url",
         )
-        read_only_fields = BucketSerializer.Meta.read_only_fields + (
+        read_only_fields = (
+            *BucketSerializer.Meta.read_only_fields,
             "bug_closed",
             "bug_hostname",
             "bug_urltemplate",
@@ -287,13 +289,15 @@ class CrashEntryVueSerializer(CrashEntrySerializer):
     find_sigs_url = serializers.SerializerMethodField()
 
     class Meta(CrashEntrySerializer.Meta):
-        fields = CrashEntrySerializer.Meta.fields + (
+        fields = (
+            *CrashEntrySerializer.Meta.fields,
             "view_url",
             "sig_view_url",
             "sig_new_url",
             "find_sigs_url",
         )
-        read_only_fields = CrashEntrySerializer.Meta.read_only_fields + (
+        read_only_fields = (
+            *CrashEntrySerializer.Meta.read_only_fields,
             "view_url",
             "sig_view_url",
             "sig_new_url",

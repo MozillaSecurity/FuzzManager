@@ -2,9 +2,6 @@
 requires = ["setuptools >= 43", "wheel", "setuptools_scm[toml] >= 3.4"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-target-version = ["py310"]
-
 [tool.coverage.report]
 exclude_lines = [
     "@(abc.)?abstract*",
@@ -21,21 +18,6 @@ omit = [
     "*/.tox/*",
     "*/.eggs/*",
 ]
-
-[tool.isort]
-known_first_party = [
-    "Collector",
-    "CovReporter",
-    "EC2StatusReporter",
-    "FTB",
-    "Reporter",
-    "TaskStatusReporter",
-    "covmanager",
-    "crashmanager",
-    "ec2spotmanager",
-    "taskmanager",
-]
-profile = "black"
 
 [tool.pytest.ini_options]
 log_level = "DEBUG"
@@ -54,4 +36,46 @@ norecursedirs = [
     "dist",
 ]
 
+[tool.ruff]
+extend-exclude = ["**/migrations/*.py"]
+fix = true
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    # flake8-comprehensions
+    "C4",
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # Flynt
+    "FLY",
+    # isort
+    "I",
+    # Ruff-specific rules
+    "RUF",
+    # flake8-type-checking
+    "TCH",
+    # pyupgrade
+    "UP",
+    # pycodestyle
+    "W",
+]
+ignore = ["RUF012"]
+
 [tool.setuptools_scm]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "Collector",
+    "CovReporter",
+    "EC2StatusReporter",
+    "FTB",
+    "Reporter",
+    "TaskStatusReporter",
+    "covmanager",
+    "crashmanager",
+    "ec2spotmanager",
+    "taskmanager",
+]

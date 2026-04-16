@@ -2,9 +2,9 @@ import datetime
 import logging
 import re
 
-import boto3
 import boto.ec2
 import boto.exception
+import boto3
 import botocore
 from django.conf import settings
 from django.utils import timezone
@@ -180,7 +180,7 @@ class EC2SpotCloudProvider(CloudProvider):
                 # an opaque internal value and should be ignored.
                 status_code = result.state_code & 255
                 status_desc = INSTANCE_STATE_CODE.get(
-                    status_code, "Unknown(%d)" % (status_code,)
+                    status_code, f"Unknown({status_code})"
                 )
 
                 self.logger.info(
@@ -215,16 +215,12 @@ class EC2SpotCloudProvider(CloudProvider):
                     )
                     failed_requests[req_id] = {}
                     failed_requests[req_id]["action"] = "blacklist"
-                    failed_requests[req_id][
-                        "instance_type"
-                    ] = result.launch_specification.instance_type
+                    failed_requests[req_id]["instance_type"] = (
+                        result.launch_specification.instance_type
+                    )
                     failed_requests[req_id]["reason"] = (
-                        "Spot request {} in {} is {} and {}".format(
-                            req_id,
-                            region,
-                            result.status.code,
-                            result.state,
-                        )
+                        f"Spot request {req_id} in {region} is {result.status.code} "
+                        f"and {result.state}"
                     )
                 elif result.state in {"open", "active"}:
                     # this should not happen! warn and leave in DB in case it's

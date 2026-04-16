@@ -106,7 +106,7 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
         if not auth_result:
             return auth_result
 
-        user, token = auth_result
+        _user, token = auth_result
 
         if not self.is_from_allowed_ip(request, token):
             LOG.warning(f"IP address restricted for token: {token.key[:8]}...")
@@ -144,12 +144,16 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
 
                 # Check if the IP is within the allowed range
                 if (
-                    isinstance(ip_obj, IPv4Address) and isinstance(network, IPv4Network)
-                ) or (
-                    isinstance(ip_obj, IPv6Address) and isinstance(network, IPv6Network)
-                ):
-                    if ip_obj in network:
-                        return True
+                    (
+                        isinstance(ip_obj, IPv4Address)
+                        and isinstance(network, IPv4Network)
+                    )
+                    or (
+                        isinstance(ip_obj, IPv6Address)
+                        and isinstance(network, IPv6Network)
+                    )
+                ) and ip_obj in network:
+                    return True
 
             except ValueError:
                 LOG.warning(f"Invalid network definition: {restriction.ip_range}")

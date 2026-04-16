@@ -8,7 +8,6 @@ from celeryconf import app
 from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
-
 from server.utils import RedisLock
 
 from .CloudProvider.CloudProvider import INSTANCE_STATE, PROVIDERS, CloudProvider
@@ -258,17 +257,16 @@ def check_instance_pools():
                 )
             )
 
-        pool_parallel = []
-        for pool in InstancePool.objects.filter(isEnabled=True):
-            pool_parallel.append(check_and_resize_pool.si(pool.pk))
+        pool_parallel = [
+            check_and_resize_pool.si(pool.pk)
+            for pool in InstancePool.objects.filter(isEnabled=True)
+        ]
 
         celery.chain(
             celery.group(provider_parallel),
             celery.chord(pool_parallel, terminate_instances.s()),
             _release_lock.si(lock_key),  # release on chain success
-        ).on_error(
-            _release_lock.si(lock_key)
-        )()  # release on chain failure
+        ).on_error(_release_lock.si(lock_key))()  # release on chain failure
 
     except Exception:  # pylint: disable=broad-except
         try:

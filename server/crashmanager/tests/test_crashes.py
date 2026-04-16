@@ -18,9 +18,7 @@ from django.urls import reverse
 from . import assert_contains
 
 LOG = logging.getLogger("fm.crashmanager.tests.crashes")
-pytestmark = pytest.mark.usefixtures(
-    "crashmanager_test"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("crashmanager_test")  # pylint: disable=invalid-name
 
 
 def test_crashes_view(client):  # pylint: disable=invalid-name

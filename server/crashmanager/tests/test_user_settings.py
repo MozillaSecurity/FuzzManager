@@ -41,11 +41,9 @@ def test_user_settings_simple_get(client):
 def test_user_settings_edit(client, cm, settings):
     """No errors are thrown in template"""
     settings.ALLOW_EMAIL_EDITION = True
-    tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
-    providers = [
-        cm.create_bugprovider(hostname="Provider #%d" % (i + 1)) for i in range(2)
-    ]
-    [cm.create_template(name="Template #%d" % (i + 1)) for i in range(2)]
+    tools = [Tool.objects.create(name=f"Tool #{i + 1}") for i in range(2)]
+    providers = [cm.create_bugprovider(hostname=f"Provider #{i + 1}") for i in range(2)]
+    [cm.create_template(name=f"Template #{i + 1}") for i in range(2)]
     user = User.objects.get(user__username="test")
     assert list(user.defaultToolsFilter.all()) == []
     assert user.defaultProviderId == 1
@@ -84,11 +82,9 @@ def test_user_settings_edit(client, cm, settings):
 
 def test_user_settings_clear_tool_filter(client, cm):
     """tool filter should be clearable"""
-    tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
-    providers = [
-        cm.create_bugprovider(hostname="Provider #%d" % (i + 1)) for i in range(2)
-    ]
-    [cm.create_template(name="Template #%d" % (i + 1)) for i in range(2)]
+    tools = [Tool.objects.create(name=f"Tool #{i + 1}") for i in range(2)]
+    providers = [cm.create_bugprovider(hostname=f"Provider #{i + 1}") for i in range(2)]
+    [cm.create_template(name=f"Template #{i + 1}") for i in range(2)]
     user = User.objects.get(user__username="test")
     user.defaultToolsFilter.add(tools[0])
     user.defaultToolsFilter.add(tools[1])
@@ -116,11 +112,9 @@ def test_user_settings_clear_tool_filter(client, cm):
 
 def test_user_settings_restricted_no_edit_tool_filter(client, cm):
     """restricted user should not be able to edit tool filter"""
-    tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
-    providers = [
-        cm.create_bugprovider(hostname="Provider #%d" % (i + 1)) for i in range(2)
-    ]
-    [cm.create_template(name="Template #%d" % (i + 1)) for i in range(2)]
+    tools = [Tool.objects.create(name=f"Tool #{i + 1}") for i in range(2)]
+    providers = [cm.create_bugprovider(hostname=f"Provider #{i + 1}") for i in range(2)]
+    [cm.create_template(name=f"Template #{i + 1}") for i in range(2)]
     user = User.objects.get(user__username="test-restricted")
     user.defaultToolsFilter.add(tools[0])
     user.save()
@@ -189,11 +183,9 @@ def test_user_settings_restricted_no_edit_tool_filter(client, cm):
 def test_user_settings_no_edit_email(client, cm, settings):
     """settings.ALLOW_EMAIL_EDITION=False disallows editing email"""
     settings.ALLOW_EMAIL_EDITION = False
-    tools = [Tool.objects.create(name="Tool #%d" % (i + 1)) for i in range(2)]
-    providers = [
-        cm.create_bugprovider(hostname="Provider #%d" % (i + 1)) for i in range(2)
-    ]
-    [cm.create_template(name="Template #%d" % (i + 1)) for i in range(2)]
+    tools = [Tool.objects.create(name=f"Tool #{i + 1}") for i in range(2)]
+    providers = [cm.create_bugprovider(hostname=f"Provider #{i + 1}") for i in range(2)]
+    [cm.create_template(name=f"Template #{i + 1}") for i in range(2)]
     user = User.objects.get(user__username="test")
     user.defaultToolsFilter.add(tools[0])
     user.save()

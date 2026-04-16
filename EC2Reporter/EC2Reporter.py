@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import argparse
 import functools
 import os
@@ -68,11 +69,7 @@ class EC2Reporter(Reporter):
         @type text: string
         @param text: Report text to send
         """
-        url = "{}://{}:{}/ec2spotmanager/rest/report/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/ec2spotmanager/rest/report/"
 
         # Serialize our report information
         data = {}
@@ -90,12 +87,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to cycle
         """
-        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/cycle/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-            poolid,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/ec2spotmanager/rest/pool/{poolid}/cycle/"
 
         self.post(url, {}, expected=requests.codes["ok"])
 
@@ -107,12 +99,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to disable
         """
-        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/disable/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-            poolid,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/ec2spotmanager/rest/pool/{poolid}/disable/"
 
         self.post(url, {}, expected=requests.codes["ok"])
 
@@ -124,12 +111,7 @@ class EC2Reporter(Reporter):
         @type poolid: int
         @param poolid: ID of the pool to enable
         """
-        url = "{}://{}:{}/ec2spotmanager/rest/pool/{}/enable/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-            poolid,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/ec2spotmanager/rest/pool/{poolid}/enable/"
 
         self.post(url, {}, expected=requests.codes["ok"])
 
@@ -280,9 +262,8 @@ def main(argv=None):
             lock = InterProcessLock(opts.report_file + ".lock")
             while True:
                 if os.path.exists(opts.report_file):
-                    with lock:
-                        with open(opts.report_file) as f:
-                            report = f.read()
+                    with lock, open(opts.report_file) as f:
+                        report = f.read()
 
                     try:
                         reporter.report(report)
@@ -297,9 +278,11 @@ def main(argv=None):
                     )
                 time.sleep(opts.keep_reporting + random_offset)
         else:
-            with InterProcessLock(f"{opts.report_file}.lock"):
-                with open(opts.report_file) as f:
-                    report = f.read()
+            with (
+                InterProcessLock(f"{opts.report_file}.lock"),
+                open(opts.report_file) as f,
+            ):
+                report = f.read()
     else:
         report = opts.report
 

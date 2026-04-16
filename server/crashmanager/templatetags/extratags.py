@@ -35,7 +35,7 @@ def listcsv(value):
 @register.filter
 def dictcsv(value):
     if value:
-        return ", ".join("%s=%s" % x for x in value.items())
+        return ", ".join(f"{x}={y}" for x, y in value.items())
     else:
         return ""
 

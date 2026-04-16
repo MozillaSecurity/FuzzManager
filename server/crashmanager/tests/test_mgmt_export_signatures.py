@@ -54,10 +54,10 @@ def test_some():
                 members.add(member)
             assert len(members) == 4
             expected = {
-                "%d.metadata" % sig1.pk,
-                "%d.signature" % sig1.pk,
-                "%d.metadata" % sig2.pk,
-                "%d.signature" % sig2.pk,
+                f"{sig1.pk}.metadata",
+                f"{sig1.pk}.signature",
+                f"{sig2.pk}.metadata",
+                f"{sig2.pk}.signature",
             }
             assert {m.filename for m in members} == expected
             for member in members:

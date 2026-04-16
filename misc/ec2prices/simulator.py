@@ -17,6 +17,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import configparser
 import datetime
 import importlib
@@ -38,8 +39,8 @@ def get_spot_price_per_region(
     """Gets spot prices of the specified region and instance type"""
 
     print(
-        "Region %s Instance Type %s Start %s End %s"
-        % (region_name, instance_type, start_time.isoformat(), end_time.isoformat())
+        f"Region {region_name} Instance Type {instance_type} "
+        f"Start {start_time.isoformat()} End {end_time.isoformat()}"
     )
     r = None
 
@@ -125,8 +126,8 @@ def get_spot_prices(
                 prices[entry.region.name][zone][entry.instance_type] = OrderedDict()
 
             if (
-                not start_time.isoformat()
-                in prices[entry.region.name][zone][entry.instance_type]
+                start_time.isoformat()
+                not in prices[entry.region.name][zone][entry.instance_type]
             ):
                 prices[entry.region.name][zone][entry.instance_type][
                     start_time.isoformat()

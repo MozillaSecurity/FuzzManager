@@ -25,11 +25,11 @@ from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.filters import BaseFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from server.auth import CheckAppPermission
+from server.utils import IPRestrictedTokenAuthentication, parse_bool
 
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo
-from server.auth import CheckAppPermission
-from server.utils import IPRestrictedTokenAuthentication, parse_bool
 
 from .forms import (
     BugzillaTemplateBugForm,
@@ -134,7 +134,7 @@ def filter_signatures_by_toolfilter(
     # these don't work with the rest api (use `ignore_toolfilter` or `query` instead)
     if not user.restricted and legacy_filters:
         # If the user is unrestricted and all=1 is set, do not apply any filters
-        if "all" in request.GET and request.GET["all"]:
+        if request.GET.get("all"):
             return signatures
 
         # Unrestricted users can filter the signature view for a single tool
@@ -1737,7 +1737,7 @@ class UserSettingsEditView(UpdateView):
 
         # Prepare form errors if any
         form = self.get_form()
-        form_errors = {field: errors for field, errors in form.errors.items()}
+        form_errors = dict(form.errors.items())
 
         # Prepare all form-related data
         context.update(

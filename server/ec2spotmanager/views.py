@@ -17,7 +17,6 @@ from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from server.auth import CheckAppPermission
 from server.utils import IPRestrictedTokenAuthentication
 
@@ -106,9 +105,10 @@ def pools(request):
         for provider in provider_msgs:
             provider_pools.setdefault(provider, set())
             cloud_provider = CloudProvider.get_instance(provider)
-            if cloud_provider.config_supported(flattened_config):
-                provider_pools[provider].add(pool.pk)
-            elif Instance.objects.filter(pool=pool, provider=provider).exists():
+            if (
+                cloud_provider.config_supported(flattened_config)
+                or Instance.objects.filter(pool=pool, provider=provider).exists()
+            ):
                 provider_pools[provider].add(pool.pk)
 
     for pool in entries:
@@ -164,9 +164,10 @@ def viewPool(request, poolid):
         # or has currently running instances with this provider
         if msg.provider not in relevant_providers:
             cloud_provider = CloudProvider.get_instance(msg.provider)
-            if cloud_provider.config_supported(pool.config.flatten()):
-                relevant_providers[msg.provider] = True
-            elif Instance.objects.filter(pool=pool, provider=msg.provider).exists():
+            if (
+                cloud_provider.config_supported(pool.config.flatten())
+                or Instance.objects.filter(pool=pool, provider=msg.provider).exists()
+            ):
                 relevant_providers[msg.provider] = True
             else:
                 relevant_providers[msg.provider] = False
@@ -792,11 +793,11 @@ class UptimeChartViewDetailed(JSONView):
 
         for point in entries:
             if point.actual == point.target:
-                colors.append("rgba(%d, %d, %d, 1)" % green)
+                colors.append(f"rgba({green[0]}, {green[1]}, {green[2]}, 1)")
             elif not point.actual:
-                colors.append("rgba(%d, %d, %d, 1)" % red)
+                colors.append(f"rgba({red[0]}, {red[1]}, {red[2]}, 1)")
             else:
-                colors.append("rgba(%d, %d, %d, 1)" % yellow)
+                colors.append(f"rgba({yellow[0]}, {yellow[1]}, {yellow[2]}, 1)")
 
         return colors
 
@@ -824,8 +825,8 @@ class UptimeChartViewDetailed(JSONView):
         dataset = {
             "fillColor": self.get_data_colors(entries),
             # 'highlightFill': "rgba(84,255,159,0.2)",
-            "strokeColor": "rgba(%d, %d, %d, 1)" % color,
-            "pointColor": "rgba(%d, %d, %d, 1)" % color,
+            "strokeColor": f"rgba({color[0]}, {color[1]}, {color[2]}, 1)",
+            "pointColor": f"rgba({color[0]}, {color[1]}, {color[2]}, 1)",
             "pointStrokeColor": "#fff",
             "data": data,
         }
@@ -871,13 +872,13 @@ class UptimeChartViewAccumulated(JSONView):
 
         for point in entries:
             if point.uptime_percentage >= 95.00:
-                colors.append("rgba(%d, %d, %d, 1)" % green)
+                colors.append(f"rgba({green[0]}, {green[1]}, {green[2]}, 1)")
             elif point.uptime_percentage <= 25.00:
-                colors.append("rgba(%d, %d, %d, 1)" % red)
+                colors.append(f"rgba({red[0]}, {red[1]}, {red[2]}, 1)")
             elif point.uptime_percentage <= 50.00:
-                colors.append("rgba(%d, %d, %d, 1)" % orange)
+                colors.append(f"rgba({orange[0]}, {orange[1]}, {orange[2]}, 1)")
             else:
-                colors.append("rgba(%d, %d, %d, 1)" % yellow)
+                colors.append(f"rgba({yellow[0]}, {yellow[1]}, {yellow[2]}, 1)")
 
         return colors
 
@@ -904,8 +905,8 @@ class UptimeChartViewAccumulated(JSONView):
         dataset = {
             "fillColor": self.get_data_colors(entries),
             # 'highlightFill': "rgba(84,255,159,0.2)",
-            "strokeColor": "rgba(%d, %d, %d, 1)" % color,
-            "pointColor": "rgba(%d, %d, %d, 1)" % color,
+            "strokeColor": f"rgba({color[0]}, {color[1]}, {color[2]}, 1)",
+            "pointColor": f"rgba({color[0]}, {color[1]}, {color[2]}, 1)",
             "pointStrokeColor": "#fff",
             "data": data,
         }

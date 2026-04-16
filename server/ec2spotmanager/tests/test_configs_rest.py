@@ -276,7 +276,7 @@ def test_rest_pool_config_get_1(api_client):
     )
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.get("/ec2spotmanager/rest/configurations/%d/" % cfg1.pk)
+    resp = api_client.get(f"/ec2spotmanager/rest/configurations/{cfg1.pk}/")
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))
     assert set(resp.keys()) == {
@@ -357,7 +357,7 @@ def test_rest_pool_config_get_sub(api_client):
     cfg2 = create_config(name="config #2", parent=cfg1)
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
-    resp = api_client.get("/ec2spotmanager/rest/configurations/%d/" % cfg2.id)
+    resp = api_client.get(f"/ec2spotmanager/rest/configurations/{cfg2.pk}/")
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))
     assert set(resp.keys()) == {
@@ -449,7 +449,7 @@ def test_rest_pool_config_get_sub_flat(api_client):
     user = User.objects.get(username="test")
     api_client.force_authenticate(user=user)
     resp = api_client.get(
-        "/ec2spotmanager/rest/configurations/%d/" % cfg2.id, {"flatten": "1"}
+        f"/ec2spotmanager/rest/configurations/{cfg2.id}/", {"flatten": "1"}
     )
     assert resp.status_code == requests.codes["ok"]
     resp = json.loads(resp.content.decode("utf-8"))

@@ -12,10 +12,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
-
-from crashmanager.models import Tool, User
 from server.utils import IPRestrictedTokenAuthentication
 from server.views import JsonQueryFilterBackend, SimpleQueryFilterBackend
+
+from crashmanager.models import Tool, User
 
 from .models import Collection, Report, ReportConfiguration, ReportSummary, Repository
 from .serializers import (
@@ -184,8 +184,8 @@ def collections_download(request, collectionid):
     response = HttpResponse(
         FileWrapper(cov_file), content_type="application/octet-stream"
     )
-    response["Content-Disposition"] = 'attachment; filename="%s"' % os.path.basename(
-        collection.coverage.file.path
+    response["Content-Disposition"] = (
+        f'attachment; filename="{os.path.basename(collection.coverage.file.path)}"'
     )
     return response
 

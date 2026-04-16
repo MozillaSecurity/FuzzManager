@@ -45,8 +45,8 @@ class Command(BaseCommand):
                     metadata["testcase__quality"] = bucket.bestEntry.testcase.quality
                     metadata["testcase__size"] = bucket.bestEntry.testcase.size
 
-                sigFileName = "%d.signature" % bucket.pk
-                metaFileName = "%d.metadata" % bucket.pk
+                sigFileName = f"{bucket.pk}.signature"
+                metaFileName = f"{bucket.pk}.metadata"
 
                 zipFile.writestr(sigFileName, bucket.signature)
                 zipFile.writestr(metaFileName, json.dumps(metadata, indent=4))

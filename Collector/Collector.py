@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import argparse
 import base64
 import hashlib
@@ -51,10 +52,9 @@ class Collector(Reporter):
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
         """
-        url = "%s://%s:%d/crashmanager/rest/signatures/download/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
+        url = (
+            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+            "/crashmanager/rest/signatures/download/"
         )
 
         response = self.get(url, stream=True)
@@ -124,10 +124,9 @@ class Collector(Reporter):
                          combined with possible metadata stored in the
                          L{ProgramConfiguration} inside crashInfo.
         """
-        url = "%s://%s:%d/crashmanager/rest/crashes/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
+        url = (
+            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+            "/crashmanager/rest/crashes/"
         )
 
         # Serialize our crash information, testcase and metadata into a dictionary to
@@ -269,18 +268,14 @@ class Collector(Reporter):
         @return: Tuple containing name of the file where the test was stored and the raw
                  JSON response
         """
-        url = "%s://%s:%d/crashmanager/rest/crashes/%s/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-            crashId,
+        url = (
+            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+            f"/crashmanager/rest/crashes/{crashId}/"
         )
 
-        dlurl = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-            crashId,
+        dlurl = (
+            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+            f"/crashmanager/rest/crashes/{crashId}/download/"
         )
 
         resp_json = self.get(url).json()
@@ -316,10 +311,9 @@ class Collector(Reporter):
         @return: generator of filenames where tests were stored.
         """
         params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
-        next_url = "%s://%s:%d/crashmanager/rest/crashes/" % (
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
+        next_url = (
+            f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+            "/crashmanager/rest/crashes/"
         )
 
         while next_url:
@@ -337,11 +331,9 @@ class Collector(Reporter):
                 if not crash["testcase"]:
                     continue
 
-                url = "%s://%s:%d/crashmanager/rest/crashes/%s/download/" % (
-                    self.serverProtocol,
-                    self.serverHost,
-                    self.serverPort,
-                    crash["id"],
+                url = (
+                    f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
+                    f"/crashmanager/rest/crashes/{crash['id']}/download/"
                 )
                 response = self.get(url)
 
@@ -350,9 +342,8 @@ class Collector(Reporter):
                         f"Server sent malformed response: {response!r}"
                     )
 
-                local_filename = "%d%s" % (
-                    crash["id"],
-                    os.path.splitext(crash["testcase"])[1],
+                local_filename = (
+                    f"{crash['id']}{os.path.splitext(crash['testcase'])[1]}"
                 )
                 with open(local_filename, "wb") as output:
                     output.write(response.content)
@@ -766,7 +757,7 @@ def main(args=None):
             print("Specified crash entry does not have a testcase", file=sys.stderr)
             return 1
 
-        if "args" in retJSON and retJSON["args"]:
+        if retJSON.get("args"):
             args = json.loads(retJSON["args"])
             print(
                 "Command line arguments:",
@@ -774,7 +765,7 @@ def main(args=None):
             )
             print("")
 
-        if "env" in retJSON and retJSON["env"]:
+        if retJSON.get("env"):
             env = json.loads(retJSON["env"])
             print(
                 "Environment variables:",
@@ -782,7 +773,7 @@ def main(args=None):
             )
             print("")
 
-        if "metadata" in retJSON and retJSON["metadata"]:
+        if retJSON.get("metadata"):
             metadata = json.loads(retJSON["metadata"])
             print("== Metadata ==")
             for k, v in metadata.items():

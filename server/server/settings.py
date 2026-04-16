@@ -22,14 +22,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_FILE = os.path.join(BASE_DIR, "settings.secret")
 try:
-    SECRET_KEY = open(SECRET_FILE).read().strip()
+    with open(SECRET_FILE) as f:
+        SECRET_KEY = f.read().strip()
 except OSError:
     try:
         with open(SECRET_FILE, "w") as f:
             import random
 
             chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
-            SECRET_KEY = "".join([random.choice(chars) for i in range(64)])
+            SECRET_KEY = "".join([random.choice(chars) for _ in range(64)])
             f.write(SECRET_KEY)
     except OSError:
         raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.')

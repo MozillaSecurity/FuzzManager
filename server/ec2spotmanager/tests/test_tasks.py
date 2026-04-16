@@ -37,9 +37,7 @@ from . import UncatchableException, create_config, create_instance, create_pool
 LOG = logging.getLogger("fm.ec2spotmanager.tests.tasks")
 
 
-pytestmark = pytest.mark.usefixtures(
-    "ec2spotmanager_test", "raise_on_status"
-)  # pylint: disable=invalid-name
+pytestmark = pytest.mark.usefixtures("ec2spotmanager_test", "raise_on_status")  # pylint: disable=invalid-name
 
 
 @pytest.mark.usefixtures("mock_provider")
@@ -205,9 +203,7 @@ def test_fulfilled_spot_instance(mocker):
     assert instance.hostname == "fm-test.fuzzing.allizom.com"
     assert instance.status_code == INSTANCE_STATE["running"]
     assert instance.instance_id == "i-123"
-    assert boto_instance._test_tags == {
-        SPOTMGR_TAG + "-Updatable": "1"
-    }  # pylint: disable=protected-access
+    assert boto_instance._test_tags == {SPOTMGR_TAG + "-Updatable": "1"}  # pylint: disable=protected-access
 
 
 def test_instance_shutting_down(mocker):
@@ -504,7 +500,7 @@ def test_spot_instance_blacklist(mocker):
     # call function under test
     # XXX: this message is inaccurate .. there were no allowed regions at all
     with pytest.raises(
-        UncatchableException, match="temporary-failure: Spot request.* and cancelled"
+        UncatchableException, match=r"temporary-failure: Spot request.* and cancelled"
     ):
         update_requests("EC2Spot", "redmond", pool.pk)
     update_instances("EC2Spot", "redmond")

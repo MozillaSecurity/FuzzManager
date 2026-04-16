@@ -223,12 +223,12 @@ def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw)
     tools = ["tool2", "tool1"]
     crashes = [
         cm.create_crash(
-            shortSignature="crash #%d" % (i + 1),
-            client="client #%d" % (i + 1),
-            os="os #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            product_version="%d" % (i + 1),
-            platform="platform #%d" % (i + 1),
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
             tool=tools[i],
             bucket=buckets[i],
             testcase=testcases[i],
@@ -320,12 +320,12 @@ def test_rest_crashes_retrieve(api_client, user, cm, ignore_toolfilter, include_
     tools = ["tool2", "tool1"]
     crashes = [
         cm.create_crash(
-            shortSignature="crash #%d" % (i + 1),
-            client="client #%d" % (i + 1),
-            os="os #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            product_version="%d" % (i + 1),
-            platform="platform #%d" % (i + 1),
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
             tool=tools[i],
             bucket=buckets[i],
             testcase=testcases[i],
@@ -340,7 +340,7 @@ def test_rest_crashes_retrieve(api_client, user, cm, ignore_toolfilter, include_
     if not include_raw:
         params["include_raw"] = "0"
     for i, crash in enumerate(crashes):
-        resp = api_client.get("/crashmanager/rest/crashes/%d/" % crash.pk, params)
+        resp = api_client.get(f"/crashmanager/rest/crashes/{crash.pk}/", params)
         LOG.debug(resp)
         allowed = user.username == "test" or tools[i] == "tool2"
         if not allowed:
@@ -373,12 +373,12 @@ def test_rest_crashes_list_query(api_client, cm, user, expected, toolfilter):
     tools = ["tool1", "tool1", "tool2", "tool1"]
     crashes = [
         cm.create_crash(
-            shortSignature="crash #%d" % (i + 1),
-            client="client #%d" % (i + 1),
-            os="os #%d" % (i + 1),
-            product="product #%d" % (i + 1),
-            product_version="%d" % (i + 1),
-            platform="platform #%d" % (i + 1),
+            shortSignature=f"crash #{i + 1}",
+            client=f"client #{i + 1}",
+            os=f"os #{i + 1}",
+            product=f"product #{i + 1}",
+            product_version=f"{i + 1}",
+            platform=f"platform #{i + 1}",
             tool=tools[i],
             bucket=buckets[i],
             testcase=testcases[i],
@@ -582,13 +582,11 @@ def test_rest_crash_update(api_client, cm, orig_quality, new_quality, user_norma
         "crashAddress",
     }
     for field in fields:
-        resp = api_client.patch(
-            "/crashmanager/rest/crashes/%d/" % crash.pk, {field: ""}
-        )
+        resp = api_client.patch(f"/crashmanager/rest/crashes/{crash.pk}/", {field: ""})
         LOG.debug(resp)
         assert resp.status_code == requests.codes["bad_request"]
     resp = api_client.patch(
-        "/crashmanager/rest/crashes/%d/" % crash.pk,
+        f"/crashmanager/rest/crashes/{crash.pk}/",
         {"testcase_quality": str(new_quality)},
     )
     LOG.debug(resp)
@@ -640,8 +638,6 @@ def test_rest_crash_update_restricted(api_client, cm, user_restricted):
         "crashAddress",
     }
     for field in fields:
-        resp = api_client.patch(
-            "/crashmanager/rest/crashes/%d/" % crash.pk, {field: ""}
-        )
+        resp = api_client.patch(f"/crashmanager/rest/crashes/{crash.pk}/", {field: ""})
         LOG.debug(resp)
         assert resp.status_code == requests.codes["method_not_allowed"]

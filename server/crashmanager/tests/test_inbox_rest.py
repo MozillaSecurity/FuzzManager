@@ -255,7 +255,7 @@ def test_rest_notifications_mark_as_read(api_client, user, cm):
             verb="bucket_hit",
             target=entry,
             level="info",
-            description="Notification %d" % (i + 1),
+            description=f"Notification {i + 1}",
         )
         for i in range(expected)
     ]
@@ -298,7 +298,7 @@ def test_rest_notifications_mark_all_as_read(api_client, user, cm):
             verb="bucket_hit",
             target=entry,
             level="info",
-            description="Notification %d" % (i + 1),
+            description=f"Notification {i + 1}",
         )
         for i in range(expected)
     ]

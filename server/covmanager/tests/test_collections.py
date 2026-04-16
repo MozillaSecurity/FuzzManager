@@ -76,7 +76,7 @@ def test_collections_diff_simple_get(client, covmgr_helper):
     client.login(username="test", password="test")
     response = client.get(
         reverse("covmanager:collections_diff_api", kwargs={"path": ""}),
-        {"ids": "%d,%d" % (col1.pk, col2.pk)},
+        {"ids": f"{col1.pk},{col2.pk}"},
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]

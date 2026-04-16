@@ -28,11 +28,9 @@ from crashmanager.models import (
     CrashEntry,
     Platform,
     Product,
-)
-from crashmanager.models import TestCase as cmTestCase
-from crashmanager.models import (
     Tool,
 )
+from crashmanager.models import TestCase as cmTestCase
 from crashmanager.models import User as cmUser
 
 LOG = logging.getLogger("fm.crashmanager.tests")

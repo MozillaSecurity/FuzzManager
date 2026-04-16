@@ -108,9 +108,7 @@ def test_rest_stats_methods(api_client, user_normal):
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 @pytest.mark.parametrize("ignore_toolfilter", [True, False])
-def test_rest_stats_with_crashes(
-    api_client, user, cm, ignore_toolfilter, settings
-):  # pylint: disable=invalid-name
+def test_rest_stats_with_crashes(api_client, user, cm, ignore_toolfilter, settings):  # pylint: disable=invalid-name
     """Insert crashes and check that they are shown ok."""
     settings.CRASH_STATS_MAX_HISTORY_DAYS = 9
     restricted = user.username != "test"

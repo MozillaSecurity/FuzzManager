@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 @contact:    choller@mozilla.com
 """
+
 import argparse
 import json
 import os
@@ -98,11 +99,7 @@ class CovReporter(Reporter):
         @type stats: dict
         @param stats: An optional stats object as returned by create_combined_coverage
         """
-        url = "{}://{}:{}/covmanager/rest/collections/".format(
-            self.serverProtocol,
-            self.serverHost,
-            self.serverPort,
-        )
+        url = f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}/covmanager/rest/collections/"
 
         if version is None:
             # Use version information extracted from coverage data

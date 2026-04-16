@@ -223,10 +223,7 @@ def isX86Compatible(registerMap):
     @rtype: bool
     @return: True if the architecture is X86 compatible, False otherwise
     """
-    for register in x86OnlyRegisters:
-        if register in registerMap:
-            return True
-    return False
+    return any(register in registerMap for register in x86OnlyRegisters)
 
 
 def isARMCompatible(registerMap):
@@ -239,7 +236,4 @@ def isARMCompatible(registerMap):
     @rtype: bool
     @return: True if the architecture is ARM/ARM64 compatible, False otherwise
     """
-    for register in armOnlyRegisters:
-        if register in registerMap:
-            return True
-    return False
+    return any(register in registerMap for register in armOnlyRegisters)
