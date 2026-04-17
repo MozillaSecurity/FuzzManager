@@ -155,8 +155,7 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
                 ) and ip_obj in network:
                     return True
 
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 LOG.warning(f"Invalid network definition: {restriction.ip_range}")
-                continue
 
         return False

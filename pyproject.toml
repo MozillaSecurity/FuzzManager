@@ -53,6 +53,8 @@ select = [
     "FLY",
     # isort
     "I",
+    # Perflint
+    "PERF",
     # Ruff-specific rules
     "RUF",
     # flake8-simplify

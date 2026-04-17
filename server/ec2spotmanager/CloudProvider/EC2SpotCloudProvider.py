@@ -105,19 +105,19 @@ class EC2SpotCloudProvider(CloudProvider):
         cluster.images = images
 
         try:
-            instances = []
             self.logger.info(
                 "Creating %dx %s instances... (%d cores total)",
                 count,
                 instance_type,
                 count * CORES_PER_INSTANCE[instance_type],
             )
-            for ec2_request in cluster.create_spot_requests(
-                config.max_price * CORES_PER_INSTANCE[instance_type],
-                delete_on_termination=True,
-                timeout=10 * 60,
-            ):
-                instances.append(ec2_request)
+            instances = list(
+                cluster.create_spot_requests(
+                    config.max_price * CORES_PER_INSTANCE[instance_type],
+                    delete_on_termination=True,
+                    timeout=10 * 60,
+                )
+            )
 
             return {
                 instance: {

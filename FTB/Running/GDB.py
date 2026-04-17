@@ -90,5 +90,5 @@ def printImportantRegisters():
     for reg in regs:
         try:
             print(reg + "\t" + regAsHexStr(reg) + "\t" + regAsIntStr(reg))
-        except Exception:
+        except Exception:  # noqa: PERF203
             print(reg + "\t" + regAsRaw(reg))
