@@ -479,17 +479,19 @@ class S3Manager:
             for key in list(self.bucket.list(remote_path))
         ]
 
-        upload_list = []
+        upload_list = [
+            os.path.join(corpus_dir, test_file)
+            for test_file in test_files
+            if test_file not in remote_files
+        ]
         delete_list = []
 
-        for test_file in test_files:
-            if test_file not in remote_files:
-                upload_list.append(os.path.join(corpus_dir, test_file))
-
         if corpus_delete:
-            for remote_file in remote_files:
-                if remote_file not in test_files:
-                    delete_list.append(remote_path + remote_file)
+            delete_list.extend(
+                remote_path + remote_file
+                for remote_file in remote_files
+                if remote_file not in test_files
+            )
 
         for upload_file in upload_list:
             remote_key = Key(self.bucket)
@@ -552,11 +554,11 @@ class S3Manager:
                 for key in list(self.bucket.list(remote_path))
             ]
 
-        upload_list = []
-
-        for queue_file in queue_files:
-            if queue_file not in remote_files:
-                upload_list.append(os.path.join(queue_basedir, queue_file))
+        upload_list = [
+            os.path.join(queue_basedir, queue_file)
+            for queue_file in queue_files
+            if queue_file not in remote_files
+        ]
 
         if "cmdline" not in remote_files:
             upload_list.append(cmdline_file)

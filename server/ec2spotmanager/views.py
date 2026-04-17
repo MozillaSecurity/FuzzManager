@@ -222,8 +222,9 @@ def viewPoolPrices(request, poolid):
                         prices[region][zone][0] / cores_per_instance[instance_type],
                     )
 
-        for zone in sorted(zones):
-            result.append((provider, zone, latest_price_by_zone[zone]))
+        result.extend(
+            (provider, zone, latest_price_by_zone[zone]) for zone in sorted(zones)
+        )
 
     return render(request, "pools/prices.html", {"prices": result})
 

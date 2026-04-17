@@ -1974,11 +1974,11 @@ def main(argv=None):
                 # multi-process sychronization directory. Try to figure this out here.
                 sync_dirs = os.listdir(opts.afloutdir)
 
-                for sync_dir in sync_dirs:
-                    if os.path.exists(
-                        os.path.join(opts.afloutdir, sync_dir, "crashes")
-                    ):
-                        afl_out_dirs.append(os.path.join(opts.afloutdir, sync_dir))
+                afl_out_dirs.extend(
+                    os.path.join(opts.afloutdir, sync_dir)
+                    for sync_dir in sync_dirs
+                    if os.path.exists(os.path.join(opts.afloutdir, sync_dir, "crashes"))
+                )
 
                 if not afl_out_dirs:
                     print(
