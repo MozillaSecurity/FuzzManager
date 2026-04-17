@@ -74,13 +74,12 @@ class StringMatch(Match):
         if self.isPCRE:
             if self.compiledValue.search(value) is not None:
                 return True
-            elif windowsSlashWorkaround and self.patternContainsSlash:
+            if windowsSlashWorkaround and self.patternContainsSlash:
                 # NB this will fail if the pattern is supposed to match a backslash and
                 #    a windows-style path in the same line
                 return self.compiledValue.search(value.replace("\\", "/")) is not None
             return False
-        else:
-            return self.value in value
+        return self.value in value
 
     def __str__(self):
         return self.value
@@ -151,11 +150,10 @@ class NumberMatch(Match):
 
         if self.matchType == NumberMatchType.GE:
             return value >= self.value
-        elif self.matchType == NumberMatchType.GT:
+        if self.matchType == NumberMatchType.GT:
             return value > self.value
-        elif self.matchType == NumberMatchType.LE:
+        if self.matchType == NumberMatchType.LE:
             return value <= self.value
-        elif self.matchType == NumberMatchType.LT:
+        if self.matchType == NumberMatchType.LT:
             return value < self.value
-        else:
-            return value == self.value
+        return value == self.value

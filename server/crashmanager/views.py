@@ -116,7 +116,7 @@ def filter_crash_entries_by_toolfilter(request, entries, restricted_only=False):
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
         return entries.filter(tool__in=defaultToolsFilter)
-    elif user.restricted:
+    if user.restricted:
         return CrashEntry.objects.none()
 
     return entries
@@ -157,7 +157,7 @@ def filter_signatures_by_toolfilter(
             ).values("bucket")
         )
 
-    elif user.restricted:
+    if user.restricted:
         return Bucket.objects.none()
 
     return signatures
@@ -172,7 +172,7 @@ def filter_bucket_hits_by_toolfilter(request, hits, restricted_only=False):
     defaultToolsFilter = user.defaultToolsFilter.all()
     if defaultToolsFilter:
         return hits.filter(tool__in=defaultToolsFilter)
-    elif user.restricted:
+    if user.restricted:
         return BucketHit.objects.none()
 
     return hits
@@ -253,11 +253,10 @@ def deleteBucketWatch(request, sigid):
         entry = get_object_or_404(BucketWatch, user=user, bucket=sigid)
         entry.delete()
         return redirect("crashmanager:sigwatch")
-    elif request.method == "GET":
+    if request.method == "GET":
         entry = get_object_or_404(Bucket, user=user, pk=sigid)
         return render(request, "signatures/watch_remove.html", {"entry": entry})
-    else:
-        raise SuspiciousOperation()
+    raise SuspiciousOperation()
 
 
 def newBucketWatch(request):
@@ -362,8 +361,7 @@ def editCrashEntry(request, crashid):
                     entry.testcase.storeTestAndSave()
 
         return redirect("crashmanager:crashview", crashid=entry.pk)
-    else:
-        return render(request, "crashes/edit.html", {"entry": entry})
+    return render(request, "crashes/edit.html", {"entry": entry})
 
 
 def deleteCrashEntry(request, crashid):
@@ -373,10 +371,9 @@ def deleteCrashEntry(request, crashid):
     if request.method == "POST":
         entry.delete()
         return redirect("crashmanager:crashes")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "crashes/remove.html", {"entry": entry})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def newSignature(request):
@@ -465,7 +462,7 @@ def deleteSignature(request, sigid):
         bucket.delete()
         return redirect("crashmanager:signatures")
 
-    elif request.method == "GET":
+    if request.method == "GET":
         in_filter = 0
         other_tool_counts = {}
 
@@ -491,15 +488,14 @@ def deleteSignature(request, sigid):
                 "other_tools": ", ".join(sorted(other_tools)),
             },
         )
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def viewSignature(request, sigid):
     response = BucketVueViewSet.as_view({"get": "retrieve"})(request, pk=sigid)
     if response.status_code == 404:
         raise Http404
-    elif response.status_code != 200:
+    if response.status_code != 200:
         return response
     bucket = response.data
     if bucket["best_entry"] is not None:
@@ -759,13 +755,12 @@ def findSignatures(request, crashid):
             "signatures/find.html",
             {"bucket": matchingBucket, "crashentry": entry},
         )
-    else:
-        similarBuckets.sort(key=lambda x: (x.foreignMatchCount, x.offCount))
-        return render(
-            request,
-            "signatures/find.html",
-            {"buckets": similarBuckets, "crashentry": entry},
-        )
+    similarBuckets.sort(key=lambda x: (x.foreignMatchCount, x.offCount))
+    return render(
+        request,
+        "signatures/find.html",
+        {"buckets": similarBuckets, "crashentry": entry},
+    )
 
 
 def createExternalBug(request, crashid):
@@ -795,8 +790,7 @@ def createExternalBug(request, crashid):
             "entry": entry,
         }
         return render(request, "bugzilla/create_external_bug.html", data)
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def createExternalBugComment(request, crashid):
@@ -817,8 +811,7 @@ def createExternalBugComment(request, crashid):
             "entry": entry,
         }
         return render(request, "bugzilla/create_external_comment.html", data)
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def viewBugProviders(request):
@@ -840,10 +833,9 @@ def deleteBugProvider(request, providerId):
 
         provider.delete()
         return redirect("crashmanager:bugproviders")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "providers/remove.html", {"provider": provider})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def viewBugProvider(request, providerId):
@@ -877,10 +869,9 @@ def editBugProvider(request, providerId):
 
         provider.save()
         return redirect("crashmanager:bugproviders")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "providers/edit.html", {"provider": provider})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def createBugProvider(request):
@@ -904,10 +895,9 @@ def createBugProvider(request):
 
         provider.save()
         return redirect("crashmanager:bugproviders")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "providers/edit.html", {})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def duplicateBugzillaTemplate(request, templateId):
@@ -1552,9 +1542,8 @@ def json_to_query(json_str):
     def get_query_obj(obj, key=None):
         if obj is None or isinstance(obj, (str, list, int)):
             kwargs = {key: obj}
-            qobj = Q(**kwargs)
-            return qobj
-        elif not isinstance(obj, dict):
+            return Q(**kwargs)
+        if not isinstance(obj, dict):
             raise RuntimeError(
                 f"Invalid object type '{type(obj).__name__}' in query object"
             )
@@ -1676,8 +1665,7 @@ class BugzillaTemplateEditView(UpdateView):
     def get_form_class(self):
         if self.object.mode == BugzillaTemplateMode.Bug:
             return BugzillaTemplateBugForm
-        else:
-            return BugzillaTemplateCommentForm
+        return BugzillaTemplateCommentForm
 
 
 class BugzillaTemplateBugCreateView(CreateView):

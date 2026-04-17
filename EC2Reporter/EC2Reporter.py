@@ -248,13 +248,13 @@ def main(argv=None):
     if opts.cycle:
         reporter.cycle(opts.cycle)
         return 0
-    elif opts.enable:
+    if opts.enable:
         reporter.enable(opts.enable)
         return 0
-    elif opts.disable:
+    if opts.disable:
         reporter.disable(opts.disable)
         return 0
-    elif opts.report_file:
+    if opts.report_file:
         if opts.keep_reporting:
             if opts.random_offset > 0:
                 random.seed(reporter.clientId)

@@ -243,13 +243,12 @@ def disablePool(request, poolid):
         pool.isEnabled = False
         pool.save()
         return redirect("ec2spotmanager:poolview", poolid=pool.pk)
-    elif request.method == "GET":
+    if request.method == "GET":
         pool.instance_running_count = Instance.objects.filter(
             pool=pool, status_code=INSTANCE_STATE["running"]
         ).count()
         return render(request, "pools/disable.html", {"pool": pool})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def enablePool(request, poolid):
@@ -287,14 +286,13 @@ def enablePool(request, poolid):
         pool.last_cycled = None
         pool.save()
         return redirect("ec2spotmanager:poolview", poolid=pool.pk)
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(
             request,
             "pools/enable.html",
             {"pool": pool, "coreCount": pool.config.flatten().size},
         )
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def forceCyclePool(request, poolid):
@@ -309,13 +307,12 @@ def forceCyclePool(request, poolid):
         pool.last_cycled = None
         pool.save()
         return redirect("ec2spotmanager:poolview", poolid=pool.pk)
-    elif request.method == "GET":
+    if request.method == "GET":
         pool.instance_running_count = Instance.objects.filter(
             pool=pool, status_code=INSTANCE_STATE["running"]
         ).count()
         return render(request, "pools/cycle.html", {"pool": pool})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def forceCyclePoolsByConfig(request, configid):
@@ -336,7 +333,7 @@ def forceCyclePoolsByConfig(request, configid):
             last_cycled=None
         )
         return redirect("ec2spotmanager:pools")
-    elif request.method == "GET":
+    if request.method == "GET":
         # Recursively enumerate all configurations directly or indirectly depending on
         # this one
         config_pks = recurse_get_dependent_configurations(config)
@@ -350,8 +347,7 @@ def forceCyclePoolsByConfig(request, configid):
             ).count()
 
         return render(request, "config/cycle.html", {"config": config, "pools": pools})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def createPool(request):
@@ -361,11 +357,10 @@ def createPool(request):
         pool.config = config
         pool.save()
         return redirect("ec2spotmanager:poolview", poolid=pool.pk)
-    elif request.method == "GET":
+    if request.method == "GET":
         configurations = PoolConfiguration.objects.all()
         return render(request, "pools/create.html", {"configurations": configurations})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def viewConfigs(request):
@@ -581,7 +576,7 @@ def createConfig(request):
     if request.method == "POST":
         config = PoolConfiguration()
         return __handleConfigPOST(request, config)
-    elif request.method == "GET":
+    if request.method == "GET":
         configurations = PoolConfiguration.objects.all()
 
         if "clone" in request.GET:
@@ -603,8 +598,7 @@ def createConfig(request):
             "ec2_userdata_ff": "unix",
         }
         return render(request, "config/edit.html", data)
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def editConfig(request, configid):
@@ -613,7 +607,7 @@ def editConfig(request, configid):
 
     if request.method == "POST":
         return __handleConfigPOST(request, config)
-    elif request.method == "GET":
+    if request.method == "GET":
         configurations = PoolConfiguration.objects.all()
         data = {
             "config": config,
@@ -624,8 +618,7 @@ def editConfig(request, configid):
             ),
         }
         return render(request, "config/edit.html", data)
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def deletePool(request, poolid):
@@ -672,10 +665,9 @@ def deletePool(request, poolid):
 
         return redirect("ec2spotmanager:pools")
 
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "pools/delete.html", {"entry": pool})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def deletePoolMsg(request, msgid, from_pool="0"):
@@ -686,16 +678,14 @@ def deletePoolMsg(request, msgid, from_pool="0"):
         entry.delete()
         if from_pool:
             return redirect("ec2spotmanager:poolview", poolid=pool.pk)
-        else:
-            return redirect("ec2spotmanager:pools")
-    elif request.method == "GET":
+        return redirect("ec2spotmanager:pools")
+    if request.method == "GET":
         return render(
             request,
             "pools/messages/delete.html",
             {"entry": entry, "from_pool": "1" if from_pool else "0"},
         )
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def deleteProviderMsg(request, msgid):
@@ -703,10 +693,9 @@ def deleteProviderMsg(request, msgid):
     if request.method == "POST":
         entry.delete()
         return redirect("ec2spotmanager:pools")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "providers/messages/delete.html", {"entry": entry})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 def deleteConfig(request, configid):
@@ -755,10 +744,9 @@ def deleteConfig(request, configid):
         pools.delete()
         config.delete()
         return redirect("ec2spotmanager:configs")
-    elif request.method == "GET":
+    if request.method == "GET":
         return render(request, "config/delete.html", {"entry": config, "pools": pools})
-    else:
-        raise SuspiciousOperation
+    raise SuspiciousOperation
 
 
 class UptimeChartViewDetailed(JSONView):
@@ -924,8 +912,7 @@ class MachineStatusViewSet(APIView):
 
     def get(self, request, *args, **kwargs):
         result = {}
-        response = Response(result, status=status.HTTP_200_OK)
-        return response
+        return Response(result, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         if "client" not in request.data:

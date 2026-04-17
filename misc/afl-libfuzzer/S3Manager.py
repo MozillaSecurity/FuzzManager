@@ -531,9 +531,8 @@ class S3Manager:
             with open(id_file, "w") as id_fd:
                 id_fd.write(id)
             return id
-        else:
-            with open(id_file) as id_fd:
-                return id_fd.read()
+        with open(id_file) as id_fd:
+            return id_fd.read()
 
     def __upload_queue_files(self, queue_basedir, queue_files, base_dir, cmdline_file):
         machine_id = self.__get_machine_id(base_dir)

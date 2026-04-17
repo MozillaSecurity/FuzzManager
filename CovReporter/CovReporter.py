@@ -219,8 +219,7 @@ class CovReporter(Reporter):
             ret["revision"] = coverage["git"]["head"]["id"]
             ret["branch"] = coverage["git"]["branch"]
             return ret
-        else:
-            raise InvalidDataError("Unknown coverage format")
+        raise InvalidDataError("Unknown coverage format")
 
     @staticmethod
     def create_combined_coverage(coverage_files, version=None):

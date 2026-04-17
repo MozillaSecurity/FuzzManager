@@ -30,7 +30,7 @@ def get_or_create_pool(worker_type):
     else:
         if "-pool" not in worker_type:
             # not our task
-            return
+            return None
         platform, pool_id = worker_type.split("-", 1)
         assert pool_id.startswith("pool")
         with suppress(ValueError):

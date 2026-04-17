@@ -102,9 +102,8 @@ def json_to_query(json_str):
     def get_query_obj(obj, key=None):
         if obj is None or isinstance(obj, (str, list, int)):
             kwargs = {key: obj}
-            qobj = Q(**kwargs)
-            return qobj
-        elif not isinstance(obj, dict):
+            return Q(**kwargs)
+        if not isinstance(obj, dict):
             raise RuntimeError(
                 f"Invalid object type '{type(obj).__name__}' in query object"
             )
