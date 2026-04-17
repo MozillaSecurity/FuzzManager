@@ -8,6 +8,13 @@ repos:
   - repo: meta
     hooks:
       - id: check-useless-excludes
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: ["--ignore-words-list=buildd,swith"]
+        exclude_types: [json]
+        exclude: ^FTB/Signatures/tests/fixtures/
   - repo: local
     hooks:
       - id: eslint

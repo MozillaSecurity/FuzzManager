@@ -146,7 +146,7 @@ class CloudProvider(metaclass=ABCMeta):
         Since this is the first point we see an actual running instance
         we set the tags on the instances here as well.
 
-        We create a dictionary of succesful requests. This has hostname,
+        We create a dictionary of successful requests. This has hostname,
         instance id, and status of each instance. This status must match the
         INSTANCE_STATE in CloudProvider.
 
@@ -157,7 +157,7 @@ class CloudProvider(metaclass=ABCMeta):
         @param region: the region the instances are in
 
         @ptype instances: list
-        @param isntances: instance request IDs
+        @param instances: instance request IDs
 
         @ptype tags: dictionary
         @param tags: instance tags.

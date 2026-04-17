@@ -67,7 +67,7 @@ FuzzManager server instance or use FTB locally.
 The server part of FuzzManager is a Django application. Please note that it
 requires the full repository to be checked out, not just the server directory.
 
-Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these contraints by installing FuzzManager using:
+Dependency constraints are listed in [requirements.txt](requirements.txt). You can ask pip to respect these constraints by installing FuzzManager using:
 
 ```pip install -c requirements.txt '.[server]'```
 
@@ -202,7 +202,7 @@ Several methods of the collector work with the `CrashInfo` class. This class sto
 * A variable containing crash information as outputted by GDB or AddressSanitizer
 * A ProgramConfiguration instance
 
-The first three sets of data are typically already available in a fuzzer. Note that for GDB traces, the trace should contain first the stack trace, then a dump of all registers and then a dissassembly of the program counter (see also the FTB/Running/AutoRunner.py file which demonstrates how to output all information properly for FuzzManager).
+The first three sets of data are typically already available in a fuzzer. Note that for GDB traces, the trace should contain first the stack trace, then a dump of all registers and then a disassembly of the program counter (see also the FTB/Running/AutoRunner.py file which demonstrates how to output all information properly for FuzzManager).
 
 The last thing required is the `ProgramConfiguration`. This class is largely a container class storing various properties of the program, e.g. product name, the platform, version and runtime options. Instead of instantiating the class and providing all the data manually, it is again recommended to use the configuration file support. Assuming your binary is located at /home/example/foo then creating a configuration file at /home/example/foo.fuzzmanagerconf with the necessary data is recommended. Such a file could look like this:
 

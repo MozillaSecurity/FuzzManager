@@ -197,7 +197,7 @@ def test_CoverageHelperApplyDirectivesMixed():
 def test_CoverageHelperApplyDirectivesPrune():
     node = json.loads(covdata)
 
-    # Check that any empty childs are pruned (empty childs are not useful)
+    # Check that any empty children are pruned (empty children are not useful)
     directives = ["-:topdir1/subdir1/**", "-:topdir1/subdir2/**"]
 
     CoverageHelper.apply_include_exclude_directives(node, directives)

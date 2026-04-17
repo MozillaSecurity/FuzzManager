@@ -1197,7 +1197,7 @@ class GDBCrashInfo(CrashInfo):
                     functionName = functionName[:gdbErrorIdx]
 
                 if gdbDebugInfoMismatch:
-                    # Remove addtional signature segment
+                    # Remove additional signature segment
                     functionName = CrashInfo.sanitizeStackFrame(functionName)
 
                 self.backtrace.append(functionName)
@@ -1498,7 +1498,7 @@ class GDBCrashInfo(CrashInfo):
 
             if len(parts) == 1:
                 if instruction == ".inst" and parts[0].endswith("; undefined"):
-                    # This is an instruction that the dissassembler can't read, so
+                    # This is an instruction that the disassembler can't read, so
                     # likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
                 if instruction == "brk":
@@ -1588,7 +1588,7 @@ class MinidumpCrashInfo(CrashInfo):
 
                     if not components[3]:
                         # If we have no symbols, but we have a library/component, using
-                        # that allows us to match on the libary name in the stack which
+                        # that allows us to match on the library name in the stack which
                         # is helpful for crashes in low level libraries.
                         if components[2]:
                             frame = components[2]

@@ -820,7 +820,7 @@ export default defineComponent({
       this.pmanager.update_hash();
     },
     toggle_highlight_line: function (line) {
-      // This method is a bit lenghty because we need to first destructure the
+      // This method is a bit lengthy because we need to first destructure the
       // existing parameters in the URL, then toggle, then restructure them
       // to update the hash. Updating the hash also updates the internal
       // properties of the model and does the actual highlight.

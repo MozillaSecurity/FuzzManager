@@ -231,7 +231,7 @@ def test_rest_notifications_list_unread(api_client, user, cm, covmgr_helper):
 
 @pytest.mark.parametrize("user", ["normal", "restricted"], indirect=True)
 def test_rest_notifications_mark_as_read(api_client, user, cm):
-    """test that mark_as_read only marks the targetted notification as read"""
+    """test that mark_as_read only marks the targeted notification as read"""
     bucket = Bucket.objects.create(
         signature=json.dumps(
             {"symptoms": [{"src": "stderr", "type": "output", "value": "/match/"}]}
