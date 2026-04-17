@@ -40,8 +40,7 @@ class BugzillaREST:
         if (self.username is None or self.password is None) and self.api_key is None:
             if loginRequired:
                 raise RuntimeError("Need username/password or API key to login.")
-            else:
-                return False
+            return False
 
         # If we have an API key, we don't need to perform any login
         if self.api_key is not None:

@@ -86,7 +86,7 @@ def fetch_coverage_revision():
 
     if not COVERAGE_REVISION_URL:
         logger.error("Missing configuration for COVERAGE_REVISION_URL.")
-        return
+        return None
 
     response = requests.get(COVERAGE_REVISION_URL)
     if not response.ok:
@@ -95,7 +95,7 @@ def fetch_coverage_revision():
             response.status_code,
             response.text,
         )
-        return
+        return None
 
     return response.text.rstrip()
 

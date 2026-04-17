@@ -325,7 +325,7 @@ class CrashInfo(metaclass=ABCMeta):
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif (
+            if (
                 asanString in line
                 or asanString2 in line
                 or ubsanString2 in line
@@ -333,22 +333,22 @@ class CrashInfo(metaclass=ABCMeta):
             ):
                 result = ASanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif lsanString in line:
+            if lsanString in line:
                 result = LSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif tsanString in line:
+            if tsanString in line:
                 result = TSanCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif appleString in line and not line.startswith(minidumpFirstString):
+            if appleString in line and not line.startswith(minidumpFirstString):
                 result = AppleCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif cdbString in line:
+            if cdbString in line:
                 result = CDBCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif gdbString in line or gdbCoreString in line:
+            if gdbString in line or gdbCoreString in line:
                 result = GDBCrashInfo(stdout, stderr, configuration, auxCrashData)
                 break
-            elif not rustFirstDetected and rustFirstString in line:
+            if not rustFirstDetected and rustFirstString in line:
                 rustFirstDetected = True
                 minidumpFirstDetected = False
             elif rustFirstDetected and rustSecondString in line:
@@ -400,8 +400,7 @@ class CrashInfo(metaclass=ABCMeta):
         if abortMsg is not None:
             if isinstance(abortMsg, list):
                 return " ".join(abortMsg)
-            else:
-                return abortMsg
+            return abortMsg
 
         if not self.backtrace:
             return "No crash detected"
@@ -840,8 +839,7 @@ class ASanCrashInfo(CrashInfo):
         if abortMsg is not None:
             if isinstance(abortMsg, list):
                 return " ".join(abortMsg)
-            else:
-                return abortMsg
+            return abortMsg
 
         # If we don't have a program abort message, see if we have an ASan
         # specific abort message other than a crash message that we can use.
@@ -1172,9 +1170,8 @@ class GDBCrashInfo(CrashInfo):
                 if frameIndex is None:
                     # Line might not be complete yet, try adding the next
                     continue
-                else:
-                    # Successfully parsed line, reset last line buffer
-                    lastLineBuf = ""
+                # Successfully parsed line, reset last line buffer
+                lastLineBuf = ""
 
                 # Allow #0 to appear twice in the beginning, GDB does this for core
                 # dumps ...
@@ -1264,17 +1261,14 @@ class GDBCrashInfo(CrashInfo):
                 # pointing somewhere where it shouldn't point, so use that as
                 # the crash address.
                 return RegisterHelper.getStackPointer(registerMap)
-            elif instruction == "ud2" or instruction == "(bad)":
+            if instruction == "ud2" or instruction == "(bad)":
                 # ud2 - Raise invalid opcode exception
                 # We treat this like invalid instruction
                 #
                 # (bad) - Assembly at the instruction pointer is not valid
                 # We also consider this an invalid instruction
                 return RegisterHelper.getInstructionPointer(registerMap)
-            else:
-                raise RuntimeError(
-                    f"Unsupported non-operand instruction: {instruction}"
-                )
+            raise RuntimeError(f"Unsupported non-operand instruction: {instruction}")
 
         if len(parts) != 2:
             raise RuntimeError(
@@ -1318,14 +1312,11 @@ class GDBCrashInfo(CrashInfo):
                 # If we don't have the value, return None
                 if val is None:
                     return (None, f"Missing value for register {match.group(2)} ")
-                else:
-                    if RegisterHelper.getBitWidth(registerMap) == 32:
-                        return (int32(uint32(offset) + uint32(val)), None)
-                    else:
-                        # Assume 64 bit width
-                        return (int64(uint64(offset) + uint64(val)), None)
-            else:
-                return (None, "Failed to match dereference operation.")
+                if RegisterHelper.getBitWidth(registerMap) == 32:
+                    return (int32(uint32(offset) + uint32(val)), None)
+                # Assume 64 bit width
+                return (int64(uint64(offset) + uint64(val)), None)
+            return (None, "Failed to match dereference operation.")
 
         if RegisterHelper.isX86Compatible(registerMap):
             if len(parts) == 1:
@@ -1485,12 +1476,10 @@ class GDBCrashInfo(CrashInfo):
                 # If we don't have the value, return None
                 if val is None:
                     return (None, f"Missing value for register {derefOps[0]} ")
-                else:
-                    if RegisterHelper.getBitWidth(registerMap) == 32:
-                        return (int32(uint32(offset) + uint32(val)), None)
-                    else:
-                        # Assume 64 bit width
-                        return (int64(uint64(offset) + uint64(val)), None)
+                if RegisterHelper.getBitWidth(registerMap) == 32:
+                    return (int32(uint32(offset) + uint32(val)), None)
+                # Assume 64 bit width
+                return (int64(uint64(offset) + uint64(val)), None)
 
             # ARM assembly has nested comma-separated operands, so we need to merge
             # those inside  brackets back together before proceeding.
@@ -1512,7 +1501,7 @@ class GDBCrashInfo(CrashInfo):
                     # This is an instruction that the dissassembler can't read, so
                     # likely a SIGILL
                     return RegisterHelper.getInstructionPointer(registerMap)
-                elif instruction == "brk":
+                if instruction == "brk":
                     # This is an explicit breakpoint / trap
                     return RegisterHelper.getInstructionPointer(registerMap)
             elif len(parts) == 2 and (
@@ -1556,8 +1545,7 @@ class GDBCrashInfo(CrashInfo):
             if regA is None or regB is None:
                 if regA is None:
                     return (None, f"Missing value for register {match.group(2)}")
-                else:
-                    return (None, f"Missing value for register {match.group(3)}")
+                return (None, f"Missing value for register {match.group(3)}")
 
             if RegisterHelper.getBitWidth(registerMap) == 32:
                 val = int32(uint32(regA) + uint32(offset) + uint32(regB) * uint32(mult))
@@ -1886,7 +1874,7 @@ class RustCrashInfo(CrashInfo):
             frame = self.RE_FRAME.match(line)
             if frame is None and inBacktrace:
                 break
-            elif frame is not None:
+            if frame is not None:
                 inBacktrace = True
                 if frame.group("symbol"):
                     self.backtrace.append(frame.group("symbol"))
@@ -2089,7 +2077,7 @@ class ValgrindCrashInfo(CrashInfo):
             if not traceLine.startswith("=="):
                 # skip unrelated noise
                 continue
-            elif not foundStart:
+            if not foundStart:
                 if re.match(self.MSG_REGEX, traceLine) is not None:
                     # skip other lines that are not part of a recognized trace
                     foundStart = True

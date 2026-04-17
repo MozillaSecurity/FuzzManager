@@ -24,7 +24,7 @@ class ExceptionLoggingMiddleware:
 
     def process_exception(self, request, exception):
         print(traceback.format_exc())
-        return None
+        return
 
 
 class RequireLoginMiddleware:

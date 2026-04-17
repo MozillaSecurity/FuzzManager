@@ -202,7 +202,7 @@ def _start_pool_instances(pool, config, count=1):
                 _update_pool_status(pool, "price-too-low", msg)
             return
 
-        elif priceLowEntries:
+        if priceLowEntries:
             priceLowEntries.delete()
 
         cloud_provider = CloudProvider.get_instance(provider)

@@ -343,7 +343,7 @@ def write_aggregated_stats_afl(base_dirs, outfile, cmdline_path=None):
     # If we don't have any data here, then the fuzzers haven't written any statistics
     # yet
     if not aggregated_stats:
-        return
+        return None
 
     # Mean conversion
     for field_name in wanted_fields_mean:
@@ -622,6 +622,8 @@ def scan_crashes(
 
         if firefox:
             ffpInst.clean_up()
+
+    return None
 
 
 def setup_firefox(bin_path, prefs_path, ext_paths, test_path):
@@ -2030,6 +2032,8 @@ def main(argv=None):
                     )
 
                 time.sleep(10)
+
+    return 0
 
 
 if __name__ == "__main__":

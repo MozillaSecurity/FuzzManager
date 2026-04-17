@@ -315,6 +315,7 @@ class SimplePersistentApplication(PersistentApplication):
             self.stop()
 
             return ret
+        return None
 
     def stop(self):
         self._terminateProcess()
@@ -347,32 +348,30 @@ class SimplePersistentApplication(PersistentApplication):
                     # code
                     self.stop()
                     return ApplicationStatus.TIMEDOUT
-                else:
-                    # The process has exited. We need to check if it crashed, but first
-                    # we call stop to join our collector threads.
-                    self.stop()
+                # The process has exited. We need to check if it crashed, but first
+                # we call stop to join our collector threads.
+                self.stop()
 
-                    if self._crashed():
-                        return ApplicationStatus.CRASHED
-                    elif self.process.returncode < 0:
-                        # The application was terminated by a signal, but not by one of
-                        # the listed signals.  We consider this a fatal error. Either
-                        # the signal should be supported here, or the process is being
-                        # terminated by something else, making the testing unreliable.
-                        #
-                        # TODO: This could be triggered by the Linux kernel OOM killer
-                        raise RuntimeError(
-                            "SPFP Error: Application terminated with signal: "
-                            f"{self.process.returncode}"
-                        )
-                    else:
-                        # The application exited, but didn't send us any message before
-                        # doing so. We consider this a protocol violation and raise an
-                        # exception.
-                        raise RuntimeError(
-                            "SPFP Error: Application exited without message. "
-                            f"Exitcode: {self.process.returncode}"
-                        )
+                if self._crashed():
+                    return ApplicationStatus.CRASHED
+                if self.process.returncode < 0:
+                    # The application was terminated by a signal, but not by one of
+                    # the listed signals.  We consider this a fatal error. Either
+                    # the signal should be supported here, or the process is being
+                    # terminated by something else, making the testing unreliable.
+                    #
+                    # TODO: This could be triggered by the Linux kernel OOM killer
+                    raise RuntimeError(
+                        "SPFP Error: Application terminated with signal: "
+                        f"{self.process.returncode}"
+                    )
+                # The application exited, but didn't send us any message before
+                # doing so. We consider this a protocol violation and raise an
+                # exception.
+                raise RuntimeError(
+                    "SPFP Error: Application exited without message. "
+                    f"Exitcode: {self.process.returncode}"
+                )
 
             # Update stdout/err available for the last run
             self.stdout = self.outCollector.output
@@ -380,13 +379,13 @@ class SimplePersistentApplication(PersistentApplication):
 
             if response == "OK":
                 return ApplicationStatus.OK
-            elif response == "ERROR":
+            if response == "ERROR":
                 return ApplicationStatus.ERROR
 
             raise RuntimeError(
                 f"SPFP Error: Unsupported application response: {response}"
             )
-        elif self.persistentMode == PersistentMode.SIGSTOP:
+        if self.persistentMode == PersistentMode.SIGSTOP:
             # Resume the process
             os.kill(self.process.pid, signal.SIGCONT)
 
@@ -411,10 +410,10 @@ class SimplePersistentApplication(PersistentApplication):
 
                 if self._crashed():
                     return ApplicationStatus.CRASHED
-                else:
-                    return ApplicationStatus.ERROR
+                return ApplicationStatus.ERROR
 
             return ApplicationStatus.OK
+        return None
 
     def _terminateProcess(self):
         if self.process and self.process.poll() is None:

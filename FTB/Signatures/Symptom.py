@@ -53,20 +53,19 @@ class Symptom(metaclass=ABCMeta):
 
         if stype == "output":
             return OutputSymptom(obj)
-        elif stype == "stackFrame":
+        if stype == "stackFrame":
             return StackFrameSymptom(obj)
-        elif stype == "stackSize":
+        if stype == "stackSize":
             return StackSizeSymptom(obj)
-        elif stype == "crashAddress":
+        if stype == "crashAddress":
             return CrashAddressSymptom(obj)
-        elif stype == "instruction":
+        if stype == "instruction":
             return InstructionSymptom(obj)
-        elif stype == "testcase":
+        if stype == "testcase":
             return TestcaseSymptom(obj)
-        elif stype == "stackFrames":
+        if stype == "stackFrames":
             return StackFramesSymptom(obj)
-        else:
-            raise RuntimeError(f"Unknown symptom type: {stype}")
+        raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
     def matches(self, crashInfo):
@@ -471,17 +470,16 @@ class StackFramesSymptom(Symptom):
                     # get a match for the remaining stack without the current
                     # wildcard element, so we're done and accept the stack.
                     return True
-                else:
-                    if not partialStack:
-                        # Out of stack to match, reject
-                        return False
+                if not partialStack:
+                    # Out of stack to match, reject
+                    return False
 
-                    # Consume one stack frame and continue
-                    partialStack = partialStack[1:]
+                # Consume one stack frame and continue
+                partialStack = partialStack[1:]
 
-                    if str(partialFunctionNames[0]) == "?":
-                        # Consume the question mark too
-                        partialFunctionNames = partialFunctionNames[1:]
+                if str(partialFunctionNames[0]) == "?":
+                    # Consume the question mark too
+                    partialFunctionNames = partialFunctionNames[1:]
 
             elif not partialStack:
                 # Out of stack to match, reject

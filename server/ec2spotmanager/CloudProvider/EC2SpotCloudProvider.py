@@ -171,8 +171,7 @@ class EC2SpotCloudProvider(CloudProvider):
                 raise CloudProviderTemporaryFailure(
                     f"Request limit exceeded for region {region}"
                 )
-            else:
-                raise
+            raise
 
         for req_id, result in zip(instances, results):
             if isinstance(result, boto.ec2.instance.Instance):
@@ -281,8 +280,7 @@ class EC2SpotCloudProvider(CloudProvider):
     @wrap_provider_errors
     def get_image(self, region, config):
         cluster = self._connect(region)
-        ami = cluster.resolve_image_name(config.ec2_image_name)
-        return ami
+        return cluster.resolve_image_name(config.ec2_image_name)
 
     @staticmethod
     def get_cores_per_instance():
