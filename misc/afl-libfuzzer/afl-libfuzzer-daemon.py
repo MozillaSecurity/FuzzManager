@@ -1973,7 +1973,7 @@ def main(argv=None):
             if not os.path.exists(os.path.join(opts.afloutdir, "crashes")):
                 # The specified directory doesn't have a "crashes" sub directory.
                 # Either the wrong directory was specified, or this is an AFL
-                # multi-process sychronization directory. Try to figure this out here.
+                # multi-process synchronization directory. Try to figure this out here.
                 sync_dirs = os.listdir(opts.afloutdir)
 
                 afl_out_dirs.extend(

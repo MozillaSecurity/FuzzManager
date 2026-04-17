@@ -87,7 +87,7 @@ class Command(BaseCommand):
                             target_content_type=bug_content_type,
                             target_object_id=bug.id,
                         ).values_list("id", flat=True)
-                        # Exluding users who have already receive this notification
+                        # Excluding users who have already receive this notification
                         recipient = bug.tools_filter_users.exclude(
                             notifications__id__in=sent_notifications_ids
                         )

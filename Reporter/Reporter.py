@@ -180,7 +180,7 @@ class Reporter(ABC):
         self._session = requests.Session()
 
         # Now search for the global configuration file. If it exists, read its contents
-        # and set all Collector settings that haven't been explicitely set by the user.
+        # and set all Collector settings that haven't been explicitly set by the user.
         globalConfigFile = os.getenv(
             "FM_CONFIG_PATH",
             os.path.join(os.path.expanduser("~"), ".fuzzmanagerconf"),

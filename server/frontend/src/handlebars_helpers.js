@@ -7,7 +7,7 @@ export function isString(value) {
 }
 
 /**
- * Split a string using the specified delimeter.
+ * Split a string using the specified delimiter.
  * @param {string} str - String to split.
  * @param {string} delim - Delimiter to split on.
  */
