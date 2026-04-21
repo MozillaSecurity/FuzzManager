@@ -231,6 +231,9 @@ def getSanitizedAssertionPattern(msgs):
             idx += len(chunk) + 1
             bsPositions = [bs + 1 if bs > idx else bs for bs in bsPositions]
 
+        # Each entry is (match_regex, replacement_text). For most patterns the
+        # two are identical, but path patterns match with a boundary-restricted
+        # class while writing a clean `.+/` into the sanitized output.
         replacementPatterns = []
 
         # Specific TSan patterns
@@ -252,24 +255,27 @@ def getSanitizedAssertionPattern(msgs):
         # Replace rust thread #s
         replacementPatterns.append("Thread#[0-9]+' panicked")
 
-        # Strip full paths
-        pathPattern = "([a-zA-Z]:)?/.+/"
+        replacementPatterns = [(p, p) for p in replacementPatterns]
+
+        # Strip full paths. Match using a boundary-restricted class so we don't
+        # greedily consume text preceding the path, but emit `.+/` as the
+        # replacement so the resulting signature stays readable.
+        pathMatch = "[^ '\",(]+/"
+        pathReplace = ".+/"
 
         # In order to reliably identify paths, we require them to be prefixed
         # by some character that doesn't belong to the path. It turns out that
         # spaces, quotes and comma are the only things used in the assertions
         # we support so far. However, we don't want to group these characters
         # into a regex so avoid cluttering the signature too much.
-        replacementPatterns.append(" " + pathPattern)
-        replacementPatterns.append("'" + pathPattern)
-        replacementPatterns.append('"' + pathPattern)
-        replacementPatterns.append("," + pathPattern)
+        for prefix in (" ", "'", '"', ","):
+            replacementPatterns.append((prefix + pathMatch, prefix + pathReplace))
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.
-        replacementPatterns.append("[0-9]{2,}")
+        replacementPatterns.append(("[0-9]{2,}", "[0-9]{2,}"))
 
-        for replacementPattern in replacementPatterns:
+        for matchPattern, replacementPattern in replacementPatterns:
 
             def _handleMatch(match):
                 start = match.start(0)
@@ -294,7 +300,7 @@ def getSanitizedAssertionPattern(msgs):
 
                 return replacementPattern
 
-            sanitizedMsg = re.sub(replacementPattern, _handleMatch, sanitizedMsg)
+            sanitizedMsg = re.sub(matchPattern, _handleMatch, sanitizedMsg)
 
         # backslashes were replaced with / for unified path handling (and because
         # backslash is the escape character, which makes pattern matching otherwise
@@ -308,7 +314,7 @@ def getSanitizedAssertionPattern(msgs):
 
         # Some implementations wrap the path into parentheses. We cannot add this to
         # replacementPatterns because it would double-escape the leading parenthesis.
-        sanitizedMsg = re.sub("\\(" + pathPattern, "(" + pathPattern, sanitizedMsg)
+        sanitizedMsg = re.sub("\\(" + pathMatch, "(" + pathReplace, sanitizedMsg)
 
         sanitizedMsgs.append(sanitizedMsg)
 

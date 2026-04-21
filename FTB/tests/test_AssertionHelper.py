@@ -76,7 +76,7 @@ def test_AssertionHelperTestMozCrash():
     )
     expectedMsg = (
         r"Hit MOZ_CRASH\(named lambda static scopes should have been skipped\) at "
-        r"([a-zA-Z]:)?/.+/ScopeObject\.cpp(:[0-9]+)+"
+        r".+/ScopeObject\.cpp(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg
     _check_regex_matches(err, sanitizedMsg)
@@ -94,7 +94,7 @@ def test_AssertionHelperTestMozCrashMultiLine():
     )
     assert sanitizedMsg[-1] == (
         r"    combined_local_clip_rect\.size\.height >= 0\.0\)"
-        r" at gfx/wr/webrender/src/prim_store/mod\.rs(:[0-9]+)+"
+        r" at .+/mod\.rs(:[0-9]+)+"
     )
     _check_regex_matches(err, sanitizedMsg)
 
@@ -106,7 +106,7 @@ def test_AssertionHelperTestMozCrashWithPath():
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r"Hit MOZ_CRASH\(([a-zA-Z]:)?/.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
+        r"Hit MOZ_CRASH\(.+/celt_decoder\.c(:[0-9]+)+ assertion failed: "
         r"st->start < st->end\) at nil(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg
@@ -121,7 +121,7 @@ def test_AssertionHelperTestMultiMozCrash():
     )
     expectedMsg = (
         r"Hit MOZ_CRASH\(good message\) at "
-        r"([a-zA-Z]:)?/.+/spatial_node\.rs(:[0-9]+)+"
+        r".+/spatial_node\.rs(:[0-9]+)+"
     )
     assert sanitizedMsg == expectedMsg
     _check_regex_matches(err, sanitizedMsg)
@@ -138,7 +138,7 @@ def test_AssertionHelperTestJSSelfHosted():
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r'Self-hosted JavaScript assertion info: "([a-zA-Z]:)?/.+/Intl\.js(:[0-9]+)+: '
+        r'Self-hosted JavaScript assertion info: ".+/Intl\.js(:[0-9]+)+: '
         r'non-canonical BestAvailableLocale locale"'
     )
 
@@ -156,7 +156,7 @@ def test_AssertionHelperTestV8Abort():
     assert len(sanitizedMsgs) == 2
 
     expectedMsgs = [
-        r"# Fatal error in \.\./src/compiler\.cc, line [0-9]+",
+        r"# Fatal error in .+/compiler\.cc, line [0-9]+",
         (
             r"# Check failed: !feedback_vector_->metadata\(\)->SpecDiffersFrom\( "
             r"literal\(\)->feedback_vector_spec\(\)\)\."
@@ -174,7 +174,7 @@ def test_AssertionHelperTestChakraAssert():
         AssertionHelper.getAssertion(err)
     )
     expectedMsg = (
-        r"ASSERTION [0-9]{2,}: \(([a-zA-Z]:)?/.+/ByteCodeEmitter\.cpp, line [0-9]+\) "
+        r"ASSERTION [0-9]{2,}: \(.+/ByteCodeEmitter\.cpp, line [0-9]+\) "
         r"scope->HasInnerScopeIndex\(\)"
     )
 
@@ -200,7 +200,7 @@ def test_AssertionHelperTestWindowsPathSanitizing():
 
     expectedMsg = (
         r"Assertion failure: block->graph\(\)\.osrBlock\(\), at "
-        r"([a-zA-Z]:)?/.+/Lowering\.cpp(:[0-9]+)+"
+        r".+/Lowering\.cpp(:[0-9]+)+"
     )
 
     assert sanitizedMsg1 == expectedMsg
@@ -215,6 +215,26 @@ def test_AssertionHelperTestWindowsPathSanitizing():
     #
     # That means a test for this can't work at this level
     # _check_regex_matches(err2, sanitizedMsg2)
+
+
+def test_AssertionHelperTestRelativePath():
+    err = ["Assertion failure: false, at foo/FileName.cpp:123"]
+    sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
+        AssertionHelper.getAssertion(err)
+    )
+    expectedMsg = r"Assertion failure: false, at .+/FileName\.cpp(:[0-9]+)+"
+    assert sanitizedMsg == expectedMsg
+    _check_regex_matches(err, sanitizedMsg)
+
+
+def test_AssertionHelperTestBareFilename():
+    err = ["Assertion failure: false, at FileName.cpp:123"]
+    sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
+        AssertionHelper.getAssertion(err)
+    )
+    expectedMsg = r"Assertion failure: false, at FileName\.cpp(:[0-9]+)+"
+    assert sanitizedMsg == expectedMsg
+    _check_regex_matches(err, sanitizedMsg)
 
 
 def test_AssertionHelperTestAuxiliaryAbortASan():
@@ -254,7 +274,7 @@ def test_AssertionHelperTestRustPanic01():
     expectedMsg = (
         r"thread 'StyleThread#[0-9]+' panicked at "
         r"'assertion failed: self\.get_data\(\)\.is_some\(\)', "
-        r"([a-zA-Z]:)?/.+/wrapper\.rs(:[0-9]+)+"
+        r".+/wrapper\.rs(:[0-9]+)+"
     )
 
     assert sanitizedMsg == expectedMsg
@@ -268,7 +288,7 @@ def test_AssertionHelperTestRustPanic02():
     )
     expectedMsg = (
         r"thread 'RenderBackend' panicked at 'called `Option::unwrap\(\)` "
-        r"on a `None` value', ([a-zA-Z]:)?/.+/option\.rs(:[0-9]+)+"
+        r"on a `None` value', .+/option\.rs(:[0-9]+)+"
     )
 
     assert sanitizedMsg == expectedMsg
@@ -286,8 +306,5 @@ def test_AssertionHelperTestRustPanic03():
         sanitizedMsg[0]
         == r"thread '<unnamed>' panicked at 'assertion failed: `\(left == right\)`"
     )
-    assert (
-        sanitizedMsg[-1]
-        == r" right: `Block`', ([a-zA-Z]:)?/.+/style_adjuster\.rs(:[0-9]+)+"
-    )
+    assert sanitizedMsg[-1] == r" right: `Block`', .+/style_adjuster\.rs(:[0-9]+)+"
     _check_regex_matches(err, sanitizedMsg)
