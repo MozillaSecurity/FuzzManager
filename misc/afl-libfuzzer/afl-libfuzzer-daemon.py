@@ -1288,7 +1288,7 @@ def main(argv=None):
 
         # Download our current corpus into the queues directory as well
         print(
-            "Downloading corpus from s3://{opts.s3_bucket}/{opts.project}/corpus/ to "
+            f"Downloading corpus from s3://{opts.s3_bucket}/{opts.project}/corpus/ to "
             f"{queues_dir}"
         )
         s3m.download_corpus(queues_dir)
