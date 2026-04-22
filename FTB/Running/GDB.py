@@ -12,34 +12,39 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from typing import TYPE_CHECKING
 
-def is64bit():
-    return not str(gdb.parse_and_eval("$rax")) == "void"  # noqa @UndefinedVariable
-
-
-def isARM():
-    return not str(gdb.parse_and_eval("$r0")) == "void"  # noqa @UndefinedVariable
+if TYPE_CHECKING:
+    import gdb  # noqa: TC004
 
 
-def isARM64():
-    return not str(gdb.parse_and_eval("$x0")) == "void"  # noqa @UndefinedVariable
+def is64bit() -> bool:
+    return str(gdb.parse_and_eval("$rax")) != "void"
 
 
-def regAsHexStr(reg):
+def isARM() -> bool:
+    return str(gdb.parse_and_eval("$r0")) != "void"
+
+
+def isARM64() -> bool:
+    return str(gdb.parse_and_eval("$x0")) != "void"
+
+
+def regAsHexStr(reg: str) -> str:
     mask = 0xFFFFFFFFFFFFFFFF if is64bit() else 0xFFFFFFFF
-    val = int(str(gdb.parse_and_eval("$" + reg)), 0) & mask  # noqa @UndefinedVariable
+    val = int(str(gdb.parse_and_eval("$" + reg)), 0) & mask
     return f"0x{val:x}"
 
 
-def regAsIntStr(reg):
-    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))  # noqa @UndefinedVariable
+def regAsIntStr(reg: str) -> str:
+    return str(int(str(gdb.parse_and_eval("$" + reg)), 0))
 
 
-def regAsRaw(reg):
-    return str(gdb.parse_and_eval("$" + reg))  # noqa @UndefinedVariable
+def regAsRaw(reg: str) -> str:
+    return str(gdb.parse_and_eval("$" + reg))
 
 
-def printImportantRegisters():
+def printImportantRegisters() -> None:
     if is64bit():
         regs = [
             "rax",

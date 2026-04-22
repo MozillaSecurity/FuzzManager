@@ -23,3 +23,12 @@ repos:
         language: system
         files: ^server/frontend/.*\.(js|mjs|cjs|vue)$
         stages: [ pre-commit ]
+      - id: mypy
+        name: mypy
+        entry: tox -e mypy --
+        language: system
+        require_serial: true
+        files: ^FTB/
+        exclude: (^|/)tests/
+        types: [python]
+        pass_filenames: false

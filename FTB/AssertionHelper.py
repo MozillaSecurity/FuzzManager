@@ -25,7 +25,7 @@ RE_RUST_END = re.compile(r".+?\.rs(:\d+)+$")
 RE_V8_END = re.compile(r"^")
 
 
-def getAssertion(output):
+def getAssertion(output: list[str]) -> str | list[str] | None:
     """
     This helper method provides a way to extract and process the
     different types of assertions from a given buffer.
@@ -35,8 +35,8 @@ def getAssertion(output):
     @type output: list
     @param output: List of strings to be searched
     """
-    lastLine = None
-    endRegex = None
+    lastLine: str | list[str] | None = None
+    endRegex: re.Pattern[str] | None = None
 
     # Use this to ignore the ASan head line in case of an assertion
     haveFatalAssertion = False
@@ -53,6 +53,7 @@ def getAssertion(output):
         line = re.sub(RE_PID, "", line, count=1)
 
         if endRegex is not None:
+            assert isinstance(lastLine, list)
             lastLine.append(line)
             if endRegex.search(line) is not None:
                 endRegex = None
@@ -129,7 +130,7 @@ def getAssertion(output):
     return lastLine
 
 
-def getAuxiliaryAbortMessage(output):
+def getAuxiliaryAbortMessage(output: list[str]) -> str | list[str] | None:
     """
     This helper method provides a way to extract and process additional
     abort messages or other useful messages produced by helper tools like
@@ -139,7 +140,7 @@ def getAuxiliaryAbortMessage(output):
     @type output: list
     @param output: List of strings to be searched
     """
-    lastLine = None
+    lastLine: str | list[str] | None = None
     needASanRW = False
     needTSanRW = False
 
@@ -161,6 +162,7 @@ def getAuxiliaryAbortMessage(output):
                 lastLine = line.strip()
                 needASanRW = True
         elif needASanRW and ("READ of size" in line or "WRITE of size" in line):
+            assert isinstance(lastLine, str)
             lastLine = [lastLine]
             lastLine.append(line)
             needASanRW = False
@@ -177,6 +179,7 @@ def getAuxiliaryAbortMessage(output):
         elif needTSanRW and re.match(
             r"\s*(?:Previous )?(?:[Aa]tomic )?(?:[Rr]ead|[Ww]rite) of size", line
         ):
+            assert isinstance(lastLine, list)
             lastLine.append(line.strip())
         elif "glibc detected" in line:
             # Aborts caused by glibc runtime error detection
@@ -188,7 +191,7 @@ def getAuxiliaryAbortMessage(output):
     return lastLine
 
 
-def getSanitizedAssertionPattern(msgs):
+def getSanitizedAssertionPattern(msgs: str | list[str]) -> str | list[str]:
     """
     This method provides a way to strip out unwanted dynamic information
     from assertions and replace it with pattern matching elements, e.g.
@@ -211,7 +214,7 @@ def getSanitizedAssertionPattern(msgs):
 
     for msg in msgs:
         # remember the position of all backslashes in the input
-        bsPositions = []
+        bsPositions: list[int] = []
         for chunk in msg.split("\\"):
             if not bsPositions:
                 bsPositions.append(len(chunk))
@@ -231,31 +234,28 @@ def getSanitizedAssertionPattern(msgs):
             idx += len(chunk) + 1
             bsPositions = [bs + 1 if bs > idx else bs for bs in bsPositions]
 
-        # Each entry is (match_regex, replacement_text). For most patterns the
-        # two are identical, but path patterns match with a boundary-restricted
-        # class while writing a clean `.+/` into the sanitized output.
-        replacementPatterns = []
+        # Each entry is (match_regex, replacement_text). A replacement_text of
+        # None means "use the match_regex as the replacement"
+        replacementPatterns: list[tuple[str, str | None]] = []
 
         # Specific TSan patterns
-        replacementPatterns.append("(Previous )?[Aa]tomic [Rr]ead of size")
-        replacementPatterns.append("(Previous )?[Aa]tomic [Ww]rite of size")
-        replacementPatterns.append("(Previous )?[Rr]ead of size")
-        replacementPatterns.append("(Previous )?[Ww]rite of size")
+        replacementPatterns.append(("(Previous )?[Aa]tomic [Rr]ead of size", None))
+        replacementPatterns.append(("(Previous )?[Aa]tomic [Ww]rite of size", None))
+        replacementPatterns.append(("(Previous )?[Rr]ead of size", None))
+        replacementPatterns.append(("(Previous )?[Ww]rite of size", None))
         # We avoid the use of parentheses here because they would be double-escaped
-        replacementPatterns.append("thread T[0-9]+( .+mutexes: .+)?:")
-        replacementPatterns.append("by main thread( .+mutexes: .+)?:")
+        replacementPatterns.append(("thread T[0-9]+( .+mutexes: .+)?:", None))
+        replacementPatterns.append(("by main thread( .+mutexes: .+)?:", None))
 
         # Replace everything that looks like a memory address
-        replacementPatterns.append("0x[0-9a-fA-F]+")
+        replacementPatterns.append(("0x[0-9a-fA-F]+", None))
 
         # Strip line numbers as they can easily change across versions
-        replacementPatterns.append("(:[0-9]+)+")
-        replacementPatterns.append(", line [0-9]+")
+        replacementPatterns.append(("(:[0-9]+)+", None))
+        replacementPatterns.append((", line [0-9]+", None))
 
         # Replace rust thread #s
-        replacementPatterns.append("Thread#[0-9]+' panicked")
-
-        replacementPatterns = [(p, p) for p in replacementPatterns]
+        replacementPatterns.append(("Thread#[0-9]+' panicked", None))
 
         # Strip full paths. Match using a boundary-restricted class so we don't
         # greedily consume text preceding the path, but emit `.+/` as the
@@ -268,16 +268,21 @@ def getSanitizedAssertionPattern(msgs):
         # spaces, quotes and comma are the only things used in the assertions
         # we support so far. However, we don't want to group these characters
         # into a regex so avoid cluttering the signature too much.
-        for prefix in (" ", "'", '"', ","):
-            replacementPatterns.append((prefix + pathMatch, prefix + pathReplace))
+        replacementPatterns.extend(
+            (prefix + pathMatch, prefix + pathReplace)
+            for prefix in (" ", "'", '"', ",")
+        )
 
         # Replace larger numbers, assuming that 1-digit numbers are likely
         # some constant that doesn't need sanitizing.
-        replacementPatterns.append(("[0-9]{2,}", "[0-9]{2,}"))
+        replacementPatterns.append(("[0-9]{2,}", None))
 
-        for matchPattern, replacementPattern in replacementPatterns:
+        for matchPattern, replacementText in replacementPatterns:
+            replacementPattern = (
+                matchPattern if replacementText is None else replacementText
+            )
 
-            def _handleMatch(match):
+            def _handleMatch(match: re.Match[str]) -> str:
                 start = match.start(0)
                 end = match.end(0)
                 lengthDiff = len(replacementPattern) - len(match.group(0))
@@ -324,7 +329,7 @@ def getSanitizedAssertionPattern(msgs):
     return sanitizedMsgs
 
 
-def escapePattern(msg):
+def escapePattern(msg: str) -> str:
     """
     This method escapes regular expression characters in the string.
     And no, this is not re.escape, which would escape many more characters.

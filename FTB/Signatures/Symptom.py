@@ -16,9 +16,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import json
 from abc import ABCMeta, abstractmethod
+from typing import TYPE_CHECKING, Any
 
 from FTB.Signatures import JSONHelper
 from FTB.Signatures.Matchers import NumberMatch, StringMatch
+
+if TYPE_CHECKING:
+    from FTB.Signatures.CrashInfo import CrashInfo
 
 
 class Symptom(metaclass=ABCMeta):
@@ -27,16 +31,16 @@ class Symptom(metaclass=ABCMeta):
     It also supports generating a CrashSignature based on the stored information.
     """
 
-    def __init__(self, jsonObj):
+    def __init__(self, jsonObj: dict[str, Any]) -> None:
         # Store the original source so we can return it if someone wants to stringify us
         self.jsonsrc = json.dumps(jsonObj, indent=2)
         self.jsonobj = jsonObj
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.jsonsrc
 
     @staticmethod
-    def fromJSONObject(obj):
+    def fromJSONObject(obj: dict[str, Any]) -> "Symptom":
         """
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
@@ -68,7 +72,7 @@ class Symptom(metaclass=ABCMeta):
         raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -78,18 +82,18 @@ class Symptom(metaclass=ABCMeta):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
-        return
+        return False
 
 
 class OutputSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.output = StringMatch(
-            JSONHelper.getObjectOrStringChecked(obj, "value", True)
-        )
+        checked = JSONHelper.getObjectOrStringChecked(obj, "value", True)
+        assert checked is not None
+        self.output = StringMatch(checked)
         self.src = JSONHelper.getStringChecked(obj, "src")
 
         if self.src is not None:
@@ -101,7 +105,7 @@ class OutputSymptom(Symptom):
             ):
                 raise RuntimeError(f"Invalid source specified: {self.src}")
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -111,7 +115,7 @@ class OutputSymptom(Symptom):
         @rtype: bool
         @return: True if the symptom matches, False otherwise
         """
-        checkedOutput = []
+        checkedOutput: list[str] = []
 
         if self.src is None:
             checkedOutput.extend(crashInfo.rawStdout)
@@ -124,6 +128,7 @@ class OutputSymptom(Symptom):
         else:
             checkedOutput = crashInfo.rawCrashData
 
+        assert crashInfo.configuration is not None
         windowsSlashWorkaround = crashInfo.configuration.os == "windows"
         for line in reversed(checkedOutput):
             if self.output.matches(line, windowsSlashWorkaround=windowsSlashWorkaround):
@@ -133,23 +138,22 @@ class OutputSymptom(Symptom):
 
 
 class StackFrameSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.functionName = StringMatch(
-            JSONHelper.getNumberOrStringChecked(obj, "functionName", True)
-        )
-        self.frameNumber = JSONHelper.getNumberOrStringChecked(obj, "frameNumber")
-
-        if self.frameNumber is not None:
-            self.frameNumber = NumberMatch(self.frameNumber)
+        func = JSONHelper.getStringChecked(obj, "functionName", True)
+        assert func is not None
+        self.functionName = StringMatch(func)
+        frame = JSONHelper.getNumberOrStringChecked(obj, "frameNumber")
+        if frame is not None:
+            self.frameNumber = NumberMatch(frame)
         else:
             # Default to 0
             self.frameNumber = NumberMatch(0)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -171,16 +175,16 @@ class StackFrameSymptom(Symptom):
 
 
 class StackSizeSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.stackSize = NumberMatch(
-            JSONHelper.getNumberOrStringChecked(obj, "size", True)
-        )
+        checked = JSONHelper.getNumberOrStringChecked(obj, "size", True)
+        assert checked is not None
+        self.stackSize = NumberMatch(checked)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -194,16 +198,16 @@ class StackSizeSymptom(Symptom):
 
 
 class CrashAddressSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.address = NumberMatch(
-            JSONHelper.getNumberOrStringChecked(obj, "address", True)
-        )
+        checked = JSONHelper.getNumberOrStringChecked(obj, "address", True)
+        assert checked is not None
+        self.address = NumberMatch(checked)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -219,24 +223,23 @@ class CrashAddressSymptom(Symptom):
 
 
 class InstructionSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
+        self.instructionName: StringMatch | None = None
         self.registerNames = JSONHelper.getArrayChecked(obj, "registerNames")
-        self.instructionName = JSONHelper.getObjectOrStringChecked(
-            obj, "instructionName"
-        )
 
-        if self.instructionName is not None:
-            self.instructionName = StringMatch(self.instructionName)
-        elif self.registerNames is None or len(self.registerNames) == 0:
+        instr = JSONHelper.getObjectOrStringChecked(obj, "instructionName")
+        if instr is not None:
+            self.instructionName = StringMatch(instr)
+        elif not self.registerNames:
             raise RuntimeError(
                 "Must provide at least instruction name or register names"
             )
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -261,16 +264,16 @@ class InstructionSymptom(Symptom):
 
 
 class TestcaseSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.output = StringMatch(
-            JSONHelper.getObjectOrStringChecked(obj, "value", True)
-        )
+        checked = JSONHelper.getObjectOrStringChecked(obj, "value", True)
+        assert checked is not None
+        self.output = StringMatch(checked)
 
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -291,19 +294,19 @@ class TestcaseSymptom(Symptom):
 
 
 class StackFramesSymptom(Symptom):
-    def __init__(self, obj):
+    def __init__(self, obj: dict[str, Any]) -> None:
         """
         Private constructor, called by L{Symptom.fromJSONObject}. Do not use directly.
         """
         Symptom.__init__(self, obj)
-        self.functionNames = []
+        self.functionNames: list[StringMatch] = []
 
         rawFunctionNames = JSONHelper.getArrayChecked(obj, "functionNames", True)
+        if rawFunctionNames is not None:
+            for fn in rawFunctionNames:
+                self.functionNames.append(StringMatch(fn))
 
-        for fn in rawFunctionNames:
-            self.functionNames.append(StringMatch(fn))
-
-    def matches(self, crashInfo):
+    def matches(self, crashInfo: "CrashInfo") -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -316,7 +319,9 @@ class StackFramesSymptom(Symptom):
 
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
-    def diff(self, crashInfo):
+    def diff(
+        self, crashInfo: "CrashInfo"
+    ) -> tuple[int | None, "StackFramesSymptom | None"]:
         if self.matches(crashInfo):
             return (0, None)
 
@@ -325,6 +330,7 @@ class StackFramesSymptom(Symptom):
                 crashInfo.backtrace, self.functionNames, 0, 1, depth
             )
             if bestDepth is not None:
+                assert bestGuess is not None
                 guessedFunctionNames = [repr(x) for x in bestGuess]
 
                 # Remove trailing wildcards as they are of no use
@@ -348,7 +354,13 @@ class StackFramesSymptom(Symptom):
         return (None, None)
 
     @staticmethod
-    def _diff(stack, signatureGuess, startIdx, depth, maxDepth):
+    def _diff(
+        stack: list[str],
+        signatureGuess: list[StringMatch],
+        startIdx: int,
+        depth: int,
+        maxDepth: int,
+    ) -> tuple[int | None, list[StringMatch] | None]:
         singleWildcardMatch = StringMatch("?")
 
         newSignatureGuess = []
@@ -442,7 +454,9 @@ class StackFramesSymptom(Symptom):
         return (bestDepth, bestGuess)
 
     @staticmethod
-    def _match(partialStack, partialFunctionNames):
+    def _match(
+        partialStack: list[str], partialFunctionNames: list[StringMatch]
+    ) -> bool:
         while True:
             # Process as many non-wildcard chars as we can find iteratively for
             # performance reasons

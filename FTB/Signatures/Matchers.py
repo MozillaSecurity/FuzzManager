@@ -14,23 +14,24 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
-import numbers
 import re
 from abc import ABCMeta, abstractmethod
+from enum import StrEnum
+from typing import Any
 
 from FTB.Signatures import JSONHelper
 
 
 class Match(metaclass=ABCMeta):
     @abstractmethod
-    def matches(self, value):
+    def matches(self, value: Any) -> bool:
         pass
 
 
 class StringMatch(Match):
-    def __init__(self, obj):
+    def __init__(self, obj: str | bytes | dict[str, Any]) -> None:
         self.isPCRE = False
-        self.compiledValue = None
+        self.compiledValue: re.Pattern[str] | None = None
         self.patternContainsSlash = False
 
         if isinstance(obj, bytes):
@@ -49,7 +50,9 @@ class StringMatch(Match):
                 except re.error as e:
                     raise RuntimeError(f"Error in regular expression: {e}")
         else:
-            self.value = JSONHelper.getStringChecked(obj, "value", True)
+            value = JSONHelper.getStringChecked(obj, "value", True)
+            assert value is not None
+            self.value = value
 
             matchType = JSONHelper.getStringChecked(obj, "matchType", False)
             if matchType is not None:
@@ -64,7 +67,7 @@ class StringMatch(Match):
                 else:
                     raise RuntimeError(f"Unknown match operator specified: {matchType}")
 
-    def matches(self, value, windowsSlashWorkaround=False):
+    def matches(self, value: str | bytes, windowsSlashWorkaround: bool = False) -> bool:
         if isinstance(value, bytes):
             # If the input is not already unicode, try to interpret it as UTF-8
             # If there are errors, replace them with U+FFFD so we neither raise nor
@@ -72,6 +75,7 @@ class StringMatch(Match):
             value = value.decode("utf-8", errors="replace")
 
         if self.isPCRE:
+            assert self.compiledValue is not None
             if self.compiledValue.search(value) is not None:
                 return True
             if windowsSlashWorkaround and self.patternContainsSlash:
@@ -81,47 +85,43 @@ class StringMatch(Match):
             return False
         return self.value in value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.isPCRE:
             return f"/{self.value}/"
 
         return self.value
 
 
-class NumberMatchType:
-    GE, GT, LE, LT = range(4)
+class NumberMatchType(StrEnum):
+    EQ = "=="
+    GE = ">="
+    GT = ">"
+    LE = "<="
+    LT = "<"
 
 
 class NumberMatch(Match):
-    def __init__(self, obj):
-        self.matchType = None
+    def __init__(self, obj: str | bytes | int) -> None:
+        self.matchType: NumberMatchType | None = None
+        self.value: int | None = None
 
         if isinstance(obj, bytes):
             obj = obj.decode("utf-8")
 
         if isinstance(obj, str):
             if len(obj) > 0:
-                numberMatchComponents = obj.split(None, 1)
+                numberMatchComponents = obj.split(maxsplit=1)
                 numIdx = 0
 
                 if len(numberMatchComponents) > 1:
                     numIdx = 1
                     matchType = numberMatchComponents[0]
-
-                    if matchType == "==":
-                        pass
-                    elif matchType == "<":
-                        self.matchType = NumberMatchType.LT
-                    elif matchType == "<=":
-                        self.matchType = NumberMatchType.LE
-                    elif matchType == ">":
-                        self.matchType = NumberMatchType.GT
-                    elif matchType == ">=":
-                        self.matchType = NumberMatchType.GE
-                    else:
+                    try:
+                        self.matchType = NumberMatchType(matchType)
+                    except ValueError:
                         raise RuntimeError(
                             f"Unknown match operator specified: {matchType}"
                         )
@@ -139,21 +139,25 @@ class NumberMatch(Match):
                 # address
                 self.value = None
 
-        elif isinstance(obj, numbers.Integral):
+        elif isinstance(obj, int):
             self.value = obj
         else:
             raise RuntimeError(f"Invalid type {type(obj)} in NumberMatch.")
 
-    def matches(self, value):
+    def matches(self, value: int | None) -> bool:
         if value is None:
             return self.value is None
 
-        if self.matchType == NumberMatchType.GE:
-            return value >= self.value
-        if self.matchType == NumberMatchType.GT:
-            return value > self.value
-        if self.matchType == NumberMatchType.LE:
-            return value <= self.value
-        if self.matchType == NumberMatchType.LT:
-            return value < self.value
+        # _matchType is only set when __init__ parses a non-empty string that also
+        # sets self.value, so these comparisons are safe.
+        if self.matchType is not None:
+            assert self.value is not None
+            if self.matchType == NumberMatchType.GE:
+                return value >= self.value
+            if self.matchType == NumberMatchType.GT:
+                return value > self.value
+            if self.matchType == NumberMatchType.LE:
+                return value <= self.value
+            if self.matchType == NumberMatchType.LT:
+                return value < self.value
         return value == self.value

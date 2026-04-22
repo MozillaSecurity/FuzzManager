@@ -32,13 +32,17 @@ class AutoRunner(metaclass=ABCMeta):
     for running the given program and obtaining crash information.
     """
 
-    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: str | list[str] | None = None,
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
-        self.stdin = stdin
-
-        if self.stdin and isinstance(self.stdin, list):
-            self.stdin = "\n".join(self.stdin)
+        self.stdin = "\n".join(stdin) if isinstance(stdin, list) else stdin
 
         # Certain debuggers like GDB can run into problems when certain
         # environment variables are missing. Hence we copy the system environment
@@ -51,28 +55,32 @@ class AutoRunner(metaclass=ABCMeta):
         if "LD_LIBRARY_PATH" not in self.env:
             self.env["LD_LIBRARY_PATH"] = os.path.dirname(binary)
 
-        self.args = args
-        if self.args is None:
-            self.args = []
+        self.args = args or []
 
         assert isinstance(self.env, dict)
         assert isinstance(self.args, list)
 
         # The command that we will run for obtaining crash information
-        self.cmdArgs = []
+        self.cmdArgs: list[str] = []
 
         # These will hold our results from running
-        self.stdout = None
-        self.stderr = None
-        self.auxCrashData = None
+        self.stdout: str | None = None
+        self.stderr: str | None = None
+        self.auxCrashData: str | None = None
 
-    def getCrashInfo(self, configuration):
+    def getCrashInfo(self, configuration: ProgramConfiguration) -> CrashInfo:
         return CrashInfo.fromRawCrashData(
             self.stdout, self.stderr, configuration, self.auxCrashData
         )
 
     @staticmethod
-    def fromBinaryArgs(binary, args=None, env=None, cwd=None, stdin=None):
+    def fromBinaryArgs(
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: str | list[str] | None = None,
+    ) -> "AutoRunner":
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
@@ -82,8 +90,8 @@ class AutoRunner(metaclass=ABCMeta):
             env=env,
         )
 
-        (stdout, _) = process.communicate()
-        stdout = stdout.decode("utf-8", errors="ignore")
+        stdout_bytes, _ = process.communicate()
+        stdout = stdout_bytes.decode("utf-8", errors="ignore")
 
         force_gdb = bool(os.environ.get("FTB_FORCE_GDB", False))
 
@@ -91,13 +99,21 @@ class AutoRunner(metaclass=ABCMeta):
             stdout.find(" __asan_init") >= 0
             or stdout.find("__ubsan_default_options") >= 0
         ):
-            return ASanRunner(binary, args, env, cwd, stdin)
+            return ASanRunner(binary, args=args, env=env, cwd=cwd, stdin=stdin)
 
-        return GDBRunner(binary, args, env, cwd, stdin)
+        return GDBRunner(binary, args=args, env=env, cwd=cwd, stdin=stdin)
 
 
 class GDBRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None, core=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        core: str | None = None,
+        stdin: str | list[str] | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         # This can be used to force GDBRunner to first generate a core and then
@@ -146,7 +162,7 @@ class GDBRunner(AutoRunner):
             else:
                 self.cmdArgs.extend(self.args)
 
-    def run(self):
+    def run(self) -> bool:
         if self.force_core:
             plainCmdArgs = [self.binary]
             plainCmdArgs.extend(self.args)
@@ -162,7 +178,9 @@ class GDBRunner(AutoRunner):
 
             core = f"core.{process.pid}"
 
-            (plainStdout, plainStderr) = process.communicate(input=self.stdin)
+            plainStdout, plainStderr = process.communicate(
+                input=self.stdin.encode() if self.stdin else None
+            )
 
             if os.path.isfile(core):
                 self.cmdArgs.append(core)
@@ -185,7 +203,9 @@ class GDBRunner(AutoRunner):
             env=self.env,
         )
 
-        (stdout, stderr) = process.communicate(input=self.stdin)
+        stdout, stderr = process.communicate(
+            input=self.stdin.encode() if self.stdin else None
+        )
 
         self.stdout = stdout.decode("utf-8", errors="ignore")
         self.stderr = stderr.decode("utf-8", errors="ignore")
@@ -217,7 +237,14 @@ class GDBRunner(AutoRunner):
 
 
 class ASanRunner(AutoRunner):
-    def __init__(self, binary, args=None, env=None, cwd=None, stdin=None):
+    def __init__(
+        self,
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        stdin: str | list[str] | None = None,
+    ) -> None:
         AutoRunner.__init__(self, binary, args, env, cwd, stdin)
 
         self.cmdArgs.append(self.binary)
@@ -231,9 +258,10 @@ class ASanRunner(AutoRunner):
                     os.path.dirname(binary), "llvm-symbolizer"
                 )
                 if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
-                    self.env["ASAN_SYMBOLIZER_PATH"] = shutil.which("llvm-symbolizer")
-                    if not self.env["ASAN_SYMBOLIZER_PATH"]:
+                    llvm_symbolizer = shutil.which("llvm-symbolizer")
+                    if not llvm_symbolizer:
                         raise RuntimeError("Unable to locate llvm-symbolizer")
+                    self.env["ASAN_SYMBOLIZER_PATH"] = llvm_symbolizer
 
         if not os.path.isfile(self.env["ASAN_SYMBOLIZER_PATH"]):
             raise RuntimeError(
@@ -263,7 +291,7 @@ class ASanRunner(AutoRunner):
                 # for bucketing. This is helpful when assertions are hit in debug builds
                 self.env["ASAN_OPTIONS"] = "allocator_may_return_null=1:handle_abort=1"
 
-    def run(self):
+    def run(self) -> bool:
         tmpd = Path(mkdtemp(prefix="fm-autorun-"))
         try:
             env = self.env.copy()
@@ -275,9 +303,10 @@ class ASanRunner(AutoRunner):
 
             # create a ProgramConfiguration just to create the temporary CrashInfo
             pc = ProgramConfiguration.fromBinary(self.binary)
+            assert pc is not None
             process = subprocess.run(
                 self.cmdArgs,
-                stdin=self.stdin,
+                input=self.stdin,
                 capture_output=True,
                 text=True,
                 cwd=self.cwd,
@@ -286,8 +315,8 @@ class ASanRunner(AutoRunner):
 
             self.stdout = process.stdout
             self.stderr = process.stderr
+            self.auxCrashData = None
             first = True
-            self.auxCrashData = []
             for crash in tmpd.iterdir():
                 self.auxCrashData = crash.read_text()
                 if not first:
