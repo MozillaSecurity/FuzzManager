@@ -21,8 +21,10 @@ import re
 import sys
 import unicodedata
 from abc import ABCMeta
+from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
+from typing import Any
 
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -30,7 +32,7 @@ from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
 
 
-def unicode_escape_result(func):
+def unicode_escape_result(func: Callable[..., str]) -> Callable[..., str]:
     r"""Decorator to escape control and special block unicode
     characters in a function returning untrusted str values.
 
@@ -38,25 +40,24 @@ def unicode_escape_result(func):
     """
 
     class unicode_cc_map:
-        def __getitem__(self, char):
+        def __getitem__(self, char: int) -> str:
             if unicodedata.category(chr(char)) in {"Cc", "So"}:
                 return f"\\u{{{char:x}}}"
             raise LookupError()
 
     @wraps(func)
-    def wrapped(*args, **kwds):
+    def wrapped(*args: Any, **kwds: Any) -> str:
         result = func(*args, **kwds)
         return result.translate(unicode_cc_map())
 
     return wrapped
 
 
-def _is_unfinished(symbol, operators):
-    start, end = operators
-    return bool(symbol.count(start) > symbol.count(end))
+def _is_unfinished(symbol: str, operators: str) -> bool:
+    return symbol.count(operators[0]) > symbol.count(operators[1])
 
 
-def uint32(val):
+def uint32(val: int) -> int:
     """Force `val` into unsigned 32-bit range.
 
     Note that the input is returned as an int, therefore
@@ -76,7 +77,7 @@ def uint32(val):
     return val & 0xFFFFFFFF
 
 
-def int32(val):
+def int32(val: int) -> int:
     """Force `val` into signed 32-bit range.
 
     Note that the input is returned as an int, therefore
@@ -99,7 +100,7 @@ def int32(val):
     return val
 
 
-def uint64(val):
+def uint64(val: int) -> int:
     """Force `val` into unsigned 64-bit range.
 
     Note that the input is returned as an int, therefore
@@ -119,7 +120,7 @@ def uint64(val):
     return val & 0xFFFFFFFFFFFFFFFF
 
 
-def int64(val):
+def int64(val: int) -> int:
     """Force `val` into signed 64-bit range.
 
     Note that the input is returned as an int, therefore
@@ -145,7 +146,7 @@ def int64(val):
 class TraceParsingError(RuntimeError):
     __slots__ = ("line_no",)
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, *args: Any, **kwds: Any) -> None:
         self.line_no = kwds.pop("line_no")
         super().__init__(*args, **kwds)
 
@@ -156,31 +157,31 @@ class CrashInfo(metaclass=ABCMeta):
     It also supports generating a CrashSignature based on the stored information.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Store the raw data
-        self.rawStdout = []
-        self.rawStderr = []
-        self.rawCrashData = []
+        self.rawStdout: list[str] = []
+        self.rawStderr: list[str] = []
+        self.rawCrashData: list[str] = []
 
         # Store processed data
-        self.backtrace = []
-        self.registers = {}
-        self.crashAddress = None
-        self.crashInstruction = None
+        self.backtrace: list[str] = []
+        self.registers: dict[str, int] = {}
+        self.crashAddress: int | None = None
+        self.crashInstruction: str | None = None
 
         # Store configuration data (platform, product, os, etc.)
-        self.configuration = None
+        self.configuration: ProgramConfiguration | None = None
 
         # This is an optional testcase that is not stored with the crashInfo but
         # can be "attached" before matching signatures that might require the
         # testcase.
-        self.testcase = None
+        self.testcase: str | None = None
 
         # This can be used to record failures during signature creation
-        self.failureReason = None
+        self.failureReason: str | None = None
 
-    def __str__(self):
-        buf = []
+    def __str__(self) -> str:
+        buf: list[str] = []
         buf.append("Crash trace:")
         buf.append("")
         for idx, frame in enumerate(self.backtrace):
@@ -201,7 +202,7 @@ class CrashInfo(metaclass=ABCMeta):
 
         return "\n".join(buf)
 
-    def toCacheObject(self):
+    def toCacheObject(self) -> dict[str, Any]:
         """
         Create a cache object for restoring the class instance later on without parsing
         the crash data again. This object includes all class fields except for the
@@ -210,7 +211,7 @@ class CrashInfo(metaclass=ABCMeta):
         @rtype: dict
         @return: Dictionary containing expensive class fields
         """
-        cacheObject = {}
+        cacheObject: dict[str, Any] = {}
         cacheObject["backtrace"] = self.backtrace
         cacheObject["registers"] = self.registers
 
@@ -226,8 +227,12 @@ class CrashInfo(metaclass=ABCMeta):
 
     @staticmethod
     def fromRawCrashData(
-        stdout, stderr, configuration, auxCrashData=None, cacheObject=None
-    ):
+        stdout: str | list[str] | None,
+        stderr: str | list[str] | None,
+        configuration: ProgramConfiguration,
+        auxCrashData: str | list[str] | None = None,
+        cacheObject: Mapping[str, Any] | None = None,
+    ) -> "CrashInfo":
         """
         Create appropriate CrashInfo instance from raw crash data
 
@@ -250,19 +255,19 @@ class CrashInfo(metaclass=ABCMeta):
         @return: Crash information object
         """
 
-        assert stdout is None or isinstance(stdout, (list, str, bytes))
-        assert stderr is None or isinstance(stderr, (list, str, bytes))
-        assert auxCrashData is None or isinstance(auxCrashData, (list, str, bytes))
-
+        # TODO: These checks should raise ValueError instead of being asserts
+        assert stdout is None or isinstance(stdout, (list, str))
+        assert stderr is None or isinstance(stderr, (list, str))
+        assert auxCrashData is None or isinstance(auxCrashData, (list, str))
         assert isinstance(configuration, ProgramConfiguration)
 
-        if isinstance(stdout, (str, bytes)):
+        if isinstance(stdout, str):
             stdout = stdout.splitlines()
 
-        if isinstance(stderr, (str, bytes)):
+        if isinstance(stderr, str):
             stderr = stderr.splitlines()
 
-        if isinstance(auxCrashData, (str, bytes)):
+        if isinstance(auxCrashData, str):
             auxCrashData = auxCrashData.splitlines()
 
         if cacheObject is not None:
@@ -314,13 +319,13 @@ class CrashInfo(metaclass=ABCMeta):
         minidumpFirstDetected = False
 
         # Search both crashData and stderr, but prefer crashData
-        lines = []
+        lines: list[str] = []
         if auxCrashData is not None:
             lines.extend(auxCrashData)
         if stderr is not None:
             lines.extend(stderr)
 
-        result = None
+        result: CrashInfo | None = None
         for line in lines:
             if ubsanString in line and re.match(ubsanRegex, line) is not None:
                 result = UBSanCrashInfo(stdout, stderr, configuration, auxCrashData)
@@ -385,7 +390,7 @@ class CrashInfo(metaclass=ABCMeta):
         return result
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)
@@ -409,11 +414,11 @@ class CrashInfo(metaclass=ABCMeta):
 
     def createCrashSignature(
         self,
-        forceCrashAddress=False,
-        forceCrashInstruction=False,
-        maxFrames=8,
-        minimumSupportedVersion=13,
-    ):
+        forceCrashAddress: bool = False,
+        forceCrashInstruction: bool = False,
+        maxFrames: int = 8,
+        minimumSupportedVersion: int = 13,
+    ) -> CrashSignature | None:
         """
         @param forceCrashAddress: If True, the crash address will be included in any
                                   case
@@ -438,7 +443,7 @@ class CrashInfo(metaclass=ABCMeta):
         else:
             numFrames = len(self.backtrace)
 
-        symptomArr = []
+        symptomArr: list[dict[str, Any]] = []
 
         # Memorize where we find our abort messages
         abortMsgInCrashdata = False
@@ -471,7 +476,7 @@ class CrashInfo(metaclass=ABCMeta):
                 abortMsgs = [abortMsgs]
 
             for abortMsg in abortMsgs:
-                abortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
+                sanAbortMsg = AssertionHelper.getSanitizedAssertionPattern(abortMsg)
                 abortMsgSrc = "stderr"
                 if abortMsgInCrashdata:
                     abortMsgSrc = "crashdata"
@@ -481,19 +486,22 @@ class CrashInfo(metaclass=ABCMeta):
                 # for anything newer, use the short form with forward slashes
                 # to increase the readability of the signatures.
                 if minimumSupportedVersion < 12:
-                    stringObj = {"value": abortMsg, "matchType": "pcre"}
-                    symptomObj = {
-                        "type": "output",
-                        "src": abortMsgSrc,
-                        "value": stringObj,
-                    }
+                    stringObj = {"value": sanAbortMsg, "matchType": "pcre"}
+                    symptomArr.append(
+                        {
+                            "type": "output",
+                            "src": abortMsgSrc,
+                            "value": stringObj,
+                        }
+                    )
                 else:
-                    symptomObj = {
-                        "type": "output",
-                        "src": abortMsgSrc,
-                        "value": f"/{abortMsg}/",
-                    }
-                symptomArr.append(symptomObj)
+                    symptomArr.append(
+                        {
+                            "type": "output",
+                            "src": abortMsgSrc,
+                            "value": f"/{sanAbortMsg}/",
+                        }
+                    )
 
         # Consider the first four frames as top stack
         topStackLimit = 4
@@ -516,17 +524,18 @@ class CrashInfo(metaclass=ABCMeta):
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
                 if functionName != "??":
-                    symptomObj = {
-                        "type": "stackFrame",
-                        "frameNumber": idx,
-                        "functionName": functionName,
-                    }
-                    symptomArr.append(symptomObj)
+                    symptomArr.append(
+                        {
+                            "type": "stackFrame",
+                            "frameNumber": idx,
+                            "functionName": functionName,
+                        }
+                    )
                 elif idx < 4:
                     # If we're in the top 4, we count this as a miss
                     topStackMissCount += 1
         else:
-            framesArray = []
+            framesArray: list[str] = []
 
             for idx in range(0, numFrames):
                 functionName = self.backtrace[idx]
@@ -540,7 +549,7 @@ class CrashInfo(metaclass=ABCMeta):
 
             lastSymbolizedFrame = None
             for frameIdx in range(0, len(framesArray)):
-                if str(framesArray[frameIdx]) != "?":
+                if framesArray[frameIdx] != "?":
                     lastSymbolizedFrame = frameIdx
 
             if lastSymbolizedFrame is not None:
@@ -604,7 +613,7 @@ class CrashInfo(metaclass=ABCMeta):
         return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
     @staticmethod
-    def sanitizeStackFrame(frame):
+    def sanitizeStackFrame(frame: str) -> str:
         """
         This function removes function arguments and other non-generic parts
         of the function frame, returning a (hopefully) generic function name.
@@ -648,7 +657,13 @@ class CrashInfo(metaclass=ABCMeta):
 
 
 class NoCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -668,7 +683,13 @@ class NoCrashInfo(CrashInfo):
 
 
 class ASanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -688,6 +709,7 @@ class ASanCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         asanOutput = crashData if crashData else stderr
+        assert asanOutput is not None
 
         asanCrashAddressPattern = r"""(?x)
             [A-Za-z]+Sanitizer.*\s
@@ -740,6 +762,7 @@ class ASanCrashInfo(CrashInfo):
             index, parts = self.split_frame(traceLine)
             if index is None:
                 continue
+            assert parts is not None
 
             # We may see multiple traces in ASAN
             if index == 0:
@@ -781,7 +804,9 @@ class ASanCrashInfo(CrashInfo):
             expectedIndex += 1
 
     @staticmethod
-    def split_frame(line):
+    def split_frame(
+        line: str,
+    ) -> tuple[int | None, list[str] | None]:
         parts = line.strip().split()
 
         # We only want stack frames
@@ -823,7 +848,7 @@ class ASanCrashInfo(CrashInfo):
         return frame_no, parts
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)
@@ -897,7 +922,13 @@ class ASanCrashInfo(CrashInfo):
 
 
 class LSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -917,6 +948,7 @@ class LSanCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the LSan trace, otherwise use stderr
         lsanOutput = crashData if crashData else stderr
+        assert lsanOutput is not None
         lsanErrorPattern = "ERROR: LeakSanitizer:"
         lsanPatternSeen = False
 
@@ -930,6 +962,7 @@ class LSanCrashInfo(CrashInfo):
             index, parts = ASanCrashInfo.split_frame(traceLine)
             if index is None:
                 continue
+            assert parts is not None
 
             if expectedIndex != index:
                 raise TraceParsingError(
@@ -962,7 +995,7 @@ class LSanCrashInfo(CrashInfo):
             self.backtrace.append("??")
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)
@@ -986,7 +1019,13 @@ class LSanCrashInfo(CrashInfo):
 
 
 class UBSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1006,6 +1045,7 @@ class UBSanCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the UBSan trace, otherwise use stderr
         ubsanOutput = crashData if crashData else stderr
+        assert ubsanOutput is not None
         ubsanErrorPattern = r":\d+:\d+:\s+runtime\s+error:\s+"
         ubsanPatternSeen = False
 
@@ -1019,6 +1059,7 @@ class UBSanCrashInfo(CrashInfo):
             index, parts = ASanCrashInfo.split_frame(traceLine)
             if index is None:
                 continue
+            assert parts is not None
 
             if expectedIndex != index:
                 raise TraceParsingError(
@@ -1045,7 +1086,7 @@ class UBSanCrashInfo(CrashInfo):
             expectedIndex += 1
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)
@@ -1069,7 +1110,13 @@ class UBSanCrashInfo(CrashInfo):
 
 
 class GDBCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1089,6 +1136,7 @@ class GDBCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the GDB trace, otherwise use stderr
         gdbOutput = crashData or stderr
+        assert gdbOutput is not None
 
         gdbFramePatterns = [
             "\\s*#(\\d+)\\s+(0x[0-9a-f]+) in (.+?) \\(.*?\\)( at .+)?",
@@ -1149,7 +1197,7 @@ class GDBCrashInfo(CrashInfo):
 
                 lastLineBuf += traceLine
 
-                functionName = None
+                functionName: str | None = None
                 frameIndex = None
                 gdbDebugInfoMismatch = False
 
@@ -1189,6 +1237,7 @@ class GDBCrashInfo(CrashInfo):
                         line_no=line_no,
                     )
 
+                assert functionName is not None
                 # This is a workaround for GDB throwing an error while resolving
                 # function arguments in the trace and aborting. We try to remove the
                 # error message to at least recover the function name properly.
@@ -1227,7 +1276,9 @@ class GDBCrashInfo(CrashInfo):
                     self.crashAddress = uint64(self.crashAddress)
 
     @staticmethod
-    def calculateCrashAddress(crashInstruction, registerMap):
+    def calculateCrashAddress(
+        crashInstruction: str, registerMap: Mapping[str, int]
+    ) -> int | str | None:
         """
         Calculate the crash address given the crash instruction and register contents
 
@@ -1248,7 +1299,7 @@ class GDBCrashInfo(CrashInfo):
             # that this caused our crash.
             return RegisterHelper.getInstructionPointer(registerMap)
 
-        parts = crashInstruction.split(None, 1)
+        parts = crashInstruction.split(maxsplit=1)
 
         if len(parts) == 1:
             # Single instruction without any operands?
@@ -1297,10 +1348,10 @@ class GDBCrashInfo(CrashInfo):
         # When we fail, try storing a reason here
         failureReason = "Unknown failure."
 
-        def isDerefOp(op):
+        def isDerefOp(op: str) -> bool:
             return "(" in op and ")" in op
 
-        def calculateDerefOpAddress(derefOp):
+        def calculateDerefOpAddress(derefOp: str) -> tuple[int | None, str | None]:
             match = re.match("\\*?((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+)\\)", derefOp)
             if match is not None:
                 offset = 0
@@ -1330,11 +1381,11 @@ class GDBCrashInfo(CrashInfo):
                     # TODO: Fix this properly by including readability information in
                     #       GDB output
                     if isDerefOp(parts[0]):
-                        (val, failed) = calculateDerefOpAddress(parts[0])
-                        if failed:
-                            failureReason = failed
-                        else:
+                        val, failed = calculateDerefOpAddress(parts[0])
+                        if val is not None:
                             return val
+                        assert failed is not None
+                        failureReason = failed
                     else:
                         # No deref, so the stack access must be failing
                         return RegisterHelper.getStackPointer(registerMap)
@@ -1345,11 +1396,11 @@ class GDBCrashInfo(CrashInfo):
                         # we don't mix them with instructions that also
                         # interacts with the stack pointer.
                         if instruction.startswith("set"):
-                            (val, failed) = calculateDerefOpAddress(parts[0])
-                            if failed:
-                                failureReason = failed
-                            else:
+                            val, failed = calculateDerefOpAddress(parts[0])
+                            if val is not None:
                                 return val
+                            assert failed is not None
+                            failureReason = failed
                     else:
                         failureReason = "Unsupported single-operand instruction."
             elif len(parts) == 2:
@@ -1391,11 +1442,11 @@ class GDBCrashInfo(CrashInfo):
                     derefOp = parts[1]
 
                 if derefOp is not None:
-                    (val, failed) = calculateDerefOpAddress(derefOp)
-                    if failed:
-                        failureReason = failed
-                    else:
+                    val, failed = calculateDerefOpAddress(derefOp)
+                    if val is not None:
                         return val
+                    assert failed is not None
+                    failureReason = failed
                 else:
                     failureReason = (
                         "Failed to decode two-operand instruction: No dereference "
@@ -1418,14 +1469,13 @@ class GDBCrashInfo(CrashInfo):
                 if "(" in parts[0] and ")" in parts[2]:
                     complexDerefOp = parts[0] + "," + parts[1] + "," + parts[2]
 
-                    (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(
+                    val, failed = GDBCrashInfo.calculateComplexDerefOpAddress(
                         complexDerefOp, registerMap
                     )
-
-                    if result is None:
-                        failureReason = reason
-                    else:
-                        return result
+                    if val is not None:
+                        return val
+                    assert failed is not None
+                    failureReason = failed
                 else:
                     raise RuntimeError(
                         f"Unexpected instruction pattern: {crashInstruction}"
@@ -1436,14 +1486,13 @@ class GDBCrashInfo(CrashInfo):
                 elif "(" not in parts[0] and ")" not in parts[0]:
                     complexDerefOp = parts[1] + "," + parts[2] + "," + parts[3]
 
-                (result, reason) = GDBCrashInfo.calculateComplexDerefOpAddress(
+                val, failed = GDBCrashInfo.calculateComplexDerefOpAddress(
                     complexDerefOp, registerMap
                 )
-
-                if result is None:
-                    failureReason = reason
-                else:
-                    return result
+                if val is not None:
+                    return val
+                assert failed is not None
+                failureReason = failed
             else:
                 raise RuntimeError(
                     "Unexpected length after splitting operands of this instruction: "
@@ -1454,13 +1503,15 @@ class GDBCrashInfo(CrashInfo):
             # Anything that is not explicitly handled now is considered unsupported
             failureReason = "Unsupported instruction in incomplete ARM/ARM64 support."
 
-            def getARMImmConst(val):
+            def getARMImmConst(val: str) -> int:
                 val = val.replace("#", "").strip()
                 if val.startswith("0x"):
                     return int(val, 16)
                 return int(val)
 
-            def calculateARMDerefOpAddress(derefOp):
+            def calculateARMDerefOpAddress(
+                derefOp: str,
+            ) -> tuple[int | None, str | None]:
                 derefOps = derefOp.split(",")
 
                 if len(derefOps) > 2:
@@ -1510,11 +1561,11 @@ class GDBCrashInfo(CrashInfo):
                 # Load/Store instruction
                 match = re.match("^\\s*\\[(.*)\\]$", parts[1])
                 if match is not None:
-                    (result, reason) = calculateARMDerefOpAddress(match.group(1))
-                    if result is None:
-                        failureReason += f" ({reason})"
-                    else:
-                        return result
+                    val, failed = calculateARMDerefOpAddress(match.group(1))
+                    if val is not None:
+                        return val
+                    assert failed is not None
+                    failureReason += f" ({failed})"
         else:
             failureReason = "Architecture is not supported."
 
@@ -1526,7 +1577,9 @@ class GDBCrashInfo(CrashInfo):
         return failureReason
 
     @staticmethod
-    def calculateComplexDerefOpAddress(complexDerefOp, registerMap):
+    def calculateComplexDerefOpAddress(
+        complexDerefOp: str, registerMap: Mapping[str, int]
+    ) -> tuple[int | None, str | None]:
         match = re.match(
             "((?:\\-?0x[0-9a-f]+)?)\\(%([a-z0-9]+),%([a-z0-9]+),([0-9]+)\\)",
             complexDerefOp,
@@ -1558,7 +1611,13 @@ class GDBCrashInfo(CrashInfo):
 
 
 class MinidumpCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1579,6 +1638,7 @@ class MinidumpCrashInfo(CrashInfo):
         # If crashData is given, use that to find the Minidump trace, otherwise use
         # stderr
         minidumpOuput = crashData or stderr
+        assert minidumpOuput is not None
 
         crashThread = None
         for traceLine in minidumpOuput:
@@ -1608,7 +1668,13 @@ class MinidumpCrashInfo(CrashInfo):
 
 
 class AppleCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1627,6 +1693,7 @@ class AppleCrashInfo(CrashInfo):
         self.configuration = configuration
 
         apple_crash_data = crashData or stderr
+        assert apple_crash_data is not None
 
         inCrashingThread = False
         for line in apple_crash_data:
@@ -1651,7 +1718,7 @@ class AppleCrashInfo(CrashInfo):
             if inCrashingThread:
                 # Example:
                 # "0   js-dbg-64-dm-darwin-a523d4c7efe2    0x00000001004b04c4 js::jit::MacroAssembler::Pop(js::jit::Register) + 180 (MacroAssembler-inl.h:50)"  # noqa: E501
-                components = line.split(None, 3)
+                components = line.split(maxsplit=3)
                 stackEntry = components[3]
                 if stackEntry.startswith("0"):
                     self.backtrace.append("??")
@@ -1662,14 +1729,14 @@ class AppleCrashInfo(CrashInfo):
                     self.backtrace.append(stackEntry)
 
     @staticmethod
-    def removeFilename(stackEntry):
+    def removeFilename(stackEntry: str) -> str:
         match = re.match(r"(.*) \(\S+\)", stackEntry)
         if match:
             return match.group(1)
         return stackEntry
 
     @staticmethod
-    def removeOffset(stackEntry):
+    def removeOffset(stackEntry: str) -> str:
         match = re.match(r"(.*) \+ \d+", stackEntry)
         if match:
             return match.group(1)
@@ -1677,7 +1744,13 @@ class AppleCrashInfo(CrashInfo):
 
 
 class CDBCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1701,10 +1774,11 @@ class CDBCrashInfo(CrashInfo):
         inCrashingThread = False
         inCrashInstruction = False
         inEcxrData = False
-        ecxrData = []
+        ecxrData: list[str] = []
         cInstruction = ""
 
         cdb_crash_data = crashData or stderr
+        assert cdb_crash_data is not None
 
         for line in cdb_crash_data:
             # Start of .ecxr data
@@ -1780,7 +1854,7 @@ class CDBCrashInfo(CrashInfo):
                     #     00404c59 8b39            mov     edi,dword ptr [ecx]
                     # 64-bit example:
                     #     00007ff7`4d469ff3 4c8b01          mov     r8,qword ptr [rcx]
-                    cInstruction = line.split(None, 2)[-1]
+                    cInstruction = line.split(maxsplit=2)[-1]
                     # There may be multiple spaces inside the faulting instruction
                     cInstruction = " ".join(cInstruction.split())
                     self.crashInstruction = cInstruction
@@ -1813,7 +1887,7 @@ class CDBCrashInfo(CrashInfo):
                 self.backtrace.append(stackEntry)
 
     @staticmethod
-    def removeFilenameAndOffset(stackEntry):
+    def removeFilenameAndOffset(stackEntry: str) -> str:
         # Extract only the function name
         if "0x" in stackEntry:
             result = (
@@ -1836,7 +1910,13 @@ class RustCrashInfo(CrashInfo):
         r"(::h[0-9a-f]{16})?|\s+at ([A-Za-z]:)?(/[A-Za-z0-9_ .]+)+:\d+)$"
     )
 
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1857,6 +1937,7 @@ class RustCrashInfo(CrashInfo):
         # If crashData is given, use that to find the rust backtrace, otherwise use
         # stderr
         rustOutput = crashData or stderr
+        assert rustOutput is not None
 
         self.crashAddress = (
             0  # this is always an assertion, set to 0 to make matching more efficient
@@ -1881,7 +1962,13 @@ class RustCrashInfo(CrashInfo):
 
 
 class TSanCrashInfo(CrashInfo):
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -1901,6 +1988,7 @@ class TSanCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
         tsanOutput = crashData if crashData else stderr
+        assert tsanOutput is not None
 
         tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""
 
@@ -1930,6 +2018,7 @@ class TSanCrashInfo(CrashInfo):
             index, parts = ASanCrashInfo.split_frame(traceLine)
             if index is None:
                 continue
+            assert parts is not None
 
             # We may see multiple traces in TSAN
             if index == 0:
@@ -1987,7 +2076,7 @@ class TSanCrashInfo(CrashInfo):
             self.backtrace.extend(backtrace)
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)
@@ -2041,7 +2130,13 @@ class ValgrindCrashInfo(CrashInfo):
         re.VERBOSE,
     )
 
-    def __init__(self, stdout, stderr, configuration, crashData=None):
+    def __init__(
+        self,
+        stdout: list[str] | None,
+        stderr: list[str] | None,
+        configuration: ProgramConfiguration,
+        crashData: list[str] | None = None,
+    ) -> None:
         """
         Private constructor, called by L{CrashInfo.fromRawCrashData}. Do not use
         directly.
@@ -2062,6 +2157,7 @@ class ValgrindCrashInfo(CrashInfo):
         # If crashData is given, use that to find the Valgrind trace, otherwise use
         # stderr
         vgdOutput = crashData if crashData else stderr
+        assert vgdOutput is not None
         stackPattern = re.compile(
             r"""
             ^==\d+==\s+(at|by)\s+            # beginning of entry
@@ -2105,7 +2201,7 @@ class ValgrindCrashInfo(CrashInfo):
                     break
 
     @unicode_escape_result
-    def createShortSignature(self):
+    def createShortSignature(self) -> str:
         """
         @rtype: String
         @return: A string representing this crash (short signature)

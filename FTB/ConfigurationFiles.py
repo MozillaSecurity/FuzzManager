@@ -18,15 +18,15 @@ import sys
 
 
 class ConfigurationFiles:
-    def __init__(self, configFiles):
-        self.mainConfig = {}
-        self.metadataConfig = {}
+    def __init__(self, configFiles: list[str] | None) -> None:
+        self.mainConfig: dict[str, str] = {}
+        self.metadataConfig: dict[str, str] = {}
 
         if configFiles:
             self.parser = configparser.ConfigParser()
 
             # Make sure keys are kept case-sensitive
-            self.parser.optionxform = str
+            self.parser.optionxform = str  # type: ignore[method-assign,assignment]
 
             self.parser.read(configFiles)
             self.mainConfig = self.getSectionMap("Main")
@@ -46,8 +46,8 @@ class ConfigurationFiles:
                     file=sys.stderr,
                 )
 
-    def getSectionMap(self, section):
-        ret = {}
+    def getSectionMap(self, section: str) -> dict[str, str]:
+        ret: dict[str, str] = {}
         try:
             options = self.parser.options(section)
         except configparser.NoSectionError:

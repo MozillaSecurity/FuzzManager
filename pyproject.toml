@@ -36,6 +36,13 @@ norecursedirs = [
     "dist",
 ]
 
+[tool.mypy]
+files = ["FTB"]
+exclude = ['/tests/']
+ignore_missing_imports = true
+show_error_codes = true
+strict = true
+
 [tool.ruff]
 extend-exclude = ["**/migrations/*.py"]
 fix = true
@@ -62,15 +69,13 @@ select = [
     # flake8-simplify
     "SIM",
     # flake8-type-checking
-    "TCH",
+    "TC",
     # pyupgrade
     "UP",
     # pycodestyle
     "W",
 ]
 ignore = ["RUF012"]
-
-[tool.setuptools_scm]
 
 [tool.ruff.lint.isort]
 known-first-party = [
@@ -85,3 +90,5 @@ known-first-party = [
     "ec2spotmanager",
     "taskmanager",
 ]
+
+[tool.setuptools_scm]

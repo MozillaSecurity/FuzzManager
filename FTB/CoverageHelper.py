@@ -13,9 +13,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import re
+from typing import Any
 
 
-def merge_coverage_data(r, s):
+def merge_coverage_data(r: dict[str, Any], s: dict[str, Any]) -> dict[str, int]:
     # These variables are mainly for debugging purposes. We count the number
     # of warnings we encounter during merging, which are mostly due to
     # bugs in GCOV. These statistics can be included in the report description
@@ -26,7 +27,7 @@ def merge_coverage_data(r, s):
         "coverable_mismatch_count": 0,
     }
 
-    def merge_recursive(r, s):
+    def merge_recursive(r: dict[str, Any], s: dict[str, Any]) -> None:
         assert r["name"] == s["name"]
 
         if "children" in s:
@@ -110,7 +111,7 @@ def merge_coverage_data(r, s):
     return stats
 
 
-def calculate_summary_fields(node, name=None):
+def calculate_summary_fields(node: dict[str, Any], name: str | None = None) -> None:
     node["name"] = name
     node["linesTotal"] = 0
     node["linesCovered"] = 0
@@ -145,7 +146,9 @@ def calculate_summary_fields(node, name=None):
         node["coveragePercent"] = 0.0
 
 
-def apply_include_exclude_directives(node, directives):
+def apply_include_exclude_directives(
+    node: dict[str, Any], directives: list[str]
+) -> None:
     """
     Applies the given include and exclude directives to the given nodeself.
     Directives either start with a + or a - for include or exclude, followed
@@ -174,7 +177,7 @@ def apply_include_exclude_directives(node, directives):
     #
     # ** are left as a string
     # patterns are converted to regex and compile
-    directives_new = [
+    directives_new: list[tuple[str, list[str | re.Pattern[str]]]] = [
         ("+", ["**"])
     ]  # start with an implicit +:** so we don't have to handle the empty case
     for directive in directives:
@@ -188,7 +191,7 @@ def apply_include_exclude_directives(node, directives):
         what, pattern = directive.split(":", 1)
         if what not in "+-":
             raise RuntimeError("Unexpected directive prefix: " + what)
-        parts = []
+        parts: list[str | re.Pattern[str]] = []
         for part in pattern.split("/"):
             if part == "**":
                 parts.append(part)
@@ -206,10 +209,12 @@ def apply_include_exclude_directives(node, directives):
                 parts.append(re.compile(part))
         directives_new.append((what, parts))
 
-    def _is_dir(node):
+    def _is_dir(node: dict[str, Any]) -> bool:
         return "children" in node
 
-    def __apply_include_exclude_directives(node, directives):
+    def __apply_include_exclude_directives(
+        node: dict[str, Any], directives: list[tuple[str, Any]]
+    ) -> None:
         if not _is_dir(node):
             return
 
@@ -332,7 +337,7 @@ def apply_include_exclude_directives(node, directives):
     __apply_include_exclude_directives(node, directives_new)
 
 
-def get_flattened_names(node, prefix=""):
+def get_flattened_names(node: dict[str, str | None], prefix: str = "") -> set[str]:
     """
     Returns a list of flattened paths (files and directories) of the given node.
 
@@ -349,7 +354,9 @@ def get_flattened_names(node, prefix=""):
     @rtype: list(str)
     """
 
-    def __get_flattened_names(node, prefix, result):
+    def __get_flattened_names(
+        node: dict[str, Any], prefix: str, result: set[str]
+    ) -> set[str]:
         current_name = node["name"]
         if current_name is None:
             new_prefix = ""

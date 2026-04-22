@@ -12,6 +12,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from collections.abc import Mapping
+
 x86Registers = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "eip"]
 
 x64Registers = [
@@ -77,7 +79,7 @@ validRegisters = {
 }
 
 
-def getRegisterPattern():
+def getRegisterPattern() -> str:
     """
     Return a pattern including all register names that are considered valid
     """
@@ -89,7 +91,7 @@ def getRegisterPattern():
     )
 
 
-def getStackPointer(registerMap):
+def getStackPointer(registerMap: Mapping[str, int]) -> int:
     """
     Return the stack pointer value from the given register map
 
@@ -107,7 +109,7 @@ def getStackPointer(registerMap):
     raise RuntimeError("Register map does not contain a usable stack pointer!")
 
 
-def getInstructionPointer(registerMap):
+def getInstructionPointer(registerMap: Mapping[str, int]) -> int:
     """
     Return the instruction pointer value from the given register map
 
@@ -125,7 +127,7 @@ def getInstructionPointer(registerMap):
     raise RuntimeError("Register map does not contain a usable instruction pointer!")
 
 
-def getRegisterValue(register, registerMap):
+def getRegisterValue(register: str, registerMap: Mapping[str, int]) -> int | None:
     """
     Return the value of the specified register using the provided register map.
     This method also works for getting lower register parts out of higher ones.
@@ -196,7 +198,7 @@ def getRegisterValue(register, registerMap):
     return None
 
 
-def getBitWidth(registerMap):
+def getBitWidth(registerMap: Mapping[str, int]) -> int:
     """
     Return the bit width (32 or 64 bit) given the registers
 
@@ -212,7 +214,7 @@ def getBitWidth(registerMap):
     return 32
 
 
-def isX86Compatible(registerMap):
+def isX86Compatible(registerMap: Mapping[str, int]) -> bool:
     """
     Return true, if the the given registers are X86 compatible, such as x86 or x86-64.
     ARM, PPC and your PDP-15 will fail this check and we don't support it right now.
@@ -226,7 +228,7 @@ def isX86Compatible(registerMap):
     return any(register in registerMap for register in x86OnlyRegisters)
 
 
-def isARMCompatible(registerMap):
+def isARMCompatible(registerMap: Mapping[str, int]) -> bool:
     """
     Return true, if the the given registers are either ARM or ARM64.
 

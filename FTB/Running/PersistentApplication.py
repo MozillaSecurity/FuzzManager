@@ -24,16 +24,20 @@ import signal
 import subprocess
 import time
 from abc import ABCMeta
+from enum import Enum, IntEnum, auto
 
 from FTB.Running.StreamCollector import StreamCollector
 from FTB.Running.WaitpidMonitor import WaitpidMonitor
 
 
-class ApplicationStatus:
-    OK, ERROR, TIMEDOUT, CRASHED = range(1, 5)
+class ApplicationStatus(IntEnum):
+    OK = 1
+    ERROR = 2
+    TIMEDOUT = 3
+    CRASHED = 4
 
 
-class PersistentMode:
+class PersistentMode(Enum):
     """
     Persistent fuzzing mode - determines how the program synchronizes the
     execution of multiple testcases in one process.
@@ -59,7 +63,9 @@ class PersistentMode:
               if no synchronization via stdin is possible
     """
 
-    NONE, SPFP, SIGSTOP = range(1, 4)
+    NONE = auto()
+    SPFP = auto()
+    SIGSTOP = auto()
 
 
 class PersistentApplication(metaclass=ABCMeta):
@@ -69,14 +75,14 @@ class PersistentApplication(metaclass=ABCMeta):
 
     def __init__(
         self,
-        binary,
-        args=None,
-        env=None,
-        cwd=None,
-        persistentMode=PersistentMode.NONE,
-        processingTimeout=10,
-        inputFile=None,
-    ):
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        persistentMode: PersistentMode = PersistentMode.NONE,
+        processingTimeout: int = 10,
+        inputFile: str | None = None,
+    ) -> None:
         self.binary = binary
         self.cwd = cwd
 
@@ -86,9 +92,7 @@ class PersistentApplication(metaclass=ABCMeta):
             for envkey in env:
                 self.env[envkey] = env[envkey]
 
-        self.args = args
-        if self.args is None:
-            self.args = []
+        self.args = args or []
 
         assert isinstance(self.env, dict)
         assert isinstance(self.args, list)
@@ -103,10 +107,10 @@ class PersistentApplication(metaclass=ABCMeta):
         self.inputFile = inputFile
 
         # Various variables holding information about the program
-        self.process = None
-        self.stdout = None
-        self.stderr = None
-        self.testLog = None
+        self.process: subprocess.Popen[str] | None = None
+        self.stdout: list[str] | None = None
+        self.stderr: list[str] | None = None
+        self.testLog: list[str] | None = None
 
         # This string will be used to prefix spfp inputs and can be set
         # to e.g. a comment string prefix for the target input ('//')
@@ -115,19 +119,20 @@ class PersistentApplication(metaclass=ABCMeta):
         self.spfpPrefix = ""
         self.spfpSuffix = ""  # To support <!-- -->
 
-    def start(self, test=None):
+    def start(self, test: str | None = None) -> int | None:
         pass
 
-    def stop(self):
+    def stop(self) -> None:
         pass
 
-    def runTest(self, test):
+    def runTest(self, test: str) -> int | None:
         pass
 
-    def status(self):
+    def status(self) -> int | None:
         pass
 
-    def _crashed(self):
+    def _crashed(self) -> bool:
+        assert self.process is not None
         if self.process.returncode < 0:
             crashSignals = [
                 # POSIX.1-1990 signals
@@ -151,32 +156,35 @@ class PersistentApplication(metaclass=ABCMeta):
 class SimplePersistentApplication(PersistentApplication):
     def __init__(
         self,
-        binary,
-        args=None,
-        env=None,
-        cwd=None,
-        persistentMode=PersistentMode.NONE,
-        processingTimeout=10,
-        inputFile=None,
-    ):
+        binary: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        persistentMode: PersistentMode = PersistentMode.NONE,
+        processingTimeout: int = 10,
+        inputFile: str | None = None,
+    ) -> None:
         PersistentApplication.__init__(
             self, binary, args, env, cwd, persistentMode, processingTimeout, inputFile
         )
 
         # Used to store the second return value if waitpid, which has the real exit code
-        self.childExit = None
+        self.childExit: int | None = None
 
         # These will hold our StreamCollectors for stdout/err
-        self.outCollector = None
-        self.errCollector = None
+        self.outCollector: StreamCollector | None = None
+        self.errCollector: StreamCollector | None = None
 
-    def _write_log_test(self, test):
+    def _write_log_test(self, test: str) -> None:
+        assert self.testLog is not None
         self.testLog.append(test)
 
         if self.inputFile:
             with open(self.inputFile, "w") as inputFileFd:
                 inputFileFd.write(test)
         elif self.persistentMode == PersistentMode.SPFP:
+            assert self.process is not None
+            assert self.process.stdin is not None
             # This won't work with pure binary data, but SPFP mode isn't suitable for
             # that in general
             print(test, file=self.process.stdin)
@@ -185,16 +193,22 @@ class SimplePersistentApplication(PersistentApplication):
                 file=self.process.stdin,
             )
         elif self.persistentMode == PersistentMode.SIGSTOP:
+            assert self.process is not None
+            assert self.process.stdin is not None
             # Shameless copycat, oh hai lcamtuf ;)
-            os.ftruncate(self.process.stdin, len(test))
-            os.lseek(self.process.stdin, 0, os.SEEK_SET)
+
+            os.ftruncate(self.process.stdin.fileno(), len(test))
+            os.lseek(self.process.stdin.fileno(), 0, os.SEEK_SET)
             self.process.stdin.write(test)
             self.process.stdin.flush()
         else:
+            assert self.process is not None
+            assert self.process.stdin is not None
             self.process.stdin.write(test)
             self.process.stdin.close()
 
-    def _wait_child_stopped(self):
+    def _wait_child_stopped(self) -> bool:
+        assert self.process is not None
         monitor = WaitpidMonitor(self.process.pid, os.WUNTRACED)
         monitor.start()
         monitor.join(self.processingTimeout)
@@ -209,7 +223,7 @@ class SimplePersistentApplication(PersistentApplication):
 
         return True
 
-    def start(self, test=None):
+    def start(self, test: str | None = None) -> int | None:
         assert self.process is None or self.process.poll() is not None
 
         # Reset the test log
@@ -239,11 +253,13 @@ class SimplePersistentApplication(PersistentApplication):
 
         # This queue is used to queue up responses that should be directly processed
         # by this class rather than being logged.
-        self.responseQueue = queue.Queue()
+        self.responseQueue: queue.Queue[str] = queue.Queue()
 
+        assert self.process.stdout is not None
         self.outCollector = StreamCollector(
             self.process.stdout, self.responseQueue, logResponses=False, maxBacklog=256
         )
+        assert self.process.stderr is not None
         self.errCollector = StreamCollector(
             self.process.stderr, self.responseQueue, logResponses=False, maxBacklog=256
         )
@@ -292,10 +308,12 @@ class SimplePersistentApplication(PersistentApplication):
                 )
         else:
             if not self.inputFile:
+                assert test is not None
                 self._write_log_test(test)
 
             # Assume PersistentMode.NONE and expect the process to exit now
-            (maxSleepTime, pollInterval) = (self.processingTimeout, 0.2)
+            maxSleepTime = float(self.processingTimeout)
+            pollInterval = 0.2
             while self.process.poll() is None and maxSleepTime > 0:
                 maxSleepTime -= pollInterval
                 time.sleep(pollInterval)
@@ -314,25 +332,27 @@ class SimplePersistentApplication(PersistentApplication):
             # Also terminates the process in case of a timeout.
             self.stop()
 
-            return ret
+            return int(ret)
         return None
 
-    def stop(self):
+    def stop(self) -> None:
         self._terminateProcess()
 
         # Ensure we leave no dangling threads when stopping
         if self.outCollector is not None:
             # errCollector is expected to be set when outCollector is
             self.outCollector.join()
+            assert self.errCollector is not None
             self.errCollector.join()
 
             # Make the output available
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
-    def runTest(self, test):
+    def runTest(self, test: str) -> int | None:
         if self.process is None or self.process.poll() is not None:
             self.start()
+            assert self.process is not None
 
         # Write test data and also log it
         self._write_log_test(test)
@@ -374,6 +394,8 @@ class SimplePersistentApplication(PersistentApplication):
                 )
 
             # Update stdout/err available for the last run
+            assert self.outCollector is not None
+            assert self.errCollector is not None
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
@@ -396,10 +418,13 @@ class SimplePersistentApplication(PersistentApplication):
                 return ApplicationStatus.TIMEDOUT
 
             # Update stdout/err available for the last run
+            assert self.outCollector is not None
+            assert self.errCollector is not None
             self.stdout = self.outCollector.output
             self.stderr = self.errCollector.output
 
             if self.process.poll() is not None:
+                assert self.childExit is not None
                 exitCode = self.childExit >> 8
                 signalNum = self.childExit & 0xFF
 
@@ -415,14 +440,15 @@ class SimplePersistentApplication(PersistentApplication):
             return ApplicationStatus.OK
         return None
 
-    def _terminateProcess(self):
+    def _terminateProcess(self) -> None:
         if self.process and self.process.poll() is None:
             # Try to terminate the process gracefully first
             self.process.terminate()
 
             # Emulate a wait() with timeout. Because wait() having
             # a timeout would be way too easy, wouldn't it? -.-
-            (maxSleepTime, pollInterval) = (3, 0.2)
+            maxSleepTime = 3.0
+            pollInterval = 0.2
             while self.process.poll() is None and maxSleepTime > 0:
                 maxSleepTime -= pollInterval
                 time.sleep(pollInterval)

@@ -15,9 +15,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import numbers
+from collections.abc import Mapping
+from typing import Any
 
 
-def getArrayChecked(obj, key, mandatory=False):
+def getArrayChecked(
+    obj: Mapping[str, Any], key: str, mandatory: bool = False
+) -> list[Any] | None:
     """
     Retrieve a list from the given object using the given key
 
@@ -33,10 +37,12 @@ def getArrayChecked(obj, key, mandatory=False):
     @rtype: list
     @return: List retrieved from object
     """
-    return __getTypeChecked(obj, key, [list], mandatory)
+    return __getTypeChecked(obj, key, [list], mandatory)  # type: ignore[no-any-return]
 
 
-def getStringChecked(obj, key, mandatory=False):
+def getStringChecked(
+    obj: Mapping[str, Any], key: str, mandatory: bool = False
+) -> str | None:
     """
     Retrieve a string from the given object using the given key
 
@@ -52,10 +58,12 @@ def getStringChecked(obj, key, mandatory=False):
     @rtype: string
     @return: String retrieved from object
     """
-    return __getTypeChecked(obj, key, [str, bytes], mandatory)
+    return __getTypeChecked(obj, key, [str], mandatory)  # type: ignore[no-any-return]
 
 
-def getNumberChecked(obj, key, mandatory=False):
+def getNumberChecked(
+    obj: Mapping[str, Any], key: str, mandatory: bool = False
+) -> int | None:
     """
     Retrieve an integer from the given object using the given key
 
@@ -71,10 +79,12 @@ def getNumberChecked(obj, key, mandatory=False):
     @rtype: int
     @return: Number retrieved from object
     """
-    return __getTypeChecked(obj, key, [numbers.Integral], mandatory)
+    return __getTypeChecked(obj, key, [numbers.Integral], mandatory)  # type: ignore[no-any-return]
 
 
-def getObjectOrStringChecked(obj, key, mandatory=False):
+def getObjectOrStringChecked(
+    obj: Mapping[str, Any], key: str, mandatory: bool = False
+) -> str | dict[str, Any] | None:
     """
     Retrieve an object or string from the given object using the given key
 
@@ -90,10 +100,12 @@ def getObjectOrStringChecked(obj, key, mandatory=False):
     @rtype: string or dict
     @return: String/Object object retrieved from object
     """
-    return __getTypeChecked(obj, key, [str, bytes, dict], mandatory)
+    return __getTypeChecked(obj, key, [str, dict], mandatory)  # type: ignore[no-any-return]
 
 
-def getNumberOrStringChecked(obj, key, mandatory=False):
+def getNumberOrStringChecked(
+    obj: Mapping[str, Any], key: str, mandatory: bool = False
+) -> str | int | None:
     """
     Retrieve a number or string from the given object using the given key
 
@@ -109,10 +121,15 @@ def getNumberOrStringChecked(obj, key, mandatory=False):
     @rtype: string or number
     @return: String/Number object retrieved from object
     """
-    return __getTypeChecked(obj, key, [str, bytes, numbers.Integral], mandatory)
+    return __getTypeChecked(obj, key, [str, numbers.Integral], mandatory)  # type: ignore[no-any-return]
 
 
-def __getTypeChecked(obj, key, valTypes, mandatory=False):
+def __getTypeChecked(
+    obj: Mapping[str, Any],
+    key: str,
+    valTypes: list[type],
+    mandatory: bool = False,
+) -> Any:
     if key not in obj:
         if mandatory:
             raise RuntimeError(f'Expected key "{key}" in object')

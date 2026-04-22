@@ -18,15 +18,15 @@ import threading
 
 
 class WaitpidMonitor(threading.Thread):
-    def __init__(self, pid, options):
+    def __init__(self, pid: int, options: int) -> None:
         threading.Thread.__init__(self)
 
         self.pid = pid
         self.options = options
 
-        self.childPid = None
-        self.childExit = None
+        self.childPid: int | None = None
+        self.childExit: int | None = None
 
-    def run(self):
+    def run(self) -> None:
         while not self.childPid:
             (self.childPid, self.childExit) = os.waitpid(self.pid, self.options)
