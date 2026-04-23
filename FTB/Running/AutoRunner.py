@@ -13,11 +13,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
 import sys
-from abc import ABCMeta
+from abc import ABC, abstractmethod
 from pathlib import Path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -26,7 +28,7 @@ from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures.CrashInfo import CrashInfo, NoCrashInfo
 
 
-class AutoRunner(metaclass=ABCMeta):
+class AutoRunner(ABC):
     """
     Abstract base class that provides a method to instantiate the right sub class
     for running the given program and obtaining crash information.
@@ -57,7 +59,6 @@ class AutoRunner(metaclass=ABCMeta):
 
         self.args = args or []
 
-        assert isinstance(self.env, dict)
         assert isinstance(self.args, list)
 
         # The command that we will run for obtaining crash information
@@ -80,7 +81,7 @@ class AutoRunner(metaclass=ABCMeta):
         env: dict[str, str] | None = None,
         cwd: str | None = None,
         stdin: str | list[str] | None = None,
-    ) -> "AutoRunner":
+    ) -> AutoRunner:
         process = subprocess.Popen(
             ["nm", "-g", binary],
             stdin=subprocess.PIPE,
@@ -102,6 +103,10 @@ class AutoRunner(metaclass=ABCMeta):
             return ASanRunner(binary, args=args, env=env, cwd=cwd, stdin=stdin)
 
         return GDBRunner(binary, args=args, env=env, cwd=cwd, stdin=stdin)
+
+    @abstractmethod
+    def run(self) -> bool:
+        pass
 
 
 class GDBRunner(AutoRunner):

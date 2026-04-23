@@ -18,6 +18,8 @@ import os
 import platform
 import time
 from abc import ABC
+from collections.abc import Callable
+from typing import Any, Concatenate, ParamSpec, TypeVar
 
 import requests
 import requests.exceptions
@@ -32,6 +34,10 @@ except ImportError:
     HAVE_SENTRY = False
 
 LOG = logging.getLogger(__name__)
+
+P = ParamSpec("P")
+R = TypeVar("R")
+T = TypeVar("T", bound="Reporter")
 
 
 # Inheriting from RuntimeError because of legacy code.
@@ -52,11 +58,13 @@ class InvalidDataError(ReporterException):
     """Reporter data validation failures."""
 
 
-def remote_checks(wrapped):
+def remote_checks(
+    wrapped: Callable[Concatenate[T, P], R],
+) -> Callable[Concatenate[T, P], R]:
     """Decorator to perform error checks before using remote features"""
 
     @functools.wraps(wrapped)
-    def decorator(self, *args, **kwargs):
+    def decorator(self: T, *args: P.args, **kwargs: P.kwargs) -> R:
         if not self.serverHost:
             raise ConfigurationError(
                 "Must specify serverHost (configuration property: serverhost) to use "
@@ -74,14 +82,16 @@ def remote_checks(wrapped):
             )
         return wrapped(self, *args, **kwargs)
 
-    return decorator
+    return decorator  # type: ignore[return-value]
 
 
-def signature_checks(wrapped):
+def signature_checks(
+    wrapped: Callable[Concatenate[T, P], R],
+) -> Callable[Concatenate[T, P], R]:
     """Decorator to perform error checks before using signature features"""
 
     @functools.wraps(wrapped)
-    def decorator(self, *args, **kwargs):
+    def decorator(self: T, *args: P.args, **kwargs: P.kwargs) -> R:
         if not self.sigCacheDir:
             raise ConfigurationError(
                 "Must specify sigCacheDir (configuration property: sigdir) to use "
@@ -89,15 +99,17 @@ def signature_checks(wrapped):
             )
         return wrapped(self, *args, **kwargs)
 
-    return decorator
+    return decorator  # type: ignore[return-value]
 
 
-def requests_retry(wrapped):
+def requests_retry(
+    wrapped: Callable[..., requests.Response],
+) -> Callable[..., requests.Response]:
     """Wrapper around requests methods that retries up to 2 minutes if it's likely that
     the response codes indicate a temporary error"""
 
     @functools.wraps(wrapped)
-    def wrapper(*args, **kwds):
+    def wrapper(*args: Any, **kwds: Any) -> requests.Response:
         success = kwds.pop("expected")
         # max_sleep is the upper limit for exponential backoff,
         # which begins at 2s and doubles each retry
@@ -117,7 +129,7 @@ def requests_retry(wrapped):
             if response.status_code != success:
                 # Allow for a total sleep time of up to 2 minutes if it's
                 # likely that the response codes indicate a temporary error
-                retry_codes = [429, 500, 502, 503, 504]
+                retry_codes = (429, 500, 502, 503, 504)
                 if response.status_code in retry_codes and current_timeout <= max_sleep:
                     LOG.warning(
                         "in %s, server returned %s, retrying...",
@@ -136,7 +148,7 @@ def requests_retry(wrapped):
     return wrapper
 
 
-def sentry_init():
+def sentry_init() -> None:
     if HAVE_SENTRY:
         sentry_fuzzing_config.init()
 
@@ -144,14 +156,14 @@ def sentry_init():
 class Reporter(ABC):
     def __init__(
         self,
-        sigCacheDir=None,
-        serverHost=None,
-        serverPort=None,
-        serverProtocol=None,
-        serverAuthToken=None,
-        clientId=None,
-        tool=None,
-    ):
+        sigCacheDir: str | None = None,
+        serverHost: str | None = None,
+        serverPort: int | None = None,
+        serverProtocol: str | None = None,
+        serverAuthToken: str | None = None,
+        clientId: str | None = None,
+        tool: str | None = None,
+    ) -> None:
         """
         Initialize the Reporter. This constructor will also attempt to read
         a configuration file to populate any missing properties that have not
@@ -229,7 +241,7 @@ class Reporter(ABC):
         if self.serverHost is not None and self.clientId is None:
             self.clientId = platform.node()
 
-    def get(self, *args, **kwds):
+    def get(self, *args: Any, **kwds: Any) -> requests.Response:
         """requests.get, with added support for FuzzManager authentication and retry on
         5xx errors.
 
@@ -243,7 +255,7 @@ class Reporter(ABC):
         )
         return requests_retry(self._session.get)(*args, **kwds)
 
-    def post(self, *args, **kwds):
+    def post(self, *args: Any, **kwds: Any) -> requests.Response:
         """requests.post, with added support for FuzzManager authentication and retry on
         5xx errors.
 
@@ -257,7 +269,7 @@ class Reporter(ABC):
         )
         return requests_retry(self._session.post)(*args, **kwds)
 
-    def patch(self, *args, **kwds):
+    def patch(self, *args: Any, **kwds: Any) -> requests.Response:
         """requests.patch, with added support for FuzzManager authentication and retry
         on 5xx errors.
 

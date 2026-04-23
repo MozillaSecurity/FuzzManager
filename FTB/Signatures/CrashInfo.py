@@ -15,21 +15,25 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
 import sys
 import unicodedata
 from abc import ABCMeta
-from collections.abc import Callable, Mapping
 from contextlib import suppress
 from functools import wraps
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from FTB import AssertionHelper
 from FTB.ProgramConfiguration import ProgramConfiguration
 from FTB.Signatures import RegisterHelper
 from FTB.Signatures.CrashSignature import CrashSignature
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
 
 
 def unicode_escape_result(func: Callable[..., str]) -> Callable[..., str]:
@@ -232,7 +236,7 @@ class CrashInfo(metaclass=ABCMeta):
         configuration: ProgramConfiguration,
         auxCrashData: str | list[str] | None = None,
         cacheObject: Mapping[str, Any] | None = None,
-    ) -> "CrashInfo":
+    ) -> CrashInfo:
         """
         Create appropriate CrashInfo instance from raw crash data
 

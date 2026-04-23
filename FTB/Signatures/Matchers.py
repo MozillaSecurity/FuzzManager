@@ -16,7 +16,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import re
 from abc import ABCMeta, abstractmethod
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 from FTB.Signatures import JSONHelper
@@ -95,7 +95,8 @@ class StringMatch(Match):
         return self.value
 
 
-class NumberMatchType(StrEnum):
+# TODO: Python >= 3.11: Enum -> StrEnum
+class NumberMatchType(str, Enum):
     EQ = "=="
     GE = ">="
     GT = ">"

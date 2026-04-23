@@ -37,7 +37,7 @@ norecursedirs = [
 ]
 
 [tool.mypy]
-files = ["FTB"]
+files = ["Collector", "FTB", "Reporter"]
 exclude = ['/tests/']
 ignore_missing_imports = true
 show_error_codes = true
@@ -56,6 +56,8 @@ select = [
     "E",
     # Pyflakes
     "F",
+    # flake8-future-annotations
+    "FA",
     # Flynt
     "FLY",
     # isort

@@ -23,7 +23,9 @@ import json
 import os
 import shutil
 import sys
+from collections.abc import Iterator, Mapping
 from tempfile import mkstemp
+from typing import Any
 from zipfile import ZipFile
 
 from FTB.ProgramConfiguration import ProgramConfiguration
@@ -38,16 +40,16 @@ from Reporter.Reporter import (
     signature_checks,
 )
 
-__all__ = []
+__all__: list[str] = []
 __version__ = 0.1
 __date__ = "2014-10-01"
-__updated__ = "2025-04-08"
+__updated__ = "2026-04-23"
 
 
 class Collector(Reporter):
     @remote_checks
     @signature_checks
-    def refresh(self):
+    def refresh(self) -> None:
         """
         Refresh signatures by contacting the server, downloading new signatures
         and invalidating old ones.
@@ -68,12 +70,13 @@ class Collector(Reporter):
         os.remove(zipFileName)
 
     @signature_checks
-    def refreshFromZip(self, zipFileName):
+    def refreshFromZip(self, zipFileName: str) -> None:
         """
         Refresh signatures from a local zip file, adding new signatures
         and invalidating old ones. (This is a non-standard use case;
         you probably want to use refresh() instead.)
         """
+        assert self.sigCacheDir is not None
         with ZipFile(zipFileName, "r") as zipFile:
             if zipFile.testzip():
                 raise InvalidDataError(f"Bad CRC for downloaded zipfile {zipFileName}")
@@ -94,12 +97,12 @@ class Collector(Reporter):
     @remote_checks
     def submit(
         self,
-        crashInfo,
-        testCase=None,
-        testCaseQuality=0,
-        testCaseSize=None,
-        metaData=None,
-    ):
+        crashInfo: CrashInfo,
+        testCase: str | None = None,
+        testCaseQuality: int = 0,
+        testCaseSize: int | None = None,
+        metaData: Mapping[str, Any] | None = None,
+    ) -> Any:
         """
         Submit the given crash information and an optional testcase/metadata
         to the server for processing and storage.
@@ -131,7 +134,7 @@ class Collector(Reporter):
 
         # Serialize our crash information, testcase and metadata into a dictionary to
         # POST
-        data = {}
+        data: dict[str, Any] = {}
 
         data["rawStdout"] = os.linesep.join(crashInfo.rawStdout)
         data["rawStderr"] = os.linesep.join(crashInfo.rawStderr)
@@ -154,6 +157,7 @@ class Collector(Reporter):
             if testcase_ext:
                 data["testcase_ext"] = testcase_ext
 
+        assert crashInfo.configuration is not None
         data["platform"] = crashInfo.configuration.platform
         data["product"] = crashInfo.configuration.product
         data["os"] = crashInfo.configuration.os
@@ -165,7 +169,7 @@ class Collector(Reporter):
         data["tool"] = self.tool
 
         if crashInfo.configuration.metadata or metaData:
-            aggrMetaData = {}
+            aggrMetaData: dict[str, Any] = {}
 
             if crashInfo.configuration.metadata:
                 aggrMetaData.update(crashInfo.configuration.metadata)
@@ -184,7 +188,7 @@ class Collector(Reporter):
         return self.post(url, data).json()
 
     @signature_checks
-    def search(self, crashInfo):
+    def search(self, crashInfo: CrashInfo) -> tuple[str | None, dict[str, Any] | None]:
         """
         Searches within the local signature cache directory for a signature matching the
         given crash.
@@ -196,7 +200,7 @@ class Collector(Reporter):
         @return: Tuple containing filename of the signature and metadata matching, or
                  None if no match.
         """
-
+        assert self.sigCacheDir is not None
         cachedSigFiles = os.listdir(self.sigCacheDir)
 
         for sigFile in cachedSigFiles:
@@ -210,7 +214,7 @@ class Collector(Reporter):
                     crashSig = CrashSignature(sigData)
                     if crashSig.matches(crashInfo):
                         metadataFile = sigFile.replace(".signature", ".metadata")
-                        metadata = None
+                        metadata: dict[str, Any] | None = None
                         if os.path.exists(metadataFile):
                             with open(metadataFile) as m:
                                 metadata = json.loads(m.read())
@@ -222,11 +226,11 @@ class Collector(Reporter):
     @signature_checks
     def generate(
         self,
-        crashInfo,
-        forceCrashAddress=None,
-        forceCrashInstruction=None,
-        numFrames=None,
-    ):
+        crashInfo: CrashInfo,
+        forceCrashAddress: bool = False,
+        forceCrashInstruction: bool = False,
+        numFrames: int = 8,
+    ) -> str | None:
         """
         Generates a signature in the local cache directory. It will be deleted when
         L{refresh} is called on the same local cache directory.
@@ -257,7 +261,7 @@ class Collector(Reporter):
         return self.__store_signature_hashed(sig)
 
     @remote_checks
-    def download(self, crashId):
+    def download(self, crashId: int) -> tuple[str, dict[str, Any]] | None:
         """
         Download the testcase for the specified crashId.
 
@@ -300,7 +304,7 @@ class Collector(Reporter):
         return (local_filename, resp_json)
 
     @remote_checks
-    def download_all(self, bucketId):
+    def download_all(self, bucketId: int) -> Iterator[str]:
         """
         Download all testcases for the specified bucketId.
 
@@ -310,8 +314,10 @@ class Collector(Reporter):
         @rtype: generator
         @return: generator of filenames where tests were stored.
         """
-        params = {"query": json.dumps({"op": "OR", "bucket": bucketId})}
-        next_url = (
+        params: dict[str, str] | None = {
+            "query": json.dumps({"op": "OR", "bucket": bucketId})
+        }
+        next_url: str | None = (
             f"{self.serverProtocol}://{self.serverHost}:{self.serverPort}"
             "/crashmanager/rest/crashes/"
         )
@@ -350,7 +356,7 @@ class Collector(Reporter):
 
                 yield local_filename
 
-    def __store_signature_hashed(self, signature):
+    def __store_signature_hashed(self, signature: CrashSignature) -> str:
         """
         Store a signature, using the sha1 hash hex representation as filename.
 
@@ -361,11 +367,9 @@ class Collector(Reporter):
         @return: Name of the file that the signature was written to
 
         """
+        assert self.sigCacheDir is not None
         h = hashlib.new("sha1")
-        if str is bytes:
-            h.update(str(signature))
-        else:
-            h.update(str(signature).encode("utf-8"))
+        h.update(str(signature).encode("utf-8"))
         sigfile = os.path.join(self.sigCacheDir, h.hexdigest() + ".signature")
         with open(sigfile, "w") as f:
             f.write(str(signature))
@@ -373,7 +377,7 @@ class Collector(Reporter):
         return sigfile
 
     @staticmethod
-    def read_testcase(testCase):
+    def read_testcase(testCase: str) -> tuple[bytes, bool]:
         """
         Read a testcase file, return the content and indicate if it is binary or not.
 
@@ -394,7 +398,7 @@ class Collector(Reporter):
         return (testCaseData, isBinary)
 
 
-def main(args=None):
+def main(args: list[str] | None = None) -> int:
     """Command line options."""
     sentry_init()
 
@@ -686,7 +690,7 @@ def main(args=None):
             if opts.testcase:
                 (testCaseData, isBinary) = Collector.read_testcase(opts.testcase)
                 if not isBinary:
-                    crashInfo.testcase = testCaseData
+                    crashInfo.testcase = testCaseData.decode("utf-8")
 
     serverauthtoken = None
     if opts.serverauthtokenfile:
@@ -708,6 +712,7 @@ def main(args=None):
         return 0
 
     if opts.submit:
+        assert crashInfo is not None
         testcase = opts.testcase
         collector.submit(
             crashInfo, testcase, opts.testcasequality, opts.testcasesize, metadata
@@ -715,16 +720,18 @@ def main(args=None):
         return 0
 
     if opts.search:
-        (sig, metadata) = collector.search(crashInfo)
+        assert crashInfo is not None
+        (sig, sigMetadata) = collector.search(crashInfo)
         if sig is None:
             print("No match found", file=sys.stderr)
             return 3
         print(sig)
-        if metadata:
-            print(json.dumps(metadata, indent=4))
+        if sigMetadata:
+            print(json.dumps(sigMetadata, indent=4))
         return 0
 
     if opts.generate:
+        assert crashInfo is not None
         sigFile = collector.generate(
             crashInfo, opts.forcecrashaddr, opts.forcecrashinst, opts.numframes
         )
@@ -738,6 +745,7 @@ def main(args=None):
         return 0
 
     if opts.autosubmit:
+        assert configuration is not None
         runner = AutoRunner.fromBinaryArgs(opts.rargs[0], opts.rargs[1:], env=env)
         if runner.run():
             crashInfo = runner.getCrashInfo(configuration)
@@ -752,10 +760,11 @@ def main(args=None):
             return 1
 
     if opts.download:
-        (retFile, retJSON) = collector.download(opts.download)
-        if not retFile:
+        downloadResult = collector.download(opts.download)
+        if downloadResult is None:
             print("Specified crash entry does not have a testcase", file=sys.stderr)
             return 1
+        retFile, retJSON = downloadResult
 
         if retJSON.get("args"):
             args = json.loads(retJSON["args"])
