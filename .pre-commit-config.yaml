@@ -28,7 +28,7 @@ repos:
         entry: tox -e mypy --
         language: system
         require_serial: true
-        files: ^FTB/
+        files: ^(Collector|FTB|Reporter)/
         exclude: (^|/)tests/
         types: [python]
         pass_filenames: false

@@ -14,6 +14,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import json
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Any
@@ -40,7 +42,7 @@ class Symptom(metaclass=ABCMeta):
         return self.jsonsrc
 
     @staticmethod
-    def fromJSONObject(obj: dict[str, Any]) -> "Symptom":
+    def fromJSONObject(obj: dict[str, Any]) -> Symptom:
         """
         Create the appropriate Symptom based on the given object (decoded from JSON)
 
@@ -72,7 +74,7 @@ class Symptom(metaclass=ABCMeta):
         raise RuntimeError(f"Unknown symptom type: {stype}")
 
     @abstractmethod
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -105,7 +107,7 @@ class OutputSymptom(Symptom):
             ):
                 raise RuntimeError(f"Invalid source specified: {self.src}")
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -153,7 +155,7 @@ class StackFrameSymptom(Symptom):
             # Default to 0
             self.frameNumber = NumberMatch(0)
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -184,7 +186,7 @@ class StackSizeSymptom(Symptom):
         assert checked is not None
         self.stackSize = NumberMatch(checked)
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -207,7 +209,7 @@ class CrashAddressSymptom(Symptom):
         assert checked is not None
         self.address = NumberMatch(checked)
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -239,7 +241,7 @@ class InstructionSymptom(Symptom):
                 "Must provide at least instruction name or register names"
             )
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -273,7 +275,7 @@ class TestcaseSymptom(Symptom):
         assert checked is not None
         self.output = StringMatch(checked)
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -306,7 +308,7 @@ class StackFramesSymptom(Symptom):
             for fn in rawFunctionNames:
                 self.functionNames.append(StringMatch(fn))
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Check if the symptom matches the given crash information
 
@@ -320,8 +322,8 @@ class StackFramesSymptom(Symptom):
         return StackFramesSymptom._match(crashInfo.backtrace, self.functionNames)
 
     def diff(
-        self, crashInfo: "CrashInfo"
-    ) -> tuple[int | None, "StackFramesSymptom | None"]:
+        self, crashInfo: CrashInfo
+    ) -> tuple[int | None, StackFramesSymptom | None]:
         if self.matches(crashInfo):
             return (0, None)
 

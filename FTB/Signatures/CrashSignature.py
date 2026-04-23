@@ -15,6 +15,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import difflib
 import json
 from typing import TYPE_CHECKING, Any
@@ -70,14 +72,14 @@ class CrashSignature:
         self.products = JSONHelper.getArrayChecked(obj, "products")
 
     @staticmethod
-    def fromFile(signatureFile: str) -> "CrashSignature":
+    def fromFile(signatureFile: str) -> CrashSignature:
         with open(signatureFile) as sigFd:
             return CrashSignature(sigFd.read())
 
     def __str__(self) -> str:
         return self.rawSignature
 
-    def matches(self, crashInfo: "CrashInfo") -> bool:
+    def matches(self, crashInfo: CrashInfo) -> bool:
         """
         Match this signature against the given crash information
 
@@ -149,7 +151,7 @@ class CrashSignature:
 
         return ret
 
-    def getDistance(self, crashInfo: "CrashInfo") -> int:
+    def getDistance(self, crashInfo: CrashInfo) -> int:
         distance = 0
 
         for symptom in self.symptoms:
@@ -179,7 +181,7 @@ class CrashSignature:
 
         return distance
 
-    def fit(self, crashInfo: "CrashInfo") -> "CrashSignature | None":
+    def fit(self, crashInfo: CrashInfo) -> CrashSignature | None:
         sigObj: dict[str, Any] = {}
         sigSymptoms: list[Any] = []
 
@@ -208,7 +210,7 @@ class CrashSignature:
 
         return CrashSignature(json.dumps(sigObj, indent=2, sort_keys=True))
 
-    def getSymptomsDiff(self, crashInfo: "CrashInfo") -> list[dict[str, Any]]:
+    def getSymptomsDiff(self, crashInfo: CrashInfo) -> list[dict[str, Any]]:
         symptomsDiff: list[dict[str, Any]] = []
         for symptom in self.symptoms:
             if symptom.matches(crashInfo):
@@ -234,7 +236,7 @@ class CrashSignature:
         return symptomsDiff
 
     def getSignatureUnifiedDiffTuples(
-        self, crashInfo: "CrashInfo"
+        self, crashInfo: CrashInfo
     ) -> list[tuple[str, str]]:
         diffTuples: list[tuple[str, str]] = []
 

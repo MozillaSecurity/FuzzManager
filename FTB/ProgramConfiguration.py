@@ -15,6 +15,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @contact:    choller@mozilla.com
 """
 
+from __future__ import annotations
+
 import os
 import sys
 
@@ -63,7 +65,7 @@ class ProgramConfiguration:
         self.metadata = metadata
 
     @staticmethod
-    def fromBinary(binaryPath: str) -> "ProgramConfiguration | None":
+    def fromBinary(binaryPath: str) -> ProgramConfiguration | None:
         binaryConfig = f"{binaryPath}.fuzzmanagerconf"
         if not os.path.exists(binaryConfig):
             print(
