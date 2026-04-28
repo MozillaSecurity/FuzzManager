@@ -712,7 +712,7 @@ class ASanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        asanOutput = crashData if crashData else stderr
+        asanOutput = crashData or stderr
         assert asanOutput is not None
 
         asanCrashAddressPattern = r"""(?x)
@@ -951,7 +951,7 @@ class LSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the LSan trace, otherwise use stderr
-        lsanOutput = crashData if crashData else stderr
+        lsanOutput = crashData or stderr
         assert lsanOutput is not None
         lsanErrorPattern = "ERROR: LeakSanitizer:"
         lsanPatternSeen = False
@@ -1048,7 +1048,7 @@ class UBSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the UBSan trace, otherwise use stderr
-        ubsanOutput = crashData if crashData else stderr
+        ubsanOutput = crashData or stderr
         assert ubsanOutput is not None
         ubsanErrorPattern = r":\d+:\d+:\s+runtime\s+error:\s+"
         ubsanPatternSeen = False
@@ -1991,7 +1991,7 @@ class TSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        tsanOutput = crashData if crashData else stderr
+        tsanOutput = crashData or stderr
         assert tsanOutput is not None
 
         tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""
@@ -2160,7 +2160,7 @@ class ValgrindCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the Valgrind trace, otherwise use
         # stderr
-        vgdOutput = crashData if crashData else stderr
+        vgdOutput = crashData or stderr
         assert vgdOutput is not None
         stackPattern = re.compile(
             r"""
@@ -2211,7 +2211,7 @@ class ValgrindCrashInfo(CrashInfo):
         @return: A string representing this crash (short signature)
         """
 
-        logData = self.rawCrashData if self.rawCrashData else self.rawStderr
+        logData = self.rawCrashData or self.rawStderr
         for line in logData:
             m = re.match(ValgrindCrashInfo.MSG_REGEX, line)
             if m and m.group("msg"):

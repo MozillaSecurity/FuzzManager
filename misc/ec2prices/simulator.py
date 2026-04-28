@@ -272,7 +272,7 @@ def main():
         total_price = sim_module.run(priceData, simulation, configFile.main)
         results[simulation_name] = total_price
 
-    print("")
+    print()
 
     col_len = None
 
@@ -284,7 +284,7 @@ def main():
 
     col_len += 1
 
-    print("")
+    print()
 
     sys.stdout.write(" " * col_len)
     for simulation in results:

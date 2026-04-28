@@ -772,7 +772,7 @@ def main(args: list[str] | None = None) -> int:
                 "Command line arguments:",
                 " ".join(args),
             )
-            print("")
+            print()
 
         if retJSON.get("env"):
             env = json.loads(retJSON["env"])
@@ -780,14 +780,14 @@ def main(args: list[str] | None = None) -> int:
                 "Environment variables:",
                 " ".join(f"{k} = {v}" for (k, v) in env.items()),
             )
-            print("")
+            print()
 
         if retJSON.get("metadata"):
             metadata = json.loads(retJSON["metadata"])
             print("== Metadata ==")
             for k, v in metadata.items():
                 print(f"{k} = {v}")
-            print("")
+            print()
 
         print(retFile)
         return 0
