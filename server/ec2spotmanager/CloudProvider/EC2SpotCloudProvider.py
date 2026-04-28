@@ -232,7 +232,10 @@ class EC2SpotCloudProvider(CloudProvider):
                     )
                 else:  # state=failed
                     self.logger.error(
-                        f"Request {req_id} is {result.status.code} and {result.state}."
+                        "Request %s is %s and %s.",
+                        req_id,
+                        result.status.code,
+                        result.state,
                     )
                     failed_requests[req_id] = {}
                     failed_requests[req_id]["action"] = "disable_pool"

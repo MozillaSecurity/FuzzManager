@@ -109,7 +109,7 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
         _user, token = auth_result
 
         if not self.is_from_allowed_ip(request, token):
-            LOG.warning(f"IP address restricted for token: {token.key[:8]}...")
+            LOG.warning("IP address restricted for token: %s...", token.key[:8])
             raise PermissionDenied("IP address restricted. Access denied.")
 
         return auth_result
@@ -133,7 +133,7 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
         try:
             ip_obj = ip_address(client_ip)
         except ValueError:
-            LOG.warning(f"Invalid IP address format: {client_ip}")
+            LOG.warning("Invalid IP address format: %s", client_ip)
             return False
 
         # Check each restriction
@@ -156,6 +156,6 @@ class IPRestrictedTokenAuthentication(TokenAuthentication):
                     return True
 
             except ValueError:  # noqa: PERF203
-                LOG.warning(f"Invalid network definition: {restriction.ip_range}")
+                LOG.warning("Invalid network definition: %s", restriction.ip_range)
 
         return False

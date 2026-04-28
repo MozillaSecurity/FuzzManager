@@ -240,8 +240,7 @@ def write_stats_file(outfile, fields, stats, warnings):
 
             f.write(f"{field}{' ' * (max_keylen + 1 - len(field))}: {val}\n")
 
-        for warning in warnings:
-            f.write(warning)
+        f.writelines(warnings)
 
     return
 

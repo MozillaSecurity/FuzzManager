@@ -520,8 +520,7 @@ def update_instances(provider, region):
                 # in our database, because otherwise our code here would delete it from
                 # the database.
                 if cloud_id in instances:
-                    if instances[cloud_id] in instances_left:
-                        instances_left.remove(instances[cloud_id])
+                    instances_left.discard(instances[cloud_id])
                 else:
                     debug_not_updatable_continue.add(cloud_id)
                 continue
@@ -564,8 +563,7 @@ def update_instances(provider, region):
                 continue
 
             instance = instances[cloud_id]
-            if instance in instances_left:
-                instances_left.remove(instance)
+            instances_left.discard(instance)
 
             # Check the status code and update if necessary
             if instance.status_code != cloud_data["status"]:

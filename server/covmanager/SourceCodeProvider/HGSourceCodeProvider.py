@@ -30,8 +30,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
         revision = revision.replace("+", "")
 
         # Avoid passing in absolute filenames to HG
-        if filename.startswith("/"):
-            filename = filename[1:]
+        filename = filename.removeprefix("/")
 
         try:
             return subprocess.check_output(
