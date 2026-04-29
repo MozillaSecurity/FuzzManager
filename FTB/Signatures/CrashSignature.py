@@ -53,7 +53,7 @@ class CrashSignature:
         try:
             obj = json.loads(rawSignature)
         except ValueError as e:
-            raise RuntimeError(f"Invalid JSON: {e}")
+            raise RuntimeError(f"Invalid JSON: {e}") from e
 
         # Get the symptoms objects (mandatory)
         if "symptoms" in obj:

@@ -948,7 +948,7 @@ class PoolConfigurationViewSet(
             flatten = int(flatten)
             assert flatten in {0, 1}
         except (AssertionError, ValueError):
-            raise serializers.ValidationError("flatten must be 0 or 1")
+            raise serializers.ValidationError("flatten must be 0 or 1") from None
         serializer = self.get_serializer(self.get_object(), flatten=bool(flatten))
         return Response(serializer.data)
 

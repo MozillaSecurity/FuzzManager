@@ -32,8 +32,8 @@ except OSError:
             chars = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)"
             SECRET_KEY = "".join([random.choice(chars) for _ in range(64)])
             f.write(SECRET_KEY)
-    except OSError:
-        raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.')
+    except OSError as exc:
+        raise Exception(f'Cannot open file "{SECRET_FILE}" for writing.') from exc
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -97,5 +97,5 @@ def test_rest_bugproviders_list(api_client, user, cm):
     assert resp["next"] is None
     assert resp["previous"] is None
     assert len(resp["results"]) == expected
-    for result, provider in zip(resp["results"], providers[:expected]):
+    for result, provider in zip(resp["results"], providers[:expected], strict=True):
         _compare_rest_result_to_bugprovider(result, provider)

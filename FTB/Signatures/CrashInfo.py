@@ -155,7 +155,7 @@ class TraceParsingError(RuntimeError):
         super().__init__(*args, **kwds)
 
 
-class CrashInfo(metaclass=ABCMeta):
+class CrashInfo(metaclass=ABCMeta):  # noqa: B024
     """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.

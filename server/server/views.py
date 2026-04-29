@@ -97,7 +97,7 @@ def json_to_query(json_str):
     try:
         obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)
     except ValueError as e:
-        raise RuntimeError(f"Invalid JSON: {e}")
+        raise RuntimeError(f"Invalid JSON: {e}") from e
 
     def get_query_obj(obj, key=None):
         if obj is None or isinstance(obj, (str, list, int)):

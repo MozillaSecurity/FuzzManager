@@ -681,8 +681,10 @@ def apply_transform(script_path, testcase_path):
     with tempfile.TemporaryDirectory() as output_path:
         try:
             subprocess.check_call([script_path, testcase_path, output_path])
-        except subprocess.CalledProcessError:
-            raise Exception("Failed to apply post crash transformation.  Aborting...")
+        except subprocess.CalledProcessError as exc:
+            raise Exception(
+                "Failed to apply post crash transformation.  Aborting..."
+            ) from exc
 
         if len(os.listdir(output_path)) == 0:
             raise Exception(

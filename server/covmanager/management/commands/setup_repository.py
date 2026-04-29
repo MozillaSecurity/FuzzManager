@@ -35,7 +35,7 @@ class Command(BaseCommand):
         except ImportError:
             raise CommandError(
                 f"Error: '{provider}' is not a valid source code provider!"
-            )
+            ) from None
 
         if not location:
             raise CommandError("Error: invalid location")

@@ -923,11 +923,11 @@ class JsonQueryFilterBackend(BaseFilterBackend):
             try:
                 _, queryobj = json_to_query(querystr)
             except (RuntimeError, TypeError) as e:
-                raise InvalidArgumentException(f"error in query: {e}")
+                raise InvalidArgumentException(f"error in query: {e}") from e
             try:
                 queryset = queryset.filter(queryobj)
             except FieldError as exc:
-                raise InvalidArgumentException(f"error in query: {exc}")
+                raise InvalidArgumentException(f"error in query: {exc}") from exc
         return queryset
 
 
@@ -944,7 +944,9 @@ class ToolFilterCrashesBackend(BaseFilterBackend):
             ignore_toolfilter = int(ignore_toolfilter)
             assert ignore_toolfilter in {0, 1}
         except (AssertionError, ValueError):
-            raise InvalidArgumentException({"ignore_toolfilter": ["Expecting 0 or 1."]})
+            raise InvalidArgumentException(
+                {"ignore_toolfilter": ["Expecting 0 or 1."]}
+            ) from None
         view.ignore_toolfilter = bool(ignore_toolfilter)
         return filter_crash_entries_by_toolfilter(
             request,
@@ -977,7 +979,9 @@ class ToolFilterSignaturesBackend(BaseFilterBackend):
             ignore_toolfilter = int(ignore_toolfilter)
             assert ignore_toolfilter in {0, 1}
         except (AssertionError, ValueError):
-            raise InvalidArgumentException({"ignore_toolfilter": ["Expecting 0 or 1."]})
+            raise InvalidArgumentException(
+                {"ignore_toolfilter": ["Expecting 0 or 1."]}
+            ) from None
         view.ignore_toolfilter = bool(ignore_toolfilter)
         return filter_signatures_by_toolfilter(
             request,
@@ -1027,7 +1031,9 @@ class DeferRawFilterBackend(BaseFilterBackend):
             include_raw = int(include_raw)
             assert include_raw in {0, 1}
         except (AssertionError, ValueError):
-            raise InvalidArgumentException({"include_raw": ["Expecting 0 or 1."]})
+            raise InvalidArgumentException(
+                {"include_raw": ["Expecting 0 or 1."]}
+            ) from None
 
         if not include_raw:
             queryset = queryset.defer("rawStdout", "rawStderr", "rawCrashData")
@@ -1135,7 +1141,7 @@ class CrashEntryViewSet(
         try:
             obj = CrashEntry.objects.get(pk=pk)
         except CrashEntry.DoesNotExist:
-            raise Http404
+            raise Http404 from None
         given_fields = set(request.data.keys())
         disallowed_fields = given_fields - allowed_fields
         if disallowed_fields:
@@ -1149,8 +1155,8 @@ class CrashEntryViewSet(
                 raise InvalidArgumentException("crash has no testcase")
             try:
                 testcase_quality = int(request.data["testcase_quality"])
-            except ValueError:
-                raise InvalidArgumentException("invalid testcase_quality")
+            except ValueError as exc:
+                raise InvalidArgumentException("invalid testcase_quality") from exc
             # NB: if other fields are added, all validation should occur before any DB
             # writes.
             obj.testcase.quality = testcase_quality
@@ -1309,7 +1315,7 @@ class BucketViewSet(
         try:
             bucket.getSignature()
         except RuntimeError as e:
-            raise ValidationError(f"Signature is not valid: {e}")
+            raise ValidationError(f"Signature is not valid: {e}") from e
 
         # Only save if we hit "save" (not e.g. "preview")
         # If offset is set, don't do it again (already done on first iteration)
@@ -1537,7 +1543,7 @@ def json_to_query(json_str):
     try:
         obj = json.loads(json_str, object_pairs_hook=OrderedDict)
     except ValueError as e:
-        raise RuntimeError(f"Invalid JSON: {e}")
+        raise RuntimeError(f"Invalid JSON: {e}") from e
 
     def get_query_obj(obj, key=None):
         if obj is None or isinstance(obj, (str, list, int)):

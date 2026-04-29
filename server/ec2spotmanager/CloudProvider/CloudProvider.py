@@ -59,15 +59,15 @@ def wrap_provider_errors(wrapped):
             return wrapped(*args, **kwds)
         except (ssl.SSLError, OSError) as exc:
             logging.getLogger("ec2spotmanager").exception("")
-            raise CloudProviderTemporaryFailure(f"{wrapped.__name__}: {exc}")
+            raise CloudProviderTemporaryFailure(f"{wrapped.__name__}: {exc}") from exc
         except CloudProviderError:
             logging.getLogger("ec2spotmanager").exception("")
             raise
-        except Exception:
+        except Exception as exc:
             logging.getLogger("ec2spotmanager").exception("")
             raise CloudProviderError(
                 f"{wrapped.__name__}: unhandled error: {traceback.format_exc()}"
-            )
+            ) from exc
 
     return wrapper
 

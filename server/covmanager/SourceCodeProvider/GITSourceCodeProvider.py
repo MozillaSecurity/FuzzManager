@@ -33,10 +33,10 @@ class GITSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
-                raise UnknownRevisionException
+                raise UnknownRevisionException from None
 
             # Otherwise assume the file doesn't exist
-            raise UnknownFilenameException
+            raise UnknownFilenameException from None
 
     def testRevision(self, revision):
         try:
@@ -57,7 +57,7 @@ class GITSourceCodeProvider(SourceCodeProvider):
                 ["git", "log", revision, "--format=%P"], cwd=self.location
             )
         except subprocess.CalledProcessError:
-            raise UnknownRevisionException
+            raise UnknownRevisionException from None
 
         output = output.decode("utf-8").splitlines()
 

@@ -150,7 +150,7 @@ def test_PersistentApplicationTestPerf(tmp_path):
             oldPid = spa.process.pid
             startTime = time.time()
 
-            for i in range(1, 10000):
+            for _ in range(1, 10000):
                 spa.runTest("aaa\naaaa")
 
             stopTime = time.time()
