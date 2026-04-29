@@ -48,7 +48,7 @@ class StringMatch(Match):
                 try:
                     self.compiledValue = re.compile(self.value)
                 except re.error as e:
-                    raise RuntimeError(f"Error in regular expression: {e}")
+                    raise RuntimeError(f"Error in regular expression: {e}") from e
         else:
             value = JSONHelper.getStringChecked(obj, "value", True)
             assert value is not None
@@ -63,7 +63,7 @@ class StringMatch(Match):
                     try:
                         self.compiledValue = re.compile(self.value)
                     except re.error as e:
-                        raise RuntimeError(f"Error in regular expression: {e}")
+                        raise RuntimeError(f"Error in regular expression: {e}") from e
                 else:
                     raise RuntimeError(f"Unknown match operator specified: {matchType}")
 
@@ -122,19 +122,19 @@ class NumberMatch(Match):
                     matchType = numberMatchComponents[0]
                     try:
                         self.matchType = NumberMatchType(matchType)
-                    except ValueError:
+                    except ValueError as exc:
                         raise RuntimeError(
                             f"Unknown match operator specified: {matchType}"
-                        )
+                        ) from exc
 
                 try:
                     value = numberMatchComponents[numIdx]
                     base = 16 if value.startswith("0x") else 10
                     self.value = int(numberMatchComponents[numIdx], base)
-                except ValueError:
+                except ValueError as exc:
                     raise RuntimeError(
                         f"Invalid number specified: {numberMatchComponents[numIdx]}"
-                    )
+                    ) from exc
             else:
                 # We're trying to match the fact that we cannot calculate a crash
                 # address

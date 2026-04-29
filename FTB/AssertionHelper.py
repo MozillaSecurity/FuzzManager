@@ -282,7 +282,11 @@ def getSanitizedAssertionPattern(msgs: str | list[str]) -> str | list[str]:
                 matchPattern if replacementText is None else replacementText
             )
 
-            def _handleMatch(match: re.Match[str]) -> str:
+            def _handleMatch(
+                match: re.Match[str],
+                replacementPattern: str = replacementPattern,
+                bsPositions: list[int] = bsPositions,
+            ) -> str:
                 start = match.start(0)
                 end = match.end(0)
                 lengthDiff = len(replacementPattern) - len(match.group(0))

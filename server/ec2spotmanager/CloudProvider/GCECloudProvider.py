@@ -276,7 +276,7 @@ class GCECloudProvider(CloudProvider):
                 )
         except Exception as exc:
             if "Please try again" in str(exc):
-                raise CloudProviderTemporaryFailure(str(exc))
+                raise CloudProviderTemporaryFailure(str(exc)) from exc
             raise
 
         for node in libcloud_nodes:

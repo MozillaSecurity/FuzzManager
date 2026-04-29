@@ -153,7 +153,7 @@ def sentry_init() -> None:
         sentry_fuzzing_config.init()
 
 
-class Reporter(ABC):
+class Reporter(ABC):  # noqa: B024
     def __init__(
         self,
         sigCacheDir: str | None = None,

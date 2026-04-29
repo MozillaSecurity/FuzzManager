@@ -23,7 +23,7 @@ class Command(BaseCommand):
         try:
             django_user = DjangoUser.objects.get(username=username)
         except DjangoUser.DoesNotExist:
-            raise CommandError(f"No user found with username '{username}'")
+            raise CommandError(f"No user found with username '{username}'") from None
 
         crash_manager_user = CrashManagerUser.get_or_create_restricted(django_user)[0]
 

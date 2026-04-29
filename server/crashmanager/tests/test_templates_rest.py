@@ -128,7 +128,7 @@ def test_rest_templates_list(api_client, user, cm):
     assert resp["next"] is None
     assert resp["previous"] is None
     assert len(resp["results"]) == expected
-    for result, template in zip(resp["results"], templates[:expected]):
+    for result, template in zip(resp["results"], templates[:expected], strict=True):
         _compare_rest_result_to_template(result, template)
 
 

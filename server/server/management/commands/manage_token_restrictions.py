@@ -41,7 +41,7 @@ class Command(BaseCommand):
         try:
             token = Token.objects.get(key=token_key)
         except Token.DoesNotExist:
-            raise CommandError(f"Token with key '{token_key}' not found")
+            raise CommandError(f"Token with key '{token_key}' not found") from None
 
         self.stdout.write(f"Found token: {token.key} (User: {token.user.username})")
 

@@ -140,7 +140,7 @@ class EC2SpotCloudProvider(CloudProvider):
                     )
                     raise CloudProviderInstanceCountError(
                         "Auto-selected region exceeded its maximum spot instance count."
-                    )
+                    ) from msg
                 if code == "RequestLimitExceeded":
                     self.logger.warning(
                         "Request limit exceeded for region %s, trying again later.",
@@ -148,11 +148,11 @@ class EC2SpotCloudProvider(CloudProvider):
                     )
                     raise CloudProviderTemporaryFailure(
                         f"Request limit exceeded for region {region}"
-                    )
+                    ) from msg
                 if code in {"InternalError", "Unavailable"}:
                     raise CloudProviderTemporaryFailure(
                         f"start_instances in region {region}: {msg}"
-                    )
+                    ) from msg
             raise
 
     @wrap_provider_errors
@@ -170,10 +170,10 @@ class EC2SpotCloudProvider(CloudProvider):
                 )
                 raise CloudProviderTemporaryFailure(
                     f"Request limit exceeded for region {region}"
-                )
+                ) from msg
             raise
 
-        for req_id, result in zip(instances, results):
+        for req_id, result in zip(instances, results, strict=True):
             if isinstance(result, boto.ec2.instance.Instance):
                 # state_code is a 16-bit value where the high byte is
                 # an opaque internal value and should be ignored.
@@ -270,7 +270,7 @@ class EC2SpotCloudProvider(CloudProvider):
                 if code == "Unavailable":
                     raise CloudProviderTemporaryFailure(
                         f"getting instances in region {region}: {msg}"
-                    )
+                    ) from msg
             raise
 
         for instance in boto_instances:
@@ -360,7 +360,7 @@ class EC2SpotCloudProvider(CloudProvider):
                         .append(float(price["SpotPrice"]))
                     )
         except botocore.exceptions.EndpointConnectionError as exc:
-            raise RuntimeError(f"Boto connection error: {exc}")
+            raise RuntimeError(f"Boto connection error: {exc}") from exc
 
         return prices
 

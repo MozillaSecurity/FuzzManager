@@ -23,7 +23,7 @@ import queue
 import signal
 import subprocess
 import time
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from enum import Enum, IntEnum, auto
 
 from FTB.Running.StreamCollector import StreamCollector
@@ -119,16 +119,19 @@ class PersistentApplication(metaclass=ABCMeta):
         self.spfpPrefix = ""
         self.spfpSuffix = ""  # To support <!-- -->
 
+    @abstractmethod
     def start(self, test: str | None = None) -> int | None:
         pass
 
+    @abstractmethod
     def stop(self) -> None:
         pass
 
+    @abstractmethod
     def runTest(self, test: str) -> int | None:
         pass
 
-    def status(self) -> int | None:
+    def status(self) -> int | None:  # noqa: B027
         pass
 
     def _crashed(self) -> bool:
@@ -278,17 +281,17 @@ class SimplePersistentApplication(PersistentApplication):
                     f"{self.spfpPrefix}spfp-selftest{self.spfpSuffix}",
                     file=self.process.stdin,
                 )
-            except OSError:
+            except OSError as exc:
                 raise RuntimeError(
                     "SPFP Error: Selftest failed, application did not start properly."
-                )
+                ) from exc
 
             try:
                 response = self.responseQueue.get(
                     block=True, timeout=self.processingTimeout
                 )
-            except queue.Empty:
-                raise RuntimeError("SPFP Error: Selftest failed, no response.")
+            except queue.Empty as exc:
+                raise RuntimeError("SPFP Error: Selftest failed, no response.") from exc
 
             if response != "PASSED":
                 raise RuntimeError(
@@ -362,7 +365,7 @@ class SimplePersistentApplication(PersistentApplication):
                 response = self.responseQueue.get(
                     block=True, timeout=self.processingTimeout
                 )
-            except queue.Empty:
+            except queue.Empty as exc:
                 if self.process.poll() is None:
                     # The process is still running, force it to stop and return timeout
                     # code
@@ -384,14 +387,14 @@ class SimplePersistentApplication(PersistentApplication):
                     raise RuntimeError(
                         "SPFP Error: Application terminated with signal: "
                         f"{self.process.returncode}"
-                    )
+                    ) from exc
                 # The application exited, but didn't send us any message before
                 # doing so. We consider this a protocol violation and raise an
                 # exception.
                 raise RuntimeError(
                     "SPFP Error: Application exited without message. "
                     f"Exitcode: {self.process.returncode}"
-                )
+                ) from exc
 
             # Update stdout/err available for the last run
             assert self.outCollector is not None
