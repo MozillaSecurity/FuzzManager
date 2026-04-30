@@ -216,7 +216,7 @@ class Collector(Reporter):
                     metadata: dict[str, Any] | None = None
                     if os.path.exists(metadataFile):
                         with open(metadataFile) as m:
-                            metadata = json.loads(m.read())
+                            metadata = json.load(m)
 
                     return (sigFile, metadata)
 
