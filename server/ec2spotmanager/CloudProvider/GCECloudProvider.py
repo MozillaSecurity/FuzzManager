@@ -423,7 +423,7 @@ class GCECloudProvider(CloudProvider):
                 if what is None:
                     continue
 
-                if what.endswith("-cpu") or what.endswith("-inst"):
+                if what.endswith(("-cpu", "-inst")):
                     assert unit == "h"
                 else:
                     assert what.endswith("-ram")
@@ -443,9 +443,7 @@ class GCECloudProvider(CloudProvider):
             mem = RAM_PER_INSTANCE[instance_type]
 
             keys = {}
-            if instance_type.startswith("n1-ultramem-") or instance_type.startswith(
-                "n1-megamem-"
-            ):
+            if instance_type.startswith(("n1-ultramem-", "n1-megamem-")):
                 keys["mem"] = "memopt-ram"
                 keys["cpu"] = "memopt-cpu"
             elif instance_type.startswith("n1-"):

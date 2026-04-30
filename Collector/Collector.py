@@ -83,7 +83,7 @@ class Collector(Reporter):
 
             # Now clean the signature directory, only deleting signatures and metadata
             for sigFile in os.listdir(self.sigCacheDir):
-                if sigFile.endswith(".signature") or sigFile.endswith(".metadata"):
+                if sigFile.endswith((".signature", ".metadata")):
                     os.remove(os.path.join(self.sigCacheDir, sigFile))
                 else:
                     print(

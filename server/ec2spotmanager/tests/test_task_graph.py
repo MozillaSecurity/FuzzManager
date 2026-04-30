@@ -279,7 +279,6 @@ def test_update_pool_graph_unsupported_running(mocker):
             update_requests_idx += 1
             update_instances_idx += 1
             cycle_and_terminate_disabled_idx += 1
-            pass
         elif group_call[0][0]:
             assert group_call == call([mock_chain(), mock_chain()])
 
