@@ -385,7 +385,7 @@ def collections_patch_api(request, collectionid, patch_revision):
         missed_locations = []
         not_coverable = []
 
-        for idx in range(0, len(locations)):
+        for idx in range(len(locations)):
             location = locations[idx]
             if location > 0 and location < len(coverage):
                 if coverage[location] == 0:

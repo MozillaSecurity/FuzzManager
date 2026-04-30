@@ -87,7 +87,7 @@ def printImportantRegisters() -> None:
         ]
     elif isARM64():
         # ARM64 has GPRs from x0 to x30
-        regs = ["x" + str(x) for x in range(0, 31)]
+        regs = ["x" + str(x) for x in range(31)]
         regs.extend(["sp", "pc", "cpsr", "fpcsr", "fpcr"])
     else:
         regs = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "eip"]

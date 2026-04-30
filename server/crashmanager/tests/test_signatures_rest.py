@@ -78,8 +78,10 @@ LOG = logging.getLogger("fm.crashmanager.tests.signatures.rest")
 
 
 def _compare_rest_result_to_bucket(
-    result, bucket, size, quality, best_entry=None, hist=[], vue=False
+    result, bucket, size, quality, best_entry=None, hist=None, vue=False
 ):
+    if hist is None:
+        hist = []
     attributes = {
         "best_entry",
         "best_quality",
@@ -532,7 +534,7 @@ def test_new_signature_preview(api_client, cm, user, many):  # pylint: disable=i
         assert len(in_list) == 100
         assert data["inListCount"] == 201
 
-        for shown, crash in zip(reversed(data["inList"]), crashes[-100:]):
+        for shown, crash in zip(reversed(data["inList"]), crashes[-100:], strict=True):
             assert shown["id"] == crash.pk
     else:
         crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
@@ -778,9 +780,9 @@ def test_edit_signature_edit_preview(api_client, cm, user, many):  # pylint: dis
         for crash in crashes2:
             crash = CrashEntry.objects.get(pk=crash.pk)  # re-read
             assert crash.bucket is None
-        for shown, crash in zip(reversed(in_list), crashes2[-100:]):
+        for shown, crash in zip(reversed(in_list), crashes2[-100:], strict=True):
             assert shown["id"] == crash.pk
-        for shown, crash in zip(reversed(out_list), crashes1[-100:]):
+        for shown, crash in zip(reversed(out_list), crashes1[-100:], strict=True):
             assert shown["id"] == crash.pk
     else:
         assert len(in_list) == 1

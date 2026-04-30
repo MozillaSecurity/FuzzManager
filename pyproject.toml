@@ -50,6 +50,8 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = [
+    # flake8-bugbear
+    "B",
     # flake8-comprehensions
     "C4",
     # pycodestyle
@@ -60,10 +62,20 @@ select = [
     "FA",
     # Flynt
     "FLY",
+    # refurb
+    "FURB",
+    # flake8-logging-format
+    "G",
     # isort
     "I",
+    # flake8-logging
+    "LOG",
     # Perflint
     "PERF",
+    # flake8-pie
+    "PIE",
+    # flake8-quotes
+    "Q",
     # flake8-return
     "RET",
     # Ruff-specific rules

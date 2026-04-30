@@ -155,7 +155,7 @@ class TraceParsingError(RuntimeError):
         super().__init__(*args, **kwds)
 
 
-class CrashInfo(metaclass=ABCMeta):
+class CrashInfo(metaclass=ABCMeta):  # noqa: B024
     """
     Abstract base class that provides a method to instantiate the right sub class.
     It also supports generating a CrashSignature based on the stored information.
@@ -525,7 +525,7 @@ class CrashInfo(metaclass=ABCMeta):
         # StackFramesSymptom is only supported in 1.2 and higher,
         # for everything else, use multiple stackFrame symptoms
         if minimumSupportedVersion < 12:
-            for idx in range(0, numFrames):
+            for idx in range(numFrames):
                 functionName = self.backtrace[idx]
                 if functionName != "??":
                     symptomArr.append(
@@ -541,7 +541,7 @@ class CrashInfo(metaclass=ABCMeta):
         else:
             framesArray: list[str] = []
 
-            for idx in range(0, numFrames):
+            for idx in range(numFrames):
                 functionName = self.backtrace[idx]
                 if functionName != "??":
                     framesArray.append(functionName)
@@ -552,7 +552,7 @@ class CrashInfo(metaclass=ABCMeta):
                         topStackMissCount += 1
 
             lastSymbolizedFrame = None
-            for frameIdx in range(0, len(framesArray)):
+            for frameIdx in range(len(framesArray)):
                 if framesArray[frameIdx] != "?":
                     lastSymbolizedFrame = frameIdx
 
@@ -712,7 +712,7 @@ class ASanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        asanOutput = crashData if crashData else stderr
+        asanOutput = crashData or stderr
         assert asanOutput is not None
 
         asanCrashAddressPattern = r"""(?x)
@@ -951,7 +951,7 @@ class LSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the LSan trace, otherwise use stderr
-        lsanOutput = crashData if crashData else stderr
+        lsanOutput = crashData or stderr
         assert lsanOutput is not None
         lsanErrorPattern = "ERROR: LeakSanitizer:"
         lsanPatternSeen = False
@@ -1048,7 +1048,7 @@ class UBSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the UBSan trace, otherwise use stderr
-        ubsanOutput = crashData if crashData else stderr
+        ubsanOutput = crashData or stderr
         assert ubsanOutput is not None
         ubsanErrorPattern = r":\d+:\d+:\s+runtime\s+error:\s+"
         ubsanPatternSeen = False
@@ -1538,7 +1538,7 @@ class GDBCrashInfo(CrashInfo):
 
             # ARM assembly has nested comma-separated operands, so we need to merge
             # those inside  brackets back together before proceeding.
-            for i in range(0, len(parts)):
+            for i in range(len(parts)):
                 if i >= len(parts):
                     break
                 if (
@@ -1559,9 +1559,7 @@ class GDBCrashInfo(CrashInfo):
                 if instruction == "brk":
                     # This is an explicit breakpoint / trap
                     return RegisterHelper.getInstructionPointer(registerMap)
-            elif len(parts) == 2 and (
-                instruction.startswith("ldr") or instruction.startswith("str")
-            ):
+            elif len(parts) == 2 and (instruction.startswith(("ldr", "str"))):
                 # Load/Store instruction
                 match = re.match("^\\s*\\[(.*)\\]$", parts[1])
                 if match is not None:
@@ -1991,7 +1989,7 @@ class TSanCrashInfo(CrashInfo):
         self.configuration = configuration
 
         # If crashData is given, use that to find the ASan trace, otherwise use stderr
-        tsanOutput = crashData if crashData else stderr
+        tsanOutput = crashData or stderr
         assert tsanOutput is not None
 
         tsanWarningPattern = r"""WARNING: ThreadSanitizer:.*\s.+?\s+\(pid=\d+\)"""
@@ -2160,7 +2158,7 @@ class ValgrindCrashInfo(CrashInfo):
 
         # If crashData is given, use that to find the Valgrind trace, otherwise use
         # stderr
-        vgdOutput = crashData if crashData else stderr
+        vgdOutput = crashData or stderr
         assert vgdOutput is not None
         stackPattern = re.compile(
             r"""
@@ -2211,7 +2209,7 @@ class ValgrindCrashInfo(CrashInfo):
         @return: A string representing this crash (short signature)
         """
 
-        logData = self.rawCrashData if self.rawCrashData else self.rawStderr
+        logData = self.rawCrashData or self.rawStderr
         for line in logData:
             m = re.match(ValgrindCrashInfo.MSG_REGEX, line)
             if m and m.group("msg"):

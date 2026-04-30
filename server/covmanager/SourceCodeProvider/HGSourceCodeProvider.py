@@ -30,8 +30,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
         revision = revision.replace("+", "")
 
         # Avoid passing in absolute filenames to HG
-        if filename.startswith("/"):
-            filename = filename[1:]
+        filename = filename.removeprefix("/")
 
         try:
             return subprocess.check_output(
@@ -40,10 +39,10 @@ class HGSourceCodeProvider(SourceCodeProvider):
         except subprocess.CalledProcessError:
             # Check if the revision exists to determine which exception to raise
             if not self.testRevision(revision):
-                raise UnknownRevisionException
+                raise UnknownRevisionException from None
 
             # Otherwise assume the file doesn't exist
-            raise UnknownFilenameException
+            raise UnknownFilenameException from None
 
     def testRevision(self, revision):
         revision = revision.replace("+", "")
@@ -71,7 +70,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
                 cwd=self.location,
             ).decode("utf-8")
         except subprocess.CalledProcessError:
-            raise UnknownRevisionException
+            raise UnknownRevisionException from None
 
         output = output.splitlines()
 
@@ -92,7 +91,7 @@ class HGSourceCodeProvider(SourceCodeProvider):
                 ["hg", "diff", "--git", "-U0", "-c", revision], cwd=self.location
             )
         except subprocess.CalledProcessError:
-            raise UnknownRevisionException
+            raise UnknownRevisionException from None
 
         return output.decode("utf-8")
 

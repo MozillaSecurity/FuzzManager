@@ -253,7 +253,7 @@ def test_rest_crashes_list(api_client, user, cm, ignore_toolfilter, include_raw)
     assert resp["next"] is None
     assert resp["previous"] is None
     assert len(resp["results"]) == expected
-    for result, crash in zip(resp["results"], crashes[:expected]):
+    for result, crash in zip(resp["results"], crashes[:expected], strict=True):
         _compare_rest_result_to_crash(result, crash, raw=include_raw)
 
 

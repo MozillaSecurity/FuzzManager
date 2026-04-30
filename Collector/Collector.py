@@ -83,7 +83,7 @@ class Collector(Reporter):
 
             # Now clean the signature directory, only deleting signatures and metadata
             for sigFile in os.listdir(self.sigCacheDir):
-                if sigFile.endswith(".signature") or sigFile.endswith(".metadata"):
+                if sigFile.endswith((".signature", ".metadata")):
                     os.remove(os.path.join(self.sigCacheDir, sigFile))
                 else:
                     print(
@@ -210,16 +210,15 @@ class Collector(Reporter):
             sigFile = os.path.join(self.sigCacheDir, sigFile)
             if not os.path.isdir(sigFile):
                 with open(sigFile) as f:
-                    sigData = f.read()
-                    crashSig = CrashSignature(sigData)
-                    if crashSig.matches(crashInfo):
-                        metadataFile = sigFile.replace(".signature", ".metadata")
-                        metadata: dict[str, Any] | None = None
-                        if os.path.exists(metadataFile):
-                            with open(metadataFile) as m:
-                                metadata = json.loads(m.read())
+                    crashSig = CrashSignature(f.read())
+                if crashSig.matches(crashInfo):
+                    metadataFile = sigFile.replace(".signature", ".metadata")
+                    metadata: dict[str, Any] | None = None
+                    if os.path.exists(metadataFile):
+                        with open(metadataFile) as m:
+                            metadata = json.load(m)
 
-                        return (sigFile, metadata)
+                    return (sigFile, metadata)
 
         return (None, None)
 
@@ -772,7 +771,7 @@ def main(args: list[str] | None = None) -> int:
                 "Command line arguments:",
                 " ".join(args),
             )
-            print("")
+            print()
 
         if retJSON.get("env"):
             env = json.loads(retJSON["env"])
@@ -780,14 +779,14 @@ def main(args: list[str] | None = None) -> int:
                 "Environment variables:",
                 " ".join(f"{k} = {v}" for (k, v) in env.items()),
             )
-            print("")
+            print()
 
         if retJSON.get("metadata"):
             metadata = json.loads(retJSON["metadata"])
             print("== Metadata ==")
             for k, v in metadata.items():
                 print(f"{k} = {v}")
-            print("")
+            print()
 
         print(retFile)
         return 0
