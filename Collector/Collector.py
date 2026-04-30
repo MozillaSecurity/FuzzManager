@@ -210,16 +210,15 @@ class Collector(Reporter):
             sigFile = os.path.join(self.sigCacheDir, sigFile)
             if not os.path.isdir(sigFile):
                 with open(sigFile) as f:
-                    sigData = f.read()
-                    crashSig = CrashSignature(sigData)
-                    if crashSig.matches(crashInfo):
-                        metadataFile = sigFile.replace(".signature", ".metadata")
-                        metadata: dict[str, Any] | None = None
-                        if os.path.exists(metadataFile):
-                            with open(metadataFile) as m:
-                                metadata = json.loads(m.read())
+                    crashSig = CrashSignature(f.read())
+                if crashSig.matches(crashInfo):
+                    metadataFile = sigFile.replace(".signature", ".metadata")
+                    metadata: dict[str, Any] | None = None
+                    if os.path.exists(metadataFile):
+                        with open(metadataFile) as m:
+                            metadata = json.loads(m.read())
 
-                        return (sigFile, metadata)
+                    return (sigFile, metadata)
 
         return (None, None)
 
