@@ -530,7 +530,7 @@ def scan_crashes(
         crash_file = os.path.join(crash_dir, crash_file)
 
         # Ignore our own status files
-        if crash_file.endswith(".submitted") or crash_file.endswith(".failed"):
+        if crash_file.endswith((".submitted", ".failed")):
             continue
 
         # Ignore files we already processed
@@ -1451,7 +1451,7 @@ def main(argv=None):
             return 2
 
         for arg in cmdline:
-            if arg.startswith("-jobs=") or arg.startswith("-workers="):
+            if arg.startswith(("-jobs=", "-workers=")):
                 print(
                     "Error: Using -jobs and -workers is incompatible with this "
                     "wrapper.",
@@ -1790,9 +1790,7 @@ def main(argv=None):
                     testcase_name = os.path.basename(testcase)
 
                     if not monitor.inited:
-                        if testcase_name.startswith("oom-") or testcase_name.startswith(
-                            "timeout-"
-                        ):
+                        if testcase_name.startswith(("oom-", "timeout-")):
                             hashname = testcase_name.split("-")[1]
                             potential_corpus_file = os.path.join(corpus_dir, hashname)
                             if os.path.exists(potential_corpus_file):

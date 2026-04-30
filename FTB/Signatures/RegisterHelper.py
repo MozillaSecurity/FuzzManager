@@ -56,7 +56,7 @@ armRegisters = [
     "cpsr",
 ]
 
-arm64Registers = ["x" + str(x) for x in range(0, 31)] + [
+arm64Registers = ["x" + str(x) for x in range(31)] + [
     "sp",
     "pc",
     "cpsr",

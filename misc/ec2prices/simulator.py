@@ -64,7 +64,6 @@ def get_spot_price_per_region(
             break
         except Exception:
             print("Caught exception, retrying")
-            pass
 
     return r
 

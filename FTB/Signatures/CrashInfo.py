@@ -525,7 +525,7 @@ class CrashInfo(metaclass=ABCMeta):  # noqa: B024
         # StackFramesSymptom is only supported in 1.2 and higher,
         # for everything else, use multiple stackFrame symptoms
         if minimumSupportedVersion < 12:
-            for idx in range(0, numFrames):
+            for idx in range(numFrames):
                 functionName = self.backtrace[idx]
                 if functionName != "??":
                     symptomArr.append(
@@ -541,7 +541,7 @@ class CrashInfo(metaclass=ABCMeta):  # noqa: B024
         else:
             framesArray: list[str] = []
 
-            for idx in range(0, numFrames):
+            for idx in range(numFrames):
                 functionName = self.backtrace[idx]
                 if functionName != "??":
                     framesArray.append(functionName)
@@ -552,7 +552,7 @@ class CrashInfo(metaclass=ABCMeta):  # noqa: B024
                         topStackMissCount += 1
 
             lastSymbolizedFrame = None
-            for frameIdx in range(0, len(framesArray)):
+            for frameIdx in range(len(framesArray)):
                 if framesArray[frameIdx] != "?":
                     lastSymbolizedFrame = frameIdx
 
@@ -1538,7 +1538,7 @@ class GDBCrashInfo(CrashInfo):
 
             # ARM assembly has nested comma-separated operands, so we need to merge
             # those inside  brackets back together before proceeding.
-            for i in range(0, len(parts)):
+            for i in range(len(parts)):
                 if i >= len(parts):
                     break
                 if (
@@ -1559,9 +1559,7 @@ class GDBCrashInfo(CrashInfo):
                 if instruction == "brk":
                     # This is an explicit breakpoint / trap
                     return RegisterHelper.getInstructionPointer(registerMap)
-            elif len(parts) == 2 and (
-                instruction.startswith("ldr") or instruction.startswith("str")
-            ):
+            elif len(parts) == 2 and (instruction.startswith(("ldr", "str"))):
                 # Load/Store instruction
                 match = re.match("^\\s*\\[(.*)\\]$", parts[1])
                 if match is not None:

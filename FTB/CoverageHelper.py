@@ -74,7 +74,7 @@ def merge_coverage_data(r: dict[str, Any], s: dict[str, Any]) -> dict[str, int]:
 
             minlen = min(len(rc), len(sc))
 
-            for idx in range(0, minlen):
+            for idx in range(minlen):
                 # There are multiple situations where coverage reports might disagree
                 # about which lines are coverable and which are not. Sometimes, GCOV
                 # reports this wrong in headers, but it can also happen when mixing

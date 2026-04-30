@@ -406,7 +406,7 @@ def newSignature(request):
         if "stackframes" in request.GET:
             maxStackFrames = int(request.GET["stackframes"])
         elif any(
-            entry.startswith("std::panicking") or entry.startswith("alloc::alloc")
+            entry.startswith(("std::panicking", "alloc::alloc"))
             for entry in crashInfo.backtrace
         ):
             # rust panic adds 5-6 frames of noise at the top of the stack
