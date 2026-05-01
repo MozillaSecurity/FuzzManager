@@ -1,0 +1,1 @@
+AssertedCast error: Cannot cast -32769 from int32_t to uint32_t: out of range
