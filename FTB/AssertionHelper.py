@@ -83,6 +83,10 @@ def getAssertion(output: list[str]) -> str | list[str] | None:
             endRegex = RE_V8_END
             lastLine = [line]
             haveFatalAssertion = True
+        elif line.startswith("AssertedCast error:"):
+            # Firefox AssertedCast error (mozilla/Casting.h)
+            lastLine = line
+            haveFatalAssertion = True
         elif "Assertion" in line and "failed" in line:
             # Firefox ANGLE assertion
             lastLine = line
