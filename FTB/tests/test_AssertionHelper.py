@@ -266,6 +266,20 @@ def test_AssertionHelperTestCPPUnhandledException():
     _check_regex_matches(err, sanitizedMsg)
 
 
+def test_AssertionHelperTestAssertedCast():
+    err = (FIXTURE_PATH / "assert_asserted_cast.txt").read_text().splitlines()
+
+    sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
+        AssertionHelper.getAssertion(err)
+    )
+    expectedMsg = (
+        r"AssertedCast error: Cannot cast -[0-9]{2,} from int[0-9]{2,}_t to "
+        r"uint[0-9]{2,}_t: out of range"
+    )
+    assert sanitizedMsg == expectedMsg
+    _check_regex_matches(err, sanitizedMsg)
+
+
 def test_AssertionHelperTestRustPanic01():
     err = (FIXTURE_PATH / "assert_rust_panic1.txt").read_text().splitlines()
     sanitizedMsg = AssertionHelper.getSanitizedAssertionPattern(
