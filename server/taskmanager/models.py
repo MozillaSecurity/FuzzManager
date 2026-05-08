@@ -10,6 +10,9 @@ class Pool(models.Model):
     cycle_time = models.DurationField(null=True)
     max_run_time = models.DurationField(null=True)
 
+    def __str__(self):
+        return self.pool_name
+
 
 class Task(models.Model):
     pool = models.ForeignKey(Pool, on_delete=models.deletion.CASCADE, null=True)
@@ -25,3 +28,6 @@ class Task(models.Model):
 
     class Meta:
         unique_together = ["task_id", "run_id"]
+
+    def __str__(self):
+        return f"{self.task_id}/{self.run_id}"

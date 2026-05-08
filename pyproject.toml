@@ -54,6 +54,8 @@ select = [
     "B",
     # flake8-comprehensions
     "C4",
+    # flake8-django
+    "DJ",
     # pycodestyle
     "E",
     # Pyflakes
@@ -89,7 +91,7 @@ select = [
     # pycodestyle
     "W",
 ]
-ignore = ["RUF012"]
+ignore = ["DJ001", "RUF012"]
 
 [tool.ruff.lint.isort]
 known-first-party = [

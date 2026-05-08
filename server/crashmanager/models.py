@@ -37,6 +37,9 @@ class Tool(models.Model):
 class Platform(models.Model):
     name = models.CharField(max_length=63, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Product(models.Model):
     name = models.CharField(max_length=63)
@@ -49,6 +52,9 @@ class Product(models.Model):
                 name="unique_product_version",
             ),
         ]
+
+    def __str__(self):
+        return f"{self.name} {self.version}".strip()
 
 
 class OS(models.Model):
@@ -63,6 +69,9 @@ class OS(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f"{self.name} {self.version}".strip()
+
 
 class TestCase(models.Model):
     test = models.FileField(
@@ -72,6 +81,9 @@ class TestCase(models.Model):
     size = models.IntegerField(default=0)
     quality = models.IntegerField(default=0)
     isBinary = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.test.name
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the testcase data temporarily
@@ -122,6 +134,9 @@ def TestCase_save(sender, instance, created, **kwargs):
 class Client(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class BugProvider(models.Model):
     classname = models.CharField(max_length=255, blank=False)
@@ -129,6 +144,9 @@ class BugProvider(models.Model):
 
     # This is used to annotate bugs with the URL linking to them
     urlTemplate = models.CharField(max_length=1023, blank=False)
+
+    def __str__(self):
+        return self.hostname
 
     def getInstance(self):
         # Dynamically instantiate the provider as requested
@@ -138,14 +156,14 @@ class BugProvider(models.Model):
         provider_class = getattr(provider_module, self.classname)
         return provider_class(self.pk, self.hostname)
 
-    def __str__(self):
-        return self.hostname
-
 
 class Bug(models.Model):
     externalId = models.CharField(max_length=255, blank=True)
     externalType = models.ForeignKey(BugProvider, on_delete=models.deletion.CASCADE)
     closed = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.externalId or f"Bug #{self.pk}"
 
     @property
     def tools_filter_users(self):
@@ -168,18 +186,8 @@ class Bucket(models.Model):
     doNotReduce = models.BooleanField(blank=False, default=False)
     reassign_in_progress = models.BooleanField(default=False)
 
-    @property
-    def watchers(self):
-        ids = User.objects.filter(
-            bucketwatch__bucket=self, bucket_hit=True
-        ).values_list("user_id", flat=True)
-        return DjangoUser.objects.filter(id__in=ids).distinct()
-
-    def getSignature(self):
-        return CrashSignature(self.signature)
-
-    def getOptimizedSignature(self):
-        return CrashSignature(self.optimizedSignature)
+    def __str__(self):
+        return self.shortDescription or f"Bucket #{self.pk}"
 
     def save(self, *args, **kwargs):
         modified = set()
@@ -204,6 +212,19 @@ class Bucket(models.Model):
             kwargs["update_fields"] = modified.union(kwargs["update_fields"])
 
         super().save(*args, **kwargs)
+
+    @property
+    def watchers(self):
+        ids = User.objects.filter(
+            bucketwatch__bucket=self, bucket_hit=True
+        ).values_list("user_id", flat=True)
+        return DjangoUser.objects.filter(id__in=ids).distinct()
+
+    def getSignature(self):
+        return CrashSignature(self.signature)
+
+    def getOptimizedSignature(self):
+        return CrashSignature(self.optimizedSignature)
 
     def reassign(self, submit_save, limit=None, offset=None):
         """
@@ -464,6 +485,17 @@ class BucketStatistics(models.Model):
     size = models.IntegerField(default=0)
     quality = models.IntegerField(null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bucket", "tool"],
+                name="unique_bucketstats_per_tool",
+            ),
+        ]
+
+    def __str__(self):
+        return f"BucketStatistics #{self.pk}"
+
     @classmethod
     def increment_count(cls, bucket_id, tool_id, quality=None):
         stats, _ = cls.objects.get_or_create(bucket_id=bucket_id, tool_id=tool_id)
@@ -506,14 +538,6 @@ class BucketStatistics(models.Model):
                 ).aggregate(min_quality=Min("testcase__quality"))["min_quality"]
                 stats.save()
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["bucket", "tool"],
-                name="unique_bucketstats_per_tool",
-            ),
-        ]
-
 
 def buckethit_default_range_begin():
     return timezone.now().replace(microsecond=0, second=0, minute=0)
@@ -524,6 +548,17 @@ class BucketHit(models.Model):
     tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
     begin = models.DateTimeField(default=buckethit_default_range_begin)
     count = models.IntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bucket", "tool", "begin"],
+                name="unique_buckethits_per_period",
+            ),
+        ]
+
+    def __str__(self):
+        return f"BucketHit #{self.pk}"
 
     @classmethod
     def decrement_count(cls, bucket_id, tool_id, begin):
@@ -546,19 +581,22 @@ class BucketHit(models.Model):
         counter.count += 1
         counter.save()
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["bucket", "tool", "begin"],
-                name="unique_buckethits_per_period",
-            ),
-        ]
-
 
 class CrashHit(models.Model):
     lastUpdate = models.DateTimeField(default=timezone.now)
     tool = models.ForeignKey(Tool, on_delete=models.deletion.CASCADE)
     count = models.BigIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lastUpdate", "tool"],
+                name="unique_crashhits_per_tool",
+            ),
+        ]
+
+    def __str__(self):
+        return f"CrashHit #{self.pk}"
 
     @staticmethod
     def get_period(time):
@@ -572,14 +610,6 @@ class CrashHit(models.Model):
             seconds=-time.second,
             microseconds=-time.microsecond,
         )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["lastUpdate", "tool"],
-                name="unique_crashhits_per_tool",
-            ),
-        ]
 
 
 class CrashEntry(models.Model):
@@ -620,11 +650,8 @@ class CrashEntry(models.Model):
         self._original_bucket = None
         super().__init__(*args, **kwargs)
 
-    @classmethod
-    def from_db(cls, db, field_names, values):
-        instance = super().from_db(db, field_names, values)
-        instance._original_bucket = instance.bucket_id
-        return instance
+    def __str__(self):
+        return self.shortSignature or f"CrashEntry #{self.pk}"
 
     def save(self, *args, **kwargs):
         modified = set()
@@ -703,6 +730,12 @@ class CrashEntry(models.Model):
             kwargs["update_fields"] = modified.union(kwargs["update_fields"])
 
         super().save(*args, **kwargs)
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._original_bucket = instance.bucket_id
+        return instance
 
     def deserializeFields(self):
         if self.args:
@@ -908,6 +941,21 @@ class BugzillaTemplate(models.Model):
 
 
 class User(models.Model):
+    user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
+    # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
+    # because the bug provider has to decide how to interpret this ID.
+    defaultTemplateId = models.IntegerField(default=0)
+    defaultProviderId = models.IntegerField(default=1)
+    defaultToolsFilter = models.ManyToManyField(Tool)
+    restricted = models.BooleanField(blank=False, default=False)
+    bucketsWatching = models.ManyToManyField(Bucket, through="BucketWatch")
+
+    # Notifications
+    bucket_hit = models.BooleanField(blank=False, default=False)
+    coverage_drop = models.BooleanField(blank=False, default=False)
+    inaccessible_bug = models.BooleanField(blank=False, default=False)
+    tasks_failed = models.BooleanField(blank=False, default=False)
+
     class Meta:
         permissions = (
             (
@@ -942,20 +990,8 @@ class User(models.Model):
             ("ec2spotmanager_all", "Full access to EC2SpotManager"),
         )
 
-    user = models.OneToOneField(DjangoUser, on_delete=models.deletion.CASCADE)
-    # Explicitly do not store this as a ForeignKey to e.g. BugzillaTemplate
-    # because the bug provider has to decide how to interpret this ID.
-    defaultTemplateId = models.IntegerField(default=0)
-    defaultProviderId = models.IntegerField(default=1)
-    defaultToolsFilter = models.ManyToManyField(Tool)
-    restricted = models.BooleanField(blank=False, default=False)
-    bucketsWatching = models.ManyToManyField(Bucket, through="BucketWatch")
-
-    # Notifications
-    bucket_hit = models.BooleanField(blank=False, default=False)
-    coverage_drop = models.BooleanField(blank=False, default=False)
-    inaccessible_bug = models.BooleanField(blank=False, default=False)
-    tasks_failed = models.BooleanField(blank=False, default=False)
+    def __str__(self):
+        return str(self.user)
 
     @staticmethod
     def get_or_create_restricted(request_user):
@@ -988,3 +1024,6 @@ class BucketWatch(models.Model):
     # Store as an integer to prevent problems if the particular crash
     # is deleted later. We only care about its place in the ordering.
     lastCrash = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"BucketWatch #{self.pk}"
