@@ -153,6 +153,39 @@ class PoolConfiguration(models.Model):
 
         super().__init__(*args, **kwargs)
 
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        modified = set()
+
+        # Reserialize data, then call regular save method
+        for field in self.dict_config_fields:
+            obj = getattr(self, field + "_dict")
+            override = getattr(self, field + "_override")
+            value = json.dumps(obj, separators=(",", ":")) if obj else ""
+            if override:
+                value = "!" + value
+            if getattr(self, field) != value:
+                setattr(self, field, value)
+                modified.add(field)
+
+        for field in self.list_config_fields:
+            obj = getattr(self, field + "_list")
+            override = getattr(self, field + "_override")
+            value = json.dumps(obj, separators=(",", ":")) if obj else ""
+            if override:
+                value = "!" + value
+            if getattr(self, field) != value:
+                setattr(self, field, value)
+                modified.add(field)
+
+        # required in Django 4.2+
+        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
+            kwargs["update_fields"] = modified.union(kwargs["update_fields"])
+
+        super().save(*args, **kwargs)
+
     def flatten(self, cache=None):
         # cache is optionally a prefetched {config_id: config} dictionary used for
         # parent lookups
@@ -225,36 +258,6 @@ class PoolConfiguration(models.Model):
                 flat_parent_config[field] = []
 
         return flat_parent_config
-
-    def save(self, *args, **kwargs):
-        modified = set()
-
-        # Reserialize data, then call regular save method
-        for field in self.dict_config_fields:
-            obj = getattr(self, field + "_dict")
-            override = getattr(self, field + "_override")
-            value = json.dumps(obj, separators=(",", ":")) if obj else ""
-            if override:
-                value = "!" + value
-            if getattr(self, field) != value:
-                setattr(self, field, value)
-                modified.add(field)
-
-        for field in self.list_config_fields:
-            obj = getattr(self, field + "_list")
-            override = getattr(self, field + "_override")
-            value = json.dumps(obj, separators=(",", ":")) if obj else ""
-            if override:
-                value = "!" + value
-            if getattr(self, field) != value:
-                setattr(self, field, value)
-                modified.add(field)
-
-        # required in Django 4.2+
-        if "update_fields" in kwargs and kwargs["update_fields"] is not None:
-            kwargs["update_fields"] = modified.union(kwargs["update_fields"])
-
-        super().save(*args, **kwargs)
 
     def deserializeFields(self):
         for field in self.dict_config_fields:
@@ -368,6 +371,9 @@ class InstancePool(models.Model):
     isEnabled = models.BooleanField(default=False)
     last_cycled = models.DateTimeField(blank=True, null=True)
 
+    def __str__(self):
+        return f"InstancePool #{self.pk}"
+
 
 class Instance(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -383,12 +389,18 @@ class Instance(models.Model):
     size = models.IntegerField(default=1)
     provider = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.hostname or f"Instance #{self.pk}"
+
 
 class InstanceStatusEntry(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"InstanceStatusEntry #{self.pk}"
 
 
 class PoolStatusEntry(models.Model):
@@ -398,6 +410,9 @@ class PoolStatusEntry(models.Model):
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"PoolStatusEntry #{self.pk}"
+
 
 class ProviderStatusEntry(models.Model):
     provider = models.CharField(max_length=255)
@@ -406,12 +421,18 @@ class ProviderStatusEntry(models.Model):
     msg = models.CharField(max_length=4095)
     isCritical = models.BooleanField(default=False)
 
+    def __str__(self):
+        return f"ProviderStatusEntry #{self.pk}"
+
 
 class PoolUptimeDetailedEntry(models.Model):
     pool = models.ForeignKey(InstancePool, on_delete=models.deletion.CASCADE)
     created = models.DateTimeField(default=timezone.now)
     target = models.IntegerField()
     actual = models.IntegerField()
+
+    def __str__(self):
+        return f"PoolUptimeDetailedEntry #{self.pk}"
 
 
 class PoolUptimeAccumulatedEntry(models.Model):
@@ -421,3 +442,6 @@ class PoolUptimeAccumulatedEntry(models.Model):
     uptime_percentage = models.DecimalField(
         max_digits=5, decimal_places=2, blank=True, null=True
     )
+
+    def __str__(self):
+        return f"PoolUptimeAccumulatedEntry #{self.pk}"

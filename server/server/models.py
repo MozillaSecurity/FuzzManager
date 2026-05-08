@@ -21,6 +21,14 @@ class TokenIPRestriction(models.Model):
     class Meta:
         unique_together = ("token", "ip_range")
 
+    def __str__(self):
+        return f"{self.token.key[:8]}... - {self.ip_range}"
+
+    def save(self, *args, **kwargs):
+        if not self.validate_cidr(self.ip_range):
+            raise ValueError(f"Invalid CIDR notation: {self.ip_range}")
+        super().save(*args, **kwargs)
+
     @staticmethod
     def validate_cidr(cidr):
         """
@@ -36,14 +44,6 @@ class TokenIPRestriction(models.Model):
                 return True
             except (AddressValueError, ValueError):
                 return False
-
-    def save(self, *args, **kwargs):
-        if not self.validate_cidr(self.ip_range):
-            raise ValueError(f"Invalid CIDR notation: {self.ip_range}")
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.token.key[:8]}... - {self.ip_range}"
 
 
 @receiver(post_save, sender=Token)

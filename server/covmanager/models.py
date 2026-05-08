@@ -21,6 +21,9 @@ class Repository(models.Model):
     name = models.CharField(max_length=255, blank=False)
     location = models.CharField(max_length=1023, blank=False)
 
+    def __str__(self):
+        return self.name
+
     def getInstance(self):
         # Dynamically instantiate the provider as requested
         providerModule = __import__(
@@ -38,6 +41,9 @@ class CollectionFile(models.Model):
     )
     format = models.IntegerField(default=0)
 
+    def __str__(self):
+        return self.file.name
+
 
 class Collection(models.Model):
     created = models.DateTimeField(default=timezone.now)
@@ -50,6 +56,9 @@ class Collection(models.Model):
     coverage = models.ForeignKey(
         CollectionFile, blank=True, null=True, on_delete=models.deletion.CASCADE
     )
+
+    def __str__(self):
+        return self.description or f"Collection #{self.pk}"
 
     def __init__(self, *args, **kwargs):
         # This variable can hold the deserialized contents of the coverage blob
@@ -208,6 +217,9 @@ class ReportConfiguration(models.Model):
         "self", blank=True, null=True, on_delete=models.deletion.CASCADE
     )
 
+    def __str__(self):
+        return self.description or f"ReportConfiguration #{self.pk}"
+
     def apply(self, collection):
         CoverageHelper.apply_include_exclude_directives(
             collection, self.directives.splitlines()
@@ -218,6 +230,9 @@ class ReportConfiguration(models.Model):
 class ReportSummary(models.Model):
     collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
     cached_result = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"ReportSummary #{self.pk}"
 
 
 class Report(models.Model):
@@ -235,3 +250,6 @@ class Report(models.Model):
     is_monthly = models.BooleanField(blank=False, default=False)
     is_quarterly = models.BooleanField(blank=False, default=False)
     tag = models.CharField(max_length=64, blank=True)
+
+    def __str__(self):
+        return f"Report #{self.pk}"
