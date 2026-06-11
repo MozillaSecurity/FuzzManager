@@ -76,7 +76,7 @@ def test_rest_status_report(api_client, username):
     resp = api_client.post("/ec2spotmanager/rest/report/", {"client": "host1"})
     assert resp.status_code == requests.codes["created"]
     host = Instance.objects.get(pk=host.pk)  # re-read
-    assert host.status_data is None
+    assert not host.status_data
     resp = api_client.post("/ec2spotmanager/rest/report/")
     assert resp.status_code == requests.codes["bad_request"]
     resp = api_client.post("/ec2spotmanager/rest/report/", {"client": "host2"})

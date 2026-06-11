@@ -84,7 +84,7 @@ def update_pool_defns():
         defaults = {
             "pool_name": pool_data[0].name,
             "size": sum(pool.tasks for pool in pool_data),
-            "cpu": pool_data[0].cpu,
+            "cpu": pool_data[0].cpu or "",
             "cycle_time": timedelta(seconds=pool_data[0].cycle_time),
             "max_run_time": timedelta(seconds=pool_data[0].max_run_time),
         }

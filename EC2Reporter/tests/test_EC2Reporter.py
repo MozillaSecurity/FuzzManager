@@ -51,7 +51,7 @@ def test_ec2reporter_report(mock_expanduser, live_server, tmp_path, fm_user):
 
     reporter.report(None)
     host = Instance.objects.get(pk=host.pk)  # re-read
-    assert host.status_data is None
+    assert not host.status_data
 
     reporter = EC2Reporter(
         sigCacheDir=str(sigcache_path),

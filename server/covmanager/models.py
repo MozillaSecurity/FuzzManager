@@ -229,7 +229,7 @@ class ReportConfiguration(models.Model):
 
 class ReportSummary(models.Model):
     collection = models.OneToOneField(Collection, on_delete=models.deletion.CASCADE)
-    cached_result = models.TextField(null=True, blank=True)
+    cached_result = models.TextField(blank=True)
 
     def __str__(self):
         return f"ReportSummary #{self.pk}"

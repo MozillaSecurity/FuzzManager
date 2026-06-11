@@ -473,7 +473,7 @@ def collections_reportsummary_api(request, collectionid):
     task_scheduled = False
 
     if not hasattr(collection, "reportsummary"):
-        summary = ReportSummary(collection=collection, cached_result=None)
+        summary = ReportSummary(collection=collection, cached_result="")
         summary.save()
         calculate_report_summary.delay(summary.pk)
         task_scheduled = True
@@ -483,7 +483,7 @@ def collections_reportsummary_api(request, collectionid):
     if request.method == "POST":
         # This is a refresh request
         if not task_scheduled:
-            summary.cached_result = None
+            summary.cached_result = ""
             summary.save()
             calculate_report_summary.delay(summary.pk)
         return HttpResponse(content=json.dumps({"msg": "Success"}))

@@ -6,7 +6,7 @@ class Pool(models.Model):
     pool_name = models.CharField(max_length=255)  # friendly name
     platform = models.CharField(max_length=15)
     size = models.PositiveIntegerField(null=True)
-    cpu = models.CharField(max_length=15, null=True)
+    cpu = models.CharField(max_length=15, blank=True)
     cycle_time = models.DurationField(null=True)
     max_run_time = models.DurationField(null=True)
 
@@ -17,7 +17,7 @@ class Pool(models.Model):
 class Task(models.Model):
     pool = models.ForeignKey(Pool, on_delete=models.deletion.CASCADE, null=True)
     task_id = models.CharField(max_length=64)
-    decision_id = models.CharField(max_length=64, null=True)
+    decision_id = models.CharField(max_length=64, blank=True)
     run_id = models.PositiveIntegerField()
     state = models.CharField(max_length=15)
     created = models.DateTimeField(null=True)

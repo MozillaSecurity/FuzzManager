@@ -76,8 +76,8 @@ def check_notify_coverage_drops(current_pk, previous_pk, retries=20):
     previous = Collection.objects.get(pk=previous_pk)
 
     if (
-        current.reportsummary.cached_result is None
-        or previous.reportsummary.cached_result is None
+        not current.reportsummary.cached_result
+        or not previous.reportsummary.cached_result
     ):
         if retries:
             # try again in 60s
@@ -155,7 +155,7 @@ def identify_coverage_drops(revision, ipc_only=False):
 
     for collection in collections:
         if not hasattr(collection, "reportsummary"):
-            summary = ReportSummary(collection=collection, cached_result=None)
+            summary = ReportSummary(collection=collection, cached_result="")
             summary.save()
             calculate_report_summary.delay(summary.pk)
 

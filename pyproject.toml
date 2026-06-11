@@ -91,7 +91,7 @@ select = [
     # pycodestyle
     "W",
 ]
-ignore = ["DJ001", "RUF012"]
+ignore = ["RUF012"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
