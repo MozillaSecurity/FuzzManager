@@ -43,7 +43,7 @@ class Platform(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
+    version = models.CharField(max_length=127, blank=True)
 
     class Meta:
         constraints = [
@@ -59,7 +59,7 @@ class Product(models.Model):
 
 class OS(models.Model):
     name = models.CharField(max_length=63)
-    version = models.CharField(max_length=127, blank=True, null=True)
+    version = models.CharField(max_length=127, blank=True)
 
     class Meta:
         constraints = [
@@ -179,7 +179,7 @@ class Bucket(models.Model):
         Bug, blank=True, null=True, on_delete=models.deletion.CASCADE
     )
     signature = models.TextField()
-    optimizedSignature = models.TextField(blank=True, null=True)
+    optimizedSignature = models.TextField(blank=True)
     shortDescription = models.CharField(max_length=1023, blank=True)
     frequent = models.BooleanField(blank=False, default=False)
     permanent = models.BooleanField(blank=False, default=False)
@@ -204,7 +204,7 @@ class Bucket(models.Model):
         # but this would require fetching the old signature from the database again.
         keep_optimized = kwargs.pop("keepOptimized", False)
         if not keep_optimized:
-            self.optimizedSignature = None
+            self.optimizedSignature = ""
             modified.add("optimizedSignature")
 
         # required in Django 4.2+
@@ -634,7 +634,7 @@ class CrashEntry(models.Model):
     crashAddress = models.CharField(max_length=255, blank=True)
     crashAddressNumeric = models.BigIntegerField(blank=True, null=True)
     shortSignature = models.CharField(max_length=255, blank=True)
-    cachedCrashInfo = models.TextField(blank=True, null=True)
+    cachedCrashInfo = models.TextField(blank=True)
     triagedOnce = models.BooleanField(blank=False, default=False)
 
     def __init__(self, *args, **kwargs):
@@ -796,7 +796,7 @@ class CrashEntry(models.Model):
         #
         # This method should only be called if either the raw crash information
         # has changed or the implementation parsing it was updated.
-        self.cachedCrashInfo = None
+        self.cachedCrashInfo = ""
         crashInfo = self.getCrashInfo()
         if crashInfo.crashAddress is not None:
             self.crashAddress = f"0x{crashInfo.crashAddress:x}"

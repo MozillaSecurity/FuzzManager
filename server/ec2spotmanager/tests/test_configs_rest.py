@@ -400,10 +400,10 @@ def test_rest_pool_config_get_sub(api_client):
     assert resp["cycle_interval"] is None
     assert resp["ec2_allowed_regions"] is None
     assert not resp["ec2_allowed_regions_override"]
-    assert resp["ec2_image_name"] is None
+    assert resp["ec2_image_name"] == ""
     assert resp["ec2_instance_types"] is None
     assert not resp["ec2_instance_types_override"]
-    assert resp["ec2_key_name"] is None
+    assert resp["ec2_key_name"] == ""
     assert resp["max_price"] is None
     assert resp["ec2_raw_config"] is None
     assert not resp["ec2_raw_config_override"]

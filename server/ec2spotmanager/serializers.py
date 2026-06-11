@@ -116,8 +116,7 @@ class MachineStatusSerializer(serializers.ModelSerializer):
         Update the status_data field of a given instance
         """
         # Update status_data only, ignore any other data
-        status_data = attrs.get("status_data", None)
-        instance.status_data = status_data
+        instance.status_data = attrs.get("status_data") or ""
 
         instance.save()
         return instance

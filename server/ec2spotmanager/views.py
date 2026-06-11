@@ -419,12 +419,12 @@ def __handleConfigPOST(request, config):
     if request.POST["ec2_key_name"]:
         config.ec2_key_name = request.POST["ec2_key_name"]
     else:
-        config.ec2_key_name = None
+        config.ec2_key_name = ""
 
     if request.POST["ec2_image_name"]:
         config.ec2_image_name = request.POST["ec2_image_name"]
     else:
-        config.ec2_image_name = None
+        config.ec2_image_name = ""
 
     if request.POST["ec2_allowed_regions"]:
         config.ec2_allowed_regions_list = [
@@ -502,12 +502,12 @@ def __handleConfigPOST(request, config):
     if request.POST["gce_image_name"]:
         config.gce_image_name = request.POST["gce_image_name"]
     else:
-        config.gce_image_name = None
+        config.gce_image_name = ""
 
     if request.POST["gce_container_name"]:
         config.gce_container_name = request.POST["gce_container_name"]
     else:
-        config.gce_container_name = None
+        config.gce_container_name = ""
 
     config.gce_docker_privileged = (
         request.POST.get("gce_docker_privileged", "off") == "on"

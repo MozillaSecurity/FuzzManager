@@ -64,12 +64,12 @@ def create_config(
         parent=parent,
         size=size,
         cycle_interval=cycle_interval,
-        ec2_key_name=ec2_key_name,
-        ec2_image_name=ec2_image_name,
+        ec2_key_name=ec2_key_name or "",
+        ec2_image_name=ec2_image_name or "",
         max_price=max_price,
-        gce_image_name=gce_image_name,
+        gce_image_name=gce_image_name or "",
         gce_disk_size=gce_disk_size,
-        gce_container_name=gce_container_name,
+        gce_container_name=gce_container_name or "",
     )
     if ec2_security_groups is not None:
         result.ec2_security_groups_list = ec2_security_groups
@@ -122,10 +122,10 @@ def create_instance(
         created = timezone.now()
     result = Instance.objects.create(
         pool=pool,
-        hostname=hostname,
+        hostname=hostname or "",
         status_code=status_code,
-        status_data=status_data,
-        instance_id=ec2_instance_id,
+        status_data=status_data or "",
+        instance_id=ec2_instance_id or "",
         region=ec2_region,
         zone=ec2_zone,
         size=size,
