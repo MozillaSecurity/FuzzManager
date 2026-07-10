@@ -217,7 +217,7 @@ pycryptodome==3.7.3
     # via laniakea
 pygments==2.19.2
     # via pytest
-pyjwt==2.10.1
+pyjwt==2.12.0
     # via adal
 pytest==9.0.2
     # via
