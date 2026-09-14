@@ -9,6 +9,24 @@ describe("parseFilename", () => {
       { basename: "testcase", extension: "txt" },
     ],
     [
+      "template with the testcase extension",
+      "tests/original.js",
+      "testcase.js",
+      { basename: "testcase", extension: "js" },
+    ],
+    [
+      "template with multiple dots and the testcase extension",
+      "tests/original.js",
+      "testcase.min.js",
+      { basename: "testcase.min", extension: "js" },
+    ],
+    [
+      "template basename with an unrelated suffix",
+      "tests/original.js",
+      "testcase.min",
+      { basename: "testcase.min", extension: "js" },
+    ],
+    [
       "testcase without an extension",
       "tests/original",
       "template_name",
@@ -55,4 +73,16 @@ describe("buildFilename", () => {
     const result = buildFilename(basename, extension);
     expect(result).toBe(expected);
   });
+});
+
+test("saved template filenames survive repeated loading and saving", () => {
+  let filename = "testcase.js";
+  for (let i = 0; i < 3; i++) {
+    const { basename, extension } = parseFilename(
+      "tests/original.js",
+      filename,
+    );
+    filename = buildFilename(basename, extension);
+    expect(filename).toBe("testcase.js");
+  }
 });

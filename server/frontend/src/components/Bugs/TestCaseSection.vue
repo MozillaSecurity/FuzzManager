@@ -18,7 +18,7 @@
       </div>
       <div class="row">
         <div class="form-group col-md-6">
-          <label for="testcase_filename">Filename:</label>
+          <label for="id_testcase_filename">Testcase basename:</label>
           <input
             id="id_testcase_filename"
             v-model="filename"
