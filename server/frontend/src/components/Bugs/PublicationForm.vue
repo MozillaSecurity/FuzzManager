@@ -525,16 +525,6 @@
               class="form-control"
             />
           </div>
-          <div class="col-md-2">
-            <label for="file_extension">File extension:</label>
-            <input
-              id="file_extension"
-              type="text"
-              class="form-control"
-              disabled
-              :value="fileExtension"
-            />
-          </div>
         </div>
 
         <hr />
@@ -823,7 +813,9 @@ export default defineComponent({
     });
 
     watch([entry, template], () => {
-      if (entry.value) {
+      if (props.isBugTemplateCreation) {
+        fileName.value = template.value?.testcase_filename ?? "";
+      } else if (entry.value?.testcase) {
         const { basename, extension } = parseFilename(
           entry.value.testcase,
           template.value?.testcase_filename,
@@ -1123,7 +1115,7 @@ export default defineComponent({
 
       const payload = {
         ...template.value,
-        testcase_filename: filenameWithExtension.value,
+        testcase_filename: fileName.value,
         product: product.value,
         component: component.value,
         op_sys: opSys.value,

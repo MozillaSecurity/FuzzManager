@@ -224,7 +224,7 @@ export function formatMonthly(d) {
 /**
  * Parse a testcase file path into basename and extension.
  * @param {string} testcasePath - Testcase file path.
- * @param {string|null} templateBasename - Optional template basename or full filename.
+ * @param {string|null} templateBasename - Optional template basename (without an extension).
  * @returns {{basename: string, extension: string|null}} Object with basename and extension.
  */
 export function parseFilename(testcasePath, templateBasename = null) {
@@ -237,19 +237,9 @@ export function parseFilename(testcasePath, templateBasename = null) {
     ? originalParts[originalParts.length - 1]
     : null;
 
-  let basename;
-  if (templateBasename) {
-    // Templates store the complete filename, while the form edits the basename.
-    const suffix = extension ? `.${extension}` : null;
-    basename =
-      suffix && templateBasename.endsWith(suffix)
-        ? templateBasename.slice(0, -suffix.length)
-        : templateBasename;
-  } else {
-    basename = hasExtension
-      ? originalParts.slice(0, -1).join(".")
-      : originalParts[0];
-  }
+  const basename =
+    templateBasename ||
+    (hasExtension ? originalParts.slice(0, -1).join(".") : originalParts[0]);
 
   return { basename, extension };
 }

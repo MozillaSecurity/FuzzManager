@@ -235,7 +235,7 @@ import { defineComponent } from "vue";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
 import * as HandlebarsHelpers from "../../../handlebars_helpers";
-import { errorParser } from "../../../helpers";
+import { errorParser, parseFilename, buildFilename } from "../../../helpers";
 import CrashDataSection from "../CrashDataSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 import TestCaseSection from "../TestCaseSection.vue";
@@ -395,7 +395,7 @@ export default defineComponent({
       return attachmentFilenameExtension;
     },
     filenameWithExtension() {
-      return this.fileName + "." + this.fileExtension;
+      return buildFilename(this.fileName, this.fileExtension);
     },
     fileMimetype() {
       const mimeType = mime.getType(this.filenameWithExtension);
@@ -417,6 +417,7 @@ export default defineComponent({
       this.provider = this.providers.find((p) => p.id === newVal);
     },
     selectedTemplate(newVal) {
+      this.newFileName = null;
       this.template = this.templates.find((t) => t.id === newVal);
     },
   },
@@ -573,19 +574,13 @@ export default defineComponent({
     getFileDetails() {
       let attachmentFilename = "";
       let attachmentFilenameExtension = "";
-      if (this.entry) {
-        // extract file name
-        const splittedAttachmentFilename = this.template?.testcase_filename
-          ? this.template.testcase_filename
-          : this.entry.testcase.split("/");
-
-        const attachmentFilenameAndExtension =
-          splittedAttachmentFilename[
-            splittedAttachmentFilename?.length - 1
-          ].split(".");
-
-        attachmentFilename = attachmentFilenameAndExtension[0];
-        attachmentFilenameExtension = attachmentFilenameAndExtension[1];
+      if (this.entry?.testcase) {
+        const { basename, extension } = parseFilename(
+          this.entry.testcase,
+          this.template?.testcase_filename,
+        );
+        attachmentFilename = basename;
+        attachmentFilenameExtension = extension;
       }
 
       return { attachmentFilename, attachmentFilenameExtension };
