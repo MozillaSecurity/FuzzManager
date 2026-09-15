@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { defineComponent, onMounted, ref, watch } from "vue";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 import * as api from "../../api";
 
 export default defineComponent({
@@ -85,7 +85,7 @@ export default defineComponent({
     },
     fileExtension: {
       type: String,
-      required: true,
+      default: null,
     },
     fileName: {
       type: String,
@@ -93,21 +93,17 @@ export default defineComponent({
     },
   },
 
-  emits: [
-    "update-not-attach-test",
-    "update-filename",
-    "update-content",
-    "update-attachment-extension",
-  ],
+  emits: ["update-not-attach-test", "update-filename", "update-content"],
   setup(props, { emit }) {
     const notAttachTest = ref(false);
-    const filename = ref("");
-    const filenameExtension = ref("");
+    const filename = computed({
+      get: () => props.fileName,
+      set: (value) => emit("update-filename", value),
+    });
     const content = ref("Content loading...");
 
     onMounted(async () => {
       notAttachTest.value = props.initialNotAttachTest;
-      filename.value = props.fileName;
 
       if (!props.entry.testcase_isbinary) {
         content.value = await api.retrieveCrashTestCase(props.entry.id);
@@ -119,15 +115,6 @@ export default defineComponent({
       emit("update-not-attach-test", newValue);
     });
 
-    watch(filename, (newValue) => {
-      if (newValue) {
-        emit("update-filename", newValue);
-      } else {
-        // Prevent removing the whole section when the filename input is empty
-        emit("update-filename", " ");
-      }
-    });
-
     watch(content, (newValue) => {
       emit("update-content", newValue);
     });
@@ -136,7 +123,6 @@ export default defineComponent({
       notAttachTest,
       filename,
       content,
-      filenameExtension,
     };
   },
 });

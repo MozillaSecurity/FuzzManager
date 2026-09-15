@@ -9,22 +9,10 @@ describe("parseFilename", () => {
       { basename: "testcase", extension: "txt" },
     ],
     [
-      "template with the testcase extension",
-      "tests/original.js",
-      "testcase.js",
-      { basename: "testcase", extension: "js" },
-    ],
-    [
-      "template with multiple dots and the testcase extension",
-      "tests/original.js",
-      "testcase.min.js",
-      { basename: "testcase.min", extension: "js" },
-    ],
-    [
-      "template basename with an unrelated suffix",
-      "tests/original.js",
+      "template basename with dots is preserved",
+      "tests/original.html",
       "testcase.min",
-      { basename: "testcase.min", extension: "js" },
+      { basename: "testcase.min", extension: "html" },
     ],
     [
       "testcase without an extension",
@@ -75,14 +63,13 @@ describe("buildFilename", () => {
   });
 });
 
-test("saved template filenames survive repeated loading and saving", () => {
-  let filename = "testcase.js";
-  for (let i = 0; i < 3; i++) {
-    const { basename, extension } = parseFilename(
-      "tests/original.js",
-      filename,
+test.each(["html", "js", "zip", "bin"])(
+  "template basename uses the original %s extension",
+  (extension) => {
+    const parsed = parseFilename(`tests/original.${extension}`, "testcase");
+    expect(parsed.basename).toBe("testcase");
+    expect(buildFilename(parsed.basename, parsed.extension)).toBe(
+      `testcase.${extension}`,
     );
-    filename = buildFilename(basename, extension);
-    expect(filename).toBe("testcase.js");
-  }
-});
+  },
+);

@@ -10,9 +10,13 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 """
 
 import logging
+from importlib import import_module
+from types import SimpleNamespace
 
 import pytest
 import requests
+from django.apps import apps
+from django.db import connection
 from django.urls import reverse
 
 from crashmanager.models import BugzillaTemplate
@@ -287,3 +291,23 @@ def test_create_external_bug_comment_simple_get(client, cm):
     )
     LOG.debug(response)
     assert response.status_code == requests.codes["ok"]
+
+
+@pytest.mark.parametrize(
+    ("filename", "basename"),
+    [
+        ("testcase.zip", "testcase"),
+        ("testcase.html", "testcase"),
+        ("testcase.min.js", "testcase.min"),
+        ("testcase", "testcase"),
+        ("", ""),
+    ],
+)
+def test_template_basename_migration(cm, filename, basename):
+    template = cm.create_template()
+    template.testcase_filename = filename
+    template.save()
+    migration = import_module("crashmanager.migrations.0021_bugzilla_template_basename")
+    migration.strip_template_extensions(apps, SimpleNamespace(connection=connection))
+    template.refresh_from_db()
+    assert template.testcase_filename == basename

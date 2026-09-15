@@ -932,6 +932,7 @@ class BugzillaTemplate(models.Model):
     security = models.BooleanField(blank=False, default=False)
     security_group = models.TextField(blank=True)
     comment = models.TextField(blank=True)
+    # Stores only the basename; attachments use the original testcase extension.
     testcase_filename = models.TextField(blank=True)
     blocks = models.TextField(blank=True)
     dependson = models.TextField(blank=True)

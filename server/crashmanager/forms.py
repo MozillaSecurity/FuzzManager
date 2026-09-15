@@ -58,7 +58,7 @@ class BugzillaTemplateBugForm(ModelForm):
             "description": "Bug description",
             "security": "This is a security bug",
             "security_group": "Security group",
-            "testcase_filename": "Filename that will be used for the testcase",
+            "testcase_filename": "Testcase basename (without extension)",
             "blocks": "Blocks",
             "dependson": "Depends On",
         }
@@ -89,7 +89,7 @@ class BugzillaTemplateCommentForm(ModelForm):
         labels = {
             "name": "Template name",
             "comment": "Comment",
-            "testcase_filename": "Filename that will be used for the testcase",
+            "testcase_filename": "Testcase basename (without extension)",
         }
         widgets = {
             "name": TextInput(),
