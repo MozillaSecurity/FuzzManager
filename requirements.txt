@@ -215,7 +215,7 @@ pycparser==2.23
     # via cffi
 pycryptodome==3.7.3
     # via laniakea
-pygments==2.19.2
+pygments==2.20.0
     # via pytest
 pyjwt==2.10.1
     # via adal
