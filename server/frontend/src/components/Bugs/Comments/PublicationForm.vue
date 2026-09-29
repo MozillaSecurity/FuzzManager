@@ -123,12 +123,14 @@
           mode="comment"
           :initial-not-attach-test="notAttachTest"
           :entry="entry"
+          :disabled="submitting"
           :template="template"
           :file-extension="fileExtension"
           :file-name="fileName"
           @update-not-attach-test="notAttachTest = $event"
           @update-filename="newFileName = $event"
           @update-content="testCaseContent = $event"
+          @update-archive="testcaseArchive = $event"
         />
 
         <div v-if="createError" class="alert alert-danger" role="alert">
@@ -236,6 +238,7 @@ import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
 import * as HandlebarsHelpers from "../../../handlebars_helpers";
 import { errorParser, parseFilename, buildFilename } from "../../../helpers";
+import { archiveAttachmentPayloads } from "../../../testcase_archive";
 import CrashDataSection from "../CrashDataSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 import TestCaseSection from "../TestCaseSection.vue";
@@ -291,6 +294,12 @@ export default defineComponent({
       createdCommentCount: null,
       notAttachTest: false,
       testCaseContent: "",
+      testcaseArchive: {
+        enabled: false,
+        loading: false,
+        error: null,
+        files: [],
+      },
       notAttachData: false,
       crashData: "",
       newFileName: null,
@@ -366,8 +375,13 @@ export default defineComponent({
           ...this.metadataExtension(this.template.comment),
         };
 
-        if (!this.notAttachTest) {
-          renderedData["testcase_attachment"] = this.filenameWithExtension;
+        if (this.isTestAttached) {
+          renderedData["testcase_attachment"] = this.testcaseArchive.enabled
+            ? this.testcaseArchive.files
+                .filter((file) => !file.doNotAttach)
+                .map((file) => buildFilename(file.basename, file.extension))
+                .join(", ")
+            : this.filenameWithExtension;
         } else {
           delete renderedData["testcase_attachment"];
         }
@@ -396,6 +410,13 @@ export default defineComponent({
     },
     filenameWithExtension() {
       return buildFilename(this.fileName, this.fileExtension);
+    },
+    isTestAttached() {
+      return (
+        !this.notAttachTest &&
+        (!this.testcaseArchive.enabled ||
+          this.testcaseArchive.files.some((file) => !file.doNotAttach))
+      );
     },
     fileMimetype() {
       const mimeType = mime.getType(this.filenameWithExtension);
@@ -469,6 +490,38 @@ export default defineComponent({
     },
 
     async createExternalComment() {
+      const {
+        enabled: unpackArchive,
+        loading: archiveLoading,
+        error: archiveError,
+        files: archiveFiles,
+      } = this.testcaseArchive;
+      const attachTestcase = Boolean(
+        this.entry?.testcase && !this.notAttachTest,
+      );
+      const testcasePlan = {
+        attach: attachTestcase,
+        unpack: attachTestcase && unpackArchive,
+        archivePayloads: [],
+      };
+      if (
+        testcasePlan.unpack &&
+        (archiveLoading || archiveError || !archiveFiles.length)
+      ) {
+        this.createError = archiveError || "Wait for the ZIP archive to load.";
+        return;
+      }
+      try {
+        if (testcasePlan.unpack) {
+          testcasePlan.archivePayloads = archiveAttachmentPayloads(
+            archiveFiles,
+            "Testcase",
+          );
+        }
+      } catch (error) {
+        this.createError = errorParser(error);
+        return;
+      }
       this.submitting = true;
       this.createdCommentId = null;
       this.createdCommentCount = null;
@@ -501,7 +554,7 @@ export default defineComponent({
         this.createdCommentCount =
           data.comments?.[this.createdCommentId]?.count;
 
-        await this.publishAttachments();
+        await this.publishAttachments(testcasePlan);
       } catch (err) {
         this.createError = errorParser(err);
       } finally {
@@ -509,7 +562,22 @@ export default defineComponent({
       }
     },
 
-    async publishAttachments() {
+    async publishAttachments(testcasePlan = null) {
+      // Direct publication also uses this method without creating a comment.
+      const plan = testcasePlan || {
+        attach: Boolean(this.entry?.testcase && !this.notAttachTest),
+        unpack: Boolean(
+          this.entry?.testcase &&
+            !this.notAttachTest &&
+            this.testcaseArchive.enabled,
+        ),
+        archivePayloads:
+          this.entry?.testcase &&
+          !this.notAttachTest &&
+          this.testcaseArchive.enabled
+            ? archiveAttachmentPayloads(this.testcaseArchive.files, "Testcase")
+            : [],
+      };
       if (!this.notAttachData) {
         const payload = {
           ids: [this.externalBugId],
@@ -532,7 +600,26 @@ export default defineComponent({
       }
 
       // Publish TestCase
-      if (this.entry?.testcase && !this.notAttachTest) {
+      if (plan.attach) {
+        if (plan.unpack) {
+          const failed = [];
+          for (const attachment of plan.archivePayloads) {
+            try {
+              await bugzillaApi.createAttachment({
+                hostname: this.provider.hostname,
+                id: this.externalBugId,
+                ids: [this.externalBugId],
+                ...attachment,
+                summary: `Testcase for ${this.createdCommentCount === undefined ? "previous comment" : `comment ${this.createdCommentCount}`}`,
+                headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
+              });
+            } catch (error) {
+              failed.push(`${attachment.file_name}: ${errorParser(error)}`);
+            }
+          }
+          if (failed.length) this.publishTestCaseError = failed.join("; ");
+          return;
+        }
         let content = this.testCaseContent;
         // If the testcase is binary we need to download it first
         if (this.entry.testcase_isbinary) {

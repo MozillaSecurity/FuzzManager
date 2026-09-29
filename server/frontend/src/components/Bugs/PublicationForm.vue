@@ -542,12 +542,14 @@
             v-if="entry.testcase"
             :initial-not-attach-test="notAttachTest"
             :entry="entry"
+            :disabled="submitting"
             :template="template"
             :file-extension="fileExtension"
             :file-name="fileName"
             @update-not-attach-test="notAttachTest = $event"
             @update-filename="fileName = $event"
             @update-content="testCaseContent = $event"
+            @update-archive="testcaseArchive = $event"
           />
 
           <div v-if="createError" class="alert alert-danger" role="alert">
@@ -699,6 +701,7 @@ import mime from "mime";
 import * as bugzillaApi from "../../bugzilla_api";
 import * as HandlebarsHelpers from "../../handlebars_helpers";
 import { errorParser, parseFilename, buildFilename } from "../../helpers";
+import { archiveAttachmentPayloads } from "../../testcase_archive";
 import CrashDataSection from "./CrashDataSection.vue";
 import FullPPCSelect from "./FullPPCSelect.vue";
 import HelpPopover from "./HelpPopover.vue";
@@ -794,6 +797,12 @@ export default defineComponent({
     const createdBugId = ref(null);
     const notAttachTest = ref(false);
     const testCaseContent = ref("");
+    const testcaseArchive = ref({
+      enabled: false,
+      loading: false,
+      error: null,
+      files: [],
+    });
     const notAttachData = ref(false);
     const crashData = ref("");
     const bugzillaTemplateError = ref({
@@ -811,6 +820,13 @@ export default defineComponent({
     const filenameWithExtension = computed(() => {
       return buildFilename(fileName.value, fileExtension.value);
     });
+
+    const isTestAttached = computed(
+      () =>
+        !notAttachTest.value &&
+        (!testcaseArchive.value.enabled ||
+          testcaseArchive.value.files.some((file) => !file.doNotAttach)),
+    );
 
     watch([entry, template], () => {
       if (props.isBugTemplateCreation) {
@@ -915,8 +931,13 @@ export default defineComponent({
           ...metadataExtension(template.value.description),
         };
 
-        if (!notAttachTest.value) {
-          renderedData["testcase_attachment"] = filenameWithExtension.value;
+        if (isTestAttached.value) {
+          renderedData["testcase_attachment"] = testcaseArchive.value.enabled
+            ? testcaseArchive.value.files
+                .filter((file) => !file.doNotAttach)
+                .map((file) => buildFilename(file.basename, file.extension))
+                .join(", ")
+            : filenameWithExtension.value;
         } else {
           delete renderedData["testcase_attachment"];
         }
@@ -937,7 +958,7 @@ export default defineComponent({
       if (!template.value || !entry.value) return "";
       try {
         const compiled = Handlebars.compile(template.value.keywords);
-        return compiled({ isTestAttached: !notAttachTest.value });
+        return compiled({ isTestAttached: isTestAttached.value });
       } catch {
         return "";
       }
@@ -947,7 +968,7 @@ export default defineComponent({
       if (!template.value || !entry.value) return "";
       try {
         const compiled = Handlebars.compile(template.value.whiteboard);
-        return compiled({ isTestAttached: !notAttachTest.value });
+        return compiled({ isTestAttached: isTestAttached.value });
       } catch {
         return "";
       }
@@ -1011,6 +1032,38 @@ export default defineComponent({
     };
 
     const createExternalBug = async () => {
+      const {
+        enabled: unpackArchive,
+        loading: archiveLoading,
+        error: archiveError,
+        files: archiveFiles,
+      } = testcaseArchive.value;
+      const attachTestcase = Boolean(
+        entry.value.testcase && !notAttachTest.value,
+      );
+      const testcasePlan = {
+        attach: attachTestcase,
+        unpack: attachTestcase && unpackArchive,
+        archivePayloads: [],
+      };
+      if (
+        testcasePlan.unpack &&
+        (archiveLoading || archiveError || !archiveFiles.length)
+      ) {
+        createError.value = archiveError || "Wait for the ZIP archive to load.";
+        return;
+      }
+      try {
+        if (testcasePlan.unpack) {
+          testcasePlan.archivePayloads = archiveAttachmentPayloads(
+            archiveFiles,
+            "Testcase",
+          );
+        }
+      } catch (error) {
+        createError.value = errorParser(error);
+        return;
+      }
       submitting.value = true;
       createdBugId.value = null;
       createError.value = null;
@@ -1069,7 +1122,7 @@ export default defineComponent({
         });
         createdBugId.value = data.id;
         await assignExternalBug();
-        await publishAttachments();
+        await publishAttachments(testcasePlan);
       } catch (err) {
         createError.value = errorParser(err);
       } finally {
@@ -1142,7 +1195,7 @@ export default defineComponent({
       }
     };
 
-    const publishAttachments = async () => {
+    const publishAttachments = async (testcasePlan) => {
       let payload = {};
       // Publish Crash data
       if (!notAttachData.value) {
@@ -1167,7 +1220,25 @@ export default defineComponent({
       }
 
       // Publish TestCase
-      if (entry.value.testcase && !notAttachTest.value) {
+      if (testcasePlan.attach) {
+        if (testcasePlan.unpack) {
+          const failed = [];
+          for (const payload of testcasePlan.archivePayloads) {
+            try {
+              await bugzillaApi.createAttachment({
+                hostname: provider.value.hostname,
+                id: createdBugId.value,
+                ids: [createdBugId.value],
+                ...payload,
+                headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
+              });
+            } catch (error) {
+              failed.push(`${payload.file_name}: ${errorParser(error)}`);
+            }
+          }
+          if (failed.length) publishTestCaseError.value = failed.join("; ");
+          return;
+        }
         try {
           let content = testCaseContent.value;
           // If the testcase is binary we need to download it first
@@ -1313,6 +1384,7 @@ export default defineComponent({
       createdBugId,
       notAttachTest,
       testCaseContent,
+      testcaseArchive,
       notAttachData,
       crashData,
       bugLink,
