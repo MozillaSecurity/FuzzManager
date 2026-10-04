@@ -53,17 +53,22 @@
         >
           <div class="archive-card-header">
             <div class="archive-filename">
-              <label class="sr-only" :for="`archive_basename_${index}`">
-                File basename for {{ file.originalName }}
-              </label>
-              <input
-                :id="`archive_basename_${index}`"
-                v-model="file.basename"
-                class="form-control archive-basename"
-                type="text"
-                :disabled="disabled"
-                @input="emitArchive"
-              />
+              <span v-if="file.doNotAttach" class="archive-excluded-name">
+                {{ file.basename || file.originalName }}
+              </span>
+              <template v-else>
+                <label class="sr-only" :for="`archive_basename_${index}`">
+                  File basename for {{ file.originalName }}
+                </label>
+                <input
+                  :id="`archive_basename_${index}`"
+                  v-model="file.basename"
+                  class="form-control archive-basename"
+                  type="text"
+                  :disabled="disabled"
+                  @input="emitArchive"
+                />
+              </template>
               <span
                 :id="`archive_extension_${index}`"
                 class="archive-extension"
@@ -87,9 +92,9 @@
             </label>
           </div>
           <details
-            v-if="file.text !== null"
+            v-if="!file.doNotAttach && file.text !== null"
             class="archive-content"
-            :open="index === firstTextIndex"
+            open
           >
             <summary>
               View/edit contents
@@ -217,9 +222,6 @@ export default defineComponent({
     const attachedFilesCount = computed(
       () => archiveFiles.value.filter((file) => !file.doNotAttach).length,
     );
-    const firstTextIndex = computed(() =>
-      archiveFiles.value.findIndex((file) => file.text !== null),
-    );
     const isZip = computed(() => /\.zip$/i.test(props.entry.testcase || ""));
     const filename = computed({
       get: () => props.fileName,
@@ -289,7 +291,6 @@ export default defineComponent({
       archiveError,
       archiveFiles,
       attachedFilesCount,
-      firstTextIndex,
       isZip,
       onUnpackChange,
       emitArchive,
@@ -328,6 +329,8 @@ export default defineComponent({
 .archive-card-excluded {
   background: #f5f6f8;
   color: #667085;
+  padding-bottom: 9px;
+  padding-top: 9px;
 }
 
 .archive-card-header,
@@ -351,6 +354,10 @@ export default defineComponent({
   flex: 0 1 280px;
   max-width: 280px;
   min-width: 160px;
+}
+
+.archive-excluded-name {
+  overflow-wrap: anywhere;
 }
 
 .archive-extension {

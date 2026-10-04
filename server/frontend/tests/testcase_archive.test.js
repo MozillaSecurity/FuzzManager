@@ -120,18 +120,33 @@ test("archive cards keep basenames editable and summarize included files", async
   expect(wrapper.get("#archive_basename_0").element.value).toBe("testcase");
   expect(wrapper.get("#archive_extension_0").text()).toBe("HTML");
   expect(wrapper.findAll(".archive-content")).toHaveLength(2);
-  expect(wrapper.findAll(".archive-content")[0].element.open).toBe(true);
-  expect(wrapper.findAll(".archive-content")[1].element.open).toBe(false);
+  expect(
+    wrapper
+      .findAll(".archive-content")
+      .every((content) => content.element.open),
+  ).toBe(true);
 
   await wrapper.get("#archive_basename_0").setValue("renamed");
+  await wrapper.get("#archive_content_0").setValue("<h1>edited</h1>");
   expect(wrapper.get("#archive_basename_0").element.value).toBe("renamed");
-  await wrapper.get("#archive_skip_2").setValue(true);
+  await wrapper.get("#archive_skip_0").setValue(true);
   expect(wrapper.get(".archive-count").text()).toBe(
     "2 of 3 files will be attached",
   );
-  expect(wrapper.findAll(".archive-card")[2].classes()).toContain(
+  expect(wrapper.findAll(".archive-card")[0].classes()).toContain(
     "archive-card-excluded",
   );
+  expect(wrapper.get(".archive-excluded-name").text()).toBe("renamed");
+  expect(wrapper.find("#archive_basename_0").exists()).toBe(false);
+  expect(wrapper.find("#archive_content_0").exists()).toBe(false);
+  expect(wrapper.findAll(".archive-content")).toHaveLength(1);
+
+  await wrapper.get("#archive_skip_0").setValue(false);
+  expect(wrapper.get("#archive_basename_0").element.value).toBe("renamed");
+  expect(wrapper.get("#archive_content_0").element.value).toBe(
+    "<h1>edited</h1>",
+  );
+  expect(wrapper.get(".archive-content").element.open).toBe(true);
   wrapper.unmount();
 });
 
@@ -204,9 +219,9 @@ test.each([
     const wrapper = await mountForm(Component);
     await wrapper.get("#id_testcase_unpack").setValue(true);
     await flushPromises();
-    await wrapper.get("#archive_skip_1").setValue(true);
     // An excluded file is not validated for upload.
     await wrapper.get("#archive_basename_1").setValue("");
+    await wrapper.get("#archive_skip_1").setValue(true);
     const rendered =
       mode === "bug"
         ? wrapper.vm.renderedDescription
