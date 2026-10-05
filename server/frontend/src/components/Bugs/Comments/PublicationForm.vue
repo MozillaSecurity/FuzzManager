@@ -130,6 +130,7 @@
           @update-not-attach-test="notAttachTest = $event"
           @update-filename="newFileName = $event"
           @update-content="testCaseContent = $event"
+          @update-binary-text="onBinaryTextLoaded"
           @update-archive="testcaseArchive = $event"
         />
 
@@ -242,6 +243,7 @@ import { archiveAttachmentPayloads } from "../../../testcase_archive";
 import CrashDataSection from "../CrashDataSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 import TestCaseSection from "../TestCaseSection.vue";
+import { testcaseAttachmentData } from "../../../testcase_content";
 
 // Apply Handlebars helpers
 Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
@@ -294,6 +296,7 @@ export default defineComponent({
       createdCommentCount: null,
       notAttachTest: false,
       testCaseContent: "",
+      binaryTextTestcase: null,
       testcaseArchive: {
         enabled: false,
         loading: false,
@@ -469,6 +472,10 @@ export default defineComponent({
   },
 
   methods: {
+    onBinaryTextLoaded(preview) {
+      this.binaryTextTestcase = preview;
+      this.testCaseContent = preview.originalText;
+    },
     goBack() {
       window.history.back();
     },
@@ -620,12 +627,6 @@ export default defineComponent({
           if (failed.length) this.publishTestCaseError = failed.join("; ");
           return;
         }
-        let content = this.testCaseContent;
-        // If the testcase is binary we need to download it first
-        if (this.entry.testcase_isbinary) {
-          content = await api.retrieveCrashTestCaseBinary(this.entry.id);
-        }
-
         /*
          * A bug in BMO is causing "count" to be missing.
          * This workaround ensures we can still attach the missing file.
@@ -637,9 +638,11 @@ export default defineComponent({
 
         const payload = {
           ids: [this.externalBugId],
-          data: this.entry.testcase_isbinary
-            ? Base64.fromUint8Array(content)
-            : Base64.encode(content),
+          data: await testcaseAttachmentData(
+            this.entry,
+            this.testCaseContent,
+            this.binaryTextTestcase,
+          ),
           file_name: this.filenameWithExtension,
           summary: `Testcase for ${comment}`,
           content_type: this.fileMimetype,

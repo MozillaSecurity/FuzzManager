@@ -1,4 +1,6 @@
 import { shallowMount, flushPromises } from "@vue/test-utils";
+import { Base64 } from "js-base64";
+import { TextDecoder, TextEncoder } from "util";
 import PublicationForm from "../src/components/Bugs/PublicationForm.vue";
 import CommentForm from "../src/components/Bugs/Comments/PublicationForm.vue";
 import TestCaseSection from "../src/components/Bugs/TestCaseSection.vue";
@@ -7,7 +9,12 @@ import * as bugzillaApi from "../src/bugzilla_api";
 
 jest.mock("../src/api");
 jest.mock("../src/bugzilla_api");
-jest.mock("mime", () => ({ getType: () => "text/plain" }));
+jest.mock("mime", () => ({
+  getType: (name) => (name.endsWith(".html") ? "text/html" : null),
+}));
+
+global.TextDecoder = TextDecoder;
+global.TextEncoder = TextEncoder;
 
 const template = (id, basename, mode = "bug") => ({
   id,
@@ -56,6 +63,115 @@ const mountForm = async (Component, props) => {
   await flushPromises();
   return wrapper;
 };
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s displays a regular HTML testcase and attaches its edits",
+  async (mode, Component) => {
+    const html = "<!doctype html>\n<h1>original testcase</h1>";
+    api.retrieveCrashTestCase.mockResolvedValue(html);
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.get("#id_testcase_content").element.value).toBe(html);
+    expect(wrapper.get("#id_testcase_content").element.readOnly).toBe(false);
+    await wrapper
+      .get("#id_testcase_content")
+      .setValue("<h1>edited testcase</h1>");
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file_name: "testcase.html",
+        data: Base64.encode("<h1>edited testcase</h1>"),
+      }),
+    );
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s edits UTF-8 HTML marked binary because of vertical tabs",
+  async (mode, Component) => {
+    const crash = await api.retrieveCrash();
+    crash.testcase_isbinary = true;
+    const original = "<!doctype html>\n<p>one\vtwo\vthree</p>";
+    api.retrieveCrashTestCaseBinary.mockResolvedValue(
+      new TextEncoder().encode(original),
+    );
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.get("#id_testcase_content").element.value).toBe(original);
+    await wrapper.get("#id_testcase_content").setValue("<p>edited</p>");
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file_name: "testcase.html",
+        data: Base64.encode("<p>edited</p>"),
+      }),
+    );
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s preserves untouched HTML bytes including BOM and CRLF",
+  async (mode, Component) => {
+    const crash = await api.retrieveCrash();
+    crash.testcase_isbinary = true;
+    const bytes = new TextEncoder().encode(
+      "\uFEFF<!doctype html>\r\n<p>one\vtwo</p>",
+    );
+    api.retrieveCrashTestCaseBinary.mockResolvedValue(bytes);
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.find("#id_testcase_content").exists()).toBe(true);
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({ data: Base64.fromUint8Array(bytes) }),
+    );
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s preserves HTML bytes that cannot be decoded as UTF-8",
+  async (mode, Component) => {
+    const crash = await api.retrieveCrash();
+    crash.testcase_isbinary = true;
+    const bytes = new Uint8Array([0xff, 0xfe, 0x41]);
+    api.retrieveCrashTestCaseBinary.mockResolvedValue(bytes);
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.find("#id_testcase_content").exists()).toBe(false);
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({ data: Base64.fromUint8Array(bytes) }),
+    );
+    wrapper.unmount();
+  },
+);
 
 test.each(["testcase", "testcase.min", ""])(
   "template saves basename %j without the example ZIP extension",
