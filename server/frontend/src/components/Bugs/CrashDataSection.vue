@@ -3,13 +3,15 @@
     <h3>Crash data</h3>
     <div class="row">
       <div class="form-group col-md-6">
-        <input
-          id="id_crashdata_skip"
-          v-model="notAttachData"
-          type="checkbox"
-          name="crashdata_skip"
-        />
-        <span>Do not attach crash data.</span>
+        <label class="checkbox-option" for="id_crashdata_skip">
+          <input
+            id="id_crashdata_skip"
+            v-model="notAttachData"
+            type="checkbox"
+            name="crashdata_skip"
+          />
+          Do not attach crash data.
+        </label>
       </div>
     </div>
     <div v-if="!notAttachData">
@@ -88,4 +90,11 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.checkbox-option {
+  font-weight: normal;
+}
+.checkbox-option input {
+  margin-right: 5px;
+}
+</style>

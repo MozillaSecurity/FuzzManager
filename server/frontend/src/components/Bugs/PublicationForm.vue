@@ -488,13 +488,15 @@
         <h3>Security</h3>
         <div class="row">
           <div class="form-group col-md-6">
-            <input
-              id="id_security"
-              v-model="template.security"
-              type="checkbox"
-              name="security"
-            />
-            <span>This is a security bug.</span>
+            <label class="checkbox-option" for="id_security">
+              <input
+                id="id_security"
+                v-model="template.security"
+                type="checkbox"
+                name="security"
+              />
+              This is a security bug.
+            </label>
           </div>
         </div>
         <div class="row">
@@ -1335,4 +1337,11 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.checkbox-option {
+  font-weight: normal;
+}
+.checkbox-option input {
+  margin-right: 5px;
+}
+</style>
