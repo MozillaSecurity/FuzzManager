@@ -30,139 +30,36 @@
           </label>
         </div>
       </div>
-      <div v-if="unpackArchive && archiveLoading" role="status">
-        Loading ZIP archive...
+      <div v-if="loading" role="status">
+        Loading {{ unpackArchive ? "ZIP archive" : "testcase" }}...
       </div>
-      <div
-        v-if="unpackArchive && archiveError"
-        class="alert alert-danger"
-        role="alert"
-      >
-        {{ archiveError }}
-      </div>
-      <div v-if="unpackArchive && archiveFiles.length" class="archive-files">
-        <p class="archive-count" aria-live="polite">
-          {{ attachedFilesCount }} of {{ archiveFiles.length }} files will be
-          attached
-        </p>
-        <div
-          v-for="(file, index) in archiveFiles"
-          :key="index"
-          class="archive-card"
-          :class="{ 'archive-card-excluded': file.doNotAttach }"
+      <div v-if="error" class="alert alert-danger" role="alert">
+        {{ error }}
+        <button
+          type="button"
+          class="btn btn-default"
+          :disabled="disabled || loading"
+          @click="retryDownload"
         >
-          <div class="archive-card-header">
-            <div class="archive-filename">
-              <span v-if="file.doNotAttach" class="archive-excluded-name">
-                {{ file.basename || file.originalName }}
-              </span>
-              <template v-else>
-                <label class="sr-only" :for="`archive_basename_${index}`">
-                  File basename for {{ file.originalName }}
-                </label>
-                <input
-                  :id="`archive_basename_${index}`"
-                  v-model="file.basename"
-                  class="form-control archive-basename"
-                  type="text"
-                  :disabled="disabled"
-                  @input="emitArchive"
-                />
-              </template>
-              <span
-                :id="`archive_extension_${index}`"
-                class="archive-extension"
-                :aria-label="`File extension: ${file.extension || 'none'}`"
-              >
-                {{ file.extension ? file.extension.toUpperCase() : "NO EXT" }}
-              </span>
-            </div>
-            <label class="archive-skip" :for="`archive_skip_${index}`">
-              <input
-                :id="`archive_skip_${index}`"
-                v-model="file.doNotAttach"
-                type="checkbox"
-                :disabled="disabled"
-                @change="emitArchive"
-              />
-              Do not attach file
-              <span class="sr-only">
-                {{ index + 1 }}: {{ file.originalName }}
-              </span>
-            </label>
-          </div>
-          <details
-            v-if="!file.doNotAttach && file.text !== null"
-            class="archive-content"
-            open
-          >
-            <summary>
-              View/edit contents
-              <span class="sr-only">
-                of file {{ index + 1 }}: {{ file.originalName }}
-              </span>
-            </summary>
-            <label class="sr-only" :for="`archive_content_${index}`">
-              Content of {{ file.originalName }}
-            </label>
-            <textarea
-              :id="`archive_content_${index}`"
-              v-model="file.text"
-              class="form-control archive-content-editor"
-              rows="5"
-              spellcheck="false"
-              :disabled="disabled"
-              @input="emitArchive"
-            ></textarea>
-          </details>
-        </div>
+          Retry
+        </button>
       </div>
-      <template v-if="!unpackArchive">
-        <div class="alert alert-info" role="alert">
-          Testcase will be attached to the {{ mode }}.
-        </div>
-        <div class="row">
-          <div class="form-group col-md-6">
-            <label for="id_testcase_filename">Testcase basename:</label>
-            <input
-              id="id_testcase_filename"
-              v-model="filename"
-              class="form-control"
-              name="testcase_filename"
-              type="text"
-              :disabled="disabled"
-            />
-          </div>
-          <div class="col-md-2">
-            <label for="file_extension">File extension:</label>
-
-            <input
-              id="file_extension"
-              type="text"
-              class="form-control"
-              disabled
-              :value="fileExtension"
-            />
-          </div>
-        </div>
-        <div v-if="contentError" class="alert alert-danger" role="alert">
-          {{ contentError }}
-        </div>
-        <div v-if="canEditContent" class="row">
-          <div class="form-group col-md-12">
-            <label for="id_testcase_content">Content:</label>
-            <textarea
-              id="id_testcase_content"
-              v-model="content"
-              class="form-control"
-              name="testcase_content"
-              type="text"
-              :disabled="disabled"
-              :readonly="content === 'Content loading...'"
-            ></textarea>
-          </div>
-        </div>
-      </template>
+      <div class="archive-files">
+        <p class="archive-count" aria-live="polite">
+          {{ attachedFilesCount }} of {{ files.length }} files will be attached
+        </p>
+        <TestcaseFileCard
+          v-for="(file, index) in files"
+          :key="`${unpackArchive}-${index}`"
+          :file="file"
+          :index="index"
+          :single="!unpackArchive"
+          :disabled="disabled || loading"
+          @update:basename="onBasenameChange(file, $event)"
+          @update:text="onTextChange(file, $event)"
+          @update:do-not-attach="onSkipChange(file, $event)"
+        />
+      </div>
     </div>
     <hr />
   </div>
@@ -173,151 +70,167 @@ import { computed, defineComponent, markRaw, onMounted, ref, watch } from "vue";
 import * as api from "../../api";
 import { errorParser } from "../../helpers";
 import { loadTestcaseArchive } from "../../testcase_archive";
-import { loadBinaryTextPreview } from "../../testcase_content";
+import { createTestcaseFile } from "../../testcase_files";
+import TestcaseFileCard from "./TestcaseFileCard.vue";
 
 export default defineComponent({
   name: "TestCaseSection",
-
+  components: { TestcaseFileCard },
   props: {
-    mode: {
-      type: String,
-      required: false,
-      default: "bug",
-    },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
-    initialNotAttachTest: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    entry: {
-      type: Object,
-      required: true,
-    },
-    template: {
-      type: Object,
-      required: true,
-    },
-    fileExtension: {
-      type: String,
-      default: null,
-    },
-    fileName: {
-      type: String,
-      required: true,
-    },
+    mode: { type: String, default: "bug" },
+    disabled: { type: Boolean, default: false },
+    initialNotAttachTest: { type: Boolean, default: false },
+    entry: { type: Object, required: true },
+    template: { type: Object, required: true },
+    fileExtension: { type: String, default: null },
+    fileName: { type: String, required: true },
   },
-
   emits: [
     "update-not-attach-test",
     "update-filename",
     "update-content",
-    "update-binary-text",
-    "update-archive",
+    "update-files",
   ],
   setup(props, { emit }) {
-    const notAttachTest = ref(false);
+    const notAttachTest = ref(props.initialNotAttachTest);
     const unpackArchive = ref(false);
+    const singleFile = ref({
+      originalName: props.entry.testcase?.split(/[\\/]/).pop() || "testcase",
+      basename: props.fileName,
+      extension: props.fileExtension,
+      bytes: null,
+      text: null,
+      originalText: null,
+      doNotAttach: false,
+    });
+    const singleLoading = ref(true);
+    const singleError = ref(null);
+    const archiveFiles = ref([]);
     const archiveLoading = ref(false);
     const archiveError = ref(null);
-    const archiveFiles = ref([]);
-    const attachedFilesCount = computed(
-      () => archiveFiles.value.filter((file) => !file.doNotAttach).length,
-    );
     const isZip = computed(() => /\.zip$/i.test(props.entry.testcase || ""));
-    const filename = computed({
-      get: () => props.fileName,
-      set: (value) => emit("update-filename", value),
-    });
-    const content = ref("Content loading...");
-    const contentError = ref(null);
-    const binaryTextAvailable = ref(false);
-    const canEditContent = computed(
-      () => !props.entry.testcase_isbinary || binaryTextAvailable.value,
+    const files = computed(() =>
+      unpackArchive.value ? archiveFiles.value : [singleFile.value],
     );
-
-    const emitArchive = () => {
-      emit("update-archive", {
-        enabled: unpackArchive.value,
-        loading: archiveLoading.value,
-        error: archiveError.value,
-        files: archiveFiles.value,
+    const loading = computed(() =>
+      unpackArchive.value ? archiveLoading.value : singleLoading.value,
+    );
+    const error = computed(() =>
+      unpackArchive.value ? archiveError.value : singleError.value,
+    );
+    const attachedFilesCount = computed(
+      () => files.value.filter((file) => !file.doNotAttach).length,
+    );
+    const emitFiles = () =>
+      emit("update-files", {
+        files: files.value,
+        loading: loading.value,
+        error: error.value,
       });
+    let source;
+    const sourceBytes = () =>
+      (source ||= api
+        .retrieveCrashTestCaseBinary(props.entry.id)
+        .catch((error) => {
+          source = null;
+          throw error;
+        }));
+    const setSingleContent = (bytes) => {
+      const file = createTestcaseFile(
+        props.entry.testcase || "testcase",
+        bytes,
+        !props.entry.testcase_isbinary,
+      );
+      // Keep the selected template's basename and any per-file choices.
+      Object.assign(singleFile.value, {
+        bytes: markRaw(file.bytes),
+        text: file.text,
+        originalText: file.originalText,
+      });
+      singleError.value = null;
+      emit("update-content", file.text ?? "");
     };
-
+    const loadSingleFile = async () => {
+      if (singleLoading.value) return;
+      singleLoading.value = true;
+      singleError.value = null;
+      emitFiles();
+      try {
+        setSingleContent(await sourceBytes());
+      } catch (error) {
+        singleError.value = `Unable to load testcase contents: ${errorParser(error)}`;
+      } finally {
+        singleLoading.value = false;
+        emitFiles();
+      }
+    };
     const onUnpackChange = async () => {
-      if (!unpackArchive.value) {
-        emitArchive();
+      if (!unpackArchive.value || archiveFiles.value.length) {
+        emitFiles();
         return;
       }
-      if (archiveFiles.value.length) {
-        emitArchive();
+      if (archiveLoading.value) {
+        emitFiles();
         return;
       }
       archiveLoading.value = true;
       archiveError.value = null;
-      emitArchive();
+      emitFiles();
       try {
-        archiveFiles.value = (await loadTestcaseArchive(props.entry.id)).map(
-          (file) => ({
-            ...file,
-            bytes: markRaw(file.bytes),
-          }),
-        );
+        const bytes = await sourceBytes();
+        if (singleError.value) setSingleContent(bytes);
+        archiveFiles.value = (
+          await loadTestcaseArchive(props.entry.id, bytes)
+        ).map((file) => ({ ...file, bytes: markRaw(file.bytes) }));
       } catch (error) {
         archiveError.value = `Unable to unpack ZIP archive: ${errorParser(error)}`;
       } finally {
         archiveLoading.value = false;
-        emitArchive();
+        emitFiles();
       }
     };
-
-    onMounted(async () => {
-      notAttachTest.value = props.initialNotAttachTest;
-
-      if (!props.entry.testcase_isbinary) {
-        content.value = await api.retrieveCrashTestCase(props.entry.id);
-      } else if (!isZip.value) {
-        try {
-          const preview = await loadBinaryTextPreview(props.entry);
-          if (preview) {
-            preview.bytes = markRaw(preview.bytes);
-            emit("update-binary-text", preview);
-            content.value = preview.originalText;
-            binaryTextAvailable.value = true;
-          }
-        } catch (error) {
-          contentError.value = `Unable to load testcase contents: ${errorParser(error)}`;
-        }
-      }
+    const onBasenameChange = (file, value) => {
+      file.basename = value;
+      if (!unpackArchive.value) emit("update-filename", value);
+      emitFiles();
+    };
+    const onTextChange = (file, value) => {
+      file.text = value;
+      if (!unpackArchive.value) emit("update-content", value);
+      emitFiles();
+    };
+    const onSkipChange = (file, value) => {
+      file.doNotAttach = value;
+      emitFiles();
+    };
+    watch(
+      () => [props.fileName, props.fileExtension],
+      ([basename, extension]) => {
+        singleFile.value.basename = basename;
+        singleFile.value.extension = extension;
+        emitFiles();
+      },
+    );
+    watch(notAttachTest, (value) => emit("update-not-attach-test", value));
+    const retryDownload = () =>
+      unpackArchive.value ? onUnpackChange() : loadSingleFile();
+    onMounted(() => {
+      singleLoading.value = false;
+      return loadSingleFile();
     });
-
-    // Watch handlers
-    watch(notAttachTest, (newValue) => {
-      emit("update-not-attach-test", newValue);
-    });
-
-    watch(content, (newValue) => {
-      emit("update-content", newValue);
-    });
-
     return {
       notAttachTest,
-      filename,
-      content,
-      contentError,
-      canEditContent,
       unpackArchive,
-      archiveLoading,
-      archiveError,
-      archiveFiles,
-      attachedFilesCount,
       isZip,
+      files,
+      loading,
+      error,
+      attachedFilesCount,
       onUnpackChange,
-      emitArchive,
+      retryDownload,
+      onBasenameChange,
+      onTextChange,
+      onSkipChange,
     };
   },
 });
@@ -327,101 +240,14 @@ export default defineComponent({
 .testcase-option {
   font-weight: normal;
 }
-
 .testcase-option input {
   margin-right: 5px;
 }
-
 .archive-files {
   margin-bottom: 16px;
 }
-
 .archive-count {
   color: #667085;
   margin: 0 0 12px;
-}
-
-.archive-card {
-  background: #fff;
-  border: 1px solid #d8dee7;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-  margin-bottom: 12px;
-  padding: 14px 16px;
-}
-
-.archive-card-excluded {
-  background: #f5f6f8;
-  color: #667085;
-  padding-bottom: 9px;
-  padding-top: 9px;
-}
-
-.archive-card-header,
-.archive-filename {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.archive-card-header {
-  justify-content: space-between;
-}
-
-.archive-filename {
-  flex: 1 1 360px;
-  min-width: 0;
-}
-
-.archive-basename {
-  flex: 0 1 280px;
-  max-width: 280px;
-  min-width: 160px;
-}
-
-.archive-excluded-name {
-  overflow-wrap: anywhere;
-}
-
-.archive-extension {
-  background: #e8efff;
-  border-radius: 999px;
-  color: #175cd3;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  white-space: nowrap;
-}
-
-.archive-card-excluded .archive-extension {
-  background: #e2e5ea;
-  color: #475467;
-}
-
-.archive-skip {
-  cursor: pointer;
-  font-weight: normal;
-  margin: 0;
-}
-
-.archive-skip input {
-  margin-right: 5px;
-}
-
-.archive-content {
-  margin-top: 12px;
-}
-
-.archive-content summary {
-  color: #175cd3;
-  cursor: pointer;
-  width: fit-content;
-}
-
-.archive-content-editor {
-  font-family: monospace;
-  margin-top: 12px;
-  resize: vertical;
 }
 </style>

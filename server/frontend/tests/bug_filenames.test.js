@@ -51,14 +51,16 @@ beforeEach(() => {
     os: "linux",
     platform: "x86-64",
   });
-  api.retrieveCrashTestCase.mockResolvedValue("test content");
+  api.retrieveCrashTestCaseBinary.mockResolvedValue(
+    new TextEncoder().encode("test content"),
+  );
   bugzillaApi.createBug.mockResolvedValue({ id: 123 });
 });
 
 const mountForm = async (Component, props) => {
   const wrapper = shallowMount(Component, {
     props: { providerId: 1, templateId: 1, entryId: 1, bucketId: 1, ...props },
-    global: { stubs: { TestCaseSection: false } },
+    global: { stubs: { TestCaseSection: false, TestcaseFileCard: false } },
   });
   await flushPromises();
   return wrapper;
@@ -71,7 +73,9 @@ test.each([
   "%s displays a regular HTML testcase and attaches its edits",
   async (mode, Component) => {
     const html = "<!doctype html>\n<h1>original testcase</h1>";
-    api.retrieveCrashTestCase.mockResolvedValue(html);
+    api.retrieveCrashTestCaseBinary.mockResolvedValue(
+      new TextEncoder().encode(html),
+    );
     api.listTemplates.mockResolvedValue({
       results: [template(1, "testcase", mode)],
     });
@@ -173,6 +177,186 @@ test.each([
   },
 );
 
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s uses one exclusion control for a single file and restores edits",
+  async (mode, Component) => {
+    const selectedTemplate = template(1, "testcase", mode);
+    selectedTemplate.description = "{{testcase_attachment}}";
+    selectedTemplate.comment = "{{testcase_attachment}}";
+    api.listTemplates.mockResolvedValue({ results: [selectedTemplate] });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.findAll(".archive-card")).toHaveLength(1);
+    expect(wrapper.get(".archive-content").element.open).toBe(true);
+    expect(wrapper.find("#id_testcase_file_skip").exists()).toBe(false);
+    expect(wrapper.get("#id_testcase_skip").element.checked).toBe(false);
+    await wrapper.get("#id_testcase_filename").setValue("edited-name");
+    await wrapper.get("#id_testcase_content").setValue("edited contents");
+    await wrapper.get("#id_testcase_skip").setValue(true);
+    expect(wrapper.find(".archive-card").exists()).toBe(false);
+    expect(wrapper.find("#id_testcase_content").exists()).toBe(false);
+    expect(wrapper.find(".archive-count").exists()).toBe(false);
+    expect(
+      mode === "bug"
+        ? wrapper.vm.renderedDescription
+        : wrapper.vm.renderedComment,
+    ).toBe("");
+    await wrapper.get("#id_testcase_skip").setValue(false);
+    expect(wrapper.get("#id_testcase_filename").element.value).toBe(
+      "edited-name",
+    );
+    expect(wrapper.get("#id_testcase_content").element.value).toBe(
+      "edited contents",
+    );
+    expect(wrapper.get(".archive-content").element.open).toBe(true);
+    await wrapper.get("#id_testcase_skip").setValue(true);
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(
+      bugzillaApi.createAttachment.mock.calls.map(([p]) => p.file_name),
+    ).toEqual(["crash_data.txt"]);
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s blocks creation until the single testcase loads",
+  async (mode, Component) => {
+    let resolveDownload;
+    api.retrieveCrashTestCaseBinary.mockReturnValue(
+      new Promise((resolve) => {
+        resolveDownload = resolve;
+      }),
+    );
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.get("#id_testcase_filename").element.disabled).toBe(true);
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.createExternalComment();
+    expect(
+      mode === "bug" ? bugzillaApi.createBug : bugzillaApi.createComment,
+    ).not.toHaveBeenCalled();
+    expect(wrapper.vm.createError).toContain("Wait for the testcase to load");
+    resolveDownload(new TextEncoder().encode("contents"));
+    await flushPromises();
+    expect(wrapper.get("#id_testcase_content").element.value).toBe("contents");
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s snapshots the single testcase edits before creation",
+  async (mode, Component) => {
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    let resolveCreate;
+    const createCall =
+      mode === "bug" ? bugzillaApi.createBug : bugzillaApi.createComment;
+    createCall.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    bugzillaApi.retrieveComment.mockResolvedValue({
+      comments: { 456: { count: 2 } },
+    });
+    const wrapper = await mountForm(Component);
+    await wrapper.get("#id_testcase_content").setValue("before submit");
+    const publishing =
+      mode === "bug"
+        ? wrapper.vm.createExternalBug()
+        : wrapper.vm.createExternalComment();
+    await flushPromises();
+    expect(wrapper.get("#id_testcase_skip").element.disabled).toBe(true);
+    wrapper.vm.testcaseFiles.files[0].text = "after submit";
+    wrapper.vm.notAttachTest = true;
+    resolveCreate({ id: mode === "bug" ? 123 : 456 });
+    await publishing;
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file_name: "testcase.html",
+        data: Base64.encode("before submit"),
+      }),
+    );
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])(
+  "%s can exclude a single testcase whose download failed",
+  async (mode, Component) => {
+    api.retrieveCrashTestCaseBinary.mockRejectedValue(
+      new Error("download failed"),
+    );
+    api.listTemplates.mockResolvedValue({
+      results: [template(1, "testcase", mode)],
+    });
+    const wrapper = await mountForm(Component);
+    expect(wrapper.text()).toContain("Unable to load testcase contents");
+    await wrapper.get("#id_testcase_skip").setValue(true);
+    if (mode === "bug") await wrapper.vm.createExternalBug();
+    else await wrapper.vm.publishAttachments();
+    expect(
+      bugzillaApi.createAttachment.mock.calls.map(([p]) => p.file_name),
+    ).toEqual(["crash_data.txt"]);
+    wrapper.unmount();
+  },
+);
+
+test.each([
+  ["bug", PublicationForm],
+  ["comment", CommentForm],
+])("%s retries a failed single testcase download", async (mode, Component) => {
+  let resolveRetry;
+  api.retrieveCrashTestCaseBinary
+    .mockRejectedValueOnce(new Error("temporary failure"))
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRetry = resolve;
+        }),
+    );
+  api.listTemplates.mockResolvedValue({
+    results: [template(1, "testcase", mode)],
+  });
+  const wrapper = await mountForm(Component);
+  expect(wrapper.text()).toContain("Unable to load testcase contents");
+  await wrapper.get(".alert-danger button").trigger("click");
+  expect(api.retrieveCrashTestCaseBinary).toHaveBeenCalledTimes(2);
+  expect(wrapper.find(".alert-danger").exists()).toBe(false);
+  expect(wrapper.get("#id_testcase_filename").element.disabled).toBe(true);
+  if (mode === "bug") await wrapper.vm.createExternalBug();
+  else await wrapper.vm.createExternalComment();
+  expect(
+    mode === "bug" ? bugzillaApi.createBug : bugzillaApi.createComment,
+  ).not.toHaveBeenCalled();
+  resolveRetry(new TextEncoder().encode("recovered contents"));
+  await flushPromises();
+  expect(wrapper.get("#id_testcase_content").element.value).toBe(
+    "recovered contents",
+  );
+  if (mode === "bug") await wrapper.vm.createExternalBug();
+  else await wrapper.vm.publishAttachments();
+  expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+    expect.objectContaining({ data: Base64.encode("recovered contents") }),
+  );
+  wrapper.unmount();
+});
+
 test.each(["testcase", "testcase.min", ""])(
   "template saves basename %j without the example ZIP extension",
   async (basename) => {
@@ -215,7 +399,7 @@ test.each([
     expect(wrapper.get("#id_testcase_filename").element.value).toBe(
       "repro.min",
     );
-    expect(wrapper.get("#file_extension").element.value).toBe("html");
+    expect(wrapper.get("#file_extension").text()).toBe("HTML");
     if (mode === "bug") await wrapper.vm.createExternalBug();
     else await wrapper.vm.publishAttachments();
     expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
@@ -229,6 +413,7 @@ test.each([
 
 test("filename input follows prop changes without emitting an edit", async () => {
   const wrapper = shallowMount(TestCaseSection, {
+    global: { stubs: { TestcaseFileCard: false } },
     props: {
       entry: { testcase_isbinary: true },
       template: {},

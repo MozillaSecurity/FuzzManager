@@ -7,10 +7,8 @@ import CommentForm from "../src/components/Bugs/Comments/PublicationForm.vue";
 import TestCaseSection from "../src/components/Bugs/TestCaseSection.vue";
 import * as api from "../src/api";
 import * as bugzillaApi from "../src/bugzilla_api";
-import {
-  loadTestcaseArchive,
-  archiveAttachmentPayloads,
-} from "../src/testcase_archive";
+import { loadTestcaseArchive } from "../src/testcase_archive";
+import { testcaseAttachmentPayloads } from "../src/testcase_files";
 
 jest.mock("../src/api");
 jest.mock("../src/bugzilla_api");
@@ -20,7 +18,9 @@ jest.mock("mime", () => ({
       ? "image/gif"
       : name.endsWith(".json")
         ? "application/json"
-        : "text/html",
+        : name.endsWith(".html")
+          ? "text/html"
+          : null,
 }));
 
 global.TextDecoder = TextDecoder;
@@ -83,7 +83,7 @@ beforeEach(async () => {
 const mountForm = async (Component, props = {}) => {
   const wrapper = shallowMount(Component, {
     props: { providerId: 1, templateId: 1, entryId: 1, bucketId: 1, ...props },
-    global: { stubs: { TestCaseSection: false } },
+    global: { stubs: { TestCaseSection: false, TestcaseFileCard: false } },
   });
   await flushPromises();
   return wrapper;
@@ -91,6 +91,7 @@ const mountForm = async (Component, props = {}) => {
 
 test("ZIP checkbox appears only while attaching a ZIP testcase", async () => {
   const wrapper = shallowMount(TestCaseSection, {
+    global: { stubs: { TestcaseFileCard: false } },
     props: {
       entry: { id: 1, testcase: "testcase.zip", testcase_isbinary: true },
       template: {},
@@ -106,6 +107,43 @@ test("ZIP checkbox appears only while attaching a ZIP testcase", async () => {
   await wrapper.get("#id_testcase_skip").setValue(false);
   expect(wrapper.find("#id_testcase_unpack").exists()).toBe(false);
 });
+
+test.each(["toggle", "retry button"])(
+  "ZIP downloads recover using %s and restore the original attachment",
+  async (recovery) => {
+    const bytes = await makeZip();
+    api.retrieveCrashTestCaseBinary
+      .mockRejectedValueOnce(new Error("first failure"))
+      .mockRejectedValueOnce(new Error("second failure"))
+      .mockResolvedValueOnce(bytes);
+    const wrapper = await mountForm(PublicationForm);
+    await wrapper.get("#id_testcase_unpack").setValue(true);
+    await flushPromises();
+    expect(wrapper.text()).toContain("Unable to unpack ZIP archive");
+    expect(api.retrieveCrashTestCaseBinary).toHaveBeenCalledTimes(2);
+    if (recovery === "toggle") {
+      await wrapper.get("#id_testcase_unpack").setValue(false);
+      await wrapper.get("#id_testcase_unpack").setValue(true);
+    } else {
+      await wrapper.get(".alert-danger button").trigger("click");
+    }
+    await flushPromises();
+    expect(api.retrieveCrashTestCaseBinary).toHaveBeenCalledTimes(3);
+    expect(wrapper.find(".alert-danger").exists()).toBe(false);
+    expect(wrapper.findAll(".archive-card")).toHaveLength(3);
+    await wrapper.get("#id_testcase_unpack").setValue(false);
+    expect(wrapper.find(".alert-danger").exists()).toBe(false);
+    await wrapper.vm.createExternalBug();
+    expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file_name: "testcase.zip",
+        data: Base64.fromUint8Array(bytes),
+      }),
+    );
+    expect(api.retrieveCrashTestCaseBinary).toHaveBeenCalledTimes(3);
+    wrapper.unmount();
+  },
+);
 
 test("archive cards keep basenames editable and summarize included files", async () => {
   api.listTemplates.mockResolvedValue({ results: [template("bug")] });
@@ -160,6 +198,7 @@ test.each([
     const wrapper = await mountForm(Component);
     await wrapper.get("#id_testcase_unpack").setValue(true);
     await flushPromises();
+    expect(api.retrieveCrashTestCaseBinary).toHaveBeenCalledTimes(1);
     expect(wrapper.findAll('[id^="archive_basename_"]')).toHaveLength(3);
     expect(wrapper.findAll('[id^="archive_content_"]')).toHaveLength(2);
     expect(wrapper.findAll('[id^="archive_skip_"]')).toHaveLength(3);
@@ -316,7 +355,7 @@ test.each([
     await flushPromises();
     expect(wrapper.get("#id_testcase_unpack").element.disabled).toBe(true);
     // Exercise the upload snapshot even if reactive state changes after submit.
-    wrapper.vm.testcaseArchive.enabled = !initiallyUnpacked;
+    wrapper.vm.testcaseFiles.files[0].basename = "changed-after-submit";
     releaseCreate({ id: mode === "bug" ? 123 : 456 });
     await publishing;
     const testcaseUploads = bugzillaApi.createAttachment.mock.calls
@@ -382,11 +421,11 @@ test("untouched UTF-8 text retains its original bytes, including a BOM", async (
     await zip.generateAsync({ type: "uint8array" }),
   );
   const [file] = await loadTestcaseArchive(1);
-  expect(archiveAttachmentPayloads([file], "Testcase")[0].data).toBe(
+  expect(testcaseAttachmentPayloads([file], "Testcase")[0].data).toBe(
     Base64.fromUint8Array(originalBytes),
   );
   file.text = "edited";
-  expect(archiveAttachmentPayloads([file], "Testcase")[0].data).toBe(
+  expect(testcaseAttachmentPayloads([file], "Testcase")[0].data).toBe(
     Base64.encode("edited"),
   );
 });

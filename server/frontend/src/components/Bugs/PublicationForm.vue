@@ -549,8 +549,7 @@
             @update-not-attach-test="notAttachTest = $event"
             @update-filename="fileName = $event"
             @update-content="testCaseContent = $event"
-            @update-binary-text="onBinaryTextLoaded"
-            @update-archive="testcaseArchive = $event"
+            @update-files="testcaseFiles = $event"
           />
 
           <div v-if="createError" class="alert alert-danger" role="alert">
@@ -698,18 +697,16 @@ import {
 } from "vue";
 import * as api from "../../api";
 
-import mime from "mime";
 import * as bugzillaApi from "../../bugzilla_api";
 import * as HandlebarsHelpers from "../../handlebars_helpers";
 import { errorParser, parseFilename, buildFilename } from "../../helpers";
-import { archiveAttachmentPayloads } from "../../testcase_archive";
+import { testcaseAttachmentPlan } from "../../testcase_files";
 import CrashDataSection from "./CrashDataSection.vue";
 import FullPPCSelect from "./FullPPCSelect.vue";
 import HelpPopover from "./HelpPopover.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 import SummaryInput from "./SummaryInput.vue";
 import TestCaseSection from "./TestCaseSection.vue";
-import { testcaseAttachmentData } from "../../testcase_content";
 import UserDropdown from "./UserDropdown.vue";
 
 // Apply Handlebars helpers
@@ -799,13 +796,7 @@ export default defineComponent({
     const createdBugId = ref(null);
     const notAttachTest = ref(false);
     const testCaseContent = ref("");
-    const binaryTextTestcase = ref(null);
-    const onBinaryTextLoaded = (preview) => {
-      binaryTextTestcase.value = preview;
-      testCaseContent.value = preview.originalText;
-    };
-    const testcaseArchive = ref({
-      enabled: false,
+    const testcaseFiles = ref({
       loading: false,
       error: null,
       files: [],
@@ -831,8 +822,7 @@ export default defineComponent({
     const isTestAttached = computed(
       () =>
         !notAttachTest.value &&
-        (!testcaseArchive.value.enabled ||
-          testcaseArchive.value.files.some((file) => !file.doNotAttach)),
+        testcaseFiles.value.files.some((file) => !file.doNotAttach),
     );
 
     watch([entry, template], () => {
@@ -846,20 +836,6 @@ export default defineComponent({
         fileName.value = basename;
         fileExtension.value = extension;
       }
-    });
-
-    const fileMimetype = computed(() => {
-      const mimeType = mime.getType(filenameWithExtension.value);
-
-      if (mimeType) {
-        return mimeType;
-      }
-
-      if (entry.value.testcase_isbinary) {
-        return "application/octet-stream";
-      }
-
-      return "text/plain";
     });
 
     const bugzillaToken = computed(() => {
@@ -939,12 +915,10 @@ export default defineComponent({
         };
 
         if (isTestAttached.value) {
-          renderedData["testcase_attachment"] = testcaseArchive.value.enabled
-            ? testcaseArchive.value.files
-                .filter((file) => !file.doNotAttach)
-                .map((file) => buildFilename(file.basename, file.extension))
-                .join(", ")
-            : filenameWithExtension.value;
+          renderedData["testcase_attachment"] = testcaseFiles.value.files
+            .filter((file) => !file.doNotAttach)
+            .map((file) => buildFilename(file.basename, file.extension))
+            .join(", ");
         } else {
           delete renderedData["testcase_attachment"];
         }
@@ -1039,34 +1013,13 @@ export default defineComponent({
     };
 
     const createExternalBug = async () => {
-      const {
-        enabled: unpackArchive,
-        loading: archiveLoading,
-        error: archiveError,
-        files: archiveFiles,
-      } = testcaseArchive.value;
-      const attachTestcase = Boolean(
-        entry.value.testcase && !notAttachTest.value,
-      );
-      const testcasePlan = {
-        attach: attachTestcase,
-        unpack: attachTestcase && unpackArchive,
-        archivePayloads: [],
-      };
-      if (
-        testcasePlan.unpack &&
-        (archiveLoading || archiveError || !archiveFiles.length)
-      ) {
-        createError.value = archiveError || "Wait for the ZIP archive to load.";
-        return;
-      }
+      let testcasePlan;
       try {
-        if (testcasePlan.unpack) {
-          testcasePlan.archivePayloads = archiveAttachmentPayloads(
-            archiveFiles,
-            "Testcase",
-          );
-        }
+        testcasePlan = testcaseAttachmentPlan(
+          entry.value,
+          notAttachTest.value,
+          testcaseFiles.value,
+        );
       } catch (error) {
         createError.value = errorParser(error);
         return;
@@ -1226,49 +1179,21 @@ export default defineComponent({
         }
       }
 
-      // Publish TestCase
-      if (testcasePlan.attach) {
-        if (testcasePlan.unpack) {
-          const failed = [];
-          for (const payload of testcasePlan.archivePayloads) {
-            try {
-              await bugzillaApi.createAttachment({
-                hostname: provider.value.hostname,
-                id: createdBugId.value,
-                ids: [createdBugId.value],
-                ...payload,
-                headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
-              });
-            } catch (error) {
-              failed.push(`${payload.file_name}: ${errorParser(error)}`);
-            }
-          }
-          if (failed.length) publishTestCaseError.value = failed.join("; ");
-          return;
-        }
+      const failed = [];
+      for (const payload of testcasePlan.payloads) {
         try {
-          payload = {
-            ids: [createdBugId.value],
-            data: await testcaseAttachmentData(
-              entry.value,
-              testCaseContent.value,
-              binaryTextTestcase.value,
-            ),
-            file_name: filenameWithExtension.value,
-            summary: "Testcase",
-            content_type: fileMimetype.value,
-          };
-
           await bugzillaApi.createAttachment({
             hostname: provider.value.hostname,
             id: createdBugId.value,
+            ids: [createdBugId.value],
             ...payload,
             headers: { "X-BUGZILLA-API-KEY": bugzillaToken.value },
           });
-        } catch (err) {
-          publishTestCaseError.value = errorParser(err);
+        } catch (error) {
+          failed.push(`${payload.file_name}: ${errorParser(error)}`);
         }
       }
+      if (failed.length) publishTestCaseError.value = failed.join("; ");
     };
 
     const instance = getCurrentInstance();
@@ -1387,8 +1312,7 @@ export default defineComponent({
       createdBugId,
       notAttachTest,
       testCaseContent,
-      onBinaryTextLoaded,
-      testcaseArchive,
+      testcaseFiles,
       notAttachData,
       crashData,
       bugLink,
@@ -1404,7 +1328,6 @@ export default defineComponent({
       createExternalBug,
       createOrUpdateBugzillaBugTemplate,
       filenameWithExtension,
-      fileMimetype,
       fileExtension,
       fileName,
     };
