@@ -549,6 +549,7 @@
             @update-not-attach-test="notAttachTest = $event"
             @update-filename="fileName = $event"
             @update-content="testCaseContent = $event"
+            @update-binary-text="onBinaryTextLoaded"
             @update-archive="testcaseArchive = $event"
           />
 
@@ -708,6 +709,7 @@ import HelpPopover from "./HelpPopover.vue";
 import ProductComponentSelect from "./ProductComponentSelect.vue";
 import SummaryInput from "./SummaryInput.vue";
 import TestCaseSection from "./TestCaseSection.vue";
+import { testcaseAttachmentData } from "../../testcase_content";
 import UserDropdown from "./UserDropdown.vue";
 
 // Apply Handlebars helpers
@@ -797,6 +799,11 @@ export default defineComponent({
     const createdBugId = ref(null);
     const notAttachTest = ref(false);
     const testCaseContent = ref("");
+    const binaryTextTestcase = ref(null);
+    const onBinaryTextLoaded = (preview) => {
+      binaryTextTestcase.value = preview;
+      testCaseContent.value = preview.originalText;
+    };
     const testcaseArchive = ref({
       enabled: false,
       loading: false,
@@ -1240,17 +1247,13 @@ export default defineComponent({
           return;
         }
         try {
-          let content = testCaseContent.value;
-          // If the testcase is binary we need to download it first
-          if (entry.value.testcase_isbinary) {
-            content = await api.retrieveCrashTestCaseBinary(entry.value.id);
-          }
-
           payload = {
             ids: [createdBugId.value],
-            data: entry.value.testcase_isbinary
-              ? Base64.fromUint8Array(content)
-              : Base64.encode(content),
+            data: await testcaseAttachmentData(
+              entry.value,
+              testCaseContent.value,
+              binaryTextTestcase.value,
+            ),
             file_name: filenameWithExtension.value,
             summary: "Testcase",
             content_type: fileMimetype.value,
@@ -1384,6 +1387,7 @@ export default defineComponent({
       createdBugId,
       notAttachTest,
       testCaseContent,
+      onBinaryTextLoaded,
       testcaseArchive,
       notAttachData,
       crashData,

@@ -145,9 +145,12 @@
             />
           </div>
         </div>
-        <div v-if="!entry.testcase_isbinary" class="row">
+        <div v-if="contentError" class="alert alert-danger" role="alert">
+          {{ contentError }}
+        </div>
+        <div v-if="canEditContent" class="row">
           <div class="form-group col-md-12">
-            <label for="testcase_content">Content:</label>
+            <label for="id_testcase_content">Content:</label>
             <textarea
               id="id_testcase_content"
               v-model="content"
@@ -170,6 +173,7 @@ import { computed, defineComponent, markRaw, onMounted, ref, watch } from "vue";
 import * as api from "../../api";
 import { errorParser } from "../../helpers";
 import { loadTestcaseArchive } from "../../testcase_archive";
+import { loadBinaryTextPreview } from "../../testcase_content";
 
 export default defineComponent({
   name: "TestCaseSection",
@@ -211,6 +215,7 @@ export default defineComponent({
     "update-not-attach-test",
     "update-filename",
     "update-content",
+    "update-binary-text",
     "update-archive",
   ],
   setup(props, { emit }) {
@@ -228,6 +233,11 @@ export default defineComponent({
       set: (value) => emit("update-filename", value),
     });
     const content = ref("Content loading...");
+    const contentError = ref(null);
+    const binaryTextAvailable = ref(false);
+    const canEditContent = computed(
+      () => !props.entry.testcase_isbinary || binaryTextAvailable.value,
+    );
 
     const emitArchive = () => {
       emit("update-archive", {
@@ -270,6 +280,18 @@ export default defineComponent({
 
       if (!props.entry.testcase_isbinary) {
         content.value = await api.retrieveCrashTestCase(props.entry.id);
+      } else if (!isZip.value) {
+        try {
+          const preview = await loadBinaryTextPreview(props.entry);
+          if (preview) {
+            preview.bytes = markRaw(preview.bytes);
+            emit("update-binary-text", preview);
+            content.value = preview.originalText;
+            binaryTextAvailable.value = true;
+          }
+        } catch (error) {
+          contentError.value = `Unable to load testcase contents: ${errorParser(error)}`;
+        }
       }
     });
 
@@ -286,6 +308,8 @@ export default defineComponent({
       notAttachTest,
       filename,
       content,
+      contentError,
+      canEditContent,
       unpackArchive,
       archiveLoading,
       archiveError,
