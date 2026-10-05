@@ -130,8 +130,7 @@
           @update-not-attach-test="notAttachTest = $event"
           @update-filename="newFileName = $event"
           @update-content="testCaseContent = $event"
-          @update-binary-text="onBinaryTextLoaded"
-          @update-archive="testcaseArchive = $event"
+          @update-files="testcaseFiles = $event"
         />
 
         <div v-if="createError" class="alert alert-danger" role="alert">
@@ -233,17 +232,15 @@
 import Handlebars from "handlebars";
 import { Base64 } from "js-base64";
 import _orderBy from "lodash/orderBy";
-import mime from "mime";
 import { defineComponent } from "vue";
 import * as api from "../../../api";
 import * as bugzillaApi from "../../../bugzilla_api";
 import * as HandlebarsHelpers from "../../../handlebars_helpers";
 import { errorParser, parseFilename, buildFilename } from "../../../helpers";
-import { archiveAttachmentPayloads } from "../../../testcase_archive";
+import { testcaseAttachmentPlan } from "../../../testcase_files";
 import CrashDataSection from "../CrashDataSection.vue";
 import HelpPopover from "../HelpPopover.vue";
 import TestCaseSection from "../TestCaseSection.vue";
-import { testcaseAttachmentData } from "../../../testcase_content";
 
 // Apply Handlebars helpers
 Object.entries(HandlebarsHelpers).forEach(([name, callback]) => {
@@ -296,9 +293,7 @@ export default defineComponent({
       createdCommentCount: null,
       notAttachTest: false,
       testCaseContent: "",
-      binaryTextTestcase: null,
-      testcaseArchive: {
-        enabled: false,
+      testcaseFiles: {
         loading: false,
         error: null,
         files: [],
@@ -379,12 +374,10 @@ export default defineComponent({
         };
 
         if (this.isTestAttached) {
-          renderedData["testcase_attachment"] = this.testcaseArchive.enabled
-            ? this.testcaseArchive.files
-                .filter((file) => !file.doNotAttach)
-                .map((file) => buildFilename(file.basename, file.extension))
-                .join(", ")
-            : this.filenameWithExtension;
+          renderedData["testcase_attachment"] = this.testcaseFiles.files
+            .filter((file) => !file.doNotAttach)
+            .map((file) => buildFilename(file.basename, file.extension))
+            .join(", ");
         } else {
           delete renderedData["testcase_attachment"];
         }
@@ -417,22 +410,8 @@ export default defineComponent({
     isTestAttached() {
       return (
         !this.notAttachTest &&
-        (!this.testcaseArchive.enabled ||
-          this.testcaseArchive.files.some((file) => !file.doNotAttach))
+        this.testcaseFiles.files.some((file) => !file.doNotAttach)
       );
-    },
-    fileMimetype() {
-      const mimeType = mime.getType(this.filenameWithExtension);
-
-      if (mimeType) {
-        return mimeType;
-      }
-
-      if (this.entry.testcase_isbinary) {
-        return "application/octet-stream";
-      }
-
-      return "text/plain";
     },
   },
 
@@ -472,10 +451,6 @@ export default defineComponent({
   },
 
   methods: {
-    onBinaryTextLoaded(preview) {
-      this.binaryTextTestcase = preview;
-      this.testCaseContent = preview.originalText;
-    },
     goBack() {
       window.history.back();
     },
@@ -497,34 +472,13 @@ export default defineComponent({
     },
 
     async createExternalComment() {
-      const {
-        enabled: unpackArchive,
-        loading: archiveLoading,
-        error: archiveError,
-        files: archiveFiles,
-      } = this.testcaseArchive;
-      const attachTestcase = Boolean(
-        this.entry?.testcase && !this.notAttachTest,
-      );
-      const testcasePlan = {
-        attach: attachTestcase,
-        unpack: attachTestcase && unpackArchive,
-        archivePayloads: [],
-      };
-      if (
-        testcasePlan.unpack &&
-        (archiveLoading || archiveError || !archiveFiles.length)
-      ) {
-        this.createError = archiveError || "Wait for the ZIP archive to load.";
-        return;
-      }
+      let testcasePlan;
       try {
-        if (testcasePlan.unpack) {
-          testcasePlan.archivePayloads = archiveAttachmentPayloads(
-            archiveFiles,
-            "Testcase",
-          );
-        }
+        testcasePlan = testcaseAttachmentPlan(
+          this.entry,
+          this.notAttachTest,
+          this.testcaseFiles,
+        );
       } catch (error) {
         this.createError = errorParser(error);
         return;
@@ -571,20 +525,13 @@ export default defineComponent({
 
     async publishAttachments(testcasePlan = null) {
       // Direct publication also uses this method without creating a comment.
-      const plan = testcasePlan || {
-        attach: Boolean(this.entry?.testcase && !this.notAttachTest),
-        unpack: Boolean(
-          this.entry?.testcase &&
-            !this.notAttachTest &&
-            this.testcaseArchive.enabled,
-        ),
-        archivePayloads:
-          this.entry?.testcase &&
-          !this.notAttachTest &&
-          this.testcaseArchive.enabled
-            ? archiveAttachmentPayloads(this.testcaseArchive.files, "Testcase")
-            : [],
-      };
+      const plan =
+        testcasePlan ||
+        testcaseAttachmentPlan(
+          this.entry,
+          this.notAttachTest,
+          this.testcaseFiles,
+        );
       if (!this.notAttachData) {
         const payload = {
           ids: [this.externalBugId],
@@ -606,59 +553,26 @@ export default defineComponent({
         }
       }
 
-      // Publish TestCase
-      if (plan.attach) {
-        if (plan.unpack) {
-          const failed = [];
-          for (const attachment of plan.archivePayloads) {
-            try {
-              await bugzillaApi.createAttachment({
-                hostname: this.provider.hostname,
-                id: this.externalBugId,
-                ids: [this.externalBugId],
-                ...attachment,
-                summary: `Testcase for ${this.createdCommentCount === undefined ? "previous comment" : `comment ${this.createdCommentCount}`}`,
-                headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
-              });
-            } catch (error) {
-              failed.push(`${attachment.file_name}: ${errorParser(error)}`);
-            }
-          }
-          if (failed.length) this.publishTestCaseError = failed.join("; ");
-          return;
-        }
-        /*
-         * A bug in BMO is causing "count" to be missing.
-         * This workaround ensures we can still attach the missing file.
-         */
-        let comment = "previous comment";
-        if (this.createdCommentCount !== undefined) {
-          comment = `comment ${this.createdCommentCount}`;
-        }
-
-        const payload = {
-          ids: [this.externalBugId],
-          data: await testcaseAttachmentData(
-            this.entry,
-            this.testCaseContent,
-            this.binaryTextTestcase,
-          ),
-          file_name: this.filenameWithExtension,
-          summary: `Testcase for ${comment}`,
-          content_type: this.fileMimetype,
-        };
-
+      const comment =
+        this.createdCommentCount === undefined
+          ? "previous comment"
+          : `comment ${this.createdCommentCount}`;
+      const failed = [];
+      for (const attachment of plan.payloads) {
         try {
           await bugzillaApi.createAttachment({
             hostname: this.provider.hostname,
             id: this.externalBugId,
-            ...payload,
+            ids: [this.externalBugId],
+            ...attachment,
+            summary: `Testcase for ${comment}`,
             headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
           });
-        } catch (err) {
-          this.publishTestCaseError = errorParser(err);
+        } catch (error) {
+          failed.push(`${attachment.file_name}: ${errorParser(error)}`);
         }
       }
+      if (failed.length) this.publishTestCaseError = failed.join("; ");
     },
 
     getFileDetails() {
