@@ -85,11 +85,13 @@ test.each([
     await wrapper
       .get("#id_testcase_content")
       .setValue("<h1>edited testcase</h1>");
+    await wrapper.get("#id_testcase_filename").setValue("renamed");
     if (mode === "bug") await wrapper.vm.createExternalBug();
     else await wrapper.vm.publishAttachments();
     expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
       expect.objectContaining({
-        file_name: "testcase.html",
+        file_name: "renamed.html",
+        summary: "renamed.html",
         data: Base64.encode("<h1>edited testcase</h1>"),
       }),
     );
@@ -286,6 +288,7 @@ test.each([
     expect(bugzillaApi.createAttachment).toHaveBeenCalledWith(
       expect.objectContaining({
         file_name: "testcase.html",
+        summary: "testcase.html",
         data: Base64.encode("before submit"),
       }),
     );
