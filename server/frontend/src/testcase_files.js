@@ -46,7 +46,7 @@ export function createTestcaseFile(filename, bytes, knownText = false) {
   };
 }
 
-export function testcaseAttachmentPayloads(files, summary) {
+export function testcaseAttachmentPayloads(files) {
   return files
     .filter((file) => !file.doNotAttach)
     .map((file) => {
@@ -57,7 +57,7 @@ export function testcaseAttachmentPayloads(files, summary) {
       const fileName = buildFilename(file.basename, file.extension);
       return {
         file_name: fileName,
-        summary,
+        summary: fileName,
         data:
           file.text === null || file.text === file.originalText
             ? Base64.fromUint8Array(file.bytes)
@@ -77,5 +77,5 @@ export function testcaseAttachmentPlan(entry, skipped, state) {
   }
   if (loading || error || !files.length)
     throw new Error(error || "Wait for the testcase to load.");
-  return { payloads: testcaseAttachmentPayloads(files, "Testcase") };
+  return { payloads: testcaseAttachmentPayloads(files) };
 }

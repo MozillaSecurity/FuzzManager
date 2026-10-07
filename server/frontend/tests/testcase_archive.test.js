@@ -220,14 +220,17 @@ test.each([
       expect.arrayContaining([
         expect.objectContaining({
           file_name: "renamed.html",
+          summary: "renamed.html",
           data: Base64.encode("<h1>edited</h1>"),
         }),
         expect.objectContaining({
           file_name: "test_info.json",
+          summary: "test_info.json",
           data: Base64.encode('{"ok":true}'),
         }),
         expect.objectContaining({
           file_name: "image.gif",
+          summary: "image.gif",
           content_type: "image/gif",
           data: Base64.fromUint8Array(
             new Uint8Array([71, 73, 70, 56, 57, 97, 0, 255]),
@@ -421,11 +424,11 @@ test("untouched UTF-8 text retains its original bytes, including a BOM", async (
     await zip.generateAsync({ type: "uint8array" }),
   );
   const [file] = await loadTestcaseArchive(1);
-  expect(testcaseAttachmentPayloads([file], "Testcase")[0].data).toBe(
+  expect(testcaseAttachmentPayloads([file])[0].data).toBe(
     Base64.fromUint8Array(originalBytes),
   );
   file.text = "edited";
-  expect(testcaseAttachmentPayloads([file], "Testcase")[0].data).toBe(
+  expect(testcaseAttachmentPayloads([file])[0].data).toBe(
     Base64.encode("edited"),
   );
 });

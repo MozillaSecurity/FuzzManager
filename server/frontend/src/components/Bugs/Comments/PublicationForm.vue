@@ -553,10 +553,6 @@ export default defineComponent({
         }
       }
 
-      const comment =
-        this.createdCommentCount === undefined
-          ? "previous comment"
-          : `comment ${this.createdCommentCount}`;
       const failed = [];
       for (const attachment of plan.payloads) {
         try {
@@ -565,7 +561,6 @@ export default defineComponent({
             id: this.externalBugId,
             ids: [this.externalBugId],
             ...attachment,
-            summary: `Testcase for ${comment}`,
             headers: { "X-BUGZILLA-API-KEY": this.bugzillaToken },
           });
         } catch (error) {
