@@ -29,15 +29,15 @@
           {{ file.extension ? file.extension.toUpperCase() : "NO EXT" }}
         </span>
       </div>
-      <label v-if="!single" class="archive-skip" :for="ids.skip">
+      <label v-if="!single" class="archive-attach" :for="ids.skip">
+        Attach
         <input
           :id="ids.skip"
-          :checked="file.doNotAttach"
+          :checked="!file.doNotAttach"
           type="checkbox"
           :disabled="disabled"
-          @change="$emit('update:doNotAttach', $event.target.checked)"
+          @change="$emit('update:doNotAttach', !$event.target.checked)"
         />
-        Do not attach file
         <span class="sr-only"> {{ index + 1 }}: {{ file.originalName }} </span>
       </label>
     </div>
@@ -160,14 +160,14 @@ export default defineComponent({
   color: #475467;
 }
 
-.archive-skip {
+.archive-attach {
   cursor: pointer;
   font-weight: normal;
   margin: 0;
 }
 
-.archive-skip input {
-  margin-right: 5px;
+.archive-attach input {
+  margin-left: 5px;
 }
 
 .archive-content {
