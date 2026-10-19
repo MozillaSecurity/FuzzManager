@@ -167,7 +167,7 @@ test("archive cards keep basenames editable and summarize included files", async
   await wrapper.get("#archive_basename_0").setValue("renamed");
   await wrapper.get("#archive_content_0").setValue("<h1>edited</h1>");
   expect(wrapper.get("#archive_basename_0").element.value).toBe("renamed");
-  await wrapper.get("#archive_skip_0").setValue(true);
+  await wrapper.get("#archive_skip_0").setValue(false);
   expect(wrapper.get(".archive-count").text()).toBe(
     "2 of 3 files will be attached",
   );
@@ -179,7 +179,7 @@ test("archive cards keep basenames editable and summarize included files", async
   expect(wrapper.find("#archive_content_0").exists()).toBe(false);
   expect(wrapper.findAll(".archive-content")).toHaveLength(1);
 
-  await wrapper.get("#archive_skip_0").setValue(false);
+  await wrapper.get("#archive_skip_0").setValue(true);
   expect(wrapper.get("#archive_basename_0").element.value).toBe("renamed");
   expect(wrapper.get("#archive_content_0").element.value).toBe(
     "<h1>edited</h1>",
@@ -205,7 +205,7 @@ test.each([
     expect(
       wrapper
         .findAll('[id^="archive_skip_"]')
-        .every((box) => !box.element.checked),
+        .every((box) => box.element.checked),
     ).toBe(true);
     await wrapper.get("#archive_basename_0").setValue("renamed");
     await wrapper.get("#archive_content_0").setValue("<h1>edited</h1>");
@@ -252,7 +252,7 @@ test.each([
   ["bug", PublicationForm],
   ["comment", CommentForm],
 ])(
-  "%s omits individually checked ZIP files from attachments and rendered names",
+  "%s omits individually unchecked ZIP files from attachments and rendered names",
   async (mode, Component) => {
     const selectedTemplate = template(mode);
     selectedTemplate.description = "{{testcase_attachment}}";
@@ -263,7 +263,7 @@ test.each([
     await flushPromises();
     // An excluded file is not validated for upload.
     await wrapper.get("#archive_basename_1").setValue("");
-    await wrapper.get("#archive_skip_1").setValue(true);
+    await wrapper.get("#archive_skip_1").setValue(false);
     const rendered =
       mode === "bug"
         ? wrapper.vm.renderedDescription
@@ -294,7 +294,7 @@ test.each([
   await wrapper.get("#id_testcase_unpack").setValue(true);
   await flushPromises();
   for (const box of wrapper.findAll('[id^="archive_skip_"]'))
-    await box.setValue(true);
+    await box.setValue(false);
   expect(
     mode === "bug"
       ? wrapper.vm.renderedDescription
