@@ -13,6 +13,7 @@ import datetime
 import logging
 import os.path
 import sys
+from pathlib import Path
 
 import pytest
 from dateutil.parser import isoparse
@@ -332,12 +333,14 @@ def test_update_task_0(mocker, settings, pulse_data, expected):
         assert getattr(task_obj, field) == value
 
 
-def test_update_pool_defns_0(mocker, settings):
+@pytest.mark.parametrize("branch", ["main", "custom-branch"])
+def test_update_pool_defns_0(mocker, settings, branch):
     """test that Pool definition is read from GH"""
     settings.TC_FUZZING_CFG_STORAGE = os.path.join(
         os.path.dirname(__file__), "fixtures", "pool1"
     )
     settings.TC_FUZZING_CFG_REPO = "git@allizom.org:allizom/fuzzing-config.git"
+    settings.TC_FUZZING_CFG_BRANCH = branch
     settings.TC_EXTRA_POOLS = ["extra"]
 
     mock_call = mocker.patch("taskmanager.tasks.check_output")
@@ -345,6 +348,14 @@ def test_update_pool_defns_0(mocker, settings):
     update_pool_defns()
 
     assert mock_call.call_count == 4
+    storage = Path(settings.TC_FUZZING_CFG_STORAGE)
+    mock_call.assert_any_call(
+        ["git", "remote", "add", "-t", branch, "origin", settings.TC_FUZZING_CFG_REPO],
+        cwd=storage,
+    )
+    mock_call.assert_any_call(
+        ["git", "fetch", "-v", "--depth", "1", "origin", branch], cwd=storage
+    )
     assert Pool.objects.count() == 1
     assert Task.objects.count() == 0
 

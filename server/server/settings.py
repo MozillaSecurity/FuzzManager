@@ -324,6 +324,7 @@ GCE_AUTH_CACHE = "/tmp/.google_libcloud_auth.fuzzmanager-cluster"
 # Most people will find EC2 easier to use for small clusters.
 #
 # TC_FUZZING_CFG_REPO = ""  # URL to git repo containing Fuzzing pool configuration
+# TC_FUZZING_CFG_BRANCH = "main"  # branch containing Fuzzing pool configuration
 # TC_FUZZING_CFG_STORAGE = BASE_DIR  # where to store the repo
 # TC_ROOT_URL = ""  # root URL to the taskcluster instance
 # TC_PROJECT = ""  # taskcluster project for fuzzing resources

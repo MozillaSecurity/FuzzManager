@@ -68,14 +68,22 @@ def update_pool_defns():
                 "remote",
                 "add",
                 "-t",
-                "master",
+                settings.TC_FUZZING_CFG_BRANCH,
                 "origin",
                 settings.TC_FUZZING_CFG_REPO,
             ],
             cwd=storage,
         )
     check_output(
-        ["git", "fetch", "-v", "--depth", "1", "origin", "master"],
+        [
+            "git",
+            "fetch",
+            "-v",
+            "--depth",
+            "1",
+            "origin",
+            settings.TC_FUZZING_CFG_BRANCH,
+        ],
         cwd=storage,
     )
     check_output(["git", "reset", "--hard", "FETCH_HEAD"], cwd=storage)

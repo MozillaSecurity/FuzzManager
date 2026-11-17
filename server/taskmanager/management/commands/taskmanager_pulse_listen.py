@@ -95,7 +95,7 @@ class TaskClusterConsumer(ConsumerMixin):
                 message.delivery_info["exchange"],
                 body["body"]["ref"],
             )
-            if body["body"]["ref"] == "refs/heads/master":
+            if body["body"]["ref"] == f"refs/heads/{settings.TC_FUZZING_CFG_BRANCH}":
                 update_pool_defns.delay()
             message.ack()
             return
